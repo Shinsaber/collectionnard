@@ -1,0 +1,315 @@
+package testutil
+
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/shinsaber/colec/config"
+	"github.com/shinsaber/colec/internal/handler"
+	"github.com/shinsaber/colec/internal/middleware"
+	"github.com/shinsaber/colec/internal/model"
+	"github.com/shinsaber/colec/internal/store"
+)
+
+const TestSecret = "test-secret"
+
+// MockStore implements store.Store with configurable function fields.
+type MockStore struct {
+	GetUserByUsernameFn  func(ctx context.Context, username string) (*model.User, string, error)
+	GetUserByIDFn        func(ctx context.Context, id uuid.UUID) (*model.User, error)
+	ListItemTypesFn      func(ctx context.Context, pg model.Pagination) ([]model.ItemType, int, error)
+	GetItemTypeFn        func(ctx context.Context, id uuid.UUID) (*model.ItemType, error)
+	CreateItemTypeFn     func(ctx context.Context, in model.ItemTypeCreate) (*model.ItemType, error)
+	UpdateItemTypeFn     func(ctx context.Context, id uuid.UUID, in model.ItemTypeUpdate) (*model.ItemType, error)
+	DeleteItemTypeFn     func(ctx context.Context, id uuid.UUID) error
+	ListRelationTypesFn  func(ctx context.Context, pg model.Pagination, s, t *uuid.UUID) ([]model.RelationType, int, error)
+	GetRelationTypeFn    func(ctx context.Context, id uuid.UUID) (*model.RelationType, error)
+	CreateRelationTypeFn func(ctx context.Context, in model.RelationTypeCreate) (*model.RelationType, error)
+	UpdateRelationTypeFn func(ctx context.Context, id uuid.UUID, in model.RelationTypeUpdate) (*model.RelationType, error)
+	DeleteRelationTypeFn func(ctx context.Context, id uuid.UUID) error
+	ListCollectionTypesFn  func(ctx context.Context, pg model.Pagination) ([]model.CollectionType, int, error)
+	GetCollectionTypeFn    func(ctx context.Context, id uuid.UUID) (*model.CollectionType, error)
+	CreateCollectionTypeFn func(ctx context.Context, in model.CollectionTypeCreate) (*model.CollectionType, error)
+	UpdateCollectionTypeFn func(ctx context.Context, id uuid.UUID, in model.CollectionTypeUpdate) (*model.CollectionType, error)
+	DeleteCollectionTypeFn func(ctx context.Context, id uuid.UUID) error
+	ListItemsFn          func(ctx context.Context, pg model.Pagination, f store.ItemFilters) ([]model.Item, int, error)
+	GetItemFn            func(ctx context.Context, id uuid.UUID) (*model.Item, error)
+	CreateItemFn         func(ctx context.Context, in model.ItemCreate) (*model.Item, error)
+	UpdateItemFn         func(ctx context.Context, id uuid.UUID, in model.ItemUpdate) (*model.Item, error)
+	DeleteItemFn         func(ctx context.Context, id uuid.UUID) error
+	ListItemRelationsFn  func(ctx context.Context, itemID uuid.UUID, rtID *uuid.UUID) ([]model.ItemRelation, error)
+	GetRelationFn        func(ctx context.Context, id uuid.UUID) (*model.ItemRelation, error)
+	CreateRelationFn     func(ctx context.Context, in model.ItemRelationCreate) (*model.ItemRelation, error)
+	UpdateRelationFn     func(ctx context.Context, id uuid.UUID, in model.ItemRelationUpdate) (*model.ItemRelation, error)
+	DeleteRelationFn     func(ctx context.Context, id uuid.UUID) error
+	GetItemGraphFn       func(ctx context.Context, id uuid.UUID, depth int, rtIDs []uuid.UUID) (*model.GraphResponse, error)
+	ListCollectionsFn    func(ctx context.Context, userID uuid.UUID, pg model.Pagination, ctID *uuid.UUID) ([]model.Collection, int, error)
+	GetCollectionFn      func(ctx context.Context, id uuid.UUID) (*model.Collection, error)
+	CreateCollectionFn   func(ctx context.Context, userID uuid.UUID, in model.CollectionCreate) (*model.Collection, error)
+	UpdateCollectionFn   func(ctx context.Context, id uuid.UUID, in model.CollectionUpdate) (*model.Collection, error)
+	DeleteCollectionFn   func(ctx context.Context, id uuid.UUID) error
+	ListCollectionItemsFn  func(ctx context.Context, colID uuid.UUID, pg model.Pagination, itID *uuid.UUID, sort string) ([]model.CollectionItem, int, error)
+	AddCollectionItemFn    func(ctx context.Context, colID uuid.UUID, in model.CollectionItemAdd) (*model.CollectionItem, error)
+	UpdateCollectionItemFn func(ctx context.Context, colID, itemID uuid.UUID, in model.CollectionItemUpdate) (*model.CollectionItem, error)
+	RemoveCollectionItemFn func(ctx context.Context, colID, itemID uuid.UUID) error
+	ListItemCollectionsFn  func(ctx context.Context, userID, itemID uuid.UUID) ([]model.ItemCollectionMembership, error)
+	ListTagsFn           func(ctx context.Context, search string) ([]model.Tag, error)
+	GetStatsFn           func(ctx context.Context) (*model.Stats, error)
+}
+
+func (m *MockStore) GetUserByUsername(ctx context.Context, username string) (*model.User, string, error) {
+	if m.GetUserByUsernameFn != nil { return m.GetUserByUsernameFn(ctx, username) }
+	return nil, "", store.ErrNotFound
+}
+func (m *MockStore) GetUserByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
+	if m.GetUserByIDFn != nil { return m.GetUserByIDFn(ctx, id) }
+	return nil, store.ErrNotFound
+}
+func (m *MockStore) ListItemTypes(ctx context.Context, pg model.Pagination) ([]model.ItemType, int, error) {
+	if m.ListItemTypesFn != nil { return m.ListItemTypesFn(ctx, pg) }
+	return nil, 0, nil
+}
+func (m *MockStore) GetItemType(ctx context.Context, id uuid.UUID) (*model.ItemType, error) {
+	if m.GetItemTypeFn != nil { return m.GetItemTypeFn(ctx, id) }
+	return nil, store.ErrNotFound
+}
+func (m *MockStore) CreateItemType(ctx context.Context, in model.ItemTypeCreate) (*model.ItemType, error) {
+	if m.CreateItemTypeFn != nil { return m.CreateItemTypeFn(ctx, in) }
+	return nil, nil
+}
+func (m *MockStore) UpdateItemType(ctx context.Context, id uuid.UUID, in model.ItemTypeUpdate) (*model.ItemType, error) {
+	if m.UpdateItemTypeFn != nil { return m.UpdateItemTypeFn(ctx, id, in) }
+	return nil, store.ErrNotFound
+}
+func (m *MockStore) DeleteItemType(ctx context.Context, id uuid.UUID) error {
+	if m.DeleteItemTypeFn != nil { return m.DeleteItemTypeFn(ctx, id) }
+	return store.ErrNotFound
+}
+func (m *MockStore) ListRelationTypes(ctx context.Context, pg model.Pagination, s, t *uuid.UUID) ([]model.RelationType, int, error) {
+	if m.ListRelationTypesFn != nil { return m.ListRelationTypesFn(ctx, pg, s, t) }
+	return nil, 0, nil
+}
+func (m *MockStore) GetRelationType(ctx context.Context, id uuid.UUID) (*model.RelationType, error) {
+	if m.GetRelationTypeFn != nil { return m.GetRelationTypeFn(ctx, id) }
+	return nil, store.ErrNotFound
+}
+func (m *MockStore) CreateRelationType(ctx context.Context, in model.RelationTypeCreate) (*model.RelationType, error) {
+	if m.CreateRelationTypeFn != nil { return m.CreateRelationTypeFn(ctx, in) }
+	return nil, nil
+}
+func (m *MockStore) UpdateRelationType(ctx context.Context, id uuid.UUID, in model.RelationTypeUpdate) (*model.RelationType, error) {
+	if m.UpdateRelationTypeFn != nil { return m.UpdateRelationTypeFn(ctx, id, in) }
+	return nil, store.ErrNotFound
+}
+func (m *MockStore) DeleteRelationType(ctx context.Context, id uuid.UUID) error {
+	if m.DeleteRelationTypeFn != nil { return m.DeleteRelationTypeFn(ctx, id) }
+	return store.ErrNotFound
+}
+func (m *MockStore) ListCollectionTypes(ctx context.Context, pg model.Pagination) ([]model.CollectionType, int, error) {
+	if m.ListCollectionTypesFn != nil { return m.ListCollectionTypesFn(ctx, pg) }
+	return nil, 0, nil
+}
+func (m *MockStore) GetCollectionType(ctx context.Context, id uuid.UUID) (*model.CollectionType, error) {
+	if m.GetCollectionTypeFn != nil { return m.GetCollectionTypeFn(ctx, id) }
+	return nil, store.ErrNotFound
+}
+func (m *MockStore) CreateCollectionType(ctx context.Context, in model.CollectionTypeCreate) (*model.CollectionType, error) {
+	if m.CreateCollectionTypeFn != nil { return m.CreateCollectionTypeFn(ctx, in) }
+	return nil, nil
+}
+func (m *MockStore) UpdateCollectionType(ctx context.Context, id uuid.UUID, in model.CollectionTypeUpdate) (*model.CollectionType, error) {
+	if m.UpdateCollectionTypeFn != nil { return m.UpdateCollectionTypeFn(ctx, id, in) }
+	return nil, store.ErrNotFound
+}
+func (m *MockStore) DeleteCollectionType(ctx context.Context, id uuid.UUID) error {
+	if m.DeleteCollectionTypeFn != nil { return m.DeleteCollectionTypeFn(ctx, id) }
+	return store.ErrNotFound
+}
+func (m *MockStore) ListItems(ctx context.Context, pg model.Pagination, f store.ItemFilters) ([]model.Item, int, error) {
+	if m.ListItemsFn != nil { return m.ListItemsFn(ctx, pg, f) }
+	return nil, 0, nil
+}
+func (m *MockStore) GetItem(ctx context.Context, id uuid.UUID) (*model.Item, error) {
+	if m.GetItemFn != nil { return m.GetItemFn(ctx, id) }
+	return nil, store.ErrNotFound
+}
+func (m *MockStore) CreateItem(ctx context.Context, in model.ItemCreate) (*model.Item, error) {
+	if m.CreateItemFn != nil { return m.CreateItemFn(ctx, in) }
+	return nil, nil
+}
+func (m *MockStore) UpdateItem(ctx context.Context, id uuid.UUID, in model.ItemUpdate) (*model.Item, error) {
+	if m.UpdateItemFn != nil { return m.UpdateItemFn(ctx, id, in) }
+	return nil, store.ErrNotFound
+}
+func (m *MockStore) DeleteItem(ctx context.Context, id uuid.UUID) error {
+	if m.DeleteItemFn != nil { return m.DeleteItemFn(ctx, id) }
+	return store.ErrNotFound
+}
+func (m *MockStore) ListItemRelations(ctx context.Context, itemID uuid.UUID, rtID *uuid.UUID) ([]model.ItemRelation, error) {
+	if m.ListItemRelationsFn != nil { return m.ListItemRelationsFn(ctx, itemID, rtID) }
+	return nil, nil
+}
+func (m *MockStore) GetRelation(ctx context.Context, id uuid.UUID) (*model.ItemRelation, error) {
+	if m.GetRelationFn != nil { return m.GetRelationFn(ctx, id) }
+	return nil, store.ErrNotFound
+}
+func (m *MockStore) CreateRelation(ctx context.Context, in model.ItemRelationCreate) (*model.ItemRelation, error) {
+	if m.CreateRelationFn != nil { return m.CreateRelationFn(ctx, in) }
+	return nil, nil
+}
+func (m *MockStore) UpdateRelation(ctx context.Context, id uuid.UUID, in model.ItemRelationUpdate) (*model.ItemRelation, error) {
+	if m.UpdateRelationFn != nil { return m.UpdateRelationFn(ctx, id, in) }
+	return nil, store.ErrNotFound
+}
+func (m *MockStore) DeleteRelation(ctx context.Context, id uuid.UUID) error {
+	if m.DeleteRelationFn != nil { return m.DeleteRelationFn(ctx, id) }
+	return store.ErrNotFound
+}
+func (m *MockStore) GetItemGraph(ctx context.Context, id uuid.UUID, depth int, rtIDs []uuid.UUID) (*model.GraphResponse, error) {
+	if m.GetItemGraphFn != nil { return m.GetItemGraphFn(ctx, id, depth, rtIDs) }
+	return nil, store.ErrNotFound
+}
+func (m *MockStore) ListCollections(ctx context.Context, userID uuid.UUID, pg model.Pagination, ctID *uuid.UUID) ([]model.Collection, int, error) {
+	if m.ListCollectionsFn != nil { return m.ListCollectionsFn(ctx, userID, pg, ctID) }
+	return nil, 0, nil
+}
+func (m *MockStore) GetCollection(ctx context.Context, id uuid.UUID) (*model.Collection, error) {
+	if m.GetCollectionFn != nil { return m.GetCollectionFn(ctx, id) }
+	return nil, store.ErrNotFound
+}
+func (m *MockStore) CreateCollection(ctx context.Context, userID uuid.UUID, in model.CollectionCreate) (*model.Collection, error) {
+	if m.CreateCollectionFn != nil { return m.CreateCollectionFn(ctx, userID, in) }
+	return nil, nil
+}
+func (m *MockStore) UpdateCollection(ctx context.Context, id uuid.UUID, in model.CollectionUpdate) (*model.Collection, error) {
+	if m.UpdateCollectionFn != nil { return m.UpdateCollectionFn(ctx, id, in) }
+	return nil, store.ErrNotFound
+}
+func (m *MockStore) DeleteCollection(ctx context.Context, id uuid.UUID) error {
+	if m.DeleteCollectionFn != nil { return m.DeleteCollectionFn(ctx, id) }
+	return store.ErrNotFound
+}
+func (m *MockStore) ListCollectionItems(ctx context.Context, colID uuid.UUID, pg model.Pagination, itID *uuid.UUID, sort string) ([]model.CollectionItem, int, error) {
+	if m.ListCollectionItemsFn != nil { return m.ListCollectionItemsFn(ctx, colID, pg, itID, sort) }
+	return nil, 0, nil
+}
+func (m *MockStore) AddCollectionItem(ctx context.Context, colID uuid.UUID, in model.CollectionItemAdd) (*model.CollectionItem, error) {
+	if m.AddCollectionItemFn != nil { return m.AddCollectionItemFn(ctx, colID, in) }
+	return nil, nil
+}
+func (m *MockStore) UpdateCollectionItem(ctx context.Context, colID, itemID uuid.UUID, in model.CollectionItemUpdate) (*model.CollectionItem, error) {
+	if m.UpdateCollectionItemFn != nil { return m.UpdateCollectionItemFn(ctx, colID, itemID, in) }
+	return nil, store.ErrNotFound
+}
+func (m *MockStore) RemoveCollectionItem(ctx context.Context, colID, itemID uuid.UUID) error {
+	if m.RemoveCollectionItemFn != nil { return m.RemoveCollectionItemFn(ctx, colID, itemID) }
+	return store.ErrNotFound
+}
+func (m *MockStore) ListItemCollections(ctx context.Context, userID, itemID uuid.UUID) ([]model.ItemCollectionMembership, error) {
+	if m.ListItemCollectionsFn != nil { return m.ListItemCollectionsFn(ctx, userID, itemID) }
+	return nil, nil
+}
+func (m *MockStore) ListTags(ctx context.Context, search string) ([]model.Tag, error) {
+	if m.ListTagsFn != nil { return m.ListTagsFn(ctx, search) }
+	return nil, nil
+}
+func (m *MockStore) GetStats(ctx context.Context) (*model.Stats, error) {
+	if m.GetStatsFn != nil { return m.GetStatsFn(ctx) }
+	return &model.Stats{}, nil
+}
+
+// --- Test helpers ---
+
+var (
+	AdminID = uuid.MustParse("a0000000-0000-0000-0000-000000000001")
+	UserID  = uuid.MustParse("a0000000-0000-0000-0000-000000000002")
+)
+
+func AdminUser() *model.User {
+	return &model.User{
+		ID: AdminID, Username: "admin", Email: "admin@test.local",
+		Role: "admin", CreatedAt: time.Now(), UpdatedAt: time.Now(),
+	}
+}
+
+func RegularUser() *model.User {
+	return &model.User{
+		ID: UserID, Username: "user", Email: "user@test.local",
+		Role: "user", CreatedAt: time.Now(), UpdatedAt: time.Now(),
+	}
+}
+
+func NewTestHandler(mockStore *MockStore) *handler.Handler {
+	auth := middleware.NewAuth(TestSecret)
+	cfg := &config.Config{
+		Port:          8080,
+		UploadDir:     os.TempDir(),
+		MaxUploadSize: 10 << 20,
+	}
+	return handler.New(mockStore, auth, cfg)
+}
+
+func NewTestServer(mockStore *MockStore) *httptest.Server {
+	h := NewTestHandler(mockStore)
+	return httptest.NewServer(h.Router())
+}
+
+func AdminToken() string {
+	auth := middleware.NewAuth(TestSecret)
+	t, _ := auth.GenerateToken(AdminID, "admin")
+	return t
+}
+
+func UserToken() string {
+	auth := middleware.NewAuth(TestSecret)
+	t, _ := auth.GenerateToken(UserID, "user")
+	return t
+}
+
+func AuthHeader(token string) http.Header {
+	h := http.Header{}
+	h.Set("Authorization", "Bearer "+token)
+	h.Set("Content-Type", "application/json")
+	return h
+}
+
+func MergeHeaders(dst, src http.Header) http.Header {
+	for k, vs := range src {
+		for _, v := range vs {
+			dst.Set(k, v)
+		}
+	}
+	return dst
+}
+
+func NewTestServerFromHandler(h *handler.Handler) *httptest.Server {
+	return httptest.NewServer(h.Router())
+}
+
+func SampleItemType() *model.ItemType {
+	return &model.ItemType{
+		ID:               uuid.MustParse("b0000000-0000-0000-0000-000000000001"),
+		Name:             "Serie",
+		AttributesSchema: json.RawMessage(`{"type":"object","required":["titre"],"properties":{"titre":{"type":"string"}}}`),
+		CreatedAt:        time.Now(),
+		UpdatedAt:        time.Now(),
+	}
+}
+
+func SampleItem() *model.Item {
+	it := SampleItemType()
+	return &model.Item{
+		ID:         uuid.MustParse("e0000000-0000-0000-0000-000000000001"),
+		ItemTypeID: it.ID,
+		ItemType:   it,
+		Attributes: json.RawMessage(`{"titre":"Breaking Bad"}`),
+		Tags:       []model.Tag{{ID: uuid.New(), Name: "drame"}},
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+	}
+}

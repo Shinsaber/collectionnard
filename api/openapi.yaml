@@ -1,0 +1,2553 @@
+openapi: 3.1.0
+info:
+  title: Collectionnard API
+  description: |
+    ## API REST pour la gestion de collections générique
+
+    Collectionnard est une plateforme de gestion de collections multi-types (livres, séries TV,
+    cartes à collectionner, vinyles, DVD, etc.). Le système est entièrement **dynamique** :
+    les types d'items, de relations et de collections sont définis par les administrateurs
+    via des **JSON Schemas**, sans modification de code.
+
+    ### Concepts clés
+
+    Le modèle repose sur 3 niveaux d'attributs dynamiques :
+
+    | Méta-type | Rôle | Instances |
+    |---|---|---|
+    | **ItemType** | Définit le schéma d'un item (ex: "Série", "Épisode") | **Item** |
+    | **RelationType** | Définit un lien entre items + contraintes source→target | **ItemRelation** |
+    | **CollectionType** | Définit le contexte d'ajout à une collection (ex: "Possession") | **CollectionItem** |
+
+    Chaque méta-type contient un champ `attributes_schema` qui est un **JSON Schema standard**
+    (draft 2020-12). Les instances portent un champ `attributes` (JSONB) validé contre ce schéma
+    à chaque création ou modification.
+
+    ### Graphe de relations
+
+    Les items forment un **graphe orienté libre** : un même item (ex: un épisode) peut être
+    atteint par plusieurs chemins (via une diffusion TV, un DVD, un streaming…).
+    L'endpoint `/items/{id}/graph` permet de traverser ce graphe récursivement.
+
+    ### Authentification
+
+    L'API utilise des **JWT Bearer tokens**. Obtenez un token via `POST /auth/login`,
+    puis envoyez-le dans le header `Authorization: Bearer <token>`.
+
+    ### Rôles
+
+    - **admin** : crée/modifie les types, items et relations (structuration du catalogue)
+    - **user** : consulte le catalogue, gère ses propres collections
+
+    ### Pagination
+
+    Tous les endpoints de listing supportent la pagination via `page` et `per_page`.
+    La réponse inclut `total`, `page`, `per_page` et `total_pages`.
+
+    ### Validation
+
+    Les erreurs de validation (422) retournent le détail des champs invalides
+    selon le JSON Schema du type concerné.
+  version: 0.1.0
+  contact:
+    name: Collectionnard
+  license:
+    name: MIT
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+# =============================================================================
+# Tags — Regroupement logique des endpoints
+# =============================================================================
+tags:
+  - name: Auth
+    description: |
+      Authentification par JWT. Utilisez `POST /auth/login` pour obtenir un token,
+      puis passez-le dans le header `Authorization: Bearer <token>` pour tous les
+      autres appels.
+  - name: ItemTypes
+    description: |
+      **Admin uniquement.** Gestion des types d'items. Un ItemType définit le schéma
+      d'attributs (JSON Schema) que devront respecter tous les items de ce type.
+
+      Exemples de types : "Série", "Épisode", "DVD", "Livre", "Personne", "Studio".
+  - name: RelationTypes
+    description: |
+      **Admin uniquement.** Gestion des types de relations entre items.
+      Un RelationType définit :
+      - Les **contraintes source→target** : quels ItemTypes peuvent être liés
+        (ex: `diffuse_en` ne peut lier que Série→Diffusion)
+      - Un **JSON Schema** pour les attributs portés par le lien
+        (ex: disque, piste pour un lien DVD→Épisode)
+
+      Ces contraintes permettent au frontend de proposer uniquement les types
+      de relation pertinents lors de la création d'un lien.
+  - name: CollectionTypes
+    description: |
+      **Admin uniquement.** Gestion des types de collections. Un CollectionType
+      définit la **sémantique** d'une collection et le schéma d'attributs contextuels
+      que l'utilisateur renseigne quand il ajoute un item à sa collection.
+
+      Exemples :
+      - **Possession** : état physique, prix d'achat, date d'acquisition
+      - **Visionnage** : date vue, note sur 10, progression en %
+      - **Wishlist** : priorité, budget maximum
+  - name: Items
+    description: |
+      Gestion du catalogue d'items. Chaque item est un **nœud unique** dans le graphe :
+      un épisode, un DVD, une personne, etc. Il n'existe qu'une seule fiche par item,
+      partagée entre tous les utilisateurs.
+
+      Les données spécifiques à un utilisateur (état, prix, note…) sont portées par
+      le lien **CollectionItem**, pas par l'item lui-même.
+
+      **Écriture** : admin uniquement (MVP). **Lecture** : tous les utilisateurs authentifiés.
+  - name: Relations
+    description: |
+      **Admin uniquement.** Gestion des relations entre items (les arêtes du graphe).
+      Chaque relation relie un item source à un item target via un RelationType.
+
+      Le système valide automatiquement que :
+      1. Les ItemTypes de source et target correspondent aux contraintes du RelationType
+      2. Les attributs du lien respectent le JSON Schema du RelationType
+
+      Un doublon (même type + même source + même target) est rejeté (409).
+  - name: Graph
+    description: |
+      Traversée du graphe d'items. L'endpoint `/items/{id}/graph` effectue une
+      traversée récursive (CTE) depuis un item racine et retourne les nœuds et
+      arêtes accessibles, jusqu'à une profondeur configurable.
+
+      Le format de réponse (nœuds + arêtes) est directement exploitable par des
+      librairies de visualisation (D3.js, Cytoscape.js, vis.js…).
+
+      La détection de cycles est gérée côté serveur pour éviter les boucles infinies.
+  - name: Collections
+    description: |
+      Gestion des collections personnelles de l'utilisateur. Chaque collection :
+      - Appartient à **un seul utilisateur**
+      - A un **CollectionType** qui définit sa sémantique (possession, visionnage…)
+      - Contient des items avec des **attributs contextuels** (état, prix, note…)
+
+      Un utilisateur ne peut pas avoir deux collections avec le même nom.
+      Un item ne peut apparaître qu'une fois dans une collection donnée.
+      Supprimer une collection ne supprime **pas** les items du catalogue.
+  - name: Tags
+    description: |
+      Étiquettes libres associées aux items pour faciliter la recherche et le filtrage.
+      Les tags sont créés automatiquement lors de la création d'un item si le nom
+      n'existe pas encore. Ils sont partagés globalement (pas par utilisateur).
+  - name: Stats
+    description: |
+      Statistiques globales sur le catalogue et les collections :
+      nombre d'items par type, total des collections, etc.
+  - name: Uploads
+    description: |
+      Upload et récupération de fichiers images. Les images sont stockées localement
+      sur le serveur. L'upload est réservé aux admins, la consultation nécessite
+      une authentification.
+
+# =============================================================================
+# Sécurité
+# =============================================================================
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Token JWT obtenu via `POST /auth/login`.
+        Durée de validité : configurable côté serveur.
+        À envoyer dans le header : `Authorization: Bearer <token>`
+
+  # ===========================================================================
+  # Schémas réutilisables
+  # ===========================================================================
+  schemas:
+    # -------------------------------------------------------------------------
+    # Auth
+    # -------------------------------------------------------------------------
+    LoginRequest:
+      type: object
+      description: Identifiants de connexion.
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          description: Nom d'utilisateur unique.
+          example: shinsaber
+        password:
+          type: string
+          format: password
+          description: Mot de passe en clair (transmis via HTTPS).
+
+    LoginResponse:
+      type: object
+      description: Réponse d'authentification contenant le token JWT et le profil utilisateur.
+      properties:
+        token:
+          type: string
+          description: "Token JWT à utiliser dans le header `Authorization: Bearer <token>`."
+          example: eyJhbGciOiJIUzI1NiIs...
+        user:
+          $ref: "#/components/schemas/User"
+
+    # -------------------------------------------------------------------------
+    # User
+    # -------------------------------------------------------------------------
+    User:
+      type: object
+      description: Profil utilisateur. Le rôle détermine les droits d'accès (admin ou user).
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identifiant unique de l'utilisateur.
+        username:
+          type: string
+          description: Nom d'utilisateur unique, utilisé pour la connexion.
+          example: shinsaber
+        email:
+          type: string
+          format: email
+          description: Adresse email unique.
+          example: shinsaber@colec.local
+        role:
+          type: string
+          enum: [admin, user]
+          description: |
+            Rôle de l'utilisateur :
+            - `admin` : peut créer/modifier types, items, relations
+            - `user` : peut gérer ses collections et consulter le catalogue
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    # -------------------------------------------------------------------------
+    # ItemType
+    # -------------------------------------------------------------------------
+    ItemType:
+      type: object
+      description: |
+        Type d'item. Définit le schéma d'attributs (JSON Schema) que devront
+        respecter tous les items de ce type. Exemples : "Série", "Épisode", "DVD".
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: 'Nom unique du type (ex: "Serie", "Episode", "DVD").'
+          example: Serie
+        description:
+          type: string
+          description: Description libre du type, affichée dans l'UI.
+          example: Série télévisée
+        attributes_schema:
+          type: object
+          description: |
+            **JSON Schema (draft 2020-12)** définissant les attributs des items de ce type.
+            Utilisé pour :
+            - Valider les données à la création/modification d'un item
+            - Générer dynamiquement les formulaires côté frontend
+            - Documenter les champs attendus
+
+            Le schéma doit avoir `"type": "object"` à la racine.
+          example:
+            type: object
+            required: [titre]
+            properties:
+              titre: { type: string, minLength: 1 }
+              synopsis: { type: string }
+              annee_debut: { type: integer, minimum: 1900 }
+              annee_fin: { type: integer, minimum: 1900 }
+              poster: { type: string, format: uri }
+            additionalProperties: false
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ItemTypeCreate:
+      type: object
+      description: Données pour créer un nouveau type d'item.
+      required: [name, attributes_schema]
+      properties:
+        name:
+          type: string
+          description: Nom unique du type. Ne peut pas être modifié après création s'il existe des items.
+        description:
+          type: string
+          description: Description libre.
+        attributes_schema:
+          type: object
+          description: 'JSON Schema définissant les attributs. Doit être un JSON Schema valide avec `"type": "object"` à la racine.'
+
+    ItemTypeUpdate:
+      type: object
+      description: |
+        Données pour modifier un type d'item. Seuls les champs fournis sont mis à jour.
+        **Attention** : modifier `attributes_schema` peut rendre des items existants invalides.
+        Le serveur ne revalide pas automatiquement les items existants.
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        attributes_schema:
+          type: object
+
+    # -------------------------------------------------------------------------
+    # RelationType
+    # -------------------------------------------------------------------------
+    RelationType:
+      type: object
+      description: |
+        Type de relation entre items. Définit les contraintes de liaison (quels types source
+        peuvent être liés à quels types cible) et le schéma d'attributs portés par le lien.
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Nom unique du type de relation.
+          example: diffuse_en
+        description:
+          type: string
+          description: Description de la sémantique de cette relation.
+          example: Série diffusée via un mode de diffusion (TV, streaming…)
+        source_item_type_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs des ItemTypes autorisés en source.
+        target_item_type_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs des ItemTypes autorisés en cible.
+        source_item_types:
+          type: array
+          items:
+            $ref: "#/components/schemas/ItemType"
+          description: ItemTypes source (inclus dans les réponses GET).
+        target_item_types:
+          type: array
+          items:
+            $ref: "#/components/schemas/ItemType"
+          description: ItemTypes cible (inclus dans les réponses GET).
+        attributes_schema:
+          type: object
+          description: |
+            JSON Schema pour les attributs portés par la relation.
+            Exemple : pour un lien DVD→Épisode, on peut avoir `{disque: integer, piste: integer}`.
+            Un schéma vide `{}` signifie que la relation ne porte pas de données additionnelles.
+          example:
+            type: object
+            properties:
+              disque: { type: integer, minimum: 1 }
+              piste: { type: integer, minimum: 1 }
+            additionalProperties: false
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    RelationTypeCreate:
+      type: object
+      description: |
+        Données pour créer un nouveau type de relation.
+        Les champs `source_item_type_ids` et `target_item_type_ids` définissent les contraintes
+        de types : seuls les items des types spécifiés pourront être liés par cette relation.
+      required: [name, source_item_type_ids, target_item_type_ids]
+      properties:
+        name:
+          type: string
+          description: 'Nom unique (ex: "diffuse_en", "contient_episode", "ecrit_par").'
+        description:
+          type: string
+          description: Description de la sémantique de cette relation.
+        source_item_type_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs des ItemTypes source. Doivent exister.
+        target_item_type_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs des ItemTypes cible. Doivent exister.
+        attributes_schema:
+          type: object
+          description: JSON Schema pour les attributs du lien. Défaut `{}` (pas d'attributs).
+          default: {}
+
+    RelationTypeUpdate:
+      type: object
+      description: Modification partielle d'un type de relation. Seuls les champs fournis sont mis à jour.
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        source_item_type_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        target_item_type_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        attributes_schema:
+          type: object
+
+    # -------------------------------------------------------------------------
+    # CollectionType
+    # -------------------------------------------------------------------------
+    CollectionType:
+      type: object
+      description: |
+        Type de collection. Définit la sémantique d'une collection et le schéma d'attributs
+        que l'utilisateur remplit quand il ajoute un item à sa collection.
+
+        Exemples :
+        - **Possession** : état_physique, prix_achat, date_acquisition
+        - **Visionnage** : date_vue, note (0-10), progression (%)
+        - **Wishlist** : priorité (1-5), budget_max
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Nom unique du type de collection.
+          example: Possession
+        description:
+          type: string
+          description: Description de la sémantique de ce type de collection.
+          example: Items possédés physiquement par l'utilisateur
+        attributes_schema:
+          type: object
+          description: |
+            JSON Schema pour les attributs contextuels du lien collection↔item.
+            Ce schéma définit les données que l'utilisateur remplit pour chaque item
+            ajouté à une collection de ce type.
+          example:
+            type: object
+            properties:
+              etat_physique:
+                {
+                  type: string,
+                  enum: [neuf, très bon, bon, acceptable, mauvais],
+                }
+              prix_achat: { type: number, minimum: 0 }
+              date_acquisition: { type: string, format: date }
+            additionalProperties: false
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CollectionTypeCreate:
+      type: object
+      description: Données pour créer un nouveau type de collection.
+      required: [name]
+      properties:
+        name:
+          type: string
+          description: 'Nom unique (ex: "Possession", "Visionnage", "Wishlist").'
+        description:
+          type: string
+        attributes_schema:
+          type: object
+          description: JSON Schema pour les attributs du lien collection↔item. Défaut `{}`.
+          default: {}
+
+    CollectionTypeUpdate:
+      type: object
+      description: Modification partielle d'un type de collection.
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        attributes_schema:
+          type: object
+
+    # -------------------------------------------------------------------------
+    # Item
+    # -------------------------------------------------------------------------
+    Item:
+      type: object
+      description: |
+        Un item est un **nœud unique** dans le graphe. Il représente n'importe quel objet
+        du catalogue : une série, un épisode, un DVD, un auteur, un studio, etc.
+
+        L'item porte ses attributs métier dans le champ `attributes` (JSONB), dont la
+        structure est définie et validée par le `attributes_schema` de son ItemType.
+
+        Un item est partagé entre tous les utilisateurs. Les données spécifiques à un
+        utilisateur (état, prix, note…) sont dans le lien CollectionItem.
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_type_id:
+          type: string
+          format: uuid
+          description: ID du ItemType de cet item.
+        item_type:
+          $ref: "#/components/schemas/ItemType"
+          description: ItemType complet (inclus dans les réponses GET).
+        attributes:
+          type: object
+          description: |
+            Attributs métier de l'item au format JSONB. La structure dépend du ItemType.
+            Exemple pour une Série : `{"titre": "Breaking Bad", "annee_debut": 2008, "annee_fin": 2013}`
+          example:
+            titre: Breaking Bad
+            synopsis: Un professeur de chimie se tourne vers la fabrication de méthamphétamine.
+            annee_debut: 2008
+            annee_fin: 2013
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tag"
+          description: Tags associés à cet item.
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ItemCreate:
+      type: object
+      description: |
+        Données pour créer un nouvel item. Le champ `attributes` sera validé contre
+        le `attributes_schema` du ItemType référencé. En cas de non-conformité, une
+        erreur 422 est retournée avec le détail des champs invalides.
+      required: [item_type_id, attributes]
+      properties:
+        item_type_id:
+          type: string
+          format: uuid
+          description: ID du ItemType. Détermine le schéma de validation des attributs.
+        attributes:
+          type: object
+          description: Attributs métier de l'item, conformes au JSON Schema du ItemType.
+        tags:
+          type: array
+          items:
+            type: string
+          description: |
+            Noms de tags à associer. Les tags sont créés automatiquement s'ils n'existent
+            pas encore. Insensible à la casse (les tags sont normalisés en minuscules).
+          example: [drame, thriller, crime]
+
+    ItemUpdate:
+      type: object
+      description: |
+        Modification d'un item. Les attributs fournis sont fusionnés avec les existants,
+        puis le résultat est validé contre le JSON Schema du ItemType.
+        Pour supprimer un attribut optionnel, passer sa valeur à `null`.
+      properties:
+        attributes:
+          type: object
+          description: Attributs à modifier. Revalidés contre le JSON Schema.
+        tags:
+          type: array
+          items:
+            type: string
+          description: Nouvelle liste de tags (remplace l'existante).
+
+    # -------------------------------------------------------------------------
+    # ItemRelation
+    # -------------------------------------------------------------------------
+    ItemRelation:
+      type: object
+      description: |
+        Relation entre deux items (arête orientée du graphe). Porte les attributs
+        définis par le RelationType (ex: numéro de disque/piste pour un lien DVD→Épisode).
+      properties:
+        id:
+          type: string
+          format: uuid
+        relation_type_id:
+          type: string
+          format: uuid
+          description: ID du RelationType de cette relation.
+        relation_type:
+          $ref: "#/components/schemas/RelationType"
+          description: RelationType complet (inclus dans les réponses GET).
+        source_item_id:
+          type: string
+          format: uuid
+          description: ID de l'item source (origine de la relation).
+        source_item:
+          $ref: "#/components/schemas/Item"
+          description: Item source (inclus dans les réponses GET détaillées).
+        target_item_id:
+          type: string
+          format: uuid
+          description: ID de l'item cible (destination de la relation).
+        target_item:
+          $ref: "#/components/schemas/Item"
+          description: Item cible (inclus dans les réponses GET détaillées).
+        attributes:
+          type: object
+          description: |
+            Attributs du lien, validés contre le `attributes_schema` du RelationType.
+            Peut être vide `{}` si le RelationType n'a pas d'attributs.
+          example:
+            disque: 1
+            piste: 3
+        created_at:
+          type: string
+          format: date-time
+
+    ItemRelationCreate:
+      type: object
+      description: |
+        Données pour créer une relation entre deux items.
+
+        **Validations effectuées :**
+        1. `source_item_id` et `target_item_id` doivent exister
+        2. Le ItemType de la source doit correspondre à l'un des `source_item_type_ids` du RelationType
+        3. Le ItemType de la cible doit correspondre à l'un des `target_item_type_ids` du RelationType
+        4. Les `attributes` doivent respecter le JSON Schema du RelationType
+        5. Le triplet (relation_type, source, target) doit être unique (pas de doublons)
+        6. Un item ne peut pas être relié à lui-même
+      required: [relation_type_id, source_item_id, target_item_id]
+      properties:
+        relation_type_id:
+          type: string
+          format: uuid
+          description: ID du RelationType. Détermine les contraintes et le schéma de validation.
+        source_item_id:
+          type: string
+          format: uuid
+          description: ID de l'item source.
+        target_item_id:
+          type: string
+          format: uuid
+          description: ID de l'item cible. Doit être différent de `source_item_id`.
+        attributes:
+          type: object
+          description: Attributs du lien, conformes au JSON Schema du RelationType. Défaut `{}`.
+          default: {}
+
+    ItemRelationUpdate:
+      type: object
+      description: |
+        Modification des attributs d'une relation existante. On ne peut pas changer
+        les items source/target ni le type — il faut supprimer et recréer la relation.
+      properties:
+        attributes:
+          type: object
+          description: Nouveaux attributs, revalidés contre le JSON Schema du RelationType.
+
+    # -------------------------------------------------------------------------
+    # Collection
+    # -------------------------------------------------------------------------
+    Collection:
+      type: object
+      description: |
+        Collection personnelle d'un utilisateur. Conteneur explicite qui associe
+        l'utilisateur à des items du catalogue, avec des attributs contextuels
+        (état, prix, note…) définis par le CollectionType.
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+          description: ID du propriétaire de la collection.
+        collection_type_id:
+          type: string
+          format: uuid
+          description: ID du CollectionType (Possession, Visionnage, Wishlist…).
+        collection_type:
+          $ref: "#/components/schemas/CollectionType"
+          description: CollectionType complet (inclus dans les réponses GET).
+        name:
+          type: string
+          description: Nom de la collection, unique par utilisateur.
+          example: Mes DVDs
+        description:
+          type: string
+          description: Description libre de la collection.
+          example: Ma collection de DVDs et Blu-rays
+        item_count:
+          type: integer
+          description: Nombre d'items dans la collection (calculé automatiquement).
+          example: 42
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CollectionCreate:
+      type: object
+      description: Données pour créer une nouvelle collection.
+      required: [collection_type_id, name]
+      properties:
+        collection_type_id:
+          type: string
+          format: uuid
+          description: ID du CollectionType. Détermine la sémantique et le schéma des attributs d'ajout.
+        name:
+          type: string
+          description: Nom de la collection, unique pour cet utilisateur.
+        description:
+          type: string
+          description: Description libre.
+
+    CollectionUpdate:
+      type: object
+      description: |
+        Modification d'une collection. Le type ne peut pas être changé après création.
+      properties:
+        name:
+          type: string
+          description: Nouveau nom (doit rester unique pour cet utilisateur).
+        description:
+          type: string
+
+    # -------------------------------------------------------------------------
+    # CollectionItem
+    # -------------------------------------------------------------------------
+    CollectionItem:
+      type: object
+      description: |
+        Lien entre une collection et un item. Porte les **attributs contextuels**
+        définis par le CollectionType : état physique, prix d'achat, date vue, note, etc.
+
+        C'est ici que se trouvent les données spécifiques à l'utilisateur pour un item donné.
+        L'item lui-même reste partagé et immuable pour tous les utilisateurs.
+      properties:
+        id:
+          type: string
+          format: uuid
+        collection_id:
+          type: string
+          format: uuid
+          description: ID de la collection.
+        item_id:
+          type: string
+          format: uuid
+          description: ID de l'item.
+        item:
+          $ref: "#/components/schemas/Item"
+          description: Item complet (inclus dans les réponses GET).
+        attributes:
+          type: object
+          description: |
+            Attributs contextuels de l'item dans cette collection, validés contre
+            le `attributes_schema` du CollectionType de la collection parente.
+
+            Exemple pour un CollectionType "Possession" :
+            `{"etat_physique": "neuf", "prix_achat": 45.00, "date_acquisition": "2020-12-25"}`
+          example:
+            etat_physique: neuf
+            prix_achat: 45.00
+            date_acquisition: "2020-12-25"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CollectionItemAdd:
+      type: object
+      description: |
+        Données pour ajouter un item à une collection. Les attributs sont validés
+        contre le JSON Schema du CollectionType de la collection.
+
+        Un item ne peut apparaître qu'une seule fois dans une collection donnée.
+        S'il est déjà présent, une erreur 409 est retournée.
+      required: [item_id]
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: ID de l'item à ajouter. Doit exister dans le catalogue.
+        attributes:
+          type: object
+          description: |
+            Attributs contextuels de l'item dans cette collection.
+            Validés contre le JSON Schema du CollectionType.
+          default: {}
+
+    CollectionItemUpdate:
+      type: object
+      description: |
+        Modification des attributs contextuels d'un item dans une collection.
+        Les attributs sont revalidés contre le JSON Schema du CollectionType.
+      properties:
+        attributes:
+          type: object
+          description: Nouveaux attributs contextuels.
+
+    # -------------------------------------------------------------------------
+    # Tag
+    # -------------------------------------------------------------------------
+    Tag:
+      type: object
+      description: Étiquette libre partagée globalement. Utilisée pour catégoriser et filtrer les items.
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Nom du tag, unique et normalisé en minuscules.
+          example: drame
+
+    # -------------------------------------------------------------------------
+    # ItemCollectionMembership
+    # -------------------------------------------------------------------------
+    ItemCollectionMembership:
+      type: object
+      description: |
+        Appartenance d'un item à une collection de l'utilisateur. Contient la
+        collection complète et les attributs contextuels du lien (état, prix, note…).
+      properties:
+        collection:
+          $ref: "#/components/schemas/Collection"
+          description: Collection contenant l'item.
+        attributes:
+          type: object
+          description: |
+            Attributs contextuels de l'item dans cette collection, définis par
+            le `attributes_schema` du CollectionType de la collection.
+          example:
+            etat_physique: neuf
+            prix_achat: 45.00
+            date_acquisition: "2020-12-25"
+
+    # -------------------------------------------------------------------------
+    # Graph
+    # -------------------------------------------------------------------------
+    GraphNode:
+      type: object
+      description: Nœud du graphe, représentant un item avec ses métadonnées de traversée.
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID de l'item.
+        type:
+          type: string
+          description: Nom du ItemType de cet item.
+          example: Serie
+        label:
+          type: string
+          description: |
+            Label lisible de l'item, dérivé automatiquement des attributs
+            (premier champ texte non-vide parmi titre, nom, numéro…).
+          example: Breaking Bad
+        attributes:
+          type: object
+          description: Attributs complets de l'item.
+        depth:
+          type: integer
+          description: Profondeur dans le graphe depuis le nœud racine (0 = racine).
+          example: 0
+
+    GraphResponse:
+      type: object
+      description: |
+        Résultat d'une traversée de graphe. Contient tous les nœuds et arêtes
+        accessibles depuis l'item racine, jusqu'à la profondeur demandée.
+
+        Format directement exploitable par les librairies de visualisation de graphe :
+        - **D3.js** : `nodes` → nœuds, `edges` → links
+        - **Cytoscape.js** : conversion directe en éléments
+        - **vis.js** : mapping trivial nœuds/arêtes
+      properties:
+        root:
+          $ref: "#/components/schemas/GraphNode"
+          description: Nœud racine de la traversée.
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/GraphNode"
+          description: Tous les nœuds du sous-graphe (sans le root, qui est séparé).
+        edges:
+          type: array
+          items:
+            type: object
+            properties:
+              source_id:
+                type: string
+                format: uuid
+                description: ID de l'item source.
+              target_id:
+                type: string
+                format: uuid
+                description: ID de l'item cible.
+              relation_type:
+                type: string
+                description: Nom du RelationType de cette arête.
+                example: diffuse_en
+              attributes:
+                type: object
+                description: Attributs portés par cette arête.
+          description: Toutes les arêtes (relations) du sous-graphe.
+
+    # -------------------------------------------------------------------------
+    # Pagination
+    # -------------------------------------------------------------------------
+    PaginatedResponse:
+      type: object
+      description: |
+        Enveloppe de réponse paginée. Tous les endpoints de listing (GET sur une collection)
+        retournent ce format. Le client peut naviguer avec `page` et `per_page`.
+      properties:
+        data:
+          type: array
+          items: {}
+          description: Liste des éléments de la page courante.
+        total:
+          type: integer
+          description: Nombre total d'éléments toutes pages confondues.
+          example: 42
+        page:
+          type: integer
+          description: Numéro de la page courante (1-indexed).
+          example: 1
+        per_page:
+          type: integer
+          description: Nombre d'éléments par page.
+          example: 20
+        total_pages:
+          type: integer
+          description: Nombre total de pages.
+          example: 3
+
+    # -------------------------------------------------------------------------
+    # Erreur
+    # -------------------------------------------------------------------------
+    Error:
+      type: object
+      description: |
+        Format d'erreur standard. Toutes les erreurs API suivent ce format.
+        Le champ `details` est optionnel et peut contenir des informations
+        spécifiques au type d'erreur (ex: erreurs de validation par champ).
+      properties:
+        error:
+          type: string
+          description: |
+            Code d'erreur machine, stable et utilisable par le code client.
+            Exemples : `validation_error`, `not_found`, `conflict`, `unauthorized`, `forbidden`.
+          example: validation_error
+        message:
+          type: string
+          description: Message lisible par un humain, localisé si possible.
+          example: Les attributs ne respectent pas le schéma du type
+        details:
+          type: object
+          description: |
+            Détails additionnels. Pour les erreurs de validation, contient les champs
+            invalides et la raison de l'erreur pour chacun.
+          example:
+            fields:
+              titre: "required — ce champ est obligatoire"
+              annee_debut: "minimum — doit être >= 1900"
+
+    # -------------------------------------------------------------------------
+    # Upload
+    # -------------------------------------------------------------------------
+    UploadResponse:
+      type: object
+      description: Réponse après un upload réussi.
+      properties:
+        url:
+          type: string
+          description: Chemin relatif pour accéder au fichier uploadé.
+          example: /api/v1/uploads/550e8400-e29b-41d4-a716-446655440000.jpg
+        filename:
+          type: string
+          description: Nom du fichier généré (UUID + extension).
+          example: 550e8400-e29b-41d4-a716-446655440000.jpg
+        size:
+          type: integer
+          description: Taille du fichier en octets.
+          example: 245760
+
+  # ===========================================================================
+  # Paramètres réutilisables
+  # ===========================================================================
+  parameters:
+    page:
+      name: page
+      in: query
+      description: Numéro de page (1-indexed). Défaut 1.
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+    per_page:
+      name: per_page
+      in: query
+      description: Nombre d'éléments par page. Min 1, max 100, défaut 20.
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+    sort:
+      name: sort
+      in: query
+      description: |
+        Champ de tri. Préfixer par `-` pour un tri descendant.
+        Exemples : `created_at`, `-created_at`, `attributes.titre`.
+        Les champs de tri disponibles dépendent du type d'objet.
+      schema:
+        type: string
+
+  # ===========================================================================
+  # Réponses réutilisables
+  # ===========================================================================
+  responses:
+    NotFound:
+      description: |
+        Ressource non trouvée. L'ID spécifié ne correspond à aucun élément existant,
+        ou l'utilisateur n'a pas accès à cette ressource.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: not_found
+            message: Ressource non trouvée
+    Unauthorized:
+      description: |
+        Non authentifié. Le token JWT est absent, expiré ou invalide.
+        Utilisez `POST /auth/login` pour obtenir un nouveau token.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: unauthorized
+            message: Token manquant ou invalide
+    Forbidden:
+      description: |
+        Droits insuffisants. L'utilisateur est authentifié mais son rôle
+        ne permet pas cette opération (ex: un user tente de créer un ItemType).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: forbidden
+            message: Droits administrateur requis
+    ValidationError:
+      description: |
+        Erreur de validation. Les données envoyées ne respectent pas le JSON Schema
+        du type concerné, ou une contrainte métier n'est pas satisfaite.
+        Le champ `details.fields` liste les erreurs par champ.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: validation_error
+            message: Les attributs ne respectent pas le schéma du type
+            details:
+              fields:
+                titre: "required — ce champ est obligatoire"
+                annee_debut: "minimum — doit être >= 1900"
+    Conflict:
+      description: |
+        Conflit. L'opération est impossible car elle violerait une contrainte d'unicité
+        (ex: doublon de relation, item déjà dans la collection, nom de type déjà utilisé).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: conflict
+            message: Cet item est déjà dans la collection
+
+# =============================================================================
+# ENDPOINTS
+# =============================================================================
+paths:
+  # ===========================================================================
+  # Auth
+  # ===========================================================================
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Authentification
+      description: |
+        Authentifie un utilisateur et retourne un token JWT.
+        Ce token doit être envoyé dans le header `Authorization: Bearer <token>`
+        pour tous les appels authentifiés.
+
+        Le token a une durée de validité configurable côté serveur (défaut : 24h).
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Connexion réussie. Le token JWT est dans le champ `token`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Identifiants invalides.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: unauthorized
+                message: Nom d'utilisateur ou mot de passe incorrect
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Profil de l'utilisateur courant
+      description: Retourne le profil complet de l'utilisateur identifié par le token JWT.
+      operationId: getCurrentUser
+      responses:
+        "200":
+          description: Profil de l'utilisateur authentifié.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ===========================================================================
+  # Item Types (admin)
+  # ===========================================================================
+  /item-types:
+    get:
+      tags: [ItemTypes]
+      summary: Lister les types d'items
+      description: |
+        Retourne la liste paginée de tous les types d'items disponibles.
+        Utile pour le frontend : permet de peupler un sélecteur de type
+        lors de la création d'un item.
+      operationId: listItemTypes
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "200":
+          description: Liste paginée des types d'items.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/ItemType"
+
+    post:
+      tags: [ItemTypes]
+      summary: Créer un type d'item
+      description: |
+        **Admin uniquement.**
+
+        Crée un nouveau type d'item avec son JSON Schema d'attributs.
+        Ce JSON Schema sera utilisé pour :
+        1. **Valider** les attributs de chaque item de ce type (création et modification)
+        2. **Générer** dynamiquement les formulaires côté frontend
+        3. **Documenter** les champs attendus
+
+        Le `attributes_schema` doit être un JSON Schema valide avec `"type": "object"` à la racine.
+      operationId: createItemType
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ItemTypeCreate"
+            example:
+              name: Serie
+              description: Série télévisée
+              attributes_schema:
+                type: object
+                required: [titre]
+                properties:
+                  titre: { type: string, minLength: 1 }
+                  synopsis: { type: string }
+                  annee_debut: { type: integer, minimum: 1900 }
+                  annee_fin: { type: integer, minimum: 1900 }
+                  poster: { type: string, format: uri }
+                additionalProperties: false
+      responses:
+        "201":
+          description: Type d'item créé avec succès.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemType"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: Un type avec ce nom existe déjà.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /item-types/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: UUID du type d'item.
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [ItemTypes]
+      summary: Détail d'un type d'item
+      description: |
+        Retourne le type d'item avec son JSON Schema complet.
+        Utile pour le frontend : récupérer le schéma avant d'afficher
+        un formulaire de création/modification d'item.
+      operationId: getItemType
+      responses:
+        "200":
+          description: Type d'item trouvé.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemType"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [ItemTypes]
+      summary: Modifier un type d'item
+      description: |
+        **Admin uniquement.**
+
+        Modifie un type d'item. Seuls les champs fournis sont mis à jour.
+
+        **⚠️ Attention** : modifier le `attributes_schema` peut rendre les items existants
+        invalides. Le serveur ne revalide pas automatiquement les items existants.
+        Il est recommandé de rester rétro-compatible (ajouter des champs optionnels,
+        ne pas supprimer de champ requis).
+      operationId: updateItemType
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ItemTypeUpdate"
+      responses:
+        "200":
+          description: Type modifié avec succès.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemType"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [ItemTypes]
+      summary: Supprimer un type d'item
+      description: |
+        **Admin uniquement.**
+
+        Supprime un type d'item. **Échoue avec une erreur 409** s'il existe
+        des items de ce type ou des RelationTypes qui le référencent.
+        Il faut d'abord supprimer tous les items et relations dépendants.
+      operationId: deleteItemType
+      responses:
+        "204":
+          description: Type supprimé avec succès.
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: |
+            Impossible de supprimer — des items de ce type existent,
+            ou des RelationTypes référencent ce type.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # ===========================================================================
+  # Relation Types (admin)
+  # ===========================================================================
+  /relation-types:
+    get:
+      tags: [RelationTypes]
+      summary: Lister les types de relation
+      description: |
+        Retourne la liste paginée des types de relation.
+
+        **Filtrage** : utilisez `source_item_type_id` et/ou `target_item_type_id`
+        pour ne récupérer que les relations pertinentes. Utile côté frontend pour
+        proposer les types de relation possibles lors de la création d'un lien
+        depuis un item d'un type donné.
+      operationId: listRelationTypes
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+        - name: source_item_type_id
+          in: query
+          description: |
+            Filtrer par type d'item source. Retourne uniquement les RelationTypes
+            dont les sources contiennent ce type.
+          schema:
+            type: string
+            format: uuid
+        - name: target_item_type_id
+          in: query
+          description: Filtrer par type d'item cible.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Liste paginée des types de relation.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/RelationType"
+
+    post:
+      tags: [RelationTypes]
+      summary: Créer un type de relation
+      description: |
+        **Admin uniquement.**
+
+        Crée un nouveau type de relation avec ses contraintes de types et son schéma d'attributs.
+        Les ItemTypes source et cible référencés doivent exister.
+      operationId: createRelationType
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RelationTypeCreate"
+            example:
+              name: inclut_episode
+              description: "DVD incluant un épisode. Porte le numéro de disque et de piste."
+              source_item_type_ids:
+                - b0000000-0000-0000-0000-000000000005
+              target_item_type_ids:
+                - b0000000-0000-0000-0000-000000000004
+              attributes_schema:
+                type: object
+                properties:
+                  disque: { type: integer, minimum: 1 }
+                  piste: { type: integer, minimum: 1 }
+                additionalProperties: false
+      responses:
+        "201":
+          description: Type de relation créé.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RelationType"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: Un type de relation avec ce nom existe déjà.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /relation-types/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: UUID du type de relation.
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [RelationTypes]
+      summary: Détail d'un type de relation
+      description: |
+        Retourne le type de relation avec ses contraintes et son JSON Schema.
+        Inclut les ItemTypes source et cible complets.
+      operationId: getRelationType
+      responses:
+        "200":
+          description: Type de relation trouvé.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RelationType"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [RelationTypes]
+      summary: Modifier un type de relation
+      description: |
+        **Admin uniquement.**
+
+        Modifie un type de relation. Seuls les champs fournis sont mis à jour.
+        Modifier les contraintes de types peut rendre des relations existantes incohérentes.
+      operationId: updateRelationType
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RelationTypeUpdate"
+      responses:
+        "200":
+          description: Type de relation modifié.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RelationType"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [RelationTypes]
+      summary: Supprimer un type de relation
+      description: |
+        **Admin uniquement.**
+
+        Supprime un type de relation. **Échoue avec 409** s'il existe des relations de ce type.
+      operationId: deleteRelationType
+      responses:
+        "204":
+          description: Type de relation supprimé.
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Impossible — des relations de ce type existent.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # ===========================================================================
+  # Collection Types (admin)
+  # ===========================================================================
+  /collection-types:
+    get:
+      tags: [CollectionTypes]
+      summary: Lister les types de collection
+      description: |
+        Retourne la liste paginée des types de collection.
+        Utile pour le frontend : permet de proposer un sélecteur de type
+        lors de la création d'une collection.
+      operationId: listCollectionTypes
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "200":
+          description: Liste paginée des types de collection.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/CollectionType"
+
+    post:
+      tags: [CollectionTypes]
+      summary: Créer un type de collection
+      description: |
+        **Admin uniquement.**
+
+        Crée un nouveau type de collection avec son JSON Schema d'attributs.
+        Ce schéma définit les données que l'utilisateur doit renseigner quand
+        il ajoute un item à une collection de ce type.
+      operationId: createCollectionType
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CollectionTypeCreate"
+            example:
+              name: Possession
+              description: Items possédés physiquement par l'utilisateur
+              attributes_schema:
+                type: object
+                properties:
+                  etat_physique:
+                    {
+                      type: string,
+                      enum: [neuf, très bon, bon, acceptable, mauvais],
+                    }
+                  prix_achat: { type: number, minimum: 0 }
+                  date_acquisition: { type: string, format: date }
+                additionalProperties: false
+      responses:
+        "201":
+          description: Type de collection créé.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectionType"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: Un type de collection avec ce nom existe déjà.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /collection-types/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: UUID du type de collection.
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [CollectionTypes]
+      summary: Détail d'un type de collection
+      description: |
+        Retourne le type de collection avec son JSON Schema complet.
+        Utile pour générer dynamiquement le formulaire d'ajout d'item à une collection.
+      operationId: getCollectionType
+      responses:
+        "200":
+          description: Type de collection trouvé.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectionType"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [CollectionTypes]
+      summary: Modifier un type de collection
+      description: |
+        **Admin uniquement.** Seuls les champs fournis sont mis à jour.
+      operationId: updateCollectionType
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CollectionTypeUpdate"
+      responses:
+        "200":
+          description: Type de collection modifié.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectionType"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [CollectionTypes]
+      summary: Supprimer un type de collection
+      description: |
+        **Admin uniquement.** Échoue avec 409 s'il existe des collections de ce type.
+      operationId: deleteCollectionType
+      responses:
+        "204":
+          description: Type de collection supprimé.
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Impossible — des collections de ce type existent.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # ===========================================================================
+  # Items
+  # ===========================================================================
+  /items:
+    get:
+      tags: [Items]
+      summary: Lister / rechercher des items
+      description: |
+        Retourne une liste paginée d'items du catalogue.
+
+        **Recherche et filtres disponibles :**
+        - `item_type_id` : filtrer par type (ex: uniquement les Séries)
+        - `search` : recherche textuelle sur tous les champs texte des attributs (ILIKE)
+        - `tag` : filtrer par tag exact
+        - `attributes[champ]=valeur` : filtre sur un attribut JSONB spécifique
+
+        **Tri :** utilisez `sort` avec le nom d'un attribut (ex: `sort=attributes.titre`
+        ou `sort=-created_at` pour les plus récents d'abord).
+      operationId: listItems
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+        - $ref: "#/components/parameters/sort"
+        - name: item_type_id
+          in: query
+          description: Filtrer par type d'item (UUID du ItemType).
+          schema:
+            type: string
+            format: uuid
+        - name: search
+          in: query
+          description: |
+            Recherche textuelle (ILIKE) sur les attributs texte de l'item.
+            Recherche dans tous les champs de type string.
+            Exemple : `search=breaking` trouvera "Breaking Bad".
+          schema:
+            type: string
+        - name: tag
+          in: query
+          description: Filtrer par tag (nom exact, insensible à la casse).
+          schema:
+            type: string
+        - name: attributes
+          in: query
+          description: |
+            Filtres sur les attributs JSONB. Passer sous la forme `attributes[champ]=valeur`.
+            Exemples :
+            - `attributes[annee_debut]=2008` → items avec annee_debut = 2008
+            - `attributes[type]=TV` → items avec type = "TV"
+          schema:
+            type: object
+      responses:
+        "200":
+          description: Liste paginée d'items. Chaque item inclut son ItemType et ses tags.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Item"
+
+    post:
+      tags: [Items]
+      summary: Créer un item
+      description: |
+        **Admin uniquement (MVP).**
+
+        Crée un nouvel item dans le catalogue. Les attributs sont **validés contre le
+        JSON Schema** du ItemType référencé. En cas de non-conformité, une erreur 422
+        est retournée avec le détail par champ.
+
+        Les tags sont créés automatiquement s'ils n'existent pas encore.
+      operationId: createItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ItemCreate"
+            example:
+              item_type_id: b0000000-0000-0000-0000-000000000001
+              attributes:
+                titre: Breaking Bad
+                synopsis: Un professeur de chimie se tourne vers la fabrication de méthamphétamine.
+                annee_debut: 2008
+                annee_fin: 2013
+              tags: [drame, thriller, crime]
+      responses:
+        "201":
+          description: Item créé avec succès. Retourne l'item complet avec son type et ses tags.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /items/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: UUID de l'item.
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Items]
+      summary: Détail d'un item
+      description: |
+        Retourne un item avec son ItemType complet et ses tags.
+        Utile pour afficher la fiche détaillée d'un item.
+      operationId: getItem
+      responses:
+        "200":
+          description: Item trouvé.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Items]
+      summary: Modifier un item
+      description: |
+        **Admin uniquement.**
+
+        Modifie les attributs et/ou tags d'un item. Les attributs sont **revalidés**
+        contre le JSON Schema du ItemType.
+
+        Le `item_type_id` ne peut pas être changé (il faudrait supprimer et recréer).
+      operationId: updateItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ItemUpdate"
+      responses:
+        "200":
+          description: Item modifié avec succès.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    delete:
+      tags: [Items]
+      summary: Supprimer un item
+      description: |
+        **Admin uniquement.**
+
+        Supprime un item du catalogue. **Effet en cascade** :
+        - Toutes les relations (ItemRelation) impliquant cet item sont supprimées
+        - Tous les liens avec les collections (CollectionItem) sont supprimés
+        - Les tags orphelins ne sont pas supprimés automatiquement
+      operationId: deleteItem
+      responses:
+        "204":
+          description: Item et dépendances supprimés.
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ===========================================================================
+  # Item Collections (membership)
+  # ===========================================================================
+  /items/{id}/collections:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: UUID de l'item dont on veut connaître les collections.
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Items, Collections]
+      summary: Collections contenant cet item
+      description: |
+        Retourne la liste des collections de l'utilisateur authentifié qui contiennent
+        cet item, avec les **attributs contextuels** (état, prix, note…) de chaque
+        appartenance.
+
+        Utile pour afficher sur la fiche d'un item dans quelles collections l'utilisateur
+        l'a déjà ajouté, et avec quels attributs.
+      operationId: listItemCollections
+      responses:
+        "200":
+          description: Liste des collections contenant cet item pour l'utilisateur courant.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ItemCollectionMembership"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ===========================================================================
+  # Item Relations
+  # ===========================================================================
+  /items/{id}/relations:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: UUID de l'item dont on veut les relations (sortantes et entrantes).
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Items, Relations]
+      summary: Relations d'un item (sortantes et entrantes)
+      description: |
+        Retourne toutes les relations impliquant cet item, qu'il soit **source** (sortantes)
+        ou **cible** (entrantes). Chaque relation inclut le RelationType.
+
+        Le client peut déterminer la direction en comparant `source_item_id` avec l'ID de l'item :
+        - `source_item_id == id` → relation sortante
+        - `target_item_id == id` → relation entrante
+
+        Filtrable par type de relation pour ne voir que certains liens.
+      operationId: listItemRelations
+      parameters:
+        - name: relation_type_id
+          in: query
+          description: |
+            Filtrer par type de relation (UUID du RelationType).
+            Exemple : ne voir que les relations "contient_episode".
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Liste des relations (sortantes et entrantes).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ItemRelation"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /relations:
+    post:
+      tags: [Relations]
+      summary: Créer une relation entre deux items
+      description: |
+        **Admin uniquement.**
+
+        Crée une relation (arête orientée) entre deux items existants.
+
+        **Validations effectuées automatiquement :**
+        1. Les deux items (`source_item_id`, `target_item_id`) doivent exister
+        2. Le ItemType de la source doit correspondre au `source_item_type_id` du RelationType
+        3. Le ItemType de la cible doit correspondre au `target_item_type_id` du RelationType
+        4. Les `attributes` doivent respecter le JSON Schema du RelationType
+        5. Le triplet (relation_type, source, target) doit être unique → 409 si doublon
+        6. `source_item_id` ≠ `target_item_id` (pas d'auto-référence) → 422 sinon
+      operationId: createRelation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ItemRelationCreate"
+            example:
+              relation_type_id: c0000000-0000-0000-0000-000000000005
+              source_item_id: e0000000-0000-0000-0000-000000000020
+              target_item_id: e0000000-0000-0000-0000-000000000010
+              attributes:
+                disque: 1
+                piste: 1
+      responses:
+        "201":
+          description: Relation créée avec succès.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemRelation"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /relations/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: UUID de la relation.
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Relations]
+      summary: Détail d'une relation
+      description: |
+        Retourne une relation avec son RelationType, l'item source et l'item cible.
+      operationId: getRelation
+      responses:
+        "200":
+          description: Relation trouvée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemRelation"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Relations]
+      summary: Modifier les attributs d'une relation
+      description: |
+        **Admin uniquement.**
+
+        Modifie les attributs d'une relation existante. Les items source et target
+        **ne peuvent pas être changés** — pour cela, supprimer et recréer la relation.
+
+        Les attributs sont revalidés contre le JSON Schema du RelationType.
+      operationId: updateRelation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ItemRelationUpdate"
+      responses:
+        "200":
+          description: Relation modifiée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemRelation"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    delete:
+      tags: [Relations]
+      summary: Supprimer une relation
+      description: |
+        **Admin uniquement.** Supprime la relation. Les items source et cible
+        ne sont pas affectés.
+      operationId: deleteRelation
+      responses:
+        "204":
+          description: Relation supprimée.
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ===========================================================================
+  # Graph
+  # ===========================================================================
+  /items/{id}/graph:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: UUID de l'item racine pour la traversée.
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Graph]
+      summary: Sous-graphe à partir d'un item
+      description: |
+        Effectue une **traversée récursive** du graphe depuis un item racine.
+        Retourne tous les nœuds et arêtes accessibles, organisés en un format
+        directement exploitable par les librairies de visualisation.
+
+        **Protection contre les cycles** : le serveur détecte les cycles et ne
+        visite jamais un nœud deux fois dans un même chemin.
+
+        **Filtrage** : utilisez `relation_type_ids` pour limiter la traversée
+        à certains types de relation (ex: ne suivre que "contient_episode").
+
+        Le format de réponse sépare le nœud racine des autres nœuds pour
+        faciliter le rendu (la racine a souvent un style différent).
+      operationId: getItemGraph
+      parameters:
+        - name: max_depth
+          in: query
+          description: |
+            Profondeur maximale de traversée depuis la racine.
+            - `1` : uniquement les voisins directs
+            - `3` (défaut) : 3 niveaux de profondeur
+            - `10` : maximum autorisé
+
+            Augmenter la profondeur augmente le temps de réponse et la taille du résultat.
+          schema:
+            type: integer
+            default: 3
+            minimum: 1
+            maximum: 10
+        - name: relation_type_ids
+          in: query
+          description: |
+            Filtrer la traversée par types de relation. Format : liste d'UUIDs séparés par des virgules.
+            Seules les arêtes de ces types seront suivies.
+            Si omis, toutes les relations sont suivies.
+
+            Exemple : `relation_type_ids=c0000000-...-001,c0000000-...-003`
+          schema:
+            type: string
+      responses:
+        "200":
+          description: |
+            Sous-graphe retourné avec succès. Contient :
+            - `root` : le nœud racine
+            - `nodes` : les autres nœuds découverts
+            - `edges` : les arêtes entre les nœuds
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GraphResponse"
+              example:
+                root:
+                  id: e0000000-0000-0000-0000-000000000001
+                  type: Serie
+                  label: Breaking Bad
+                  attributes:
+                    { titre: Breaking Bad, annee_debut: 2008, annee_fin: 2013 }
+                  depth: 0
+                nodes:
+                  - id: e0000000-0000-0000-0000-000000000002
+                    type: Diffusion
+                    label: AMC 2008-2013
+                    attributes: { nom: AMC 2008-2013, type: cable, chaine: AMC }
+                    depth: 1
+                  - id: e0000000-0000-0000-0000-000000000003
+                    type: Saison
+                    label: S1
+                    attributes: { numero: 1, annee: 2008 }
+                    depth: 2
+                  - id: e0000000-0000-0000-0000-000000000010
+                    type: Episode
+                    label: Pilot
+                    attributes: { numero: 1, titre: Pilot, duree: 58 }
+                    depth: 3
+                edges:
+                  - source_id: e0000000-0000-0000-0000-000000000001
+                    target_id: e0000000-0000-0000-0000-000000000002
+                    relation_type: diffuse_en
+                    attributes: { annee_debut_diff: 2008 }
+                  - source_id: e0000000-0000-0000-0000-000000000002
+                    target_id: e0000000-0000-0000-0000-000000000003
+                    relation_type: contient_saison
+                    attributes: {}
+                  - source_id: e0000000-0000-0000-0000-000000000003
+                    target_id: e0000000-0000-0000-0000-000000000010
+                    relation_type: contient_episode
+                    attributes: { ordre: 1 }
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ===========================================================================
+  # Collections (user)
+  # ===========================================================================
+  /collections:
+    get:
+      tags: [Collections]
+      summary: Lister les collections de l'utilisateur courant
+      description: |
+        Retourne les collections de l'utilisateur authentifié, avec le nombre
+        d'items dans chaque collection. Filtrable par type de collection.
+      operationId: listCollections
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+        - name: collection_type_id
+          in: query
+          description: 'Filtrer par type de collection (ex: uniquement les collections "Possession").'
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Collections de l'utilisateur.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Collection"
+
+    post:
+      tags: [Collections]
+      summary: Créer une collection
+      description: |
+        Crée une nouvelle collection pour l'utilisateur authentifié.
+        Le nom doit être unique parmi les collections de cet utilisateur.
+      operationId: createCollection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CollectionCreate"
+            example:
+              collection_type_id: d0000000-0000-0000-0000-000000000001
+              name: Mes DVDs
+              description: Ma collection de DVDs et Blu-rays
+      responses:
+        "201":
+          description: Collection créée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collection"
+        "409":
+          description: Une collection avec ce nom existe déjà pour cet utilisateur.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /collections/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: UUID de la collection.
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Collections]
+      summary: Détail d'une collection
+      description: |
+        Retourne la collection avec son CollectionType et le nombre d'items.
+        L'utilisateur ne peut accéder qu'à ses propres collections.
+      operationId: getCollection
+      responses:
+        "200":
+          description: Collection trouvée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collection"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Collections]
+      summary: Modifier une collection
+      description: |
+        Modifie le nom et/ou la description de la collection.
+        Le **CollectionType ne peut pas être changé** après création.
+      operationId: updateCollection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CollectionUpdate"
+      responses:
+        "200":
+          description: Collection modifiée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collection"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Une autre collection avec ce nom existe déjà.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [Collections]
+      summary: Supprimer une collection
+      description: |
+        Supprime la collection et tous les liens CollectionItem associés.
+        **Les items du catalogue ne sont pas supprimés** — seuls les liens
+        personnels (état, prix, note…) sont perdus.
+      operationId: deleteCollection
+      responses:
+        "204":
+          description: Collection et liens supprimés.
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ===========================================================================
+  # Collection Items (user)
+  # ===========================================================================
+  /collections/{id}/items:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: UUID de la collection.
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Collections]
+      summary: Lister les items d'une collection
+      description: |
+        Retourne les items d'une collection avec leurs **attributs contextuels**
+        (état, prix, note…) et les détails de chaque item (type, attributs métier, tags).
+
+        Filtrable par type d'item (ex: uniquement les DVDs dans cette collection).
+      operationId: listCollectionItems
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+        - $ref: "#/components/parameters/sort"
+        - name: item_type_id
+          in: query
+          description: Filtrer par type d'item dans la collection.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Items de la collection avec attributs contextuels.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/CollectionItem"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    post:
+      tags: [Collections]
+      summary: Ajouter un item à la collection
+      description: |
+        Ajoute un item existant du catalogue à cette collection, avec des
+        **attributs contextuels** (état, prix, note…) validés contre le
+        JSON Schema du CollectionType.
+
+        Un item ne peut apparaître qu'une seule fois dans une collection donnée.
+      operationId: addItemToCollection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CollectionItemAdd"
+            example:
+              item_id: e0000000-0000-0000-0000-000000000020
+              attributes:
+                etat_physique: neuf
+                prix_achat: 45.00
+                date_acquisition: "2020-12-25"
+      responses:
+        "201":
+          description: Item ajouté à la collection avec ses attributs contextuels.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectionItem"
+        "404":
+          description: Collection ou item non trouvé.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Cet item est déjà dans la collection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /collections/{collectionId}/items/{itemId}:
+    parameters:
+      - name: collectionId
+        in: path
+        required: true
+        description: UUID de la collection.
+        schema:
+          type: string
+          format: uuid
+      - name: itemId
+        in: path
+        required: true
+        description: UUID de l'item dans la collection.
+        schema:
+          type: string
+          format: uuid
+    put:
+      tags: [Collections]
+      summary: Modifier les attributs contextuels d'un item dans la collection
+      description: |
+        Met à jour les attributs contextuels (état, prix, note…) d'un item
+        dans cette collection. Les attributs sont revalidés contre le JSON Schema
+        du CollectionType.
+
+        Ne modifie **pas** les attributs de l'item du catalogue (titre, année…),
+        uniquement les données personnelles de l'utilisateur.
+      operationId: updateCollectionItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CollectionItemUpdate"
+            example:
+              attributes:
+                etat_physique: bon
+                prix_achat: 45.00
+                date_acquisition: "2020-12-25"
+      responses:
+        "200":
+          description: Attributs contextuels modifiés.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectionItem"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    delete:
+      tags: [Collections]
+      summary: Retirer un item de la collection
+      description: |
+        Retire le lien entre l'item et cette collection. **L'item n'est pas
+        supprimé du catalogue** — il reste disponible pour d'autres collections
+        et d'autres utilisateurs. Seules les données contextuelles (état, prix, note…)
+        sont perdues.
+      operationId: removeItemFromCollection
+      responses:
+        "204":
+          description: Item retiré de la collection.
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ===========================================================================
+  # Tags
+  # ===========================================================================
+  /tags:
+    get:
+      tags: [Tags]
+      summary: Lister / rechercher les tags
+      description: |
+        Retourne la liste de tous les tags existants. Utilisez `search` pour
+        filtrer par préfixe (auto-complétion côté frontend).
+        Les tags sont triés par nom.
+      operationId: listTags
+      parameters:
+        - name: search
+          in: query
+          description: |
+            Recherche par préfixe (insensible à la casse).
+            Exemple : `search=dra` retournera "drame", "dragon"…
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Liste des tags correspondants.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tag"
+
+  # ===========================================================================
+  # Uploads
+  # ===========================================================================
+  /uploads:
+    post:
+      tags: [Uploads]
+      summary: Uploader un fichier image
+      description: |
+        **Admin uniquement.**
+
+        Accepte un fichier image via multipart/form-data et le sauvegarde sur le serveur.
+        Retourne l'URL d'accès au fichier, le nom généré et la taille.
+
+        **Formats acceptés** : JPEG, PNG, GIF, WebP.
+        **Taille maximale** : configurable via `MAX_UPLOAD_SIZE` (défaut 10 Mo).
+      operationId: uploadFile
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Fichier image à uploader.
+      responses:
+        "201":
+          description: Fichier uploadé avec succès.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadResponse"
+        "400":
+          description: |
+            Requête invalide : fichier manquant, type non autorisé ou taille dépassée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /uploads/{filename}:
+    parameters:
+      - name: filename
+        in: path
+        required: true
+        description: Nom du fichier (UUID + extension, retourné par l'upload).
+        schema:
+          type: string
+          example: 550e8400-e29b-41d4-a716-446655440000.jpg
+    get:
+      tags: [Uploads]
+      summary: Récupérer un fichier uploadé
+      description: |
+        Sert le fichier image depuis le stockage local.
+        **Requiert une authentification** (token JWT).
+        Seuls les fichiers avec extensions autorisées (.jpg, .jpeg, .png, .gif, .webp) sont servis.
+      operationId: getUploadedFile
+      responses:
+        "200":
+          description: Fichier image.
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/gif:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ===========================================================================
+  # Stats
+  # ===========================================================================
+
+  /stats:
+    get:
+      tags: [Stats]
+      summary: Statistiques globales
+      description: |
+        Retourne des statistiques agrégées sur le catalogue et les collections :
+        - Nombre d'items par type
+        - Total des items, collections et relations
+      operationId: getStats
+      responses:
+        "200":
+          description: Statistiques globales.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items_by_type:
+                    type: array
+                    description: Comptage d'items ventilé par ItemType.
+                    items:
+                      type: object
+                      properties:
+                        type_name:
+                          type: string
+                          description: Nom du ItemType.
+                          example: Episode
+                        count:
+                          type: integer
+                          description: Nombre d'items de ce type.
+                          example: 42
+                  total_items:
+                    type: integer
+                    description: Nombre total d'items dans le catalogue.
+                    example: 156
+                  total_collections:
+                    type: integer
+                    description: Nombre total de collections (tous utilisateurs).
+                    example: 12
+                  total_relations:
+                    type: integer
+                    description: Nombre total de relations (arêtes du graphe).
+                    example: 324

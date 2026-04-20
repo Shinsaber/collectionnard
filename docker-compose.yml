@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: colec-postgres
+    environment:
+      POSTGRES_USER: colec
+      POSTGRES_PASSWORD: colec
+      POSTGRES_DB: colec
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U colec"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: ./server
+    container_name: colec-server
+    environment:
+      PORT: "8080"
+      DATABASE_URL: "postgres://colec:colec@postgres:5432/colec?sslmode=disable"
+      JWT_SECRET: "change-me-in-production"
+      UPLOAD_DIR: "/data/uploads"
+      MAX_UPLOAD_SIZE: "10485760"
+    ports:
+      - "8080:8080"
+    volumes:
+      - uploads:/data/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./web
+    container_name: colec-web
+    ports:
+      - "3000:80"
+    depends_on:
+      - server
+
+volumes:
+  pgdata:
+  uploads:

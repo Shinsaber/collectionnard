@@ -1,0 +1,27 @@
+# ── OS ─────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDE ────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Docker ─────────────────────────────────────────────────────────────
+pgdata/
+uploads/
+
+# ── Go (server) ────────────────────────────────────────────────────────
+server/colec
+server/server
+*.exe
+
+# ── Node / Vue (web) ──────────────────────────────────────────────────
+web/node_modules/
+web/dist/
+web/tsconfig.tsbuildinfo
+web/tsconfig.node.tsbuildinfo
+web/vite.config.js
+web/vite.config.d.ts
+web/vite.config.d.ts.map
