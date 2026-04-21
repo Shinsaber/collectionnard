@@ -16,11 +16,15 @@ func (s *PgStore) ListItemRelations(ctx context.Context, itemID uuid.UUID, relat
 		       rt.id, rt.name, rt.description,
 		       rt.attributes_schema, rt.created_at, rt.updated_at,
 		       si.id, si.item_type_id, si.attributes, si.created_at, si.updated_at,
-		       ti.id, ti.item_type_id, ti.attributes, ti.created_at, ti.updated_at
+		       sit.id, sit.name, sit.description, sit.attributes_schema, sit.created_at, sit.updated_at,
+		       ti.id, ti.item_type_id, ti.attributes, ti.created_at, ti.updated_at,
+		       tit.id, tit.name, tit.description, tit.attributes_schema, tit.created_at, tit.updated_at
 		FROM item_relations ir
 		JOIN relation_types rt ON rt.id = ir.relation_type_id
 		JOIN items si ON si.id = ir.source_item_id
+		JOIN item_types sit ON sit.id = si.item_type_id
 		JOIN items ti ON ti.id = ir.target_item_id
+		JOIN item_types tit ON tit.id = ti.item_type_id
 		WHERE (ir.source_item_id = $1 OR ir.target_item_id = $1)`
 	args := []interface{}{itemID}
 
@@ -41,17 +45,22 @@ func (s *PgStore) ListItemRelations(ctx context.Context, itemID uuid.UUID, relat
 		var ir model.ItemRelation
 		var rt model.RelationType
 		var si, ti model.Item
+		var sit, tit model.ItemType
 		if err := rows.Scan(
 			&ir.ID, &ir.RelationTypeID, &ir.SourceItemID, &ir.TargetItemID,
 			&ir.Attributes, &ir.CreatedAt,
 			&rt.ID, &rt.Name, &rt.Description,
 			&rt.AttributesSchema, &rt.CreatedAt, &rt.UpdatedAt,
 			&si.ID, &si.ItemTypeID, &si.Attributes, &si.CreatedAt, &si.UpdatedAt,
+			&sit.ID, &sit.Name, &sit.Description, &sit.AttributesSchema, &sit.CreatedAt, &sit.UpdatedAt,
 			&ti.ID, &ti.ItemTypeID, &ti.Attributes, &ti.CreatedAt, &ti.UpdatedAt,
+			&tit.ID, &tit.Name, &tit.Description, &tit.AttributesSchema, &tit.CreatedAt, &tit.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
 		ir.RelationType = &rt
+		si.ItemType = &sit
+		ti.ItemType = &tit
 		ir.SourceItem = &si
 		ir.TargetItem = &ti
 		result = append(result, ir)

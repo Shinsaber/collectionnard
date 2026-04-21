@@ -164,61 +164,28 @@
         Aucune relation trouvée.
       </div>
 
-      <DataTable v-else :value="relations" stripedRows dataKey="id">
-        <Column header="Type">
-          <template #body="{ data: rel }">
-            <Tag :value="rel.relation_type?.name ?? '?'" />
-          </template>
-        </Column>
-        <Column header="Direction">
-          <template #body="{ data: rel }">
-            <span
-              v-if="rel.source_item_id === item!.id"
-              class="text-emerald-600"
-              >→ sortant</span
+      <div v-else class="flex flex-col gap-5">
+        <div v-for="group in groupedRelations" :key="group.typeId">
+          <!-- Group header -->
+          <div
+            class="flex items-center gap-2 pb-2 border-b border-gray-200 mb-1"
+          >
+            <Tag :value="group.typeName" class="text-xs" />
+            <span class="text-xs text-gray-400"
+              >({{ group.relations.length }})</span
             >
-            <span v-else class="text-blue-600">← entrant</span>
-          </template>
-        </Column>
-        <Column header="Item lié">
-          <template #body="{ data: rel }">
-            {{ linkedItemLabel(rel) }}
-          </template>
-        </Column>
-        <Column header="Attributs">
-          <template #body="{ data: rel }">
-            <span
-              class="text-xs text-gray-500"
-              v-if="Object.keys(rel.attributes ?? {}).length"
-            >
-              {{ JSON.stringify(rel.attributes) }}
-            </span>
-          </template>
-        </Column>
-        <Column header="" style="width: 100px">
-          <template #body="{ data: rel }">
-            <div class="flex gap-1">
-              <Button
-                icon="pi pi-arrow-right"
-                text
-                size="small"
-                rounded
-                v-tooltip="'Voir ' + linkedItemLabel(rel)"
-                @click.stop="goToRelated({ data: rel })"
-              />
-              <Button
-                icon="pi pi-trash"
-                text
-                size="small"
-                rounded
-                severity="danger"
-                v-tooltip="'Supprimer'"
-                @click.stop="confirmDeleteRelation(rel)"
-              />
-            </div>
-          </template>
-        </Column>
-      </DataTable>
+          </div>
+
+          <!-- Relation rows via recursive component -->
+          <RelationTree
+            :relations="group.relations"
+            :context-item-id="item!.id"
+            :show-delete="true"
+            @delete="confirmDeleteRelation"
+            @edit="openEditRelation"
+          />
+        </div>
+      </div>
     </div>
 
     <!-- Collections contenant cet item -->
@@ -391,6 +358,53 @@
       </template>
     </Dialog>
 
+    <!-- Edit Relation Dialog -->
+    <Dialog
+      v-model:visible="editRelationVisible"
+      header="Modifier la relation"
+      modal
+      :style="{ width: '500px' }"
+    >
+      <div v-if="editingRelation" class="flex flex-col gap-4">
+        <div class="flex items-center gap-2 text-sm text-gray-500">
+          <Tag
+            :value="editingRelation.relation_type?.name ?? '?'"
+            class="text-xs"
+          />
+          <span>{{ editRelationLinkedLabel }}</span>
+        </div>
+
+        <div
+          v-if="
+            editRelationSchema &&
+            Object.keys(editRelationSchema.properties ?? {}).length > 0
+          "
+        >
+          <label class="text-sm font-medium text-gray-700 mb-2 block"
+            >Attributs</label
+          >
+          <DynamicForm
+            :schema="editRelationSchema"
+            :modelValue="editRelationAttrs"
+            @update:modelValue="editRelationAttrs = $event"
+          />
+        </div>
+        <div v-else class="text-sm text-gray-400 italic">
+          Ce type de relation n'a pas d'attributs modifiables.
+        </div>
+      </div>
+
+      <template #footer>
+        <Button label="Annuler" text @click="editRelationVisible = false" />
+        <Button
+          label="Enregistrer"
+          icon="pi pi-check"
+          :loading="editRelationLoading"
+          @click="submitEditRelation"
+        />
+      </template>
+    </Dialog>
+
     <!-- Edit Dialog -->
     <ItemEditDialog
       v-model:visible="editDialogVisible"
@@ -404,8 +418,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from "vue";
 import { useRouter } from "vue-router";
-import DataTable from "primevue/datatable";
-import Column from "primevue/column";
 import Button from "primevue/button";
 import Tag from "primevue/tag";
 import ProgressSpinner from "primevue/progressspinner";
@@ -427,6 +439,7 @@ import {
 import { extractApiError } from "@/api/client";
 import { useAuthStore } from "@/stores/auth";
 import ItemEditDialog from "@/components/item/ItemEditDialog.vue";
+import RelationTree from "@/components/item/RelationTree.vue";
 import DynamicForm from "@/components/common/DynamicForm.vue";
 import type {
   Item,
@@ -478,15 +491,6 @@ function linkedItemLabel(rel: ItemRelation): string {
     return String(val);
   }
   return linked.id.slice(0, 8);
-}
-
-function goToRelated(event: { data: ItemRelation }) {
-  const rel = event.data;
-  const targetId =
-    rel.source_item_id === item.value?.id
-      ? rel.target_item_id
-      : rel.source_item_id;
-  router.push(`/items/${targetId}`);
 }
 
 function attrLabel(key: string): string {
@@ -594,6 +598,27 @@ const imageGalleryField = computed<{
   return null;
 });
 
+// ── Grouped relations ───────────────────────────────────────────────
+const groupedRelations = computed(() => {
+  if (!item.value) return [];
+  const groups = new Map<
+    string,
+    { typeId: string; typeName: string; relations: ItemRelation[] }
+  >();
+  for (const rel of relations.value) {
+    const typeId = rel.relation_type_id;
+    if (!groups.has(typeId)) {
+      groups.set(typeId, {
+        typeId,
+        typeName: rel.relation_type?.name ?? "?",
+        relations: [],
+      });
+    }
+    groups.get(typeId)!.relations.push(rel);
+  }
+  return Array.from(groups.values());
+});
+
 // Edit
 const editDialogVisible = ref(false);
 
@@ -695,6 +720,60 @@ function confirmDeleteRelation(rel: ItemRelation) {
       }
     },
   });
+}
+
+// ── Edit relation ───────────────────────────────────────────────────
+const editRelationVisible = ref(false);
+const editRelationLoading = ref(false);
+const editingRelation = ref<ItemRelation | null>(null);
+const editRelationAttrs = ref<Record<string, unknown>>({});
+
+const editRelationSchema = computed(() => {
+  if (!editingRelation.value) return null;
+  return (
+    (editingRelation.value.relation_type?.attributes_schema as Record<
+      string,
+      unknown
+    >) ?? null
+  );
+});
+
+const editRelationLinkedLabel = computed(() => {
+  if (!editingRelation.value || !item.value) return "";
+  return linkedItemLabel(editingRelation.value);
+});
+
+function openEditRelation(rel: ItemRelation) {
+  editingRelation.value = rel;
+  editRelationAttrs.value = { ...(rel.attributes ?? {}) };
+  editRelationVisible.value = true;
+}
+
+async function submitEditRelation() {
+  if (!editingRelation.value || !item.value) return;
+  editRelationLoading.value = true;
+  try {
+    await relationApi.update(editingRelation.value.id, {
+      attributes: editRelationAttrs.value,
+    });
+    toast.add({
+      severity: "success",
+      summary: "Relation modifiée",
+      life: 3000,
+    });
+    editRelationVisible.value = false;
+    relations.value = (await itemApi.relations(item.value.id)) ?? [];
+  } catch (e) {
+    const err = extractApiError(e);
+    toast.add({
+      severity: "error",
+      summary: "Erreur",
+      detail: err.message,
+      life: 5000,
+    });
+  } finally {
+    editRelationLoading.value = false;
+  }
 }
 
 // ── Create relation ─────────────────────────────────────────────────
