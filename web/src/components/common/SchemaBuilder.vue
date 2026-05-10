@@ -578,61 +578,73 @@ function parseSchema(schema: Record<string, unknown>): SchemaField[] {
     string,
     Record<string, string>
   >;
+  const xOrder = (schema["x-order"] ?? []) as string[];
   const labelsFr = xLabels["fr"] ?? {};
   const labelsEn = xLabels["en"] ?? {};
 
-  return Object.entries(properties).map(([key, prop]) => {
-    let type = (prop.type as string) ?? "string";
-    // Detect i18n-text widget
-    if (
-      type === "object" &&
-      (prop as Record<string, unknown>)["x-widget"] === "i18n-text"
-    ) {
-      type = "i18n-text";
-    }
-    // Detect image-gallery widget
-    if (
-      type === "object" &&
-      (prop as Record<string, unknown>)["x-widget"] === "image-gallery"
-    ) {
-      type = "image-gallery";
-    }
-    const field: SchemaField = {
-      key,
-      type,
-      labelFr: labelsFr[key] ?? "",
-      labelEn: labelsEn[key] ?? "",
-      required: required.includes(key),
-      description: (prop.description as string) ?? null,
-      defaultValue: prop.default ?? null,
-      // string
-      minLength: (prop.minLength as number) ?? null,
-      maxLength: (prop.maxLength as number) ?? null,
-      pattern: (prop.pattern as string) ?? null,
-      format: (prop.format as string) ?? null,
-      enum: (prop.enum as string[]) ?? null,
-      // number
-      minimum: (prop.minimum as number) ?? null,
-      maximum: (prop.maximum as number) ?? null,
-      exclusiveMinimum: (prop.exclusiveMinimum as number) ?? null,
-      exclusiveMaximum: (prop.exclusiveMaximum as number) ?? null,
-      multipleOf: (prop.multipleOf as number) ?? null,
-      // array
-      itemsType:
-        ((prop.items as Record<string, unknown>)?.type as string) ?? null,
-      minItems: (prop.minItems as number) ?? null,
-      maxItems: (prop.maxItems as number) ?? null,
-      uniqueItems: (prop.uniqueItems as boolean) ?? null,
-      // image-gallery
-      imageCategories:
-        type === "image-gallery"
-          ? parseImageCategories(
-              (prop as Record<string, unknown>)["x-image-categories"],
-            )
-          : null,
-    };
-    return field;
-  });
+  const keys =
+    xOrder.length > 0
+      ? [
+          ...xOrder,
+          ...Object.keys(properties).filter((k) => !xOrder.includes(k)),
+        ]
+      : Object.keys(properties);
+
+  return keys
+    .filter((key) => key in properties)
+    .map((key) => {
+      const prop = properties[key]!;
+      let type = (prop.type as string) ?? "string";
+      // Detect i18n-text widget
+      if (
+        type === "object" &&
+        (prop as Record<string, unknown>)["x-widget"] === "i18n-text"
+      ) {
+        type = "i18n-text";
+      }
+      // Detect image-gallery widget
+      if (
+        type === "object" &&
+        (prop as Record<string, unknown>)["x-widget"] === "image-gallery"
+      ) {
+        type = "image-gallery";
+      }
+      const field: SchemaField = {
+        key,
+        type,
+        labelFr: labelsFr[key] ?? "",
+        labelEn: labelsEn[key] ?? "",
+        required: required.includes(key),
+        description: (prop.description as string) ?? null,
+        defaultValue: prop.default ?? null,
+        // string
+        minLength: (prop.minLength as number) ?? null,
+        maxLength: (prop.maxLength as number) ?? null,
+        pattern: (prop.pattern as string) ?? null,
+        format: (prop.format as string) ?? null,
+        enum: (prop.enum as string[]) ?? null,
+        // number
+        minimum: (prop.minimum as number) ?? null,
+        maximum: (prop.maximum as number) ?? null,
+        exclusiveMinimum: (prop.exclusiveMinimum as number) ?? null,
+        exclusiveMaximum: (prop.exclusiveMaximum as number) ?? null,
+        multipleOf: (prop.multipleOf as number) ?? null,
+        // array
+        itemsType:
+          ((prop.items as Record<string, unknown>)?.type as string) ?? null,
+        minItems: (prop.minItems as number) ?? null,
+        maxItems: (prop.maxItems as number) ?? null,
+        uniqueItems: (prop.uniqueItems as boolean) ?? null,
+        // image-gallery
+        imageCategories:
+          type === "image-gallery"
+            ? parseImageCategories(
+                (prop as Record<string, unknown>)["x-image-categories"],
+              )
+            : null,
+      };
+      return field;
+    });
 }
 
 // ── Build fields → schema ─────────────────────────────────────────────
@@ -732,6 +744,7 @@ const schema = computed<Record<string, unknown>>(() => {
     type: "object",
     properties,
     additionalProperties: false,
+    "x-order": fields.value.filter((f) => f.key.trim()).map((f) => f.key),
   };
   if (requiredKeys.length > 0) result.required = requiredKeys;
   if (hasLabels) {

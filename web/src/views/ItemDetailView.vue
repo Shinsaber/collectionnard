@@ -59,12 +59,14 @@
 
         <!-- Attribute grid -->
         <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
-          <template v-for="(value, key) in item.attributes" :key="key">
-            <div v-if="!isImageGallery(key as string)" class="flex flex-col">
+          <template v-for="key in orderedAttributeKeys" :key="key">
+            <div v-if="!isImageGallery(key)" class="flex flex-col">
               <span class="text-xs text-gray-400 uppercase">{{
-                attrLabel(key as string)
+                attrLabel(key)
               }}</span>
-              <span class="text-gray-800">{{ displayValue(value) }}</span>
+              <span class="text-gray-800">{{
+                displayValue(item.attributes[key])
+              }}</span>
             </div>
           </template>
         </div>
@@ -167,6 +169,7 @@
       <div v-else class="flex flex-col gap-5">
         <div v-for="group in groupedRelations" :key="group.typeId">
           <!-- Group header -->
+          <!-- 
           <div
             class="flex items-center gap-2 pb-2 border-b border-gray-200 mb-1"
           >
@@ -174,7 +177,7 @@
             <span class="text-xs text-gray-400"
               >({{ group.relations.length }})</span
             >
-          </div>
+          </div> -->
 
           <!-- Relation rows via recursive component -->
           <RelationTree
@@ -596,6 +599,22 @@ const imageGalleryField = computed<{
     }
   }
   return null;
+});
+
+const orderedAttributeKeys = computed<string[]>(() => {
+  if (!item.value) return [];
+  const schema = item.value.item_type?.attributes_schema as
+    | Record<string, unknown>
+    | undefined;
+  const xOrder = (schema?.["x-order"] as string[]) ?? [];
+  const allKeys = Object.keys(item.value.attributes);
+  if (xOrder.length > 0) {
+    return [
+      ...xOrder.filter((k) => k in item.value!.attributes),
+      ...allKeys.filter((k) => !xOrder.includes(k)),
+    ];
+  }
+  return allKeys;
 });
 
 // ── Grouped relations ───────────────────────────────────────────────

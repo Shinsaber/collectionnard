@@ -246,28 +246,44 @@ const fields = computed<SchemaField[]>(() => {
   if (!properties) return [];
 
   const required = (props.schema?.required as string[]) ?? [];
+  const xOrder = (props.schema?.["x-order"] as string[]) ?? [];
   const labels = (
     props.schema?.["x-labels"] as
       | Record<string, Record<string, string>>
       | undefined
   )?.[lang];
 
-  return Object.entries(properties).map(([name, prop]) => ({
-    name,
-    label:
-      labels?.[name] ??
-      name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-    type: (prop.type as string) ?? "string",
-    required: required.includes(name),
-    enum: prop.enum as string[] | undefined,
-    format: prop.format as string | undefined,
-    minimum: prop.minimum as number | undefined,
-    maximum: prop.maximum as number | undefined,
-    widget: (prop as Record<string, unknown>)["x-widget"] as string | undefined,
-    imageCategories: parseImageCategories(
-      (prop as Record<string, unknown>)["x-image-categories"],
-    ),
-  }));
+  const keys =
+    xOrder.length > 0
+      ? [
+          ...xOrder,
+          ...Object.keys(properties).filter((k) => !xOrder.includes(k)),
+        ]
+      : Object.keys(properties);
+
+  return keys
+    .filter((name) => name in properties)
+    .map((name) => {
+      const prop = properties[name]!;
+      return {
+        name,
+        label:
+          labels?.[name] ??
+          name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+        type: (prop.type as string) ?? "string",
+        required: required.includes(name),
+        enum: prop.enum as string[] | undefined,
+        format: prop.format as string | undefined,
+        minimum: prop.minimum as number | undefined,
+        maximum: prop.maximum as number | undefined,
+        widget: (prop as Record<string, unknown>)["x-widget"] as
+          | string
+          | undefined,
+        imageCategories: parseImageCategories(
+          (prop as Record<string, unknown>)["x-image-categories"],
+        ),
+      };
+    });
 });
 
 function parseImageCategories(

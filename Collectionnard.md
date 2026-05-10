@@ -6,6 +6,12 @@ Ce document est la **base documentaire de référence** du projet Collectionnard
 Il compile la vision, les décisions de conception et le modèle de données.
 Il sera maintenu à jour au fil des échanges et itérations.
 
+> **Voir aussi** :
+>
+> - [README.md](README.md) — Démarrage rapide, stack, structure du projet
+> - [api/openapi.yaml](api/openapi.yaml) — Spécification complète de l'API REST
+> - [db/schema.sql](db/schema.sql) — Schéma de base de données commenté
+
 ---
 
 ## 1. Vue d'ensemble
@@ -272,12 +278,22 @@ La table unique d'items avec attributs dynamiques nécessite une attention parti
 
 ### Phase 1 : MVP — Valider le dynamisme
 
-- [ ] Schéma de BDD avec attributs dynamiques
-- [ ] Tests des requêtes BDD (CRUD items, relations, collections, traversée de graphe)
-- [ ] API REST (CRUD sur tous les objets)
-- [ ] Authentification utilisateur (admin/user)
-- [ ] Jeu de données de test : Séries TV (multi-chemin Série→Diffusion→Saison→Épisode + Série→DVD→Épisode)
-- [ ] Interface web basique de visualisation
+- [x] Schéma de BDD avec attributs dynamiques (PostgreSQL 16, JSONB, index GIN)
+- [x] Tests des requêtes BDD (CRUD items, relations, collections, traversée de graphe)
+- [x] API REST (CRUD sur tous les objets) — spécification OpenAPI 3.1 dans `api/openapi.yaml`
+- [x] Authentification utilisateur (admin/user) — JWT Bearer
+- [x] Jeu de données de test : Séries TV (multi-chemin Série→Diffusion→Saison→Épisode + Série→DVD→Épisode)
+- [x] Interface web de visualisation (SPA Vue 3 + PrimeVue)
+- [x] Upload d'images (galerie, catégories avec ratios, onglets)
+- [x] Visualisation de graphe (Cytoscape.js, traversée récursive avec profondeur configurable)
+- [x] Gestion des collections utilisateur (CRUD, ajout/retrait d'items, attributs contextuels)
+- [x] Gestion des relations (CRUD, arbre groupé par type, direction source/target)
+- [x] Formulaires dynamiques générés depuis JSON Schema (DynamicForm)
+- [x] Éditeur de JSON Schema visuel (SchemaBuilder) avec `x-order`, `x-labels`, `x-widget`
+- [x] Recherche et filtres (par type, texte libre, tags, tri)
+- [x] Statistiques (dashboard avec compteurs par type)
+- [x] Tags libres sur les items
+- [x] Déploiement Docker Compose (3 services : postgres, server, web)
 
 ### Phase 2 : Enrichissement
 
@@ -301,13 +317,16 @@ La table unique d'items avec attributs dynamiques nécessite une attention parti
 
 ## 9. Stack technique
 
-| Composant       | Choix                     | Statut                   |
-| --------------- | ------------------------- | ------------------------ |
-| Backend         | Go                        | Préférence, pas bloquant |
-| Base de données | PostgreSQL                | Préférence, pas fixé     |
-| Frontend        | Web (framework à définir) | À choisir                |
-| Déploiement     | Docker                    | Pour la phase de test    |
-| Packaging       | NixOS flake possible      | À voir                   |
+| Composant       | Choix                           | Version   |
+| --------------- | ------------------------------- | --------- |
+| Backend         | Go (chi, pgx, JWT, JSON Schema) | 1.22      |
+| Base de données | PostgreSQL                      | 16        |
+| Frontend        | Vue 3 + TypeScript              | 3.5 / 5.6 |
+| UI              | PrimeVue + Tailwind CSS         | 4.3 / 3.4 |
+| Graphes         | Cytoscape.js                    | 3.30      |
+| Build           | Vite                            | 6.0       |
+| Déploiement     | Docker Compose (3 services)     | —         |
+| Packaging       | NixOS flake possible            | À voir    |
 
 ---
 
@@ -317,4 +336,4 @@ Ce projet est en phase de conception. Vos retours et suggestions sont les bienve
 
 ---
 
-**Dernière mise à jour** : 18/04/2026
+**Dernière mise à jour** : 22/04/2026

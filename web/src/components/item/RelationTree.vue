@@ -1,124 +1,136 @@
 <template>
   <div class="flex flex-col">
-    <div v-for="rel in sortedRelations" :key="rel.id" class="flex flex-col">
+    <template v-for="(rel, idx) in sortedRelations" :key="rel.id">
+      <!-- Relation type separator (shown once per group) -->
       <div
-        class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 group/rel transition-colors"
+        v-if="isFirstOfType(idx)"
+        class="flex items-center gap-2 mt-2 first:mt-0 mb-0.5 px-2"
       >
-        <!-- Direction icon (SVG) -->
-        <svg
-          class="w-4 h-4 shrink-0"
-          :class="isOutgoing(rel) ? 'text-emerald-500' : 'text-blue-500'"
-          viewBox="0 0 16 16"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <template v-if="isOutgoing(rel)">
-            <line x1="2" y1="8" x2="14" y2="8" />
-            <polyline points="10,4 14,8 10,12" />
-          </template>
-          <template v-else>
-            <line x1="2" y1="8" x2="14" y2="8" />
-            <polyline points="6,4 2,8 6,12" />
-          </template>
-        </svg>
-
-        <!-- Linked item type -->
-        <Tag
-          :value="linkedTypeName(rel)"
-          severity="secondary"
-          class="text-[11px]"
-        />
-
-        <!-- Order badge -->
-        <span
-          v-if="orderVal(rel) != null"
-          class="bg-gray-200 text-gray-600 text-[11px] font-semibold font-mono rounded px-1.5 py-0.5 shrink-0"
-          title="Ordre"
-        >
-          #{{ orderVal(rel) }}
-        </span>
-
-        <!-- Linked item label (clickable) -->
-        <router-link
-          :to="`/items/${linkedId(rel)}`"
-          class="text-indigo-600 hover:underline font-medium text-sm"
-        >
-          {{ linkedLabel(rel) }}
-        </router-link>
-
-        <!-- Attributes pills -->
-        <div class="flex gap-1.5 flex-wrap items-center ml-auto">
-          <span
-            v-for="(val, key) in displayAttrs(rel)"
-            :key="String(key)"
-            class="bg-gray-100 text-gray-600 text-[11px] rounded-full px-2 py-0.5"
-          >
-            {{ attrLabel(rel, String(key)) }}: {{ displayValue(val) }}
-          </span>
-        </div>
-
-        <!-- Actions -->
-        <div class="flex gap-0.5 shrink-0">
-          <Button
-            :icon="
-              expanded.has(rel.id) ? 'pi pi-chevron-up' : 'pi pi-chevron-down'
-            "
-            text
-            size="small"
-            rounded
-            v-tooltip="'Sous-relations'"
-            @click.stop="toggle(rel)"
-          />
-          <Button
-            v-if="showDelete"
-            icon="pi pi-pencil"
-            text
-            size="small"
-            rounded
-            class="opacity-0 group-hover/rel:opacity-100 transition-opacity"
-            v-tooltip="'Modifier'"
-            @click.stop="$emit('edit', rel)"
-          />
-          <Button
-            v-if="showDelete"
-            icon="pi pi-trash"
-            text
-            size="small"
-            rounded
-            severity="danger"
-            class="opacity-0 group-hover/rel:opacity-100 transition-opacity"
-            v-tooltip="'Supprimer'"
-            @click.stop="$emit('delete', rel)"
-          />
-        </div>
+        <Tag :value="rel.relation_type?.name ?? '?'" class="text-[10px]" />
+        <span class="text-xs text-gray-400">({{ typeCount(rel.relation_type_id) }})</span>
+        <div class="flex-1 border-b border-gray-100"></div>
       </div>
 
-      <!-- Sub-relations (recursive) -->
-      <div
-        v-if="expanded.has(rel.id)"
-        class="ml-6 pl-3 border-l-2 border-gray-200"
-      >
-        <div v-if="loading.has(rel.id)" class="py-2 text-xs text-gray-400">
-          <i class="pi pi-spin pi-spinner mr-1"></i> Chargement…
-        </div>
+      <div class="flex flex-col">
         <div
-          v-else-if="!children[rel.id]?.length"
-          class="py-2 text-xs text-gray-400 italic"
+          class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 group/rel transition-colors"
         >
-          Aucune sous-relation sortante.
+          <!-- Direction icon (SVG) -->
+          <svg
+            class="w-4 h-4 shrink-0"
+            :class="isOutgoing(rel) ? 'text-emerald-500' : 'text-blue-500'"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <template v-if="isOutgoing(rel)">
+              <line x1="2" y1="8" x2="14" y2="8" />
+              <polyline points="10,4 14,8 10,12" />
+            </template>
+            <template v-else>
+              <line x1="2" y1="8" x2="14" y2="8" />
+              <polyline points="6,4 2,8 6,12" />
+            </template>
+          </svg>
+
+          <!-- Linked item type -->
+          <Tag
+            :value="linkedTypeName(rel)"
+            severity="secondary"
+            class="text-[11px]"
+          />
+
+          <!-- Order badge -->
+          <span
+            v-if="orderVal(rel) != null"
+            class="bg-gray-200 text-gray-600 text-[11px] font-semibold font-mono rounded px-1.5 py-0.5 shrink-0"
+            title="Ordre"
+          >
+            #{{ orderVal(rel) }}
+          </span>
+
+          <!-- Linked item label (clickable) -->
+          <router-link
+            :to="`/items/${linkedId(rel)}`"
+            class="text-indigo-600 hover:underline font-medium text-sm"
+          >
+            {{ linkedLabel(rel) }}
+          </router-link>
+
+          <!-- Attributes pills -->
+          <div class="flex gap-1.5 flex-wrap items-center ml-auto">
+            <span
+              v-for="(val, key) in displayAttrs(rel)"
+              :key="String(key)"
+              class="bg-gray-100 text-gray-600 text-[11px] rounded-full px-2 py-0.5"
+            >
+              {{ attrLabel(rel, String(key)) }}: {{ displayValue(val) }}
+            </span>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex gap-0.5 shrink-0">
+            <Button
+              :icon="
+                expanded.has(rel.id) ? 'pi pi-chevron-up' : 'pi pi-chevron-down'
+              "
+              text
+              size="small"
+              rounded
+              v-tooltip="'Sous-relations'"
+              @click.stop="toggle(rel)"
+            />
+            <Button
+              v-if="showDelete"
+              icon="pi pi-pencil"
+              text
+              size="small"
+              rounded
+              class="opacity-0 group-hover/rel:opacity-100 transition-opacity"
+              v-tooltip="'Modifier'"
+              @click.stop="$emit('edit', rel)"
+            />
+            <Button
+              v-if="showDelete"
+              icon="pi pi-trash"
+              text
+              size="small"
+              rounded
+              severity="danger"
+              class="opacity-0 group-hover/rel:opacity-100 transition-opacity"
+              v-tooltip="'Supprimer'"
+              @click.stop="$emit('delete', rel)"
+            />
+          </div>
         </div>
-        <RelationTree
-          v-else
-          :relations="children[rel.id] ?? []"
-          :context-item-id="linkedId(rel)"
-          :show-delete="false"
-          :max-depth="maxDepth - 1"
-        />
+
+        <!-- Sub-relations (recursive) -->
+        <div
+          v-if="expanded.has(rel.id)"
+          class="ml-6 pl-3 border-l-2 border-gray-200"
+        >
+          <div v-if="loading.has(rel.id)" class="py-2 text-xs text-gray-400">
+            <i class="pi pi-spin pi-spinner mr-1"></i> Chargement…
+          </div>
+          <div
+            v-else-if="!children[rel.id]?.length"
+            class="py-2 text-xs text-gray-400 italic"
+          >
+            Aucune sous-relation sortante.
+          </div>
+          <RelationTree
+            v-else
+            :relations="children[rel.id] ?? []"
+            :context-item-id="linkedId(rel)"
+            :show-delete="false"
+            :max-depth="maxDepth - 1"
+          />
+        </div>
       </div>
-    </div>
+    </template>
   </div>
 </template>
 
@@ -218,6 +230,12 @@ function attrLabel(rel: ItemRelation, key: string): string {
 
 const sortedRelations = computed(() => {
   return [...props.relations].sort((a, b) => {
+    // 1. Group by relation type name
+    const rtA = a.relation_type?.name ?? "";
+    const rtB = b.relation_type?.name ?? "";
+    const rtCmp = rtA.localeCompare(rtB);
+    if (rtCmp !== 0) return rtCmp;
+    // 2. Then by order attribute
     const oa = orderVal(a);
     const ob = orderVal(b);
     if (oa != null && ob != null) return Number(oa) - Number(ob);
@@ -226,6 +244,18 @@ const sortedRelations = computed(() => {
     return a.created_at.localeCompare(b.created_at);
   });
 });
+
+function isFirstOfType(idx: number): boolean {
+  if (idx === 0) return true;
+  const sorted = sortedRelations.value;
+  return sorted[idx]?.relation_type_id !== sorted[idx - 1]?.relation_type_id;
+}
+
+function typeCount(relationTypeId: string): number {
+  return sortedRelations.value.filter(
+    (r) => r.relation_type_id === relationTypeId,
+  ).length;
+}
 
 async function toggle(rel: ItemRelation) {
   if (expanded.value.has(rel.id)) {

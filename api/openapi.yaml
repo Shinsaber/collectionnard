@@ -2476,9 +2476,11 @@ paths:
       summary: Récupérer un fichier uploadé
       description: |
         Sert le fichier image depuis le stockage local.
-        **Requiert une authentification** (token JWT).
+        **Accès public** (pas d'authentification requise) car les balises `<img>`
+        ne peuvent pas envoyer de header `Authorization`.
         Seuls les fichiers avec extensions autorisées (.jpg, .jpeg, .png, .gif, .webp) sont servis.
       operationId: getUploadedFile
+      security: []
       responses:
         "200":
           description: Fichier image.
@@ -2499,8 +2501,6 @@ paths:
               schema:
                 type: string
                 format: binary
-        "401":
-          $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
 
