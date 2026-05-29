@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-3">
     <div v-for="field in fields" :key="field.name" class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">
+      <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
         {{ field.label }}
         <span v-if="field.required" class="text-red-500">*</span>
       </label>
@@ -87,7 +87,7 @@
       <template v-else-if="field.widget === 'i18n-text'">
         <div class="grid grid-cols-2 gap-2">
           <div class="flex flex-col gap-1">
-            <label class="text-xs text-gray-400">FR</label>
+            <label class="text-xs text-gray-400 dark:text-gray-500">FR</label>
             <Textarea
               :modelValue="getI18n(field.name, 'fr')"
               @update:modelValue="
@@ -98,7 +98,7 @@
             />
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-xs text-gray-400">EN</label>
+            <label class="text-xs text-gray-400 dark:text-gray-500">EN</label>
             <Textarea
               :modelValue="getI18n(field.name, 'en')"
               @update:modelValue="
@@ -119,9 +119,10 @@
             :key="cat.name"
             class="flex flex-col gap-1"
           >
-            <label class="text-xs font-medium text-gray-500 capitalize">{{
-              cat.name
-            }}</label>
+            <label
+              class="text-xs font-medium text-gray-500 dark:text-gray-400 capitalize"
+              >{{ cat.name }}</label
+            >
             <div class="flex flex-wrap gap-2">
               <div
                 v-for="(url, imgIdx) in getGalleryCategory(
@@ -171,10 +172,10 @@
           </div>
           <div
             v-if="getGalleryDefault(field.name)"
-            class="text-xs text-gray-400"
+            class="text-xs text-gray-400 dark:text-gray-500"
           >
             Image par défaut :
-            <span class="font-medium text-gray-600">{{
+            <span class="font-medium text-gray-600 dark:text-gray-300">{{
               getGalleryDefault(field.name)
             }}</span>
           </div>
@@ -196,7 +197,10 @@
       }}</small>
     </div>
 
-    <div v-if="fields.length === 0" class="text-sm text-gray-400 italic">
+    <div
+      v-if="fields.length === 0"
+      class="text-sm text-gray-400 dark:text-gray-500 italic"
+    >
       Aucun attribut défini pour ce type.
     </div>
   </div>

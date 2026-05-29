@@ -23,7 +23,7 @@ func (s *PgStore) GetItemGraph(ctx context.Context, itemID uuid.UUID, maxDepth i
 	}
 
 	query := fmt.Sprintf(`
-		WITH RECURSIVE graph AS (
+		WITH RECURSIVE graph_down AS (
 			SELECT i.id, i.item_type_id, i.attributes, it.name AS type_name, 0 AS depth,
 			       ARRAY[i.id] AS path
 			FROM items i
@@ -34,16 +34,39 @@ func (s *PgStore) GetItemGraph(ctx context.Context, itemID uuid.UUID, maxDepth i
 
 			SELECT i2.id, i2.item_type_id, i2.attributes, it2.name AS type_name, g.depth + 1,
 			       g.path || i2.id
-			FROM graph g
-			JOIN item_relations ir ON ir.source_item_id = g.id %s
+			FROM graph_down g
+			JOIN item_relations ir ON ir.source_item_id = g.id %[1]s
 			JOIN items i2 ON i2.id = ir.target_item_id
 			JOIN item_types it2 ON it2.id = i2.item_type_id
 			WHERE g.depth < $2
 			  AND NOT i2.id = ANY(g.path)
+		),
+		graph_up AS (
+			SELECT i.id, i.item_type_id, i.attributes, it.name AS type_name, 0 AS depth,
+			       ARRAY[i.id] AS path
+			FROM items i
+			JOIN item_types it ON it.id = i.item_type_id
+			WHERE i.id = $1
+
+			UNION ALL
+
+			SELECT i2.id, i2.item_type_id, i2.attributes, it2.name AS type_name, g.depth - 1,
+			       g.path || i2.id
+			FROM graph_up g
+			JOIN item_relations ir ON ir.target_item_id = g.id %[1]s
+			JOIN items i2 ON i2.id = ir.source_item_id
+			JOIN item_types it2 ON it2.id = i2.item_type_id
+			WHERE g.depth > -$2
+			  AND NOT i2.id = ANY(g.path)
+		),
+		graph AS (
+			SELECT * FROM graph_down
+			UNION ALL
+			SELECT * FROM graph_up WHERE depth != 0
 		)
 		SELECT DISTINCT ON (id) id, type_name, attributes, depth
 		FROM graph
-		ORDER BY id, depth`, rtFilter)
+		ORDER BY id, ABS(depth)`, rtFilter)
 
 	rows, err := s.pool.Query(ctx, query, args...)
 	if err != nil {

@@ -11,13 +11,15 @@
         @click="router.push('/collections')"
       />
       <div>
-        <h1 class="text-2xl font-bold text-gray-800">{{ collection.name }}</h1>
+        <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
+          {{ collection.name }}
+        </h1>
         <div class="flex items-center gap-2 mt-1">
           <Tag
             :value="collection.collection_type?.name ?? '?'"
             severity="info"
           />
-          <span class="text-sm text-gray-400"
+          <span class="text-sm text-gray-400 dark:text-gray-500"
             >{{ collection.item_count }} items</span
           >
         </div>
@@ -26,7 +28,10 @@
       <Button label="Ajouter un item" icon="pi pi-plus" @click="openAddItem" />
     </div>
 
-    <p v-if="collection.description" class="text-gray-500 mb-4">
+    <p
+      v-if="collection.description"
+      class="text-gray-500 dark:text-gray-400 mb-4"
+    >
       {{ collection.description }}
     </p>
 
@@ -50,7 +55,7 @@
         <template #body="{ data: ci }">
           <router-link
             :to="`/items/${ci.item_id}`"
-            class="text-indigo-600 hover:underline"
+            class="text-indigo-600 dark:text-indigo-400 hover:underline"
           >
             {{ ciLabel(ci) }}
           </router-link>
@@ -62,7 +67,7 @@
             <span
               v-for="(val, key) in ci.attributes"
               :key="key"
-              class="bg-gray-100 rounded px-2 py-0.5"
+              class="bg-gray-100 dark:bg-gray-700 dark:text-gray-300 rounded px-2 py-0.5"
             >
               {{ ctxAttrLabel(String(key)) }}: {{ val }}
             </span>
@@ -182,7 +187,12 @@ import Tag from "primevue/tag";
 import ProgressSpinner from "primevue/progressspinner";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
-import { collectionApi, itemApi, collectionTypeApi, extractApiError } from "@/api/client";
+import {
+  collectionApi,
+  itemApi,
+  collectionTypeApi,
+  extractApiError,
+} from "@/api/client";
 import { usePagination } from "@/composables/usePagination";
 import DynamicForm from "@/components/common/DynamicForm.vue";
 import type { Collection, CollectionItem, Item } from "@/api/types";
@@ -320,7 +330,12 @@ async function updateItem() {
     items.load();
   } catch (e: unknown) {
     const apiErr = extractApiError(e);
-    toast.add({ severity: "error", summary: "Erreur", detail: apiErr.message, life: 5000 });
+    toast.add({
+      severity: "error",
+      summary: "Erreur",
+      detail: apiErr.message,
+      life: 5000,
+    });
   } finally {
     saving.value = false;
   }

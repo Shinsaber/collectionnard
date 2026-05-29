@@ -298,7 +298,7 @@ La table unique d'items avec attributs dynamiques nécessite une attention parti
 ### Phase 2 : Enrichissement
 
 - [ ] Recherche avancée et filtres
-- [ ] Statistiques et graphiques
+- [ ] Statistiques et visualisation graphiques
 - [ ] Import/Export CSV/JSON
 - [ ] Soumission d'items par les users (validation admin)
 

@@ -4,11 +4,11 @@
     <div
       v-for="(field, idx) in fields"
       :key="idx"
-      class="border border-gray-200 rounded-lg bg-gray-50 relative overflow-hidden"
+      class="border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 relative overflow-hidden"
     >
       <!-- Header: reorder, key, type, required, delete -->
       <div
-        class="flex items-center gap-2 px-3 py-2 bg-gray-100 border-b border-gray-200"
+        class="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600"
       >
         <Button
           icon="pi pi-chevron-up"

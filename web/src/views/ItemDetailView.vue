@@ -7,7 +7,9 @@
     <div class="flex items-center gap-3 mb-6">
       <Button icon="pi pi-arrow-left" text @click="router.back()" />
       <div>
-        <h1 class="text-2xl font-bold text-gray-800">{{ itemLabel }}</h1>
+        <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
+          {{ itemLabel }}
+        </h1>
         <div class="flex items-center gap-2 mt-1">
           <Tag :value="item.item_type?.name ?? '?'" severity="info" />
           <Tag
@@ -44,8 +46,10 @@
     </div>
 
     <!-- Attributes -->
-    <div class="bg-white rounded-lg shadow p-6 mb-6">
-      <h2 class="text-lg font-semibold text-gray-700 mb-4">Attributs</h2>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+      <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">
+        Attributs
+      </h2>
       <div class="flex gap-6">
         <!-- Default image (portrait) -->
         <div v-if="defaultImageUrl" class="flex-shrink-0">
@@ -61,10 +65,11 @@
         <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
           <template v-for="key in orderedAttributeKeys" :key="key">
             <div v-if="!isImageGallery(key)" class="flex flex-col">
-              <span class="text-xs text-gray-400 uppercase">{{
-                attrLabel(key)
-              }}</span>
-              <span class="text-gray-800">{{
+              <span
+                class="text-xs text-gray-400 dark:text-gray-500 uppercase"
+                >{{ attrLabel(key) }}</span
+              >
+              <span class="text-gray-800 dark:text-gray-200">{{
                 displayValue(item.attributes[key])
               }}</span>
             </div>
@@ -74,8 +79,11 @@
     </div>
 
     <!-- Images gallery with tabs -->
-    <div v-if="imageGalleryField" class="bg-white rounded-lg shadow p-6 mb-6">
-      <h2 class="text-lg font-semibold text-gray-700 mb-4">
+    <div
+      v-if="imageGalleryField"
+      class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6"
+    >
+      <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">
         {{ attrLabel(imageGalleryField.key) }}
       </h2>
       <Tabs :value="imageGalleryField.categories[0]?.name ?? ''">
@@ -86,7 +94,7 @@
             :value="cat.name"
           >
             <span class="capitalize">{{ cat.name }}</span>
-            <span class="ml-1 text-xs text-gray-400"
+            <span class="ml-1 text-xs text-gray-400 dark:text-gray-500"
               >({{
                 getAttrGalleryCategory(
                   item.attributes[imageGalleryField.key],
@@ -139,7 +147,7 @@
                     cat.name,
                   ).length === 0
                 "
-                class="text-sm text-gray-400 italic py-4"
+                class="text-sm text-gray-400 dark:text-gray-500 italic py-4"
               >
                 Aucune image dans cette catégorie.
               </div>
@@ -150,9 +158,11 @@
     </div>
 
     <!-- Relations -->
-    <div class="bg-white rounded-lg shadow p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-gray-700">Relations</h2>
+        <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">
+          Relations
+        </h2>
         <Button
           icon="pi pi-plus"
           label="Créer une relation"
@@ -162,7 +172,10 @@
         />
       </div>
 
-      <div v-if="relations.length === 0" class="text-sm text-gray-400 italic">
+      <div
+        v-if="relations.length === 0"
+        class="text-sm text-gray-400 dark:text-gray-500 italic"
+      >
         Aucune relation trouvée.
       </div>
 
@@ -194,16 +207,16 @@
     <!-- Collections contenant cet item -->
     <div
       v-if="itemCollections.length > 0"
-      class="bg-white rounded-lg shadow p-6 mt-6"
+      class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mt-6"
     >
-      <h2 class="text-lg font-semibold text-gray-700 mb-4">
+      <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">
         Dans vos collections
       </h2>
       <div class="flex flex-col gap-2">
         <div
           v-for="ic in itemCollections"
           :key="ic.collection.id"
-          class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+          class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
         >
           <Tag
             :value="ic.collection.collection_type?.name ?? '?'"
@@ -211,7 +224,7 @@
           />
           <router-link
             :to="`/collections/${ic.collection.id}`"
-            class="text-indigo-600 hover:underline font-medium"
+            class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
           >
             {{ ic.collection.name }}
           </router-link>
@@ -219,7 +232,7 @@
             <span
               v-for="(val, key) in ic.attributes"
               :key="String(key)"
-              class="bg-gray-200 rounded px-2 py-0.5"
+              class="bg-gray-200 dark:bg-gray-600 dark:text-gray-300 rounded px-2 py-0.5"
             >
               {{ ctxLabel(ic.collection, String(key)) }}: {{ val }}
             </span>
@@ -238,14 +251,16 @@
       <div class="flex flex-col gap-4">
         <div
           v-if="availableCollections.length === 0"
-          class="text-sm text-gray-400 italic"
+          class="text-sm text-gray-400 dark:text-gray-500 italic"
         >
           Aucune collection disponible (toutes contiennent déjà cet item, ou
           vous n'avez pas de collection).
         </div>
         <template v-else>
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium text-gray-700">Collection</label>
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300"
+              >Collection</label
+            >
             <Select
               v-model="selectedCollectionId"
               :options="availableCollections"
@@ -261,7 +276,8 @@
               Object.keys(selectedCollectionSchema.properties ?? {}).length > 0
             "
           >
-            <label class="text-sm font-medium text-gray-700 mb-2 block"
+            <label
+              class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block"
               >Attributs contextuels</label
             >
             <DynamicForm
@@ -294,7 +310,7 @@
     >
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-gray-700"
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300"
             >Type de relation</label
           >
           <Select
@@ -308,7 +324,9 @@
         </div>
 
         <div v-if="newRelationTypeId" class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-gray-700">Direction</label>
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300"
+            >Direction</label
+          >
           <Select
             v-model="newRelationDirection"
             :options="directionOptions"
@@ -318,7 +336,9 @@
         </div>
 
         <div v-if="newRelationTypeId" class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-gray-700">Item lié</label>
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300"
+            >Item lié</label
+          >
           <Select
             v-model="newRelationTargetItemId"
             :options="searchedItems"
@@ -329,7 +349,17 @@
             @filter="onItemFilter"
             :loading="searchingItems"
             placeholder="Sélectionner un item…"
-          />
+          >
+            <template #option="{ option }">
+              <div class="flex items-center gap-2">
+                <Tag
+                  :value="option.item_type?.name ?? '?'"
+                  class="text-[10px]"
+                />
+                <span>{{ option._label }}</span>
+              </div>
+            </template>
+          </Select>
         </div>
 
         <div
@@ -338,7 +368,8 @@
             Object.keys(newRelationSchema.properties ?? {}).length > 0
           "
         >
-          <label class="text-sm font-medium text-gray-700 mb-2 block"
+          <label
+            class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block"
             >Attributs</label
           >
           <DynamicForm
@@ -369,7 +400,9 @@
       :style="{ width: '500px' }"
     >
       <div v-if="editingRelation" class="flex flex-col gap-4">
-        <div class="flex items-center gap-2 text-sm text-gray-500">
+        <div
+          class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
+        >
           <Tag
             :value="editingRelation.relation_type?.name ?? '?'"
             class="text-xs"
@@ -383,7 +416,8 @@
             Object.keys(editRelationSchema.properties ?? {}).length > 0
           "
         >
-          <label class="text-sm font-medium text-gray-700 mb-2 block"
+          <label
+            class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block"
             >Attributs</label
           >
           <DynamicForm
@@ -392,7 +426,7 @@
             @update:modelValue="editRelationAttrs = $event"
           />
         </div>
-        <div v-else class="text-sm text-gray-400 italic">
+        <div v-else class="text-sm text-gray-400 dark:text-gray-500 italic">
           Ce type de relation n'a pas d'attributs modifiables.
         </div>
       </div>
@@ -865,21 +899,32 @@ async function loadCandidateItems(search: string) {
     newRelationDirection.value === "source"
       ? rt.target_item_type_ids
       : rt.source_item_type_ids;
+  if (!linkedTypeIds?.length) return;
   searchingItems.value = true;
   try {
-    // load items for each linked type
-    const results: Item[] = [];
-    for (const tid of linkedTypeIds ?? []) {
-      const resp = await itemApi.list({
-        item_type_id: tid,
-        search: search || undefined,
-        per_page: 50,
-      });
-      results.push(...resp.data);
-    }
-    // exclude current item
+    // fetch all types in parallel and flatten results
+    const responses = await Promise.all(
+      linkedTypeIds.map((tid) =>
+        itemApi.list({
+          item_type_id: tid,
+          search: search || undefined,
+          per_page: 50,
+        }),
+      ),
+    );
+    const results = responses.flatMap((resp) => resp.data ?? []);
+    // exclude current item + items already linked by this relation type in this direction
+    const alreadyLinkedIds = new Set(
+      relations.value
+        .filter((r) => r.relation_type_id === newRelationTypeId.value)
+        .map((r) =>
+          newRelationDirection.value === "source"
+            ? r.target_item_id
+            : r.source_item_id,
+        ),
+    );
     searchedItems.value = results
-      .filter((i) => i.id !== item.value!.id)
+      .filter((i) => i.id !== item.value!.id && !alreadyLinkedIds.has(i.id))
       .map((i) => ({ ...i, _label: computeItemLabel(i) }));
   } finally {
     searchingItems.value = false;
@@ -902,7 +947,7 @@ function computeItemLabel(i: Item): string {
     }
     return String(val);
   }
-  return `${i.item_type?.name ?? "Item"} – ${i.id.slice(0, 8)}`;
+  return i.id.slice(0, 8);
 }
 
 async function openCreateRelation() {

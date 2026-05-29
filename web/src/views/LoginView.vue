@@ -1,13 +1,21 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-100">
-    <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-sm">
-      <h1 class="text-2xl font-bold text-center text-indigo-600 mb-6">
+  <div
+    class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900"
+  >
+    <div
+      class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 w-full max-w-sm"
+    >
+      <h1
+        class="text-2xl font-bold text-center text-indigo-600 dark:text-indigo-400 mb-6"
+      >
         📦 Collectionnard
       </h1>
 
       <form @submit.prevent="handleLogin" class="flex flex-col gap-4">
         <div class="flex flex-col gap-1">
-          <label for="username" class="text-sm font-medium text-gray-700"
+          <label
+            for="username"
+            class="text-sm font-medium text-gray-700 dark:text-gray-300"
             >Utilisateur</label
           >
           <InputText
@@ -20,7 +28,9 @@
         </div>
 
         <div class="flex flex-col gap-1">
-          <label for="password" class="text-sm font-medium text-gray-700"
+          <label
+            for="password"
+            class="text-sm font-medium text-gray-700 dark:text-gray-300"
             >Mot de passe</label
           >
           <Password

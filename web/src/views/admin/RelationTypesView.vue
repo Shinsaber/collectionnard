@@ -1,7 +1,9 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-800">Types de relations</h1>
+      <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
+        Types de relations
+      </h1>
       <Button label="Nouveau type" icon="pi pi-plus" @click="openCreate" />
     </div>
 
@@ -26,7 +28,9 @@
                 .map((t: ItemType) => t.name)
                 .join(", ") || "?"
             }}
-            <i class="pi pi-arrow-right mx-1 text-gray-400"></i>
+            <i
+              class="pi pi-arrow-right mx-1 text-gray-400 dark:text-gray-500"
+            ></i>
             {{
               (row.target_item_types ?? [])
                 .map((t: ItemType) => t.name)

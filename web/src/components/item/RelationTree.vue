@@ -7,13 +7,15 @@
         class="flex items-center gap-2 mt-2 first:mt-0 mb-0.5 px-2"
       >
         <Tag :value="rel.relation_type?.name ?? '?'" class="text-[10px]" />
-        <span class="text-xs text-gray-400">({{ typeCount(rel.relation_type_id) }})</span>
-        <div class="flex-1 border-b border-gray-100"></div>
+        <span class="text-xs text-gray-400 dark:text-gray-500"
+          >({{ typeCount(rel.relation_type_id) }})</span
+        >
+        <div class="flex-1 border-b border-gray-100 dark:border-gray-700"></div>
       </div>
 
       <div class="flex flex-col">
         <div
-          class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 group/rel transition-colors"
+          class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 group/rel transition-colors"
         >
           <!-- Direction icon (SVG) -->
           <svg
@@ -46,7 +48,7 @@
           <!-- Order badge -->
           <span
             v-if="orderVal(rel) != null"
-            class="bg-gray-200 text-gray-600 text-[11px] font-semibold font-mono rounded px-1.5 py-0.5 shrink-0"
+            class="bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 text-[11px] font-semibold font-mono rounded px-1.5 py-0.5 shrink-0"
             title="Ordre"
           >
             #{{ orderVal(rel) }}
@@ -55,7 +57,7 @@
           <!-- Linked item label (clickable) -->
           <router-link
             :to="`/items/${linkedId(rel)}`"
-            class="text-indigo-600 hover:underline font-medium text-sm"
+            class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium text-sm"
           >
             {{ linkedLabel(rel) }}
           </router-link>
@@ -65,7 +67,7 @@
             <span
               v-for="(val, key) in displayAttrs(rel)"
               :key="String(key)"
-              class="bg-gray-100 text-gray-600 text-[11px] rounded-full px-2 py-0.5"
+              class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[11px] rounded-full px-2 py-0.5"
             >
               {{ attrLabel(rel, String(key)) }}: {{ displayValue(val) }}
             </span>
@@ -110,14 +112,17 @@
         <!-- Sub-relations (recursive) -->
         <div
           v-if="expanded.has(rel.id)"
-          class="ml-6 pl-3 border-l-2 border-gray-200"
+          class="ml-6 pl-3 border-l-2 border-gray-200 dark:border-gray-600"
         >
-          <div v-if="loading.has(rel.id)" class="py-2 text-xs text-gray-400">
+          <div
+            v-if="loading.has(rel.id)"
+            class="py-2 text-xs text-gray-400 dark:text-gray-500"
+          >
             <i class="pi pi-spin pi-spinner mr-1"></i> Chargement…
           </div>
           <div
             v-else-if="!children[rel.id]?.length"
-            class="py-2 text-xs text-gray-400 italic"
+            class="py-2 text-xs text-gray-400 dark:text-gray-500 italic"
           >
             Aucune sous-relation sortante.
           </div>

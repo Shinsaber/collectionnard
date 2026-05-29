@@ -19,7 +19,7 @@
           @change="form.attributes = {}"
         />
       </div>
-      <div v-else class="text-sm text-gray-500">
+      <div v-else class="text-sm text-gray-500 dark:text-gray-400">
         Type : <strong>{{ item.item_type?.name }}</strong>
       </div>
 

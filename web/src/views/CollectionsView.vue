@@ -1,7 +1,9 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-800">Mes collections</h1>
+      <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
+        Mes collections
+      </h1>
       <Button
         label="Nouvelle collection"
         icon="pi pi-plus"
@@ -31,21 +33,26 @@
       <div
         v-for="col in pag.data.value"
         :key="col.id"
-        class="bg-white rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer p-5"
+        class="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer p-5"
         @click="router.push(`/collections/${col.id}`)"
       >
         <div class="flex items-center justify-between mb-2">
-          <h3 class="font-semibold text-gray-800">{{ col.name }}</h3>
+          <h3 class="font-semibold text-gray-800 dark:text-gray-100">
+            {{ col.name }}
+          </h3>
           <Tag
             :value="col.collection_type?.name ?? '?'"
             severity="info"
             class="text-xs"
           />
         </div>
-        <p v-if="col.description" class="text-sm text-gray-500 mb-3">
+        <p
+          v-if="col.description"
+          class="text-sm text-gray-500 dark:text-gray-400 mb-3"
+        >
           {{ col.description }}
         </p>
-        <div class="text-sm text-gray-400">
+        <div class="text-sm text-gray-400 dark:text-gray-500">
           <i class="pi pi-box mr-1"></i> {{ col.item_count }} items
         </div>
         <div class="flex gap-1 mt-3 justify-end" @click.stop>
@@ -68,7 +75,7 @@
 
     <div
       v-if="!pag.loading.value && pag.data.value.length === 0"
-      class="text-center text-gray-400 py-12"
+      class="text-center text-gray-400 dark:text-gray-500 py-12"
     >
       <i class="pi pi-bookmark text-4xl mb-2"></i>
       <p>Aucune collection. Créez-en une pour commencer !</p>

@@ -2,10 +2,14 @@
   <div>
     <div class="flex items-center gap-3 mb-4">
       <Button icon="pi pi-arrow-left" text @click="router.back()" />
-      <h1 class="text-2xl font-bold text-gray-800">Graphe de relations</h1>
+      <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
+        Graphe de relations
+      </h1>
       <div class="flex-1"></div>
       <div class="flex items-center gap-2">
-        <label class="text-sm text-gray-600">Profondeur :</label>
+        <label class="text-sm text-gray-600 dark:text-gray-400"
+          >Profondeur :</label
+        >
         <InputNumber
           v-model="maxDepth"
           :min="1"
@@ -22,15 +26,22 @@
       <ProgressSpinner />
     </div>
 
-    <div v-else class="bg-white rounded-lg shadow" style="height: 600px">
+    <div
+      v-else
+      class="bg-white dark:bg-gray-800 rounded-lg shadow"
+      style="height: 600px"
+    >
       <div ref="cyContainer" class="w-full h-full"></div>
     </div>
 
     <!-- Node info panel -->
-    <div v-if="selectedNode" class="mt-4 bg-white rounded-lg shadow p-4">
+    <div
+      v-if="selectedNode"
+      class="mt-4 bg-white dark:bg-gray-800 rounded-lg shadow p-4"
+    >
       <div class="flex items-center gap-2 mb-2">
         <Tag :value="selectedNode.type" severity="info" />
-        <span class="font-semibold text-gray-800">{{
+        <span class="font-semibold text-gray-800 dark:text-gray-100">{{
           selectedNode.label
         }}</span>
         <Button
@@ -43,7 +54,8 @@
       </div>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
         <div v-for="(value, key) in selectedNode.attributes" :key="key">
-          <span class="text-gray-400">{{ key }}:</span> {{ value }}
+          <span class="text-gray-400 dark:text-gray-500">{{ key }}:</span>
+          <span class="dark:text-gray-200">{{ value }}</span>
         </div>
       </div>
     </div>

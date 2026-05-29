@@ -1,7 +1,9 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-800">Types d'items</h1>
+      <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
+        Types d'items
+      </h1>
       <Button label="Nouveau type" icon="pi pi-plus" @click="openCreate" />
     </div>
 
@@ -20,7 +22,7 @@
       <Column field="description" header="Description" />
       <Column header="Champs schema">
         <template #body="{ data: row }">
-          <div class="text-xs text-gray-500">
+          <div class="text-xs text-gray-500 dark:text-gray-400">
             {{ schemaFieldNames(row.attributes_schema) }}
           </div>
         </template>
