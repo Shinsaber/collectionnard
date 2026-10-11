@@ -124,6 +124,8 @@ migration déjà appliquée.
   (`LOG_FORMAT=text` pour du lisible, `LOG_LEVEL=debug|info|warn|error`).
 - Pour accéder à PostgreSQL depuis l'hôte : `docker compose exec postgres psql -U colec colec`
   (ou publier le port dans un `docker-compose.override.yml` local, jamais commité).
+- Si le build de `web` échoue sur « Cannot find native binding » (rolldown / Tailwind), une dépendance
+  optionnelle npm n'a pas été téléchargée dans une couche mise en cache : `docker compose build --no-cache web`.
 
 ---
 

@@ -2,7 +2,12 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+# Les binaires natifs (rolldown, @tailwindcss/oxide, lightningcss) sont des dépendances optionnelles :
+# npm ignore silencieusement un téléchargement raté. On vérifie donc leur présence tout de suite,
+# pour échouer ici avec un message clair plutôt qu'au `vite build`. Remède : `docker compose build --no-cache web`.
+RUN npm ci --no-audit --no-fund \
+ && node --input-type=module -e "await import('rolldown'); await import('@tailwindcss/oxide'); await import('lightningcss')" \
+ || { echo "Binaire natif manquant (dépendance optionnelle npm non téléchargée) : relancer le build avec --no-cache"; exit 1; }
 COPY . .
 RUN npm run build
 
