@@ -1133,8 +1133,7 @@ components:
       description: |
         Champ de tri. Préfixer par `-` pour un tri descendant.
         Valeurs acceptées : `created_at`, `updated_at` (défaut `-created_at`).
-        Toute autre valeur renvoie 400. Le tri par attribut JSONB (`attributes.<champ>`)
-        arrive avec la recherche avancée (Phase 2).
+        Toute autre valeur renvoie 400. `GET /items` accepte en plus `relevance` et `attr.<clé>`.
         Les champs de tri disponibles dépendent du type d'objet.
       schema:
         type: string
@@ -2034,40 +2033,101 @@ paths:
       description: |
         Retourne une liste paginée d'items du catalogue.
 
-        **Recherche et filtres disponibles :**
-        - `item_type_id` : filtrer par type (ex: uniquement les Séries)
-        - `search` : recherche textuelle sur tous les champs texte des attributs (ILIKE)
-        - `tag` : filtrer par tag (nom exact, insensible à la casse)
+        **Recherche plein texte** (`search`) : porte sur toutes les chaînes et tous les nombres des
+        attributs (objets i18n-text compris, toutes langues), hors URLs d'images. Chaque mot est
+        cherché en préfixe (`break` trouve « Breaking »), tous les mots sont requis, casse et
+        accents sont ignorés (`integrale` trouve « Intégrale »). La ponctuation sépare les mots.
+        Index : colonne générée `search_tsv` + GIN (migration 003).
 
-        **Tri :** `sort=created_at|updated_at`, préfixe `-` pour descendant (défaut `-created_at`).
+        **Filtres par attribut** (`attr.<clé>[.<opérateur>]`) — exigent `item_type_id` : la clé doit
+        exister dans le JSON Schema du type et l'opérateur convenir à son type, sinon 400.
 
-        Le filtre par attribut JSONB (`attributes[champ]=valeur`, index GIN) et le tri par attribut
-        font partie de la recherche avancée (Phase 2) : non disponibles dans cette version.
+        | Type de la propriété                  | Paramètres acceptés                                        |
+        | ------------------------------------- | ---------------------------------------------------------- |
+        | `string` (avec ou sans `enum`)        | `attr.k=v` (égalité), `attr.k.contains=v` (sous-chaîne)    |
+        | `string` `format: date` / `date-time` | `attr.k=v`, `attr.k.gte=v`, `attr.k.lte=v` (ISO 8601)      |
+        | `integer`, `number`                   | `attr.k=v`, `attr.k.gte=v`, `attr.k.lte=v`                 |
+        | `boolean`                             | `attr.k=true` / `attr.k=false`                             |
+        | `array` de scalaires                  | `attr.k=v` : le tableau contient `v`                       |
+        | `object` `x-widget: i18n-text`        | `attr.k.contains=v` : dans l'une quelconque des langues    |
+
+        Une égalité répétée vaut OU (`attr.type=tv&attr.type=cable`) ; les filtres se combinent en ET.
+        `contains` ignore casse et accents et prend la valeur littéralement (`%`, `_` ne sont pas des
+        jokers). Une valeur vide est ignorée. Au plus 20 valeurs de filtre, 200 caractères chacune.
+        L'égalité utilise l'index GIN sur `attributes` (`@>`).
+
+        **Relations** : `related_to=<uuid>` ne garde que les items liés à cet item (dans un sens ou
+        l'autre), éventuellement via `relation_type_id` seulement.
+
+        **Tri** (`sort`, préfixe `-` pour descendant) : `created_at`, `updated_at`, `relevance`
+        (pertinence de `search`), ou `attr.<clé>` (exige `item_type_id` ; propriétés scalaires
+        uniquement, ordre numérique pour `integer` / `number`, valeurs absentes en dernier).
+        Défaut : `-relevance` si `search` est fourni, sinon `-created_at`.
       operationId: listItems
       parameters:
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/per_page"
-        - $ref: "#/components/parameters/sort"
+        - name: sort
+          in: query
+          description: |
+            `created_at`, `updated_at`, `relevance` ou `attr.<clé>`, préfixe `-` pour descendant.
+            Toute autre valeur renvoie 400.
+          schema:
+            type: string
+          examples:
+            recent: { value: "-created_at" }
+            byYear: { value: "-attr.start_year" }
         - name: item_type_id
           in: query
-          description: Filtrer par type d'item (UUID du ItemType).
+          description: Filtrer par type d'item (UUID du ItemType). Requis par `attr.*` et `sort=attr.*`.
           schema:
             type: string
             format: uuid
         - name: search
           in: query
           description: |
-            Recherche textuelle (ILIKE) sur les attributs texte de l'item.
-            Recherche dans tous les champs de type string.
-            Exemple : `search=breaking` trouvera "Breaking Bad".
+            Recherche plein texte dans les attributs (préfixes, tous les mots requis, sans casse ni
+            accents). Exemple : `search=breaking ba` trouve « Breaking Bad ». 200 caractères au plus.
           schema:
             type: string
+            maxLength: 200
         - name: tag
           in: query
           description: Filtrer par tag (nom exact, insensible à la casse).
           schema:
             type: string
+            maxLength: 200
+        - name: related_to
+          in: query
+          description: Ne garder que les items liés à cet item (source ou cible d'une relation).
+          schema:
+            type: string
+            format: uuid
+        - name: relation_type_id
+          in: query
+          description: Avec `related_to`, ne considérer que les relations de ce type (400 sans `related_to`).
+          schema:
+            type: string
+            format: uuid
+        - name: attr
+          in: query
+          description: |
+            Filtres par attribut, un paramètre par condition : `attr.<clé>` (égalité, répétable = OU),
+            `attr.<clé>.gte`, `attr.<clé>.lte`, `attr.<clé>.contains`. Voir la description de
+            l'opération pour les opérateurs acceptés selon le type de la propriété.
+            Exemple : `attr.start_year.gte=2008&attr.type=tv&attr.type=cable`.
+          style: form
+          explode: true
+          schema:
+            type: object
+            additionalProperties:
+              type: string
+            example:
+              attr.start_year.gte: "2008"
+              attr.title.contains: "bad"
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "500":

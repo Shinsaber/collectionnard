@@ -355,7 +355,7 @@ Lots de `docs/audit/03-feuille-de-route.md`, branche `remise-a-niveau` :
 ### Phase 2 : Enrichissement
 
 - [x] Couverture multilingue : interface entière traduite (vue-i18n, fr/en, langues ajoutables via un registre), locale Element Plus, noms de types (`x-title` / `x-description`), valeurs d'enum (`x-enum-labels`), erreurs API traduites par code (messages serveur en anglais), langue du navigateur détectée
-- [ ] Recherche avancée : filtres `attributes[champ]` (index GIN `@>`), tri par attribut (lot 14)
+- [x] Recherche avancée (lot 14) : plein texte indexé (`search_tsv`, préfixes, sans accents), filtres par attribut pilotés par le schéma (`attr.<clé>[.gte|lte|contains]`, égalité via l'index GIN `@>`), tri par attribut, filtre `related_to`, critères dans l'URL du catalogue
 - [ ] Statistiques et visualisation graphiques
 - [ ] Import/Export CSV/JSON (lot 12)
 - [ ] Domaine BD / Manga : seed `les.collection.md`, rôles multiples (lot 13)

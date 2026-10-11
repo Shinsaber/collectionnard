@@ -254,6 +254,18 @@ export interface PaginationParams {
   per_page?: number;
 }
 
+// ---------- Item search (GET /items) ----------
+export type ItemListParams = PaginationParams & {
+  item_type_id?: string;
+  search?: string;
+  tag?: string;
+  sort?: string;
+  related_to?: string;
+  relation_type_id?: string;
+  /** Filtres d'attributs : `attr.<clé>`, `attr.<clé>.gte|lte|contains`. */
+  [attr: `attr.${string}`]: string | string[] | undefined;
+};
+
 // ---------- API Error ----------
 export interface APIError {
   error: string;

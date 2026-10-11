@@ -16,6 +16,7 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 | `validator`  | `ValidateAttributes(schema, data)` + `FormatValidationError`                                         |
 | `testutil`   | `MockStore` (champs `XxxFn`), `NewTestServer`, `AdminToken`/`UserToken`, `AuthHeader`                |
 | `label`      | `Render(schema, attrs, lang)` : libellé d'un item via `x-label` (pendant de `web/src/lib/schema.ts`) |
+| `itemquery`  | Recherche avancée de `GET /items` : filtres `attr.<clé>[.<op>]`, tri `attr.<clé>`, requête plein texte — validés contre le schéma du type (pendant de `web/src/lib/itemSearch.ts`) |
 | `dbmigrate`  | Migrations tern (`db/migrations`) + seed : sous-commandes `colec-server migrate` / `seed` (`cmd.go`) |
 
 ## Erreurs et réponses
@@ -31,6 +32,9 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 - Paramètres de requête : `parsePagination` borne `per_page` à 100 ; `parseOptionalUUID(w, r, "param")`
   répond 400 sur un UUID invalide ; `GET /items/{id}/graph` limite `max_depth` (5, 10 pour admin),
   `relation_type_ids` (20) et le nombre de nœuds (`GRAPH_MAX_NODES`).
+- `GET /items` : filtres et tri par attribut exigent `item_type_id` et passent par `itemquery` (clé présente dans le
+  schéma, opérateur adapté au type, valeurs typées) ; le store n'injecte jamais une clé dans le SQL (`attributes -> $n::text`).
+  Plein texte : colonne générée `search_tsv` + `f_unaccent` (migration 003, extension `unaccent`).
 - Les listes renvoient `model.PaginatedResponse` (`data`, `total`, …).
 - Lire un corps JSON avec `decodeJSON(w, r, &in)` + `respondDecodeError(w, err)` (limite 1 Mio → 413).
 - Logs : `log/slog` (JSON par défaut, `LOG_FORMAT=text` en dev) ; `respondInternal(w, r, err, msg)` et

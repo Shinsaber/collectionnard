@@ -12,47 +12,23 @@ import (
 )
 
 func (s *PgStore) ListItems(ctx context.Context, pg model.Pagination, f ItemFilters) ([]model.Item, int, error) {
-	where := []string{"1=1"}
-	args := []any{}
-	argN := 1
-
-	if f.ItemTypeID != nil {
-		where = append(where, fmt.Sprintf("i.item_type_id = $%d", argN))
-		args = append(args, *f.ItemTypeID)
-		argN++
+	q, err := buildItemQuery(f)
+	if err != nil {
+		return nil, 0, err
 	}
-	if f.Search != "" {
-		where = append(where, fmt.Sprintf(`i.attributes::text ILIKE $%d ESCAPE '\'`, argN))
-		args = append(args, "%"+escapeLike(f.Search)+"%")
-		argN++
-	}
-	if f.Tag != "" {
-		// Case-insensitive exact match without lower() on the column (index-friendly, literal pattern).
-		where = append(where, fmt.Sprintf(
-			`EXISTS (SELECT 1 FROM item_tags it2 JOIN tags t ON t.id = it2.tag_id WHERE it2.item_id = i.id AND t.name ILIKE $%d ESCAPE '\')`, argN))
-		args = append(args, escapeLike(f.Tag))
-		argN++
-	}
-
-	whereClause := strings.Join(where, " AND ")
+	whereClause := q.whereClause()
 
 	var total int
-	countArgs := make([]any, len(args))
-	copy(countArgs, args)
-	err := s.pool.QueryRow(ctx,
+	err = s.pool.QueryRow(ctx,
 		fmt.Sprintf(`SELECT count(*) FROM items i WHERE %s`, whereClause),
-		countArgs...,
+		q.args...,
 	).Scan(&total)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	sortClause := buildSortClause(f.Sort, "i.created_at DESC", map[string]string{
-		"created_at": "i.created_at",
-		"updated_at": "i.updated_at",
-	})
-
-	args = append(args, pg.PerPage, pg.Offset())
+	sortClause := q.orderBy(f) // may add the sort key to q.args
+	limit, offset := q.arg(pg.PerPage), q.arg(pg.Offset())
 
 	query := fmt.Sprintf(`
 		SELECT i.id, i.item_type_id, i.attributes, i.created_at, i.updated_at,
@@ -61,9 +37,9 @@ func (s *PgStore) ListItems(ctx context.Context, pg model.Pagination, f ItemFilt
 		JOIN item_types it ON it.id = i.item_type_id
 		WHERE %s
 		ORDER BY %s
-		LIMIT $%d OFFSET $%d`, whereClause, sortClause, argN, argN+1)
+		LIMIT %s OFFSET %s`, whereClause, sortClause, limit, offset)
 
-	rows, err := s.pool.Query(ctx, query, args...)
+	rows, err := s.pool.Query(ctx, query, q.args...)
 	if err != nil {
 		return nil, 0, err
 	}

@@ -37,6 +37,7 @@ import type {
   Tag,
   PaginatedResponse,
   PaginationParams,
+  ItemListParams,
   UploadResponse,
 } from "./types";
 import { i18n } from "@/i18n";
@@ -235,15 +236,15 @@ export const collectionTypeApi = {
 
 // ── Items ─────────────────────────────────────────────────────────────
 export const itemApi = {
-  list: (
-    params?: PaginationParams & {
-      item_type_id?: string;
-      search?: string;
-      tag?: string;
-      sort?: string;
-    },
-  ) =>
-    http.get<PaginatedResponse<Item>>("/items", { params }).then((r) => r.data),
+  /** Recherche avancée : `attr.<clé>[.<op>]`, `related_to`, `sort=attr.<clé>` (voir lib/itemSearch). */
+  list: (params?: ItemListParams) =>
+    http
+      .get<PaginatedResponse<Item>>("/items", {
+        params,
+        // Filtres répétés en `attr.k=a&attr.k=b` (et non `attr.k[]=a`), comme l'attend l'API.
+        paramsSerializer: { indexes: null },
+      })
+      .then((r) => r.data),
   get: (id: string) => http.get<Item>(`/items/${id}`).then((r) => r.data),
   create: (data: ItemCreate) =>
     http.post<Item>("/items", data).then((r) => r.data),

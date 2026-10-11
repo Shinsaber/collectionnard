@@ -12,6 +12,19 @@
         <span class="text-xs text-gray-400 dark:text-gray-500"
           >({{ typeCount(rel.relation_type_id) }})</span
         >
+        <router-link
+          :to="{
+            path: '/items',
+            query: {
+              related_to: contextItemId,
+              relation_type_id: rel.relation_type_id,
+            },
+          }"
+          class="text-xs text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+          :title="t('items.search.relatedItems')"
+          :aria-label="t('items.search.relatedItems')"
+          ><i class="pi pi-list" aria-hidden="true"></i
+        ></router-link>
         <div class="flex-1 border-b border-gray-100 dark:border-gray-700"></div>
       </div>
 

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shinsaber/colec/internal/itemquery"
 	"github.com/shinsaber/colec/internal/model"
 )
 
@@ -14,11 +15,19 @@ var (
 	ErrConflict = errors.New("conflict")
 )
 
+// ItemFilters are the criteria of ListItems. Attrs and SortAttr come from the
+// itemquery package, already validated against the schema of ItemTypeID.
 type ItemFilters struct {
 	ItemTypeID *uuid.UUID
-	Search     string
+	Search     string // full text (prefix terms, accent- and case-insensitive)
 	Tag        string
-	Sort       string
+	Sort       string // created_at | updated_at | relevance, optional "-" prefix
+	SortAttr   *itemquery.Sort
+	Attrs      []itemquery.Filter
+	// RelatedTo keeps the items linked to this item, in either direction,
+	// optionally through RelationTypeID only.
+	RelatedTo      *uuid.UUID
+	RelationTypeID *uuid.UUID
 }
 
 // Store defines all data operations.

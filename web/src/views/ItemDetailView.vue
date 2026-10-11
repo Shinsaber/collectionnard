@@ -33,6 +33,13 @@
         <i class="pi pi-plus mr-2" aria-hidden="true"></i>
         {{ t("items.detail.addToCollection") }}
       </ElButton>
+      <ElButton
+        plain
+        @click="router.push({ path: '/items', query: { related_to: item.id } })"
+      >
+        <i class="pi pi-list mr-2" aria-hidden="true"></i>
+        {{ t("items.search.relatedItems") }}
+      </ElButton>
       <ElButton plain @click="router.push(`/items/${item.id}/graph`)">
         <i class="pi pi-sitemap mr-2" aria-hidden="true"></i>
         {{ t("items.detail.graph") }}

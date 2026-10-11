@@ -20,6 +20,7 @@ Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
 | `src/composables/`                    | `useTheme`, `useLang`, `useNotify` (ElMessage), `useConfirmDialog` (ElMessageBox → promesse booléenne), `usePagination`                   |
 | `components/common/AppSpinner.vue`    | Indicateur de chargement                                                                                                                    |
 | `src/lib/schema.ts`                   | Lecture des schémas et extensions x-* (pendant de `server/internal/label`)                                                                  |
+| `src/lib/itemSearch.ts`               | Recherche du catalogue : champs filtrables / triables d'un schéma, état ↔ query (URL = paramètres de `GET /items`) |
 | `src/i18n/`                          | vue-i18n : registre des langues (`langs.ts`), instance + locales Element Plus (`index.ts`), catalogues `locales/<lang>/<ns>.ts` (fr = référence typée) |
 
 ## Règles

@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -21,6 +22,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/shinsaber/colec/internal/dbmigrate"
+	"github.com/shinsaber/colec/internal/itemquery"
 	"github.com/shinsaber/colec/internal/model"
 	"github.com/shinsaber/colec/internal/store"
 )
@@ -212,15 +214,10 @@ func TestListItems_Filters(t *testing.T) {
 		t.Errorf("search: total %d, err %v", total, err)
 	}
 
-	// Wildcards are literal: no attribute contains a percent sign.
+	// A search without any letter or digit carries no term: no filter.
 	_, total, err = s.ListItems(ctx, pg, store.ItemFilters{Search: "%"})
-	if err != nil || total != 0 {
-		t.Errorf("search %%: total %d (wildcard not escaped?), err %v", total, err)
-	}
-	// Unescaped, "Breaking%Bad" would match "Breaking Bad" through the % wildcard.
-	_, total, err = s.ListItems(ctx, pg, store.ItemFilters{Search: "Breaking%Bad"})
-	if err != nil || total != 0 {
-		t.Errorf("search Breaking%%Bad: total %d (wildcard not escaped?), err %v", total, err)
+	if err != nil || total != 8 {
+		t.Errorf("search %%: total %d, err %v", total, err)
 	}
 
 	tagged, total, err := s.ListItems(ctx, pg, store.ItemFilters{Tag: "DRAMA"})
@@ -456,5 +453,112 @@ func TestStatsAndTags(t *testing.T) {
 	tags, err = s.ListTags(ctx, "%")
 	if err != nil || len(tags) != 0 {
 		t.Errorf("tag wildcard must be literal: %v, err %v", tags, err)
+	}
+}
+
+// --- Advanced search (lot 14) ---
+
+// ids lists the ids of a page, in order.
+func ids(items []model.Item) []uuid.UUID {
+	out := make([]uuid.UUID, len(items))
+	for i := range items {
+		out[i] = items[i].ID
+	}
+	return out
+}
+
+func TestListItems_FullText(t *testing.T) {
+	pg := model.Pagination{Page: 1, PerPage: 20}
+	cases := []struct {
+		search string
+		want   int
+	}{
+		{"break", 2},          // prefix
+		{"BREAKING bad", 2},   // case, all terms required
+		{"integrale", 1},      // accents ignored (« Intégrale »)
+		{"chimie", 1},         // i18n-text, French
+		{"chemistry", 1},      // i18n-text, English
+		{"2008", 3},           // numbers: series, broadcast, season 1
+		{"Breaking%Bad", 2},   // punctuation separates terms, never a wildcard
+		{"uploads", 0},        // image URLs are not indexed
+		{"breaking pilot", 0}, // no item has both terms
+	}
+	for _, c := range cases {
+		_, total, err := s.ListItems(ctx, pg, store.ItemFilters{Search: c.search})
+		if err != nil || total != c.want {
+			t.Errorf("search %q: total %d, want %d (err %v)", c.search, total, c.want, err)
+		}
+	}
+	// Relevance first by default: the series title matches better than the DVD's.
+	page, _, err := s.ListItems(ctx, pg, store.ItemFilters{Search: "breaking bad"})
+	if err != nil || len(page) != 2 {
+		t.Fatalf("relevance: %v %v", ids(page), err)
+	}
+}
+
+func TestListItems_AttributeFilters(t *testing.T) {
+	pg := model.Pagination{Page: 1, PerPage: 20}
+	typeBroadcast := uuid.MustParse("b0000000-0000-0000-0000-000000000002")
+	itemSaison2 := uuid.MustParse("e0000000-0000-0000-0000-000000000004")
+	f := func(key string, kind itemquery.Kind, op itemquery.Op, values ...any) itemquery.Filter {
+		return itemquery.Filter{Key: key, Kind: kind, Op: op, Values: values}
+	}
+	cases := []struct {
+		name    string
+		filters store.ItemFilters
+		want    []uuid.UUID
+	}{
+		{"enum equality (OR)", store.ItemFilters{ItemTypeID: &typeBroadcast,
+			Attrs: []itemquery.Filter{f("type", itemquery.KindString, itemquery.OpEq, "tv", "cable")}},
+			[]uuid.UUID{itemDiffusion}},
+		{"enum equality, no match", store.ItemFilters{ItemTypeID: &typeBroadcast,
+			Attrs: []itemquery.Filter{f("type", itemquery.KindString, itemquery.OpEq, "web")}}, nil},
+		{"integer range", store.ItemFilters{ItemTypeID: &typeSaison,
+			Attrs: []itemquery.Filter{f("year", itemquery.KindInteger, itemquery.OpGte, int64(2009))}},
+			[]uuid.UUID{itemSaison2}},
+		{"integer equality", store.ItemFilters{ItemTypeID: &typeEpisode,
+			Attrs: []itemquery.Filter{f("duration", itemquery.KindInteger, itemquery.OpEq, int64(58))}},
+			[]uuid.UUID{itemPilot}},
+		{"text contains, accents ignored", store.ItemFilters{ItemTypeID: &typeSaison,
+			Attrs: []itemquery.Filter{f("name", itemquery.KindString, itemquery.OpContains, "SAISON 1")}},
+			[]uuid.UUID{itemSaison1}},
+		{"contains is literal", store.ItemFilters{ItemTypeID: &typeSaison,
+			Attrs: []itemquery.Filter{f("name", itemquery.KindString, itemquery.OpContains, "%")}}, nil},
+		{"i18n contains, any language", store.ItemFilters{ItemTypeID: &typeEpisode,
+			Attrs: []itemquery.Filter{f("synopsis", itemquery.KindI18n, itemquery.OpContains, "diagnosis")}},
+			[]uuid.UUID{itemPilot}},
+		{"related to the series", store.ItemFilters{RelatedTo: &itemSerie,
+			Sort: "created_at"}, []uuid.UUID{itemDiffusion, itemDVD}},
+		{"related through one relation type", store.ItemFilters{RelatedTo: &itemSerie,
+			RelationTypeID: &rtEditeEn}, []uuid.UUID{itemDVD}},
+		{"related, both directions", store.ItemFilters{RelatedTo: &itemSaison1,
+			ItemTypeID: &typeEpisode, Attrs: []itemquery.Filter{f("number", itemquery.KindInteger, itemquery.OpLte, int64(1))}},
+			[]uuid.UUID{itemPilot}},
+	}
+	for _, c := range cases {
+		page, total, err := s.ListItems(ctx, pg, c.filters)
+		if err != nil || total != len(c.want) || !reflect.DeepEqual(ids(page), append([]uuid.UUID{}, c.want...)) {
+			t.Errorf("%s: got %v (total %d), want %v, err %v", c.name, ids(page), total, c.want, err)
+		}
+	}
+}
+
+func TestListItems_AttributeSort(t *testing.T) {
+	pg := model.Pagination{Page: 1, PerPage: 20}
+	page, _, err := s.ListItems(ctx, pg, store.ItemFilters{ItemTypeID: &typeEpisode,
+		SortAttr: &itemquery.Sort{Key: "duration", Numeric: true, Desc: true}})
+	if err != nil || len(page) != 3 || page[0].ID != itemPilot {
+		t.Fatalf("numeric sort desc: %v %v", ids(page), err)
+	}
+	// Numeric, not lexicographic: 9 < 10 would fail as text; here 48 < 58 and ties by id.
+	page, _, err = s.ListItems(ctx, pg, store.ItemFilters{ItemTypeID: &typeEpisode,
+		SortAttr: &itemquery.Sort{Key: "number", Numeric: true}})
+	if err != nil || len(page) != 3 || page[0].ID != itemPilot || page[2].ID != uuid.MustParse("e0000000-0000-0000-0000-000000000012") {
+		t.Fatalf("numeric sort asc: %v %v", ids(page), err)
+	}
+	page, _, err = s.ListItems(ctx, pg, store.ItemFilters{ItemTypeID: &typeSaison,
+		SortAttr: &itemquery.Sort{Key: "name", Desc: true}})
+	if err != nil || len(page) != 2 || page[1].ID != itemSaison1 {
+		t.Fatalf("text sort desc: %v %v", ids(page), err)
 	}
 }
