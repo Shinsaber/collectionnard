@@ -144,6 +144,13 @@ import { ref, computed } from "vue";
 import Tag from "primevue/tag";
 import Button from "primevue/button";
 import { itemApi } from "@/api/client";
+import { useLang } from "@/composables/useLang";
+import {
+  displayValue as displayAttr,
+  fieldLabel,
+  itemLabel as renderItemLabel,
+  orderedKeys,
+} from "@/lib/schema";
 import type { Item, ItemRelation } from "@/api/types";
 
 const props = withDefaults(
@@ -161,6 +168,7 @@ defineEmits<{
   edit: [rel: ItemRelation];
 }>();
 
+const { lang } = useLang();
 const expanded = ref(new Set<string>());
 const children = ref<Record<string, ItemRelation[]>>({});
 const loading = ref(new Set<string>());
@@ -185,40 +193,27 @@ function linkedLabel(rel: ItemRelation): string {
 }
 
 function computeLabel(i: Item): string {
-  const attrs = i.attributes;
-  if (typeof attrs !== "object" || !attrs) return i.id.slice(0, 8);
-  const obj = attrs as Record<string, unknown>;
-  for (const key of ["titre", "nom", "name", "title", "label"]) {
-    const val = obj[key];
-    if (val == null) continue;
-    if (typeof val === "object" && !Array.isArray(val)) {
-      const loc = val as Record<string, unknown>;
-      if (typeof loc["fr"] === "string") return loc["fr"];
-      if (typeof loc["en"] === "string") return loc["en"];
-    }
-    return String(val);
-  }
-  return `${i.item_type?.name ?? "Item"} – ${i.id.slice(0, 8)}`;
+  return renderItemLabel(i, lang.value);
 }
 
 function displayValue(value: unknown): string {
-  if (value != null && typeof value === "object" && !Array.isArray(value)) {
-    const obj = value as Record<string, unknown>;
-    if (typeof obj["fr"] === "string") return obj["fr"];
-    if (typeof obj["en"] === "string") return obj["en"];
-  }
-  return String(value ?? "");
+  return displayAttr(value, lang.value);
 }
 
+// Convention : l'attribut de relation `order` (entier) sert au tri et s'affiche en badge.
+const ORDER_KEY = "order";
+
 function orderVal(rel: ItemRelation): unknown {
-  return rel.attributes?.order ?? rel.attributes?.ordre ?? null;
+  return rel.attributes?.[ORDER_KEY] ?? null;
 }
 
 function displayAttrs(rel: ItemRelation): Record<string, unknown> {
+  const schema = rel.relation_type?.attributes_schema as
+    Record<string, unknown> | undefined;
   const result: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(rel.attributes ?? {})) {
-    if (k === "order" || k === "ordre") continue;
-    result[k] = v;
+  for (const k of orderedKeys(schema, rel.attributes)) {
+    if (k === ORDER_KEY || !(k in (rel.attributes ?? {}))) continue;
+    result[k] = rel.attributes[k];
   }
   return result;
 }
@@ -226,10 +221,7 @@ function displayAttrs(rel: ItemRelation): Record<string, unknown> {
 function attrLabel(rel: ItemRelation, key: string): string {
   const schema = rel.relation_type?.attributes_schema as
     Record<string, unknown> | undefined;
-  const labels = (
-    schema?.["x-labels"] as Record<string, Record<string, string>> | undefined
-  )?.["fr"];
-  return labels?.[key] ?? key;
+  return fieldLabel(schema, key, lang.value);
 }
 
 const sortedRelations = computed(() => {

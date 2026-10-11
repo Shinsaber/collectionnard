@@ -92,14 +92,16 @@
         <!-- Attributes -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
           <div
-            v-for="(value, key) in filteredNodeAttributes"
-            :key="key"
+            v-for="attr in filteredNodeAttributes"
+            :key="attr.key"
             class="flex flex-col"
           >
             <span class="text-gray-400 dark:text-gray-500 text-xs">{{
-              key
+              attr.label
             }}</span>
-            <span class="dark:text-gray-200">{{ formatAttrValue(value) }}</span>
+            <span class="dark:text-gray-200">{{
+              formatAttrValue(attr.value)
+            }}</span>
           </div>
         </div>
       </div>
@@ -131,8 +133,17 @@ import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
 import cytoscape from "cytoscape";
 import type { Core } from "cytoscape";
-import { itemApi } from "@/api/client";
+import { itemApi, itemTypeApi, relationTypeApi } from "@/api/client";
 import { useAuthStore } from "@/stores/auth";
+import { useLang } from "@/composables/useLang";
+import {
+  defaultImage,
+  displayValue,
+  fieldLabel,
+  isImageGallery,
+  orderedKeys,
+  renderLabel,
+} from "@/lib/schema";
 import type { GraphNode, GraphEdge, GraphResponse } from "@/api/types";
 
 const props = defineProps<{ id: string }>();
@@ -143,6 +154,7 @@ const cyContainer = ref<HTMLElement | null>(null);
 const maxDepth = ref(3);
 const truncated = ref(false);
 const auth = useAuthStore();
+const { lang } = useLang();
 const loading = ref(true);
 
 // Node detail modal
@@ -173,23 +185,36 @@ function getColor(type: string): string {
   return typeColors[type]!;
 }
 
-// ── Localized label extraction ──
-function extractTitle(attrs: Record<string, unknown>): string {
-  for (const key of ["titre", "nom", "name", "title", "label"]) {
-    const val = attrs[key];
-    if (val == null) continue;
-    if (typeof val === "object" && !Array.isArray(val)) {
-      const obj = val as Record<string, string>;
-      if (typeof obj["fr"] === "string") return obj["fr"];
-      if (typeof obj["en"] === "string") return obj["en"];
-    }
-    if (typeof val === "string") return val;
-  }
-  return "";
+// ── Schémas des méta-types (par nom) pour x-label, x-labels, x-widget ──
+const itemTypeSchemas = ref<Record<string, Record<string, unknown>>>({});
+const relationTypeSchemas = ref<Record<string, Record<string, unknown>>>({});
+
+async function loadSchemas() {
+  const [its, rts] = await Promise.all([
+    itemTypeApi.list({ per_page: 100 }),
+    relationTypeApi.list({ per_page: 100 }),
+  ]);
+  itemTypeSchemas.value = Object.fromEntries(
+    its.data.map((t) => [
+      t.name,
+      t.attributes_schema as Record<string, unknown>,
+    ]),
+  );
+  relationTypeSchemas.value = Object.fromEntries(
+    rts.data.map((t) => [
+      t.name,
+      t.attributes_schema as Record<string, unknown>,
+    ]),
+  );
 }
 
+// Le serveur calcule `label` avec le x-label de l'ItemType ; repli local sinon.
 function nodeTitle(n: GraphNode): string {
-  return extractTitle(n.attributes) || n.id.slice(0, 8);
+  return (
+    n.label ||
+    renderLabel(itemTypeSchemas.value[n.type], n.attributes, lang.value) ||
+    n.id.slice(0, 8)
+  );
 }
 
 // ── SVG badge for type label inside node ──
@@ -236,45 +261,38 @@ const selectedNodeTitle = computed(() =>
   selectedNode.value ? nodeTitle(selectedNode.value) : "",
 );
 
-const selectedNodeImage = computed(() => {
-  if (!selectedNode.value) return "";
-  const attrs = selectedNode.value.attributes;
-  for (const key of Object.keys(attrs)) {
-    if (!/image/i.test(key)) continue;
-    const val = attrs[key];
-    if (typeof val === "object" && val && !Array.isArray(val)) {
-      const obj = val as Record<string, unknown>;
-      if (typeof obj.default_image === "string" && obj.default_image)
-        return obj.default_image;
-      for (const v of Object.values(obj)) {
-        if (Array.isArray(v) && typeof v[0] === "string") return v[0];
-      }
-    }
-  }
-  return "";
-});
+const selectedNodeSchema = computed(() =>
+  selectedNode.value
+    ? itemTypeSchemas.value[selectedNode.value.type]
+    : undefined,
+);
 
+const selectedNodeImage = computed(() =>
+  selectedNode.value
+    ? defaultImage(selectedNodeSchema.value, selectedNode.value.attributes)
+    : "",
+);
+
+// Attributs hors galeries d'images, dans l'ordre du schéma, libellés via x-labels.
 const filteredNodeAttributes = computed(() => {
-  if (!selectedNode.value) return {};
-  const skip = new Set(["images", "Images"]);
-  const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(selectedNode.value.attributes)) {
-    if (skip.has(k)) continue;
-    out[k] = v;
-  }
-  return out;
+  if (!selectedNode.value)
+    return [] as { key: string; label: string; value: unknown }[];
+  const schema = selectedNodeSchema.value;
+  const attrs = selectedNode.value.attributes;
+  return orderedKeys(schema, attrs)
+    .filter((k) => k in attrs && !isImageGallery(schema, k))
+    .map((k) => ({
+      key: k,
+      label: fieldLabel(schema, k, lang.value),
+      value: attrs[k],
+    }));
 });
 
 function formatAttrValue(value: unknown): string {
   if (value == null) return "—";
-  if (typeof value === "object" && !Array.isArray(value)) {
-    const obj = value as Record<string, unknown>;
-    if (typeof obj["fr"] === "string") return obj["fr"];
-    if (typeof obj["en"] === "string") return obj["en"];
-    return JSON.stringify(value);
-  }
-  if (Array.isArray(value)) return value.join(", ");
-  return String(value);
+  const s = displayValue(value, lang.value);
+  if (s === "" && typeof value === "object") return JSON.stringify(value);
+  return s || "—";
 }
 
 // ── Graph loading ──
@@ -423,6 +441,11 @@ function renderGraph(graph: GraphResponse) {
   });
 }
 
-onMounted(() => loadGraph());
+onMounted(async () => {
+  await loadSchemas().catch(() => {
+    /* sans schémas : libellés serveur et clés brutes */
+  });
+  await loadGraph();
+});
 onUnmounted(() => cy?.destroy());
 </script>

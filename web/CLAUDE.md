@@ -14,15 +14,17 @@ Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
 | `src/views/`, `views/admin/`   | Pages (admin = gestion des méta-types)                        |
 | `components/common/DynamicForm.vue`   | Formulaire généré depuis un JSON Schema           |
 | `components/common/SchemaBuilder.vue` | Éditeur visuel de JSON Schema (admin)             |
-| `src/composables/`             | `useTheme`, `usePagination`                                   |
+| `src/composables/`             | `useTheme`, `useLang`, `usePagination`                        |
+| `src/lib/schema.ts`            | Lecture des schémas et extensions x-* (pendant de `server/internal/label`) |
 
 ## Règles
 
 - Pas d'`axios` direct dans les vues/composants : ajouter une fonction dans `client.ts`.
 - Quand un modèle Go change, mettre `types.ts` à jour dans le même changement.
-- Ne jamais coder en dur un ItemType/champ métier (« Serie », « titre »…) dans une vue :
-  tout affichage d'attributs passe par le JSON Schema (`x-order`, `x-labels`, `x-widget`).
-- Libellés UI en français ; labels de champs via `x-labels` (fr/en).
+- Ne jamais coder en dur un ItemType/champ métier (« Series », « title »…) dans une vue :
+  tout affichage d'attributs passe par `src/lib/schema.ts` (`itemLabel`, `fieldLabel`, `displayValue`,
+  `orderedKeys`, `isImageGallery`, `defaultImage`) qui lit `x-label`, `x-order`, `x-labels`, `x-widget`.
+- Libellés UI en français ; langue des libellés de champs via `useLang()` (fr/en, persistée).
 - Après modification : `npm run lint && npm run format:check && npm run type-check && npm test`
   (`npm run lint:fix` et `npm run format` corrigent automatiquement). Tests unitaires : `vitest`,
   fichiers `src/**/*.test.ts` (environnement jsdom). Les composants PrimeVue se montent avec

@@ -475,6 +475,14 @@ import {
 } from "@/api/client";
 import { extractApiError } from "@/api/client";
 import { useAuthStore } from "@/stores/auth";
+import { useLang } from "@/composables/useLang";
+import {
+  displayValue as displayAttr,
+  fieldLabel,
+  isImageGallery as isGallery,
+  itemLabel as renderItemLabel,
+  orderedKeys,
+} from "@/lib/schema";
 import ItemEditDialog from "@/components/item/ItemEditDialog.vue";
 import RelationTree from "@/components/item/RelationTree.vue";
 import DynamicForm from "@/components/common/DynamicForm.vue";
@@ -491,70 +499,39 @@ const router = useRouter();
 const auth = useAuthStore();
 const confirm = useConfirm();
 const toast = useToast();
+const { lang } = useLang();
 
 const item = ref<Item | null>(null);
 const relations = ref<ItemRelation[]>([]);
 const loading = ref(true);
 const itemCollections = ref<ItemCollectionMembership[]>([]);
 
-const itemLabel = computed(() => {
-  if (!item.value) return "";
-  const attrs = item.value.attributes;
-  for (const key of ["titre", "nom", "name", "title", "label"]) {
-    const val = attrs[key];
-    if (val == null) continue;
-    if (typeof val === "object" && !Array.isArray(val)) {
-      const obj = val as Record<string, unknown>;
-      if (typeof obj["fr"] === "string") return obj["fr"];
-      if (typeof obj["en"] === "string") return obj["en"];
-    }
-    return String(val);
-  }
-  return item.value.id.slice(0, 8);
-});
+const itemSchema = computed(
+  () =>
+    item.value?.item_type?.attributes_schema as
+      Record<string, unknown> | undefined,
+);
+
+const itemLabel = computed(() =>
+  item.value ? renderItemLabel(item.value, lang.value) : "",
+);
 
 function linkedItemLabel(rel: ItemRelation): string {
   const linked =
     rel.source_item_id === item.value?.id ? rel.target_item : rel.source_item;
-  if (!linked) return "?";
-  for (const key of ["titre", "nom", "name", "title", "label"]) {
-    const val = linked.attributes?.[key];
-    if (val == null) continue;
-    if (typeof val === "object" && !Array.isArray(val)) {
-      const obj = val as Record<string, unknown>;
-      if (typeof obj["fr"] === "string") return obj["fr"];
-      if (typeof obj["en"] === "string") return obj["en"];
-    }
-    return String(val);
-  }
-  return linked.id.slice(0, 8);
+  return renderItemLabel(linked, lang.value);
 }
 
 function attrLabel(key: string): string {
-  const schema = item.value?.item_type?.attributes_schema as
-    Record<string, unknown> | undefined;
-  const labels = (
-    schema?.["x-labels"] as Record<string, Record<string, string>> | undefined
-  )?.["fr"];
-  return labels?.[key] ?? key;
+  return fieldLabel(itemSchema.value, key, lang.value);
 }
 
 function displayValue(value: unknown): string {
-  if (value != null && typeof value === "object" && !Array.isArray(value)) {
-    const obj = value as Record<string, unknown>;
-    // i18n object: show current lang, fallback to first available
-    if (typeof obj["fr"] === "string") return obj["fr"];
-    if (typeof obj["en"] === "string") return obj["en"];
-  }
-  return String(value ?? "");
+  return displayAttr(value, lang.value);
 }
 
 function isImageGallery(key: string): boolean {
-  const schema = item.value?.item_type?.attributes_schema as
-    Record<string, unknown> | undefined;
-  const props = schema?.properties as
-    Record<string, Record<string, unknown>> | undefined;
-  return props?.[key]?.["x-widget"] === "image-gallery";
+  return isGallery(itemSchema.value, key);
 }
 
 function getSchemaImageCategories(
@@ -632,17 +609,10 @@ const imageGalleryField = computed<{
 
 const orderedAttributeKeys = computed<string[]>(() => {
   if (!item.value) return [];
-  const schema = item.value.item_type?.attributes_schema as
-    Record<string, unknown> | undefined;
-  const xOrder = (schema?.["x-order"] as string[]) ?? [];
-  const allKeys = Object.keys(item.value.attributes);
-  if (xOrder.length > 0) {
-    return [
-      ...xOrder.filter((k) => k in item.value!.attributes),
-      ...allKeys.filter((k) => !xOrder.includes(k)),
-    ];
-  }
-  return allKeys;
+  // Seules les clés présentes dans les données sont affichées, dans l'ordre du schéma.
+  return orderedKeys(itemSchema.value, item.value.attributes).filter(
+    (k) => k in item.value!.attributes,
+  );
 });
 
 // ── Grouped relations ───────────────────────────────────────────────
@@ -730,10 +700,7 @@ function ctxLabel(
 ): string {
   const schema = collection.collection_type?.attributes_schema as
     Record<string, unknown> | undefined;
-  const labels = (
-    schema?.["x-labels"] as Record<string, Record<string, string>> | undefined
-  )?.["fr"];
-  return labels?.[key] ?? key;
+  return fieldLabel(schema, key, lang.value);
 }
 
 // ── Delete relation ──────────────────────────────────────────────────
@@ -929,18 +896,7 @@ function onItemFilter(event: { value: string }) {
 }
 
 function computeItemLabel(i: Item): string {
-  const attrs = i.attributes;
-  for (const key of ["titre", "nom", "name", "title", "label"]) {
-    const val = attrs[key];
-    if (val == null) continue;
-    if (typeof val === "object" && !Array.isArray(val)) {
-      const obj = val as Record<string, unknown>;
-      if (typeof obj["fr"] === "string") return obj["fr"];
-      if (typeof obj["en"] === "string") return obj["en"];
-    }
-    return String(val);
-  }
-  return i.id.slice(0, 8);
+  return renderItemLabel(i, lang.value);
 }
 
 async function openCreateRelation() {

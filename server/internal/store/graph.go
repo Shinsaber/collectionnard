@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/shinsaber/colec/internal/label"
 	"github.com/shinsaber/colec/internal/model"
 )
 
@@ -57,7 +58,7 @@ func (s *PgStore) GetItemGraph(ctx context.Context, itemID uuid.UUID, maxDepth, 
 
 	// Node details in one query.
 	rows, err := s.pool.Query(ctx, `
-		SELECT i.id, it.name, i.attributes
+		SELECT i.id, it.name, i.attributes, it.attributes_schema
 		FROM items i
 		JOIN item_types it ON it.id = i.item_type_id
 		WHERE i.id = ANY($1)`, order)
@@ -68,12 +69,12 @@ func (s *PgStore) GetItemGraph(ctx context.Context, itemID uuid.UUID, maxDepth, 
 	nodesByID := make(map[uuid.UUID]model.GraphNode, len(order))
 	for rows.Next() {
 		var node model.GraphNode
-		var attrs json.RawMessage
-		if err := rows.Scan(&node.ID, &node.Type, &attrs); err != nil {
+		var attrs, schema json.RawMessage
+		if err := rows.Scan(&node.ID, &node.Type, &attrs, &schema); err != nil {
 			return nil, err
 		}
 		node.Attributes = attrs
-		node.Label = extractLabel(attrs)
+		node.Label = label.Render(schema, attrs, label.Langs[0])
 		node.Depth = depths[node.ID]
 		nodesByID[node.ID] = node
 	}
@@ -167,17 +168,4 @@ func (s *PgStore) expandLevel(ctx context.Context, frontier []uuid.UUID, down bo
 		return nil, err
 	}
 	return next, nil
-}
-
-func extractLabel(attrs json.RawMessage) string {
-	var m map[string]any
-	if err := json.Unmarshal(attrs, &m); err != nil {
-		return ""
-	}
-	for _, key := range []string{"titre", "nom", "name", "title", "numero"} {
-		if v, ok := m[key]; ok {
-			return fmt.Sprintf("%v", v)
-		}
-	}
-	return ""
 }

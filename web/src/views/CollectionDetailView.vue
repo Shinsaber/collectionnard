@@ -189,6 +189,8 @@ import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
 import { collectionApi, itemApi, extractApiError } from "@/api/client";
 import { usePagination } from "@/composables/usePagination";
+import { useLang } from "@/composables/useLang";
+import { fieldLabel, itemLabel as renderItemLabel } from "@/lib/schema";
 import DynamicForm from "@/components/common/DynamicForm.vue";
 import type { Collection, CollectionItem, Item } from "@/api/types";
 
@@ -196,6 +198,7 @@ const props = defineProps<{ id: string }>();
 const router = useRouter();
 const confirm = useConfirm();
 const toast = useToast();
+const { lang } = useLang();
 
 const collection = ref<Collection | null>(null);
 const loading = ref(true);
@@ -240,27 +243,13 @@ function ciLabel(ci: CollectionItem): string {
 }
 
 function itemLabel(item?: Item | null): string {
-  if (!item) return "?";
-  for (const key of ["titre", "nom", "name", "title", "label"]) {
-    const val = item.attributes?.[key];
-    if (val == null) continue;
-    if (typeof val === "object" && !Array.isArray(val)) {
-      const obj = val as Record<string, unknown>;
-      if (typeof obj["fr"] === "string") return obj["fr"];
-      if (typeof obj["en"] === "string") return obj["en"];
-    }
-    return String(val);
-  }
-  return item.id.slice(0, 8);
+  return renderItemLabel(item, lang.value);
 }
 
 function ctxAttrLabel(key: string): string {
   const schema = collection.value?.collection_type?.attributes_schema as
     Record<string, unknown> | undefined;
-  const labels = (
-    schema?.["x-labels"] as Record<string, Record<string, string>> | undefined
-  )?.["fr"];
-  return labels?.[key] ?? key;
+  return fieldLabel(schema, key, lang.value);
 }
 
 function openAddItem() {

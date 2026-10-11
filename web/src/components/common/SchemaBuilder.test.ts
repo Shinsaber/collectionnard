@@ -75,9 +75,9 @@ describe("SchemaBuilder — aller-retour sur les schémas du seed", () => {
 
 import { it as itTop } from "vitest";
 
-// Connu (audit 4.7) : les mots-clés inconnus du builder (futurs `x-*`, `default`
-// sur un objet…) sont perdus à la reconstruction — corrigé au lot 8.
-itTop.fails("conserve une extension x-* inconnue du builder", async () => {
+// Les mots-clés inconnus du builder (futurs `x-*`, `default` sur un objet…) et le
+// gabarit racine `x-label` sont conservés à la reconstruction (lot 8).
+itTop("conserve une extension x-* inconnue du builder", async () => {
   const out = await roundTrip({
     type: "object",
     properties: { a: { type: "string", "x-custom": 42 } },
@@ -86,3 +86,17 @@ itTop.fails("conserve une extension x-* inconnue du builder", async () => {
     ((out.properties as Props).a as Record<string, unknown>)["x-custom"],
   ).toBe(42);
 });
+
+itTop(
+  "conserve le gabarit racine x-label et les clés racine inconnues",
+  async () => {
+    const out = await roundTrip({
+      type: "object",
+      "x-label": "{number}. {title}",
+      "x-future": { a: 1 },
+      properties: { number: { type: "integer" }, title: { type: "string" } },
+    });
+    expect(out["x-label"]).toBe("{number}. {title}");
+    expect(out["x-future"]).toEqual({ a: 1 });
+  },
+);

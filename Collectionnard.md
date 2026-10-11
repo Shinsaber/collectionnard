@@ -164,7 +164,7 @@ une abstraction de ce schéma ; elle n'existe pas dans l'implémentation.
 | `x-labels`           | racine    | Libellés par langue : `{ "fr": { "title": "Titre" }, "en": { "title": "Title" } }`      |
 | `x-widget`           | propriété | Widget dédié : `i18n-text` (objet `{fr, en}`), `image-gallery` (objet de catégories)    |
 | `x-image-categories` | propriété | Catégories d'images et ratios : `{ "poster": { "ratio": "2/3" } }` (avec `image-gallery`) |
-| `x-label`            | racine    | _(prévu, lot 8)_ gabarit du libellé d'un item : `"{title}"`, `"{last_name} {first_name}"` |
+| `x-label`            | racine    | Gabarit du libellé des instances : `"{title}"`, `"{number}. {title}"`, `"{last_name} {first_name}"` ; sans gabarit, repli sur `title`, `name`, `label` (Go `internal/label`, TS `web/src/lib/schema.ts`) |
 
 Règles d'affichage dérivées du schéma lui-même (pas d'extension) : un `integer` / `number` avec `minimum`
 **et** `maximum` est rendu par un curseur ; un `enum` par une liste déroulante ; `format: date` / `uri` par
@@ -179,44 +179,44 @@ et documentée ici et dans le README.
 
 **ItemTypes :**
 
-| ItemType  | Attributs                                       |
-| --------- | ----------------------------------------------- |
-| Série     | titre, synopsis, année_début, année_fin, poster |
-| Diffusion | nom, type (TV/streaming/…), chaîne              |
-| Saison    | numéro, année                                   |
-| Épisode   | numéro, titre, durée, synopsis                  |
-| DVD       | titre, éditeur, année_sortie, nb_disques        |
+| ItemType  | Attributs (clés JSON)                                   | `x-label`             |
+| --------- | ------------------------------------------------------- | --------------------- |
+| Series    | title, synopsis (i18n), start_year, end_year, images    | `{title}`             |
+| Broadcast | name, type (tv/streaming/cable/web), channel            | `{name}`              |
+| Season    | name, number, year                                      | `{name}`              |
+| Episode   | number, title, duration, synopsis (i18n)                | `{number}. {title}`   |
+| DVD       | title, publisher, release_year, disc_count              | `{title}`             |
 
-**RelationTypes :** (noms ASCII du seed ; les clés JSON du seed TV passent en anglais au lot 8)
+**RelationTypes :**
 
-| RelationType     | Source → Target    | Attributs du lien |
-| ---------------- | ------------------ | ----------------- |
-| diffuse_en       | Serie → Diffusion  | —                 |
-| contient_saison  | Diffusion → Saison | —                 |
-| contient_episode | Saison → Episode   | ordre             |
-| edite_en         | Serie → DVD        | —                 |
-| inclut_episode   | DVD → Episode      | disque, piste     |
+| RelationType     | Source → Target    | Attributs du lien      |
+| ---------------- | ------------------ | ---------------------- |
+| broadcast_on     | Series → Broadcast | broadcast_start_year   |
+| contains_season  | Broadcast → Season | —                      |
+| contains_episode | Season → Episode   | order (tri des relations) |
+| released_as      | Series → DVD       | —                      |
+| includes_episode | DVD → Episode      | disc, track            |
 
 **CollectionTypes :**
 
-| CollectionType | Attributs du lien CollectionItem            |
-| -------------- | ------------------------------------------- |
-| Possession     | état_physique, prix_achat, date_acquisition |
-| Visionnage     | date_vue, note, progression                 |
-| Wishlist       | priorité, budget_max                        |
+| CollectionType | Attributs du lien CollectionItem                              |
+| -------------- | ------------------------------------------------------------- |
+| Ownership      | condition (new/very_good/good/fair/poor), purchase_price, acquisition_date |
+| Watching       | watched_at, rating, progress                                  |
+| Wishlist       | priority, max_budget                                          |
 
 **Graphe de données :**
 
 ```
-Breaking Bad (Série)
-├──diffuse_en──▶ "AMC 2008-2013" (Diffusion)
-│                 ├──contient_saison──▶ Saison 1
-│                 │                     ├──contient_episode──▶ Ep1 "Pilot"
-│                 │                     └──contient_episode──▶ Ep2 "Cat's in the Bag"
-│                 └──contient_saison──▶ Saison 2 ──...
-└──edite_en─────▶ "Coffret DVD Intégrale" (DVD)
-                  ├──inclut_episode {disque:1, piste:1}──▶ Ep1 "Pilot"     ← même item !
-                  └──inclut_episode {disque:1, piste:2}──▶ Ep2 "Cat's..."  ← même item !
+Breaking Bad (Series)
+├──broadcast_on──▶ "AMC 2008-2013" (Broadcast)
+│                 ├──contains_season──▶ Saison 1
+│                 │                     ├──contains_episode──▶ Ep1 "Pilot"
+│                 │                     └──contains_episode──▶ Ep2 "Cat's in the Bag"
+│                 └──contains_season──▶ Saison 2 ──...
+└──released_as──▶ "Coffret DVD Intégrale" (DVD)
+                  ├──includes_episode {disc:1, track:1}──▶ Ep1 "Pilot"     ← même item !
+                  └──includes_episode {disc:1, track:2}──▶ Ep2 "Cat's..."  ← même item !
 ```
 
 Les épisodes sont les **mêmes nœuds**, accessibles par deux chemins. C'est la force du graphe.
@@ -225,10 +225,10 @@ Les épisodes sont les **mêmes nœuds**, accessibles par deux chemins. C'est la
 
 ```
 User "shinsaber" :
-├── Collection "Mes DVDs" (type: Possession)
-│     └── Coffret DVD Intégrale {état: "neuf", prix: 45€, date: 2020-12-25}
-└── Collection "Séries vues" (type: Visionnage)
-      └── Breaking Bad {date_vue: 2023-03, note: 10, progression: 100%}
+├── Collection "Mes DVDs" (type: Ownership)
+│     └── Coffret DVD Intégrale {condition: "new", purchase_price: 45, acquisition_date: 2020-12-25}
+└── Collection "Séries vues" (type: Watching)
+      └── Breaking Bad {watched_at: 2023-03-15, rating: 10, progress: 100}
 ```
 
 ### Autres cas d'usage (post-MVP)
@@ -330,7 +330,7 @@ Lots de `docs/audit/03-feuille-de-route.md`, branche `remise-a-niveau` :
       `per_page` borné, UUID/tri invalides → 400, jokers échappés, `statement_timeout`
 - [x] Lot 6 — tests : 100 % des handlers, intégration PostgreSQL, Vitest (DynamicForm, SchemaBuilder, LoginView)
 - [x] Lot 7 — cohérence : spec OpenAPI = code (test routes ↔ spec, `redocly lint` en CI), docs à jour
-- [ ] Lot 8 — extension `x-label`, seed TV en anglais, perf N+1
+- [x] Lot 8 — extension `x-label` (Go + TS), seed TV en anglais avec `x-order`, langue d'affichage fr/en, requêtes groupées (tags, jonctions)
 - [ ] Lot 9 — découpage d'`ItemDetailView`, erreurs notifiées, accessibilité
 - [ ] Lot 10 — PrimeVue 5, Vite 8, TypeScript 6, Pinia 4, vue-router 5
 - [ ] Lot 11 — Tailwind 4 (optionnel)

@@ -216,6 +216,8 @@ import Checkbox from "primevue/checkbox";
 import Slider from "primevue/slider";
 import Button from "primevue/button";
 import { uploadApi } from "@/api/client";
+import { useLang } from "@/composables/useLang";
+import { fieldLabel } from "@/lib/schema";
 
 interface SchemaField {
   name: string;
@@ -241,7 +243,7 @@ const emit = defineEmits<{
 
 const model = computed(() => props.modelValue);
 
-const lang = "fr"; // TODO: make configurable
+const { lang } = useLang();
 
 const fields = computed<SchemaField[]>(() => {
   const properties = props.schema?.properties as
@@ -250,10 +252,6 @@ const fields = computed<SchemaField[]>(() => {
 
   const required = (props.schema?.required as string[]) ?? [];
   const xOrder = (props.schema?.["x-order"] as string[]) ?? [];
-  const labels = (
-    props.schema?.["x-labels"] as
-      Record<string, Record<string, string>> | undefined
-  )?.[lang];
 
   const keys =
     xOrder.length > 0
@@ -269,9 +267,7 @@ const fields = computed<SchemaField[]>(() => {
       const prop = properties[name]!;
       return {
         name,
-        label:
-          labels?.[name] ??
-          name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+        label: fieldLabel(props.schema, name, lang.value, "pretty"),
         type: (prop.type as string) ?? "string",
         required: required.includes(name),
         enum: prop.enum as string[] | undefined,

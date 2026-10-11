@@ -54,6 +54,17 @@
           <Tag v-if="auth.isAdmin" value="admin" severity="warn" class="ml-1" />
         </span>
         <Button
+          v-tooltip="
+            lang === 'fr' ? 'Libellés en anglais' : 'Libellés en français'
+          "
+          :label="lang.toUpperCase()"
+          text
+          severity="secondary"
+          size="small"
+          class="font-mono"
+          @click="toggleLang"
+        />
+        <Button
           v-tooltip="theme === 'dark' ? 'Mode clair' : 'Mode sombre'"
           :icon="theme === 'dark' ? 'pi pi-sun' : 'pi pi-moon'"
           text
@@ -81,10 +92,12 @@ import Button from "primevue/button";
 import Tag from "primevue/tag";
 import { useAuthStore } from "@/stores/auth";
 import { useTheme } from "@/composables/useTheme";
+import { useLang } from "@/composables/useLang";
 
 const auth = useAuthStore();
 const router = useRouter();
 const { theme, toggle: toggleTheme } = useTheme();
+const { lang, toggle: toggleLang } = useLang();
 
 const navLinks = [
   { to: "/", label: "Dashboard", icon: "pi pi-home" },

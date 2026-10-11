@@ -1,5 +1,25 @@
 <template>
   <div class="flex flex-col gap-4">
+    <!-- Root: item label template (x-label) -->
+    <div
+      class="flex flex-col gap-1 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800"
+    >
+      <label class="text-xs font-medium text-gray-500 dark:text-gray-400"
+        >Libellé des instances (<code>x-label</code>)</label
+      >
+      <InputText
+        v-model="xLabel"
+        placeholder="ex. {title} ou {number}. {title}"
+        class="text-sm font-mono"
+      />
+      <span class="text-[11px] text-gray-400 dark:text-gray-500">
+        Gabarit avec les clés des champs entre accolades ; sans gabarit, le
+        premier champ <code>title</code>, <code>name</code> ou
+        <code>label</code>
+        est utilisé.
+      </span>
+    </div>
+
     <!-- Field list -->
     <div
       v-for="(field, idx) in fields"
@@ -500,7 +520,45 @@ interface SchemaField {
   uniqueItems?: boolean | null;
   // image-gallery
   imageCategories?: { name: string; ratio: string }[] | null;
+  // mots-clés non gérés par le builder (futurs x-*, default sur un objet…), conservés tels quels
+  extra?: Record<string, unknown>;
 }
+
+// Mots-clés d'une propriété pilotés par le builder ; tout le reste est conservé dans `extra`.
+const MANAGED_PROPERTY_KEYS = new Set([
+  "type",
+  "description",
+  "default",
+  "minLength",
+  "maxLength",
+  "pattern",
+  "format",
+  "enum",
+  "minimum",
+  "maximum",
+  "exclusiveMinimum",
+  "exclusiveMaximum",
+  "multipleOf",
+  "items",
+  "minItems",
+  "maxItems",
+  "uniqueItems",
+  "properties",
+  "additionalProperties",
+  "x-widget",
+  "x-image-categories",
+]);
+
+// Mots-clés racine pilotés par le builder ; le reste (dont x-label édité à part) est conservé.
+const MANAGED_ROOT_KEYS = new Set([
+  "type",
+  "properties",
+  "required",
+  "additionalProperties",
+  "x-order",
+  "x-labels",
+  "x-label",
+]);
 
 // ── Props & Emits ─────────────────────────────────────────────────────
 const props = defineProps({
@@ -568,6 +626,10 @@ const arrayItemTypeOptions = [
 
 const fields = ref<SchemaField[]>([]);
 const showRaw = ref(false);
+// Gabarit du libellé des instances (extension racine x-label), ex. "{number}. {title}".
+const xLabel = ref("");
+// Mots-clés racine inconnus, restitués à l'identique.
+const rootExtra = ref<Record<string, unknown>>({});
 
 // ── Parse schema → fields ─────────────────────────────────────────────
 function parseSchema(schema: Record<string, unknown>): SchemaField[] {
@@ -644,6 +706,9 @@ function parseSchema(schema: Record<string, unknown>): SchemaField[] {
                 (prop as Record<string, unknown>)["x-image-categories"],
               )
             : null,
+        extra: Object.fromEntries(
+          Object.entries(prop).filter(([k]) => !MANAGED_PROPERTY_KEYS.has(k)),
+        ),
       };
       return field;
     });
@@ -659,7 +724,7 @@ const schema = computed<Record<string, unknown>>(() => {
 
   for (const f of fields.value) {
     if (!f.key.trim()) continue;
-    const prop: Record<string, unknown> = { type: f.type };
+    const prop: Record<string, unknown> = { ...(f.extra ?? {}), type: f.type };
 
     // description
     if (f.description) prop.description = f.description;
@@ -743,11 +808,13 @@ const schema = computed<Record<string, unknown>>(() => {
   }
 
   const result: Record<string, unknown> = {
+    ...rootExtra.value,
     type: "object",
     properties,
     additionalProperties: false,
     "x-order": fields.value.filter((f) => f.key.trim()).map((f) => f.key),
   };
+  if (xLabel.value.trim()) result["x-label"] = xLabel.value.trim();
   if (requiredKeys.length > 0) result.required = requiredKeys;
   if (hasLabels) {
     const xLabels: Record<string, Record<string, string>> = {};
@@ -771,11 +838,20 @@ watch(
 // Load fields from initial modelValue
 let initialized = false;
 
+function loadRoot(schema: Record<string, unknown>) {
+  xLabel.value =
+    typeof schema["x-label"] === "string" ? (schema["x-label"] as string) : "";
+  rootExtra.value = Object.fromEntries(
+    Object.entries(schema ?? {}).filter(([k]) => !MANAGED_ROOT_KEYS.has(k)),
+  );
+}
+
 watch(
   () => props.modelValue,
   (val) => {
     if (!initialized) {
       fields.value = parseSchema(val);
+      loadRoot(val);
       initialized = true;
     }
   },
@@ -786,6 +862,7 @@ watch(
 function resetFromSchema(schema: Record<string, unknown>) {
   initialized = false;
   fields.value = parseSchema(schema);
+  loadRoot(schema);
   initialized = true;
 }
 defineExpose({ resetFromSchema });

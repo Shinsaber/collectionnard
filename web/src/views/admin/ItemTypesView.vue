@@ -97,12 +97,15 @@ import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
 import { itemTypeApi, extractApiError } from "@/api/client";
 import { usePagination } from "@/composables/usePagination";
+import { useLang } from "@/composables/useLang";
+import { fieldLabel, orderedKeys } from "@/lib/schema";
 import SchemaBuilder from "@/components/common/SchemaBuilder.vue";
 import type { ItemType } from "@/api/types";
 
 const confirm = useConfirm();
 const toast = useToast();
 const pag = usePagination(itemTypeApi.list);
+const { lang } = useLang();
 
 const dialogVisible = ref(false);
 const editing = ref<ItemType | null>(null);
@@ -123,14 +126,9 @@ function onPageChange(e: { page: number; rows: number }) {
 }
 
 function schemaFieldNames(schema: Record<string, unknown>): string {
-  const props = schema?.properties as Record<string, unknown> | undefined;
-  if (!props) return "—";
-  const labels = (
-    schema?.["x-labels"] as Record<string, Record<string, string>> | undefined
-  )?.["fr"];
-  return Object.keys(props)
-    .map((k) => labels?.[k] ?? k)
-    .join(", ");
+  const keys = orderedKeys(schema);
+  if (keys.length === 0) return "—";
+  return keys.map((k) => fieldLabel(schema, k, lang.value)).join(", ");
 }
 
 function openCreate() {

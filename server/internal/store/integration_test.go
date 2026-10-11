@@ -116,7 +116,7 @@ func TestGraph_MultiPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if g.Root.ID != itemPilot || g.Root.Label != "Pilot" {
+	if g.Root.ID != itemPilot || g.Root.Label != "1. Pilot" { // x-label "{number}. {title}"
 		t.Fatalf("root = %+v", g.Root)
 	}
 	if g.Truncated {
@@ -166,7 +166,7 @@ func TestGraph_DepthAndFilter(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, n := range only.Nodes {
-		if n.Type == "Diffusion" || n.Type == "Saison" {
+		if n.Type == "Broadcast" || n.Type == "Season" {
 			t.Errorf("relation filter ignored: reached %s", n.Type)
 		}
 	}
@@ -203,7 +203,7 @@ func TestListItems_Filters(t *testing.T) {
 	if err != nil || total != 1 || len(byType) != 1 || byType[0].ID != itemSerie {
 		t.Fatalf("type filter: %d items, total %d, err %v", len(byType), total, err)
 	}
-	if byType[0].ItemType == nil || byType[0].ItemType.Name != "Serie" {
+	if byType[0].ItemType == nil || byType[0].ItemType.Name != "Series" {
 		t.Error("item type must be embedded")
 	}
 
@@ -223,11 +223,11 @@ func TestListItems_Filters(t *testing.T) {
 		t.Errorf("search Breaking%%Bad: total %d (wildcard not escaped?), err %v", total, err)
 	}
 
-	tagged, total, err := s.ListItems(ctx, pg, store.ItemFilters{Tag: "DRAME"})
+	tagged, total, err := s.ListItems(ctx, pg, store.ItemFilters{Tag: "DRAMA"})
 	if err != nil || total != 1 || tagged[0].ID != itemSerie {
 		t.Errorf("tag filter (case-insensitive): total %d, err %v", total, err)
 	}
-	if len(tagged[0].Tags) != 3 { // drame, thriller, crime
+	if len(tagged[0].Tags) != 3 { // drama, thriller, crime
 		t.Errorf("tags must be loaded, got %v", tagged[0].Tags)
 	}
 
@@ -240,8 +240,8 @@ func TestListItems_Filters(t *testing.T) {
 func TestItem_CreateUpdateDeleteCascade(t *testing.T) {
 	item, err := s.CreateItem(ctx, model.ItemCreate{
 		ItemTypeID: typeEpisode,
-		Attributes: json.RawMessage(`{"numero": 99, "titre": "Temporaire", "duree": 1}`),
-		Tags:       []string{"drame", "nouveau-tag"},
+		Attributes: json.RawMessage(`{"number": 99, "title": "Temporaire", "duration": 1}`),
+		Tags:       []string{"drama", "new-tag"},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -252,7 +252,7 @@ func TestItem_CreateUpdateDeleteCascade(t *testing.T) {
 
 	rel, err := s.CreateRelation(ctx, model.ItemRelationCreate{
 		RelationTypeID: rtInclutEp, SourceItemID: itemDVD, TargetItemID: item.ID,
-		Attributes: json.RawMessage(`{"disque": 9, "piste": 9}`),
+		Attributes: json.RawMessage(`{"disc": 9, "track": 9}`),
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -260,7 +260,7 @@ func TestItem_CreateUpdateDeleteCascade(t *testing.T) {
 
 	noTags := []string{}
 	updated, err := s.UpdateItem(ctx, item.ID, model.ItemUpdate{
-		Attributes: json.RawMessage(`{"numero": 99, "titre": "Renommé"}`),
+		Attributes: json.RawMessage(`{"number": 99, "title": "Renommé"}`),
 		Tags:       &noTags,
 	})
 	if err != nil {
@@ -450,7 +450,7 @@ func TestStatsAndTags(t *testing.T) {
 		t.Errorf("stats: %+v, err %v", st, err)
 	}
 	tags, err := s.ListTags(ctx, "dr")
-	if err != nil || len(tags) != 1 || tags[0].Name != "drame" {
+	if err != nil || len(tags) != 1 || tags[0].Name != "drama" {
 		t.Errorf("tags prefix search: %v, err %v", tags, err)
 	}
 	tags, err = s.ListTags(ctx, "%")

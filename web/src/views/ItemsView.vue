@@ -127,11 +127,14 @@ import { useToast } from "primevue/usetoast";
 import { itemApi, itemTypeApi } from "@/api/client";
 import { usePagination } from "@/composables/usePagination";
 import { useAuthStore } from "@/stores/auth";
+import { useLang } from "@/composables/useLang";
+import { itemLabel as renderItemLabel } from "@/lib/schema";
 import ItemEditDialog from "@/components/item/ItemEditDialog.vue";
 import type { Item, ItemType } from "@/api/types";
 
 const auth = useAuthStore();
 const router = useRouter();
+const { lang } = useLang();
 const confirm = useConfirm();
 const toast = useToast();
 
@@ -162,18 +165,7 @@ function onPageChange(e: { page: number; rows: number }) {
 }
 
 function itemLabel(item: Item): string {
-  const attrs = item.attributes;
-  for (const key of ["titre", "nom", "name", "title", "label", "numero"]) {
-    const val = attrs[key];
-    if (val == null) continue;
-    if (typeof val === "object" && !Array.isArray(val)) {
-      const obj = val as Record<string, unknown>;
-      if (typeof obj["fr"] === "string") return obj["fr"];
-      if (typeof obj["en"] === "string") return obj["en"];
-    }
-    return String(val);
-  }
-  return item.id.slice(0, 8);
+  return renderItemLabel(item, lang.value);
 }
 
 function goToItem(event: { data: Item }) {

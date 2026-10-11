@@ -13,7 +13,7 @@
 - ✅ **Traité** : `relation_types` accepte plusieurs types source et cible (tables de jonction
   `relation_type_sources` / `relation_type_targets`, champs `source_item_type_ids` / `target_item_type_ids`)
 - **Convention** : clés JSON, noms de RelationTypes et valeurs d'enum en anglais snake_case ; les libellés
-  affichés viennent de `x-labels` (fr/en). Le seed TV historique est migré vers cette convention (lot 8)
+  affichés viennent de `x-labels` (fr/en) et le libellé d'un item de `x-label` ; le seed TV suit déjà cette convention
 
 ---
 

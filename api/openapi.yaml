@@ -17,7 +17,7 @@ info:
     |---|---|---|
     | **ItemType** | Définit le schéma d'un item (ex: "Série", "Épisode") | **Item** |
     | **RelationType** | Définit un lien entre items + contraintes source→target | **ItemRelation** |
-    | **CollectionType** | Définit le contexte d'ajout à une collection (ex: "Possession") | **CollectionItem** |
+    | **CollectionType** | Définit le contexte d'ajout à une collection (ex: "Ownership") | **CollectionItem** |
 
     Chaque méta-type contient un champ `attributes_schema` qui est un **JSON Schema standard**
     (draft 2020-12). Les instances portent un champ `attributes` (JSONB) validé contre ce schéma
@@ -81,9 +81,9 @@ tags:
       **Admin uniquement.** Gestion des types de relations entre items.
       Un RelationType définit :
       - Les **contraintes source→target** : quels ItemTypes peuvent être liés
-        (ex: `diffuse_en` ne peut lier que Série→Diffusion)
+        (ex: `broadcast_on` ne peut lier que Series→Broadcast)
       - Un **JSON Schema** pour les attributs portés par le lien
-        (ex: disque, piste pour un lien DVD→Épisode)
+        (ex: disc, track pour un lien DVD→Épisode)
 
       Ces contraintes permettent au frontend de proposer uniquement les types
       de relation pertinents lors de la création d'un lien.
@@ -94,8 +94,8 @@ tags:
       que l'utilisateur renseigne quand il ajoute un item à sa collection.
 
       Exemples :
-      - **Possession** : état physique, prix d'achat, date d'acquisition
-      - **Visionnage** : date vue, note sur 10, progression en %
+      - **Ownership** : état physique, prix d'achat, date d'acquisition
+      - **Watching** : date vue, rating (0-10), progress en %
       - **Wishlist** : priorité, budget maximum
   - name: Items
     description: |
@@ -283,8 +283,8 @@ components:
           format: uuid
         name:
           type: string
-          description: 'Nom unique du type (ex: "Serie", "Episode", "DVD").'
-          example: Serie
+          description: 'Nom unique du type (ex: "Series", "Episode", "DVD").'
+          example: Series
         description:
           type: string
           description: Description libre du type, affichée dans l'UI.
@@ -301,12 +301,12 @@ components:
             Le schéma doit avoir `"type": "object"` à la racine.
           example:
             type: object
-            required: [titre]
+            required: [title]
             properties:
-              titre: { type: string, minLength: 1 }
+              title: { type: string, minLength: 1 }
               synopsis: { type: string }
-              annee_debut: { type: integer, minimum: 1900 }
-              annee_fin: { type: integer, minimum: 1900 }
+              start_year: { type: integer, minimum: 1900 }
+              end_year: { type: integer, minimum: 1900 }
               poster: { type: string, format: uri }
             additionalProperties: false
         created_at:
@@ -360,7 +360,7 @@ components:
         name:
           type: string
           description: Nom unique du type de relation.
-          example: diffuse_en
+          example: broadcast_on
         description:
           type: string
           description: Description de la sémantique de cette relation.
@@ -391,13 +391,13 @@ components:
           type: object
           description: |
             JSON Schema pour les attributs portés par la relation.
-            Exemple : pour un lien DVD→Épisode, on peut avoir `{disque: integer, piste: integer}`.
+            Exemple : pour un lien DVD→Épisode, on peut avoir `{disc: integer, track: integer}`.
             Un schéma vide `{}` signifie que la relation ne porte pas de données additionnelles.
           example:
             type: object
             properties:
-              disque: { type: integer, minimum: 1 }
-              piste: { type: integer, minimum: 1 }
+              disc: { type: integer, minimum: 1 }
+              track: { type: integer, minimum: 1 }
             additionalProperties: false
         created_at:
           type: string
@@ -416,7 +416,7 @@ components:
       properties:
         name:
           type: string
-          description: 'Nom unique (ex: "diffuse_en", "contient_episode", "ecrit_par").'
+          description: 'Nom unique (ex: "broadcast_on", "contains_episode", "written_by").'
         description:
           type: string
           description: Description de la sémantique de cette relation.
@@ -468,9 +468,9 @@ components:
         que l'utilisateur remplit quand il ajoute un item à sa collection.
 
         Exemples :
-        - **Possession** : état_physique, prix_achat, date_acquisition
-        - **Visionnage** : date_vue, note (0-10), progression (%)
-        - **Wishlist** : priorité (1-5), budget_max
+        - **Ownership** : état_physique, purchase_price, acquisition_date
+        - **Watching** : watched_at, rating (0-10), progress (%)
+        - **Wishlist** : priority (1-5), max_budget
       properties:
         id:
           type: string
@@ -478,7 +478,7 @@ components:
         name:
           type: string
           description: Nom unique du type de collection.
-          example: Possession
+          example: Ownership
         description:
           type: string
           description: Description de la sémantique de ce type de collection.
@@ -492,13 +492,13 @@ components:
           example:
             type: object
             properties:
-              etat_physique:
+              condition:
                 {
                   type: string,
                   enum: [neuf, très bon, bon, acceptable, mauvais],
                 }
-              prix_achat: { type: number, minimum: 0 }
-              date_acquisition: { type: string, format: date }
+              purchase_price: { type: number, minimum: 0 }
+              acquisition_date: { type: string, format: date }
             additionalProperties: false
         created_at:
           type: string
@@ -514,7 +514,7 @@ components:
       properties:
         name:
           type: string
-          description: 'Nom unique (ex: "Possession", "Visionnage", "Wishlist").'
+          description: 'Nom unique (ex: "Ownership", "Watching", "Wishlist").'
         description:
           type: string
         attributes_schema:
@@ -562,12 +562,12 @@ components:
           type: object
           description: |
             Attributs métier de l'item au format JSONB. La structure dépend du ItemType.
-            Exemple pour une Série : `{"titre": "Breaking Bad", "annee_debut": 2008, "annee_fin": 2013}`
+            Exemple pour une Série : `{"title": "Breaking Bad", "start_year": 2008, "end_year": 2013}`
           example:
-            titre: Breaking Bad
+            title: Breaking Bad
             synopsis: Un professeur de chimie se tourne vers la fabrication de méthamphétamine.
-            annee_debut: 2008
-            annee_fin: 2013
+            start_year: 2008
+            end_year: 2013
         tags:
           type: array
           items:
@@ -628,7 +628,7 @@ components:
       type: object
       description: |
         Relation entre deux items (arête orientée du graphe). Porte les attributs
-        définis par le RelationType (ex: numéro de disque/piste pour un lien DVD→Épisode).
+        définis par le RelationType (ex: numéro de disc/track pour un lien DVD→Épisode).
       properties:
         id:
           type: string
@@ -660,8 +660,8 @@ components:
             Attributs du lien, validés contre le `attributes_schema` du RelationType.
             Peut être vide `{}` si le RelationType n'a pas d'attributs.
           example:
-            disque: 1
-            piste: 3
+            disc: 1
+            track: 3
         created_at:
           type: string
           format: date-time
@@ -732,7 +732,7 @@ components:
         collection_type_id:
           type: string
           format: uuid
-          description: ID du CollectionType (Possession, Visionnage, Wishlist…).
+          description: ID du CollectionType (Ownership, Watching, Wishlist…).
         collection_type:
           $ref: "#/components/schemas/CollectionType"
           description: CollectionType complet (inclus dans les réponses GET).
@@ -814,12 +814,12 @@ components:
             Attributs contextuels de l'item dans cette collection, validés contre
             le `attributes_schema` du CollectionType de la collection parente.
 
-            Exemple pour un CollectionType "Possession" :
-            `{"etat_physique": "neuf", "prix_achat": 45.00, "date_acquisition": "2020-12-25"}`
+            Exemple pour un CollectionType "Ownership" :
+            `{"condition": "neuf", "purchase_price": 45.00, "acquisition_date": "2020-12-25"}`
           example:
-            etat_physique: neuf
-            prix_achat: 45.00
-            date_acquisition: "2020-12-25"
+            condition: new
+            purchase_price: 45.00
+            acquisition_date: "2020-12-25"
         created_at:
           type: string
           format: date-time
@@ -892,9 +892,9 @@ components:
             Attributs contextuels de l'item dans cette collection, définis par
             le `attributes_schema` du CollectionType de la collection.
           example:
-            etat_physique: neuf
-            prix_achat: 45.00
-            date_acquisition: "2020-12-25"
+            condition: new
+            purchase_price: 45.00
+            acquisition_date: "2020-12-25"
 
     # -------------------------------------------------------------------------
     # Graph
@@ -910,12 +910,12 @@ components:
         type:
           type: string
           description: Nom du ItemType de cet item.
-          example: Serie
+          example: Series
         label:
           type: string
           description: |
             Label lisible de l'item, dérivé automatiquement des attributs
-            (premier champ texte non-vide parmi titre, nom, numéro…).
+            calculé côté serveur avec le gabarit `x-label` de l'ItemType (repli : `title`, `name`, `label`…).
           example: Breaking Bad
         attributes:
           type: object
@@ -945,7 +945,7 @@ components:
         relation_type:
           type: string
           description: Nom du RelationType.
-          example: inclut_episode
+          example: includes_episode
         attributes:
           type: object
           description: Attributs de la relation.
@@ -1075,8 +1075,8 @@ components:
             invalides et la raison de l'erreur pour chacun.
           example:
             fields:
-              titre: "required — ce champ est obligatoire"
-              annee_debut: "minimum — doit être >= 1900"
+              title: "required — ce champ est obligatoire"
+              start_year: "minimum — doit être >= 1900"
 
     # -------------------------------------------------------------------------
     # Upload
@@ -1095,7 +1095,7 @@ components:
           example: 550e8400-e29b-41d4-a716-446655440000.jpg
         size:
           type: integer
-          description: Taille du fichier écrit sur le disque, en octets.
+          description: Taille du fichier écrit sur le disc, en octets.
           example: 245760
 
   # ===========================================================================
@@ -1183,8 +1183,8 @@ components:
             message: Les attributs ne respectent pas le schéma du type
             details:
               fields:
-                titre: "required — ce champ est obligatoire"
-                annee_debut: "minimum — doit être >= 1900"
+                title: "required — ce champ est obligatoire"
+                start_year: "minimum — doit être >= 1900"
     Conflict:
       description: |
         Conflit. L'opération est impossible car elle violerait une contrainte d'unicité
@@ -1504,16 +1504,16 @@ paths:
             schema:
               $ref: "#/components/schemas/ItemTypeCreate"
             example:
-              name: Serie
+              name: Series
               description: Série télévisée
               attributes_schema:
                 type: object
-                required: [titre]
+                required: [title]
                 properties:
-                  titre: { type: string, minLength: 1 }
+                  title: { type: string, minLength: 1 }
                   synopsis: { type: string }
-                  annee_debut: { type: integer, minimum: 1900 }
-                  annee_fin: { type: integer, minimum: 1900 }
+                  start_year: { type: integer, minimum: 1900 }
+                  end_year: { type: integer, minimum: 1900 }
                   poster: { type: string, format: uri }
                 additionalProperties: false
       responses:
@@ -1709,8 +1709,8 @@ paths:
             schema:
               $ref: "#/components/schemas/RelationTypeCreate"
             example:
-              name: inclut_episode
-              description: "DVD incluant un épisode. Porte le numéro de disque et de piste."
+              name: includes_episode
+              description: "DVD incluant un épisode. Porte le numéro de disc et de track."
               source_item_type_ids:
                 - b0000000-0000-0000-0000-000000000005
               target_item_type_ids:
@@ -1718,8 +1718,8 @@ paths:
               attributes_schema:
                 type: object
                 properties:
-                  disque: { type: integer, minimum: 1 }
-                  piste: { type: integer, minimum: 1 }
+                  disc: { type: integer, minimum: 1 }
+                  track: { type: integer, minimum: 1 }
                 additionalProperties: false
       responses:
         "413":
@@ -1889,18 +1889,18 @@ paths:
             schema:
               $ref: "#/components/schemas/CollectionTypeCreate"
             example:
-              name: Possession
+              name: Ownership
               description: Items possédés physiquement par l'utilisateur
               attributes_schema:
                 type: object
                 properties:
-                  etat_physique:
+                  condition:
                     {
                       type: string,
                       enum: [neuf, très bon, bon, acceptable, mauvais],
                     }
-                  prix_achat: { type: number, minimum: 0 }
-                  date_acquisition: { type: string, format: date }
+                  purchase_price: { type: number, minimum: 0 }
+                  acquisition_date: { type: string, format: date }
                 additionalProperties: false
       responses:
         "413":
@@ -2097,10 +2097,10 @@ paths:
             example:
               item_type_id: b0000000-0000-0000-0000-000000000001
               attributes:
-                titre: Breaking Bad
+                title: Breaking Bad
                 synopsis: Un professeur de chimie se tourne vers la fabrication de méthamphétamine.
-                annee_debut: 2008
-                annee_fin: 2013
+                start_year: 2008
+                end_year: 2013
               tags: [drame, thriller, crime]
       responses:
         "413":
@@ -2287,7 +2287,7 @@ paths:
           in: query
           description: |
             Filtrer par type de relation (UUID du RelationType).
-            Exemple : ne voir que les relations "contient_episode".
+            Exemple : ne voir que les relations "contains_episode".
           schema:
             type: string
             format: uuid
@@ -2337,8 +2337,8 @@ paths:
               source_item_id: e0000000-0000-0000-0000-000000000020
               target_item_id: e0000000-0000-0000-0000-000000000010
               attributes:
-                disque: 1
-                piste: 1
+                disc: 1
+                track: 1
       responses:
         "413":
           $ref: "#/components/responses/PayloadTooLarge"
@@ -2478,7 +2478,7 @@ paths:
         visite jamais un nœud deux fois dans un même chemin.
 
         **Filtrage** : utilisez `relation_type_ids` pour limiter la traversée
-        à certains types de relation (ex: ne suivre que "contient_episode").
+        à certains types de relation (ex: ne suivre que "contains_episode").
 
         Le format de réponse sépare le nœud racine des autres nœuds pour
         faciliter le rendu (la racine a souvent un style différent).
@@ -2541,31 +2541,31 @@ paths:
               example:
                 root:
                   id: e0000000-0000-0000-0000-000000000001
-                  type: Serie
+                  type: Series
                   label: Breaking Bad
                   attributes:
-                    { titre: Breaking Bad, annee_debut: 2008, annee_fin: 2013 }
+                    { title: Breaking Bad, start_year: 2008, end_year: 2013 }
                   depth: 0
                 nodes:
                   - id: e0000000-0000-0000-0000-000000000050
                     type: Personne
                     label: Vince Gilligan
-                    attributes: { nom: Vince Gilligan, role: createur }
+                    attributes: { name: Vince Gilligan, role: creator }
                     depth: -1
                   - id: e0000000-0000-0000-0000-000000000002
-                    type: Diffusion
+                    type: Broadcast
                     label: AMC 2008-2013
-                    attributes: { nom: AMC 2008-2013, type: cable, chaine: AMC }
+                    attributes: { name: AMC 2008-2013, type: cable, channel: AMC }
                     depth: 1
                   - id: e0000000-0000-0000-0000-000000000003
-                    type: Saison
+                    type: Season
                     label: S1
-                    attributes: { numero: 1, annee: 2008 }
+                    attributes: { name: Saison 1, number: 1, year: 2008 }
                     depth: 2
                   - id: e0000000-0000-0000-0000-000000000010
                     type: Episode
                     label: Pilot
-                    attributes: { numero: 1, titre: Pilot, duree: 58 }
+                    attributes: { number: 1, title: Pilot, duration: 58 }
                     depth: 3
                 edges:
                   - source_id: e0000000-0000-0000-0000-000000000050
@@ -2574,16 +2574,16 @@ paths:
                     attributes: {}
                   - source_id: e0000000-0000-0000-0000-000000000001
                     target_id: e0000000-0000-0000-0000-000000000002
-                    relation_type: diffuse_en
-                    attributes: { annee_debut_diff: 2008 }
+                    relation_type: broadcast_on
+                    attributes: { broadcast_start_year: 2008 }
                   - source_id: e0000000-0000-0000-0000-000000000002
                     target_id: e0000000-0000-0000-0000-000000000003
-                    relation_type: contient_saison
+                    relation_type: contains_season
                     attributes: {}
                   - source_id: e0000000-0000-0000-0000-000000000003
                     target_id: e0000000-0000-0000-0000-000000000010
-                    relation_type: contient_episode
-                    attributes: { ordre: 1 }
+                    relation_type: contains_episode
+                    attributes: { order: 1 }
         "404":
           $ref: "#/components/responses/NotFound"
 
@@ -2603,7 +2603,7 @@ paths:
         - $ref: "#/components/parameters/per_page"
         - name: collection_type_id
           in: query
-          description: 'Filtrer par type de collection (ex: uniquement les collections "Possession").'
+          description: 'Filtrer par type de collection (ex: uniquement les collections "Ownership").'
           schema:
             type: string
             format: uuid
@@ -2829,9 +2829,9 @@ paths:
             example:
               item_id: e0000000-0000-0000-0000-000000000020
               attributes:
-                etat_physique: neuf
-                prix_achat: 45.00
-                date_acquisition: "2020-12-25"
+                condition: new
+                purchase_price: 45.00
+                acquisition_date: "2020-12-25"
       responses:
         "413":
           $ref: "#/components/responses/PayloadTooLarge"
@@ -2886,7 +2886,7 @@ paths:
         dans cette collection. Les attributs sont revalidés contre le JSON Schema
         du CollectionType.
 
-        Ne modifie **pas** les attributs de l'item du catalogue (titre, année…),
+        Ne modifie **pas** les attributs de l'item du catalogue (title, année…),
         uniquement les données personnelles de l'utilisateur.
       operationId: updateCollectionItem
       requestBody:
@@ -2897,9 +2897,9 @@ paths:
               $ref: "#/components/schemas/CollectionItemUpdate"
             example:
               attributes:
-                etat_physique: bon
-                prix_achat: 45.00
-                date_acquisition: "2020-12-25"
+                condition: bon
+                purchase_price: 45.00
+                acquisition_date: "2020-12-25"
       responses:
         "413":
           $ref: "#/components/responses/PayloadTooLarge"

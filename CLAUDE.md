@@ -7,8 +7,8 @@ validées contre ce schéma.
 
 Langue du projet : **français** (docs, commits, échanges). Le socle de données est en **anglais**
 snake_case ASCII : identifiants, clés JSON des attributs, noms de RelationTypes, valeurs d'enum ;
-l'affichage traduit via `x-labels` (fr/en). Le seed TV historique (clés `titre`, `annee_debut`…)
-est migré vers cette convention au lot 8 de la feuille de route.
+l'affichage traduit via `x-labels` (fr/en, bascule dans l'en-tête). Le seed TV suit cette convention
+(`title`, `start_year`, `broadcast_on`, `Ownership`…) ; un changement de clé = nouvelle migration + seed.
 
 ## Documents de référence (à lire selon le besoin, ne pas tout charger d'office)
 
@@ -43,11 +43,13 @@ est migré vers cette convention au lot 8 de la feuille de route.
 
 ### Extensions JSON Schema maison (pilotent le front)
 
-`x-order` (ordre des champs), `x-labels` (`{fr:{…}, en:{…}}`), `x-widget`
-(`image-gallery`, `i18n-text`), `x-image-categories` (`{poster:{ratio:"2/3"}}`). Pas de widget
+`x-label` (gabarit du libellé d'une instance : `"{number}. {title}"` — Go `internal/label`, TS
+`web/src/lib/schema.ts`, à garder alignés), `x-order` (ordre des champs), `x-labels` (`{fr:{…}, en:{…}}`),
+`x-widget` (`image-gallery`, `i18n-text`), `x-image-categories` (`{poster:{ratio:"2/3"}}`). Pas de widget
 `slider` : le curseur est automatique quand `minimum` **et** `maximum` sont définis.
-Toute nouvelle extension doit être gérée dans `DynamicForm.vue` **et** `SchemaBuilder.vue`,
-et documentée dans le README.
+Toute nouvelle extension doit être gérée dans `DynamicForm.vue` **et** `SchemaBuilder.vue` (qui conserve
+les mots-clés qu'il ne connaît pas), lue via `lib/schema.ts`, et documentée dans le README et
+`Collectionnard.md` § 3.
 
 ## Stack
 
@@ -134,7 +136,7 @@ Nouveau compte : `go run . hash-password <mdp>` puis `INSERT INTO users …`.
 ## Où en est le projet
 
 Phase 1 (MVP) : terminée. Phase 1.5 (remise à niveau issue de l'audit, branche `remise-a-niveau`,
-lots 0 à 7 livrés, voir `Collectionnard.md` §8 et `docs/audit/03-feuille-de-route.md`) : en cours.
+lots 0 à 8 livrés, voir `Collectionnard.md` §8 et `docs/audit/03-feuille-de-route.md`) : en cours.
 Prochaines pistes (Phase 2, voir `Collectionnard.md` §8) :
 recherche avancée, statistiques graphiques, **import/export CSV/JSON**, soumission d'items
 par les users. Domaine en préparation : **BD / Manga** (`les.collection.md`).

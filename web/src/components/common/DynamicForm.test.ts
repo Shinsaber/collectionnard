@@ -10,7 +10,7 @@ import DynamicForm from "./DynamicForm.vue";
 
 type Schema = Record<string, unknown>;
 
-const serieSchema = fixtures.find((f) => f.name === "Serie")!.schema as Schema;
+const serieSchema = fixtures.find((f) => f.name === "Series")!.schema as Schema;
 
 function mountForm(schema: Schema, modelValue: Record<string, unknown> = {}) {
   return mount(DynamicForm, {
@@ -29,7 +29,7 @@ function labels(wrapper: ReturnType<typeof mountForm>): string[] {
 }
 
 describe("DynamicForm", () => {
-  it("rend les champs du schéma Serie avec les libellés x-labels (fr) et les widgets", () => {
+  it("rend les champs du schéma Series avec les libellés x-labels (fr) et les widgets", () => {
     const w = mountForm(serieSchema);
 
     expect(labels(w)).toEqual([

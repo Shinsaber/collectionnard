@@ -201,9 +201,9 @@ Le système repose sur un **pattern unique à 3 niveaux** : des méta-types déf
 
 | Méta-type          | Instances      | Exemple                                     |
 | ------------------ | -------------- | ------------------------------------------- |
-| **ItemType**       | Item           | "Série" → `{titre, synopsis, année_début…}` |
-| **RelationType**   | ItemRelation   | "inclut_épisode" → `{disque, piste}`        |
-| **CollectionType** | CollectionItem | "Possession" → `{état, prix, date}`         |
+| **ItemType**       | Item           | "Series" → `{title, synopsis, start_year…}`  |
+| **RelationType**   | ItemRelation   | "includes_episode" → `{disc, track}`         |
+| **CollectionType** | CollectionItem | "Ownership" → `{condition, purchase_price, acquisition_date}` |
 
 Les items forment un **graphe orienté libre** : un même épisode peut être atteint via une diffusion TV et un DVD. Voir l'endpoint `GET /items/{id}/graph`.
 
@@ -238,8 +238,9 @@ Le projet utilise des extensions custom dans les JSON Schemas pour piloter le fr
 
 | Extension            | Rôle                                                         |
 | -------------------- | ------------------------------------------------------------ |
+| `x-label`            | Gabarit du libellé des instances (`"{title}"`, `"{number}. {title}"`) ; repli `title` / `name` / `label` |
 | `x-order`            | Ordre d'affichage des champs (array de clés)                 |
-| `x-labels`           | Labels i18n par langue (`{fr: {champ: "Label"}, en: {…}}`)   |
+| `x-labels`           | Labels i18n par langue (`{fr: {champ: "Label"}, en: {…}}`) ; la langue se bascule dans l'en-tête (FR/EN) |
 | `x-widget`           | Widget spécifique : `image-gallery`, `i18n-text`                 |
 | `x-image-categories` | Catégories d'images avec ratios (`{poster: {ratio: "2/3"}}`) |
 
