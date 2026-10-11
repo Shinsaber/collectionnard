@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
     <header
-      class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-3 flex items-center justify-between shadow-sm"
+      class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-3 flex items-center justify-between shadow-xs"
     >
       <div class="flex items-center gap-4">
         <router-link
@@ -16,7 +16,7 @@
             :key="link.to"
             :to="link.to"
             class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-gray-700 transition-colors"
-            exact-active-class="!text-indigo-600 dark:!text-indigo-400 !bg-indigo-50 dark:!bg-gray-700"
+            exact-active-class="text-indigo-600! dark:text-indigo-400! bg-indigo-50! dark:bg-gray-700!"
           >
             <i :class="link.icon" class="mr-1"></i>
             {{ link.label }}
@@ -36,8 +36,8 @@
                 v-for="link in adminLinks"
                 :key="link.to"
                 :to="link.to"
-                class="px-2 py-1 rounded text-sm font-medium text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100 hover:bg-amber-100 dark:hover:bg-gray-600 transition-colors"
-                exact-active-class="!text-amber-900 dark:!text-amber-100 !bg-amber-100 dark:!bg-gray-600"
+                class="px-2 py-1 rounded-sm text-sm font-medium text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100 hover:bg-amber-100 dark:hover:bg-gray-600 transition-colors"
+                exact-active-class="text-amber-900! dark:text-amber-100! bg-amber-100! dark:bg-gray-600!"
               >
                 <i :class="link.icon" class="mr-1"></i>
                 {{ link.label }}

@@ -20,7 +20,7 @@
         <img
           :src="image"
           :alt="title"
-          class="max-h-48 rounded-lg shadow object-contain"
+          class="max-h-48 rounded-lg shadow-sm object-contain"
         />
       </div>
 

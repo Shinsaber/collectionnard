@@ -10,7 +10,7 @@
 
     <template v-else-if="stats">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5">
           <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">
             Items au catalogue
           </div>
@@ -18,7 +18,7 @@
             {{ stats.total_items }}
           </div>
         </div>
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5">
           <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">
             Relations
           </div>
@@ -28,7 +28,7 @@
             {{ stats.total_relations }}
           </div>
         </div>
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5">
           <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">
             Collections
           </div>
@@ -36,7 +36,7 @@
             {{ stats.total_collections }}
           </div>
         </div>
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-5">
           <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">
             Types d'items
           </div>
@@ -48,7 +48,7 @@
 
       <div
         v-if="stats.items_by_type?.length"
-        class="bg-white dark:bg-gray-800 rounded-lg shadow p-6"
+        class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6"
       >
         <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">
           Items par type

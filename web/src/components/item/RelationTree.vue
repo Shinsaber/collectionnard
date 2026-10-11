@@ -48,7 +48,7 @@
           <!-- Order badge -->
           <span
             v-if="orderVal(rel) != null"
-            class="bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 text-[11px] font-semibold font-mono rounded px-1.5 py-0.5 shrink-0"
+            class="bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 text-[11px] font-semibold font-mono rounded-sm px-1.5 py-0.5 shrink-0"
             title="Ordre"
           >
             #{{ orderVal(rel) }}

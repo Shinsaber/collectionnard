@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="gallery"
-    class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6"
+    class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6"
   >
     <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">
       {{ fieldLabel(schema, gallery.key, lang) }}
@@ -40,7 +40,7 @@
               />
               <span
                 v-if="defaultUrl === url"
-                class="absolute top-1 left-1 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded"
+                class="absolute top-1 left-1 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded-sm"
                 >défaut</span
               >
             </div>

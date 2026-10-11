@@ -220,7 +220,7 @@
       class="md:col-span-2 text-xs text-gray-400 italic"
     >
       Génère un objet
-      <code class="bg-gray-200 px-1 rounded">{ "fr": "…", "en": "…" }</code>
+      <code class="bg-gray-200 px-1 rounded-sm">{ "fr": "…", "en": "…" }</code>
       — les utilisateurs saisiront une valeur par langue.
     </div>
 

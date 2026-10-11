@@ -1,24 +1,24 @@
 # Frontend Vue — conventions
 
-Vue 3 `<script setup lang="ts">` · PrimeVue 5 (preset `aura-compat` via `@primeuix/themes`) · Tailwind 3 ·
+Vue 3 `<script setup lang="ts">` · PrimeVue 5 (preset `aura-compat` via `@primeuix/themes`) · Tailwind 4 (`@tailwindcss/vite`, thème et variante `dark` dans `src/assets/main.css`, pas de `tailwind.config.js`) ·
 Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
 
 ## Organisation
 
-| Chemin                         | Rôle                                                          |
-| ------------------------------ | ------------------------------------------------------------- |
-| `src/api/types.ts`             | Types TS **miroir des structs Go** (`server/internal/model`)  |
-| `src/api/client.ts`            | **Seul** point d'appel HTTP (axios, `baseURL: /api/v1`, JWT)   |
-| `src/stores/auth.ts`           | Store Pinia d'authentification                                |
-| `src/router/index.ts`          | Routes ; `meta: { public: true }` pour les pages sans auth    |
-| `src/views/`, `views/admin/`   | Pages (admin = gestion des méta-types)                        |
-| `components/common/DynamicForm.vue`   | Formulaire généré depuis un JSON Schema (+ `ImageGalleryField.vue`) |
+| Chemin                                | Rôle                                                                                                                                        |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/api/types.ts`                    | Types TS **miroir des structs Go** (`server/internal/model`)                                                                                |
+| `src/api/client.ts`                   | **Seul** point d'appel HTTP (axios, `baseURL: /api/v1`, JWT)                                                                                |
+| `src/stores/auth.ts`                  | Store Pinia d'authentification                                                                                                              |
+| `src/router/index.ts`                 | Routes ; `meta: { public: true }` pour les pages sans auth                                                                                  |
+| `src/views/`, `views/admin/`          | Pages (admin = gestion des méta-types)                                                                                                      |
+| `components/common/DynamicForm.vue`   | Formulaire généré depuis un JSON Schema (+ `ImageGalleryField.vue`)                                                                         |
 | `components/common/SchemaBuilder.vue` | Éditeur visuel de JSON Schema (admin) : coquille + `SchemaFieldCard.vue` + `SchemaFieldConstraints.vue`, types dans `schemaBuilderTypes.ts` |
-| `components/item/`             | `ItemGallery`, `RelationTree`, dialogues `ItemEditDialog`, `AddToCollectionDialog`, `RelationCreateDialog`, `RelationEditDialog` |
-| `components/graph/`            | `GraphNodeDialog`                                             |
-| `src/stores/metaTypes.ts`      | Cache des ItemTypes / RelationTypes / CollectionTypes (`invalidate()` après toute écriture admin) |
-| `src/composables/`             | `useTheme`, `useLang`, `useNotify`, `usePagination`           |
-| `src/lib/schema.ts`            | Lecture des schémas et extensions x-* (pendant de `server/internal/label`) |
+| `components/item/`                    | `ItemGallery`, `RelationTree`, dialogues `ItemEditDialog`, `AddToCollectionDialog`, `RelationCreateDialog`, `RelationEditDialog`            |
+| `components/graph/`                   | `GraphNodeDialog`                                                                                                                           |
+| `src/stores/metaTypes.ts`             | Cache des ItemTypes / RelationTypes / CollectionTypes (`invalidate()` après toute écriture admin)                                           |
+| `src/composables/`                    | `useTheme`, `useLang`, `useNotify`, `usePagination`                                                                                         |
+| `src/lib/schema.ts`                   | Lecture des schémas et extensions x-* (pendant de `server/internal/label`)                                                                  |
 
 ## Règles
 

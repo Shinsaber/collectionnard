@@ -2555,7 +2555,8 @@ paths:
                   - id: e0000000-0000-0000-0000-000000000002
                     type: Broadcast
                     label: AMC 2008-2013
-                    attributes: { name: AMC 2008-2013, type: cable, channel: AMC }
+                    attributes:
+                      { name: AMC 2008-2013, type: cable, channel: AMC }
                     depth: 1
                   - id: e0000000-0000-0000-0000-000000000003
                     type: Season

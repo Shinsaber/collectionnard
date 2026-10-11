@@ -13,6 +13,7 @@ Produis un nouveau fichier `db/seed_<domaine>.sql` (ne modifie pas `seed.sql`) c
 4. Le jeu d'exemple décrit dans le document (items + relations), en réutilisant les items existants quand le modèle y fait référence (ex. une Série TV déjà présente).
 
 Contraintes :
+
 - UUID lisibles avec les préfixes du projet (`b…` item_types, `c…` relation_types, `d…` collection_types, `e…` items) dans une plage libre : vérifie les UUID déjà utilisés avant d'en choisir.
 - Les points listés comme « à définir » ou « TODO » dans le document : ne les invente pas, liste-les-moi à la fin.
 - Indique comment brancher le fichier dans `docker-compose.yml` (`03-seed_<domaine>.sql`) et dans le script `pg-start` du `flake.nix`, mais demande-moi avant de modifier ces fichiers.

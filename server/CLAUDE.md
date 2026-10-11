@@ -7,14 +7,14 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 
 ## Couches (`internal/`)
 
-| Paquet       | Rôle                                                                  |
-| ------------ | --------------------------------------------------------------------- |
-| `model`      | Structs JSON (entités, `*Create`, `*Update`, `Pagination`, `APIError`) |
-| `store`      | Interface `Store` (`store.go`) + implémentation pgx (1 fichier/domaine) |
-| `handler`    | Handlers HTTP, 1 fichier/domaine ; **toutes les routes** dans `handler.go` → `Router()` |
-| `middleware` | `Authenticate` (JWT HS256, `exp` obligatoire), `RequireAdmin`, `RateLimiter` (`/auth/*`) |
-| `validator`  | `ValidateAttributes(schema, data)` + `FormatValidationError`          |
-| `testutil`   | `MockStore` (champs `XxxFn`), `NewTestServer`, `AdminToken`/`UserToken`, `AuthHeader` |
+| Paquet       | Rôle                                                                                                 |
+| ------------ | ---------------------------------------------------------------------------------------------------- |
+| `model`      | Structs JSON (entités, `*Create`, `*Update`, `Pagination`, `APIError`)                               |
+| `store`      | Interface `Store` (`store.go`) + implémentation pgx (1 fichier/domaine)                              |
+| `handler`    | Handlers HTTP, 1 fichier/domaine ; **toutes les routes** dans `handler.go` → `Router()`              |
+| `middleware` | `Authenticate` (JWT HS256, `exp` obligatoire), `RequireAdmin`, `RateLimiter` (`/auth/*`)             |
+| `validator`  | `ValidateAttributes(schema, data)` + `FormatValidationError`                                         |
+| `testutil`   | `MockStore` (champs `XxxFn`), `NewTestServer`, `AdminToken`/`UserToken`, `AuthHeader`                |
 | `label`      | `Render(schema, attrs, lang)` : libellé d'un item via `x-label` (pendant de `web/src/lib/schema.ts`) |
 | `dbmigrate`  | Migrations tern (`db/migrations`) + seed : sous-commandes `colec-server migrate` / `seed` (`cmd.go`) |
 
@@ -48,7 +48,7 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
    (sinon les tests ne compilent plus)
 5. Handler + route dans `Router()` dans le bon groupe (public / authentifié / admin)
 6. Test `internal/handler/<domaine>_test.go` (paquet `handler_test`, via `NewTestServer`
-   + `MockStore`) : cas succès, 401/403, 404, 422 si validation
+   - `MockStore`) : cas succès, 401/403, 404, 422 si validation
 7. `go vet ./... && go test ./...`
 
 ## Tests
@@ -62,7 +62,7 @@ Trois niveaux :
   (graphe multi-chemin, filtres, cascades, 409, jonctions, refresh tokens) puis supprime la base.
   Nécessite PostgreSQL (`pg-start`) ; job dédié en CI.
 - Les tests de handlers n'ont **pas besoin de PostgreSQL** (tout passe par `MockStore`).
-Un champ `XxxFn` non renseigné fait renvoyer `store.ErrNotFound` par défaut : ne définir
-que les fonctions utiles au cas testé. Fixtures prêtes : `SampleItemType()`, `SampleItem()`,
-`AdminUser()`, `RegularUser()`.
-Les requêtes SQL complexes se testent à la main via `db/queries_test.sql` contre la base Docker.
+  Un champ `XxxFn` non renseigné fait renvoyer `store.ErrNotFound` par défaut : ne définir
+  que les fonctions utiles au cas testé. Fixtures prêtes : `SampleItemType()`, `SampleItem()`,
+  `AdminUser()`, `RegularUser()`.
+  Les requêtes SQL complexes se testent à la main via `db/queries_test.sql` contre la base Docker.

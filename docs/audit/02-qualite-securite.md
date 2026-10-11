@@ -8,17 +8,17 @@
 
 ## Commandes exécutées (via `nix develop path:$PWD -c …`, le flake n'étant pas suivi par git)
 
-| Commande | Résultat |
-|----------|----------|
-| `go vet ./...` | **3 avertissements** : `collection_test.go:130`, `relation_test.go:82`, `relation_test.go:100` (« using resp before checking for errors »). |
-| `go test ./...` | **OK** : `handler` (0,34 s) et `middleware` passent ; `store`, `validator`, `model`, `config`, `main` : « no test files ». |
-| `gofmt -l .` | **7 fichiers non formatés** : 5 `*_test.go`, `model/model.go`, `testutil/testutil.go`. |
-| `govulncheck ./...` (v1.8.0, base du 2026-10-08) | **14 vulnérabilités atteintes** par le code : `golang.org/x/text` ×2, `go-chi/chi` ×2, `jackc/pgx` ×1, `golang-jwt/jwt` ×1, bibliothèque standard ×8 (toolchain 1.26.8 → corrigées en 1.26.9). Détail en S3. |
-| `go list -m -u all` | Mises à jour disponibles pour tous les modules directs sauf `google/uuid` et `jsonschema/v5` (v6 est un nouveau module). |
-| `npm install` | OK, 163 paquets. Avertissement : `@primevue/themes@4.5.4` **déprécié**, migrer vers `@primeuix/themes`. |
-| `npm run type-check` (`vue-tsc --build --force`) | **OK**, aucune erreur. |
-| `npm audit` | **17 vulnérabilités** (15 hautes, 2 modérées). Runtime : `axios 1.15.0` (nombreuses CVE, fix 1.20.0), `vue ≤3.5.41` (`@vue/server-renderer`, SSR non utilisé). Le reste est outillage de build (vite, postcss, tailwind 3 → braces/micromatch, nanoid, browserslist…). |
-| `npm outdated` | Majeures disponibles : PrimeVue 5.0.2, Tailwind 4.3.3, Vite 8.3.4, Pinia 4.0.3, vue-router 5.4.0, TypeScript 7.0.2, vue-tsc 3.3.13, @vitejs/plugin-vue 6.0.10, primeicons 8.0.2. |
+| Commande                                         | Résultat                                                                                                                                                                                                                                                               |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `go vet ./...`                                   | **3 avertissements** : `collection_test.go:130`, `relation_test.go:82`, `relation_test.go:100` (« using resp before checking for errors »).                                                                                                                            |
+| `go test ./...`                                  | **OK** : `handler` (0,34 s) et `middleware` passent ; `store`, `validator`, `model`, `config`, `main` : « no test files ».                                                                                                                                             |
+| `gofmt -l .`                                     | **7 fichiers non formatés** : 5 `*_test.go`, `model/model.go`, `testutil/testutil.go`.                                                                                                                                                                                 |
+| `govulncheck ./...` (v1.8.0, base du 2026-10-08) | **14 vulnérabilités atteintes** par le code : `golang.org/x/text` ×2, `go-chi/chi` ×2, `jackc/pgx` ×1, `golang-jwt/jwt` ×1, bibliothèque standard ×8 (toolchain 1.26.8 → corrigées en 1.26.9). Détail en S3.                                                           |
+| `go list -m -u all`                              | Mises à jour disponibles pour tous les modules directs sauf `google/uuid` et `jsonschema/v5` (v6 est un nouveau module).                                                                                                                                               |
+| `npm install`                                    | OK, 163 paquets. Avertissement : `@primevue/themes@4.5.4` **déprécié**, migrer vers `@primeuix/themes`.                                                                                                                                                                |
+| `npm run type-check` (`vue-tsc --build --force`) | **OK**, aucune erreur.                                                                                                                                                                                                                                                 |
+| `npm audit`                                      | **17 vulnérabilités** (15 hautes, 2 modérées). Runtime : `axios 1.15.0` (nombreuses CVE, fix 1.20.0), `vue ≤3.5.41` (`@vue/server-renderer`, SSR non utilisé). Le reste est outillage de build (vite, postcss, tailwind 3 → braces/micromatch, nanoid, browserslist…). |
+| `npm outdated`                                   | Majeures disponibles : PrimeVue 5.0.2, Tailwind 4.3.3, Vite 8.3.4, Pinia 4.0.3, vue-router 5.4.0, TypeScript 7.0.2, vue-tsc 3.3.13, @vitejs/plugin-vue 6.0.10, primeicons 8.0.2.                                                                                       |
 
 ---
 
@@ -107,13 +107,13 @@ générer un mot de passe aléatoire affiché dans les logs.
 
 **Constaté** par `govulncheck` (symboles réellement atteints) :
 
-| ID | Module | Trouvé | Corrigé | Chemin d'appel dans le projet | Pertinence |
-|----|--------|--------|---------|-------------------------------|------------|
-| GO-2026-5777, GO-2026-5775 | `go-chi/chi/v5` | 5.0.12 | 5.3.0 | `middleware.RealIP` ([handler.go:36](../../server/internal/handler/handler.go#L36)) : usurpation d'IP via `X-Forwarded-For` | Réelle : le port 8080 est publié directement (S6), donc l'en-tête peut venir du client. Aujourd'hui l'IP ne sert qu'aux logs. |
-| GO-2026-5004 | `jackc/pgx/v5` | 5.5.5 | 5.9.2 | `pgxpool.Pool.Query` → `sanitize.SanitizeSQL` | Faible : nécessite le protocole simple (non utilisé). À corriger par principe. |
-| GO-2025-3553 | `golang-jwt/jwt/v5` | 5.2.1 | 5.2.2 | `jwt.Parse` ([auth.go:51](../../server/internal/middleware/auth.go#L51)) : allocation excessive au parsing d'en-tête | Réelle : déni de service sur toute route authentifiée. |
-| GO-2026-6629, GO-2026-5970 | `golang.org/x/text` | 0.14.0 | 0.41.0 | via `pgxpool.New` (SASL/precis) | Faible (entrée = mot de passe PG). |
-| GO-2026-6603…6617 (8) | stdlib `net/http`, `crypto/tls`, `net/textproto` | go1.26.8 | go1.26.9 | `ListenAndServe`, `ParseMultipartForm`, `ServeFile` | **La prod compile avec `golang:1.22-alpine`** ([server/Dockerfile:1](../../server/Dockerfile#L1)), bien plus ancien : le nombre réel de CVE stdlib en prod est supérieur. |
+| ID                         | Module                                           | Trouvé   | Corrigé  | Chemin d'appel dans le projet                                                                                               | Pertinence                                                                                                                                                                |
+| -------------------------- | ------------------------------------------------ | -------- | -------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GO-2026-5777, GO-2026-5775 | `go-chi/chi/v5`                                  | 5.0.12   | 5.3.0    | `middleware.RealIP` ([handler.go:36](../../server/internal/handler/handler.go#L36)) : usurpation d'IP via `X-Forwarded-For` | Réelle : le port 8080 est publié directement (S6), donc l'en-tête peut venir du client. Aujourd'hui l'IP ne sert qu'aux logs.                                             |
+| GO-2026-5004               | `jackc/pgx/v5`                                   | 5.5.5    | 5.9.2    | `pgxpool.Pool.Query` → `sanitize.SanitizeSQL`                                                                               | Faible : nécessite le protocole simple (non utilisé). À corriger par principe.                                                                                            |
+| GO-2025-3553               | `golang-jwt/jwt/v5`                              | 5.2.1    | 5.2.2    | `jwt.Parse` ([auth.go:51](../../server/internal/middleware/auth.go#L51)) : allocation excessive au parsing d'en-tête        | Réelle : déni de service sur toute route authentifiée.                                                                                                                    |
+| GO-2026-6629, GO-2026-5970 | `golang.org/x/text`                              | 0.14.0   | 0.41.0   | via `pgxpool.New` (SASL/precis)                                                                                             | Faible (entrée = mot de passe PG).                                                                                                                                        |
+| GO-2026-6603…6617 (8)      | stdlib `net/http`, `crypto/tls`, `net/textproto` | go1.26.8 | go1.26.9 | `ListenAndServe`, `ParseMultipartForm`, `ServeFile`                                                                         | **La prod compile avec `golang:1.22-alpine`** ([server/Dockerfile:1](../../server/Dockerfile#L1)), bien plus ancien : le nombre réel de CVE stdlib en prod est supérieur. |
 
 **Constaté** par `npm audit` : `axios 1.15.0` (prototype pollution, header injection, ReDoS…,
 corrigé en 1.20.0) est la seule dépendance **runtime navigateur** réellement concernée. `vue
@@ -144,6 +144,7 @@ requête `max_depth=10` peut occuper PostgreSQL plusieurs minutes et retourner d
 Déni de service sans intention malveillante (un simple clic sur « profondeur 10 »).
 
 **Correctif.**
+
 1. Remplacer la stratégie « chemins » par une stratégie « nœuds visités » : `UNION` (dédoublonne par
    ligne) sur `(id, depth)` sans colonne `path`, ou mieux une boucle côté Go niveau par niveau avec
    `WHERE id <> ALL($visited)`.
@@ -156,6 +157,7 @@ Déni de service sans intention malveillante (un simple clic sur « profondeur 1
 ### S5 — Absence de limites sur les entrées HTTP et de limitation de débit — **moyenne**
 
 **Constaté.**
+
 - `decodeJSON` lit le corps sans `http.MaxBytesReader` ni `DisallowUnknownFields`
   ([server/internal/handler/handler.go:147-150](../../server/internal/handler/handler.go#L147-L150)).
   Seul l'upload est borné ([upload.go:26](../../server/internal/handler/upload.go#L26)). Un
@@ -176,6 +178,7 @@ recherche.
 ### S6 — Configuration de déploiement : exposition réseau, conteneurs root, nginx nu — **moyenne**
 
 **Constaté.**
+
 - PostgreSQL publié sur l'hôte `5432:5432` avec `colec/colec` ([docker-compose.yml:9-10](../../docker-compose.yml#L9-L10)) ; l'API publiée `8080:8080` ([docker-compose.yml:31-32](../../docker-compose.yml#L31-L32)) alors que nginx la proxifie déjà ([web/nginx.conf:12-18](../../web/nginx.conf#L12-L18)). L'exposition directe de l'API rend `X-Forwarded-For` falsifiable (S3, chi).
 - Aucun `USER` dans `server/Dockerfile` ([server/Dockerfile:9-14](../../server/Dockerfile#L9-L14)) : le binaire tourne en root avec un volume `uploads` en écriture. `web/Dockerfile` idem (`nginx:alpine` tourne en root par défaut).
 - `nginx.conf` : aucun en-tête de sécurité (`X-Content-Type-Options`, `X-Frame-Options`/`frame-ancestors`, `Referrer-Policy`, `Content-Security-Policy`), pas de `client_max_body_size` (voir S7), pas de TLS. La spec OpenAPI suppose « transmis via HTTPS » ([api/openapi.yaml:191](../../api/openapi.yaml#L191)) mais rien ne termine TLS.
@@ -207,6 +210,7 @@ fichiers avec rejet de `..` et `/` et liste blanche d'extensions ([handler.go:44
 test de traversée présent ([upload_test.go:150-166](../../server/internal/handler/upload_test.go#L150-L166)).
 
 Écarts :
+
 - nginx limite les corps à **1 Mo** par défaut (pas de `client_max_body_size`) alors que le serveur
   accepte 10 Mo : via le front, tout upload > 1 Mo échoue avec un 413 nginx que le front
   n'interprète pas (erreur avalée, cf. Q5). **Bug fonctionnel probable en prod.**
@@ -294,6 +298,7 @@ SQL (paramètre `$n`), mais résultats surprenants et balayage complet de la tab
 ### Q1 — Couverture de tests réelle insuffisante — **haute**
 
 **Constaté.**
+
 - **19 handlers sur 42 sans aucun test** : `UpdateItemType`, les 5 routes `RelationType`, les
   5 routes `CollectionType`, `UpdateItem`, `DeleteItem`, `ListItemRelations`,
   `ListItemCollections`, `GetRelation`, `UpdateRelation`, `DeleteRelation`, `ListTags`,
@@ -310,6 +315,7 @@ SQL (paramètre `$n`), mais résultats surprenants et balayage complet de la tab
 - `go vet` : 3 avertissements ; `gofmt` : 7 fichiers.
 
 **Correctif.**
+
 1. Tests handlers manquants avec le `MockStore` existant (pattern déjà en place, 1 session).
 2. Tests store **d'intégration** : paquet `store` avec `//go:build integration`, connexion via
    `DATABASE_URL`, base jetable créée par `pg-start` (ou `testcontainers-go`), rejouer
@@ -344,6 +350,7 @@ utiliser `in.ItemTypeID == uuid.Nil`.
 ### Q3 — Performance : N+1, recherche sans index, recompilation de schéma — **moyenne**
 
 **Constaté.**
+
 - `ListItems` charge les tags par **une requête par item** ([store/item.go:88-95](../../server/internal/store/item.go#L88-L95)) : 21 requêtes pour une page de 20.
 - `ListRelationTypes` charge les jonctions par **deux requêtes par type** ([store/relation_type.go:69-74](../../server/internal/store/relation_type.go#L69-L74)).
 - `ILIKE` sur `attributes::text` ([store/item.go:25](../../server/internal/store/item.go#L25)) : l'index GIN `idx_items_attributes` ([db/schema.sql:166](../../db/schema.sql#L166)) ne sert pas ; balayage séquentiel + conversion texte de chaque JSONB.
@@ -355,11 +362,13 @@ utiliser `in.ItemTypeID == uuid.Nil`.
 requête `WHERE item_id = ANY($1)` regroupée en Go ; idem pour les jonctions ; `lower()` retiré du
 filtre tag ; pour la recherche : colonne générée
 `search_tsv tsvector GENERATED ALWAYS AS (jsonb_to_tsvector('simple', attributes, '["string"]')) STORED`
-+ index GIN, ou à minima `jsonb_path_exists`. Cache des schémas compilés.
+
+- index GIN, ou à minima `jsonb_path_exists`. Cache des schémas compilés.
 
 ### Q4 — Architecture : duplication et responsabilités mal placées — **moyenne**
 
 **Constaté.**
+
 - Le bloc « charger la collection + vérifier le propriétaire + 404 » est copié **7 fois** dans
   `handler/collection.go` (l. 31-40, 71-79, 99-107, 124-132, 153-161, 207-215, 254-262).
 - La construction SQL dynamique (`where`, `argN`, `fmt.Sprintf`) est réécrite à la main dans
@@ -379,6 +388,7 @@ l'extraction de label dans `model`/`label` avec le schéma en entrée ; struct `
 ### Q5 — Front : composant monolithique, duplication, erreurs avalées, accessibilité — **moyenne**
 
 **Constaté.**
+
 - `ItemDetailView.vue` : **1 032 lignes**, 3 dialogues (ajout à une collection, création et édition de relation), 25 `ref`/`computed`. `SchemaBuilder.vue` : 908 lignes.
 - Fonction « label d'item » dupliquée 6 fois (livrable 1 § 4.4) ; `attrLabel`/`ctxLabel`/`ctxAttrLabel` (lecture `x-labels`) dupliquée 5 fois.
 - Erreurs réseau avalées sans retour utilisateur : `DynamicForm.handleFileUpload` (`catch {}` [l. 402-404](../../web/src/components/common/DynamicForm.vue#L402-L404), c'est là que le 413 nginx de S7 disparaît), `GraphView.loadGraph` ([l. 279-281](../../web/src/views/GraphView.vue#L279-L281)), `ItemDetailView.openAddToCollection` ([l. 712-714](../../web/src/views/ItemDetailView.vue#L712-L714)), `submitAddToCollection` sans `catch` ([l. 719-731](../../web/src/views/ItemDetailView.vue#L719-L731)), `ItemsView.confirmDelete` sans `catch` ([l. 201-205](../../web/src/views/ItemsView.vue#L201-L205)), `CollectionsView.save` toast sans détail ([l. 206-208](../../web/src/views/CollectionsView.vue#L206-L208)).
@@ -396,6 +406,7 @@ des ItemTypes/RelationTypes/CollectionTypes ; retirer `baseUrl`.
 ### Q6 — Robustesse d'exécution et observabilité — **moyenne**
 
 **Constaté.**
+
 - `config.Load` fournit des défauts silencieux pour `DATABASE_URL` et `JWT_SECRET` ([config.go:27-35](../../server/config/config.go#L27-L35)) : un oubli de variable en prod ne se voit pas au démarrage (cf. S2).
 - Journalisation : `chimiddleware.Logger` seulement (texte, par requête) ; les erreurs 500 de `handleStoreError` **ne sont pas loguées** ([handler.go:200-202](../../server/internal/handler/handler.go#L200-L202)) : impossible de diagnostiquer un 500 en prod.
 - `pgxpool.New` sans réglage (`MaxConns` défaut = 4 × CPU, pas de `statement_timeout`) ([store/postgres.go:16](../../server/internal/store/postgres.go#L16)).
@@ -413,17 +424,19 @@ et un `request_id` (`chimiddleware.RequestID`) ; `pgxpool.ParseConfig` + `MaxCon
 manuellement (et échouent aujourd'hui).
 
 **Correctif.** Un workflow GitHub Actions (`.github/workflows/ci.yml`) avec deux jobs :
+
 - Go : `gofmt -l`, `go vet`, `golangci-lint` (config minimale : `errcheck`, `staticcheck`,
   `gosec`, `bodyclose`), `go test -race ./...`, `govulncheck` ; job d'intégration avec service
   `postgres:16` et `go test -tags integration`.
 - Web : `npm ci`, `eslint` (`eslint-plugin-vue` + `typescript-eslint`), `prettier --check`,
   `vue-tsc`, `vitest`, `npm audit --audit-level=high`, `npm run build`.
-Migrations : `tern` (même auteur que pgx, SQL pur) ou `goose` ; `schema.sql` devient
-`db/migrations/0001_init.sql`, et `pg-start`/compose appliquent les migrations.
+  Migrations : `tern` (même auteur que pgx, SQL pur) ou `goose` ; `schema.sql` devient
+  `db/migrations/0001_init.sql`, et `pg-start`/compose appliquent les migrations.
 
 ### Q8 — Dette mineure diverse — **basse**
 
 **Constaté.**
+
 - `README.md:46-49` et `CLAUDE.md:97` documentent `admin/admin` mais pas le mot de passe de `shinsaber`.
 - `web/Dockerfile` : `COPY . .` après `npm ci` invalide le cache à chaque changement de source (normal) mais copie aussi `node_modules` local sans `.dockerignore`.
 - `nginx:alpine`, `postgres:16-alpine` et `golang:1.22-alpine` : tags flottants ou obsolètes (livrable 1 § 6).
@@ -434,27 +447,27 @@ Migrations : `tern` (même auteur que pgx, SQL pur) ou `goose` ; `schema.sql` de
 
 ## C. Tableau de synthèse (trié par gravité)
 
-| Réf. | Gravité | Constat | Fichiers principaux | Effort |
-|------|---------|---------|---------------------|--------|
-| S1 | **Critique** | JWT sans `exp`, rôle figé, aucune révocation | `middleware/auth.go`, `config.go`, `stores/auth.ts` | S |
-| S2 | **Critique** | Secret JWT et identifiants par défaut en dur | `config/config.go`, `docker-compose.yml`, `README.md` | S |
-| S3 | **Haute** | 14 vulnérabilités Go atteintes (chi, pgx, jwt, x/text, stdlib) + axios ; toolchain Go 1.22 EOL en prod | `go.mod`, `server/Dockerfile`, `package.json` | M |
-| S4 | **Haute** | Graphe sans borne : CTE `UNION ALL` par chemins, profondeur 10, pas de `LIMIT` | `store/graph.go`, `handler/graph.go` | M |
-| Q1 | **Haute** | 19 handlers, tout le store et tout le front sans test ; `vet`/`gofmt` en échec | `internal/handler/*_test.go`, `internal/store`, `web/` | L |
-| S5 | Moyenne | Corps JSON non borné, pas de `ReadHeaderTimeout`, pas de rate limit login | `handler/handler.go`, `main.go` | S |
-| S6 | Moyenne | PG et API exposés sur l'hôte, conteneurs root, nginx sans en-têtes, pas de `.dockerignore`, pas de healthcheck | `docker-compose.yml`, `*/Dockerfile`, `web/nginx.conf` | S |
-| S7 | Moyenne | nginx 1 Mo vs serveur 10 Mo ; `size` client ; pas de cache ni GC des uploads | `web/nginx.conf`, `handler/upload.go` | S |
-| S8 | Moyenne | Schémas JSON jamais validés à l'écriture, recompilés à chaque requête | `handler/*_type.go`, `validator/jsonschema.go` | S |
-| Q2 | Moyenne | `PUT` relation / collection-item sans `attributes` → 500 ou 422 trompeur | `handler/relation.go`, `handler/collection.go` | S |
-| Q3 | Moyenne | N+1 tags et jonctions, `ILIKE` plein texte sans index | `store/item.go`, `store/relation_type.go` | M |
-| Q4 | Moyenne | Duplication (contrôle propriétaire ×7, SQL dynamique), label métier dans le store | `handler/collection.go`, `store/*.go` | M |
-| Q5 | Moyenne | `ItemDetailView` 1 032 l., label dupliqué ×6, erreurs avalées, a11y de base, `baseUrl` déprécié | `web/src/views/*`, `DynamicForm.vue`, `tsconfig.json` | L |
-| Q6 | Moyenne | 500 non logués, pas de `/healthz`, pool non configuré | `handler/handler.go`, `main.go`, `store/postgres.go` | S |
-| Q7 | Moyenne | Ni CI, ni lint, ni migrations | `.github/`, `.golangci.yml`, `eslint.config.js`, `db/migrations/` | M |
-| S9 | Basse | Énumération d'utilisateurs par timing au login | `handler/auth.go` | S |
-| S10 | Basse | Token en `localStorage` (acceptable avec S1 + CSP) | `stores/auth.ts` | — |
-| S11 | Basse | Jokers `%`/`_` non échappés, recherche sur les clés JSON | `store/item.go` | S |
-| Q8 | Basse | Divers (doc comptes, tags d'images flottants, couleurs du graphe) | `README.md`, `Dockerfile`, `GraphView.vue` | S |
+| Réf. | Gravité      | Constat                                                                                                        | Fichiers principaux                                               | Effort |
+| ---- | ------------ | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | ------ |
+| S1   | **Critique** | JWT sans `exp`, rôle figé, aucune révocation                                                                   | `middleware/auth.go`, `config.go`, `stores/auth.ts`               | S      |
+| S2   | **Critique** | Secret JWT et identifiants par défaut en dur                                                                   | `config/config.go`, `docker-compose.yml`, `README.md`             | S      |
+| S3   | **Haute**    | 14 vulnérabilités Go atteintes (chi, pgx, jwt, x/text, stdlib) + axios ; toolchain Go 1.22 EOL en prod         | `go.mod`, `server/Dockerfile`, `package.json`                     | M      |
+| S4   | **Haute**    | Graphe sans borne : CTE `UNION ALL` par chemins, profondeur 10, pas de `LIMIT`                                 | `store/graph.go`, `handler/graph.go`                              | M      |
+| Q1   | **Haute**    | 19 handlers, tout le store et tout le front sans test ; `vet`/`gofmt` en échec                                 | `internal/handler/*_test.go`, `internal/store`, `web/`            | L      |
+| S5   | Moyenne      | Corps JSON non borné, pas de `ReadHeaderTimeout`, pas de rate limit login                                      | `handler/handler.go`, `main.go`                                   | S      |
+| S6   | Moyenne      | PG et API exposés sur l'hôte, conteneurs root, nginx sans en-têtes, pas de `.dockerignore`, pas de healthcheck | `docker-compose.yml`, `*/Dockerfile`, `web/nginx.conf`            | S      |
+| S7   | Moyenne      | nginx 1 Mo vs serveur 10 Mo ; `size` client ; pas de cache ni GC des uploads                                   | `web/nginx.conf`, `handler/upload.go`                             | S      |
+| S8   | Moyenne      | Schémas JSON jamais validés à l'écriture, recompilés à chaque requête                                          | `handler/*_type.go`, `validator/jsonschema.go`                    | S      |
+| Q2   | Moyenne      | `PUT` relation / collection-item sans `attributes` → 500 ou 422 trompeur                                       | `handler/relation.go`, `handler/collection.go`                    | S      |
+| Q3   | Moyenne      | N+1 tags et jonctions, `ILIKE` plein texte sans index                                                          | `store/item.go`, `store/relation_type.go`                         | M      |
+| Q4   | Moyenne      | Duplication (contrôle propriétaire ×7, SQL dynamique), label métier dans le store                              | `handler/collection.go`, `store/*.go`                             | M      |
+| Q5   | Moyenne      | `ItemDetailView` 1 032 l., label dupliqué ×6, erreurs avalées, a11y de base, `baseUrl` déprécié                | `web/src/views/*`, `DynamicForm.vue`, `tsconfig.json`             | L      |
+| Q6   | Moyenne      | 500 non logués, pas de `/healthz`, pool non configuré                                                          | `handler/handler.go`, `main.go`, `store/postgres.go`              | S      |
+| Q7   | Moyenne      | Ni CI, ni lint, ni migrations                                                                                  | `.github/`, `.golangci.yml`, `eslint.config.js`, `db/migrations/` | M      |
+| S9   | Basse        | Énumération d'utilisateurs par timing au login                                                                 | `handler/auth.go`                                                 | S      |
+| S10  | Basse        | Token en `localStorage` (acceptable avec S1 + CSP)                                                             | `stores/auth.ts`                                                  | —      |
+| S11  | Basse        | Jokers `%`/`_` non échappés, recherche sur les clés JSON                                                       | `store/item.go`                                                   | S      |
+| Q8   | Basse        | Divers (doc comptes, tags d'images flottants, couleurs du graphe)                                              | `README.md`, `Dockerfile`, `GraphView.vue`                        | S      |
 
 Effort : S < ½ journée · M = 1 session Claude Code · L = plusieurs sessions.
 

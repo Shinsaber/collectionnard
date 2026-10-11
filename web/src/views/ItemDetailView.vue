@@ -51,15 +51,15 @@
     </div>
 
     <!-- Attributes -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
       <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">
         Attributs
       </h2>
       <div class="flex gap-6">
-        <div v-if="defaultImageUrl" class="flex-shrink-0">
+        <div v-if="defaultImageUrl" class="shrink-0">
           <img
             :src="defaultImageUrl"
-            class="w-48 h-auto rounded-lg shadow object-cover"
+            class="w-48 h-auto rounded-lg shadow-sm object-cover"
             :style="{ aspectRatio: defaultImageRatio }"
             :alt="`Image par défaut : ${title}`"
           />
@@ -83,7 +83,7 @@
     <ItemGallery :attributes="item.attributes" :schema="schema" />
 
     <!-- Relations -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">
           Relations
@@ -121,7 +121,7 @@
     <!-- Collections contenant cet item -->
     <div
       v-if="itemCollections.length > 0"
-      class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mt-6"
+      class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mt-6"
     >
       <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">
         Dans vos collections
@@ -146,7 +146,7 @@
             <span
               v-for="(val, key) in ic.attributes"
               :key="String(key)"
-              class="bg-gray-200 dark:bg-gray-600 dark:text-gray-300 rounded px-2 py-0.5"
+              class="bg-gray-200 dark:bg-gray-600 dark:text-gray-300 rounded-sm px-2 py-0.5"
             >
               {{ ctxLabel(ic.collection, String(key)) }}:
               {{ displayValue(val, lang) }}

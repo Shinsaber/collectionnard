@@ -9,15 +9,15 @@ Séries TV, DVD, livres, cartes à collectionner, vinyles… tout type de collec
 
 ## Stack technique
 
-| Composant           | Technologie             | Version    |
-| ------------------- | ----------------------- | ---------- |
-| **Backend**         | Go (chi 5.3, pgx 5.11, JWT 5.3) | 1.27       |
-| **Base de données** | PostgreSQL              | 16         |
-| **Frontend**        | Vue 3 + TypeScript      | 3.5 / 6.0  |
-| **UI**              | PrimeVue (@primeuix/themes, preset aura-compat) + Tailwind CSS | 5.0 / 3.4  |
-| **Graphes**         | Cytoscape.js            | 3.34       |
-| **Build**           | Vite (Rolldown) + vue-tsc 3, Pinia 4, vue-router 5 | 8.3 |
-| **Déploiement**     | Docker Compose          | 4 services |
+| Composant           | Technologie                                                    | Version    |
+| ------------------- | -------------------------------------------------------------- | ---------- |
+| **Backend**         | Go (chi 5.3, pgx 5.11, JWT 5.3)                                | 1.27       |
+| **Base de données** | PostgreSQL                                                     | 16         |
+| **Frontend**        | Vue 3 + TypeScript                                             | 3.5 / 6.0  |
+| **UI**              | PrimeVue (@primeuix/themes, preset aura-compat) + Tailwind CSS (plugin Vite) | 5.0 / 4.3 |
+| **Graphes**         | Cytoscape.js                                                   | 3.34       |
+| **Build**           | Vite (Rolldown) + vue-tsc 3, Pinia 4, vue-router 5             | 8.3        |
+| **Déploiement**     | Docker Compose                                                 | 4 services |
 
 ---
 
@@ -40,10 +40,10 @@ docker compose up --build
 
 Sans `.env`, `docker compose` refuse de démarrer : aucun secret n'a de valeur par défaut.
 
-| Service        | URL                          | Description                        |
-| -------------- | ---------------------------- | ---------------------------------- |
-| **Frontend**   | http://localhost:3000        | SPA Vue 3                          |
-| **API**        | http://localhost:8080/api/v1 | API REST                           |
+| Service        | URL                          | Description                                    |
+| -------------- | ---------------------------- | ---------------------------------------------- |
+| **Frontend**   | http://localhost:3000        | SPA Vue 3                                      |
+| **API**        | http://localhost:8080/api/v1 | API REST                                       |
 | **PostgreSQL** | localhost:5432               | BDD (user: `colec`, pass: `POSTGRES_PASSWORD`) |
 
 ### Utilisateur par défaut
@@ -72,18 +72,18 @@ go run .
 
 ### Variables d'environnement du serveur
 
-| Variable            | Défaut      | Rôle                                                                 |
-| ------------------- | ----------- | -------------------------------------------------------------------- |
-| `DATABASE_URL`      | **requis**  | DSN PostgreSQL                                                       |
-| `JWT_SECRET`        | **requis**  | Clé HS256 des access tokens, 32 caractères minimum                   |
-| `ACCESS_TOKEN_TTL`  | `15m`       | Durée de vie des access tokens JWT (format Go)                        |
-| `REFRESH_TOKEN_TTL` | `720h`      | Durée de vie des refresh tokens (rotation à chaque utilisation)       |
-| `LOGIN_RATE_LIMIT`  | `10`        | Appels par minute et par IP sur `/auth/login`, `/auth/refresh`, `/auth/logout` |
-| `TRUSTED_PROXY`     | `false`     | `true` derrière un reverse-proxy qui pose `X-Real-IP` (nginx du compose) ; sinon l'IP serait usurpable |
-| `GRAPH_MAX_NODES`   | `500`       | Nombre max de nœuds renvoyés par `GET /items/{id}/graph` (au-delà : `truncated: true`) |
-| `PORT`              | `8080`      | Port HTTP                                                            |
-| `UPLOAD_DIR`        | `uploads`   | Dossier des images uploadées                                         |
-| `MAX_UPLOAD_SIZE`   | `10485760`  | Taille max d'un upload (octets) ; les corps JSON sont limités à 1 Mio |
+| Variable            | Défaut     | Rôle                                                                                                   |
+| ------------------- | ---------- | ------------------------------------------------------------------------------------------------------ |
+| `DATABASE_URL`      | **requis** | DSN PostgreSQL                                                                                         |
+| `JWT_SECRET`        | **requis** | Clé HS256 des access tokens, 32 caractères minimum                                                     |
+| `ACCESS_TOKEN_TTL`  | `15m`      | Durée de vie des access tokens JWT (format Go)                                                         |
+| `REFRESH_TOKEN_TTL` | `720h`     | Durée de vie des refresh tokens (rotation à chaque utilisation)                                        |
+| `LOGIN_RATE_LIMIT`  | `10`       | Appels par minute et par IP sur `/auth/login`, `/auth/refresh`, `/auth/logout`                         |
+| `TRUSTED_PROXY`     | `false`    | `true` derrière un reverse-proxy qui pose `X-Real-IP` (nginx du compose) ; sinon l'IP serait usurpable |
+| `GRAPH_MAX_NODES`   | `500`      | Nombre max de nœuds renvoyés par `GET /items/{id}/graph` (au-delà : `truncated: true`)                 |
+| `PORT`              | `8080`     | Port HTTP                                                                                              |
+| `UPLOAD_DIR`        | `uploads`  | Dossier des images uploadées                                                                           |
+| `MAX_UPLOAD_SIZE`   | `10485760` | Taille max d'un upload (octets) ; les corps JSON sont limités à 1 Mio                                  |
 
 **Frontend** :
 
@@ -199,10 +199,10 @@ colec/
 
 Le système repose sur un **pattern unique à 3 niveaux** : des méta-types définissent des JSON Schemas, et les instances portent les valeurs validées contre ces schémas.
 
-| Méta-type          | Instances      | Exemple                                     |
-| ------------------ | -------------- | ------------------------------------------- |
-| **ItemType**       | Item           | "Series" → `{title, synopsis, start_year…}`  |
-| **RelationType**   | ItemRelation   | "includes_episode" → `{disc, track}`         |
+| Méta-type          | Instances      | Exemple                                                       |
+| ------------------ | -------------- | ------------------------------------------------------------- |
+| **ItemType**       | Item           | "Series" → `{title, synopsis, start_year…}`                   |
+| **RelationType**   | ItemRelation   | "includes_episode" → `{disc, track}`                          |
 | **CollectionType** | CollectionItem | "Ownership" → `{condition, purchase_price, acquisition_date}` |
 
 Les items forment un **graphe orienté libre** : un même épisode peut être atteint via une diffusion TV et un DVD. Voir l'endpoint `GET /items/{id}/graph`.
@@ -215,20 +215,20 @@ La spécification complète est dans [api/openapi.yaml](api/openapi.yaml).
 
 ### Endpoints principaux
 
-| Domaine         | Endpoints                                       | Auth                              |
-| --------------- | ----------------------------------------------- | --------------------------------- |
-| Auth            | `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me` | Public (rate-limited) / JWT |
-| ItemTypes       | CRUD `/item-types`                              | Admin                             |
-| RelationTypes   | CRUD `/relation-types`                          | Admin                             |
-| CollectionTypes | CRUD `/collection-types`                        | Admin                             |
-| Items           | CRUD `/items` + recherche, filtres, tri         | Admin (écriture)                  |
-| Relations       | CRUD `/relations` + `GET /items/{id}/relations` | Admin (écriture)                  |
-| Graph           | `GET /items/{id}/graph`                         | JWT                               |
-| Collections     | CRUD `/collections` + gestion items             | JWT (owner)                       |
-| Tags            | `GET /tags`                                     | JWT                               |
-| Stats           | `GET /stats`                                    | JWT                               |
-| Santé           | `GET /healthz`                                  | Public                            |
-| Uploads         | `POST /uploads`, `GET /uploads/{filename}`      | Admin (upload) / Public (lecture) |
+| Domaine         | Endpoints                                                                     | Auth                              |
+| --------------- | ----------------------------------------------------------------------------- | --------------------------------- |
+| Auth            | `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me` | Public (rate-limited) / JWT       |
+| ItemTypes       | CRUD `/item-types`                                                            | Admin                             |
+| RelationTypes   | CRUD `/relation-types`                                                        | Admin                             |
+| CollectionTypes | CRUD `/collection-types`                                                      | Admin                             |
+| Items           | CRUD `/items` + recherche, filtres, tri                                       | Admin (écriture)                  |
+| Relations       | CRUD `/relations` + `GET /items/{id}/relations`                               | Admin (écriture)                  |
+| Graph           | `GET /items/{id}/graph`                                                       | JWT                               |
+| Collections     | CRUD `/collections` + gestion items                                           | JWT (owner)                       |
+| Tags            | `GET /tags`                                                                   | JWT                               |
+| Stats           | `GET /stats`                                                                  | JWT                               |
+| Santé           | `GET /healthz`                                                                | Public                            |
+| Uploads         | `POST /uploads`, `GET /uploads/{filename}`                                    | Admin (upload) / Public (lecture) |
 
 ---
 
@@ -236,13 +236,13 @@ La spécification complète est dans [api/openapi.yaml](api/openapi.yaml).
 
 Le projet utilise des extensions custom dans les JSON Schemas pour piloter le frontend :
 
-| Extension            | Rôle                                                         |
-| -------------------- | ------------------------------------------------------------ |
+| Extension            | Rôle                                                                                                     |
+| -------------------- | -------------------------------------------------------------------------------------------------------- |
 | `x-label`            | Gabarit du libellé des instances (`"{title}"`, `"{number}. {title}"`) ; repli `title` / `name` / `label` |
-| `x-order`            | Ordre d'affichage des champs (array de clés)                 |
+| `x-order`            | Ordre d'affichage des champs (array de clés)                                                             |
 | `x-labels`           | Labels i18n par langue (`{fr: {champ: "Label"}, en: {…}}`) ; la langue se bascule dans l'en-tête (FR/EN) |
-| `x-widget`           | Widget spécifique : `image-gallery`, `i18n-text`                 |
-| `x-image-categories` | Catégories d'images avec ratios (`{poster: {ratio: "2/3"}}`) |
+| `x-widget`           | Widget spécifique : `image-gallery`, `i18n-text`                                                         |
+| `x-image-categories` | Catégories d'images avec ratios (`{poster: {ratio: "2/3"}}`)                                             |
 
 Sans extension, le widget découle du schéma : `enum` → liste déroulante, `integer`/`number` avec `minimum`
 **et** `maximum` → curseur, `format: date` / `uri` → champ dédié. Référence complète : `Collectionnard.md` § 3.

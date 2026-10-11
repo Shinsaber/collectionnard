@@ -158,12 +158,12 @@ une abstraction de ce schéma ; elle n'existe pas dans l'implémentation.
 
 ### Extensions `x-*` (pilotent le front)
 
-| Extension            | Niveau    | Rôle                                                                                   |
-| -------------------- | --------- | -------------------------------------------------------------------------------------- |
-| `x-order`            | racine    | Ordre d'affichage des champs (tableau de clés ; les clés absentes suivent)               |
-| `x-labels`           | racine    | Libellés par langue : `{ "fr": { "title": "Titre" }, "en": { "title": "Title" } }`      |
-| `x-widget`           | propriété | Widget dédié : `i18n-text` (objet `{fr, en}`), `image-gallery` (objet de catégories)    |
-| `x-image-categories` | propriété | Catégories d'images et ratios : `{ "poster": { "ratio": "2/3" } }` (avec `image-gallery`) |
+| Extension            | Niveau    | Rôle                                                                                                                                                                                                     |
+| -------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `x-order`            | racine    | Ordre d'affichage des champs (tableau de clés ; les clés absentes suivent)                                                                                                                               |
+| `x-labels`           | racine    | Libellés par langue : `{ "fr": { "title": "Titre" }, "en": { "title": "Title" } }`                                                                                                                       |
+| `x-widget`           | propriété | Widget dédié : `i18n-text` (objet `{fr, en}`), `image-gallery` (objet de catégories)                                                                                                                     |
+| `x-image-categories` | propriété | Catégories d'images et ratios : `{ "poster": { "ratio": "2/3" } }` (avec `image-gallery`)                                                                                                                |
 | `x-label`            | racine    | Gabarit du libellé des instances : `"{title}"`, `"{number}. {title}"`, `"{last_name} {first_name}"` ; sans gabarit, repli sur `title`, `name`, `label` (Go `internal/label`, TS `web/src/lib/schema.ts`) |
 
 Règles d'affichage dérivées du schéma lui-même (pas d'extension) : un `integer` / `number` avec `minimum`
@@ -179,31 +179,31 @@ et documentée ici et dans le README.
 
 **ItemTypes :**
 
-| ItemType  | Attributs (clés JSON)                                   | `x-label`             |
-| --------- | ------------------------------------------------------- | --------------------- |
-| Series    | title, synopsis (i18n), start_year, end_year, images    | `{title}`             |
-| Broadcast | name, type (tv/streaming/cable/web), channel            | `{name}`              |
-| Season    | name, number, year                                      | `{name}`              |
-| Episode   | number, title, duration, synopsis (i18n)                | `{number}. {title}`   |
-| DVD       | title, publisher, release_year, disc_count              | `{title}`             |
+| ItemType  | Attributs (clés JSON)                                | `x-label`           |
+| --------- | ---------------------------------------------------- | ------------------- |
+| Series    | title, synopsis (i18n), start_year, end_year, images | `{title}`           |
+| Broadcast | name, type (tv/streaming/cable/web), channel         | `{name}`            |
+| Season    | name, number, year                                   | `{name}`            |
+| Episode   | number, title, duration, synopsis (i18n)             | `{number}. {title}` |
+| DVD       | title, publisher, release_year, disc_count           | `{title}`           |
 
 **RelationTypes :**
 
-| RelationType     | Source → Target    | Attributs du lien      |
-| ---------------- | ------------------ | ---------------------- |
-| broadcast_on     | Series → Broadcast | broadcast_start_year   |
-| contains_season  | Broadcast → Season | —                      |
+| RelationType     | Source → Target    | Attributs du lien         |
+| ---------------- | ------------------ | ------------------------- |
+| broadcast_on     | Series → Broadcast | broadcast_start_year      |
+| contains_season  | Broadcast → Season | —                         |
 | contains_episode | Season → Episode   | order (tri des relations) |
-| released_as      | Series → DVD       | —                      |
-| includes_episode | DVD → Episode      | disc, track            |
+| released_as      | Series → DVD       | —                         |
+| includes_episode | DVD → Episode      | disc, track               |
 
 **CollectionTypes :**
 
-| CollectionType | Attributs du lien CollectionItem                              |
-| -------------- | ------------------------------------------------------------- |
+| CollectionType | Attributs du lien CollectionItem                                           |
+| -------------- | -------------------------------------------------------------------------- |
 | Ownership      | condition (new/very_good/good/fair/poor), purchase_price, acquisition_date |
-| Watching       | watched_at, rating, progress                                  |
-| Wishlist       | priority, max_budget                                          |
+| Watching       | watched_at, rating, progress                                               |
+| Wishlist       | priority, max_budget                                                       |
 
 **Graphe de données :**
 
@@ -333,7 +333,7 @@ Lots de `docs/audit/03-feuille-de-route.md`, branche `remise-a-niveau` :
 - [x] Lot 8 — extension `x-label` (Go + TS), seed TV en anglais avec `x-order`, langue d'affichage fr/en, requêtes groupées (tags, jonctions)
 - [x] Lot 9 — découpage d'`ItemDetailView` / `SchemaBuilder` / `DynamicForm` / `GraphView` (< 400 lignes), `notifyError` partout, accessibilité (aria-label, alt, label/for, clavier), cache des méta-types, `baseUrl` retiré
 - [x] Lot 10 — PrimeVue 5 (preset aura-compat 14 px), Vite 8, TypeScript 6, vue-tsc 3, Pinia 4, vue-router 5, primeicons 8
-- [ ] Lot 11 — Tailwind 4 (optionnel)
+- [x] Lot 11 — Tailwind 4 (@tailwindcss/vite, config en CSS, outil de migration officiel, `npm audit` complet à zéro)
 
 ### Phase 2 : Enrichissement
 
@@ -358,16 +358,16 @@ Lots de `docs/audit/03-feuille-de-route.md`, branche `remise-a-niveau` :
 
 ## 9. Stack technique
 
-| Composant       | Choix                           | Version   |
-| --------------- | ------------------------------- | --------- |
+| Composant       | Choix                                                                                   | Version              |
+| --------------- | --------------------------------------------------------------------------------------- | -------------------- |
 | Backend         | Go (chi 5.3, pgx 5.11, JWT 5.3, jsonschema v5 — v6 différé, API incompatible, sans CVE) | 1.27 (go.mod ≥ 1.26) |
-| Base de données | PostgreSQL                      | 16        |
-| Frontend        | Vue 3 + TypeScript              | 3.5 / 6.0 |
-| UI              | PrimeVue (@primeuix/themes, aura-compat) + Tailwind CSS | 5.0 / 3.4 |
-| Graphes         | Cytoscape.js                    | 3.34      |
-| Build           | Vite (Rolldown), vue-tsc 3, Pinia 4, vue-router 5 | 8.3 |
-| Déploiement     | Docker Compose (4 services : postgres, migrate, server, web) | — |
-| Dev             | Nix flake (Go, Node, PostgreSQL, golangci-lint) + direnv | flake.lock |
+| Base de données | PostgreSQL                                                                              | 16                   |
+| Frontend        | Vue 3 + TypeScript                                                                      | 3.5 / 6.0            |
+| UI              | PrimeVue (@primeuix/themes, aura-compat) + Tailwind CSS                                 | 5.0 / 3.4            |
+| Graphes         | Cytoscape.js                                                                            | 3.34                 |
+| Build           | Vite (Rolldown), vue-tsc 3, Pinia 4, vue-router 5                                       | 8.3                  |
+| Déploiement     | Docker Compose (4 services : postgres, migrate, server, web)                            | —                    |
+| Dev             | Nix flake (Go, Node, PostgreSQL, golangci-lint) + direnv                                | flake.lock           |
 
 ---
 

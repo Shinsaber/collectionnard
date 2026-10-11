@@ -150,15 +150,15 @@ Créateur : auteur, scénariste, dessinateur, coloriste, traducteur…
 
 ## RelationTypes
 
-| Nom               | Source → Target             | Attributs du lien                                           |
-| ----------------- | --------------------------- | ----------------------------------------------------------- |
-| `contains_saga`   | Univers → Saga              | `order` (integer)                                           |
-| `contains_work`   | Univers / Saga → Manga / BD | `order` (integer)                                           |
+| Nom               | Source → Target             | Attributs du lien                                                                     |
+| ----------------- | --------------------------- | ------------------------------------------------------------------------------------- |
+| `contains_saga`   | Univers → Saga              | `order` (integer)                                                                     |
+| `contains_work`   | Univers / Saga → Manga / BD | `order` (integer)                                                                     |
 | `created_by`      | Manga / BD → Personne       | `roles` (array d'enum : author, writer, artist, colorist, translator ; `minItems: 1`) |
-| `published_as`    | Manga / BD → Édition        | —                                                           |
-| `edited_by`       | Édition → Maison d'édition  | —                                                           |
-| `contains_volume` | Édition → Tome              | `order` (integer)                                           |
-| `adapted_as`      | Manga / BD → Série _(TV)_   | `adaptation_type` (enum: anime, film, OAV, live_action)     |
+| `published_as`    | Manga / BD → Édition        | —                                                                                     |
+| `edited_by`       | Édition → Maison d'édition  | —                                                                                     |
+| `contains_volume` | Édition → Tome              | `order` (integer)                                                                     |
+| `adapted_as`      | Manga / BD → Série _(TV)_   | `adaptation_type` (enum: anime, film, OAV, live_action)                               |
 
 > `contains_work` a plusieurs sources (Univers, Saga) et plusieurs cibles (Manga, BD) : supporté nativement
 > par les tables de jonction de `relation_types`.

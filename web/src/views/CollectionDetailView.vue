@@ -68,7 +68,7 @@
             <span
               v-for="(val, key) in ci.attributes"
               :key="key"
-              class="bg-gray-100 dark:bg-gray-700 dark:text-gray-300 rounded px-2 py-0.5"
+              class="bg-gray-100 dark:bg-gray-700 dark:text-gray-300 rounded-sm px-2 py-0.5"
             >
               {{ ctxAttrLabel(String(key)) }}: {{ val }}
             </span>

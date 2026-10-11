@@ -50,6 +50,7 @@ Format : tableau des écarts (zone, constat, fichier:ligne, gravité, correction
 Revue **défensive** de notre propre code (pas d'écriture d'exploit : constat, impact, correctif).
 
 **Sécurité** (au minimum) :
+
 - Authentification JWT : algorithme, expiration, secret par défaut, révocation, stockage côté front (`localStorage`).
 - Autorisation : contrôles admin et propriétaire (collections, collection items) sur **toutes** les routes ; IDOR.
 - Injections SQL : tout SQL construit avec `fmt.Sprintf` (`store/collection.go`, `store/graph.go`, `buildSortClause`…).
@@ -63,6 +64,7 @@ Revue **défensive** de notre propre code (pas d'écriture d'exploit : constat, 
   `npm audit` si disponibles via `nix develop -c` ; sinon signale-le).
 
 **Qualité** :
+
 - Architecture et découpage (handler / store / model), duplication, gestion d'erreurs, transactions.
 - Tests : couverture réelle des handlers, absence de tests store (SQL) et front, pistes de tests d'intégration.
 - Performance : index vs requêtes réelles, N+1, requête récursive du graphe, pagination.

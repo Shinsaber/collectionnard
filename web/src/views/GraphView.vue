@@ -43,7 +43,7 @@
 
     <div
       v-else
-      class="bg-white dark:bg-gray-800 rounded-lg shadow"
+      class="bg-white dark:bg-gray-800 rounded-lg shadow-sm"
       style="height: 600px"
     >
       <div ref="cyContainer" class="w-full h-full"></div>
@@ -60,7 +60,7 @@
         class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400"
       >
         <span
-          class="inline-block w-3 h-3 rounded-sm"
+          class="inline-block w-3 h-3 rounded-xs"
           :style="{ backgroundColor: color }"
         ></span>
         {{ typeName }}

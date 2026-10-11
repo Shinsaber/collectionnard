@@ -12,27 +12,27 @@ l'affichage traduit via `x-labels` (fr/en, bascule dans l'en-tête). Le seed TV 
 
 ## Documents de référence (à lire selon le besoin, ne pas tout charger d'office)
 
-| Fichier                                  | Contenu                                                     |
-| ---------------------------------------- | ----------------------------------------------------------- |
-| [Collectionnard.md](Collectionnard.md)   | Vision, modèle conceptuel, phases de développement (roadmap) |
-| [les.collection.md](les.collection.md)   | Modèle de données BD / Manga (prochain domaine à intégrer)  |
-| [api/openapi.yaml](api/openapi.yaml)     | Spécification OpenAPI 3.1 — **source de vérité de l'API**   |
-| [db/migrations/](db/migrations/)         | Migrations SQL (tern) ; `001_init.sql` = schéma complet commenté |
-| [db/seed.sql](db/seed.sql)               | Jeu de test « Breaking Bad » (multi-chemin Diffusion + DVD) |
-| [server/CLAUDE.md](server/CLAUDE.md)     | Conventions backend Go                                      |
-| [web/CLAUDE.md](web/CLAUDE.md)           | Conventions frontend Vue                                    |
-| [docs/audit/](docs/audit/BRIEF.md)       | Brief et résultats de l'audit approfondi (`/audit`)         |
+| Fichier                                | Contenu                                                          |
+| -------------------------------------- | ---------------------------------------------------------------- |
+| [Collectionnard.md](Collectionnard.md) | Vision, modèle conceptuel, phases de développement (roadmap)     |
+| [les.collection.md](les.collection.md) | Modèle de données BD / Manga (prochain domaine à intégrer)       |
+| [api/openapi.yaml](api/openapi.yaml)   | Spécification OpenAPI 3.1 — **source de vérité de l'API**        |
+| [db/migrations/](db/migrations/)       | Migrations SQL (tern) ; `001_init.sql` = schéma complet commenté |
+| [db/seed.sql](db/seed.sql)             | Jeu de test « Breaking Bad » (multi-chemin Diffusion + DVD)      |
+| [server/CLAUDE.md](server/CLAUDE.md)   | Conventions backend Go                                           |
+| [web/CLAUDE.md](web/CLAUDE.md)         | Conventions frontend Vue                                         |
+| [docs/audit/](docs/audit/BRIEF.md)     | Brief et résultats de l'audit approfondi (`/audit`)              |
 
 ## Modèle en une table
 
-| Méta-type        | Instance         | Le JSON Schema décrit…                          |
-| ---------------- | ---------------- | ----------------------------------------------- |
-| `ItemType`       | `Item`           | les attributs de l'item (titre, année, ISBN…)   |
-| `RelationType`   | `ItemRelation`   | les attributs du lien (disque, piste, rôle…)    |
-| `CollectionType` | `CollectionItem` | les attributs user↔item (état, prix, note…)     |
+| Méta-type        | Instance         | Le JSON Schema décrit…                        |
+| ---------------- | ---------------- | --------------------------------------------- |
+| `ItemType`       | `Item`           | les attributs de l'item (titre, année, ISBN…) |
+| `RelationType`   | `ItemRelation`   | les attributs du lien (disque, piste, rôle…)  |
+| `CollectionType` | `CollectionItem` | les attributs user↔item (état, prix, note…)   |
 
 - Les items forment un **graphe orienté libre** : un même nœud peut être atteint par plusieurs
-  chemins (ex. Épisode via Saison *et* via DVD). Ne jamais modéliser en arbre strict.
+  chemins (ex. Épisode via Saison _et_ via DVD). Ne jamais modéliser en arbre strict.
 - Un `RelationType` a **plusieurs** types source et cible possibles (tables de jonction
   `relation_type_sources` / `relation_type_targets`, champs `source_item_type_ids` /
   `target_item_type_ids`). Le TODO « arrays » de `les.collection.md` est donc déjà traité.
@@ -54,7 +54,7 @@ les mots-clés qu'il ne connaît pas), lue via `lib/schema.ts`, et documentée d
 ## Stack
 
 Go 1.27 (chi 5.3, pgx 5.11, golang-jwt 5.3, santhosh-tekuri/jsonschema v5) · PostgreSQL 16 ·
-Vue 3.5 + TypeScript 6 · PrimeVue 5 (`@primeuix/themes`, preset `aura-compat`) + Tailwind 3 · Cytoscape.js · Vite 8 · Docker Compose.
+Vue 3.5 + TypeScript 6 · PrimeVue 5 (`@primeuix/themes`, preset `aura-compat`) + Tailwind 4 (plugin Vite, configuration dans `main.css`) · Cytoscape.js · Vite 8 · Docker Compose.
 
 ## Environnement : Nix
 
@@ -136,7 +136,7 @@ Nouveau compte : `go run . hash-password <mdp>` puis `INSERT INTO users …`.
 ## Où en est le projet
 
 Phase 1 (MVP) : terminée. Phase 1.5 (remise à niveau issue de l'audit, branche `remise-a-niveau`,
-lots 0 à 10 livrés, voir `Collectionnard.md` §8 et `docs/audit/03-feuille-de-route.md`) : en cours.
+lots 0 à 11 livrés, voir `Collectionnard.md` §8 et `docs/audit/03-feuille-de-route.md`) : en cours.
 Prochaines pistes (Phase 2, voir `Collectionnard.md` §8) :
 recherche avancée, statistiques graphiques, **import/export CSV/JSON**, soumission d'items
 par les users. Domaine en préparation : **BD / Manga** (`les.collection.md`).

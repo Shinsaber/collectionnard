@@ -13,7 +13,7 @@
         rounded
         aria-label="Monter le champ"
         :disabled="index === 0"
-        class="!w-6 !h-6"
+        class="w-6! h-6!"
         @click="$emit('move', -1)"
       />
       <Button
@@ -23,7 +23,7 @@
         rounded
         aria-label="Descendre le champ"
         :disabled="index === count - 1"
-        class="!w-6 !h-6"
+        class="w-6! h-6!"
         @click="$emit('move', 1)"
       />
 
@@ -62,7 +62,7 @@
         size="small"
         rounded
         aria-label="Supprimer le champ"
-        class="!w-7 !h-7"
+        class="w-7! h-7!"
         @click="$emit('remove')"
       />
 
@@ -73,7 +73,7 @@
         size="small"
         rounded
         aria-label="Ajouter un champ après"
-        class="!w-7 !h-7"
+        class="w-7! h-7!"
         @click="$emit('add-after')"
       />
     </div>

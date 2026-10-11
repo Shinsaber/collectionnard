@@ -13,7 +13,7 @@
         >
           <button
             type="button"
-            class="block rounded border focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="block rounded-sm border focus:outline-hidden focus:ring-2 focus:ring-blue-500"
             :class="{ 'ring-2 ring-blue-500': defaultUrl === url }"
             :title="'Définir comme image par défaut'"
             :aria-label="`Définir l'image ${imgIdx + 1} de ${cat.name} comme image par défaut`"
@@ -23,7 +23,7 @@
             <img
               :src="url"
               :alt="`${cat.name} ${imgIdx + 1}`"
-              class="w-20 object-cover rounded"
+              class="w-20 object-cover rounded-sm"
               :style="{ aspectRatio: cat.ratio || '1/1' }"
             />
           </button>

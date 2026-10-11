@@ -33,7 +33,7 @@
       <div
         v-for="col in pag.data.value"
         :key="col.id"
-        class="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer p-5"
+        class="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer p-5"
         @click="router.push(`/collections/${col.id}`)"
       >
         <div class="flex items-center justify-between mb-2">

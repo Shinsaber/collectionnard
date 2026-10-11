@@ -46,7 +46,7 @@ services:
       ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-15m}
       REFRESH_TOKEN_TTL: ${REFRESH_TOKEN_TTL:-720h}
       LOGIN_RATE_LIMIT: ${LOGIN_RATE_LIMIT:-10}
-      TRUSTED_PROXY: "true"   # X-Real-IP posé par nginx (service web) ; l'API n'est pas publiée directement
+      TRUSTED_PROXY: "true" # X-Real-IP posé par nginx (service web) ; l'API n'est pas publiée directement
       UPLOAD_DIR: "/data/uploads"
       MAX_UPLOAD_SIZE: "10485760"
       LOG_FORMAT: ${LOG_FORMAT:-json}
