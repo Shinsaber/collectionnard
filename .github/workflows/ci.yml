@@ -57,6 +57,8 @@ jobs:
         run: nix develop -c sh -c 'cd web && npm ci'
       - name: lint
         run: nix develop -c sh -c 'cd web && npm run lint'
+      - name: lint OpenAPI (redocly)
+        run: nix develop -c sh -c 'cd web && npm run lint:openapi'
       - name: format
         run: nix develop -c sh -c 'cd web && npm run format:check'
       - name: type-check

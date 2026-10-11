@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 	"strconv"
 	"time"
 
 	"github.com/shinsaber/colec/internal/dbmigrate"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const dbCommandTimeout = 5 * time.Minute
@@ -72,5 +74,21 @@ func applySeed(ctx context.Context, databaseURL string) int {
 		slog.Error("seed", "err", err)
 		return 1
 	}
+	return 0
+}
+
+// runHashPassword implements `colec-server hash-password <mot de passe>` and
+// prints a bcrypt hash usable in db/seed.sql or in a manual INSERT INTO users.
+func runHashPassword(args []string) int {
+	if len(args) != 1 || args[0] == "" {
+		fmt.Fprintln(os.Stderr, "usage: colec-server hash-password <password>")
+		return 2
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(args[0]), bcrypt.DefaultCost)
+	if err != nil {
+		slog.Error("bcrypt", "err", err)
+		return 1
+	}
+	fmt.Println(string(hash))
 	return 0
 }

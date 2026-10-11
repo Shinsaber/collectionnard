@@ -55,6 +55,7 @@ info:
     name: Collectionnard
   license:
     name: MIT
+    identifier: MIT
 
 servers:
   - url: /api/v1
@@ -151,8 +152,8 @@ tags:
   - name: Uploads
     description: |
       Upload et récupération de fichiers images. Les images sont stockées localement
-      sur le serveur. L'upload est réservé aux admins, la consultation nécessite
-      une authentification.
+      sur le serveur. L'upload est réservé aux admins ; la lecture (`GET /uploads/{filename}`)
+      est publique car les balises `<img>` ne peuvent pas envoyer d'en-tête Authorization.
   - name: Health
     description: |
       État de santé de l'API (connexion à la base). Public, utilisé par le healthcheck
@@ -606,18 +607,19 @@ components:
     ItemUpdate:
       type: object
       description: |
-        Modification d'un item. Les attributs fournis sont fusionnés avec les existants,
-        puis le résultat est validé contre le JSON Schema du ItemType.
-        Pour supprimer un attribut optionnel, passer sa valeur à `null`.
+        Modification d'un item (sémantique PUT : **remplacement**). `attributes`, s'il est
+        fourni, remplace intégralement l'objet existant et est validé contre le JSON Schema
+        du ItemType ; envoyer l'objet complet (le front le fait toujours). Omis, les attributs
+        sont inchangés.
       properties:
         attributes:
           type: object
-          description: Attributs à modifier. Revalidés contre le JSON Schema.
+          description: Nouvel objet d'attributs complet, validé contre le JSON Schema.
         tags:
           type: array
           items:
             type: string
-          description: Nouvelle liste de tags (remplace l'existante).
+          description: "Nouvelle liste de tags : omis = inchangés, `[]` = supprime tous les tags."
 
     # -------------------------------------------------------------------------
     # ItemRelation
@@ -663,6 +665,10 @@ components:
         created_at:
           type: string
           format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          description: Dernière modification des attributs (migration 002).
 
     ItemRelationCreate:
       type: object
@@ -700,6 +706,7 @@ components:
       description: |
         Modification des attributs d'une relation existante. On ne peut pas changer
         les items source/target ni le type — il faut supprimer et recréer la relation.
+      required: [attributes]
       properties:
         attributes:
           type: object
@@ -846,6 +853,7 @@ components:
       description: |
         Modification des attributs contextuels d'un item dans une collection.
         Les attributs sont revalidés contre le JSON Schema du CollectionType.
+      required: [attributes]
       properties:
         attributes:
           type: object
@@ -921,6 +929,27 @@ components:
             - Valeurs négatives (-1, -2, -3…) : nœuds ascendants (target → source)
           example: 0
 
+    GraphEdge:
+      type: object
+      description: Arête du sous-graphe (une ItemRelation projetée).
+      required: [source_id, target_id, relation_type, attributes]
+      properties:
+        source_id:
+          type: string
+          format: uuid
+          description: ID de l'item source.
+        target_id:
+          type: string
+          format: uuid
+          description: ID de l'item cible.
+        relation_type:
+          type: string
+          description: Nom du RelationType.
+          example: inclut_episode
+        attributes:
+          type: object
+          description: Attributs de la relation.
+
     GraphResponse:
       type: object
       description: |
@@ -949,24 +978,8 @@ components:
         edges:
           type: array
           items:
-            type: object
-            properties:
-              source_id:
-                type: string
-                format: uuid
-                description: ID de l'item source.
-              target_id:
-                type: string
-                format: uuid
-                description: ID de l'item cible.
-              relation_type:
-                type: string
-                description: Nom du RelationType de cette arête.
-                example: diffuse_en
-              attributes:
-                type: object
-                description: Attributs portés par cette arête.
-          description: Toutes les arêtes (relations) du sous-graphe.
+            $ref: "#/components/schemas/GraphEdge"
+          description: Arêtes entre les nœuds du sous-graphe (racine incluse).
 
     # -------------------------------------------------------------------------
     # Pagination
@@ -1001,6 +1014,43 @@ components:
     # -------------------------------------------------------------------------
     # Erreur
     # -------------------------------------------------------------------------
+    ItemsByType:
+      type: object
+      description: Nombre d'items pour un ItemType.
+      required: [type_name, count]
+      properties:
+        type_name:
+          type: string
+          description: Nom du ItemType.
+          example: Episode
+        count:
+          type: integer
+          description: Nombre d'items de ce type.
+          example: 42
+
+    Stats:
+      type: object
+      description: Statistiques globales du catalogue et des collections.
+      required: [items_by_type, total_items, total_collections, total_relations]
+      properties:
+        items_by_type:
+          type: array
+          description: Comptage d'items ventilé par ItemType.
+          items:
+            $ref: "#/components/schemas/ItemsByType"
+        total_items:
+          type: integer
+          description: Nombre total d'items dans le catalogue.
+          example: 156
+        total_collections:
+          type: integer
+          description: Nombre total de collections (tous utilisateurs).
+          example: 12
+        total_relations:
+          type: integer
+          description: Nombre total de relations (arêtes du graphe).
+          example: 340
+
     Error:
       type: object
       description: |
@@ -1045,7 +1095,7 @@ components:
           example: 550e8400-e29b-41d4-a716-446655440000.jpg
         size:
           type: integer
-          description: Taille du fichier en octets.
+          description: Taille du fichier écrit sur le disque, en octets.
           example: 245760
 
   # ===========================================================================
@@ -1074,7 +1124,9 @@ components:
       in: query
       description: |
         Champ de tri. Préfixer par `-` pour un tri descendant.
-        Exemples : `created_at`, `-created_at`, `attributes.titre`.
+        Valeurs acceptées : `created_at`, `updated_at` (défaut `-created_at`).
+        Toute autre valeur renvoie 400. Le tri par attribut JSONB (`attributes.<champ>`)
+        arrive avec la recherche avancée (Phase 2).
         Les champs de tri disponibles dépendent du type d'objet.
       schema:
         type: string
@@ -1173,6 +1225,29 @@ components:
             error: payload_too_large
             message: Corps de requête trop volumineux (max 1048576 octets)
 
+    BadRequest:
+      description: |
+        Requête invalide : UUID de chemin ou de filtre mal formé, JSON illisible, paramètre hors
+        bornes (`max_depth`, `sort`…) ou champ obligatoire manquant dans le corps.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: bad_request
+            message: "UUID invalide: id"
+    InternalError:
+      description: |
+        Erreur interne. La cause est journalisée côté serveur avec le `request_id` de la requête ;
+        le message renvoyé est volontairement générique.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: internal
+            message: Erreur interne
+
 # =============================================================================
 # ENDPOINTS
 # =============================================================================
@@ -1190,6 +1265,8 @@ paths:
       operationId: healthz
       security: []
       responses:
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: API et base de données opérationnelles.
           content:
@@ -1246,6 +1323,10 @@ paths:
             schema:
               $ref: "#/components/schemas/LoginRequest"
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Connexion réussie. Le token JWT est dans le champ `token`.
           content:
@@ -1292,6 +1373,10 @@ paths:
             schema:
               $ref: "#/components/schemas/RefreshRequest"
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Nouveaux tokens.
           content:
@@ -1333,6 +1418,10 @@ paths:
             schema:
               $ref: "#/components/schemas/RefreshRequest"
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "204":
           description: Refresh token révoqué.
         "400":
@@ -1351,6 +1440,8 @@ paths:
       description: Retourne le profil complet de l'utilisateur identifié par le token JWT.
       operationId: getCurrentUser
       responses:
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Profil de l'utilisateur authentifié.
           content:
@@ -1376,6 +1467,10 @@ paths:
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/per_page"
       responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Liste paginée des types d'items.
           content:
@@ -1422,6 +1517,14 @@ paths:
                   poster: { type: string, format: uri }
                 additionalProperties: false
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "201":
           description: Type d'item créé avec succès.
           content:
@@ -1457,6 +1560,12 @@ paths:
         un formulaire de création/modification d'item.
       operationId: getItemType
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Type d'item trouvé.
           content:
@@ -1485,6 +1594,14 @@ paths:
             schema:
               $ref: "#/components/schemas/ItemTypeUpdate"
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Type modifié avec succès.
           content:
@@ -1506,6 +1623,12 @@ paths:
         Il faut d'abord supprimer tous les items et relations dépendants.
       operationId: deleteItemType
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "204":
           description: Type supprimé avec succès.
         "403":
@@ -1554,6 +1677,10 @@ paths:
             type: string
             format: uuid
       responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Liste paginée des types de relation.
           content:
@@ -1595,6 +1722,14 @@ paths:
                   piste: { type: integer, minimum: 1 }
                 additionalProperties: false
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "201":
           description: Type de relation créé.
           content:
@@ -1629,6 +1764,12 @@ paths:
         Inclut les ItemTypes source et cible complets.
       operationId: getRelationType
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Type de relation trouvé.
           content:
@@ -1653,6 +1794,14 @@ paths:
             schema:
               $ref: "#/components/schemas/RelationTypeUpdate"
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Type de relation modifié.
           content:
@@ -1672,6 +1821,12 @@ paths:
         Supprime un type de relation. **Échoue avec 409** s'il existe des relations de ce type.
       operationId: deleteRelationType
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "204":
           description: Type de relation supprimé.
         "403":
@@ -1701,6 +1856,10 @@ paths:
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/per_page"
       responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Liste paginée des types de collection.
           content:
@@ -1744,6 +1903,16 @@ paths:
                   date_acquisition: { type: string, format: date }
                 additionalProperties: false
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "201":
           description: Type de collection créé.
           content:
@@ -1776,6 +1945,12 @@ paths:
         Utile pour générer dynamiquement le formulaire d'ajout d'item à une collection.
       operationId: getCollectionType
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Type de collection trouvé.
           content:
@@ -1797,6 +1972,14 @@ paths:
             schema:
               $ref: "#/components/schemas/CollectionTypeUpdate"
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Type de collection modifié.
           content:
@@ -1814,6 +1997,12 @@ paths:
         **Admin uniquement.** Échoue avec 409 s'il existe des collections de ce type.
       operationId: deleteCollectionType
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "204":
           description: Type de collection supprimé.
         "403":
@@ -1840,11 +2029,12 @@ paths:
         **Recherche et filtres disponibles :**
         - `item_type_id` : filtrer par type (ex: uniquement les Séries)
         - `search` : recherche textuelle sur tous les champs texte des attributs (ILIKE)
-        - `tag` : filtrer par tag exact
-        - `attributes[champ]=valeur` : filtre sur un attribut JSONB spécifique
+        - `tag` : filtrer par tag (nom exact, insensible à la casse)
 
-        **Tri :** utilisez `sort` avec le nom d'un attribut (ex: `sort=attributes.titre`
-        ou `sort=-created_at` pour les plus récents d'abord).
+        **Tri :** `sort=created_at|updated_at`, préfixe `-` pour descendant (défaut `-created_at`).
+
+        Le filtre par attribut JSONB (`attributes[champ]=valeur`, index GIN) et le tri par attribut
+        font partie de la recherche avancée (Phase 2) : non disponibles dans cette version.
       operationId: listItems
       parameters:
         - $ref: "#/components/parameters/page"
@@ -1869,16 +2059,11 @@ paths:
           description: Filtrer par tag (nom exact, insensible à la casse).
           schema:
             type: string
-        - name: attributes
-          in: query
-          description: |
-            Filtres sur les attributs JSONB. Passer sous la forme `attributes[champ]=valeur`.
-            Exemples :
-            - `attributes[annee_debut]=2008` → items avec annee_debut = 2008
-            - `attributes[type]=TV` → items avec type = "TV"
-          schema:
-            type: object
       responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Liste paginée d'items. Chaque item inclut son ItemType et ses tags.
           content:
@@ -1918,6 +2103,14 @@ paths:
                 annee_fin: 2013
               tags: [drame, thriller, crime]
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "201":
           description: Item créé avec succès. Retourne l'item complet avec son type et ses tags.
           content:
@@ -1946,6 +2139,12 @@ paths:
         Utile pour afficher la fiche détaillée d'un item.
       operationId: getItem
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Item trouvé.
           content:
@@ -1972,6 +2171,14 @@ paths:
             schema:
               $ref: "#/components/schemas/ItemUpdate"
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Item modifié avec succès.
           content:
@@ -1996,6 +2203,12 @@ paths:
         - Les tags orphelins ne sont pas supprimés automatiquement
       operationId: deleteItem
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "204":
           description: Item et dépendances supprimés.
         "403":
@@ -2027,6 +2240,10 @@ paths:
         l'a déjà ajouté, et avec quels attributs.
       operationId: listItemCollections
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Liste des collections contenant cet item pour l'utilisateur courant.
           content:
@@ -2075,6 +2292,12 @@ paths:
             type: string
             format: uuid
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Liste des relations (sortantes et entrantes).
           content:
@@ -2097,8 +2320,8 @@ paths:
 
         **Validations effectuées automatiquement :**
         1. Les deux items (`source_item_id`, `target_item_id`) doivent exister
-        2. Le ItemType de la source doit correspondre au `source_item_type_id` du RelationType
-        3. Le ItemType de la cible doit correspondre au `target_item_type_id` du RelationType
+        2. Le ItemType de la source doit être l'un des `source_item_type_ids` du RelationType
+        3. Le ItemType de la cible doit être l'un des `target_item_type_ids` du RelationType
         4. Les `attributes` doivent respecter le JSON Schema du RelationType
         5. Le triplet (relation_type, source, target) doit être unique → 409 si doublon
         6. `source_item_id` ≠ `target_item_id` (pas d'auto-référence) → 422 sinon
@@ -2117,6 +2340,14 @@ paths:
                 disque: 1
                 piste: 1
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "201":
           description: Relation créée avec succès.
           content:
@@ -2146,6 +2377,12 @@ paths:
         Retourne une relation avec son RelationType, l'item source et l'item cible.
       operationId: getRelation
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Relation trouvée.
           content:
@@ -2172,6 +2409,14 @@ paths:
             schema:
               $ref: "#/components/schemas/ItemRelationUpdate"
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Relation modifiée.
           content:
@@ -2192,6 +2437,12 @@ paths:
         ne sont pas affectés.
       operationId: deleteRelation
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "204":
           description: Relation supprimée.
         "403":
@@ -2261,6 +2512,10 @@ paths:
           schema:
             type: string
       responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "400":
           description: "`max_depth` hors bornes ou `relation_type_ids` invalide / trop long."
           content:
@@ -2353,6 +2608,10 @@ paths:
             type: string
             format: uuid
       responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Collections de l'utilisateur.
           content:
@@ -2383,6 +2642,22 @@ paths:
               name: Mes DVDs
               description: Ma collection de DVDs et Blu-rays
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "`collection_type_id` inconnu."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "201":
           description: Collection créée.
           content:
@@ -2413,6 +2688,12 @@ paths:
         L'utilisateur ne peut accéder qu'à ses propres collections.
       operationId: getCollection
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Collection trouvée.
           content:
@@ -2435,6 +2716,14 @@ paths:
             schema:
               $ref: "#/components/schemas/CollectionUpdate"
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Collection modifiée.
           content:
@@ -2458,6 +2747,12 @@ paths:
         personnels (état, prix, note…) sont perdus.
       operationId: deleteCollection
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "204":
           description: Collection et liens supprimés.
         "404":
@@ -2495,6 +2790,12 @@ paths:
             type: string
             format: uuid
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Items de la collection avec attributs contextuels.
           content:
@@ -2532,6 +2833,14 @@ paths:
                 prix_achat: 45.00
                 date_acquisition: "2020-12-25"
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "201":
           description: Item ajouté à la collection avec ses attributs contextuels.
           content:
@@ -2592,6 +2901,14 @@ paths:
                 prix_achat: 45.00
                 date_acquisition: "2020-12-25"
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Attributs contextuels modifiés.
           content:
@@ -2612,6 +2929,12 @@ paths:
         sont perdues.
       operationId: removeItemFromCollection
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "204":
           description: Item retiré de la collection.
         "404":
@@ -2638,6 +2961,10 @@ paths:
           schema:
             type: string
       responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Liste des tags correspondants.
           content:
@@ -2676,6 +3003,8 @@ paths:
                   format: binary
                   description: Fichier image à uploader.
       responses:
+        "500":
+          $ref: "#/components/responses/InternalError"
         "201":
           description: Fichier uploadé avec succès.
           content:
@@ -2694,7 +3023,7 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
         "413":
-          description: Fichier plus grand que `MAX_UPLOAD_SIZE` (nginx applique la même limite : `client_max_body_size 10m`).
+          description: "Fichier plus grand que `MAX_UPLOAD_SIZE` (nginx applique la même limite : `client_max_body_size 10m`)."
           content:
             application/json:
               schema:
@@ -2723,6 +3052,10 @@ paths:
       operationId: getUploadedFile
       security: []
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Fichier image.
           content:
@@ -2759,36 +3092,13 @@ paths:
         - Total des items, collections et relations
       operationId: getStats
       responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Statistiques globales.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  items_by_type:
-                    type: array
-                    description: Comptage d'items ventilé par ItemType.
-                    items:
-                      type: object
-                      properties:
-                        type_name:
-                          type: string
-                          description: Nom du ItemType.
-                          example: Episode
-                        count:
-                          type: integer
-                          description: Nombre d'items de ce type.
-                          example: 42
-                  total_items:
-                    type: integer
-                    description: Nombre total d'items dans le catalogue.
-                    example: 156
-                  total_collections:
-                    type: integer
-                    description: Nombre total de collections (tous utilisateurs).
-                    example: 12
-                  total_relations:
-                    type: integer
-                    description: Nombre total de relations (arêtes du graphe).
-                    example: 324
+                $ref: "#/components/schemas/Stats"

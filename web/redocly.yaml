@@ -1,0 +1,8 @@
+# Configuration Redocly CLI (web: `npm run lint:openapi`, CI).
+extends:
+  - recommended
+rules:
+  # Les `security: []` explicites sur les endpoints publics sont voulus.
+  security-defined: error
+  operation-4xx-response: error
+  no-unused-components: error

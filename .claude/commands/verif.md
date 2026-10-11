@@ -6,7 +6,7 @@ Lance les vérifications suivantes (préfixe `nix develop -c` si `go`/`npm` n'es
 
 1. `nix flake check`
 2. `cd server && gofmt -l . && go vet ./... && golangci-lint run ./... && go test ./...`
-3. `cd web && npm run lint && npm run format:check && npm run type-check && npm test`
+3. `cd web && npm run lint && npm run lint:openapi && npm run format:check && npm run type-check && npm test`
 
 Ce sont exactement les étapes de la CI (`.github/workflows/ci.yml`).
 Ne corrige rien sans me le demander : propose seulement les corrections.

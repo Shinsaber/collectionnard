@@ -57,18 +57,18 @@ Le système repose sur **un pattern unique appliqué à 3 niveaux**. Chaque nive
 
 ```
                     ┌──────────────────────────────┐
-                    │    AttributeDefinition       │
-                    │ (name, field_type, required, │
-                    │  default, validation_rules)  │
+                    │  attributes_schema (JSONB)   │
+                    │  = JSON Schema draft 2020-12 │
+                    │  + extensions x-* (voir §3)  │
                     └──────────┬───────────────────┘
-                               │ utilisé par
+                               │ porté par chaque méta-type
               ┌────────────────┼────────────────┐
               ▼                ▼                ▼
-        ┌──────────┐    ┌──────────────┐  ┌────────────────┐
-        │ ItemType │    │ RelationType │  │ CollectionType │
-        │          │    │ source_type  │  │                │
-        │          │    │ target_type  │  │                │
-        └────┬─────┘    └──────┬───────┘  └───────┬────────┘
+        ┌──────────┐    ┌────────────────┐ ┌────────────────┐
+        │ ItemType │    │ RelationType   │ │ CollectionType │
+        │          │    │ source_types[] │ │                │
+        │          │    │ target_types[] │ │                │
+        └────┬─────┘    └──────┬─────────┘ └───────┬────────┘
              │                 │                  │
      définit le schéma  définit le schéma   définit le schéma
              │                 │                  │
@@ -121,7 +121,10 @@ Exemples : "Série", "Épisode", "Livre", "Personne", "Studio".
 
 Définit les liens possibles entre items, avec :
 
-- **Contraintes source→target** : quels ItemTypes peuvent être liés (ex: `diffusé_en` ne lie que Série→Diffusion). Permet de proposer les types pertinents lors de la création de liens.
+- **Contraintes source→target** : **listes** d'ItemTypes autorisés de chaque côté (`source_item_type_ids`,
+  `target_item_type_ids`, tables de jonction `relation_type_sources` / `relation_type_targets`). Ex. `diffuse_en`
+  ne lie que Serie→Diffusion ; `contains_work` accepte Univers ou Saga → Manga ou BD. Permet de proposer les
+  types pertinents lors de la création de liens.
 - **Attributs dynamiques** : données portées par le lien (ex: disque, piste, rôle…)
 
 #### ItemRelation
@@ -140,19 +143,33 @@ Instance du lien entre une collection et un item, avec les valeurs des attributs
 
 ## 3. Attributs dynamiques
 
-### Définition des champs
+### Un JSON Schema par méta-type
 
-Chaque méta-type (ItemType, RelationType, CollectionType) définit une liste d'`AttributeDefinition` :
+Chaque méta-type (ItemType, RelationType, CollectionType) porte un **JSON Schema** (draft 2020-12) dans sa
+colonne `attributes_schema` (JSONB). Les instances (Item, ItemRelation, CollectionItem) portent un objet
+`attributes` (JSONB) validé contre ce schéma à chaque écriture, côté serveur
+(`santhosh-tekuri/jsonschema`). Le schéma lui-même est vérifié à l'enregistrement du méta-type : objet JSON
+de racine `"type": "object"`, compilable, sans `$ref` externe.
 
-| Propriété          | Description                                                                                 |
-| ------------------ | ------------------------------------------------------------------------------------------- |
-| `name`             | Nom du champ                                                                                |
-| `field_type`       | Type du champ (texte, nombre, date, booléen, liste déroulante, image, URL, référence item…) |
-| `required`         | Champ obligatoire ou non                                                                    |
-| `default`          | Valeur par défaut                                                                           |
-| `validation_rules` | Règles de validation (format ISBN, prix > 0, regex…)                                        |
+Les mots-clés standards couvrent les besoins du catalogue : `type` (string, integer, number, boolean, object,
+array), `required`, `enum`, `format` (`date`, `uri`…), `minimum` / `maximum`, `minLength`, `pattern`,
+`items`, `description`, `default`. L'« `AttributeDefinition` » des premières versions de ce document était
+une abstraction de ce schéma ; elle n'existe pas dans l'implémentation.
 
-Le système de types de champs est conçu pour être extensible : de nouveaux types de champs pourront être ajoutés au fil du temps.
+### Extensions `x-*` (pilotent le front)
+
+| Extension            | Niveau    | Rôle                                                                                   |
+| -------------------- | --------- | -------------------------------------------------------------------------------------- |
+| `x-order`            | racine    | Ordre d'affichage des champs (tableau de clés ; les clés absentes suivent)               |
+| `x-labels`           | racine    | Libellés par langue : `{ "fr": { "title": "Titre" }, "en": { "title": "Title" } }`      |
+| `x-widget`           | propriété | Widget dédié : `i18n-text` (objet `{fr, en}`), `image-gallery` (objet de catégories)    |
+| `x-image-categories` | propriété | Catégories d'images et ratios : `{ "poster": { "ratio": "2/3" } }` (avec `image-gallery`) |
+| `x-label`            | racine    | _(prévu, lot 8)_ gabarit du libellé d'un item : `"{title}"`, `"{last_name} {first_name}"` |
+
+Règles d'affichage dérivées du schéma lui-même (pas d'extension) : un `integer` / `number` avec `minimum`
+**et** `maximum` est rendu par un curseur ; un `enum` par une liste déroulante ; `format: date` / `uri` par
+le champ adapté. Toute nouvelle extension doit être gérée par `DynamicForm.vue` **et** `SchemaBuilder.vue`,
+et documentée ici et dans le README.
 
 ---
 
@@ -170,15 +187,15 @@ Le système de types de champs est conçu pour être extensible : de nouveaux ty
 | Épisode   | numéro, titre, durée, synopsis                  |
 | DVD       | titre, éditeur, année_sortie, nb_disques        |
 
-**RelationTypes :**
+**RelationTypes :** (noms ASCII du seed ; les clés JSON du seed TV passent en anglais au lot 8)
 
 | RelationType     | Source → Target    | Attributs du lien |
 | ---------------- | ------------------ | ----------------- |
-| diffusé_en       | Série → Diffusion  | année_début_diff  |
+| diffuse_en       | Serie → Diffusion  | —                 |
 | contient_saison  | Diffusion → Saison | —                 |
-| contient_épisode | Saison → Épisode   | ordre             |
-| édité_en         | Série → DVD        | —                 |
-| inclut_épisode   | DVD → Épisode      | disque, piste     |
+| contient_episode | Saison → Episode   | ordre             |
+| edite_en         | Serie → DVD        | —                 |
+| inclut_episode   | DVD → Episode      | disque, piste     |
 
 **CollectionTypes :**
 
@@ -192,14 +209,14 @@ Le système de types de champs est conçu pour être extensible : de nouveaux ty
 
 ```
 Breaking Bad (Série)
-├──diffusé_en──▶ "AMC 2008-2013" (Diffusion)
+├──diffuse_en──▶ "AMC 2008-2013" (Diffusion)
 │                 ├──contient_saison──▶ Saison 1
-│                 │                     ├──contient_épisode──▶ Ep1 "Pilot"
-│                 │                     └──contient_épisode──▶ Ep2 "Cat's in the Bag"
+│                 │                     ├──contient_episode──▶ Ep1 "Pilot"
+│                 │                     └──contient_episode──▶ Ep2 "Cat's in the Bag"
 │                 └──contient_saison──▶ Saison 2 ──...
-└──édité_en────▶ "Coffret DVD Intégrale" (DVD)
-                  ├──inclut_épisode {disque:1, piste:1}──▶ Ep1 "Pilot"     ← même item !
-                  └──inclut_épisode {disque:1, piste:2}──▶ Ep2 "Cat's..."  ← même item !
+└──edite_en─────▶ "Coffret DVD Intégrale" (DVD)
+                  ├──inclut_episode {disque:1, piste:1}──▶ Ep1 "Pilot"     ← même item !
+                  └──inclut_episode {disque:1, piste:2}──▶ Ep2 "Cat's..."  ← même item !
 ```
 
 Les épisodes sont les **mêmes nœuds**, accessibles par deux chemins. C'est la force du graphe.
@@ -238,9 +255,12 @@ User "shinsaber" :
 La table unique d'items avec attributs dynamiques nécessite une attention particulière :
 
 - **Stockage JSONB** (PostgreSQL) pour les attributs dynamiques : performant en lecture, indexable
-- **Vues matérialisées** par ItemType pour les requêtes fréquentes
-- **Index GIN** sur les champs JSONB les plus filtrés (titre, année…)
-- **Index sur les relations** pour les traversées de graphe
+- **Index GIN** sur les colonnes JSONB `attributes` (items, relations, collection items) — exploité par la
+  recherche avancée (Phase 2, opérateur `@>`)
+- **Index sur les relations** (source, cible, type) pour les traversées de graphe, qui se font en parcours en
+  largeur borné (`GRAPH_MAX_NODES`, profondeur max, timeout)
+- `statement_timeout` sur le pool de connexions
+- _Piste_ : vues matérialisées par ItemType si des requêtes fréquentes l'exigent (aucune aujourd'hui)
 
 ---
 
@@ -279,7 +299,8 @@ La table unique d'items avec attributs dynamiques nécessite une attention parti
 ### Phase 1 : MVP — Valider le dynamisme
 
 - [x] Schéma de BDD avec attributs dynamiques (PostgreSQL 16, JSONB, index GIN)
-- [x] Tests des requêtes BDD (CRUD items, relations, collections, traversée de graphe)
+- [x] Tests des requêtes BDD : `db/queries_test.sql` (manuel) puis tests d'intégration Go sur PostgreSQL
+      (`go test -tags integration`, Phase 1.5)
 - [x] API REST (CRUD sur tous les objets) — spécification OpenAPI 3.1 dans `api/openapi.yaml`
 - [x] Authentification utilisateur (admin/user) — JWT Bearer
 - [x] Jeu de données de test : Séries TV (multi-chemin Série→Diffusion→Saison→Épisode + Série→DVD→Épisode)
@@ -289,17 +310,37 @@ La table unique d'items avec attributs dynamiques nécessite une attention parti
 - [x] Gestion des collections utilisateur (CRUD, ajout/retrait d'items, attributs contextuels)
 - [x] Gestion des relations (CRUD, arbre groupé par type, direction source/target)
 - [x] Formulaires dynamiques générés depuis JSON Schema (DynamicForm)
-- [x] Éditeur de JSON Schema visuel (SchemaBuilder) avec `x-order`, `x-labels`, `x-widget`
-- [x] Recherche et filtres (par type, texte libre, tags, tri)
+- [x] Éditeur de JSON Schema visuel (SchemaBuilder) avec `x-order`, `x-labels`, `x-widget`, `x-image-categories`
+- [x] Recherche et filtres (par type, texte libre `ILIKE` sur les attributs, tags, tri `created_at` / `updated_at`)
 - [x] Statistiques (dashboard avec compteurs par type)
 - [x] Tags libres sur les items
-- [x] Déploiement Docker Compose (3 services : postgres, server, web)
+- [x] Déploiement Docker Compose (4 services : postgres, migrate, server, web)
+
+### Phase 1.5 : Remise à niveau (audit du 2026-10-11, `docs/audit/`)
+
+Lots de `docs/audit/03-feuille-de-route.md`, branche `remise-a-niveau` :
+
+- [x] Lot 0 — sécurité : JWT courts + refresh tokens à rotation, secrets obligatoires, limites de corps,
+      rate limit `/auth/*`, 422 sur PUT sans `attributes`
+- [x] Lot 1 — outillage : flake suivi, gofmt/vet/golangci-lint, ESLint/Prettier/Vitest, CI GitHub Actions
+- [x] Lot 2 — migrations tern (`db/migrations`), `/healthz`, conteneurs non-root, nginx durci, logs `slog`
+- [x] Lot 3 — Go 1.27, pgx 5.11, chi 5.3, zéro vulnérabilité `govulncheck`
+- [x] Lot 4 — front : axios, vue, cytoscape, vite, `/themes` ; `npm audit --omit=dev` propre
+- [x] Lot 5 — API : graphe borné (BFS, `GRAPH_MAX_NODES`, `truncated`), schémas validés à l'écriture,
+      `per_page` borné, UUID/tri invalides → 400, jokers échappés, `statement_timeout`
+- [x] Lot 6 — tests : 100 % des handlers, intégration PostgreSQL, Vitest (DynamicForm, SchemaBuilder, LoginView)
+- [x] Lot 7 — cohérence : spec OpenAPI = code (test routes ↔ spec, `redocly lint` en CI), docs à jour
+- [ ] Lot 8 — extension `x-label`, seed TV en anglais, perf N+1
+- [ ] Lot 9 — découpage d'`ItemDetailView`, erreurs notifiées, accessibilité
+- [ ] Lot 10 — PrimeVue 5, Vite 8, TypeScript 6, Pinia 4, vue-router 5
+- [ ] Lot 11 — Tailwind 4 (optionnel)
 
 ### Phase 2 : Enrichissement
 
-- [ ] Recherche avancée et filtres
+- [ ] Recherche avancée : filtres `attributes[champ]` (index GIN `@>`), tri par attribut (lot 14)
 - [ ] Statistiques et visualisation graphiques
-- [ ] Import/Export CSV/JSON
+- [ ] Import/Export CSV/JSON (lot 12)
+- [ ] Domaine BD / Manga : seed `les.collection.md`, rôles multiples (lot 13)
 - [ ] Soumission d'items par les users (validation admin)
 
 ### Phase 3 : Social
@@ -326,7 +367,7 @@ La table unique d'items avec attributs dynamiques nécessite une attention parti
 | Graphes         | Cytoscape.js                    | 3.34      |
 | Build           | Vite                            | 6.4       |
 | Déploiement     | Docker Compose (4 services : postgres, migrate, server, web) | — |
-| Packaging       | NixOS flake possible            | À voir    |
+| Dev             | Nix flake (Go, Node, PostgreSQL, golangci-lint) + direnv | flake.lock |
 
 ---
 

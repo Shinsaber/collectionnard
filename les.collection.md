@@ -4,10 +4,16 @@
 
 - **Univers** : optionnel. Une Œuvre peut exister sans Univers parent. Utile long terme pour regrouper les médias (jeux vidéo, films, etc.)
 - **Types dédiés** : Manga et BD sont des ItemTypes séparés (pas un type unique avec enum)
-- **Personnes** : gérées comme Items de type Personne, liées par relation `created_by` avec attribut `role`
+- **Personnes** : gérées comme Items de type Personne, liées par relation `created_by` (source = Manga / BD,
+  cible = Personne, lecture « créé par ») avec attribut `roles` : **tableau** d'enum, une même personne pouvant
+  cumuler plusieurs rôles sur une œuvre (ex. scénariste et dessinateur) sans violer l'unicité
+  `(relation_type_id, source_item_id, target_item_id)` d'`item_relations`
 - **Saga** : ItemType dédié (arcs narratifs)
 - **CollectionType "Lecture"** : à définir plus tard
-- **TODO** : revoir le schéma `relation_types` pour accepter des arrays de `source_item_type_id` / `target_item_type_id`
+- ✅ **Traité** : `relation_types` accepte plusieurs types source et cible (tables de jonction
+  `relation_type_sources` / `relation_type_targets`, champs `source_item_type_ids` / `target_item_type_ids`)
+- **Convention** : clés JSON, noms de RelationTypes et valeurs d'enum en anglais snake_case ; les libellés
+  affichés viennent de `x-labels` (fr/en). Le seed TV historique est migré vers cette convention (lot 8)
 
 ---
 
@@ -17,7 +23,7 @@
 Univers (optionnel)
 ├── contains_saga ──▶ Saga
 │                      └── contains_work ──▶ Manga / BD
-│                                              ├── created_by {role} ◀── Personne
+│                                              ├── created_by {roles} ──▶ Personne
 │                                              ├── published_as ──▶ Édition
 │                                              │                  ├── edited_by ──▶ Maison d'édition
 │                                              │                  └── contains_volume ──▶ Tome
@@ -148,13 +154,14 @@ Créateur : auteur, scénariste, dessinateur, coloriste, traducteur…
 | ----------------- | --------------------------- | ----------------------------------------------------------- |
 | `contains_saga`   | Univers → Saga              | `order` (integer)                                           |
 | `contains_work`   | Univers / Saga → Manga / BD | `order` (integer)                                           |
-| `created_by`      | Manga / BD → Personne       | `role` (enum: author, writer, artist, colorist, translator) |
+| `created_by`      | Manga / BD → Personne       | `roles` (array d'enum : author, writer, artist, colorist, translator ; `minItems: 1`) |
 | `published_as`    | Manga / BD → Édition        | —                                                           |
 | `edited_by`       | Édition → Maison d'édition  | —                                                           |
 | `contains_volume` | Édition → Tome              | `order` (integer)                                           |
 | `adapted_as`      | Manga / BD → Série _(TV)_   | `adaptation_type` (enum: anime, film, OAV, live_action)     |
 
-> Note : `contains_work` a besoin de sources multiples (Univers OU Saga) et cibles multiples (Manga OU BD). → lié au TODO sur les arrays dans `relation_types`.
+> `contains_work` a plusieurs sources (Univers, Saga) et plusieurs cibles (Manga, BD) : supporté nativement
+> par les tables de jonction de `relation_types`.
 
 ---
 
@@ -175,7 +182,7 @@ Créateur : auteur, scénariste, dessinateur, coloriste, traducteur…
 "Dragon Ball" (Univers)
 ├── contains_saga {order:1} ──▶ "Saga de l'Enfance" (Saga)
 │     └── contains_work ──▶ "Dragon Ball" (Manga, shōnen, 1984-1995, 42 tomes VO)
-│           ├── created_by {role: author} ◀── Akira Toriyama (Personne)
+│           ├── created_by {roles: [author]} ──▶ Akira Toriyama (Personne)
 │           ├── published_as ──▶ "Édition originale FR" (Édition, fr, tankōbon, 42 tomes)
 │           │     ├── edited_by ──▶ Glénat (Maison d'édition)
 │           │     ├── contains_volume {order:1} ──▶ Tome 1 "Son Gokū et ses amis"
@@ -188,8 +195,8 @@ Créateur : auteur, scénariste, dessinateur, coloriste, traducteur…
 │
 ├── contains_saga {order:2} ──▶ "Dragon Ball Super" (Saga)
 │     └── contains_work ──▶ "Dragon Ball Super" (Manga, shōnen, 2015-)
-│           ├── created_by {role: writer} ◀── Akira Toriyama ← MÊME personne
-│           ├── created_by {role: artist} ◀── Toyotarō (Personne)
+│           ├── created_by {roles: [writer]} ──▶ Akira Toriyama ← MÊME personne
+│           ├── created_by {roles: [artist]} ──▶ Toyotarō (Personne)
 │           └── published_as ──▶ ...
 ```
 

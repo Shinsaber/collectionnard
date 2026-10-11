@@ -5,8 +5,10 @@ Principe central : **aucun type de collection n'est codé en dur**. Tout passe p
 méta-types qui portent un **JSON Schema**, et des instances qui portent des valeurs JSONB
 validées contre ce schéma.
 
-Langue du projet : **français** (docs, commits, échanges). Le code (identifiants, noms de
-champs JSON, noms de RelationTypes récents) est en **anglais** ou en snake_case ASCII.
+Langue du projet : **français** (docs, commits, échanges). Le socle de données est en **anglais**
+snake_case ASCII : identifiants, clés JSON des attributs, noms de RelationTypes, valeurs d'enum ;
+l'affichage traduit via `x-labels` (fr/en). Le seed TV historique (clés `titre`, `annee_debut`…)
+est migré vers cette convention au lot 8 de la feuille de route.
 
 ## Documents de référence (à lire selon le besoin, ne pas tout charger d'office)
 
@@ -42,7 +44,8 @@ champs JSON, noms de RelationTypes récents) est en **anglais** ou en snake_case
 ### Extensions JSON Schema maison (pilotent le front)
 
 `x-order` (ordre des champs), `x-labels` (`{fr:{…}, en:{…}}`), `x-widget`
-(`image-gallery`, `slider`, `i18n-text`), `x-image-categories` (`{poster:{ratio:"2/3"}}`).
+(`image-gallery`, `i18n-text`), `x-image-categories` (`{poster:{ratio:"2/3"}}`). Pas de widget
+`slider` : le curseur est automatique quand `minimum` **et** `maximum` sont définis.
 Toute nouvelle extension doit être gérée dans `DynamicForm.vue` **et** `SchemaBuilder.vue`,
 et documentée dans le README.
 
@@ -102,7 +105,8 @@ docker compose down -v && docker compose up --build   # repart d'une base vide (
 (cd server && go run . migrate)     # appliquer les migrations à la main (SEED_ON_EMPTY=true pour le seed)
 ```
 
-Comptes de dev (seed) : `admin` / `admin` (rôle admin), `shinsaber` (rôle user).
+Comptes de dev (seed) : `admin` / `admin` (rôle admin), `shinsaber` / `shinsaber` (rôle user).
+Nouveau compte : `go run . hash-password <mdp>` puis `INSERT INTO users …`.
 
 ## Règles de travail
 
@@ -129,6 +133,8 @@ Comptes de dev (seed) : `admin` / `admin` (rôle admin), `shinsaber` (rôle user
 
 ## Où en est le projet
 
-Phase 1 (MVP) : terminée. Prochaines pistes (Phase 2, voir `Collectionnard.md` §8) :
+Phase 1 (MVP) : terminée. Phase 1.5 (remise à niveau issue de l'audit, branche `remise-a-niveau`,
+lots 0 à 7 livrés, voir `Collectionnard.md` §8 et `docs/audit/03-feuille-de-route.md`) : en cours.
+Prochaines pistes (Phase 2, voir `Collectionnard.md` §8) :
 recherche avancée, statistiques graphiques, **import/export CSV/JSON**, soumission d'items
 par les users. Domaine en préparation : **BD / Manga** (`les.collection.md`).

@@ -10,9 +10,10 @@
 -- 1. USERS
 -- =============================================================================
 
+-- Mots de passe de dev : admin / admin, shinsaber / shinsaber (hash bcrypt : `colec-server hash-password <mdp>`)
 INSERT INTO users (id, username, email, password, role) VALUES
     ('a0000000-0000-0000-0000-000000000001', 'admin',     'admin@colec.local',     '$2a$10$59V0nqZ3Sb.G99iWddEB4ecQY2TRU20UZzgWcM/ZNsggk.UEI5lGK', 'admin'),
-    ('a0000000-0000-0000-0000-000000000002', 'shinsaber', 'shinsaber@colec.local', '$2a$10$YV9A.lO4gHKbcAlw2mT1W.PkJ6E4oWpqKvM.cvlbHvRX7LyCUDcgC',  'user');
+    ('a0000000-0000-0000-0000-000000000002', 'shinsaber', 'shinsaber@colec.local', '$2a$10$5d6MyNdOvZD/Ac31Dmi6TOR6YWPydNX3m/n2tYouPMeEOPTf2ndrG',  'user');
 
 -- =============================================================================
 -- 2. ITEM TYPES avec JSON Schema

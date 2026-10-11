@@ -144,3 +144,32 @@ func TestUpdateCollectionType_InvalidSchema(t *testing.T) {
 		t.Fatalf("expected 422, got %d", resp.StatusCode)
 	}
 }
+
+func TestListItems_InvalidSort(t *testing.T) {
+	srv := testutil.NewTestServer(&testutil.MockStore{})
+	defer srv.Close()
+	for _, q := range []string{"?sort=attributes.titre", "?sort=-name", "?sort=created_at,id"} {
+		req, _ := http.NewRequest("GET", srv.URL+"/api/v1/items"+q, nil)
+		req.Header = testutil.AuthHeader(testutil.UserToken())
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("%s: expected 400, got %d", q, resp.StatusCode)
+		}
+	}
+	for _, q := range []string{"", "?sort=created_at", "?sort=-updated_at"} {
+		req, _ := http.NewRequest("GET", srv.URL+"/api/v1/items"+q, nil)
+		req.Header = testutil.AuthHeader(testutil.UserToken())
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("%s: expected 200, got %d", q, resp.StatusCode)
+		}
+	}
+}

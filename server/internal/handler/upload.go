@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/shinsaber/colec/internal/model"
 )
 
 // allowedMimeTypes maps MIME types to file extensions.
@@ -93,10 +94,10 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	url := "/api/v1/uploads/" + filename
-	respondJSON(w, http.StatusCreated, map[string]any{
-		"url":      url,
-		"filename": filename,
-		"size":     written, // octets réellement écrits (header.Size est déclaré par le client)
+	respondJSON(w, http.StatusCreated, model.UploadResponse{
+		URL:      url,
+		Filename: filename,
+		Size:     written, // octets réellement écrits (header.Size est déclaré par le client)
 	})
 }
 

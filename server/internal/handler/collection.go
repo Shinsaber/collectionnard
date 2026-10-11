@@ -135,12 +135,14 @@ func (h *Handler) ListCollectionItems(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pg := parsePagination(r)
-	q := r.URL.Query()
 	itemTypeID, ok := parseOptionalUUID(w, r, "item_type_id")
 	if !ok {
 		return
 	}
-	sort := q.Get("sort")
+	sort, ok := parseSort(w, r)
+	if !ok {
+		return
+	}
 
 	items, total, err := h.Store.ListCollectionItems(r.Context(), colID, pg, itemTypeID, sort)
 	if err != nil {

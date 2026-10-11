@@ -190,6 +190,24 @@ func hasAttributes(attrs json.RawMessage) bool {
 	return len(trimmed) > 0 && !bytes.Equal(trimmed, []byte("null"))
 }
 
+// sortFields are the only sortable columns of the listing endpoints.
+var sortFields = map[string]bool{"created_at": true, "updated_at": true}
+
+// parseSort validates the `sort` query parameter (optional `-` prefix). An
+// unknown field answers 400 and returns ok=false.
+func parseSort(w http.ResponseWriter, r *http.Request) (string, bool) {
+	sort := r.URL.Query().Get("sort")
+	if sort == "" {
+		return "", true
+	}
+	if !sortFields[strings.TrimPrefix(sort, "-")] {
+		respondError(w, http.StatusBadRequest, "bad_request",
+			"sort invalide : valeurs acceptées created_at, updated_at (préfixe - pour descendant)")
+		return "", false
+	}
+	return sort, true
+}
+
 // checkAttributesSchema rejects an invalid attributes_schema with a 422 and reports
 // whether the caller may continue.
 func checkAttributesSchema(w http.ResponseWriter, schema json.RawMessage) bool {

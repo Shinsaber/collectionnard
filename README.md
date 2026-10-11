@@ -25,7 +25,11 @@ Séries TV, DVD, livres, cartes à collectionner, vinyles… tout type de collec
 
 ### Prérequis
 
-- Docker & Docker Compose
+- Docker & Docker Compose pour la stack complète ;
+- ou **Nix** (avec `direnv` conseillé) pour le développement : `flake.nix` fournit Go, Node 22, PostgreSQL 16,
+  golangci-lint et les commandes `pg-start` / `pg-stop` / `pg-reset`. Sans direnv : `nix develop`, ou préfixer
+  chaque commande par `nix develop -c`. Les variables de dev (`DATABASE_URL`, `JWT_SECRET`, `UPLOAD_DIR`,
+  `LOG_FORMAT=text`) sont exportées par le shell.
 
 ### Lancer le projet
 
@@ -44,12 +48,14 @@ Sans `.env`, `docker compose` refuse de démarrer : aucun secret n'a de valeur p
 
 ### Utilisateur par défaut
 
-Le fichier `db/seed.sql` crée un utilisateur admin pour le développement :
+Le fichier `db/seed.sql` crée deux comptes de développement (appliqué si `SEED_ON_EMPTY=true`) :
 
-```
-username: admin
-password: admin
-```
+| Utilisateur | Mot de passe | Rôle  |
+| ----------- | ------------ | ----- |
+| `admin`     | `admin`      | admin |
+| `shinsaber` | `shinsaber`  | user  |
+
+Pour créer un compte : `colec-server hash-password <mdp>` donne le hash bcrypt à insérer dans `users`.
 
 ### Développement local (sans Docker)
 
@@ -126,8 +132,15 @@ migration déjà appliquée.
 ```
 colec/
 ├── Collectionnard.md       # Document de conception (vision, modèle, phases)
+├── les.collection.md       # Modèle de données BD / Manga (prochain domaine)
 ├── README.md               # Ce fichier
-├── docker-compose.yml      # Orchestration des 3 services
+├── CLAUDE.md               # Contexte et règles de travail pour Claude Code (+ server/, web/)
+├── docker-compose.yml      # Orchestration des 4 services (postgres, migrate, server, web)
+├── .env.example            # Variables de déploiement (copier en .env)
+├── flake.nix, flake.lock   # Environnement de développement Nix (+ .envrc pour direnv)
+├── .github/workflows/      # CI : Go (fmt, vet, lint, tests, govulncheck, intégration PG), web, OpenAPI
+├── .claude/                # Commandes Claude Code (/verif, /endpoint, /audit…) et permissions
+├── docs/audit/             # Audit du 2026-10-11 : cohérence, qualité/sécurité, feuille de route
 ├── api/
 │   └── openapi.yaml        # Spécification OpenAPI 3.1 (référence API)
 ├── db/
@@ -227,8 +240,11 @@ Le projet utilise des extensions custom dans les JSON Schemas pour piloter le fr
 | -------------------- | ------------------------------------------------------------ |
 | `x-order`            | Ordre d'affichage des champs (array de clés)                 |
 | `x-labels`           | Labels i18n par langue (`{fr: {champ: "Label"}, en: {…}}`)   |
-| `x-widget`           | Widget spécifique (`image-gallery`, `slider`, `i18n-text`)   |
+| `x-widget`           | Widget spécifique : `image-gallery`, `i18n-text`                 |
 | `x-image-categories` | Catégories d'images avec ratios (`{poster: {ratio: "2/3"}}`) |
+
+Sans extension, le widget découle du schéma : `enum` → liste déroulante, `integer`/`number` avec `minimum`
+**et** `maximum` → curseur, `format: date` / `uri` → champ dédié. Référence complète : `Collectionnard.md` § 3.
 
 ---
 

@@ -23,11 +23,15 @@ func (h *Handler) ListItems(w http.ResponseWriter, r *http.Request) {
 			fmt.Sprintf("search et tag sont limités à %d caractères", maxSearchLength))
 		return
 	}
+	sort, ok := parseSort(w, r)
+	if !ok {
+		return
+	}
 	filters := store.ItemFilters{
 		ItemTypeID: itemTypeID,
 		Search:     q.Get("search"),
 		Tag:        q.Get("tag"),
-		Sort:       q.Get("sort"),
+		Sort:       sort,
 	}
 
 	items, total, err := h.Store.ListItems(r.Context(), pg, filters)
@@ -136,6 +140,11 @@ func (h *Handler) DeleteItem(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) ListItemCollections(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseUUID(w, r, "id")
 	if !ok {
+		return
+	}
+	// 404 if the item does not exist (the membership query alone would return []).
+	if _, err := h.Store.GetItem(r.Context(), id); err != nil {
+		handleStoreError(w, r, err)
 		return
 	}
 	userID := middleware.GetUserID(r.Context())

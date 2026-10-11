@@ -12,7 +12,7 @@ import (
 func (s *PgStore) ListItemRelations(ctx context.Context, itemID uuid.UUID, relationTypeID *uuid.UUID) ([]model.ItemRelation, error) {
 	query := `
 		SELECT ir.id, ir.relation_type_id, ir.source_item_id, ir.target_item_id,
-		       ir.attributes, ir.created_at,
+		       ir.attributes, ir.created_at, ir.updated_at,
 		       rt.id, rt.name, rt.description,
 		       rt.attributes_schema, rt.created_at, rt.updated_at,
 		       si.id, si.item_type_id, si.attributes, si.created_at, si.updated_at,
@@ -48,7 +48,7 @@ func (s *PgStore) ListItemRelations(ctx context.Context, itemID uuid.UUID, relat
 		var sit, tit model.ItemType
 		if err := rows.Scan(
 			&ir.ID, &ir.RelationTypeID, &ir.SourceItemID, &ir.TargetItemID,
-			&ir.Attributes, &ir.CreatedAt,
+			&ir.Attributes, &ir.CreatedAt, &ir.UpdatedAt,
 			&rt.ID, &rt.Name, &rt.Description,
 			&rt.AttributesSchema, &rt.CreatedAt, &rt.UpdatedAt,
 			&si.ID, &si.ItemTypeID, &si.Attributes, &si.CreatedAt, &si.UpdatedAt,
@@ -73,7 +73,7 @@ func (s *PgStore) GetRelation(ctx context.Context, id uuid.UUID) (*model.ItemRel
 	var rt model.RelationType
 	err := s.pool.QueryRow(ctx,
 		`SELECT ir.id, ir.relation_type_id, ir.source_item_id, ir.target_item_id,
-		        ir.attributes, ir.created_at,
+		        ir.attributes, ir.created_at, ir.updated_at,
 		        rt.id, rt.name, rt.description,
 		        rt.attributes_schema, rt.created_at, rt.updated_at
 		 FROM item_relations ir
@@ -81,7 +81,7 @@ func (s *PgStore) GetRelation(ctx context.Context, id uuid.UUID) (*model.ItemRel
 		 WHERE ir.id = $1`, id,
 	).Scan(
 		&ir.ID, &ir.RelationTypeID, &ir.SourceItemID, &ir.TargetItemID,
-		&ir.Attributes, &ir.CreatedAt,
+		&ir.Attributes, &ir.CreatedAt, &ir.UpdatedAt,
 		&rt.ID, &rt.Name, &rt.Description,
 		&rt.AttributesSchema, &rt.CreatedAt, &rt.UpdatedAt,
 	)

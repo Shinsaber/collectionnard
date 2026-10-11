@@ -164,6 +164,7 @@ type ItemRelation struct {
 	TargetItem     *Item           `json:"target_item,omitempty"`
 	Attributes     json.RawMessage `json:"attributes"`
 	CreatedAt      time.Time       `json:"created_at"`
+	UpdatedAt      time.Time       `json:"updated_at"`
 }
 
 type ItemRelationCreate struct {
@@ -267,6 +268,13 @@ type GraphResponse struct {
 	Nodes     []GraphNode `json:"nodes"`
 	Edges     []GraphEdge `json:"edges"`
 	Truncated bool        `json:"truncated"` // exploration arrêtée par la limite de nœuds (GRAPH_MAX_NODES)
+}
+
+// UploadResponse is returned by POST /uploads.
+type UploadResponse struct {
+	URL      string `json:"url"`
+	Filename string `json:"filename"`
+	Size     int64  `json:"size"` // octets réellement écrits
 }
 
 // ---------------------------------------------------------------------------

@@ -140,6 +140,7 @@ export interface ItemRelation {
   target_item?: Item;
   attributes: Record<string, unknown>;
   created_at: string;
+  updated_at: string;
 }
 
 export interface ItemRelationCreate {
@@ -254,7 +255,7 @@ export interface PaginationParams {
 }
 
 // ---------- API Error ----------
-export interface ApiError {
+export interface APIError {
   error: string;
   message: string;
   details?: Record<string, unknown>;

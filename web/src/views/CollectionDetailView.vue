@@ -187,12 +187,7 @@ import Tag from "primevue/tag";
 import ProgressSpinner from "primevue/progressspinner";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
-import {
-  collectionApi,
-  itemApi,
-  collectionTypeApi,
-  extractApiError,
-} from "@/api/client";
+import { collectionApi, itemApi, extractApiError } from "@/api/client";
 import { usePagination } from "@/composables/usePagination";
 import DynamicForm from "@/components/common/DynamicForm.vue";
 import type { Collection, CollectionItem, Item } from "@/api/types";
@@ -228,12 +223,7 @@ const editAttributes = ref<Record<string, unknown>>({});
 
 onMounted(async () => {
   try {
-    const col = await collectionApi.get(props.id);
-    // Fetch collection type details if not embedded
-    if (col.collection_type_id && !col.collection_type) {
-      col.collection_type = await collectionTypeApi.get(col.collection_type_id);
-    }
-    collection.value = col;
+    collection.value = await collectionApi.get(props.id); // collection_type est toujours joint par l'API
     items.load();
   } finally {
     loading.value = false;
