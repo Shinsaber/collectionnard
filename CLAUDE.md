@@ -21,9 +21,11 @@ des messages techniques en anglais. Ajouter une langue : `Collectionnard.md` § 
 | [api/openapi.yaml](api/openapi.yaml)   | Spécification OpenAPI 3.1 — **source de vérité de l'API**        |
 | [db/migrations/](db/migrations/)       | Migrations SQL (tern) ; `001_init.sql` = schéma complet commenté |
 | [db/seed.sql](db/seed.sql)             | Jeu de test « Breaking Bad » (multi-chemin Diffusion + DVD)      |
+| [db/seed_bd_manga.sql](db/seed_bd_manga.sql) | Domaine BD / Manga (lot 13), chargé après `seed.sql` |
 | [server/CLAUDE.md](server/CLAUDE.md)   | Conventions backend Go                                           |
 | [web/CLAUDE.md](web/CLAUDE.md)         | Conventions frontend Vue                                         |
 | [docs/audit/](docs/audit/BRIEF.md)     | Brief et résultats de l'audit approfondi (`/audit`)              |
+| [docs/sources-externes.md](docs/sources-externes.md) | Bases ouvertes BD / Manga : licences, accès (Wikidata, BnF retenues) |
 
 ## Modèle en une table
 
@@ -141,6 +143,5 @@ Nouveau compte : `go run . hash-password <mdp>` puis `INSERT INTO users …`.
 
 Phase 1 (MVP) : terminée. Phase 1.5 (remise à niveau issue de l'audit, branche `remise-a-niveau`,
 lots 0 à 11 livrés, voir `Collectionnard.md` §8 et `docs/audit/03-feuille-de-route.md`) : en cours.
-Phase 2 livrée en partie : multilingue, recherche avancée (lot 14), import/export (lot 12). Prochaines pistes
-(voir `Collectionnard.md` §8) : statistiques graphiques, soumission d'items
-par les users. Domaine en préparation : **BD / Manga** (`les.collection.md`).
+Phase 2 livrée : multilingue, recherche avancée (lot 14), import/export (lot 12), domaine BD / Manga (lot 13,
+`les.collection.md`, sources Wikidata / BnF). Suite : Phase 3 (statistiques, soumission d'items par les users, social).

@@ -179,7 +179,14 @@ function parseSchema(schema: Record<string, unknown>): SchemaField[] {
         maxLength: (prop.maxLength as number) ?? null,
         pattern: (prop.pattern as string) ?? null,
         format: (prop.format as string) ?? null,
-        enum: (prop.enum as string[]) ?? null,
+        // Tableau d'enum (ex. rôles) : les valeurs vivent dans `items.enum`, les libellés
+        // (`x-enum-labels`) sur la propriété, comme pour un enum simple.
+        enum:
+          (prop.enum as string[]) ??
+          (type === "array"
+            ? ((prop.items as Record<string, unknown>)?.enum as string[])
+            : undefined) ??
+          null,
         enumLabels:
           (prop["x-enum-labels"] as Record<string, Record<string, string>>) ??
           null,
@@ -197,11 +204,30 @@ function parseSchema(schema: Record<string, unknown>): SchemaField[] {
           type === "image-gallery"
             ? parseImageCategories(prop["x-image-categories"])
             : null,
-        extra: Object.fromEntries(
-          Object.entries(prop).filter(([k]) => !MANAGED_PROPERTY_KEYS.has(k)),
-        ),
+        extra: preservedKeys(prop, type),
+        itemsExtra:
+          type === "array"
+            ? Object.fromEntries(
+                Object.entries(
+                  (prop.items ?? {}) as Record<string, unknown>,
+                ).filter(([k]) => k !== "type" && k !== "enum"),
+              )
+            : null,
       };
     });
+}
+
+// Mots-clés conservés tels quels : ceux que le builder ne pilote pas, plus la structure
+// d'un objet générique (sans widget), qu'il n'édite pas (ex. `external_ids`).
+function preservedKeys(
+  prop: Record<string, unknown>,
+  type: string,
+): Record<string, unknown> {
+  const keep = (k: string) =>
+    !MANAGED_PROPERTY_KEYS.has(k) ||
+    (type === "object" &&
+      ["properties", "additionalProperties", "propertyNames"].includes(k));
+  return Object.fromEntries(Object.entries(prop).filter(([k]) => keep(k)));
 }
 
 // ── Fields → schema ─────────────────────────────────────────────────
@@ -262,7 +288,17 @@ function buildProperty(f: SchemaField): Record<string, unknown> {
     prop.additionalProperties = false;
   }
   if (f.type === "array") {
-    prop.items = { type: f.itemsType ?? "string" };
+    // `items` complet (ex. tableau d'objets `sources`) : seuls `type` et `enum` sont édités.
+    const items: Record<string, unknown> = {
+      ...(f.itemsExtra ?? {}),
+      type: f.itemsType ?? "string",
+    };
+    if (f.enum && f.enum.length > 0) {
+      items.enum = f.enum;
+      const enumLabels = cleanEnumLabels(f.enumLabels, f.enum);
+      if (enumLabels) prop["x-enum-labels"] = enumLabels;
+    }
+    prop.items = items;
     if (f.minItems != null) prop.minItems = f.minItems;
     if (f.maxItems != null) prop.maxItems = f.maxItems;
     if (f.uniqueItems) prop.uniqueItems = true;

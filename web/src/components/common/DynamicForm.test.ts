@@ -120,3 +120,19 @@ describe("DynamicForm", () => {
     expect(w.text()).toContain("Aucun attribut défini");
   });
 });
+
+describe("DynamicForm — tableau d'enum (rôles)", () => {
+  const rolesSchema = fixtures.find((f) => f.name === "created_by")!
+    .schema as Schema;
+
+  it("rend une sélection multiple ; la vider rend le champ absent", async () => {
+    const w = mountForm(rolesSchema, { roles: ["writer", "artist"] });
+    const select = w.findComponent(ElSelect);
+    expect(select.props("multiple")).toBe(true);
+    expect(select.props("modelValue")).toEqual(["writer", "artist"]);
+
+    await select.vm.$emit("update:modelValue", []);
+    const emitted = w.emitted("update:modelValue")!;
+    expect(emitted[emitted.length - 1]![0]).toEqual({ roles: undefined });
+  });
+});

@@ -87,23 +87,6 @@
           />
         </ElSelect>
       </div>
-      <div v-if="features.enum" class="flex flex-col gap-1 md:col-span-2">
-        <label :for="`${uid}-enum`" class="text-xs text-gray-500">{{
-          t("schema.constraints.enum")
-        }}</label>
-        <ElInput
-          :id="`${uid}-enum`"
-          :model-value="(field.enum ?? []).join(', ')"
-          placeholder="new, good, poor"
-          @update:model-value="set('enum', parseEnum(String($event ?? '')))"
-        />
-        <SchemaEnumLabels
-          v-if="features.labels && (field.enum ?? []).length > 0"
-          :values="field.enum ?? []"
-          :model-value="field.enumLabels ?? {}"
-          @update:model-value="set('enumLabels', $event)"
-        />
-      </div>
       <div v-if="features.default" class="flex flex-col gap-1">
         <label :for="`${uid}-default`" class="text-xs text-gray-500">{{
           t("schema.constraints.default")
@@ -116,6 +99,28 @@
         />
       </div>
     </template>
+
+    <!-- ── Enum : chaîne, ou tableau de chaînes (valeurs multiples, ex. rôles) ── -->
+    <div
+      v-if="features.enum && acceptsEnum"
+      class="flex flex-col gap-1 md:col-span-2"
+    >
+      <label :for="`${uid}-enum`" class="text-xs text-gray-500">{{
+        t("schema.constraints.enum")
+      }}</label>
+      <ElInput
+        :id="`${uid}-enum`"
+        :model-value="(field.enum ?? []).join(', ')"
+        placeholder="new, good, poor"
+        @update:model-value="set('enum', parseEnum(String($event ?? '')))"
+      />
+      <SchemaEnumLabels
+        v-if="features.labels && (field.enum ?? []).length > 0"
+        :values="field.enum ?? []"
+        :model-value="field.enumLabels ?? {}"
+        @update:model-value="set('enumLabels', $event)"
+      />
+    </div>
 
     <!-- ── Number / Integer constraints ── -->
     <template v-if="field.type === 'integer' || field.type === 'number'">
@@ -329,7 +334,7 @@
 </template>
 
 <script setup lang="ts">
-import { useId } from "vue";
+import { computed, useId } from "vue";
 import { useI18n } from "vue-i18n";
 import { LANGS } from "@/i18n/langs";
 import SchemaEnumLabels from "./SchemaEnumLabels.vue";
@@ -359,6 +364,14 @@ const uid = useId();
 function set<K extends keyof SchemaField>(key: K, value: unknown) {
   emit("update:field", { [key]: value } as Partial<SchemaField>);
 }
+
+// Valeurs d'enum proposées pour une chaîne et pour un tableau de chaînes (`items.enum`).
+const acceptsEnum = computed(
+  () =>
+    props.field.type === "string" ||
+    (props.field.type === "array" &&
+      (props.field.itemsType ?? "string") === "string"),
+);
 
 function setLabel(l: string, value: string) {
   const labels = { ...(props.field.labels ?? {}), [l]: value };

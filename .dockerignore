@@ -2,7 +2,7 @@
 *
 !server/
 !db/migrations/
-!db/seed.sql
+!db/seed*.sql
 server/colec
 server/server
 server/*.exe

@@ -23,15 +23,16 @@
         @update:model-value="update(field.name, $event)"
       />
 
-      <!-- Enum -->
+      <!-- Enum (tableau d'enum : choix multiples, ex. rôles) -->
       <ElSelect
         v-else-if="field.enum"
         :id="`${uid}-${field.name}`"
-        :model-value="(model[field.name] as string | undefined) ?? undefined"
+        :model-value="enumValue(field)"
+        :multiple="field.multiple"
         :placeholder="t('schema.form.choose')"
         clearable
         :class="{ 'is-error': !!errors[field.name] }"
-        @update:model-value="update(field.name, $event)"
+        @update:model-value="updateEnum(field, $event)"
       >
         <ElOption
           v-for="opt in field.enum"
@@ -174,6 +175,8 @@ interface SchemaField {
   type: string;
   required: boolean;
   enum?: string[];
+  /** Tableau dont les éléments sont un enum (`items.enum`) : sélection multiple. */
+  multiple?: boolean;
   format?: string;
   minimum?: number;
   maximum?: number;
@@ -206,12 +209,18 @@ const fields = computed<SchemaField[]>(() => {
     .filter((name) => name in properties)
     .map((name) => {
       const prop = properties[name]!;
+      const itemsEnum =
+        prop.type === "array"
+          ? ((prop.items as Record<string, unknown> | undefined)?.enum as
+              string[] | undefined)
+          : undefined;
       return {
         name,
         label: fieldLabel(props.schema, name, lang.value, "pretty"),
         type: (prop.type as string) ?? "string",
         required: required.includes(name),
-        enum: prop.enum as string[] | undefined,
+        enum: (prop.enum as string[] | undefined) ?? itemsEnum,
+        multiple: !!itemsEnum,
         format: prop.format as string | undefined,
         minimum: prop.minimum as number | undefined,
         maximum: prop.maximum as number | undefined,
@@ -220,6 +229,21 @@ const fields = computed<SchemaField[]>(() => {
       };
     });
 });
+
+function enumValue(field: SchemaField): string | string[] | undefined {
+  const v = model.value[field.name];
+  if (field.multiple) return Array.isArray(v) ? (v as string[]) : [];
+  return (v as string | undefined) ?? undefined;
+}
+
+// Un tableau vidé redevient « absent » : `required` le signale, l'API ne reçoit pas [].
+function updateEnum(field: SchemaField, value: unknown) {
+  if (field.multiple && Array.isArray(value) && value.length === 0) {
+    update(field.name, undefined);
+    return;
+  }
+  update(field.name, value === "" ? undefined : value);
+}
 
 function getString(name: string): string {
   return (model.value[name] as string) ?? "";
@@ -287,7 +311,13 @@ function validate(): boolean {
   let valid = true;
   for (const field of fields.value) {
     const val = model.value[field.name];
-    if (field.required && (val === undefined || val === null || val === "")) {
+    if (
+      field.required &&
+      (val === undefined ||
+        val === null ||
+        val === "" ||
+        (Array.isArray(val) && val.length === 0))
+    ) {
       errors[field.name] = t("errors.required");
       valid = false;
     }

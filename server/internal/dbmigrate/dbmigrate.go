@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/tern/v2/migrate"
@@ -22,7 +23,10 @@ const VersionTable = "schema_version"
 // from the repository root and from server/ (`go run . migrate`).
 var (
 	defaultMigrationDirs = []string{"db/migrations", "../db/migrations", "/app/db/migrations"}
-	defaultSeedFiles     = []string{"db/seed.sql", "../db/seed.sql", "/app/db/seed.sql"}
+	defaultSeedDirs      = []string{"db", "../db", "/app/db"}
+	// defaultSeedNames are applied in this order; seed.sql is required, the
+	// domain seeds that follow (they reuse its users and types) are optional.
+	defaultSeedNames = []string{"seed.sql", "seed_bd_manga.sql"}
 )
 
 // ResolveMigrationsDir returns the migrations directory: the explicit value if
@@ -31,10 +35,38 @@ func ResolveMigrationsDir(explicit string) (string, error) {
 	return resolve(explicit, defaultMigrationDirs, "MIGRATIONS_DIR", true)
 }
 
-// ResolveSeedFile returns the seed file: the explicit value if non-empty,
-// otherwise the first default candidate that exists.
-func ResolveSeedFile(explicit string) (string, error) {
-	return resolve(explicit, defaultSeedFiles, "SEED_FILE", false)
+// ResolveSeedFiles returns the seed files to apply, in order: the explicit
+// comma-separated list if non-empty (each file must exist), otherwise
+// seed.sql then the optional domain seeds of the first default directory that
+// holds a seed.sql.
+func ResolveSeedFiles(explicit string) ([]string, error) {
+	if explicit != "" {
+		var files []string
+		for _, f := range strings.Split(explicit, ",") {
+			f = strings.TrimSpace(f)
+			if f == "" {
+				continue
+			}
+			if err := checkPath(f, false); err != nil {
+				return nil, fmt.Errorf("SEED_FILE: %w", err)
+			}
+			files = append(files, f)
+		}
+		return files, nil
+	}
+	for _, dir := range defaultSeedDirs {
+		if checkPath(filepath.Join(dir, defaultSeedNames[0]), false) != nil {
+			continue
+		}
+		var files []string
+		for _, name := range defaultSeedNames {
+			if f := filepath.Join(dir, name); checkPath(f, false) == nil {
+				files = append(files, f)
+			}
+		}
+		return files, nil
+	}
+	return nil, fmt.Errorf("SEED_FILE unset and no seed.sql found in %v", defaultSeedDirs)
 }
 
 func resolve(explicit string, candidates []string, envName string, wantDir bool) (string, error) {

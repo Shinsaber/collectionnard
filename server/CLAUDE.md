@@ -18,7 +18,7 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 | `label`      | `Render(schema, attrs, lang)` : libellé d'un item via `x-label` (pendant de `web/src/lib/schema.ts`) |
 | `itemquery`  | Recherche avancée de `GET /items` : filtres `attr.<clé>[.<op>]`, tri `attr.<clé>`, requête plein texte — validés contre le schéma du type (pendant de `web/src/lib/itemSearch.ts`) |
 | `csvexport`  | Mise à plat CSV des attributs (colonnes depuis le schéma, i18n-text → `clé.langue`, BOM, anti-injection de formules) |
-| `dbmigrate`  | Migrations tern (`db/migrations`) + seed : sous-commandes `colec-server migrate` / `seed` (`cmd.go`) |
+| `dbmigrate`  | Migrations tern (`db/migrations`) + seeds (`SEED_FILE` : liste séparée par des virgules ; défaut `seed.sql` puis `seed_bd_manga.sql`) : sous-commandes `colec-server migrate` / `seed` (`cmd.go`) |
 
 ## Erreurs et réponses
 

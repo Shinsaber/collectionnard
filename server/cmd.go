@@ -64,15 +64,18 @@ func runSeed() int {
 	return applySeed(ctx, databaseURL)
 }
 
+// applySeed applies SEED_FILE (comma-separated list) or the default seeds, in order.
 func applySeed(ctx context.Context, databaseURL string) int {
-	file, err := dbmigrate.ResolveSeedFile(os.Getenv("SEED_FILE"))
+	files, err := dbmigrate.ResolveSeedFiles(os.Getenv("SEED_FILE"))
 	if err != nil {
 		slog.Error("seed", "err", err)
 		return 1
 	}
-	if err := dbmigrate.Seed(ctx, databaseURL, file); err != nil {
-		slog.Error("seed", "err", err)
-		return 1
+	for _, file := range files {
+		if err := dbmigrate.Seed(ctx, databaseURL, file); err != nil {
+			slog.Error("seed", "err", err)
+			return 1
+		}
 	}
 	return 0
 }

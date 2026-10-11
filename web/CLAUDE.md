@@ -50,5 +50,5 @@ Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
 - Après modification : `npm run lint && npm run format:check && npm run type-check && npm test`
   (`npm run lint:fix` et `npm run format` corrigent automatiquement). Tests unitaires : `vitest`,
   fichiers `src/**/*.test.ts` (environnement jsdom, stubs `matchMedia` et `ResizeObserver` dans
-  `tests/setup.ts`). Les composants se montent avec `global.plugins: [ElementPlus]` (vue-i18n est ajouté globalement par `tests/setup.ts`) ; les 13 schémas du seed sont disponibles dans
-  `tests/fixtures/seed-schemas.json` (régénérer depuis `db/seed.sql` si le seed change).
+  `tests/setup.ts`). Les composants se montent avec `global.plugins: [ElementPlus]` (vue-i18n est ajouté globalement par `tests/setup.ts`) ; les 28 schémas des seeds sont disponibles dans
+  `tests/fixtures/seed-schemas.json` (régénérer si un seed change : `node scripts/seed-fixtures.mjs tests/fixtures/seed-schemas.json ../db/seed.sql ../db/seed_bd_manga.sql`).

@@ -150,3 +150,24 @@ itTop("génère un i18n-text ouvert aux langues futures", async () => {
   expect(prop.additionalProperties).toEqual({ type: "string" });
   expect(prop.propertyNames).toBeTruthy();
 });
+
+// Lot 13 : schémas BD / Manga — objets génériques (`external_ids`), tableaux d'objets
+// (`sources`) et tableaux d'enum (`roles`) conservés intégralement.
+itTop(
+  "conserve external_ids, sources et les rôles (tableau d'enum)",
+  async () => {
+    const byName = (n: string) =>
+      fixtures.find((f) => f.name === n)!.schema as Schema;
+    for (const name of ["Manga", "created_by"]) {
+      const src = byName(name);
+      const out = await roundTrip(src);
+      const outProps = out.properties as Props;
+      const srcProps = src.properties as Props;
+      for (const key of Object.keys(srcProps).filter((k) =>
+        ["external_ids", "sources", "roles"].includes(k),
+      )) {
+        expect(outProps[key], `${name}.${key}`).toEqual(srcProps[key]);
+      }
+    }
+  },
+);

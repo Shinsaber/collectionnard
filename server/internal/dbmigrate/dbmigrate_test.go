@@ -3,6 +3,7 @@ package dbmigrate
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 )
 
@@ -34,8 +35,16 @@ func TestResolveMigrationsDir_Default(t *testing.T) {
 	if got != "../db/migrations" {
 		t.Errorf("got %q, want ../db/migrations", got)
 	}
-	seed, err := ResolveSeedFile("")
-	if err != nil || seed != "../db/seed.sql" {
-		t.Errorf("seed: got %q, %v", seed, err)
+	seeds, err := ResolveSeedFiles("")
+	if err != nil || !slices.Equal(seeds, []string{"../db/seed.sql", "../db/seed_bd_manga.sql"}) {
+		t.Errorf("seeds: got %q, %v", seeds, err)
+	}
+	// Explicit comma-separated list, spaces and empty entries ignored.
+	seeds, err = ResolveSeedFiles(" ../db/seed_bd_manga.sql, ,../db/seed.sql")
+	if err != nil || !slices.Equal(seeds, []string{"../db/seed_bd_manga.sql", "../db/seed.sql"}) {
+		t.Errorf("explicit seeds: got %q, %v", seeds, err)
+	}
+	if _, err := ResolveSeedFiles("../db/seed.sql,../db/nope.sql"); err == nil {
+		t.Error("a missing explicit seed must fail")
 	}
 }

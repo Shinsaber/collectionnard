@@ -309,3 +309,49 @@ func TestImportCollection_Errors(t *testing.T) {
 		t.Errorf("type by name: %+v", rep)
 	}
 }
+
+// db/seed_bd_manga.sql (lot 13) loads on top of seed.sql and every entity it
+// inserts directly in SQL satisfies its JSON Schema (checked by an import dry run).
+func TestSeedBDManga_Valid(t *testing.T) {
+	const dbName = "colec_test_bd"
+	admin, err := pgx.Connect(ctx, baseURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer admin.Close(ctx)
+	_, _ = admin.Exec(ctx, "DROP DATABASE IF EXISTS "+dbName)
+	if _, err := admin.Exec(ctx, "CREATE DATABASE "+dbName); err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _, _ = admin.Exec(ctx, "DROP DATABASE IF EXISTS "+dbName+" WITH (FORCE)") }()
+	u, _ := url.Parse(baseURL)
+	u.Path = "/" + dbName
+	if err := dbmigrate.Migrate(ctx, u.String(), migrationsDir); err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range []string{seedFile, "../../../db/seed_bd_manga.sql"} {
+		if err := dbmigrate.Seed(ctx, u.String(), f); err != nil {
+			t.Fatalf("%s: %v", f, err)
+		}
+	}
+	bd, err := store.NewPgStore(ctx, u.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer bd.Close()
+
+	rep, err := bd.ImportCatalog(ctx, exportNow(t, bd), true)
+	if err != nil || len(rep.Errors) != 0 {
+		t.Fatalf("seed BD invalid: %v %+v", err, rep.Errors)
+	}
+	if c := counts(rep, model.EntityItems); c.Unchanged != 8+21 {
+		t.Errorf("items: %+v", c)
+	}
+
+	// Multiple roles on a single relation: Uderzo is writer and artist of Astérix.
+	uderzo := uuid.MustParse("e0000000-0000-0000-0000-000000000123")
+	rels, err := bd.ListItemRelations(ctx, uderzo, nil)
+	if err != nil || len(rels) != 1 || string(rels[0].Attributes) != `{"roles": ["writer", "artist"]}` {
+		t.Errorf("created_by roles: %v %+v", err, rels)
+	}
+}

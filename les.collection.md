@@ -17,6 +17,16 @@
 
 ---
 
+## Implémentation (lot 13)
+
+Seed : [`db/seed_bd_manga.sql`](db/seed_bd_manga.sql) (chargé après `db/seed.sql`). Noms techniques des ItemTypes :
+`Universe`, `Saga`, `Manga`, `Comic` (BD), `Edition`, `Volume` (Tome), `Person`, `Publisher` ; noms affichés via `x-title`.
+Valeurs d'enum en ASCII (`shonen`, `tankobon`, `ova`…) affichées avec leurs accents via `x-enum-labels`.
+Exemples réels : Dragon Ball (univers, sagas, deux mangas, Toriyama / Toyotarō, édition Glénat 1993, tomes 1-2,
+anime) et Astérix (BD franco-belge sans saga ; Uderzo `roles: [writer, artist]` ; Dargaud puis Albert René).
+
+---
+
 ## Graphe
 
 ```
@@ -67,7 +77,7 @@ Arc narratif ou sous-ensemble d'un Univers (ex: "Saga des Saiyans", "Arc Impel D
 | `original_title` | string        |        | Titre en VO (鳥山明 ドラゴンボール)            |
 | `description`    | i18n-text     |        | Synopsis                                       |
 | `sub_type`       | enum          |        | `manga`, `manhwa`, `manhua`, `webtoon`         |
-| `demographic`    | enum          |        | `shōnen`, `shōjo`, `seinen`, `josei`, `kodomo` |
+| `demographic`    | enum          |        | `shonen`, `shojo`, `seinen`, `josei`, `kodomo` |
 | `status`         | enum          |        | `ongoing`, `completed`, `on_hold`, `cancelled` |
 | `start_year`     | integer       |        | Année de première publication                  |
 | `end_year`       | integer       |        | Année de fin                                   |
@@ -98,7 +108,7 @@ Publication spécifique d'une Œuvre (édition originale, perfect edition, poche
 | -------------- | ------------- | ------ | ----------------------------------------------------------------------------------------- |
 | `title`        | i18n-text     | ✅     | Ex: "Dragon Ball - Perfect Edition"                                                       |
 | `language`     | enum          | ✅     | `fr`, `ja`, `en`, `ko`, `zh`, `es`, `de`, `it`                                            |
-| `format`       | enum          |        | `tankōbon`, `grand_format`, `poche`, `perfect`, `deluxe`, `collector`, `omnibus`, `album` |
+| `format`       | enum          |        | `tankobon`, `grand_format`, `poche`, `perfect`, `deluxe`, `collector`, `omnibus`, `album` |
 | `status`       | enum          |        | `ongoing`, `completed`, `on_hold`, `out_of_print`                                         |
 | `volume_count` | integer       |        | Nombre de tomes dans cette édition                                                        |
 | `start_year`   | integer       |        | Année de début de publication                                                             |
@@ -114,7 +124,7 @@ Volume physique individuel. Item le plus souvent mis en collection.
 | `number`           | integer       | ✅     | Numéro dans l'édition            |
 | `title`            | i18n-text     | ✅     | Titre du tome                    |
 | `subtitle`         | string        |        | Sous-titre éventuel              |
-| `isbn`             | string        |        | ISBN-13                          |
+| `isbn`             | string        |        | ISBN-13 (chiffres seuls)         |
 | `publication_date` | date          |        | Date de publication              |
 | `page_count`       | integer       |        | Nombre de pages                  |
 | `retail_price`     | number        |        | Prix catalogue (€)               |
@@ -129,7 +139,7 @@ Créateur : auteur, scénariste, dessinateur, coloriste, traducteur…
 | `last_name`   | string        | ✅     | Nom de famille                  |
 | `first_name`  | string        |        | Prénom                          |
 | `native_name` | string        |        | Nom en écriture native (鳥山明) |
-| `nationality` | string        |        | Nationalité                     |
+| `nationality` | string        |        | Code pays ISO 3166-1 alpha-2    |
 | `birth_date`  | date          |        | Date de naissance               |
 | `biography`   | i18n-text     |        | Bio courte                      |
 | `images`      | image-gallery |        | portrait                        |
@@ -141,7 +151,7 @@ Créateur : auteur, scénariste, dessinateur, coloriste, traducteur…
 | Attribut      | Type          | Requis | Description      |
 | ------------- | ------------- | ------ | ---------------- |
 | `name`        | string        | ✅     | Nom de l'éditeur |
-| `country`     | string        |        | Pays d'origine   |
+| `country`     | string        |        | Code pays ISO    |
 | `website`     | string        |        | URL du site      |
 | `description` | i18n-text     |        | Description      |
 | `images`      | image-gallery |        | logo             |
@@ -158,10 +168,79 @@ Créateur : auteur, scénariste, dessinateur, coloriste, traducteur…
 | `published_as`    | Manga / BD → Édition        | —                                                                                     |
 | `edited_by`       | Édition → Maison d'édition  | —                                                                                     |
 | `contains_volume` | Édition → Tome              | `order` (integer)                                                                     |
-| `adapted_as`      | Manga / BD → Série _(TV)_   | `adaptation_type` (enum: anime, film, OAV, live_action)                               |
+| `adapted_as`      | Manga / BD → Série _(TV)_   | `adaptation_type` (enum: anime, film, ova, live_action)                               |
 
 > `contains_work` a plusieurs sources (Univers, Saga) et plusieurs cibles (Manga, BD) : supporté nativement
 > par les tables de jonction de `relation_types`.
+
+---
+
+## Sources de référence : Wikidata et BnF
+
+Décision (2026-10-11) : le domaine s'appuie sur deux bases ouvertes, à licence compatible avec la reprise des
+données dans le catalogue. Le détail des licences, des accès et des sources écartées ou gardées pour plus
+tard (GCD, Open Library, AniList…) est dans [`docs/sources-externes.md`](docs/sources-externes.md).
+
+| Niveau du graphe                                   | Source       | Licence                                         |
+| -------------------------------------------------- | ------------ | ----------------------------------------------- |
+| Univers, Manga, BD, Personne, Maison d'édition     | **Wikidata** | CC0 (aucune obligation)                         |
+| Édition, Tome (+ autorités Personne / Éditeur)     | **BnF**      | Licence Ouverte : citer la source et la date    |
+
+Le schéma reste **le nôtre** : on ne calque pas le modèle d'une source. Chaque item garde simplement de quoi
+retrouver sa fiche d'origine, ce qui prépare les connecteurs de la Phase 4.
+
+### Attributs communs (tous les ItemTypes du domaine)
+
+| Attribut       | Type   | Description                                                                                       |
+| -------------- | ------ | ------------------------------------------------------------------------------------------------- |
+| `external_ids` | object | `{ "wikidata": "Q…", "bnf_ark": "ark:/12148/…" }` — chaque clé optionnelle, `additionalProperties: false` |
+| `sources`      | array  | Provenance : `[{ "source": "bnf", "retrieved_at": "2026-10-11" }]` (`source` : enum `wikidata`, `bnf`, `manual`) — obligatoire pour la BnF (attribution) |
+
+- Motifs de validation : `wikidata` → `^Q[1-9][0-9]*$` ; `bnf_ark` → `^ark:/12148/[a-z0-9]+$`.
+- Les identifiants d'autres bases (MangaUpdates `P11149`, MyAnimeList `P4087`, AniList `P8731`, Comic Vine
+  `P5905`) ne sont **pas** stockés : ils se retrouvent à la demande via le QID Wikidata.
+- `isbn` reste un attribut propre du Tome (identifiant métier, recherche par code-barres en Phase 4).
+- Ni les textes Wikipédia (CC BY-SA) ni les images (licences propres, couvertures protégées) ne sont repris :
+  `description` / `biography` sont écrites à la main ou reprises des **descriptions** Wikidata (CC0) ; les
+  images restent des uploads.
+
+### Correspondance des champs
+
+**Manga / BD ← Wikidata** (classes : `Q21198342` série de manga, `Q14406742` série de bande dessinée,
+`Q725377` roman graphique)
+
+| Attribut / relation             | Wikidata                                                                    |
+| ------------------------------- | --------------------------------------------------------------------------- |
+| `title` (i18n)                  | libellés fr / en (ou `P1476` titre)                                         |
+| `original_title`                | `P1559` nom dans la langue d'origine, ou libellé ja                         |
+| `start_year` / `end_year`       | `P571` création ou `P577` date de publication / `P582` date de fin           |
+| `volumes_vo`                    | `P2635` nombre de parties                                                   |
+| `demographic`, genre            | `P136` genre (valeurs à mapper vers notre enum)                             |
+| pays                            | `P495` pays d'origine                                                       |
+| `created_by {roles}`            | `P50` auteur → `author`, `P58` scénariste → `writer`, `P110` illustrateur → `artist` |
+| `contains_work` (Univers)       | `P8345` franchise médiatique (`Q196600`)                                    |
+| `adapted_as`                    | `P4969` œuvre dérivée / `P144` basé sur                                     |
+| éditeur d'origine               | `P123` éditeur                                                              |
+| `external_ids.bnf_ark`          | `P268` identifiant BnF (quand Wikidata le connaît)                          |
+
+**Personne ← Wikidata** (`Q5`), complétée par l'autorité BnF : `last_name` `P734`, `first_name` `P735`,
+`native_name` `P1559`, `nationality` `P27`, `birth_date` `P569`, `external_ids.bnf_ark` `P268`.
+
+**Maison d'édition ← Wikidata** (`Q2085381`) : `name` (libellé), `country` `P17`/`P495`, `website` `P856`,
+`external_ids.bnf_ark` `P268`.
+
+**Édition / Tome ← BnF** (API SRU, voir `docs/sources-externes.md`) : un Tome = une notice bibliographique
+(`bib.persistentid` → `bnf_ark`, recherche par `bib.fuzzyIsbn`) ; une Édition = la collection éditoriale ou
+l'ensemble multivolume qui regroupe ces notices (`bib.col2bib`, `bib.ens2bib`). Champs du Tome : `isbn`,
+`title` / `subtitle`, `number` (numéro dans la série), `publication_date`, `page_count`, `retail_price`,
+éditeur (→ relation `edited_by` de l'Édition). Les zones exactes (UNIMARC / INTERMARC) sont à revalider au
+moment du connecteur : la BnF a changé de modèle de catalogage en juin 2026.
+
+### Pour le seed (lot 13)
+
+Les exemples (Dragon Ball, une BD franco-belge) sont repris de Wikidata (œuvres, auteurs, éditeurs) et de
+la BnF (une édition française et quelques tomes), avec leurs `external_ids` et `sources` réels : données
+légalement réutilisables et déjà au bon format pour les futurs connecteurs.
 
 ---
 

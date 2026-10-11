@@ -79,6 +79,8 @@ export interface SchemaField {
   uniqueItems?: boolean | null;
   // image-gallery
   imageCategories?: { name: string; ratio: string }[] | null;
+  /** Mots-clés de `items` hors `type` / `enum` (tableau d'objets…), restitués tels quels. */
+  itemsExtra?: Record<string, unknown> | null;
   /** Mots-clés non gérés par le builder (futurs x-*, default sur un objet…), restitués tels quels. */
   extra?: Record<string, unknown>;
 }
