@@ -74,6 +74,7 @@ go run .
 | `REFRESH_TOKEN_TTL` | `720h`      | Durée de vie des refresh tokens (rotation à chaque utilisation)       |
 | `LOGIN_RATE_LIMIT`  | `10`        | Appels par minute et par IP sur `/auth/login`, `/auth/refresh`, `/auth/logout` |
 | `TRUSTED_PROXY`     | `false`     | `true` derrière un reverse-proxy qui pose `X-Real-IP` (nginx du compose) ; sinon l'IP serait usurpable |
+| `GRAPH_MAX_NODES`   | `500`       | Nombre max de nœuds renvoyés par `GET /items/{id}/graph` (au-delà : `truncated: true`) |
 | `PORT`              | `8080`      | Port HTTP                                                            |
 | `UPLOAD_DIR`        | `uploads`   | Dossier des images uploadées                                         |
 | `MAX_UPLOAD_SIZE`   | `10485760`  | Taille max d'un upload (octets) ; les corps JSON sont limités à 1 Mio |

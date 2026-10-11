@@ -24,6 +24,12 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
   `respondValidationError` (422) — pas de `w.Write` à la main.
 - Toute écriture d'attributs dynamiques (item, relation, collection item) doit passer par
   `validator.ValidateAttributes` avec le schéma du méta-type correspondant.
+- Tout `attributes_schema` écrit sur un méta-type passe par `checkAttributesSchema` (→ `validator.CheckSchema` :
+  objet JSON, `"type": "object"` à la racine, compilable, sans `$ref` externe). Les schémas compilés sont
+  mis en cache par hash de contenu.
+- Paramètres de requête : `parsePagination` borne `per_page` à 100 ; `parseOptionalUUID(w, r, "param")`
+  répond 400 sur un UUID invalide ; `GET /items/{id}/graph` limite `max_depth` (5, 10 pour admin),
+  `relation_type_ids` (20) et le nombre de nœuds (`GRAPH_MAX_NODES`).
 - Les listes renvoient `model.PaginatedResponse` (`data`, `total`, …).
 - Lire un corps JSON avec `decodeJSON(w, r, &in)` + `respondDecodeError(w, err)` (limite 1 Mio → 413).
 - Logs : `log/slog` (JSON par défaut, `LOG_FORMAT=text` en dev) ; `respondInternal(w, r, err, msg)` et

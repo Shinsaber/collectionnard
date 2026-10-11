@@ -13,7 +13,10 @@ import (
 func (h *Handler) ListCollections(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	pg := parsePagination(r)
-	collectionTypeID := parseOptionalUUID(r.URL.Query().Get("collection_type_id"))
+	collectionTypeID, ok := parseOptionalUUID(w, r, "collection_type_id")
+	if !ok {
+		return
+	}
 
 	cols, total, err := h.Store.ListCollections(r.Context(), userID, pg, collectionTypeID)
 	if err != nil {
@@ -133,7 +136,10 @@ func (h *Handler) ListCollectionItems(w http.ResponseWriter, r *http.Request) {
 
 	pg := parsePagination(r)
 	q := r.URL.Query()
-	itemTypeID := parseOptionalUUID(q.Get("item_type_id"))
+	itemTypeID, ok := parseOptionalUUID(w, r, "item_type_id")
+	if !ok {
+		return
+	}
 	sort := q.Get("sort")
 
 	items, total, err := h.Store.ListCollectionItems(r.Context(), colID, pg, itemTypeID, sort)

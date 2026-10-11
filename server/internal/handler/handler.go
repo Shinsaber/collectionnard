@@ -19,6 +19,7 @@ import (
 	"github.com/shinsaber/colec/internal/middleware"
 	"github.com/shinsaber/colec/internal/model"
 	"github.com/shinsaber/colec/internal/store"
+	"github.com/shinsaber/colec/internal/validator"
 )
 
 type Handler struct {
@@ -189,6 +190,18 @@ func hasAttributes(attrs json.RawMessage) bool {
 	return len(trimmed) > 0 && !bytes.Equal(trimmed, []byte("null"))
 }
 
+// checkAttributesSchema rejects an invalid attributes_schema with a 422 and reports
+// whether the caller may continue.
+func checkAttributesSchema(w http.ResponseWriter, schema json.RawMessage) bool {
+	if err := validator.CheckSchema(schema); err != nil {
+		respondValidationError(w, "Le JSON Schema des attributs est invalide", map[string]any{
+			"fields": map[string]string{"attributes_schema": err.Error()},
+		})
+		return false
+	}
+	return true
+}
+
 // respondMissingAttributes emits the 422 used when a PUT omits `attributes`.
 func respondMissingAttributes(w http.ResponseWriter) {
 	respondValidationError(w, "Le champ attributes est requis", map[string]any{
@@ -212,21 +225,34 @@ func parsePagination(r *http.Request) model.Pagination {
 		page = 1
 	}
 	perPage, _ := strconv.Atoi(r.URL.Query().Get("per_page"))
-	if perPage < 1 || perPage > 100 {
-		perPage = 20
+	if perPage < 1 {
+		perPage = defaultPerPage
+	}
+	if perPage > maxPerPage {
+		perPage = maxPerPage
 	}
 	return model.Pagination{Page: page, PerPage: perPage}
 }
 
-func parseOptionalUUID(raw string) *uuid.UUID {
+const (
+	defaultPerPage  = 20
+	maxPerPage      = 100
+	maxSearchLength = 200
+)
+
+// parseOptionalUUID reads an optional UUID query parameter. An absent parameter
+// yields (nil, true); an invalid one answers 400 and yields (nil, false).
+func parseOptionalUUID(w http.ResponseWriter, r *http.Request, param string) (*uuid.UUID, bool) {
+	raw := r.URL.Query().Get(param)
 	if raw == "" {
-		return nil
+		return nil, true
 	}
 	id, err := uuid.Parse(raw)
 	if err != nil {
-		return nil
+		respondError(w, http.StatusBadRequest, "bad_request", "UUID invalide: "+param)
+		return nil, false
 	}
-	return &id
+	return &id, true
 }
 
 func containsUUID(ids []uuid.UUID, target uuid.UUID) bool {

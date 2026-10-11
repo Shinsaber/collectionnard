@@ -39,6 +39,9 @@ func (h *Handler) CreateItemType(w http.ResponseWriter, r *http.Request) {
 		respondValidationError(w, "Le nom est obligatoire", nil)
 		return
 	}
+	if !checkAttributesSchema(w, in.AttributesSchema) {
+		return
+	}
 	if len(in.AttributesSchema) == 0 {
 		in.AttributesSchema = []byte(`{}`)
 	}
@@ -59,6 +62,9 @@ func (h *Handler) UpdateItemType(w http.ResponseWriter, r *http.Request) {
 	var in model.ItemTypeUpdate
 	if err := decodeJSON(w, r, &in); err != nil {
 		respondDecodeError(w, err)
+		return
+	}
+	if len(in.AttributesSchema) > 0 && !checkAttributesSchema(w, in.AttributesSchema) {
 		return
 	}
 	it, err := h.Store.UpdateItemType(r.Context(), id, in)

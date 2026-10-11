@@ -13,7 +13,10 @@ func (h *Handler) ListItemRelations(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	relationTypeID := parseOptionalUUID(r.URL.Query().Get("relation_type_id"))
+	relationTypeID, ok := parseOptionalUUID(w, r, "relation_type_id")
+	if !ok {
+		return
+	}
 	relations, err := h.Store.ListItemRelations(r.Context(), itemID, relationTypeID)
 	if err != nil {
 		handleStoreError(w, r, err)

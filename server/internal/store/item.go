@@ -22,8 +22,8 @@ func (s *PgStore) ListItems(ctx context.Context, pg model.Pagination, f ItemFilt
 		argN++
 	}
 	if f.Search != "" {
-		where = append(where, fmt.Sprintf("i.attributes::text ILIKE $%d", argN))
-		args = append(args, "%"+f.Search+"%")
+		where = append(where, fmt.Sprintf(`i.attributes::text ILIKE $%d ESCAPE '\'`, argN))
+		args = append(args, "%"+escapeLike(f.Search)+"%")
 		argN++
 	}
 	if f.Tag != "" {

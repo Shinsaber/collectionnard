@@ -47,3 +47,10 @@ func buildSortClause(sort, defaultSort string, allowed map[string]string) string
 	}
 	return col + " ASC"
 }
+
+// escapeLike neutralises the LIKE/ILIKE metacharacters of a user-supplied
+// string so that it is matched literally (to be used with ESCAPE '\').
+func escapeLike(s string) string {
+	r := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
+	return r.Replace(s)
+}

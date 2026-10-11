@@ -19,6 +19,7 @@ type Config struct {
 	RefreshTokenTTL time.Duration // lifetime of a refresh token (rotated on use)
 	LoginRateLimit  int           // max calls per minute and per IP on /auth/*
 	TrustedProxy    bool          // trust X-Real-IP set by a reverse proxy (nginx)
+	GraphMaxNodes   int           // max nodes returned by GET /items/{id}/graph
 	UploadDir       string
 	MaxUploadSize   int64 // bytes
 }
@@ -64,6 +65,15 @@ func Load() (*Config, error) {
 		loginRateLimit = n
 	}
 
+	graphMaxNodes := 500
+	if v := os.Getenv("GRAPH_MAX_NODES"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 1 {
+			return nil, fmt.Errorf("invalid GRAPH_MAX_NODES: %q (positive integer expected)", v)
+		}
+		graphMaxNodes = n
+	}
+
 	trustedProxy := false
 	if v := os.Getenv("TRUSTED_PROXY"); v != "" {
 		b, err := strconv.ParseBool(v)
@@ -95,6 +105,7 @@ func Load() (*Config, error) {
 		RefreshTokenTTL: refreshTTL,
 		LoginRateLimit:  loginRateLimit,
 		TrustedProxy:    trustedProxy,
+		GraphMaxNodes:   graphMaxNodes,
 		UploadDir:       uploadDir,
 		MaxUploadSize:   maxUploadSize,
 	}, nil

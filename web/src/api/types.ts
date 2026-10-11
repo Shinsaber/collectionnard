@@ -223,6 +223,7 @@ export interface GraphResponse {
   root: GraphNode;
   nodes: GraphNode[];
   edges: GraphEdge[];
+  truncated: boolean; // exploration arrêtée par la limite de nœuds du serveur
 }
 
 // ---------- Stats ----------

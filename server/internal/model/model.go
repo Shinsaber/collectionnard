@@ -263,9 +263,10 @@ type GraphEdge struct {
 }
 
 type GraphResponse struct {
-	Root  GraphNode   `json:"root"`
-	Nodes []GraphNode `json:"nodes"`
-	Edges []GraphEdge `json:"edges"`
+	Root      GraphNode   `json:"root"`
+	Nodes     []GraphNode `json:"nodes"`
+	Edges     []GraphEdge `json:"edges"`
+	Truncated bool        `json:"truncated"` // exploration arrêtée par la limite de nœuds (GRAPH_MAX_NODES)
 }
 
 // ---------------------------------------------------------------------------

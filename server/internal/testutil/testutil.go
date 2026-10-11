@@ -3,6 +3,8 @@ package testutil
 import (
 	"context"
 	"encoding/json"
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -55,7 +57,7 @@ type MockStore struct {
 	CreateRelationFn             func(ctx context.Context, in model.ItemRelationCreate) (*model.ItemRelation, error)
 	UpdateRelationFn             func(ctx context.Context, id uuid.UUID, in model.ItemRelationUpdate) (*model.ItemRelation, error)
 	DeleteRelationFn             func(ctx context.Context, id uuid.UUID) error
-	GetItemGraphFn               func(ctx context.Context, id uuid.UUID, depth int, rtIDs []uuid.UUID) (*model.GraphResponse, error)
+	GetItemGraphFn               func(ctx context.Context, id uuid.UUID, depth, maxNodes int, rtIDs []uuid.UUID) (*model.GraphResponse, error)
 	ListCollectionsFn            func(ctx context.Context, userID uuid.UUID, pg model.Pagination, ctID *uuid.UUID) ([]model.Collection, int, error)
 	GetCollectionFn              func(ctx context.Context, id uuid.UUID) (*model.Collection, error)
 	CreateCollectionFn           func(ctx context.Context, userID uuid.UUID, in model.CollectionCreate) (*model.Collection, error)
@@ -262,9 +264,9 @@ func (m *MockStore) DeleteRelation(ctx context.Context, id uuid.UUID) error {
 	}
 	return store.ErrNotFound
 }
-func (m *MockStore) GetItemGraph(ctx context.Context, id uuid.UUID, depth int, rtIDs []uuid.UUID) (*model.GraphResponse, error) {
+func (m *MockStore) GetItemGraph(ctx context.Context, id uuid.UUID, depth, maxNodes int, rtIDs []uuid.UUID) (*model.GraphResponse, error) {
 	if m.GetItemGraphFn != nil {
-		return m.GetItemGraphFn(ctx, id, depth, rtIDs)
+		return m.GetItemGraphFn(ctx, id, depth, maxNodes, rtIDs)
 	}
 	return nil, store.ErrNotFound
 }
@@ -370,6 +372,7 @@ func TestConfig() *config.Config {
 		AccessTokenTTL:  TestAccessTTL,
 		RefreshTokenTTL: 24 * time.Hour,
 		LoginRateLimit:  1000,
+		GraphMaxNodes:   500,
 		UploadDir:       os.TempDir(),
 		MaxUploadSize:   10 << 20,
 	}
@@ -441,5 +444,13 @@ func SampleItem() *model.Item {
 		Tags:       []model.Tag{{ID: uuid.New(), Name: "drame"}},
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
+	}
+}
+
+// Tests are noisy with the structured request logger: silence slog unless
+// TEST_LOG is set.
+func init() {
+	if os.Getenv("TEST_LOG") == "" {
+		slog.SetDefault(slog.New(slog.NewTextHandler(io.Discard, nil)))
 	}
 }

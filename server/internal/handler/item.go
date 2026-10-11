@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/shinsaber/colec/internal/middleware"
@@ -13,8 +14,17 @@ import (
 func (h *Handler) ListItems(w http.ResponseWriter, r *http.Request) {
 	pg := parsePagination(r)
 	q := r.URL.Query()
+	itemTypeID, ok := parseOptionalUUID(w, r, "item_type_id")
+	if !ok {
+		return
+	}
+	if len(q.Get("search")) > maxSearchLength || len(q.Get("tag")) > maxSearchLength {
+		respondError(w, http.StatusBadRequest, "bad_request",
+			fmt.Sprintf("search et tag sont limités à %d caractères", maxSearchLength))
+		return
+	}
 	filters := store.ItemFilters{
-		ItemTypeID: parseOptionalUUID(q.Get("item_type_id")),
+		ItemTypeID: itemTypeID,
 		Search:     q.Get("search"),
 		Tag:        q.Get("tag"),
 		Sort:       q.Get("sort"),

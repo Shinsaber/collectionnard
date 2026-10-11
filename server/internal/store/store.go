@@ -72,7 +72,7 @@ type Store interface {
 	DeleteRelation(ctx context.Context, id uuid.UUID) error
 
 	// Graph
-	GetItemGraph(ctx context.Context, itemID uuid.UUID, maxDepth int, relationTypeIDs []uuid.UUID) (*model.GraphResponse, error)
+	GetItemGraph(ctx context.Context, itemID uuid.UUID, maxDepth, maxNodes int, relationTypeIDs []uuid.UUID) (*model.GraphResponse, error)
 
 	// Collection
 	ListCollections(ctx context.Context, userID uuid.UUID, pg model.Pagination, collectionTypeID *uuid.UUID) ([]model.Collection, int, error)

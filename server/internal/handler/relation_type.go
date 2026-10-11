@@ -8,9 +8,14 @@ import (
 
 func (h *Handler) ListRelationTypes(w http.ResponseWriter, r *http.Request) {
 	pg := parsePagination(r)
-	q := r.URL.Query()
-	sourceID := parseOptionalUUID(q.Get("source_item_type_id"))
-	targetID := parseOptionalUUID(q.Get("target_item_type_id"))
+	sourceID, ok := parseOptionalUUID(w, r, "source_item_type_id")
+	if !ok {
+		return
+	}
+	targetID, ok := parseOptionalUUID(w, r, "target_item_type_id")
+	if !ok {
+		return
+	}
 
 	items, total, err := h.Store.ListRelationTypes(r.Context(), pg, sourceID, targetID)
 	if err != nil {
@@ -43,6 +48,9 @@ func (h *Handler) CreateRelationType(w http.ResponseWriter, r *http.Request) {
 		respondValidationError(w, "Le nom est obligatoire", nil)
 		return
 	}
+	if !checkAttributesSchema(w, in.AttributesSchema) {
+		return
+	}
 
 	rt, err := h.Store.CreateRelationType(r.Context(), in)
 	if err != nil {
@@ -60,6 +68,9 @@ func (h *Handler) UpdateRelationType(w http.ResponseWriter, r *http.Request) {
 	var in model.RelationTypeUpdate
 	if err := decodeJSON(w, r, &in); err != nil {
 		respondDecodeError(w, err)
+		return
+	}
+	if len(in.AttributesSchema) > 0 && !checkAttributesSchema(w, in.AttributesSchema) {
 		return
 	}
 	rt, err := h.Store.UpdateRelationType(r.Context(), id, in)

@@ -12,8 +12,19 @@ type PgStore struct {
 	pool *pgxpool.Pool
 }
 
+// statementTimeout bounds every statement server-side so that a pathological
+// query cannot hold a connection indefinitely.
+const statementTimeout = "10000" // ms
+
 func NewPgStore(ctx context.Context, databaseURL string) (*PgStore, error) {
-	pool, err := pgxpool.New(ctx, databaseURL)
+	cfg, err := pgxpool.ParseConfig(databaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("parse database url: %w", err)
+	}
+	if _, set := cfg.ConnConfig.RuntimeParams["statement_timeout"]; !set {
+		cfg.ConnConfig.RuntimeParams["statement_timeout"] = statementTimeout
+	}
+	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("connect to database: %w", err)
 	}

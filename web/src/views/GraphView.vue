@@ -13,7 +13,7 @@
         <InputNumber
           v-model="maxDepth"
           :min="1"
-          :max="10"
+          :max="auth.isAdmin ? 10 : 5"
           show-buttons
           :step="1"
           class="w-24"
@@ -21,6 +21,16 @@
         />
       </div>
     </div>
+
+    <Message
+      v-if="truncated && !loading"
+      severity="warn"
+      :closable="false"
+      class="mb-3"
+    >
+      Graphe tronqué : la limite de nœuds du serveur est atteinte. Réduisez la
+      profondeur pour voir l'ensemble des relations.
+    </Message>
 
     <div v-if="loading" class="flex justify-center py-12">
       <ProgressSpinner />
@@ -118,9 +128,11 @@ import InputNumber from "primevue/inputnumber";
 import Tag from "primevue/tag";
 import Dialog from "primevue/dialog";
 import ProgressSpinner from "primevue/progressspinner";
+import Message from "primevue/message";
 import cytoscape from "cytoscape";
 import type { Core } from "cytoscape";
 import { itemApi } from "@/api/client";
+import { useAuthStore } from "@/stores/auth";
 import type { GraphNode, GraphEdge, GraphResponse } from "@/api/types";
 
 const props = defineProps<{ id: string }>();
@@ -129,6 +141,8 @@ const { theme } = useTheme();
 
 const cyContainer = ref<HTMLElement | null>(null);
 const maxDepth = ref(3);
+const truncated = ref(false);
+const auth = useAuthStore();
 const loading = ref(true);
 
 // Node detail modal
@@ -270,6 +284,7 @@ async function loadGraph() {
 
   try {
     const graph = await itemApi.graph(props.id, { max_depth: maxDepth.value });
+    truncated.value = graph.truncated;
 
     loading.value = false;
     await nextTick();

@@ -4,130 +4,110 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/shinsaber/colec/internal/model"
 )
 
-func (s *PgStore) GetItemGraph(ctx context.Context, itemID uuid.UUID, maxDepth int, relationTypeIDs []uuid.UUID) (*model.GraphResponse, error) {
-	rtFilter := ""
-	args := []any{itemID, maxDepth}
-	if len(relationTypeIDs) > 0 {
-		placeholders := make([]string, len(relationTypeIDs))
-		for i, id := range relationTypeIDs {
-			args = append(args, id)
-			placeholders[i] = fmt.Sprintf("$%d", i+3)
-		}
-		rtFilter = fmt.Sprintf("AND ir.relation_type_id IN (%s)", strings.Join(placeholders, ","))
+// GetItemGraph explores the relation graph around itemID with a breadth-first
+// search, level by level and in both directions (outgoing relations give a
+// positive depth, incoming ones a negative depth). Each node is visited once
+// (the first time it is reached, hence with its smallest |depth|), so the cost
+// is bounded by the number of distinct nodes, not by the number of paths.
+// Exploration stops at maxDepth levels or maxNodes nodes; in the latter case
+// Truncated is set on the response.
+func (s *PgStore) GetItemGraph(ctx context.Context, itemID uuid.UUID, maxDepth, maxNodes int, relationTypeIDs []uuid.UUID) (*model.GraphResponse, error) {
+	var exists bool
+	if err := s.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM items WHERE id = $1)`, itemID).Scan(&exists); err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, ErrNotFound
+	}
+	if maxNodes < 1 {
+		maxNodes = 1
 	}
 
-	query := fmt.Sprintf(`
-		WITH RECURSIVE graph_down AS (
-			SELECT i.id, i.item_type_id, i.attributes, it.name AS type_name, 0 AS depth,
-			       ARRAY[i.id] AS path
-			FROM items i
-			JOIN item_types it ON it.id = i.item_type_id
-			WHERE i.id = $1
+	depths := map[uuid.UUID]int{itemID: 0}
+	order := []uuid.UUID{itemID}
+	truncated := false
 
-			UNION ALL
+	down := []uuid.UUID{itemID}
+	up := []uuid.UUID{itemID}
+	for level := 1; level <= maxDepth && (len(down) > 0 || len(up) > 0) && !truncated; level++ {
+		var err error
+		down, err = s.expandLevel(ctx, down, true, level, relationTypeIDs, depths, &order, maxNodes, &truncated)
+		if err != nil {
+			return nil, err
+		}
+		if truncated {
+			break
+		}
+		up, err = s.expandLevel(ctx, up, false, level, relationTypeIDs, depths, &order, maxNodes, &truncated)
+		if err != nil {
+			return nil, err
+		}
+	}
 
-			SELECT i2.id, i2.item_type_id, i2.attributes, it2.name AS type_name, g.depth + 1,
-			       g.path || i2.id
-			FROM graph_down g
-			JOIN item_relations ir ON ir.source_item_id = g.id %[1]s
-			JOIN items i2 ON i2.id = ir.target_item_id
-			JOIN item_types it2 ON it2.id = i2.item_type_id
-			WHERE g.depth < $2
-			  AND NOT i2.id = ANY(g.path)
-		),
-		graph_up AS (
-			SELECT i.id, i.item_type_id, i.attributes, it.name AS type_name, 0 AS depth,
-			       ARRAY[i.id] AS path
-			FROM items i
-			JOIN item_types it ON it.id = i.item_type_id
-			WHERE i.id = $1
+	resp := &model.GraphResponse{
+		Nodes:     []model.GraphNode{},
+		Edges:     []model.GraphEdge{},
+		Truncated: truncated,
+	}
 
-			UNION ALL
-
-			SELECT i2.id, i2.item_type_id, i2.attributes, it2.name AS type_name, g.depth - 1,
-			       g.path || i2.id
-			FROM graph_up g
-			JOIN item_relations ir ON ir.target_item_id = g.id %[1]s
-			JOIN items i2 ON i2.id = ir.source_item_id
-			JOIN item_types it2 ON it2.id = i2.item_type_id
-			WHERE g.depth > -$2
-			  AND NOT i2.id = ANY(g.path)
-		),
-		graph AS (
-			SELECT * FROM graph_down
-			UNION ALL
-			SELECT * FROM graph_up WHERE depth != 0
-		)
-		SELECT DISTINCT ON (id) id, type_name, attributes, depth
-		FROM graph
-		ORDER BY id, ABS(depth)`, rtFilter)
-
-	rows, err := s.pool.Query(ctx, query, args...)
+	// Node details in one query.
+	rows, err := s.pool.Query(ctx, `
+		SELECT i.id, it.name, i.attributes
+		FROM items i
+		JOIN item_types it ON it.id = i.item_type_id
+		WHERE i.id = ANY($1)`, order)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-
-	resp := &model.GraphResponse{
-		Nodes: []model.GraphNode{},
-		Edges: []model.GraphEdge{},
-	}
-
-	var foundRoot bool
+	nodesByID := make(map[uuid.UUID]model.GraphNode, len(order))
 	for rows.Next() {
 		var node model.GraphNode
 		var attrs json.RawMessage
-		if err := rows.Scan(&node.ID, &node.Type, &attrs, &node.Depth); err != nil {
+		if err := rows.Scan(&node.ID, &node.Type, &attrs); err != nil {
 			return nil, err
 		}
 		node.Attributes = attrs
 		node.Label = extractLabel(attrs)
-
-		if node.ID == itemID && !foundRoot {
-			resp.Root = node
-			foundRoot = true
-		} else {
-			resp.Nodes = append(resp.Nodes, node)
-		}
+		node.Depth = depths[node.ID]
+		nodesByID[node.ID] = node
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-
-	if !foundRoot {
-		return nil, ErrNotFound
+	for _, id := range order { // discovery order, root first
+		node, ok := nodesByID[id]
+		if !ok {
+			continue // deleted between the traversal and the fetch
+		}
+		if id == itemID {
+			resp.Root = node
+		} else {
+			resp.Nodes = append(resp.Nodes, node)
+		}
 	}
 
-	// Fetch edges between discovered nodes
-	allIDs := []uuid.UUID{resp.Root.ID}
-	for _, n := range resp.Nodes {
-		allIDs = append(allIDs, n.ID)
-	}
-
+	// Edges between discovered nodes.
 	edgeQuery := `
 		SELECT ir.source_item_id, ir.target_item_id, rt.name, ir.attributes
 		FROM item_relations ir
 		JOIN relation_types rt ON rt.id = ir.relation_type_id
 		WHERE ir.source_item_id = ANY($1) AND ir.target_item_id = ANY($1)`
-	edgeArgs := []any{allIDs}
-
+	edgeArgs := []any{order}
 	if len(relationTypeIDs) > 0 {
 		edgeQuery += ` AND ir.relation_type_id = ANY($2)`
 		edgeArgs = append(edgeArgs, relationTypeIDs)
 	}
-
 	edgeRows, err := s.pool.Query(ctx, edgeQuery, edgeArgs...)
 	if err != nil {
 		return nil, err
 	}
 	defer edgeRows.Close()
-
 	for edgeRows.Next() {
 		var edge model.GraphEdge
 		if err := edgeRows.Scan(&edge.SourceID, &edge.TargetID, &edge.RelationType, &edge.Attributes); err != nil {
@@ -135,8 +115,58 @@ func (s *PgStore) GetItemGraph(ctx context.Context, itemID uuid.UUID, maxDepth i
 		}
 		resp.Edges = append(resp.Edges, edge)
 	}
-
 	return resp, edgeRows.Err()
+}
+
+// expandLevel fetches the neighbours of frontier (targets of outgoing relations
+// when down, sources of incoming ones otherwise), records the new ones at the
+// given depth and returns them as the next frontier.
+func (s *PgStore) expandLevel(ctx context.Context, frontier []uuid.UUID, down bool, level int, relationTypeIDs []uuid.UUID,
+	depths map[uuid.UUID]int, order *[]uuid.UUID, maxNodes int, truncated *bool) ([]uuid.UUID, error) {
+	if len(frontier) == 0 {
+		return nil, nil
+	}
+	from, to := "source_item_id", "target_item_id"
+	if !down {
+		from, to = to, from
+	}
+	query := fmt.Sprintf(`SELECT DISTINCT %s FROM item_relations WHERE %s = ANY($1)`, to, from)
+	args := []any{frontier}
+	if len(relationTypeIDs) > 0 {
+		query += ` AND relation_type_id = ANY($2)`
+		args = append(args, relationTypeIDs)
+	}
+	rows, err := s.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var next []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		if _, seen := depths[id]; seen {
+			continue
+		}
+		if len(*order) >= maxNodes {
+			*truncated = true
+			break
+		}
+		depth := level
+		if !down {
+			depth = -level
+		}
+		depths[id] = depth
+		*order = append(*order, id)
+		next = append(next, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return next, nil
 }
 
 func extractLabel(attrs json.RawMessage) string {

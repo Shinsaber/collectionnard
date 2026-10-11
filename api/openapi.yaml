@@ -927,6 +927,9 @@ components:
         Résultat d'une traversée de graphe. Contient tous les nœuds et arêtes
         accessibles depuis l'item racine, jusqu'à la profondeur demandée.
 
+        L'exploration est bornée par `GRAPH_MAX_NODES` nœuds (défaut 500) : au-delà,
+        `truncated` vaut `true` et le sous-graphe est partiel.
+
         Format directement exploitable par les librairies de visualisation de graphe :
         - **D3.js** : `nodes` → nœuds, `edges` → links
         - **Cytoscape.js** : conversion directe en éléments
@@ -935,6 +938,9 @@ components:
         root:
           $ref: "#/components/schemas/GraphNode"
           description: Nœud racine de la traversée.
+        truncated:
+          type: boolean
+          description: "`true` si la limite de nœuds du serveur a interrompu l'exploration."
         nodes:
           type: array
           items:
@@ -1057,7 +1063,7 @@ components:
     per_page:
       name: per_page
       in: query
-      description: Nombre d'éléments par page. Min 1, max 100, défaut 20.
+      description: Nombre d'éléments par page. Défaut 20 ; une valeur > 100 est ramenée à 100, une valeur < 1 à 20.
       schema:
         type: integer
         default: 20
@@ -2233,11 +2239,12 @@ paths:
             Profondeur maximale de traversée depuis la racine, dans chaque direction.
             - `1` : uniquement les voisins directs (depth -1 et +1)
             - `3` (défaut) : 3 niveaux dans chaque direction
-            - `10` : maximum autorisé
+            - `5` : maximum pour un utilisateur ; `10` pour un admin
 
-            La traversée explore `max_depth` niveaux en descendant (profondeur positive)
-            et `max_depth` niveaux en remontant (profondeur négative).
-            Augmenter la profondeur augmente le temps de réponse et la taille du résultat.
+            La traversée est un parcours en largeur, niveau par niveau : `max_depth` niveaux en
+            descendant (profondeur positive) puis en remontant (profondeur négative), chaque nœud
+            n'étant visité qu'une fois. Elle s'arrête aussi à `GRAPH_MAX_NODES` nœuds (`truncated`)
+            et après 5 s (503). Une valeur hors bornes ou non entière renvoie 400.
           schema:
             type: integer
             default: 3
@@ -2246,14 +2253,26 @@ paths:
         - name: relation_type_ids
           in: query
           description: |
-            Filtrer la traversée par types de relation. Format : liste d'UUIDs séparés par des virgules.
-            Seules les arêtes de ces types seront suivies.
+            Filtrer la traversée par types de relation. Format : liste d'UUIDs séparés par des virgules
+            (20 maximum ; un UUID invalide renvoie 400). Seules les arêtes de ces types seront suivies.
             Si omis, toutes les relations sont suivies.
 
             Exemple : `relation_type_ids=c0000000-...-001,c0000000-...-003`
           schema:
             type: string
       responses:
+        "400":
+          description: "`max_depth` hors bornes ou `relation_type_ids` invalide / trop long."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Exploration interrompue après 5 s (réduire `max_depth` ou filtrer).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: |
             Sous-graphe retourné avec succès. Contient :

@@ -39,6 +39,9 @@ func (h *Handler) CreateCollectionType(w http.ResponseWriter, r *http.Request) {
 		respondValidationError(w, "Le nom est obligatoire", nil)
 		return
 	}
+	if !checkAttributesSchema(w, in.AttributesSchema) {
+		return
+	}
 
 	ct, err := h.Store.CreateCollectionType(r.Context(), in)
 	if err != nil {
@@ -56,6 +59,9 @@ func (h *Handler) UpdateCollectionType(w http.ResponseWriter, r *http.Request) {
 	var in model.CollectionTypeUpdate
 	if err := decodeJSON(w, r, &in); err != nil {
 		respondDecodeError(w, err)
+		return
+	}
+	if len(in.AttributesSchema) > 0 && !checkAttributesSchema(w, in.AttributesSchema) {
 		return
 	}
 	ct, err := h.Store.UpdateCollectionType(r.Context(), id, in)

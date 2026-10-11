@@ -11,8 +11,8 @@ func (s *PgStore) ListTags(ctx context.Context, search string) ([]model.Tag, err
 	args := []any{}
 
 	if search != "" {
-		query += ` WHERE lower(name) LIKE lower($1)`
-		args = append(args, search+"%")
+		query += ` WHERE name ILIKE $1 ESCAPE '\'`
+		args = append(args, escapeLike(search)+"%")
 	}
 	query += ` ORDER BY name`
 

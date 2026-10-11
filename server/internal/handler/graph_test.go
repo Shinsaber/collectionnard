@@ -14,7 +14,7 @@ import (
 func TestGetItemGraph_Success(t *testing.T) {
 	rootID := uuid.MustParse("e0000000-0000-0000-0000-000000000001")
 	mock := &testutil.MockStore{
-		GetItemGraphFn: func(_ context.Context, id uuid.UUID, depth int, rtIDs []uuid.UUID) (*model.GraphResponse, error) {
+		GetItemGraphFn: func(_ context.Context, id uuid.UUID, depth, _ int, rtIDs []uuid.UUID) (*model.GraphResponse, error) {
 			return &model.GraphResponse{
 				Root: model.GraphNode{
 					ID: rootID, Type: "Serie", Label: "Breaking Bad",
