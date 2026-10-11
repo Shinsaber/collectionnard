@@ -1,7 +1,8 @@
 import { createApp } from "vue";
 import { createPinia } from "pinia";
 import PrimeVue from "primevue/config";
-import Aura from "@primeuix/themes/aura";
+// Preset « compat » : taille de base 14 px comme PrimeVue 4 (le preset aura natif de v5 est en 16 px).
+import Aura from "@primeuix/themes/aura-compat";
 import ToastService from "primevue/toastservice";
 import ConfirmationService from "primevue/confirmationservice";
 import "primeicons/primeicons.css";

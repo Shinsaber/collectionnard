@@ -13,10 +13,10 @@ Séries TV, DVD, livres, cartes à collectionner, vinyles… tout type de collec
 | ------------------- | ----------------------- | ---------- |
 | **Backend**         | Go (chi 5.3, pgx 5.11, JWT 5.3) | 1.27       |
 | **Base de données** | PostgreSQL              | 16         |
-| **Frontend**        | Vue 3 + TypeScript      | 3.5 / 5.6  |
-| **UI**              | PrimeVue (@primeuix/themes) + Tailwind CSS | 4.5 / 3.4  |
+| **Frontend**        | Vue 3 + TypeScript      | 3.5 / 6.0  |
+| **UI**              | PrimeVue (@primeuix/themes, preset aura-compat) + Tailwind CSS | 5.0 / 3.4  |
 | **Graphes**         | Cytoscape.js            | 3.34       |
-| **Build**           | Vite                    | 6.4        |
+| **Build**           | Vite (Rolldown) + vue-tsc 3, Pinia 4, vue-router 5 | 8.3 |
 | **Déploiement**     | Docker Compose          | 4 services |
 
 ---

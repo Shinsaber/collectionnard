@@ -54,7 +54,7 @@ les mots-clés qu'il ne connaît pas), lue via `lib/schema.ts`, et documentée d
 ## Stack
 
 Go 1.27 (chi 5.3, pgx 5.11, golang-jwt 5.3, santhosh-tekuri/jsonschema v5) · PostgreSQL 16 ·
-Vue 3.5 + TypeScript 5.6 · PrimeVue 4.5 (`@primeuix/themes`) + Tailwind 3 · Cytoscape.js · Vite 6 · Docker Compose.
+Vue 3.5 + TypeScript 6 · PrimeVue 5 (`@primeuix/themes`, preset `aura-compat`) + Tailwind 3 · Cytoscape.js · Vite 8 · Docker Compose.
 
 ## Environnement : Nix
 
@@ -136,7 +136,7 @@ Nouveau compte : `go run . hash-password <mdp>` puis `INSERT INTO users …`.
 ## Où en est le projet
 
 Phase 1 (MVP) : terminée. Phase 1.5 (remise à niveau issue de l'audit, branche `remise-a-niveau`,
-lots 0 à 9 livrés, voir `Collectionnard.md` §8 et `docs/audit/03-feuille-de-route.md`) : en cours.
+lots 0 à 10 livrés, voir `Collectionnard.md` §8 et `docs/audit/03-feuille-de-route.md`) : en cours.
 Prochaines pistes (Phase 2, voir `Collectionnard.md` §8) :
 recherche avancée, statistiques graphiques, **import/export CSV/JSON**, soumission d'items
 par les users. Domaine en préparation : **BD / Manga** (`les.collection.md`).

@@ -332,7 +332,7 @@ Lots de `docs/audit/03-feuille-de-route.md`, branche `remise-a-niveau` :
 - [x] Lot 7 — cohérence : spec OpenAPI = code (test routes ↔ spec, `redocly lint` en CI), docs à jour
 - [x] Lot 8 — extension `x-label` (Go + TS), seed TV en anglais avec `x-order`, langue d'affichage fr/en, requêtes groupées (tags, jonctions)
 - [x] Lot 9 — découpage d'`ItemDetailView` / `SchemaBuilder` / `DynamicForm` / `GraphView` (< 400 lignes), `notifyError` partout, accessibilité (aria-label, alt, label/for, clavier), cache des méta-types, `baseUrl` retiré
-- [ ] Lot 10 — PrimeVue 5, Vite 8, TypeScript 6, Pinia 4, vue-router 5
+- [x] Lot 10 — PrimeVue 5 (preset aura-compat 14 px), Vite 8, TypeScript 6, vue-tsc 3, Pinia 4, vue-router 5, primeicons 8
 - [ ] Lot 11 — Tailwind 4 (optionnel)
 
 ### Phase 2 : Enrichissement
@@ -362,10 +362,10 @@ Lots de `docs/audit/03-feuille-de-route.md`, branche `remise-a-niveau` :
 | --------------- | ------------------------------- | --------- |
 | Backend         | Go (chi 5.3, pgx 5.11, JWT 5.3, jsonschema v5 — v6 différé, API incompatible, sans CVE) | 1.27 (go.mod ≥ 1.26) |
 | Base de données | PostgreSQL                      | 16        |
-| Frontend        | Vue 3 + TypeScript              | 3.5 / 5.6 |
-| UI              | PrimeVue (@primeuix/themes) + Tailwind CSS | 4.5 / 3.4 |
+| Frontend        | Vue 3 + TypeScript              | 3.5 / 6.0 |
+| UI              | PrimeVue (@primeuix/themes, aura-compat) + Tailwind CSS | 5.0 / 3.4 |
 | Graphes         | Cytoscape.js                    | 3.34      |
-| Build           | Vite                            | 6.4       |
+| Build           | Vite (Rolldown), vue-tsc 3, Pinia 4, vue-router 5 | 8.3 |
 | Déploiement     | Docker Compose (4 services : postgres, migrate, server, web) | — |
 | Dev             | Nix flake (Go, Node, PostgreSQL, golangci-lint) + direnv | flake.lock |
 
