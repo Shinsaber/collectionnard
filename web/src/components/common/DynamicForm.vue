@@ -12,48 +12,34 @@
         >
       </label>
 
-      <!-- String -->
-      <InputText
-        v-if="field.type === 'string' && !field.enum && !field.format"
+      <!-- String (texte, url, date) -->
+      <ElInput
+        v-if="field.type === 'string' && !field.enum"
         :id="`${uid}-${field.name}`"
         :model-value="getString(field.name)"
+        :type="inputType(field)"
         :placeholder="field.label"
-        :required="field.required"
-        :invalid="!!errors[field.name]"
-        @update:model-value="update(field.name, $event)"
-      />
-
-      <!-- String with format: uri -->
-      <InputText
-        v-else-if="field.type === 'string' && field.format === 'uri'"
-        :id="`${uid}-${field.name}`"
-        :model-value="getString(field.name)"
-        type="url"
-        :placeholder="field.label"
-        :invalid="!!errors[field.name]"
-        @update:model-value="update(field.name, $event)"
-      />
-
-      <!-- String with format: date -->
-      <InputText
-        v-else-if="field.type === 'string' && field.format === 'date'"
-        :id="`${uid}-${field.name}`"
-        :model-value="getString(field.name)"
-        type="date"
-        :invalid="!!errors[field.name]"
+        :class="{ 'is-error': !!errors[field.name] }"
         @update:model-value="update(field.name, $event)"
       />
 
       <!-- Enum -->
-      <Select
+      <ElSelect
         v-else-if="field.enum"
-        :input-id="`${uid}-${field.name}`"
-        :model-value="model[field.name]"
-        :options="field.enum"
-        :placeholder="'Choisir...'"
-        :invalid="!!errors[field.name]"
+        :id="`${uid}-${field.name}`"
+        :model-value="(model[field.name] as string | undefined) ?? undefined"
+        placeholder="Choisir..."
+        clearable
+        :class="{ 'is-error': !!errors[field.name] }"
         @update:model-value="update(field.name, $event)"
-      />
+      >
+        <ElOption
+          v-for="opt in field.enum"
+          :key="opt"
+          :label="opt"
+          :value="opt"
+        />
+      </ElSelect>
 
       <!-- Integer / Number with slider (when min & max defined) -->
       <div
@@ -64,13 +50,13 @@
         "
         class="flex items-center gap-3"
       >
-        <Slider
+        <ElSlider
           :model-value="getNumber(field.name) ?? field.minimum"
           :min="field.minimum"
           :max="field.maximum"
           :step="field.type === 'integer' ? 1 : 0.01"
           class="flex-1"
-          :aria-labelledby="`${uid}-${field.name}-label`"
+          :aria-label="field.label"
           @update:model-value="update(field.name, $event)"
         />
         <output
@@ -81,25 +67,25 @@
       </div>
 
       <!-- Integer / Number (no slider) -->
-      <InputNumber
+      <ElInputNumber
         v-else-if="field.type === 'integer' || field.type === 'number'"
-        :input-id="`${uid}-${field.name}`"
+        :id="`${uid}-${field.name}`"
         :model-value="getNumber(field.name)"
         :min="field.minimum"
         :max="field.maximum"
-        :use-grouping="false"
-        :min-fraction-digits="field.type === 'number' ? 0 : undefined"
-        :max-fraction-digits="field.type === 'number' ? 2 : 0"
-        :invalid="!!errors[field.name]"
-        @update:model-value="update(field.name, $event)"
+        :precision="field.type === 'integer' ? 0 : 2"
+        :step="field.type === 'integer' ? 1 : 0.1"
+        controls-position="right"
+        class="w-full!"
+        :class="{ 'is-error': !!errors[field.name] }"
+        @update:model-value="update(field.name, $event ?? undefined)"
       />
 
       <!-- Boolean -->
-      <Checkbox
+      <ElCheckbox
         v-else-if="field.type === 'boolean'"
-        :input-id="`${uid}-${field.name}`"
+        :id="`${uid}-${field.name}`"
         :model-value="!!model[field.name]"
-        :binary="true"
         @update:model-value="update(field.name, $event)"
       />
 
@@ -117,10 +103,11 @@
             class="text-xs text-gray-400 dark:text-gray-500 uppercase"
             >{{ l }}</label
           >
-          <Textarea
+          <ElInput
             :id="`${uid}-${field.name}-${l}`"
+            type="textarea"
             :model-value="getI18n(field.name, l)"
-            rows="2"
+            :rows="2"
             :placeholder="`${field.label} (${l.toUpperCase()})`"
             @update:model-value="
               updateI18n(field.name, l, String($event ?? ''))
@@ -139,11 +126,12 @@
       />
 
       <!-- Fallback: raw JSON for other objects/arrays -->
-      <Textarea
+      <ElInput
         v-else
         :id="`${uid}-${field.name}`"
+        type="textarea"
         :model-value="JSON.stringify(model[field.name] ?? '', null, 2)"
-        rows="3"
+        :rows="3"
         class="font-mono text-xs"
         @update:model-value="updateJson(field.name, String($event ?? ''))"
       />
@@ -168,12 +156,6 @@
 
 <script setup lang="ts">
 import { computed, reactive, useId } from "vue";
-import InputText from "primevue/inputtext";
-import InputNumber from "primevue/inputnumber";
-import Textarea from "primevue/textarea";
-import Select from "primevue/select";
-import Checkbox from "primevue/checkbox";
-import Slider from "primevue/slider";
 import { useLang } from "@/composables/useLang";
 import {
   LANGS,
@@ -238,6 +220,13 @@ const fields = computed<SchemaField[]>(() => {
 
 function getString(name: string): string {
   return (model.value[name] as string) ?? "";
+}
+
+// Type HTML de l'input texte selon `format` (uri → url, date → date).
+function inputType(field: SchemaField): string {
+  if (field.format === "uri") return "url";
+  if (field.format === "date") return "date";
+  return "text";
 }
 
 function getNumber(name: string): number | undefined {

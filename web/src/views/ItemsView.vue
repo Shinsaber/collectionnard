@@ -4,109 +4,125 @@
       <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
         Catalogue
       </h1>
-      <Button
-        v-if="auth.isAdmin"
-        label="Nouvel item"
-        icon="pi pi-plus"
-        @click="openCreate"
-      />
+      <ElButton v-if="auth.isAdmin" type="primary" @click="openCreate">
+        <i class="pi pi-plus mr-2" aria-hidden="true"></i> Nouvel item
+      </ElButton>
     </div>
 
     <!-- Filters -->
     <div class="flex gap-3 mb-4 flex-wrap">
-      <Select
+      <ElSelect
         v-model="filters.item_type_id"
-        :options="itemTypes"
-        option-label="name"
-        option-value="id"
         placeholder="Tous les types"
-        show-clear
-        class="w-48"
+        clearable
+        class="w-48!"
+        aria-label="Filtrer par type"
         @change="reload"
-      />
-      <InputText
+      >
+        <ElOption
+          v-for="t in itemTypes"
+          :key="t.id"
+          :label="t.name"
+          :value="t.id"
+        />
+      </ElSelect>
+      <ElInput
         v-model="filters.search"
         placeholder="Rechercher..."
-        class="w-64"
+        clearable
+        class="w-64!"
+        aria-label="Recherche"
         @keyup.enter="reload"
       />
-      <InputText
+      <ElInput
         v-model="filters.tag"
         placeholder="Tag..."
-        class="w-32"
+        clearable
+        class="w-32!"
+        aria-label="Tag"
         @keyup.enter="reload"
       />
-      <Button icon="pi pi-search" @click="reload" />
+      <ElButton aria-label="Rechercher" @click="reload">
+        <i class="pi pi-search" aria-hidden="true"></i>
+      </ElButton>
     </div>
 
-    <DataTable
-      :value="pag.data.value"
-      :loading="pag.loading.value"
-      :lazy="true"
-      :paginator="true"
-      :rows="pag.perPage.value"
-      :total-records="pag.total.value"
-      striped-rows
-      data-key="id"
-      selection-mode="single"
-      :meta-key-selection="false"
+    <ElTable
+      v-loading="pag.loading.value"
+      :data="pag.data.value"
+      stripe
+      row-key="id"
+      highlight-current-row
       class="cursor-pointer"
-      @page="onPageChange"
-      @row-select="goToItem"
+      @row-click="goToItem"
     >
-      <Column header="Type" style="width: 120px">
-        <template #body="{ data: row }">
-          <Tag :value="row.item_type?.name ?? '?'" severity="info" />
+      <ElTableColumn label="Type" width="140">
+        <template #default="{ row }">
+          <ElTag type="info" size="small">{{
+            (row as Item).item_type?.name ?? "?"
+          }}</ElTag>
         </template>
-      </Column>
-      <Column header="Label">
-        <template #body="{ data: row }">
-          {{ itemLabel(row) }}
+      </ElTableColumn>
+      <ElTableColumn label="Label">
+        <template #default="{ row }">
+          {{ itemLabel(row as Item) }}
         </template>
-      </Column>
-      <Column header="Tags">
-        <template #body="{ data: row }">
+      </ElTableColumn>
+      <ElTableColumn label="Tags">
+        <template #default="{ row }">
           <div class="flex gap-1 flex-wrap">
-            <Tag
-              v-for="t in row.tags ?? []"
+            <ElTag
+              v-for="t in (row as Item).tags ?? []"
               :key="t.id"
-              :value="t.name"
-              severity="secondary"
-              class="text-xs"
-            />
+              type="info"
+              effect="plain"
+              size="small"
+              >{{ t.name }}</ElTag
+            >
           </div>
         </template>
-      </Column>
-      <Column v-if="auth.isAdmin" header="Actions" style="width: 140px">
-        <template #body="{ data: row }">
+      </ElTableColumn>
+      <ElTableColumn v-if="auth.isAdmin" label="Actions" width="150">
+        <template #default="{ row }">
           <div class="flex gap-1">
-            <Button
-              v-tooltip="'Graphe'"
-              icon="pi pi-sitemap"
+            <ElButton
               text
               size="small"
+              title="Graphe"
               aria-label="Voir le graphe"
-              @click.stop="router.push(`/items//graph`)"
-            />
-            <Button
-              icon="pi pi-pencil"
+              @click.stop="router.push(`/items/${(row as Item).id}/graph`)"
+            >
+              <i class="pi pi-sitemap" aria-hidden="true"></i>
+            </ElButton>
+            <ElButton
               text
               size="small"
               aria-label="Modifier"
-              @click.stop="openEdit(row)"
-            />
-            <Button
-              icon="pi pi-trash"
+              @click.stop="openEdit(row as Item)"
+            >
+              <i class="pi pi-pencil" aria-hidden="true"></i>
+            </ElButton>
+            <ElButton
               text
-              severity="danger"
               size="small"
+              type="danger"
               aria-label="Supprimer"
-              @click.stop="confirmDelete(row)"
-            />
+              @click.stop="confirmDelete(row as Item)"
+            >
+              <i class="pi pi-trash" aria-hidden="true"></i>
+            </ElButton>
           </div>
         </template>
-      </Column>
-    </DataTable>
+      </ElTableColumn>
+    </ElTable>
+    <ElPagination
+      class="mt-3 justify-end"
+      layout="total, prev, pager, next"
+      :total="pag.total.value"
+      :page-size="pag.perPage.value"
+      :current-page="pag.page.value"
+      @current-change="onPageChange"
+    />
 
     <!-- Create / Edit Dialog -->
     <ItemEditDialog
@@ -121,17 +137,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
-import DataTable from "primevue/datatable";
-import Column from "primevue/column";
-import Button from "primevue/button";
-import InputText from "primevue/inputtext";
-import Select from "primevue/select";
-import Tag from "primevue/tag";
-import { useConfirm } from "primevue/useconfirm";
-import { useToast } from "primevue/usetoast";
 import { itemApi } from "@/api/client";
 import { useMetaTypes } from "@/stores/metaTypes";
 import { useNotify } from "@/composables/useNotify";
+import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import { usePagination } from "@/composables/usePagination";
 import { useAuthStore } from "@/stores/auth";
 import { useLang } from "@/composables/useLang";
@@ -142,9 +151,8 @@ import type { Item } from "@/api/types";
 const auth = useAuthStore();
 const router = useRouter();
 const { lang } = useLang();
-const { notifyError } = useNotify();
-const confirm = useConfirm();
-const toast = useToast();
+const { notifyError, notifySuccess } = useNotify();
+const { confirm } = useConfirmDialog();
 
 const metaTypes = useMetaTypes();
 const itemTypes = computed(() => metaTypes.itemTypes);
@@ -165,20 +173,20 @@ onMounted(async () => {
 
 function reload() {
   pag.page.value = 1;
-  pag.load(filters.value);
+  pag.load(filters.value).catch((e) => notifyError(e, "Chargement impossible"));
 }
 
-function onPageChange(e: { page: number; rows: number }) {
-  pag.onPage(e);
-  pag.load(filters.value);
+function onPageChange(p: number) {
+  pag.goToPage(p);
+  pag.load(filters.value).catch((e) => notifyError(e, "Chargement impossible"));
 }
 
 function itemLabel(item: Item): string {
   return renderItemLabel(item, lang.value);
 }
 
-function goToItem(event: { data: Item }) {
-  router.push(`/items/${event.data.id}`);
+function goToItem(row: Item) {
+  router.push(`/items/${(row as Item).id}`);
 }
 
 function openCreate() {
@@ -191,19 +199,19 @@ function openEdit(row: Item) {
   dialogVisible.value = true;
 }
 
-function confirmDelete(row: Item) {
-  confirm.require({
-    message: `Supprimer cet item ?`,
-    header: "Confirmation",
-    icon: "pi pi-exclamation-triangle",
-    acceptLabel: "Supprimer",
-    rejectLabel: "Annuler",
-    acceptClass: "p-button-danger",
-    accept: async () => {
-      await itemApi.delete(row.id);
-      toast.add({ severity: "success", summary: "Supprimé", life: 3000 });
-      pag.load(filters.value);
-    },
+async function confirmDelete(row: Item) {
+  const ok = await confirm({
+    message: `Supprimer « ${itemLabel(row as Item)} » ?`,
+    confirmText: "Supprimer",
+    danger: true,
   });
+  if (!ok) return;
+  try {
+    await itemApi.delete(row.id);
+    notifySuccess("Item supprimé");
+    pag.load(filters.value);
+  } catch (e) {
+    notifyError(e);
+  }
 }
 </script>

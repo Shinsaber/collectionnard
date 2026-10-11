@@ -54,7 +54,7 @@ les mots-clés qu'il ne connaît pas), lue via `lib/schema.ts`, et documentée d
 ## Stack
 
 Go 1.27 (chi 5.3, pgx 5.11, golang-jwt 5.3, santhosh-tekuri/jsonschema v5) · PostgreSQL 16 ·
-Vue 3.5 + TypeScript 6 · PrimeVue 5 (`@primeuix/themes`, preset `aura-compat`) + Tailwind 4 (plugin Vite, configuration dans `main.css`) · Cytoscape.js · Vite 8 · Docker Compose.
+Vue 3.5 + TypeScript 6 · Element Plus 2 (MIT) + Tailwind 4 (plugin Vite, configuration dans `main.css`) · Cytoscape.js · Vite 8 · Docker Compose.
 
 ## Environnement : Nix
 

@@ -1,10 +1,9 @@
 <template>
-  <Dialog
-    :visible="visible"
-    header="Créer une relation"
-    modal
-    :style="{ width: '550px' }"
-    @update:visible="$emit('update:visible', $event)"
+  <ElDialog
+    :model-value="visible"
+    title="Créer une relation"
+    width="34rem"
+    @update:model-value="$emit('update:visible', $event)"
   >
     <div class="flex flex-col gap-4">
       <div class="flex flex-col gap-1">
@@ -13,15 +12,19 @@
           class="text-sm font-medium text-gray-700 dark:text-gray-300"
           >Type de relation</label
         >
-        <Select
+        <ElSelect
+          id="relation-type-select"
           v-model="relationTypeId"
-          input-id="relation-type-select"
-          :options="availableRelationTypes"
-          option-label="name"
-          option-value="id"
           placeholder="Choisir un type…"
           @change="onRelationTypeChange"
-        />
+        >
+          <ElOption
+            v-for="rt in availableRelationTypes"
+            :key="rt.id"
+            :label="rt.name"
+            :value="rt.id"
+          />
+        </ElSelect>
       </div>
 
       <div v-if="relationTypeId" class="flex flex-col gap-1">
@@ -30,14 +33,18 @@
           class="text-sm font-medium text-gray-700 dark:text-gray-300"
           >Direction</label
         >
-        <Select
+        <ElSelect
+          id="relation-direction-select"
           v-model="direction"
-          input-id="relation-direction-select"
-          :options="directionOptions"
-          option-label="label"
-          option-value="value"
           @change="loadCandidates('')"
-        />
+        >
+          <ElOption
+            v-for="o in directionOptions"
+            :key="o.value"
+            :label="o.label"
+            :value="o.value"
+          />
+        </ElSelect>
       </div>
 
       <div v-if="relationTypeId" class="flex flex-col gap-1">
@@ -46,25 +53,29 @@
           class="text-sm font-medium text-gray-700 dark:text-gray-300"
           >Item lié</label
         >
-        <Select
+        <ElSelect
+          id="relation-item-select"
           v-model="targetItemId"
-          input-id="relation-item-select"
-          :options="candidates"
-          option-label="_label"
-          option-value="id"
-          filter
-          :filter-placeholder="'Rechercher un item…'"
+          filterable
+          remote
+          :remote-method="loadCandidates"
           :loading="searching"
-          placeholder="Sélectionner un item…"
-          @filter="loadCandidates($event.value)"
+          placeholder="Sélectionner un item… (tapez pour rechercher)"
         >
-          <template #option="{ option }">
+          <ElOption
+            v-for="c in candidates"
+            :key="c.id"
+            :label="c._label"
+            :value="c.id"
+          >
             <div class="flex items-center gap-2">
-              <Tag :value="option.item_type?.name ?? '?'" class="text-[10px]" />
-              <span>{{ option._label }}</span>
+              <ElTag size="small" type="info">{{
+                c.item_type?.name ?? "?"
+              }}</ElTag>
+              <span>{{ c._label }}</span>
             </div>
-          </template>
-        </Select>
+          </ElOption>
+        </ElSelect>
       </div>
 
       <div v-if="hasFields">
@@ -82,24 +93,21 @@
     </div>
 
     <template #footer>
-      <Button label="Annuler" text @click="$emit('update:visible', false)" />
-      <Button
-        label="Créer"
-        icon="pi pi-plus"
+      <ElButton text @click="$emit('update:visible', false)">Annuler</ElButton>
+      <ElButton
+        type="primary"
         :disabled="!relationTypeId || !targetItemId"
         :loading="saving"
         @click="submit"
-      />
+      >
+        <i class="pi pi-plus mr-2" aria-hidden="true"></i> Créer
+      </ElButton>
     </template>
-  </Dialog>
+  </ElDialog>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import Dialog from "primevue/dialog";
-import Button from "primevue/button";
-import Select from "primevue/select";
-import Tag from "primevue/tag";
 import { itemApi, relationApi } from "@/api/client";
 import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";

@@ -47,38 +47,40 @@
         </nav>
       </div>
 
-      <div class="flex items-center gap-4">
-        <span class="text-sm text-gray-500 dark:text-gray-400">
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-gray-500 dark:text-gray-400 mr-2">
           <i class="pi pi-user mr-1"></i>
           {{ auth.user?.username }}
-          <Tag v-if="auth.isAdmin" value="admin" severity="warn" class="ml-1" />
+          <ElTag v-if="auth.isAdmin" type="warning" size="small" class="ml-1"
+            >admin</ElTag
+          >
         </span>
-        <Button
-          v-tooltip="
-            lang === 'fr' ? 'Libellés en anglais' : 'Libellés en français'
-          "
-          :label="lang.toUpperCase()"
+        <ElButton
           text
-          severity="secondary"
           size="small"
           class="font-mono"
+          :title="
+            lang === 'fr' ? 'Libellés en anglais' : 'Libellés en français'
+          "
           @click="toggleLang"
-        />
-        <Button
-          v-tooltip="theme === 'dark' ? 'Mode clair' : 'Mode sombre'"
-          :icon="theme === 'dark' ? 'pi pi-sun' : 'pi pi-moon'"
+          >{{ lang.toUpperCase() }}</ElButton
+        >
+        <ElButton
           text
-          severity="secondary"
+          :title="theme === 'dark' ? 'Mode clair' : 'Mode sombre'"
+          :aria-label="theme === 'dark' ? 'Mode clair' : 'Mode sombre'"
           @click="toggleTheme"
-        />
-        <Button
-          v-tooltip="'Se déconnecter'"
-          icon="pi pi-sign-out"
+        >
+          <i :class="theme === 'dark' ? 'pi pi-sun' : 'pi pi-moon'"></i>
+        </ElButton>
+        <ElButton
           text
-          severity="secondary"
+          title="Se déconnecter"
           aria-label="Se déconnecter"
           @click="handleLogout"
-        />
+        >
+          <i class="pi pi-sign-out"></i>
+        </ElButton>
       </div>
     </header>
 
@@ -90,8 +92,6 @@
 
 <script setup lang="ts">
 import { useRouter } from "vue-router";
-import Button from "primevue/button";
-import Tag from "primevue/tag";
 import { useAuthStore } from "@/stores/auth";
 import { useTheme } from "@/composables/useTheme";
 import { useLang } from "@/composables/useLang";

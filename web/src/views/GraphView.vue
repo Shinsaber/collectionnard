@@ -1,45 +1,42 @@
 <template>
   <div>
     <div class="flex items-center gap-3 mb-4">
-      <Button
-        icon="pi pi-arrow-left"
-        text
-        aria-label="Retour"
-        @click="router.back()"
-      />
+      <ElButton text aria-label="Retour" @click="router.back()">
+        <i class="pi pi-arrow-left" aria-hidden="true"></i>
+      </ElButton>
       <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
         Graphe de relations
       </h1>
       <div class="flex-1"></div>
       <div class="flex items-center gap-2">
-        <label class="text-sm text-gray-600 dark:text-gray-400"
+        <label
+          for="graph-depth"
+          class="text-sm text-gray-600 dark:text-gray-400"
           >Profondeur :</label
         >
-        <InputNumber
+        <ElInputNumber
+          id="graph-depth"
           v-model="maxDepth"
           :min="1"
           :max="auth.isAdmin ? 10 : 5"
-          show-buttons
           :step="1"
-          class="w-24"
-          @update:model-value="loadGraph"
+          size="small"
+          class="w-28!"
+          @change="loadGraph"
         />
       </div>
     </div>
 
-    <Message
+    <ElAlert
       v-if="truncated && !loading"
-      severity="warn"
+      type="warning"
       :closable="false"
+      show-icon
       class="mb-3"
-    >
-      Graphe tronqué : la limite de nœuds du serveur est atteinte. Réduisez la
-      profondeur pour voir l'ensemble des relations.
-    </Message>
+      title="Graphe tronqué : la limite de nœuds du serveur est atteinte. Réduisez la profondeur pour voir l'ensemble des relations."
+    />
 
-    <div v-if="loading" class="flex justify-center py-12">
-      <ProgressSpinner />
-    </div>
+    <AppSpinner v-if="loading" />
 
     <div
       v-else
@@ -81,10 +78,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import { useTheme } from "@/composables/useTheme";
-import Button from "primevue/button";
-import InputNumber from "primevue/inputnumber";
-import ProgressSpinner from "primevue/progressspinner";
-import Message from "primevue/message";
+import AppSpinner from "@/components/common/AppSpinner.vue";
 import cytoscape from "cytoscape";
 import type { Core } from "cytoscape";
 import { itemApi } from "@/api/client";

@@ -1,16 +1,17 @@
 <template>
-  <Dialog
-    :visible="visible"
-    header="Modifier la relation"
-    modal
-    :style="{ width: '500px' }"
-    @update:visible="$emit('update:visible', $event)"
+  <ElDialog
+    :model-value="visible"
+    title="Modifier la relation"
+    width="32rem"
+    @update:model-value="$emit('update:visible', $event)"
   >
     <div v-if="relation" class="flex flex-col gap-4">
       <div
         class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
       >
-        <Tag :value="relation.relation_type?.name ?? '?'" class="text-xs" />
+        <ElTag size="small" type="info">{{
+          relation.relation_type?.name ?? "?"
+        }}</ElTag>
         <span>{{ linkedLabel }}</span>
       </div>
 
@@ -32,22 +33,16 @@
     </div>
 
     <template #footer>
-      <Button label="Annuler" text @click="$emit('update:visible', false)" />
-      <Button
-        label="Enregistrer"
-        icon="pi pi-check"
-        :loading="saving"
-        @click="submit"
-      />
+      <ElButton text @click="$emit('update:visible', false)">Annuler</ElButton>
+      <ElButton type="primary" :loading="saving" @click="submit">
+        <i class="pi pi-check mr-2" aria-hidden="true"></i> Enregistrer
+      </ElButton>
     </template>
-  </Dialog>
+  </ElDialog>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import Dialog from "primevue/dialog";
-import Button from "primevue/button";
-import Tag from "primevue/tag";
 import { relationApi } from "@/api/client";
 import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";

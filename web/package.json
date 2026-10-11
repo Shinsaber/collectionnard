@@ -17,12 +17,11 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@primeuix/themes": "^3.0.1",
     "axios": "^1.20.0",
     "cytoscape": "^3.34.3",
+    "element-plus": "^2.14.7",
     "pinia": "^4.0.3",
-    "primeicons": "^8.0.2",
-    "primevue": "^5.0.2",
+    "primeicons": "^7.0.0",
     "vue": "^3.5.43",
     "vue-router": "^5.4.0"
   },

@@ -1,9 +1,5 @@
 import { mount } from "@vue/test-utils";
-import PrimeVue from "primevue/config";
-import InputText from "primevue/inputtext";
-import Select from "primevue/select";
-import Slider from "primevue/slider";
-import Textarea from "primevue/textarea";
+import ElementPlus, { ElInput, ElSelect, ElSlider } from "element-plus";
 import { describe, expect, it } from "vitest";
 import fixtures from "../../../tests/fixtures/seed-schemas.json";
 import DynamicForm from "./DynamicForm.vue";
@@ -15,7 +11,7 @@ const serieSchema = fixtures.find((f) => f.name === "Series")!.schema as Schema;
 function mountForm(schema: Schema, modelValue: Record<string, unknown> = {}) {
   return mount(DynamicForm, {
     props: { schema, modelValue },
-    global: { plugins: [[PrimeVue, { unstyled: true }]] },
+    global: { plugins: [ElementPlus] },
   });
 }
 
@@ -43,7 +39,7 @@ describe("DynamicForm", () => {
     const titre = w.findAll("label.text-sm")[0]!;
     expect(titre.find("span.text-red-500").exists()).toBe(true);
     // synopsis : widget i18n-text → deux zones de texte FR / EN
-    expect(w.findAllComponents(Textarea)).toHaveLength(2);
+    expect(w.findAll("textarea")).toHaveLength(2);
     // images : galerie avec les 3 catégories déclarées dans x-image-categories
     const cats = w.findAll(".capitalize").map((l) => l.text());
     expect(cats).toEqual(["poster", "screenshot", "banner"]);
@@ -71,9 +67,9 @@ describe("DynamicForm", () => {
         name: { type: "string" },
       },
     });
-    expect(w.findComponent(Select).exists()).toBe(true);
-    expect(w.findComponent(Slider).exists()).toBe(true);
-    expect(w.findComponent(InputText).exists()).toBe(true);
+    expect(w.findComponent(ElSelect).exists()).toBe(true);
+    expect(w.findComponent(ElSlider).exists()).toBe(true);
+    expect(w.findComponent(ElInput).exists()).toBe(true);
   });
 
   it("émet update:modelValue en fusionnant la valeur modifiée", async () => {
@@ -81,7 +77,7 @@ describe("DynamicForm", () => {
       { type: "object", properties: { titre: { type: "string" } } },
       { titre: "Avant", autre: 1 },
     );
-    await w.findComponent(InputText).vm.$emit("update:modelValue", "Après");
+    await w.findComponent(ElInput).vm.$emit("update:modelValue", "Après");
     const emitted = w.emitted("update:modelValue");
     expect(emitted).toBeTruthy();
     expect(emitted![0]![0]).toEqual({ titre: "Après", autre: 1 });

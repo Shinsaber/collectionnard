@@ -1,7 +1,6 @@
 import { flushPromises, mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
-import PrimeVue from "primevue/config";
-import Password from "primevue/password";
+import ElementPlus from "element-plus";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMemoryHistory, createRouter } from "vue-router";
 import LoginView from "./LoginView.vue";
@@ -20,7 +19,7 @@ function mountLogin() {
     ],
   });
   const wrapper = mount(LoginView, {
-    global: { plugins: [[PrimeVue, { unstyled: true }], router] },
+    global: { plugins: [ElementPlus, router] },
   });
   return { wrapper, router };
 }
@@ -42,10 +41,8 @@ describe("LoginView", () => {
     const { wrapper, router } = mountLogin();
     const push = vi.spyOn(router, "push");
 
-    await wrapper.find("#username").setValue("admin");
-    await wrapper
-      .findComponent(Password)
-      .vm.$emit("update:modelValue", "secret");
+    await wrapper.find('input[autocomplete="username"]').setValue("admin");
+    await wrapper.find('input[type="password"]').setValue("secret");
     await wrapper.find("form").trigger("submit");
     await flushPromises();
 
@@ -62,8 +59,8 @@ describe("LoginView", () => {
     loginMock.mockRejectedValue(new Error("401"));
     const { wrapper } = mountLogin();
 
-    await wrapper.find("#username").setValue("ghost");
-    await wrapper.findComponent(Password).vm.$emit("update:modelValue", "x");
+    await wrapper.find('input[autocomplete="username"]').setValue("ghost");
+    await wrapper.find('input[type="password"]').setValue("x");
     await wrapper.find("form").trigger("submit");
     await flushPromises();
 

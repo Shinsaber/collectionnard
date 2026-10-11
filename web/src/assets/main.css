@@ -22,34 +22,20 @@
 
 :root {
   --color-primary: #4f46e5;
+  /* Element Plus : couleur primaire alignée sur l'indigo du projet */
+  --el-color-primary: #4f46e5;
+  --el-color-primary-light-3: #818cf8;
+  --el-color-primary-light-5: #a5b4fc;
+  --el-color-primary-light-7: #c7d2fe;
+  --el-color-primary-light-8: #e0e7ff;
+  --el-color-primary-light-9: #eef2ff;
+  --el-color-primary-dark-2: #4338ca;
 }
 
-/* Light mode: subtle gray on DataTable columns */
-.p-datatable .p-datatable-thead > tr > th {
-  background-color: #e0e2e3;
-}
-.p-datatable .p-datatable-tbody > tr > td {
-  background-color: #f0f2f3;
-}
-.p-datatable .p-datatable-tbody > tr:nth-child(even) > td {
-  background-color: #f5f7f8;
-}
-
-/* Dark mode overrides */
-html.dark .p-datatable .p-datatable-thead > tr > th {
-  background-color: #182029;
-  /* background-color: #1f2937; */
-}
-html.dark .p-datatable .p-datatable-tbody > tr > td {
-  background-color: #182130;
-}
-html.dark .p-datatable .p-datatable-tbody > tr:nth-child(even) > td {
-  background-color: #182534;
-}
-
-/* Smooth transition on theme switch */
 html.dark {
   color-scheme: dark;
+  --el-bg-color: #1f2937; /* gray-800, comme les cartes Tailwind */
+  --el-fill-color-blank: #1f2937;
 }
 
 /* Tailwind 4 : les boutons repassent en `cursor: default` dans le preflight ; on garde la main. */

@@ -4,47 +4,49 @@
       <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
         Mes collections
       </h1>
-      <Button
-        label="Nouvelle collection"
-        icon="pi pi-plus"
-        @click="openCreate"
-      />
+      <ElButton type="primary" @click="openCreate">
+        <i class="pi pi-plus mr-2" aria-hidden="true"></i> Nouvelle collection
+      </ElButton>
     </div>
 
     <!-- Filter -->
     <div class="flex gap-3 mb-4">
-      <Select
+      <ElSelect
         v-model="filterTypeId"
-        :options="collectionTypes"
-        option-label="name"
-        option-value="id"
         placeholder="Tous les types"
-        show-clear
-        class="w-48"
+        clearable
+        class="w-48!"
+        aria-label="Filtrer par type de collection"
         @change="reload"
-      />
+      >
+        <ElOption
+          v-for="t in collectionTypes"
+          :key="t.id"
+          :label="t.name"
+          :value="t.id"
+        />
+      </ElSelect>
     </div>
 
-    <div v-if="pag.loading.value" class="flex justify-center py-12">
-      <ProgressSpinner />
-    </div>
+    <AppSpinner v-if="pag.loading.value" />
 
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <div
         v-for="col in pag.data.value"
         :key="col.id"
-        class="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer p-5"
+        class="bg-white dark:bg-gray-800 rounded-lg shadow-xs hover:shadow-md transition-shadow cursor-pointer p-5"
+        role="link"
+        tabindex="0"
         @click="router.push(`/collections/${col.id}`)"
+        @keyup.enter="router.push(`/collections/${col.id}`)"
       >
         <div class="flex items-center justify-between mb-2">
           <h3 class="font-semibold text-gray-800 dark:text-gray-100">
             {{ col.name }}
           </h3>
-          <Tag
-            :value="col.collection_type?.name ?? '?'"
-            severity="info"
-            class="text-xs"
-          />
+          <ElTag type="info" size="small">{{
+            col.collection_type?.name ?? "?"
+          }}</ElTag>
         </div>
         <p
           v-if="col.description"
@@ -55,20 +57,24 @@
         <div class="text-sm text-gray-400 dark:text-gray-500">
           <i class="pi pi-box mr-1"></i> {{ col.item_count }} items
         </div>
-        <div class="flex gap-1 mt-3 justify-end" @click.stop>
-          <Button
-            icon="pi pi-pencil"
+        <div class="flex gap-1 mt-3 justify-end" @click.stop @keyup.stop>
+          <ElButton
             text
             size="small"
+            aria-label="Modifier"
             @click="openEdit(col)"
-          />
-          <Button
-            icon="pi pi-trash"
+          >
+            <i class="pi pi-pencil" aria-hidden="true"></i>
+          </ElButton>
+          <ElButton
             text
-            severity="danger"
             size="small"
+            type="danger"
+            aria-label="Supprimer"
             @click="confirmDelete(col)"
-          />
+          >
+            <i class="pi pi-trash" aria-hidden="true"></i>
+          </ElButton>
         </div>
       </div>
     </div>
@@ -82,69 +88,76 @@
     </div>
 
     <!-- Create / Edit Dialog -->
-    <Dialog
-      v-model:visible="dialogVisible"
-      :header="editing ? 'Modifier' : 'Nouvelle collection'"
-      modal
-      class="w-full max-w-md"
+    <ElDialog
+      v-model="dialogVisible"
+      :title="editing ? 'Modifier' : 'Nouvelle collection'"
+      width="28rem"
     >
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Type de collection</label>
-          <Select
+          <label for="col-type" class="text-sm font-medium"
+            >Type de collection</label
+          >
+          <ElSelect
+            id="col-type"
             v-model="form.collection_type_id"
-            :options="collectionTypes"
-            option-label="name"
-            option-value="id"
             placeholder="Choisir..."
             :disabled="!!editing"
+          >
+            <ElOption
+              v-for="t in collectionTypes"
+              :key="t.id"
+              :label="t.name"
+              :value="t.id"
+            />
+          </ElSelect>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label for="col-name" class="text-sm font-medium">Nom</label>
+          <ElInput
+            id="col-name"
+            v-model="form.name"
+            placeholder="Ma collection de..."
           />
         </div>
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Nom</label>
-          <InputText v-model="form.name" placeholder="Ma collection de..." />
-        </div>
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Description</label>
-          <Textarea v-model="form.description" rows="2" />
+          <label for="col-desc" class="text-sm font-medium">Description</label>
+          <ElInput
+            id="col-desc"
+            v-model="form.description"
+            type="textarea"
+            :rows="2"
+          />
         </div>
       </div>
       <template #footer>
-        <Button label="Annuler" text @click="dialogVisible = false" />
-        <Button
-          :label="editing ? 'Enregistrer' : 'Créer'"
-          icon="pi pi-check"
-          :loading="saving"
-          @click="save"
-        />
+        <ElButton text @click="dialogVisible = false">Annuler</ElButton>
+        <ElButton type="primary" :loading="saving" @click="save">
+          <i class="pi pi-check mr-2" aria-hidden="true"></i>
+          {{ editing ? "Enregistrer" : "Créer" }}
+        </ElButton>
       </template>
-    </Dialog>
+    </ElDialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
-import Button from "primevue/button";
-import Dialog from "primevue/dialog";
-import InputText from "primevue/inputtext";
-import Textarea from "primevue/textarea";
-import Select from "primevue/select";
-import Tag from "primevue/tag";
-import ProgressSpinner from "primevue/progressspinner";
-import { useConfirm } from "primevue/useconfirm";
-import { useToast } from "primevue/usetoast";
-import { collectionApi, collectionTypeApi } from "@/api/client";
+import { collectionApi } from "@/api/client";
 import { usePagination } from "@/composables/usePagination";
 import { useNotify } from "@/composables/useNotify";
-import type { Collection, CollectionType } from "@/api/types";
+import { useConfirmDialog } from "@/composables/useConfirmDialog";
+import { useMetaTypes } from "@/stores/metaTypes";
+import AppSpinner from "@/components/common/AppSpinner.vue";
+import type { Collection } from "@/api/types";
 
 const router = useRouter();
-const confirm = useConfirm();
-const toast = useToast();
-const { notifyError } = useNotify();
+const { notifyError, notifySuccess } = useNotify();
+const { confirm } = useConfirmDialog();
 const pag = usePagination(collectionApi.list);
-const collectionTypes = ref<CollectionType[]>([]);
+const metaTypes = useMetaTypes();
+const collectionTypes = computed(() => metaTypes.collectionTypes);
 const filterTypeId = ref<string>();
 
 const dialogVisible = ref(false);
@@ -153,17 +166,17 @@ const saving = ref(false);
 const form = ref({ collection_type_id: "", name: "", description: "" });
 
 onMounted(async () => {
-  await collectionTypeApi
-    .list({ per_page: 100 })
-    .then((r) => (collectionTypes.value = r.data));
+  await metaTypes
+    .loadCollectionTypes()
+    .catch((e) => notifyError(e, "Types de collection indisponibles"));
   reload();
 });
 
 function reload() {
   pag.page.value = 1;
-  pag.load(
-    filterTypeId.value ? { collection_type_id: filterTypeId.value } : {},
-  );
+  pag
+    .load(filterTypeId.value ? { collection_type_id: filterTypeId.value } : {})
+    .catch((e) => notifyError(e, "Chargement impossible"));
 }
 
 function openCreate() {
@@ -190,18 +203,10 @@ async function save() {
         name: form.value.name,
         description: form.value.description,
       });
-      toast.add({
-        severity: "success",
-        summary: "Collection modifiée",
-        life: 3000,
-      });
+      notifySuccess("Collection modifiée");
     } else {
       await collectionApi.create(form.value);
-      toast.add({
-        severity: "success",
-        summary: "Collection créée",
-        life: 3000,
-      });
+      notifySuccess("Collection créée");
     }
     dialogVisible.value = false;
     reload();
@@ -212,19 +217,19 @@ async function save() {
   }
 }
 
-function confirmDelete(col: Collection) {
-  confirm.require({
+async function confirmDelete(col: Collection) {
+  const ok = await confirm({
     message: `Supprimer la collection « ${col.name} » ? Les items ne seront pas supprimés.`,
-    header: "Confirmation",
-    icon: "pi pi-exclamation-triangle",
-    acceptLabel: "Supprimer",
-    rejectLabel: "Annuler",
-    acceptClass: "p-button-danger",
-    accept: async () => {
-      await collectionApi.delete(col.id);
-      toast.add({ severity: "success", summary: "Supprimée", life: 3000 });
-      reload();
-    },
+    confirmText: "Supprimer",
+    danger: true,
   });
+  if (!ok) return;
+  try {
+    await collectionApi.delete(col.id);
+    notifySuccess("Collection supprimée");
+    reload();
+  } catch (e) {
+    notifyError(e);
+  }
 }
 </script>

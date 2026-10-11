@@ -1,23 +1,27 @@
 <template>
-  <Dialog
-    :visible="visible"
-    :header="item ? 'Modifier l\'item' : 'Nouvel item'"
-    modal
-    class="w-full max-w-lg"
-    @update:visible="$emit('update:visible', $event)"
+  <ElDialog
+    :model-value="visible"
+    :title="item ? 'Modifier l\'item' : 'Nouvel item'"
+    width="34rem"
+    @update:model-value="$emit('update:visible', $event)"
   >
     <div class="flex flex-col gap-4">
       <!-- Type selector (create mode only) -->
       <div v-if="!item" class="flex flex-col gap-1">
-        <label class="text-sm font-medium">Type</label>
-        <Select
+        <label for="item-type" class="text-sm font-medium">Type</label>
+        <ElSelect
+          id="item-type"
           v-model="form.item_type_id"
-          :options="itemTypes"
-          option-label="name"
-          option-value="id"
           placeholder="Choisir un type..."
           @change="form.attributes = {}"
-        />
+        >
+          <ElOption
+            v-for="t in itemTypes"
+            :key="t.id"
+            :label="t.name"
+            :value="t.id"
+          />
+        </ElSelect>
       </div>
       <div v-else class="text-sm text-gray-500 dark:text-gray-400">
         Type : <strong>{{ item.item_type?.name }}</strong>
@@ -31,32 +35,30 @@
       />
 
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium"
+        <label for="item-tags" class="text-sm font-medium"
           >Tags (séparés par des virgules)</label
         >
-        <InputText v-model="form.tagsText" placeholder="drame, thriller, ..." />
+        <ElInput
+          id="item-tags"
+          v-model="form.tagsText"
+          placeholder="drama, thriller, ..."
+        />
       </div>
     </div>
     <template #footer>
-      <Button label="Annuler" text @click="$emit('update:visible', false)" />
-      <Button
-        :label="item ? 'Enregistrer' : 'Créer'"
-        icon="pi pi-check"
-        :loading="saving"
-        @click="save"
-      />
+      <ElButton text @click="$emit('update:visible', false)">Annuler</ElButton>
+      <ElButton type="primary" :loading="saving" @click="save">
+        <i class="pi pi-check mr-2" aria-hidden="true"></i>
+        {{ item ? "Enregistrer" : "Créer" }}
+      </ElButton>
     </template>
-  </Dialog>
+  </ElDialog>
 </template>
 
 <script setup lang="ts">
 import { reactive, computed, watch, ref } from "vue";
-import Dialog from "primevue/dialog";
-import Button from "primevue/button";
-import InputText from "primevue/inputtext";
-import Select from "primevue/select";
-import { useToast } from "primevue/usetoast";
 import { itemApi, extractApiError } from "@/api/client";
+import { useNotify } from "@/composables/useNotify";
 import DynamicForm from "@/components/common/DynamicForm.vue";
 import type { Item, ItemType } from "@/api/types";
 
@@ -71,7 +73,7 @@ const emit = defineEmits<{
   saved: [];
 }>();
 
-const toast = useToast();
+const { notifyError, notifySuccess } = useNotify();
 const saving = ref(false);
 const dynamicFormRef = ref<InstanceType<typeof DynamicForm> | null>(null);
 
@@ -82,11 +84,10 @@ const form = reactive({
 });
 
 const currentSchema = computed(() => {
-  const typeId = props.item ? props.item.item_type_id : form.item_type_id;
-  if (props.item?.item_type?.attributes_schema && props.item) {
+  if (props.item?.item_type?.attributes_schema) {
     return props.item.item_type.attributes_schema;
   }
-  const t = props.itemTypes.find((it) => it.id === typeId);
+  const t = props.itemTypes.find((it) => it.id === form.item_type_id);
   return t?.attributes_schema ?? null;
 });
 
@@ -121,14 +122,14 @@ async function save() {
         attributes: form.attributes,
         tags,
       });
-      toast.add({ severity: "success", summary: "Item modifié", life: 3000 });
+      notifySuccess("Item modifié");
     } else {
       await itemApi.create({
         item_type_id: form.item_type_id,
         attributes: form.attributes,
         tags,
       });
-      toast.add({ severity: "success", summary: "Item créé", life: 3000 });
+      notifySuccess("Item créé");
     }
     emit("update:visible", false);
     emit("saved");
@@ -137,12 +138,7 @@ async function save() {
     if (apiErr.fieldErrors && dynamicFormRef.value) {
       dynamicFormRef.value.setErrors(apiErr.fieldErrors);
     }
-    toast.add({
-      severity: "error",
-      summary: "Erreur",
-      detail: apiErr.message,
-      life: 5000,
-    });
+    notifyError(e);
   } finally {
     saving.value = false;
   }

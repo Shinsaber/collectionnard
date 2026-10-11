@@ -46,14 +46,14 @@
           :aria-label="`Fichier image pour ${cat.name}`"
           @change="handleUpload(cat.name, $event)"
         />
-        <Button
-          label="Ajouter"
-          icon="pi pi-upload"
+        <ElButton
           size="small"
-          outlined
+          plain
           :loading="uploading[cat.name] ?? false"
           @click="fileInputs[cat.name]?.click()"
-        />
+        >
+          <i class="pi pi-upload mr-2" aria-hidden="true"></i> Ajouter
+        </ElButton>
       </div>
     </div>
     <div v-if="defaultUrl" class="text-xs text-gray-400 dark:text-gray-500">
@@ -67,7 +67,6 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from "vue";
-import Button from "primevue/button";
 import { uploadApi } from "@/api/client";
 import { useNotify } from "@/composables/useNotify";
 

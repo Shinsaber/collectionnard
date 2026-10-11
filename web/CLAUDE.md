@@ -1,6 +1,6 @@
 # Frontend Vue — conventions
 
-Vue 3 `<script setup lang="ts">` · PrimeVue 5 (preset `aura-compat` via `@primeuix/themes`) · Tailwind 4 (`@tailwindcss/vite`, thème et variante `dark` dans `src/assets/main.css`, pas de `tailwind.config.js`) ·
+Vue 3 `<script setup lang="ts">` · Element Plus 2 (MIT, composants globaux `El*`, locale fr, mode sombre via `html.dark`) · Tailwind 4 (`@tailwindcss/vite`, thème et variante `dark` dans `src/assets/main.css`, pas de `tailwind.config.js`) ·
 Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
 
 ## Organisation
@@ -17,7 +17,8 @@ Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
 | `components/item/`                    | `ItemGallery`, `RelationTree`, dialogues `ItemEditDialog`, `AddToCollectionDialog`, `RelationCreateDialog`, `RelationEditDialog`            |
 | `components/graph/`                   | `GraphNodeDialog`                                                                                                                           |
 | `src/stores/metaTypes.ts`             | Cache des ItemTypes / RelationTypes / CollectionTypes (`invalidate()` après toute écriture admin)                                           |
-| `src/composables/`                    | `useTheme`, `useLang`, `useNotify`, `usePagination`                                                                                         |
+| `src/composables/`                    | `useTheme`, `useLang`, `useNotify` (ElMessage), `useConfirmDialog` (ElMessageBox → promesse booléenne), `usePagination`                   |
+| `components/common/AppSpinner.vue`    | Indicateur de chargement                                                                                                                    |
 | `src/lib/schema.ts`                   | Lecture des schémas et extensions x-* (pendant de `server/internal/label`)                                                                  |
 
 ## Règles
@@ -30,12 +31,15 @@ Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
 - Libellés UI en français ; langue des libellés de champs via `useLang()` (fr/en, persistée).
 - Erreurs : jamais de `catch {}` silencieux — `const { notifyError } = useNotify()` puis `notifyError(e)`
   (affiche le message de l'API, y compris le 413 d'un upload).
-- Accessibilité : un `aria-label` sur tout bouton sans texte, un `alt` sur toute image, `label for` /
-  `input-id` sur les champs (DynamicForm génère ses ids avec `useId()`), tableaux cliquables en
-  `selection-mode="single"` (navigation clavier).
+- Accessibilité : un `aria-label` sur tout bouton sans texte (icônes `pi pi-*` dans le slot d'`ElButton`,
+  `aria-hidden`), un `alt` sur toute image, `label for` / `id` sur les champs (DynamicForm génère ses ids
+  avec `useId()`), tableaux cliquables en `highlight-current-row` (navigation clavier).
+- Composants UI : Element Plus uniquement (MIT). Lignes d'`ElTable` : le slot `#default="{ row }"` n'est
+  pas générique, caster `(row as Item)`. Pagination serveur : `ElPagination` + `pag.goToPage(p)`.
+  Jamais de dépendance UI sous licence non libre (PrimeVue ≥ 5 est sous PrimeUI License : exclu).
 - Taille : un fichier `.vue` ne dépasse pas ~400 lignes ; extraire un composant au-delà.
 - Après modification : `npm run lint && npm run format:check && npm run type-check && npm test`
   (`npm run lint:fix` et `npm run format` corrigent automatiquement). Tests unitaires : `vitest`,
-  fichiers `src/**/*.test.ts` (environnement jsdom). Les composants PrimeVue se montent avec
-  `global.plugins: [[PrimeVue, { unstyled: true }]]` ; les 13 schémas du seed sont disponibles dans
+  fichiers `src/**/*.test.ts` (environnement jsdom, stubs `matchMedia` et `ResizeObserver` dans
+  `tests/setup.ts`). Les composants se montent avec `global.plugins: [ElementPlus]` ; les 13 schémas du seed sont disponibles dans
   `tests/fixtures/seed-schemas.json` (régénérer depuis `db/seed.sql` si le seed change).

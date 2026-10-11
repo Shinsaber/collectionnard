@@ -1,5 +1,5 @@
 import { mount } from "@vue/test-utils";
-import PrimeVue from "primevue/config";
+import ElementPlus from "element-plus";
 import { describe, expect, it } from "vitest";
 import fixtures from "../../../tests/fixtures/seed-schemas.json";
 import SchemaBuilder from "./SchemaBuilder.vue";
@@ -11,7 +11,7 @@ type Props = Record<string, Record<string, unknown>>;
 async function roundTrip(schema: Schema): Promise<Schema> {
   const w = mount(SchemaBuilder, {
     props: { modelValue: schema },
-    global: { plugins: [[PrimeVue, { unstyled: true }]] },
+    global: { plugins: [ElementPlus] },
   });
   await w.vm.$nextTick();
   await w.vm.$nextTick();

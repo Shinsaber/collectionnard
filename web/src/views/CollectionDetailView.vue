@@ -1,32 +1,32 @@
 <template>
-  <div v-if="loading" class="flex justify-center py-12">
-    <ProgressSpinner />
-  </div>
+  <AppSpinner v-if="loading" />
 
   <div v-else-if="collection">
     <div class="flex items-center gap-3 mb-6">
-      <Button
-        icon="pi pi-arrow-left"
+      <ElButton
         text
         aria-label="Retour aux collections"
         @click="router.push('/collections')"
-      />
+      >
+        <i class="pi pi-arrow-left" aria-hidden="true"></i>
+      </ElButton>
       <div>
         <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
           {{ collection.name }}
         </h1>
         <div class="flex items-center gap-2 mt-1">
-          <Tag
-            :value="collection.collection_type?.name ?? '?'"
-            severity="info"
-          />
+          <ElTag type="info" size="small">{{
+            collection.collection_type?.name ?? "?"
+          }}</ElTag>
           <span class="text-sm text-gray-400 dark:text-gray-500"
             >{{ collection.item_count }} items</span
           >
         </div>
       </div>
       <div class="flex-1"></div>
-      <Button label="Ajouter un item" icon="pi pi-plus" @click="openAddItem" />
+      <ElButton type="primary" @click="openAddItem">
+        <i class="pi pi-plus mr-2" aria-hidden="true"></i> Ajouter un item
+      </ElButton>
     </div>
 
     <p
@@ -36,173 +36,182 @@
       {{ collection.description }}
     </p>
 
-    <DataTable
-      :value="items.data.value"
-      :loading="items.loading.value"
-      :lazy="true"
-      :paginator="true"
-      :rows="items.perPage.value"
-      :total-records="items.total.value"
-      striped-rows
-      data-key="id"
-      @page="onPageChange"
+    <ElTable
+      v-loading="items.loading.value"
+      :data="items.data.value"
+      stripe
+      row-key="id"
     >
-      <Column header="Type" style="width: 100px">
-        <template #body="{ data: ci }">
-          <Tag :value="ci.item?.item_type?.name ?? '?'" severity="secondary" />
+      <ElTableColumn label="Type" width="120">
+        <template #default="{ row: ci }">
+          <ElTag type="info" effect="plain" size="small">{{
+            (ci as CollectionItem).item?.item_type?.name ?? "?"
+          }}</ElTag>
         </template>
-      </Column>
-      <Column header="Item">
-        <template #body="{ data: ci }">
+      </ElTableColumn>
+      <ElTableColumn label="Item">
+        <template #default="{ row: ci }">
           <router-link
-            :to="`/items/${ci.item_id}`"
+            :to="`/items/${(ci as CollectionItem).item_id}`"
             class="text-indigo-600 dark:text-indigo-400 hover:underline"
           >
-            {{ ciLabel(ci) }}
+            {{ ciLabel(ci as CollectionItem) }}
           </router-link>
         </template>
-      </Column>
-      <Column header="Attributs contextuels">
-        <template #body="{ data: ci }">
+      </ElTableColumn>
+      <ElTableColumn label="Attributs contextuels">
+        <template #default="{ row: ci }">
           <div class="flex gap-2 flex-wrap text-xs">
             <span
-              v-for="(val, key) in ci.attributes"
+              v-for="(val, key) in (ci as CollectionItem).attributes"
               :key="key"
-              class="bg-gray-100 dark:bg-gray-700 dark:text-gray-300 rounded-sm px-2 py-0.5"
+              class="bg-gray-100 dark:bg-gray-700 dark:text-gray-300 rounded-xs px-2 py-0.5"
             >
-              {{ ctxAttrLabel(String(key)) }}: {{ val }}
+              {{ ctxAttrLabel(String(key)) }}:
+              {{ displayValue(val, lang) }}
             </span>
           </div>
         </template>
-      </Column>
-      <Column header="Actions" style="width: 100px">
-        <template #body="{ data: ci }">
+      </ElTableColumn>
+      <ElTableColumn label="Actions" width="110">
+        <template #default="{ row: ci }">
           <div class="flex gap-1">
-            <Button
-              icon="pi pi-pencil"
+            <ElButton
               text
               size="small"
               aria-label="Modifier les attributs"
-              @click="openEditItem(ci)"
-            />
-            <Button
-              icon="pi pi-trash"
+              @click="openEditItem(ci as CollectionItem)"
+            >
+              <i class="pi pi-pencil" aria-hidden="true"></i>
+            </ElButton>
+            <ElButton
               text
-              severity="danger"
               size="small"
+              type="danger"
               aria-label="Retirer de la collection"
-              @click="confirmRemove(ci)"
-            />
+              @click="confirmRemove(ci as CollectionItem)"
+            >
+              <i class="pi pi-trash" aria-hidden="true"></i>
+            </ElButton>
           </div>
         </template>
-      </Column>
-    </DataTable>
+      </ElTableColumn>
+    </ElTable>
+    <ElPagination
+      class="mt-3 justify-end"
+      layout="total, prev, pager, next"
+      :total="items.total.value"
+      :page-size="items.perPage.value"
+      :current-page="items.page.value"
+      @current-change="onPageChange"
+    />
 
     <!-- Add item dialog -->
-    <Dialog
-      v-model:visible="addDialogVisible"
-      header="Ajouter un item"
-      modal
-      class="w-full max-w-lg"
-    >
+    <ElDialog v-model="addDialogVisible" title="Ajouter un item" width="34rem">
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Rechercher un item</label>
-          <InputText
-            v-model="searchText"
-            placeholder="Rechercher..."
-            @keyup.enter="searchItems"
-          />
-          <Button
-            icon="pi pi-search"
-            text
-            size="small"
-            class="self-start"
-            aria-label="Rechercher"
-            @click="searchItems"
-          />
+          <label for="ci-search" class="text-sm font-medium"
+            >Rechercher un item</label
+          >
+          <div class="flex gap-2">
+            <ElInput
+              id="ci-search"
+              v-model="searchText"
+              placeholder="Rechercher..."
+              clearable
+              @keyup.enter="searchItems"
+            />
+            <ElButton aria-label="Rechercher" @click="searchItems">
+              <i class="pi pi-search" aria-hidden="true"></i>
+            </ElButton>
+          </div>
         </div>
 
-        <DataTable
+        <ElTable
           v-if="searchResults.length"
-          v-model:selection="selectedItem"
-          :value="searchResults"
-          selection-mode="single"
-          data-key="id"
-          class="text-sm"
+          :data="searchResults"
+          highlight-current-row
+          row-key="id"
+          size="small"
+          class="cursor-pointer"
+          @current-change="selectedItem = $event"
         >
-          <Column field="item_type.name" header="Type" style="width: 80px" />
-          <Column header="Label">
-            <template #body="{ data: row }">{{ itemLabel(row) }}</template>
-          </Column>
-        </DataTable>
+          <ElTableColumn label="Type" width="110">
+            <template #default="{ row }">{{
+              (row as Item).item_type?.name ?? "?"
+            }}</template>
+          </ElTableColumn>
+          <ElTableColumn label="Label">
+            <template #default="{ row }">{{ itemLabel(row as Item) }}</template>
+          </ElTableColumn>
+        </ElTable>
 
         <div v-if="selectedItem && collectionTypeSchema">
           <h4 class="text-sm font-medium mb-2">Attributs contextuels</h4>
-          <DynamicForm v-model="addAttributes" :schema="collectionTypeSchema" />
+          <DynamicForm
+            ref="addFormRef"
+            v-model="addAttributes"
+            :schema="collectionTypeSchema"
+          />
         </div>
       </div>
       <template #footer>
-        <Button label="Annuler" text @click="addDialogVisible = false" />
-        <Button
-          label="Ajouter"
-          icon="pi pi-plus"
+        <ElButton text @click="addDialogVisible = false">Annuler</ElButton>
+        <ElButton
+          type="primary"
           :disabled="!selectedItem"
           :loading="saving"
           @click="addItem"
-        />
+        >
+          <i class="pi pi-plus mr-2" aria-hidden="true"></i> Ajouter
+        </ElButton>
       </template>
-    </Dialog>
+    </ElDialog>
 
     <!-- Edit item attributes dialog -->
-    <Dialog
-      v-model:visible="editDialogVisible"
-      header="Modifier les attributs"
-      modal
-      class="w-full max-w-lg"
+    <ElDialog
+      v-model="editDialogVisible"
+      title="Modifier les attributs"
+      width="34rem"
     >
       <DynamicForm
         v-if="collectionTypeSchema"
+        ref="editFormRef"
         v-model="editAttributes"
         :schema="collectionTypeSchema"
       />
       <template #footer>
-        <Button label="Annuler" text @click="editDialogVisible = false" />
-        <Button
-          label="Enregistrer"
-          icon="pi pi-check"
-          :loading="saving"
-          @click="updateItem"
-        />
+        <ElButton text @click="editDialogVisible = false">Annuler</ElButton>
+        <ElButton type="primary" :loading="saving" @click="updateItem">
+          <i class="pi pi-check mr-2" aria-hidden="true"></i> Enregistrer
+        </ElButton>
       </template>
-    </Dialog>
+    </ElDialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import DataTable from "primevue/datatable";
-import Column from "primevue/column";
-import Button from "primevue/button";
-import Dialog from "primevue/dialog";
-import InputText from "primevue/inputtext";
-import Tag from "primevue/tag";
-import ProgressSpinner from "primevue/progressspinner";
-import { useConfirm } from "primevue/useconfirm";
-import { useToast } from "primevue/usetoast";
-import { collectionApi, itemApi, extractApiError } from "@/api/client";
+import { collectionApi, itemApi } from "@/api/client";
 import { usePagination } from "@/composables/usePagination";
 import { useLang } from "@/composables/useLang";
-import { fieldLabel, itemLabel as renderItemLabel } from "@/lib/schema";
+import { useNotify } from "@/composables/useNotify";
+import { useConfirmDialog } from "@/composables/useConfirmDialog";
+import {
+  displayValue,
+  fieldLabel,
+  itemLabel as renderItemLabel,
+} from "@/lib/schema";
+import AppSpinner from "@/components/common/AppSpinner.vue";
 import DynamicForm from "@/components/common/DynamicForm.vue";
 import type { Collection, CollectionItem, Item } from "@/api/types";
 
 const props = defineProps<{ id: string }>();
 const router = useRouter();
-const confirm = useConfirm();
-const toast = useToast();
 const { lang } = useLang();
+const { notifyError, notifySuccess } = useNotify();
+const { confirm } = useConfirmDialog();
 
 const collection = ref<Collection | null>(null);
 const loading = ref(true);
@@ -211,9 +220,9 @@ const items = usePagination((params: Record<string, unknown>) =>
   collectionApi.listItems(props.id, params),
 );
 
-const collectionTypeSchema = computed(() => {
-  return collection.value?.collection_type?.attributes_schema ?? null;
-});
+const collectionTypeSchema = computed(
+  () => collection.value?.collection_type?.attributes_schema ?? null,
+);
 
 // Add item
 const addDialogVisible = ref(false);
@@ -221,25 +230,37 @@ const searchText = ref("");
 const searchResults = ref<Item[]>([]);
 const selectedItem = ref<Item | null>(null);
 const addAttributes = ref<Record<string, unknown>>({});
+const addFormRef = ref<InstanceType<typeof DynamicForm> | null>(null);
 const saving = ref(false);
 
 // Edit item
 const editDialogVisible = ref(false);
 const editingItemId = ref("");
 const editAttributes = ref<Record<string, unknown>>({});
+const editFormRef = ref<InstanceType<typeof DynamicForm> | null>(null);
 
 onMounted(async () => {
   try {
     collection.value = await collectionApi.get(props.id); // collection_type est toujours joint par l'API
-    items.load();
+    await items.load();
+  } catch (e) {
+    notifyError(e, "Collection introuvable");
   } finally {
     loading.value = false;
   }
 });
 
-function onPageChange(e: { page: number; rows: number }) {
-  items.onPage(e);
-  items.load();
+function onPageChange(p: number) {
+  items.goToPage(p);
+  items.load().catch((e) => notifyError(e, "Chargement impossible"));
+}
+
+async function refreshCollection() {
+  try {
+    collection.value = await collectionApi.get(props.id);
+  } catch (e) {
+    notifyError(e, "Collection indisponible");
+  }
 }
 
 function ciLabel(ci: CollectionItem): string {
@@ -265,31 +286,29 @@ function openAddItem() {
 }
 
 async function searchItems() {
-  const res = await itemApi.list({ search: searchText.value, per_page: 10 });
-  searchResults.value = res.data;
+  try {
+    const res = await itemApi.list({ search: searchText.value, per_page: 10 });
+    searchResults.value = res.data;
+  } catch (e) {
+    notifyError(e, "Recherche impossible");
+  }
 }
 
 async function addItem() {
   if (!selectedItem.value) return;
+  if (addFormRef.value && !addFormRef.value.validate()) return;
   saving.value = true;
   try {
     await collectionApi.addItem(props.id, {
       item_id: selectedItem.value.id,
       attributes: addAttributes.value,
     });
-    toast.add({ severity: "success", summary: "Item ajouté", life: 3000 });
+    notifySuccess("Item ajouté");
     addDialogVisible.value = false;
-    items.load();
-    // Refresh collection to update count
-    collection.value = await collectionApi.get(props.id);
-  } catch (e: unknown) {
-    const apiErr = extractApiError(e);
-    toast.add({
-      severity: "error",
-      summary: "Erreur",
-      detail: apiErr.message,
-      life: 5000,
-    });
+    await items.load();
+    await refreshCollection();
+  } catch (e) {
+    notifyError(e);
   } finally {
     saving.value = false;
   }
@@ -302,41 +321,36 @@ function openEditItem(ci: CollectionItem) {
 }
 
 async function updateItem() {
+  if (editFormRef.value && !editFormRef.value.validate()) return;
   saving.value = true;
   try {
     await collectionApi.updateItem(props.id, editingItemId.value, {
       attributes: editAttributes.value,
     });
-    toast.add({ severity: "success", summary: "Modifié", life: 3000 });
+    notifySuccess("Attributs modifiés");
     editDialogVisible.value = false;
-    items.load();
-  } catch (e: unknown) {
-    const apiErr = extractApiError(e);
-    toast.add({
-      severity: "error",
-      summary: "Erreur",
-      detail: apiErr.message,
-      life: 5000,
-    });
+    await items.load();
+  } catch (e) {
+    notifyError(e);
   } finally {
     saving.value = false;
   }
 }
 
-function confirmRemove(ci: CollectionItem) {
-  confirm.require({
-    message: "Retirer cet item de la collection ?",
-    header: "Confirmation",
-    icon: "pi pi-exclamation-triangle",
-    acceptLabel: "Retirer",
-    rejectLabel: "Annuler",
-    acceptClass: "p-button-danger",
-    accept: async () => {
-      await collectionApi.removeItem(props.id, ci.item_id);
-      toast.add({ severity: "success", summary: "Retiré", life: 3000 });
-      items.load();
-      collection.value = await collectionApi.get(props.id);
-    },
+async function confirmRemove(ci: CollectionItem) {
+  const ok = await confirm({
+    message: `Retirer « ${ciLabel(ci as CollectionItem)} » de la collection ?`,
+    confirmText: "Retirer",
+    danger: true,
   });
+  if (!ok) return;
+  try {
+    await collectionApi.removeItem(props.id, ci.item_id);
+    notifySuccess("Item retiré");
+    await items.load();
+    await refreshCollection();
+  } catch (e) {
+    notifyError(e);
+  }
 }
 </script>

@@ -1,14 +1,13 @@
 <template>
-  <Dialog
-    :visible="visible"
-    :header="title"
-    modal
-    :style="{ width: '550px' }"
-    @update:visible="$emit('update:visible', $event)"
+  <ElDialog
+    :model-value="visible"
+    :title="title"
+    width="34rem"
+    @update:model-value="$emit('update:visible', $event)"
   >
     <div v-if="node" class="flex flex-col gap-4">
       <div class="flex items-center gap-2">
-        <Tag :value="node.type" severity="info" />
+        <ElTag type="info" size="small">{{ node.type }}</ElTag>
         <span
           v-if="node.depth === 0"
           class="text-xs text-gray-400 dark:text-gray-500"
@@ -35,21 +34,17 @@
     </div>
 
     <template #footer>
-      <Button label="Fermer" text @click="$emit('update:visible', false)" />
-      <Button
-        label="Voir la fiche"
-        icon="pi pi-external-link"
-        @click="$emit('open', node!.id)"
-      />
+      <ElButton text @click="$emit('update:visible', false)">Fermer</ElButton>
+      <ElButton type="primary" @click="$emit('open', node!.id)">
+        <i class="pi pi-external-link mr-2" aria-hidden="true"></i> Voir la
+        fiche
+      </ElButton>
     </template>
-  </Dialog>
+  </ElDialog>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
-import Dialog from "primevue/dialog";
-import Button from "primevue/button";
-import Tag from "primevue/tag";
 import { useLang } from "@/composables/useLang";
 import {
   defaultImage,

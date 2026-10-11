@@ -9,11 +9,11 @@
         class="text-xs font-medium text-gray-500 dark:text-gray-400"
         >Libellé des instances (<code>x-label</code>)</label
       >
-      <InputText
-        :id="`${uid}-xlabel`"
+      <ElInput
+        :id="`-xlabel`"
         v-model="xLabel"
         placeholder="ex. {title} ou {number}. {title}"
-        class="text-sm font-mono"
+        class="font-mono"
       />
       <span class="text-[11px] text-gray-400 dark:text-gray-500">
         Gabarit avec les clés des champs entre accolades ; sans gabarit, le
@@ -48,32 +48,34 @@
 
     <!-- Actions -->
     <div class="flex items-center gap-2">
-      <Button
-        label="Ajouter un champ"
-        icon="pi pi-plus"
-        size="small"
-        outlined
-        @click="fields.push(emptyField())"
-      />
+      <ElButton size="small" plain @click="fields.push(emptyField())">
+        <i class="pi pi-plus mr-2" aria-hidden="true"></i> Ajouter un champ
+      </ElButton>
       <div class="flex-1"></div>
-      <Button
-        :label="showRaw ? 'Masquer JSON' : 'Voir JSON'"
-        :icon="showRaw ? 'pi pi-eye-slash' : 'pi pi-eye'"
+      <ElButton
         size="small"
         text
         :aria-expanded="showRaw"
         @click="showRaw = !showRaw"
-      />
+      >
+        <i
+          :class="showRaw ? 'pi pi-eye-slash' : 'pi pi-eye'"
+          class="mr-2"
+          aria-hidden="true"
+        ></i>
+        {{ showRaw ? "Masquer JSON" : "Voir JSON" }}
+      </ElButton>
     </div>
 
     <!-- Raw JSON preview -->
     <div v-if="showRaw" class="flex flex-col gap-1">
-      <Textarea
+      <ElInput
         :model-value="JSON.stringify(schema, null, 2)"
+        type="textarea"
         readonly
-        rows="12"
+        :rows="12"
         aria-label="JSON Schema généré"
-        class="font-mono text-xs bg-gray-100"
+        class="font-mono text-xs"
       />
     </div>
   </div>
@@ -81,9 +83,6 @@
 
 <script setup lang="ts">
 import { computed, ref, useId, watch, type PropType } from "vue";
-import Button from "primevue/button";
-import InputText from "primevue/inputtext";
-import Textarea from "primevue/textarea";
 import SchemaFieldCard from "./SchemaFieldCard.vue";
 import {
   MANAGED_PROPERTY_KEYS,

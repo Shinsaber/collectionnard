@@ -6,7 +6,9 @@
         v-if="isFirstOfType(idx)"
         class="flex items-center gap-2 mt-2 first:mt-0 mb-0.5 px-2"
       >
-        <Tag :value="rel.relation_type?.name ?? '?'" class="text-[10px]" />
+        <ElTag size="small" type="info">{{
+          rel.relation_type?.name ?? "?"
+        }}</ElTag>
         <span class="text-xs text-gray-400 dark:text-gray-500"
           >({{ typeCount(rel.relation_type_id) }})</span
         >
@@ -39,11 +41,9 @@
           </svg>
 
           <!-- Linked item type -->
-          <Tag
-            :value="linkedTypeName(rel)"
-            severity="secondary"
-            class="text-[11px]"
-          />
+          <ElTag size="small" type="info" effect="plain">{{
+            linkedTypeName(rel)
+          }}</ElTag>
 
           <!-- Order badge -->
           <span
@@ -75,39 +75,53 @@
 
           <!-- Actions -->
           <div class="flex gap-0.5 shrink-0">
-            <Button
-              v-tooltip="'Sous-relations'"
-              :icon="
-                expanded.has(rel.id) ? 'pi pi-chevron-up' : 'pi pi-chevron-down'
+            <ElButton
+              text
+              size="small"
+              circle
+              title="Sous-relations"
+              :aria-label="
+                expanded.has(rel.id)
+                  ? 'Replier les sous-relations'
+                  : 'Déplier les sous-relations'
               "
-              text
-              size="small"
-              rounded
+              :aria-expanded="expanded.has(rel.id)"
               @click.stop="toggle(rel)"
-            />
-            <Button
+            >
+              <i
+                :class="
+                  expanded.has(rel.id)
+                    ? 'pi pi-chevron-up'
+                    : 'pi pi-chevron-down'
+                "
+                aria-hidden="true"
+              ></i>
+            </ElButton>
+            <ElButton
               v-if="showDelete"
-              v-tooltip="'Modifier'"
-              icon="pi pi-pencil"
               text
               size="small"
-              rounded
+              circle
+              title="Modifier"
               aria-label="Modifier la relation"
-              class="opacity-0 group-hover/rel:opacity-100 transition-opacity"
+              class="opacity-0 group-hover/rel:opacity-100 focus:opacity-100 transition-opacity"
               @click.stop="$emit('edit', rel)"
-            />
-            <Button
+            >
+              <i class="pi pi-pencil" aria-hidden="true"></i>
+            </ElButton>
+            <ElButton
               v-if="showDelete"
-              v-tooltip="'Supprimer'"
-              icon="pi pi-trash"
               text
               size="small"
-              rounded
-              severity="danger"
+              circle
+              type="danger"
+              title="Supprimer"
               aria-label="Supprimer la relation"
-              class="opacity-0 group-hover/rel:opacity-100 transition-opacity"
+              class="opacity-0 group-hover/rel:opacity-100 focus:opacity-100 transition-opacity"
               @click.stop="$emit('delete', rel)"
-            />
+            >
+              <i class="pi pi-trash" aria-hidden="true"></i>
+            </ElButton>
           </div>
         </div>
 
@@ -143,8 +157,6 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import Tag from "primevue/tag";
-import Button from "primevue/button";
 import { itemApi } from "@/api/client";
 import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";

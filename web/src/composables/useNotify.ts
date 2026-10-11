@@ -1,31 +1,28 @@
-import { useToast } from "primevue/usetoast";
-import type { ToastServiceMethods } from "primevue/toastservice";
+import { ElMessage } from "element-plus";
 import { extractApiError } from "@/api/client";
 
 /**
- * Notifications uniformes. `notifyError(e)` affiche le message de l'API
- * (`extractApiError`) : plus aucun `catch {}` silencieux dans les vues.
- * Tolère l'absence de ToastService (tests unitaires) en retombant sur la console.
+ * Notifications uniformes (ElMessage, sans provider). `notifyError(e)` affiche le
+ * message de l'API (`extractApiError`) : plus aucun `catch {}` silencieux dans les vues.
  */
 export function useNotify() {
-  let toast: ToastServiceMethods | null = null;
-  try {
-    toast = useToast();
-  } catch {
-    toast = null;
-  }
-
   function notifyError(e: unknown, summary = "Erreur") {
     const { message } = extractApiError(e);
-    if (toast) {
-      toast.add({ severity: "error", summary, detail: message, life: 5000 });
-    } else {
-      console.error(summary, message);
-    }
+    ElMessage({
+      type: "error",
+      message:
+        message && message !== summary ? `${summary} : ${message}` : summary,
+      duration: 5000,
+      showClose: true,
+    });
   }
 
   function notifySuccess(summary: string, detail?: string) {
-    toast?.add({ severity: "success", summary, detail, life: 3000 });
+    ElMessage({
+      type: "success",
+      message: detail ? `${summary} : ${detail}` : summary,
+      duration: 3000,
+    });
   }
 
   return { notifyError, notifySuccess };

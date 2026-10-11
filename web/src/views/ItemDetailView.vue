@@ -1,53 +1,40 @@
 <template>
-  <div v-if="loading" class="flex justify-center py-12">
-    <ProgressSpinner />
-  </div>
+  <AppSpinner v-if="loading" />
 
   <div v-else-if="item">
     <div class="flex items-center gap-3 mb-6">
-      <Button
-        icon="pi pi-arrow-left"
-        text
-        aria-label="Retour"
-        @click="router.back()"
-      />
+      <ElButton text aria-label="Retour" @click="router.back()">
+        <i class="pi pi-arrow-left" aria-hidden="true"></i>
+      </ElButton>
       <div>
         <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
           {{ title }}
         </h1>
         <div class="flex items-center gap-2 mt-1">
-          <Tag :value="item.item_type?.name ?? '?'" severity="info" />
-          <Tag
+          <ElTag type="info" size="small">{{
+            item.item_type?.name ?? "?"
+          }}</ElTag>
+          <ElTag
             v-for="t in item.tags ?? []"
             :key="t.id"
-            :value="t.name"
-            severity="secondary"
-            class="text-xs"
-          />
+            type="info"
+            effect="plain"
+            size="small"
+            >{{ t.name }}</ElTag
+          >
         </div>
       </div>
       <div class="flex-1"></div>
-      <Button
-        v-if="auth.isAdmin"
-        icon="pi pi-pencil"
-        label="Modifier"
-        outlined
-        class="mr-2"
-        @click="editDialogVisible = true"
-      />
-      <Button
-        icon="pi pi-plus"
-        label="Ajouter à une collection"
-        outlined
-        class="mr-2"
-        @click="addToCollectionVisible = true"
-      />
-      <Button
-        icon="pi pi-sitemap"
-        label="Graphe"
-        outlined
-        @click="router.push(`/items/${item.id}/graph`)"
-      />
+      <ElButton v-if="auth.isAdmin" plain @click="editDialogVisible = true">
+        <i class="pi pi-pencil mr-2" aria-hidden="true"></i> Modifier
+      </ElButton>
+      <ElButton plain @click="addToCollectionVisible = true">
+        <i class="pi pi-plus mr-2" aria-hidden="true"></i> Ajouter à une
+        collection
+      </ElButton>
+      <ElButton plain @click="router.push(`/items//graph`)">
+        <i class="pi pi-sitemap mr-2" aria-hidden="true"></i> Graphe
+      </ElButton>
     </div>
 
     <!-- Attributes -->
@@ -88,14 +75,14 @@
         <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">
           Relations
         </h2>
-        <Button
+        <ElButton
           v-if="auth.isAdmin"
-          icon="pi pi-plus"
-          label="Créer une relation"
-          outlined
+          plain
           size="small"
           @click="createRelationVisible = true"
-        />
+        >
+          <i class="pi pi-plus mr-2" aria-hidden="true"></i> Créer une relation
+        </ElButton>
       </div>
 
       <div
@@ -132,10 +119,9 @@
           :key="ic.collection.id"
           class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
         >
-          <Tag
-            :value="ic.collection.collection_type?.name ?? '?'"
-            severity="info"
-          />
+          <ElTag type="info" size="small">{{
+            ic.collection.collection_type?.name ?? "?"
+          }}</ElTag>
           <router-link
             :to="`/collections/${ic.collection.id}`"
             class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
@@ -186,10 +172,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
-import Button from "primevue/button";
-import Tag from "primevue/tag";
-import ProgressSpinner from "primevue/progressspinner";
-import { useConfirm } from "primevue/useconfirm";
+import { useConfirmDialog } from "@/composables/useConfirmDialog";
+import AppSpinner from "@/components/common/AppSpinner.vue";
 import { itemApi, relationApi } from "@/api/client";
 import { useAuthStore } from "@/stores/auth";
 import { useLang } from "@/composables/useLang";
@@ -215,7 +199,7 @@ import type { Item, ItemCollectionMembership, ItemRelation } from "@/api/types";
 const props = defineProps<{ id: string }>();
 const router = useRouter();
 const auth = useAuthStore();
-const confirm = useConfirm();
+const { confirm } = useConfirmDialog();
 const { lang } = useLang();
 const { notifyError, notifySuccess } = useNotify();
 
@@ -296,26 +280,22 @@ function openEditRelation(rel: ItemRelation) {
   editRelationVisible.value = true;
 }
 
-function confirmDeleteRelation(rel: ItemRelation) {
+async function confirmDeleteRelation(rel: ItemRelation) {
   const linked =
     rel.source_item_id === item.value?.id ? rel.target_item : rel.source_item;
-  confirm.require({
+  const ok = await confirm({
     message: `Supprimer la relation avec « ${itemLabel(linked, lang.value)} » ?`,
-    header: "Confirmation",
-    icon: "pi pi-exclamation-triangle",
-    acceptLabel: "Supprimer",
-    rejectLabel: "Annuler",
-    acceptClass: "p-button-danger",
-    accept: async () => {
-      try {
-        await relationApi.delete(rel.id);
-        notifySuccess("Relation supprimée");
-        relations.value = relations.value.filter((r) => r.id !== rel.id);
-      } catch (e) {
-        notifyError(e);
-      }
-    },
+    confirmText: "Supprimer",
+    danger: true,
   });
+  if (!ok) return;
+  try {
+    await relationApi.delete(rel.id);
+    notifySuccess("Relation supprimée");
+    relations.value = relations.value.filter((r) => r.id !== rel.id);
+  } catch (e) {
+    notifyError(e);
+  }
 }
 
 async function reloadRelations() {

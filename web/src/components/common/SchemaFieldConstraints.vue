@@ -4,7 +4,7 @@
       <label :for="`${uid}-fr`" class="text-xs font-medium text-gray-500"
         >Label FR</label
       >
-      <InputText
+      <ElInput
         :id="`${uid}-fr`"
         :model-value="field.labelFr"
         placeholder="ex: Titre"
@@ -16,7 +16,7 @@
       <label :for="`${uid}-en`" class="text-xs font-medium text-gray-500"
         >Label EN</label
       >
-      <InputText
+      <ElInput
         :id="`${uid}-en`"
         :model-value="field.labelEn"
         placeholder="ex: Title"
@@ -29,7 +29,7 @@
       <label :for="`${uid}-desc`" class="text-xs font-medium text-gray-500"
         >Description</label
       >
-      <InputText
+      <ElInput
         :id="`${uid}-desc`"
         :model-value="field.description ?? ''"
         placeholder="Description du champ"
@@ -44,12 +44,10 @@
         <label :for="`${uid}-minlen`" class="text-xs text-gray-500"
           >Min. caractères</label
         >
-        <InputNumber
-          :input-id="`${uid}-minlen`"
-          :model-value="field.minLength ?? null"
+        <ElInputNumber
+          :id="`${uid}-minlen`"
+          :model-value="field.minLength ?? undefined"
           :min="0"
-          :use-grouping="false"
-          class="text-sm"
           @update:model-value="set('minLength', $event)"
         />
       </div>
@@ -57,12 +55,10 @@
         <label :for="`${uid}-maxlen`" class="text-xs text-gray-500"
           >Max. caractères</label
         >
-        <InputNumber
-          :input-id="`${uid}-maxlen`"
-          :model-value="field.maxLength ?? null"
+        <ElInputNumber
+          :id="`${uid}-maxlen`"
+          :model-value="field.maxLength ?? undefined"
           :min="0"
-          :use-grouping="false"
-          class="text-sm"
           @update:model-value="set('maxLength', $event)"
         />
       </div>
@@ -70,11 +66,11 @@
         <label :for="`${uid}-pattern`" class="text-xs text-gray-500"
           >Pattern (regex)</label
         >
-        <InputText
+        <ElInput
           :id="`${uid}-pattern`"
           :model-value="field.pattern ?? ''"
           placeholder="ex: ^[A-Z].*"
-          class="text-sm font-mono"
+          class="font-mono"
           @update:model-value="set('pattern', $event || null)"
         />
       </div>
@@ -82,27 +78,29 @@
         <label :for="`${uid}-format`" class="text-xs text-gray-500"
           >Format</label
         >
-        <Select
-          :input-id="`${uid}-format`"
-          :model-value="field.format ?? null"
-          :options="formatOptions"
-          option-label="label"
-          option-value="value"
+        <ElSelect
+          :id="`${uid}-format`"
+          :model-value="field.format ?? undefined"
           placeholder="Aucun"
-          show-clear
-          class="text-sm"
-          @update:model-value="set('format', $event)"
-        />
+          clearable
+          @update:model-value="set('format', $event || null)"
+        >
+          <ElOption
+            v-for="o in formatOptions"
+            :key="o.value"
+            :label="o.label"
+            :value="o.value"
+          />
+        </ElSelect>
       </div>
       <div v-if="features.enum" class="flex flex-col gap-1 md:col-span-2">
         <label :for="`${uid}-enum`" class="text-xs text-gray-500"
           >Valeurs (enum, séparées par des virgules)</label
         >
-        <InputText
+        <ElInput
           :id="`${uid}-enum`"
           :model-value="(field.enum ?? []).join(', ')"
           placeholder="new, good, poor"
-          class="text-sm"
           @update:model-value="set('enum', parseEnum(String($event ?? '')))"
         />
       </div>
@@ -110,11 +108,10 @@
         <label :for="`${uid}-default`" class="text-xs text-gray-500"
           >Valeur par défaut</label
         >
-        <InputText
+        <ElInput
           :id="`${uid}-default`"
           :model-value="String(field.defaultValue ?? '')"
           placeholder="ex: N/A"
-          class="text-sm"
           @update:model-value="set('defaultValue', $event ? $event : null)"
         />
       </div>
@@ -124,21 +121,17 @@
     <template v-if="field.type === 'integer' || field.type === 'number'">
       <div v-if="features.minimum" class="flex flex-col gap-1">
         <label :for="`${uid}-min`" class="text-xs text-gray-500">Min</label>
-        <InputNumber
-          :input-id="`${uid}-min`"
-          :model-value="field.minimum ?? null"
-          :use-grouping="false"
-          class="text-sm"
+        <ElInputNumber
+          :id="`${uid}-min`"
+          :model-value="field.minimum ?? undefined"
           @update:model-value="set('minimum', $event)"
         />
       </div>
       <div v-if="features.maximum" class="flex flex-col gap-1">
         <label :for="`${uid}-max`" class="text-xs text-gray-500">Max</label>
-        <InputNumber
-          :input-id="`${uid}-max`"
-          :model-value="field.maximum ?? null"
-          :use-grouping="false"
-          class="text-sm"
+        <ElInputNumber
+          :id="`${uid}-max`"
+          :model-value="field.maximum ?? undefined"
           @update:model-value="set('maximum', $event)"
         />
       </div>
@@ -146,11 +139,9 @@
         <label :for="`${uid}-xmin`" class="text-xs text-gray-500"
           >Min exclusif</label
         >
-        <InputNumber
-          :input-id="`${uid}-xmin`"
-          :model-value="field.exclusiveMinimum ?? null"
-          :use-grouping="false"
-          class="text-sm"
+        <ElInputNumber
+          :id="`${uid}-xmin`"
+          :model-value="field.exclusiveMinimum ?? undefined"
           @update:model-value="set('exclusiveMinimum', $event)"
         />
       </div>
@@ -158,11 +149,9 @@
         <label :for="`${uid}-xmax`" class="text-xs text-gray-500"
           >Max exclusif</label
         >
-        <InputNumber
-          :input-id="`${uid}-xmax`"
-          :model-value="field.exclusiveMaximum ?? null"
-          :use-grouping="false"
-          class="text-sm"
+        <ElInputNumber
+          :id="`${uid}-xmax`"
+          :model-value="field.exclusiveMaximum ?? undefined"
           @update:model-value="set('exclusiveMaximum', $event)"
         />
       </div>
@@ -170,13 +159,11 @@
         <label :for="`${uid}-mult`" class="text-xs text-gray-500"
           >Multiple de</label
         >
-        <InputNumber
-          :input-id="`${uid}-mult`"
-          :model-value="field.multipleOf ?? null"
-          :use-grouping="false"
+        <ElInputNumber
+          :id="`${uid}-mult`"
+          :model-value="field.multipleOf ?? undefined"
           :min-fraction-digits="0"
           :max-fraction-digits="4"
-          class="text-sm"
           @update:model-value="set('multipleOf', $event)"
         />
       </div>
@@ -184,11 +171,9 @@
         <label :for="`${uid}-ndefault`" class="text-xs text-gray-500"
           >Valeur par défaut</label
         >
-        <InputNumber
-          :input-id="`${uid}-ndefault`"
-          :model-value="(field.defaultValue as number | null) ?? null"
-          :use-grouping="false"
-          class="text-sm"
+        <ElInputNumber
+          :id="`${uid}-ndefault`"
+          :model-value="(field.defaultValue as number | undefined) ?? undefined"
           @update:model-value="set('defaultValue', $event)"
         />
       </div>
@@ -200,17 +185,24 @@
         <label :for="`${uid}-bdefault`" class="text-xs text-gray-500"
           >Valeur par défaut</label
         >
-        <Select
-          :input-id="`${uid}-bdefault`"
-          :model-value="field.defaultValue ?? null"
-          :options="boolDefaultOptions"
-          option-label="label"
-          option-value="value"
+        <ElSelect
+          :id="`${uid}-bdefault`"
+          :model-value="
+            (field.defaultValue as boolean | undefined) ?? undefined
+          "
           placeholder="Aucune"
-          show-clear
-          class="text-sm"
-          @update:model-value="set('defaultValue', $event)"
-        />
+          clearable
+          @update:model-value="
+            set('defaultValue', $event === '' ? null : $event)
+          "
+        >
+          <ElOption
+            v-for="o in boolDefaultOptions"
+            :key="String(o.value)"
+            :label="o.label"
+            :value="o.value"
+          />
+        </ElSelect>
       </div>
     </template>
 
@@ -233,7 +225,7 @@
           :key="catIdx"
           class="flex items-center gap-2"
         >
-          <InputText
+          <ElInput
             :model-value="cat.name"
             placeholder="Nom (ex: poster)"
             :aria-label="`Nom de la catégorie ${catIdx + 1}`"
@@ -242,7 +234,7 @@
               updateCategory(catIdx, 'name', String($event ?? ''))
             "
           />
-          <InputText
+          <ElInput
             :model-value="cat.ratio"
             placeholder="Ratio (ex: 2/3)"
             :aria-label="`Ratio de la catégorie ${catIdx + 1}`"
@@ -251,23 +243,20 @@
               updateCategory(catIdx, 'ratio', String($event ?? ''))
             "
           />
-          <Button
-            icon="pi pi-times"
+          <ElButton
             text
             size="small"
-            severity="danger"
+            type="danger"
             :aria-label="`Supprimer la catégorie ${catIdx + 1}`"
             @click="removeCategory(catIdx)"
-          />
+          >
+            <i class="pi pi-times" aria-hidden="true"></i>
+          </ElButton>
         </div>
-        <Button
-          label="Ajouter une catégorie"
-          icon="pi pi-plus"
-          text
-          size="small"
-          class="self-start"
-          @click="addCategory"
-        />
+        <ElButton text size="small" class="self-start" @click="addCategory">
+          <i class="pi pi-plus mr-1" aria-hidden="true"></i> Ajouter une
+          catégorie
+        </ElButton>
       </div>
       <div class="md:col-span-2 text-xs text-gray-400 italic">
         Génère un objet avec un tableau d'URLs par catégorie et un sélecteur
@@ -281,21 +270,23 @@
         <label :for="`${uid}-items`" class="text-xs text-gray-500"
           >Type des éléments</label
         >
-        <Select
-          :input-id="`${uid}-items`"
+        <ElSelect
+          :id="`${uid}-items`"
           :model-value="field.itemsType ?? 'string'"
-          :options="arrayItemTypeOptions"
-          option-label="label"
-          option-value="value"
-          class="text-sm"
           @update:model-value="set('itemsType', $event)"
-        />
+        >
+          <ElOption
+            v-for="o in arrayItemTypeOptions"
+            :key="o.value"
+            :label="o.label"
+            :value="o.value"
+          />
+        </ElSelect>
       </div>
       <div v-if="features.uniqueItems" class="flex items-center gap-2 pt-5">
-        <Checkbox
+        <ElCheckbox
+          :id="`${uid}-unique`"
           :model-value="field.uniqueItems ?? false"
-          :binary="true"
-          :input-id="`${uid}-unique`"
           @update:model-value="set('uniqueItems', $event)"
         />
         <label :for="`${uid}-unique`" class="text-xs text-gray-500"
@@ -306,12 +297,10 @@
         <label :for="`${uid}-minitems`" class="text-xs text-gray-500"
           >Min. éléments</label
         >
-        <InputNumber
-          :input-id="`${uid}-minitems`"
-          :model-value="field.minItems ?? null"
+        <ElInputNumber
+          :id="`${uid}-minitems`"
+          :model-value="field.minItems ?? undefined"
           :min="0"
-          :use-grouping="false"
-          class="text-sm"
           @update:model-value="set('minItems', $event)"
         />
       </div>
@@ -319,12 +308,10 @@
         <label :for="`${uid}-maxitems`" class="text-xs text-gray-500"
           >Max. éléments</label
         >
-        <InputNumber
-          :input-id="`${uid}-maxitems`"
-          :model-value="field.maxItems ?? null"
+        <ElInputNumber
+          :id="`${uid}-maxitems`"
+          :model-value="field.maxItems ?? undefined"
           :min="0"
-          :use-grouping="false"
-          class="text-sm"
           @update:model-value="set('maxItems', $event)"
         />
       </div>
@@ -334,11 +321,6 @@
 
 <script setup lang="ts">
 import { useId } from "vue";
-import Button from "primevue/button";
-import InputText from "primevue/inputtext";
-import InputNumber from "primevue/inputnumber";
-import Select from "primevue/select";
-import Checkbox from "primevue/checkbox";
 import {
   arrayItemTypeOptions,
   boolDefaultOptions,

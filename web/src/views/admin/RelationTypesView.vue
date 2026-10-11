@@ -4,143 +4,163 @@
       <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
         Types de relations
       </h1>
-      <Button label="Nouveau type" icon="pi pi-plus" @click="openCreate" />
+      <ElButton type="primary" @click="openCreate">
+        <i class="pi pi-plus mr-2" aria-hidden="true"></i> Nouveau type
+      </ElButton>
     </div>
 
-    <DataTable
-      :value="pag.data.value"
-      :loading="pag.loading.value"
-      :lazy="true"
-      :paginator="true"
-      :rows="pag.perPage.value"
-      :total-records="pag.total.value"
-      striped-rows
-      data-key="id"
-      @page="onPageChange"
+    <ElTable
+      v-loading="pag.loading.value"
+      :data="pag.data.value"
+      stripe
+      row-key="id"
     >
-      <Column field="name" header="Nom" sortable />
-      <Column field="description" header="Description" />
-      <Column header="Sources → Cibles">
-        <template #body="{ data: row }">
-          <span class="text-sm">
-            {{
-              (row.source_item_types ?? [])
-                .map((t: ItemType) => t.name)
-                .join(", ") || "?"
-            }}
-            <i
-              class="pi pi-arrow-right mx-1 text-gray-400 dark:text-gray-500"
-            ></i>
-            {{
-              (row.target_item_types ?? [])
-                .map((t: ItemType) => t.name)
-                .join(", ") || "?"
-            }}
-          </span>
+      <ElTableColumn prop="name" label="Nom" width="200" />
+      <ElTableColumn prop="description" label="Description" />
+      <ElTableColumn label="Sources → Cibles">
+        <template #default="{ row }">
+          <div class="text-xs text-gray-500 dark:text-gray-400">
+            <span class="text-sm">
+              {{ typeNames((row as RelationType).source_item_types) }}
+              <i
+                class="pi pi-arrow-right mx-1 text-gray-400 dark:text-gray-500"
+                aria-hidden="true"
+              ></i>
+              {{ typeNames((row as RelationType).target_item_types) }}
+            </span>
+          </div>
         </template>
-      </Column>
-      <Column header="Actions" style="width: 120px">
-        <template #body="{ data: row }">
+      </ElTableColumn>
+      <ElTableColumn label="Actions" width="110">
+        <template #default="{ row }">
           <div class="flex gap-1">
-            <Button
-              icon="pi pi-pencil"
+            <ElButton
               text
               size="small"
               aria-label="Modifier"
-              @click="openEdit(row)"
-            />
-            <Button
-              icon="pi pi-trash"
+              @click="openEdit(row as RelationType)"
+            >
+              <i class="pi pi-pencil" aria-hidden="true"></i>
+            </ElButton>
+            <ElButton
               text
-              severity="danger"
               size="small"
+              type="danger"
               aria-label="Supprimer"
-              @click="confirmDelete(row)"
-            />
+              @click="confirmDelete(row as RelationType)"
+            >
+              <i class="pi pi-trash" aria-hidden="true"></i>
+            </ElButton>
           </div>
         </template>
-      </Column>
-    </DataTable>
+      </ElTableColumn>
+    </ElTable>
+    <ElPagination
+      class="mt-3 justify-end"
+      layout="total, prev, pager, next"
+      :total="pag.total.value"
+      :page-size="pag.perPage.value"
+      :current-page="pag.page.value"
+      @current-change="onPageChange"
+    />
 
-    <Dialog
-      v-model:visible="dialogVisible"
-      :header="editing ? 'Modifier' : 'Nouveau type de relation'"
-      modal
-      class="w-full max-w-2xl"
+    <!-- Create / Edit Dialog -->
+    <ElDialog
+      v-model="dialogVisible"
+      :title="editing ? 'Modifier le type' : 'Nouveau type'"
+      width="48rem"
     >
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Nom</label>
-          <InputText v-model="form.name" />
+          <label for="type-name" class="text-sm font-medium">Nom</label>
+          <ElInput
+            id="type-name"
+            v-model="form.name"
+            placeholder="Ex: contains_episode"
+          />
         </div>
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Description</label>
-          <Textarea v-model="form.description" rows="2" />
+          <label for="type-desc" class="text-sm font-medium">Description</label>
+          <ElInput
+            id="type-desc"
+            v-model="form.description"
+            type="textarea"
+            :rows="2"
+          />
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium">Types source</label>
-            <MultiSelect
+            <label for="rt-sources" class="text-sm font-medium"
+              >Types source</label
+            >
+            <ElSelect
+              id="rt-sources"
               v-model="form.source_item_type_ids"
-              :options="itemTypes"
-              option-label="name"
-              option-value="id"
+              multiple
+              collapse-tags
+              collapse-tags-tooltip
               placeholder="Choisir..."
-              display="chip"
-            />
+            >
+              <ElOption
+                v-for="t in itemTypes"
+                :key="t.id"
+                :label="t.name"
+                :value="t.id"
+              />
+            </ElSelect>
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-sm font-medium">Types cible</label>
-            <MultiSelect
+            <label for="rt-targets" class="text-sm font-medium"
+              >Types cible</label
+            >
+            <ElSelect
+              id="rt-targets"
               v-model="form.target_item_type_ids"
-              :options="itemTypes"
-              option-label="name"
-              option-value="id"
+              multiple
+              collapse-tags
+              collapse-tags-tooltip
               placeholder="Choisir..."
-              display="chip"
-            />
+            >
+              <ElOption
+                v-for="t in itemTypes"
+                :key="t.id"
+                :label="t.name"
+                :value="t.id"
+              />
+            </ElSelect>
           </div>
         </div>
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Attributs du lien</label>
+          <span class="text-sm font-medium">Attributs du lien</span>
           <SchemaBuilder ref="schemaBuilderRef" v-model="schemaValue" />
         </div>
       </div>
       <template #footer>
-        <Button label="Annuler" text @click="dialogVisible = false" />
-        <Button
-          :label="editing ? 'Enregistrer' : 'Créer'"
-          icon="pi pi-check"
-          :loading="saving"
-          @click="save"
-        />
+        <ElButton text @click="dialogVisible = false">Annuler</ElButton>
+        <ElButton type="primary" :loading="saving" @click="save">
+          <i class="pi pi-check mr-2" aria-hidden="true"></i>
+          {{ editing ? "Enregistrer" : "Créer" }}
+        </ElButton>
       </template>
-    </Dialog>
+    </ElDialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import DataTable from "primevue/datatable";
-import Column from "primevue/column";
-import Button from "primevue/button";
-import Dialog from "primevue/dialog";
-import InputText from "primevue/inputtext";
-import Textarea from "primevue/textarea";
-import MultiSelect from "primevue/multiselect";
-import { useConfirm } from "primevue/useconfirm";
-import { useToast } from "primevue/usetoast";
-import { relationTypeApi, extractApiError } from "@/api/client";
+import { computed, ref, onMounted } from "vue";
+import { relationTypeApi } from "@/api/client";
 import { usePagination } from "@/composables/usePagination";
+import { useNotify } from "@/composables/useNotify";
+import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import { useMetaTypes } from "@/stores/metaTypes";
 import SchemaBuilder from "@/components/common/SchemaBuilder.vue";
 import type { RelationType, ItemType } from "@/api/types";
 
-const confirm = useConfirm();
-const toast = useToast();
+const { notifyError, notifySuccess } = useNotify();
+const { confirm } = useConfirmDialog();
 const pag = usePagination(relationTypeApi.list);
 const metaTypes = useMetaTypes();
-const itemTypes = ref<ItemType[]>([]);
+const itemTypes = computed(() => metaTypes.itemTypes);
 
 const dialogVisible = ref(false);
 const editing = ref<RelationType | null>(null);
@@ -151,25 +171,34 @@ const form = ref({
   source_item_type_ids: [] as string[],
   target_item_type_ids: [] as string[],
 });
-const schemaValue = ref<Record<string, unknown>>({
+const emptySchema = () => ({
   type: "object",
   properties: {},
   additionalProperties: false,
 });
+const schemaValue = ref<Record<string, unknown>>(emptySchema());
 const schemaBuilderRef = ref<InstanceType<typeof SchemaBuilder> | null>(null);
 
 onMounted(async () => {
   await Promise.all([
-    pag.load(),
+    load(),
     metaTypes
       .loadItemTypes()
-      .then(() => (itemTypes.value = metaTypes.itemTypes)),
+      .catch((e) => notifyError(e, "Types d'items indisponibles")),
   ]);
 });
 
-function onPageChange(e: { page: number; rows: number }) {
-  pag.onPage(e);
-  pag.load();
+function load() {
+  return pag.load().catch((e) => notifyError(e, "Chargement impossible"));
+}
+
+function onPageChange(p: number) {
+  pag.goToPage(p);
+  load();
+}
+
+function typeNames(types?: ItemType[] | null): string {
+  return (types ?? []).map((t) => t.name).join(", ") || "?";
 }
 
 function openCreate() {
@@ -180,9 +209,8 @@ function openCreate() {
     source_item_type_ids: [],
     target_item_type_ids: [],
   };
-  const empty = { type: "object", properties: {}, additionalProperties: false };
-  schemaValue.value = empty;
-  schemaBuilderRef.value?.resetFromSchema(empty);
+  schemaValue.value = emptySchema();
+  schemaBuilderRef.value?.resetFromSchema(schemaValue.value);
   dialogVisible.value = true;
 }
 
@@ -200,57 +228,40 @@ function openEdit(row: RelationType) {
 }
 
 async function save() {
-  const schema = schemaValue.value;
-
   saving.value = true;
   try {
-    const payload = { ...form.value, attributes_schema: schema };
+    const payload = { ...form.value, attributes_schema: schemaValue.value };
     if (editing.value) {
       await relationTypeApi.update(editing.value.id, payload);
-      toast.add({ severity: "success", summary: "Modifié", life: 3000 });
+      notifySuccess("Type de relation modifié");
     } else {
       await relationTypeApi.create(payload);
-      toast.add({ severity: "success", summary: "Créé", life: 3000 });
+      notifySuccess("Type de relation créé");
     }
     dialogVisible.value = false;
     metaTypes.invalidate();
-    pag.load();
-  } catch (e: unknown) {
-    const apiErr = extractApiError(e);
-    toast.add({
-      severity: "error",
-      summary: "Erreur",
-      detail: apiErr.message,
-      life: 5000,
-    });
+    load();
+  } catch (e) {
+    notifyError(e);
   } finally {
     saving.value = false;
   }
 }
 
-function confirmDelete(row: RelationType) {
-  confirm.require({
-    message: `Supprimer « ${row.name} » ?`,
-    header: "Confirmation",
-    icon: "pi pi-exclamation-triangle",
-    acceptLabel: "Supprimer",
-    rejectLabel: "Annuler",
-    acceptClass: "p-button-danger",
-    accept: async () => {
-      try {
-        await relationTypeApi.delete(row.id);
-        toast.add({ severity: "success", summary: "Supprimé", life: 3000 });
-        pag.load();
-      } catch (e: unknown) {
-        const apiErr = extractApiError(e);
-        toast.add({
-          severity: "error",
-          summary: "Erreur",
-          detail: apiErr.message,
-          life: 5000,
-        });
-      }
-    },
+async function confirmDelete(row: RelationType) {
+  const ok = await confirm({
+    message: `Supprimer le type de relation « ${row.name} » ?`,
+    confirmText: "Supprimer",
+    danger: true,
   });
+  if (!ok) return;
+  try {
+    await relationTypeApi.delete(row.id);
+    notifySuccess("Type de relation supprimé");
+    metaTypes.invalidate();
+    load();
+  } catch (e) {
+    notifyError(e);
+  }
 }
 </script>

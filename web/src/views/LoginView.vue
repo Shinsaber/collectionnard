@@ -18,11 +18,11 @@
             class="text-sm font-medium text-gray-700 dark:text-gray-300"
             >Utilisateur</label
           >
-          <InputText
+          <ElInput
             id="username"
             v-model="username"
             placeholder="Nom d'utilisateur"
-            required
+            autocomplete="username"
             autofocus
           />
         </div>
@@ -33,28 +33,26 @@
             class="text-sm font-medium text-gray-700 dark:text-gray-300"
             >Mot de passe</label
           >
-          <Password
+          <ElInput
             id="password"
             v-model="password"
-            :feedback="false"
-            toggle-mask
-            required
-            class="w-full"
-            input-class="w-full"
+            type="password"
+            show-password
+            autocomplete="current-password"
           />
         </div>
 
-        <Message v-if="error" severity="error" :closable="false">{{
-          error
-        }}</Message>
-
-        <Button
-          type="submit"
-          label="Se connecter"
-          icon="pi pi-sign-in"
-          :loading="loading"
-          class="w-full"
+        <ElAlert
+          v-if="error"
+          type="error"
+          :closable="false"
+          show-icon
+          :title="error"
         />
+
+        <ElButton type="primary" native-type="submit" :loading="loading">
+          <i class="pi pi-sign-in mr-2" aria-hidden="true"></i> Se connecter
+        </ElButton>
       </form>
     </div>
   </div>
@@ -63,10 +61,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import InputText from "primevue/inputtext";
-import Password from "primevue/password";
-import Button from "primevue/button";
-import Message from "primevue/message";
 import { useAuthStore } from "@/stores/auth";
 
 const auth = useAuthStore();

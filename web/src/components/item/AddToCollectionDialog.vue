@@ -1,10 +1,9 @@
 <template>
-  <Dialog
-    :visible="visible"
-    header="Ajouter à une collection"
-    modal
-    :style="{ width: '500px' }"
-    @update:visible="$emit('update:visible', $event)"
+  <ElDialog
+    :model-value="visible"
+    title="Ajouter à une collection"
+    width="32rem"
+    @update:model-value="$emit('update:visible', $event)"
   >
     <div class="flex flex-col gap-4">
       <div
@@ -21,14 +20,18 @@
             class="text-sm font-medium text-gray-700 dark:text-gray-300"
             >Collection</label
           >
-          <Select
+          <ElSelect
+            id="add-to-collection-select"
             v-model="selectedCollectionId"
-            input-id="add-to-collection-select"
-            :options="availableCollections"
-            option-label="name"
-            option-value="id"
             placeholder="Choisir une collection…"
-          />
+          >
+            <ElOption
+              v-for="c in availableCollections"
+              :key="c.id"
+              :label="c.name"
+              :value="c.id"
+            />
+          </ElSelect>
         </div>
 
         <div
@@ -52,23 +55,21 @@
     </div>
 
     <template #footer>
-      <Button label="Annuler" text @click="$emit('update:visible', false)" />
-      <Button
-        label="Ajouter"
-        icon="pi pi-plus"
+      <ElButton text @click="$emit('update:visible', false)">Annuler</ElButton>
+      <ElButton
+        type="primary"
         :disabled="!selectedCollectionId"
         :loading="saving"
         @click="submit"
-      />
+      >
+        <i class="pi pi-plus mr-2" aria-hidden="true"></i> Ajouter
+      </ElButton>
     </template>
-  </Dialog>
+  </ElDialog>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import Dialog from "primevue/dialog";
-import Button from "primevue/button";
-import Select from "primevue/select";
 import { collectionApi } from "@/api/client";
 import { useNotify } from "@/composables/useNotify";
 import DynamicForm from "@/components/common/DynamicForm.vue";

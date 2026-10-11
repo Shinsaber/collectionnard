@@ -6,76 +6,81 @@
     <div
       class="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600"
     >
-      <Button
-        icon="pi pi-chevron-up"
+      <ElButton
         text
         size="small"
-        rounded
+        circle
         aria-label="Monter le champ"
         :disabled="index === 0"
-        class="w-6! h-6!"
         @click="$emit('move', -1)"
-      />
-      <Button
-        icon="pi pi-chevron-down"
+      >
+        <i class="pi pi-chevron-up" aria-hidden="true"></i>
+      </ElButton>
+      <ElButton
         text
         size="small"
-        rounded
+        circle
         aria-label="Descendre le champ"
         :disabled="index === count - 1"
-        class="w-6! h-6!"
         @click="$emit('move', 1)"
-      />
+      >
+        <i class="pi pi-chevron-down" aria-hidden="true"></i>
+      </ElButton>
 
-      <InputText
+      <ElInput
         :model-value="field.key"
         placeholder="clé (ex: title)"
         aria-label="Clé du champ"
-        class="text-sm flex-1"
+        size="small"
+        class="flex-1"
         @update:model-value="set('key', $event)"
       />
 
-      <Select
+      <ElSelect
         :model-value="field.type"
-        :options="typeOptions"
-        option-label="label"
-        option-value="value"
         aria-label="Type du champ"
-        class="text-sm w-32"
+        size="small"
+        class="w-36!"
         @update:model-value="set('type', $event)"
-      />
-
-      <div v-tooltip="'Champ requis'" class="flex items-center gap-1">
-        <Checkbox
-          :model-value="field.required"
-          :binary="true"
-          :input-id="`${uid}-req`"
-          @update:model-value="set('required', $event)"
+      >
+        <ElOption
+          v-for="o in typeOptions"
+          :key="o.value"
+          :label="o.label"
+          :value="o.value"
         />
-        <label :for="`${uid}-req`" class="text-xs text-gray-500">Req.</label>
-      </div>
+      </ElSelect>
 
-      <Button
-        icon="pi pi-trash"
-        text
-        severity="danger"
+      <ElCheckbox
+        :id="`${uid}-req`"
+        :model-value="field.required"
+        title="Champ requis"
         size="small"
-        rounded
+        @update:model-value="set('required', $event)"
+        >Req.</ElCheckbox
+      >
+
+      <ElButton
+        text
+        type="danger"
+        size="small"
+        circle
         aria-label="Supprimer le champ"
-        class="w-7! h-7!"
         @click="$emit('remove')"
-      />
+      >
+        <i class="pi pi-trash" aria-hidden="true"></i>
+      </ElButton>
 
-      <Button
-        v-tooltip="'Ajouter un champ après'"
-        icon="pi pi-plus"
+      <ElButton
         text
         size="small"
-        rounded
+        circle
+        title="Ajouter un champ après"
         aria-label="Ajouter un champ après"
-        class="w-7! h-7!"
         @click="$emit('add-after')"
-      />
+      >
+        <i class="pi pi-plus" aria-hidden="true"></i>
+      </ElButton>
     </div>
 
     <SchemaFieldConstraints
@@ -88,10 +93,6 @@
 
 <script setup lang="ts">
 import { useId } from "vue";
-import Button from "primevue/button";
-import InputText from "primevue/inputtext";
-import Select from "primevue/select";
-import Checkbox from "primevue/checkbox";
 import SchemaFieldConstraints from "./SchemaFieldConstraints.vue";
 import type {
   Option,
