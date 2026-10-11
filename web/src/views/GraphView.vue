@@ -1,7 +1,12 @@
 <template>
   <div>
     <div class="flex items-center gap-3 mb-4">
-      <Button icon="pi pi-arrow-left" text @click="router.back()" />
+      <Button
+        icon="pi pi-arrow-left"
+        text
+        aria-label="Retour"
+        @click="router.back()"
+      />
       <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
         Graphe de relations
       </h1>
@@ -62,62 +67,13 @@
       </span>
     </div>
 
-    <!-- Node detail modal -->
-    <Dialog
+    <GraphNodeDialog
       v-model:visible="nodeDialogVisible"
-      :header="selectedNodeTitle"
-      modal
-      :style="{ width: '550px' }"
-    >
-      <div v-if="selectedNode" class="flex flex-col gap-4">
-        <!-- Header: type + title -->
-        <div class="flex items-center gap-2">
-          <Tag :value="selectedNode.type" severity="info" />
-          <span
-            v-if="selectedNode.depth === 0"
-            class="text-xs text-gray-400 dark:text-gray-500"
-            >(racine)</span
-          >
-        </div>
-
-        <!-- Poster image -->
-        <div v-if="selectedNodeImage" class="flex justify-center">
-          <img
-            :src="selectedNodeImage"
-            :alt="selectedNodeTitle"
-            class="max-h-48 rounded-lg shadow object-contain"
-          />
-        </div>
-
-        <!-- Attributes -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-          <div
-            v-for="attr in filteredNodeAttributes"
-            :key="attr.key"
-            class="flex flex-col"
-          >
-            <span class="text-gray-400 dark:text-gray-500 text-xs">{{
-              attr.label
-            }}</span>
-            <span class="dark:text-gray-200">{{
-              formatAttrValue(attr.value)
-            }}</span>
-          </div>
-        </div>
-      </div>
-
-      <template #footer>
-        <Button label="Fermer" text @click="nodeDialogVisible = false" />
-        <Button
-          label="Voir la fiche"
-          icon="pi pi-external-link"
-          @click="
-            router.push(`/items/${selectedNode!.id}`);
-            nodeDialogVisible = false;
-          "
-        />
-      </template>
-    </Dialog>
+      :node="selectedNode"
+      :schema="selectedNode ? itemTypeSchemas[selectedNode.type] : undefined"
+      :title="selectedNodeTitle"
+      @open="openItem"
+    />
   </div>
 </template>
 
@@ -127,23 +83,22 @@ import { useRouter } from "vue-router";
 import { useTheme } from "@/composables/useTheme";
 import Button from "primevue/button";
 import InputNumber from "primevue/inputnumber";
-import Tag from "primevue/tag";
-import Dialog from "primevue/dialog";
 import ProgressSpinner from "primevue/progressspinner";
 import Message from "primevue/message";
 import cytoscape from "cytoscape";
 import type { Core } from "cytoscape";
-import { itemApi, itemTypeApi, relationTypeApi } from "@/api/client";
+import { itemApi } from "@/api/client";
 import { useAuthStore } from "@/stores/auth";
+import { useMetaTypes } from "@/stores/metaTypes";
 import { useLang } from "@/composables/useLang";
+import { useNotify } from "@/composables/useNotify";
 import {
-  defaultImage,
   displayValue,
   fieldLabel,
-  isImageGallery,
   orderedKeys,
   renderLabel,
 } from "@/lib/schema";
+import GraphNodeDialog from "@/components/graph/GraphNodeDialog.vue";
 import type { GraphNode, GraphEdge, GraphResponse } from "@/api/types";
 
 const props = defineProps<{ id: string }>();
@@ -155,6 +110,7 @@ const maxDepth = ref(3);
 const truncated = ref(false);
 const auth = useAuthStore();
 const { lang } = useLang();
+const { notifyError } = useNotify();
 const loading = ref(true);
 
 // Node detail modal
@@ -185,27 +141,13 @@ function getColor(type: string): string {
   return typeColors[type]!;
 }
 
-// ── Schémas des méta-types (par nom) pour x-label, x-labels, x-widget ──
-const itemTypeSchemas = ref<Record<string, Record<string, unknown>>>({});
-const relationTypeSchemas = ref<Record<string, Record<string, unknown>>>({});
+// ── Schémas des méta-types (par nom), depuis le cache partagé ──
+const metaTypes = useMetaTypes();
+const itemTypeSchemas = computed(() => metaTypes.itemTypeSchemasByName);
+const relationTypeSchemas = computed(() => metaTypes.relationTypeSchemasByName);
 
 async function loadSchemas() {
-  const [its, rts] = await Promise.all([
-    itemTypeApi.list({ per_page: 100 }),
-    relationTypeApi.list({ per_page: 100 }),
-  ]);
-  itemTypeSchemas.value = Object.fromEntries(
-    its.data.map((t) => [
-      t.name,
-      t.attributes_schema as Record<string, unknown>,
-    ]),
-  );
-  relationTypeSchemas.value = Object.fromEntries(
-    rts.data.map((t) => [
-      t.name,
-      t.attributes_schema as Record<string, unknown>,
-    ]),
-  );
+  await Promise.all([metaTypes.loadItemTypes(), metaTypes.loadRelationTypes()]);
 }
 
 // Le serveur calcule `label` avec le x-label de l'ItemType ; repli local sinon.
@@ -246,13 +188,18 @@ function escapeXml(s: string): string {
 }
 
 // ── Edge label formatting ──
+// Nom du type + attributs libellés via les x-labels du RelationType ; `order` en badge #n.
 function edgeLabel(e: GraphEdge): string {
+  const schema = relationTypeSchemas.value[e.relation_type];
   const attrs = e.attributes ?? {};
-  const tags: string[] = [];
-  if (attrs.order != null) tags.push(`#${attrs.order}`);
-  if (attrs.language) tags.push(String(attrs.language));
-  if (attrs.role) tags.push(String(attrs.role));
-  if (tags.length) return `${e.relation_type}\n${tags.join(" · ")}`;
+  const parts = orderedKeys(schema, attrs)
+    .filter((k) => attrs[k] != null && attrs[k] !== "")
+    .map((k) =>
+      k === "order"
+        ? `#${displayValue(attrs[k], lang.value)}`
+        : `${fieldLabel(schema, k, lang.value)} ${displayValue(attrs[k], lang.value)}`,
+    );
+  if (parts.length) return `${e.relation_type}\n${parts.join(" · ")}`;
   return e.relation_type;
 }
 
@@ -261,38 +208,9 @@ const selectedNodeTitle = computed(() =>
   selectedNode.value ? nodeTitle(selectedNode.value) : "",
 );
 
-const selectedNodeSchema = computed(() =>
-  selectedNode.value
-    ? itemTypeSchemas.value[selectedNode.value.type]
-    : undefined,
-);
-
-const selectedNodeImage = computed(() =>
-  selectedNode.value
-    ? defaultImage(selectedNodeSchema.value, selectedNode.value.attributes)
-    : "",
-);
-
-// Attributs hors galeries d'images, dans l'ordre du schéma, libellés via x-labels.
-const filteredNodeAttributes = computed(() => {
-  if (!selectedNode.value)
-    return [] as { key: string; label: string; value: unknown }[];
-  const schema = selectedNodeSchema.value;
-  const attrs = selectedNode.value.attributes;
-  return orderedKeys(schema, attrs)
-    .filter((k) => k in attrs && !isImageGallery(schema, k))
-    .map((k) => ({
-      key: k,
-      label: fieldLabel(schema, k, lang.value),
-      value: attrs[k],
-    }));
-});
-
-function formatAttrValue(value: unknown): string {
-  if (value == null) return "—";
-  const s = displayValue(value, lang.value);
-  if (s === "" && typeof value === "object") return JSON.stringify(value);
-  return s || "—";
+function openItem(id: string) {
+  nodeDialogVisible.value = false;
+  router.push(`/items/${id}`);
 }
 
 // ── Graph loading ──
@@ -309,8 +227,9 @@ async function loadGraph() {
     if (!cyContainer.value) return;
 
     renderGraph(graph);
-  } catch {
+  } catch (e) {
     loading.value = false;
+    notifyError(e, "Graphe indisponible");
   }
 }
 
@@ -442,9 +361,9 @@ function renderGraph(graph: GraphResponse) {
 }
 
 onMounted(async () => {
-  await loadSchemas().catch(() => {
-    /* sans schémas : libellés serveur et clés brutes */
-  });
+  await loadSchemas().catch((e) =>
+    notifyError(e, "Schémas des types indisponibles"),
+  );
   await loadGraph();
 });
 onUnmounted(() => cy?.destroy());

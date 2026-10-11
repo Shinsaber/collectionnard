@@ -45,7 +45,7 @@ describe("DynamicForm", () => {
     // synopsis : widget i18n-text → deux zones de texte FR / EN
     expect(w.findAllComponents(Textarea)).toHaveLength(2);
     // images : galerie avec les 3 catégories déclarées dans x-image-categories
-    const cats = w.findAll("label.capitalize").map((l) => l.text());
+    const cats = w.findAll(".capitalize").map((l) => l.text());
     expect(cats).toEqual(["poster", "screenshot", "banner"]);
   });
 

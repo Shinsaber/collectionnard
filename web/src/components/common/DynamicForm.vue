@@ -1,22 +1,32 @@
 <template>
   <div class="flex flex-col gap-3">
     <div v-for="field in fields" :key="field.name" class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+      <label
+        :id="`${uid}-${field.name}-label`"
+        :for="`${uid}-${field.name}`"
+        class="text-sm font-medium text-gray-700 dark:text-gray-300"
+      >
         {{ field.label }}
-        <span v-if="field.required" class="text-red-500">*</span>
+        <span v-if="field.required" class="text-red-500" aria-hidden="true"
+          >*</span
+        >
       </label>
 
       <!-- String -->
       <InputText
         v-if="field.type === 'string' && !field.enum && !field.format"
+        :id="`${uid}-${field.name}`"
         :model-value="getString(field.name)"
         :placeholder="field.label"
+        :required="field.required"
+        :invalid="!!errors[field.name]"
         @update:model-value="update(field.name, $event)"
       />
 
       <!-- String with format: uri -->
       <InputText
         v-else-if="field.type === 'string' && field.format === 'uri'"
+        :id="`${uid}-${field.name}`"
         :model-value="getString(field.name)"
         type="url"
         :placeholder="field.label"
@@ -27,17 +37,21 @@
       <!-- String with format: date -->
       <InputText
         v-else-if="field.type === 'string' && field.format === 'date'"
+        :id="`${uid}-${field.name}`"
         :model-value="getString(field.name)"
         type="date"
+        :invalid="!!errors[field.name]"
         @update:model-value="update(field.name, $event)"
       />
 
       <!-- Enum -->
       <Select
         v-else-if="field.enum"
+        :input-id="`${uid}-${field.name}`"
         :model-value="model[field.name]"
         :options="field.enum"
         :placeholder="'Choisir...'"
+        :invalid="!!errors[field.name]"
         @update:model-value="update(field.name, $event)"
       />
 
@@ -56,145 +70,91 @@
           :max="field.maximum"
           :step="field.type === 'integer' ? 1 : 0.01"
           class="flex-1"
+          :aria-labelledby="`${uid}-${field.name}-label`"
           @update:model-value="update(field.name, $event)"
         />
-        <span class="text-sm font-mono w-12 text-right">{{
-          getNumber(field.name) ?? field.minimum
-        }}</span>
+        <output
+          :id="`${uid}-${field.name}`"
+          class="text-sm font-mono w-12 text-right"
+          >{{ getNumber(field.name) ?? field.minimum }}</output
+        >
       </div>
 
       <!-- Integer / Number (no slider) -->
       <InputNumber
         v-else-if="field.type === 'integer' || field.type === 'number'"
+        :input-id="`${uid}-${field.name}`"
         :model-value="getNumber(field.name)"
         :min="field.minimum"
         :max="field.maximum"
         :use-grouping="false"
         :min-fraction-digits="field.type === 'number' ? 0 : undefined"
         :max-fraction-digits="field.type === 'number' ? 2 : 0"
+        :invalid="!!errors[field.name]"
         @update:model-value="update(field.name, $event)"
       />
 
       <!-- Boolean -->
       <Checkbox
         v-else-if="field.type === 'boolean'"
+        :input-id="`${uid}-${field.name}`"
         :model-value="!!model[field.name]"
         :binary="true"
         @update:model-value="update(field.name, $event)"
       />
 
-      <!-- Fallback: textarea for objects/arrays -->
-      <template v-else-if="field.widget === 'i18n-text'">
-        <div class="grid grid-cols-2 gap-2">
-          <div class="flex flex-col gap-1">
-            <label class="text-xs text-gray-400 dark:text-gray-500">FR</label>
-            <Textarea
-              :model-value="getI18n(field.name, 'fr')"
-              rows="2"
-              :placeholder="field.label + ' (FR)'"
-              @update:model-value="
-                updateI18n(field.name, 'fr', String($event ?? ''))
-              "
-            />
-          </div>
-          <div class="flex flex-col gap-1">
-            <label class="text-xs text-gray-400 dark:text-gray-500">EN</label>
-            <Textarea
-              :model-value="getI18n(field.name, 'en')"
-              rows="2"
-              :placeholder="field.label + ' (EN)'"
-              @update:model-value="
-                updateI18n(field.name, 'en', String($event ?? ''))
-              "
-            />
-          </div>
+      <!-- i18n text: one textarea per language -->
+      <div
+        v-else-if="field.widget === 'i18n-text'"
+        :id="`${uid}-${field.name}`"
+        class="grid grid-cols-2 gap-2"
+        role="group"
+        :aria-labelledby="`${uid}-${field.name}-label`"
+      >
+        <div v-for="l in LANGS" :key="l" class="flex flex-col gap-1">
+          <label
+            :for="`${uid}-${field.name}-${l}`"
+            class="text-xs text-gray-400 dark:text-gray-500 uppercase"
+            >{{ l }}</label
+          >
+          <Textarea
+            :id="`${uid}-${field.name}-${l}`"
+            :model-value="getI18n(field.name, l)"
+            rows="2"
+            :placeholder="`${field.label} (${l.toUpperCase()})`"
+            @update:model-value="
+              updateI18n(field.name, l, String($event ?? ''))
+            "
+          />
         </div>
-      </template>
+      </div>
 
       <!-- Image gallery widget -->
-      <template v-else-if="field.widget === 'image-gallery'">
-        <div class="flex flex-col gap-3">
-          <div
-            v-for="cat in field.imageCategories ?? []"
-            :key="cat.name"
-            class="flex flex-col gap-1"
-          >
-            <label
-              class="text-xs font-medium text-gray-500 dark:text-gray-400 capitalize"
-              >{{ cat.name }}</label
-            >
-            <div class="flex flex-wrap gap-2">
-              <div
-                v-for="(url, imgIdx) in getGalleryCategory(
-                  field.name,
-                  cat.name,
-                )"
-                :key="imgIdx"
-                class="relative group"
-              >
-                <img
-                  :src="url"
-                  class="w-20 object-cover rounded border cursor-pointer"
-                  :style="{ aspectRatio: cat.ratio || '1/1' }"
-                  :class="{
-                    'ring-2 ring-blue-500':
-                      getGalleryDefault(field.name) === url,
-                  }"
-                  :title="'Cliquer pour définir comme image par défaut'"
-                  @click="setGalleryDefault(field.name, url)"
-                />
-                <button
-                  class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  title="Supprimer"
-                  @click="removeGalleryImage(field.name, cat.name, imgIdx)"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-            <div class="flex items-center gap-2">
-              <input
-                :ref="(el) => setFileRef(field.name, cat.name, el)"
-                type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp"
-                class="hidden"
-                @change="handleFileUpload(field.name, cat.name, $event)"
-              />
-              <Button
-                :label="'Ajouter'"
-                icon="pi pi-upload"
-                size="small"
-                outlined
-                :loading="uploadingState[`${field.name}__${cat.name}`] ?? false"
-                @click="triggerFileInput(field.name, cat.name)"
-              />
-            </div>
-          </div>
-          <div
-            v-if="getGalleryDefault(field.name)"
-            class="text-xs text-gray-400 dark:text-gray-500"
-          >
-            Image par défaut :
-            <span class="font-medium text-gray-600 dark:text-gray-300">{{
-              getGalleryDefault(field.name)
-            }}</span>
-          </div>
-        </div>
-      </template>
+      <ImageGalleryField
+        v-else-if="field.widget === 'image-gallery'"
+        :id="`${uid}-${field.name}`"
+        :categories="field.imageCategories ?? []"
+        :model-value="galleryValue(field.name)"
+        @update:model-value="update(field.name, $event)"
+      />
 
-      <!-- Fallback: textarea for other objects/arrays -->
+      <!-- Fallback: raw JSON for other objects/arrays -->
       <Textarea
         v-else
+        :id="`${uid}-${field.name}`"
         :model-value="JSON.stringify(model[field.name] ?? '', null, 2)"
         rows="3"
         class="font-mono text-xs"
-        @update:model-value="updateJson(field.name, $event)"
+        @update:model-value="updateJson(field.name, String($event ?? ''))"
       />
 
       <!-- Field error message -->
-      <small v-if="errors[field.name]" class="text-red-500 text-xs">{{
-        errors[field.name]
-      }}</small>
+      <small
+        v-if="errors[field.name]"
+        class="text-red-500 text-xs"
+        role="alert"
+        >{{ errors[field.name] }}</small
+      >
     </div>
 
     <div
@@ -207,17 +167,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, useId } from "vue";
 import InputText from "primevue/inputtext";
 import InputNumber from "primevue/inputnumber";
 import Textarea from "primevue/textarea";
 import Select from "primevue/select";
 import Checkbox from "primevue/checkbox";
 import Slider from "primevue/slider";
-import Button from "primevue/button";
-import { uploadApi } from "@/api/client";
 import { useLang } from "@/composables/useLang";
-import { fieldLabel } from "@/lib/schema";
+import {
+  LANGS,
+  fieldLabel,
+  imageCategories,
+  orderedKeys,
+  widgetOf,
+} from "@/lib/schema";
+import ImageGalleryField from "./ImageGalleryField.vue";
 
 interface SchemaField {
   name: string;
@@ -241,27 +206,18 @@ const emit = defineEmits<{
   "update:modelValue": [value: Record<string, unknown>];
 }>();
 
-const model = computed(() => props.modelValue);
-
+// Préfixe unique des ids (plusieurs formulaires peuvent coexister dans une page).
+const uid = useId();
 const { lang } = useLang();
+const model = computed(() => props.modelValue);
 
 const fields = computed<SchemaField[]>(() => {
   const properties = props.schema?.properties as
     Record<string, Record<string, unknown>> | undefined;
   if (!properties) return [];
-
   const required = (props.schema?.required as string[]) ?? [];
-  const xOrder = (props.schema?.["x-order"] as string[]) ?? [];
 
-  const keys =
-    xOrder.length > 0
-      ? [
-          ...xOrder,
-          ...Object.keys(properties).filter((k) => !xOrder.includes(k)),
-        ]
-      : Object.keys(properties);
-
-  return keys
+  return orderedKeys(props.schema)
     .filter((name) => name in properties)
     .map((name) => {
       const prop = properties[name]!;
@@ -274,29 +230,11 @@ const fields = computed<SchemaField[]>(() => {
         format: prop.format as string | undefined,
         minimum: prop.minimum as number | undefined,
         maximum: prop.maximum as number | undefined,
-        widget: (prop as Record<string, unknown>)["x-widget"] as
-          string | undefined,
-        imageCategories: parseImageCategories(
-          (prop as Record<string, unknown>)["x-image-categories"],
-        ),
+        widget: widgetOf(props.schema, name),
+        imageCategories: imageCategories(props.schema, name),
       };
     });
 });
-
-function parseImageCategories(
-  raw: unknown,
-): { name: string; ratio: string }[] | undefined {
-  if (!raw) return undefined;
-  if (typeof raw === "object" && !Array.isArray(raw)) {
-    return Object.entries(raw as Record<string, { ratio?: string }>).map(
-      ([name, v]) => ({ name, ratio: v?.ratio ?? "1/1" }),
-    );
-  }
-  if (Array.isArray(raw)) {
-    return (raw as string[]).map((name) => ({ name, ratio: "1/1" }));
-  }
-  return undefined;
-}
 
 function getString(name: string): string {
   return (model.value[name] as string) ?? "";
@@ -307,6 +245,13 @@ function getNumber(name: string): number | undefined {
   return typeof v === "number" ? v : undefined;
 }
 
+function galleryValue(name: string): Record<string, unknown> | undefined {
+  const v = model.value[name];
+  return v && typeof v === "object" && !Array.isArray(v)
+    ? (v as Record<string, unknown>)
+    : undefined;
+}
+
 function update(name: string, value: unknown) {
   emit("update:modelValue", { ...model.value, [name]: value });
 }
@@ -315,91 +260,21 @@ function updateJson(name: string, raw: string) {
   try {
     update(name, JSON.parse(raw));
   } catch {
-    // ignore invalid JSON while typing
+    // JSON incomplet pendant la saisie : on attend une valeur valide
   }
 }
 
-function getI18n(name: string, lang: string): string {
+function getI18n(name: string, l: string): string {
   const obj = model.value[name] as Record<string, string> | undefined;
-  return obj?.[lang] ?? "";
+  return obj?.[l] ?? "";
 }
 
-function updateI18n(name: string, lang: string, value: string) {
+function updateI18n(name: string, l: string, value: string) {
   const current = (model.value[name] as Record<string, string>) ?? {};
-  update(name, { ...current, [lang]: value });
+  update(name, { ...current, [l]: value });
 }
 
-// ── Image gallery helpers ───────────────────────────────────────────
-const uploadingState = reactive<Record<string, boolean>>({});
-const fileInputRefs = ref<Record<string, HTMLInputElement | null>>({});
-
-function setFileRef(fieldName: string, cat: string, el: unknown) {
-  fileInputRefs.value[`${fieldName}__${cat}`] = el as HTMLInputElement | null;
-}
-
-function getGalleryData(name: string): Record<string, unknown> {
-  return (model.value[name] as Record<string, unknown>) ?? {};
-}
-
-function getGalleryCategory(name: string, cat: string): string[] {
-  const data = getGalleryData(name);
-  return (data[cat] as string[]) ?? [];
-}
-
-function getGalleryDefault(name: string): string {
-  const data = getGalleryData(name);
-  return (data.default_image as string) ?? "";
-}
-
-function setGalleryDefault(name: string, url: string) {
-  const data = { ...getGalleryData(name) };
-  data.default_image = url;
-  update(name, data);
-}
-
-function removeGalleryImage(name: string, cat: string, imgIdx: number) {
-  const data = { ...getGalleryData(name) };
-  const arr = [...((data[cat] as string[]) ?? [])];
-  const removedUrl = arr[imgIdx];
-  arr.splice(imgIdx, 1);
-  data[cat] = arr;
-  // If removed image was default, clear it
-  if (data.default_image === removedUrl) {
-    data.default_image = "";
-  }
-  update(name, data);
-}
-
-function triggerFileInput(fieldName: string, cat: string) {
-  fileInputRefs.value[`${fieldName}__${cat}`]?.click();
-}
-
-async function handleFileUpload(fieldName: string, cat: string, event: Event) {
-  const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
-  if (!file) return;
-
-  const key = `${fieldName}__${cat}`;
-  uploadingState[key] = true;
-  try {
-    const resp = await uploadApi.upload(file);
-    const data = { ...getGalleryData(fieldName) };
-    const arr = [...((data[cat] as string[]) ?? [])];
-    arr.push(resp.url);
-    data[cat] = arr;
-    // Set first image as default if none set
-    if (!data.default_image) {
-      data.default_image = resp.url;
-    }
-    update(fieldName, data);
-  } catch {
-    // Upload error — handled silently for now
-  } finally {
-    uploadingState[key] = false;
-    input.value = ""; // reset file input
-  }
-}
-
+// ── Validation ──────────────────────────────────────────────────────
 const errors = reactive<Record<string, string>>({});
 
 function clearErrors() {

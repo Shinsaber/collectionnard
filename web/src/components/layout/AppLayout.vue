@@ -72,9 +72,11 @@
           @click="toggleTheme"
         />
         <Button
+          v-tooltip="'Se déconnecter'"
           icon="pi pi-sign-out"
           text
           severity="secondary"
+          aria-label="Se déconnecter"
           @click="handleLogout"
         />
       </div>

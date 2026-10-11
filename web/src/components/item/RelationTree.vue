@@ -92,6 +92,7 @@
               text
               size="small"
               rounded
+              aria-label="Modifier la relation"
               class="opacity-0 group-hover/rel:opacity-100 transition-opacity"
               @click.stop="$emit('edit', rel)"
             />
@@ -103,6 +104,7 @@
               size="small"
               rounded
               severity="danger"
+              aria-label="Supprimer la relation"
               class="opacity-0 group-hover/rel:opacity-100 transition-opacity"
               @click.stop="$emit('delete', rel)"
             />
@@ -145,6 +147,7 @@ import Tag from "primevue/tag";
 import Button from "primevue/button";
 import { itemApi } from "@/api/client";
 import { useLang } from "@/composables/useLang";
+import { useNotify } from "@/composables/useNotify";
 import {
   displayValue as displayAttr,
   fieldLabel,
@@ -169,6 +172,7 @@ defineEmits<{
 }>();
 
 const { lang } = useLang();
+const { notifyError } = useNotify();
 const expanded = ref(new Set<string>());
 const children = ref<Record<string, ItemRelation[]>>({});
 const loading = ref(new Set<string>());
@@ -273,8 +277,9 @@ async function toggle(rel: ItemRelation) {
       (r) =>
         r.source_item_id === lid && r.target_item_id !== props.contextItemId,
     );
-  } catch {
+  } catch (e) {
     children.value[rel.id] = [];
+    notifyError(e, "Sous-relations indisponibles");
   } finally {
     loading.value.delete(rel.id);
     loading.value = new Set(loading.value);

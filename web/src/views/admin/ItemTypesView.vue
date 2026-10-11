@@ -34,6 +34,7 @@
               icon="pi pi-pencil"
               text
               size="small"
+              aria-label="Modifier"
               @click="openEdit(row)"
             />
             <Button
@@ -41,6 +42,7 @@
               text
               severity="danger"
               size="small"
+              aria-label="Supprimer"
               @click="confirmDelete(row)"
             />
           </div>
@@ -97,6 +99,7 @@ import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
 import { itemTypeApi, extractApiError } from "@/api/client";
 import { usePagination } from "@/composables/usePagination";
+import { useMetaTypes } from "@/stores/metaTypes";
 import { useLang } from "@/composables/useLang";
 import { fieldLabel, orderedKeys } from "@/lib/schema";
 import SchemaBuilder from "@/components/common/SchemaBuilder.vue";
@@ -105,6 +108,7 @@ import type { ItemType } from "@/api/types";
 const confirm = useConfirm();
 const toast = useToast();
 const pag = usePagination(itemTypeApi.list);
+const metaTypes = useMetaTypes();
 const { lang } = useLang();
 
 const dialogVisible = ref(false);
@@ -164,6 +168,7 @@ async function save() {
       toast.add({ severity: "success", summary: "Type créé", life: 3000 });
     }
     dialogVisible.value = false;
+    metaTypes.invalidate();
     pag.load();
   } catch (e: unknown) {
     const apiErr = extractApiError(e);
@@ -194,6 +199,7 @@ function confirmDelete(row: ItemType) {
           summary: "Type supprimé",
           life: 3000,
         });
+        metaTypes.invalidate();
         pag.load();
       } catch (e: unknown) {
         const apiErr = extractApiError(e);

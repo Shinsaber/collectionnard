@@ -12,9 +12,12 @@ Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
 | `src/stores/auth.ts`           | Store Pinia d'authentification                                |
 | `src/router/index.ts`          | Routes ; `meta: { public: true }` pour les pages sans auth    |
 | `src/views/`, `views/admin/`   | Pages (admin = gestion des méta-types)                        |
-| `components/common/DynamicForm.vue`   | Formulaire généré depuis un JSON Schema           |
-| `components/common/SchemaBuilder.vue` | Éditeur visuel de JSON Schema (admin)             |
-| `src/composables/`             | `useTheme`, `useLang`, `usePagination`                        |
+| `components/common/DynamicForm.vue`   | Formulaire généré depuis un JSON Schema (+ `ImageGalleryField.vue`) |
+| `components/common/SchemaBuilder.vue` | Éditeur visuel de JSON Schema (admin) : coquille + `SchemaFieldCard.vue` + `SchemaFieldConstraints.vue`, types dans `schemaBuilderTypes.ts` |
+| `components/item/`             | `ItemGallery`, `RelationTree`, dialogues `ItemEditDialog`, `AddToCollectionDialog`, `RelationCreateDialog`, `RelationEditDialog` |
+| `components/graph/`            | `GraphNodeDialog`                                             |
+| `src/stores/metaTypes.ts`      | Cache des ItemTypes / RelationTypes / CollectionTypes (`invalidate()` après toute écriture admin) |
+| `src/composables/`             | `useTheme`, `useLang`, `useNotify`, `usePagination`           |
 | `src/lib/schema.ts`            | Lecture des schémas et extensions x-* (pendant de `server/internal/label`) |
 
 ## Règles
@@ -25,6 +28,12 @@ Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
   tout affichage d'attributs passe par `src/lib/schema.ts` (`itemLabel`, `fieldLabel`, `displayValue`,
   `orderedKeys`, `isImageGallery`, `defaultImage`) qui lit `x-label`, `x-order`, `x-labels`, `x-widget`.
 - Libellés UI en français ; langue des libellés de champs via `useLang()` (fr/en, persistée).
+- Erreurs : jamais de `catch {}` silencieux — `const { notifyError } = useNotify()` puis `notifyError(e)`
+  (affiche le message de l'API, y compris le 413 d'un upload).
+- Accessibilité : un `aria-label` sur tout bouton sans texte, un `alt` sur toute image, `label for` /
+  `input-id` sur les champs (DynamicForm génère ses ids avec `useId()`), tableaux cliquables en
+  `selection-mode="single"` (navigation clavier).
+- Taille : un fichier `.vue` ne dépasse pas ~400 lignes ; extraire un composant au-delà.
 - Après modification : `npm run lint && npm run format:check && npm run type-check && npm test`
   (`npm run lint:fix` et `npm run format` corrigent automatiquement). Tests unitaires : `vitest`,
   fichiers `src/**/*.test.ts` (environnement jsdom). Les composants PrimeVue se montent avec

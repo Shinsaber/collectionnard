@@ -8,6 +8,7 @@
       <Button
         icon="pi pi-arrow-left"
         text
+        aria-label="Retour aux collections"
         @click="router.push('/collections')"
       />
       <div>
@@ -81,6 +82,7 @@
               icon="pi pi-pencil"
               text
               size="small"
+              aria-label="Modifier les attributs"
               @click="openEditItem(ci)"
             />
             <Button
@@ -88,6 +90,7 @@
               text
               severity="danger"
               size="small"
+              aria-label="Retirer de la collection"
               @click="confirmRemove(ci)"
             />
           </div>
@@ -115,6 +118,7 @@
             text
             size="small"
             class="self-start"
+            aria-label="Rechercher"
             @click="searchItems"
           />
         </div>

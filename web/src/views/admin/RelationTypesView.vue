@@ -46,6 +46,7 @@
               icon="pi pi-pencil"
               text
               size="small"
+              aria-label="Modifier"
               @click="openEdit(row)"
             />
             <Button
@@ -53,6 +54,7 @@
               text
               severity="danger"
               size="small"
+              aria-label="Supprimer"
               @click="confirmDelete(row)"
             />
           </div>
@@ -128,14 +130,16 @@ import Textarea from "primevue/textarea";
 import MultiSelect from "primevue/multiselect";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
-import { relationTypeApi, itemTypeApi, extractApiError } from "@/api/client";
+import { relationTypeApi, extractApiError } from "@/api/client";
 import { usePagination } from "@/composables/usePagination";
+import { useMetaTypes } from "@/stores/metaTypes";
 import SchemaBuilder from "@/components/common/SchemaBuilder.vue";
 import type { RelationType, ItemType } from "@/api/types";
 
 const confirm = useConfirm();
 const toast = useToast();
 const pag = usePagination(relationTypeApi.list);
+const metaTypes = useMetaTypes();
 const itemTypes = ref<ItemType[]>([]);
 
 const dialogVisible = ref(false);
@@ -157,7 +161,9 @@ const schemaBuilderRef = ref<InstanceType<typeof SchemaBuilder> | null>(null);
 onMounted(async () => {
   await Promise.all([
     pag.load(),
-    itemTypeApi.list({ per_page: 100 }).then((r) => (itemTypes.value = r.data)),
+    metaTypes
+      .loadItemTypes()
+      .then(() => (itemTypes.value = metaTypes.itemTypes)),
   ]);
 });
 
@@ -207,6 +213,7 @@ async function save() {
       toast.add({ severity: "success", summary: "Créé", life: 3000 });
     }
     dialogVisible.value = false;
+    metaTypes.invalidate();
     pag.load();
   } catch (e: unknown) {
     const apiErr = extractApiError(e);

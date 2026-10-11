@@ -136,11 +136,13 @@ import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
 import { collectionApi, collectionTypeApi } from "@/api/client";
 import { usePagination } from "@/composables/usePagination";
+import { useNotify } from "@/composables/useNotify";
 import type { Collection, CollectionType } from "@/api/types";
 
 const router = useRouter();
 const confirm = useConfirm();
 const toast = useToast();
+const { notifyError } = useNotify();
 const pag = usePagination(collectionApi.list);
 const collectionTypes = ref<CollectionType[]>([]);
 const filterTypeId = ref<string>();
@@ -203,8 +205,8 @@ async function save() {
     }
     dialogVisible.value = false;
     reload();
-  } catch {
-    toast.add({ severity: "error", summary: "Erreur", life: 5000 });
+  } catch (e) {
+    notifyError(e);
   } finally {
     saving.value = false;
   }

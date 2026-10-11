@@ -48,9 +48,11 @@
       :total-records="pag.total.value"
       striped-rows
       data-key="id"
+      selection-mode="single"
+      :meta-key-selection="false"
       class="cursor-pointer"
       @page="onPageChange"
-      @row-click="goToItem"
+      @row-select="goToItem"
     >
       <Column header="Type" style="width: 120px">
         <template #body="{ data: row }">
@@ -83,12 +85,14 @@
               icon="pi pi-sitemap"
               text
               size="small"
-              @click.stop="router.push(`/items/${row.id}/graph`)"
+              aria-label="Voir le graphe"
+              @click.stop="router.push(`/items//graph`)"
             />
             <Button
               icon="pi pi-pencil"
               text
               size="small"
+              aria-label="Modifier"
               @click.stop="openEdit(row)"
             />
             <Button
@@ -96,6 +100,7 @@
               text
               severity="danger"
               size="small"
+              aria-label="Supprimer"
               @click.stop="confirmDelete(row)"
             />
           </div>
@@ -114,7 +119,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
@@ -124,21 +129,25 @@ import Select from "primevue/select";
 import Tag from "primevue/tag";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
-import { itemApi, itemTypeApi } from "@/api/client";
+import { itemApi } from "@/api/client";
+import { useMetaTypes } from "@/stores/metaTypes";
+import { useNotify } from "@/composables/useNotify";
 import { usePagination } from "@/composables/usePagination";
 import { useAuthStore } from "@/stores/auth";
 import { useLang } from "@/composables/useLang";
 import { itemLabel as renderItemLabel } from "@/lib/schema";
 import ItemEditDialog from "@/components/item/ItemEditDialog.vue";
-import type { Item, ItemType } from "@/api/types";
+import type { Item } from "@/api/types";
 
 const auth = useAuthStore();
 const router = useRouter();
 const { lang } = useLang();
+const { notifyError } = useNotify();
 const confirm = useConfirm();
 const toast = useToast();
 
-const itemTypes = ref<ItemType[]>([]);
+const metaTypes = useMetaTypes();
+const itemTypes = computed(() => metaTypes.itemTypes);
 const filters = ref<{ item_type_id?: string; search?: string; tag?: string }>(
   {},
 );
@@ -148,9 +157,9 @@ const dialogVisible = ref(false);
 const editing = ref<Item | null>(null);
 
 onMounted(async () => {
-  await itemTypeApi
-    .list({ per_page: 100 })
-    .then((r) => (itemTypes.value = r.data));
+  await metaTypes
+    .loadItemTypes()
+    .catch((e) => notifyError(e, "Types indisponibles"));
   reload();
 });
 
