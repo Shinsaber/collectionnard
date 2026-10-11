@@ -46,7 +46,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusUnauthorized, "unauthorized", "Nom d'utilisateur ou mot de passe incorrect")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "internal", "Erreur interne")
+		respondInternal(w, r, err, "Erreur interne")
 		return
 	}
 
@@ -77,7 +77,7 @@ func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusUnauthorized, "unauthorized", "Refresh token invalide ou expiré")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "internal", "Erreur interne")
+		respondInternal(w, r, err, "Erreur interne")
 		return
 	}
 
@@ -89,7 +89,7 @@ func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusUnauthorized, "unauthorized", "Utilisateur inconnu")
 			return
 		}
-		respondError(w, http.StatusInternalServerError, "internal", "Erreur interne")
+		respondInternal(w, r, err, "Erreur interne")
 		return
 	}
 
@@ -108,7 +108,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.Store.DeleteRefreshToken(r.Context(), hashToken(req.RefreshToken)); err != nil {
-		respondError(w, http.StatusInternalServerError, "internal", "Erreur interne")
+		respondInternal(w, r, err, "Erreur interne")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -118,7 +118,7 @@ func (h *Handler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	user, err := h.Store.GetUserByID(r.Context(), userID)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusOK, user)
@@ -128,19 +128,19 @@ func (h *Handler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) issueTokens(w http.ResponseWriter, r *http.Request, user *model.User) {
 	access, err := h.Auth.GenerateToken(user.ID, user.Role)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, "internal", "Erreur génération token")
+		respondInternal(w, r, err, "Erreur génération token")
 		return
 	}
 
 	raw := make([]byte, refreshTokenBytes)
 	if _, err := rand.Read(raw); err != nil {
-		respondError(w, http.StatusInternalServerError, "internal", "Erreur génération token")
+		respondInternal(w, r, err, "Erreur génération token")
 		return
 	}
 	refresh := base64.RawURLEncoding.EncodeToString(raw)
 	expiresAt := time.Now().Add(h.Config.RefreshTokenTTL)
 	if err := h.Store.CreateRefreshToken(r.Context(), user.ID, hashToken(refresh), expiresAt); err != nil {
-		respondError(w, http.StatusInternalServerError, "internal", "Erreur interne")
+		respondInternal(w, r, err, "Erreur interne")
 		return
 	}
 

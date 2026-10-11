@@ -153,6 +153,10 @@ tags:
       Upload et récupération de fichiers images. Les images sont stockées localement
       sur le serveur. L'upload est réservé aux admins, la consultation nécessite
       une authentification.
+  - name: Health
+    description: |
+      État de santé de l'API (connexion à la base). Public, utilisé par le healthcheck
+      docker-compose et la supervision.
 
 # =============================================================================
 # Sécurité
@@ -1167,6 +1171,49 @@ components:
 # ENDPOINTS
 # =============================================================================
 paths:
+  # ===========================================================================
+  # Health
+  # ===========================================================================
+  /healthz:
+    get:
+      tags: [Health]
+      summary: État de santé
+      description: |
+        Vérifie que l'API répond et que PostgreSQL est joignable (`Ping`).
+        Aucune authentification, aucune limitation de débit.
+      operationId: healthz
+      security: []
+      responses:
+        "200":
+          description: API et base de données opérationnelles.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+              example:
+                status: ok
+        "503":
+          description: Base de données injoignable.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, error]
+                properties:
+                  status:
+                    type: string
+                    enum: [degraded]
+                  error:
+                    type: string
+              example:
+                status: degraded
+                error: database
+
   # ===========================================================================
   # Auth
   # ===========================================================================
@@ -2618,7 +2665,7 @@ paths:
                 $ref: "#/components/schemas/UploadResponse"
         "400":
           description: |
-            Requête invalide : fichier manquant, type non autorisé ou taille dépassée.
+            Requête invalide : fichier manquant, formulaire multipart invalide ou type non autorisé.
           content:
             application/json:
               schema:
@@ -2627,6 +2674,15 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+        "413":
+          description: Fichier plus grand que `MAX_UPLOAD_SIZE` (nginx applique la même limite : `client_max_body_size 10m`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: payload_too_large
+                message: Fichier trop volumineux (max 10 Mo)
 
   /uploads/{filename}:
     parameters:

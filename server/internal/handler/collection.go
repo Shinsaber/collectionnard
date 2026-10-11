@@ -17,7 +17,7 @@ func (h *Handler) ListCollections(w http.ResponseWriter, r *http.Request) {
 
 	cols, total, err := h.Store.ListCollections(r.Context(), userID, pg, collectionTypeID)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusOK, model.NewPaginatedResponse(cols, total, pg))
@@ -30,7 +30,7 @@ func (h *Handler) GetCollection(w http.ResponseWriter, r *http.Request) {
 	}
 	col, err := h.Store.GetCollection(r.Context(), id)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	// Ensure user can only see their own collections
@@ -55,7 +55,7 @@ func (h *Handler) CreateCollection(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	col, err := h.Store.CreateCollection(r.Context(), userID, in)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusCreated, col)
@@ -70,7 +70,7 @@ func (h *Handler) UpdateCollection(w http.ResponseWriter, r *http.Request) {
 	// Check ownership
 	col, err := h.Store.GetCollection(r.Context(), id)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	if col.UserID != middleware.GetUserID(r.Context()) {
@@ -85,7 +85,7 @@ func (h *Handler) UpdateCollection(w http.ResponseWriter, r *http.Request) {
 	}
 	updated, err := h.Store.UpdateCollection(r.Context(), id, in)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusOK, updated)
@@ -98,7 +98,7 @@ func (h *Handler) DeleteCollection(w http.ResponseWriter, r *http.Request) {
 	}
 	col, err := h.Store.GetCollection(r.Context(), id)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	if col.UserID != middleware.GetUserID(r.Context()) {
@@ -107,7 +107,7 @@ func (h *Handler) DeleteCollection(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Store.DeleteCollection(r.Context(), id); err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -123,7 +123,7 @@ func (h *Handler) ListCollectionItems(w http.ResponseWriter, r *http.Request) {
 
 	col, err := h.Store.GetCollection(r.Context(), colID)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	if col.UserID != middleware.GetUserID(r.Context()) {
@@ -138,7 +138,7 @@ func (h *Handler) ListCollectionItems(w http.ResponseWriter, r *http.Request) {
 
 	items, total, err := h.Store.ListCollectionItems(r.Context(), colID, pg, itemTypeID, sort)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusOK, model.NewPaginatedResponse(items, total, pg))
@@ -152,7 +152,7 @@ func (h *Handler) AddItemToCollection(w http.ResponseWriter, r *http.Request) {
 
 	col, err := h.Store.GetCollection(r.Context(), colID)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	if col.UserID != middleware.GetUserID(r.Context()) {
@@ -172,7 +172,7 @@ func (h *Handler) AddItemToCollection(w http.ResponseWriter, r *http.Request) {
 	// Validate attributes against collection type schema
 	ct, err := h.Store.GetCollectionType(r.Context(), col.CollectionTypeID)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	if vErr := validator.ValidateAttributes(ct.AttributesSchema, in.Attributes); vErr != nil {
@@ -188,7 +188,7 @@ func (h *Handler) AddItemToCollection(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusConflict, "conflict", "Cet item est déjà dans la collection")
 			return
 		}
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusCreated, ci)
@@ -206,7 +206,7 @@ func (h *Handler) UpdateCollectionItem(w http.ResponseWriter, r *http.Request) {
 
 	col, err := h.Store.GetCollection(r.Context(), colID)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	if col.UserID != middleware.GetUserID(r.Context()) {
@@ -227,7 +227,7 @@ func (h *Handler) UpdateCollectionItem(w http.ResponseWriter, r *http.Request) {
 	// Validate attributes
 	ct, err := h.Store.GetCollectionType(r.Context(), col.CollectionTypeID)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	if vErr := validator.ValidateAttributes(ct.AttributesSchema, in.Attributes); vErr != nil {
@@ -239,7 +239,7 @@ func (h *Handler) UpdateCollectionItem(w http.ResponseWriter, r *http.Request) {
 
 	ci, err := h.Store.UpdateCollectionItem(r.Context(), colID, itemID, in)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusOK, ci)
@@ -257,7 +257,7 @@ func (h *Handler) RemoveItemFromCollection(w http.ResponseWriter, r *http.Reques
 
 	col, err := h.Store.GetCollection(r.Context(), colID)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	if col.UserID != middleware.GetUserID(r.Context()) {
@@ -266,7 +266,7 @@ func (h *Handler) RemoveItemFromCollection(w http.ResponseWriter, r *http.Reques
 	}
 
 	if err := h.Store.RemoveCollectionItem(r.Context(), colID, itemID); err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

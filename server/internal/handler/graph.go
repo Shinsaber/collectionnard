@@ -35,7 +35,7 @@ func (h *Handler) GetItemGraph(w http.ResponseWriter, r *http.Request) {
 
 	graph, err := h.Store.GetItemGraph(r.Context(), itemID, maxDepth, relationTypeIDs)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusOK, graph)

@@ -3,10 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -19,10 +20,63 @@ import (
 // refreshTokenPurgeInterval is how often expired refresh tokens are deleted.
 const refreshTokenPurgeInterval = time.Hour
 
+const usage = `usage: colec-server [serve|migrate|seed]
+
+  serve    (default) start the HTTP API
+  migrate  apply pending SQL migrations (MIGRATIONS_DIR), then the seed if
+           SEED_ON_EMPTY=true and the users table is empty (SEED_FILE)
+  seed     apply the seed file unconditionally (development only)
+`
+
 func main() {
+	setupLogger()
+
+	cmd := "serve"
+	if len(os.Args) > 1 {
+		cmd = os.Args[1]
+	}
+	switch cmd {
+	case "serve":
+		serve()
+	case "migrate":
+		os.Exit(runMigrate())
+	case "seed":
+		os.Exit(runSeed())
+	case "-h", "--help", "help":
+		fmt.Print(usage)
+	default:
+		fmt.Fprintf(os.Stderr, "unknown command %q\n%s", cmd, usage)
+		os.Exit(2)
+	}
+}
+
+// setupLogger configures slog from LOG_FORMAT (json|text, default json) and
+// LOG_LEVEL (debug|info|warn|error, default info).
+func setupLogger() {
+	level := slog.LevelInfo
+	switch strings.ToLower(os.Getenv("LOG_LEVEL")) {
+	case "debug":
+		level = slog.LevelDebug
+	case "warn", "warning":
+		level = slog.LevelWarn
+	case "error":
+		level = slog.LevelError
+	}
+	opts := &slog.HandlerOptions{Level: level}
+	var h slog.Handler
+	if strings.EqualFold(os.Getenv("LOG_FORMAT"), "text") {
+		h = slog.NewTextHandler(os.Stdout, opts)
+	} else {
+		h = slog.NewJSONHandler(os.Stdout, opts)
+	}
+	slog.SetDefault(slog.New(h))
+}
+
+func serve() {
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("config: %v", err)
+		slog.Error("config", "err", err)
+		os.Exit(1)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -31,7 +85,8 @@ func main() {
 	// Database
 	pgStore, err := store.NewPgStore(ctx, cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("database: %v", err)
+		slog.Error("database", "err", err)
+		os.Exit(1)
 	}
 	defer pgStore.Close()
 
@@ -64,17 +119,22 @@ func main() {
 		shutdownCtx, cancelShutdown := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancelShutdown()
 
-		log.Println("Shutting down...")
+		slog.Info("shutting down")
 		cancel()
 		if err := srv.Shutdown(shutdownCtx); err != nil {
-			log.Printf("shutdown error: %v", err)
+			slog.Error("shutdown", "err", err)
 		}
 	}()
 
-	log.Printf("Collectionnard API listening on :%d (access token TTL %s, refresh token TTL %s)",
-		cfg.Port, cfg.AccessTokenTTL, cfg.RefreshTokenTTL)
+	slog.Info("Collectionnard API listening",
+		"port", cfg.Port,
+		"access_token_ttl", cfg.AccessTokenTTL.String(),
+		"refresh_token_ttl", cfg.RefreshTokenTTL.String(),
+		"trusted_proxy", cfg.TrustedProxy,
+	)
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-		log.Fatalf("server: %v", err)
+		slog.Error("server", "err", err)
+		os.Exit(1)
 	}
 }
 
@@ -84,10 +144,10 @@ func purgeRefreshTokens(ctx context.Context, s *store.PgStore) {
 	for {
 		if n, err := s.DeleteExpiredRefreshTokens(ctx); err != nil {
 			if ctx.Err() == nil {
-				log.Printf("refresh token purge: %v", err)
+				slog.Error("refresh token purge", "err", err)
 			}
 		} else if n > 0 {
-			log.Printf("refresh token purge: %d expired token(s) removed", n)
+			slog.Info("refresh token purge", "removed", n)
 		}
 		select {
 		case <-ctx.Done():

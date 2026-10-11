@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -35,12 +36,16 @@ func (h *Handler) Router() chi.Router {
 	r := chi.NewRouter()
 
 	// Global middlewares (must be before routes)
-	r.Use(chimiddleware.Logger)
+	r.Use(chimiddleware.RequestID)
+	r.Use(middleware.RequestLogger)
 	r.Use(chimiddleware.Recoverer)
 	if h.Config.TrustedProxy {
 		// Only behind nginx (TRUSTED_PROXY=true): otherwise X-Real-IP is client-controlled.
 		r.Use(middleware.TrustedProxyRealIP)
 	}
+
+	// Public: liveness/readiness (compose healthcheck, monitoring)
+	r.Get("/api/v1/healthz", h.Healthz)
 
 	// Public, rate-limited per IP (credential stuffing, token guessing)
 	authLimiter := middleware.NewRateLimiter(h.Config.LoginRateLimit, time.Minute)
@@ -233,13 +238,25 @@ func containsUUID(ids []uuid.UUID, target uuid.UUID) bool {
 	return false
 }
 
-func handleStoreError(w http.ResponseWriter, err error) {
-	switch err {
-	case store.ErrNotFound:
+func handleStoreError(w http.ResponseWriter, r *http.Request, err error) {
+	switch {
+	case errors.Is(err, store.ErrNotFound):
 		respondError(w, http.StatusNotFound, "not_found", "Ressource non trouvée")
-	case store.ErrConflict:
+	case errors.Is(err, store.ErrConflict):
 		respondError(w, http.StatusConflict, "conflict", "Conflit — ressource existante")
 	default:
-		respondError(w, http.StatusInternalServerError, "internal", "Erreur interne")
+		respondInternal(w, r, err, "Erreur interne")
 	}
+}
+
+// respondInternal logs the underlying error (with the request id) and answers 500
+// with a generic message: the cause never reaches the client.
+func respondInternal(w http.ResponseWriter, r *http.Request, err error, message string) {
+	slog.Error("internal error",
+		"err", err,
+		"method", r.Method,
+		"path", r.URL.Path,
+		"request_id", chimiddleware.GetReqID(r.Context()),
+	)
+	respondError(w, http.StatusInternalServerError, "internal", message)
 }

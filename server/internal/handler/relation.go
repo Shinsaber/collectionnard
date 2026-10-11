@@ -16,7 +16,7 @@ func (h *Handler) ListItemRelations(w http.ResponseWriter, r *http.Request) {
 	relationTypeID := parseOptionalUUID(r.URL.Query().Get("relation_type_id"))
 	relations, err := h.Store.ListItemRelations(r.Context(), itemID, relationTypeID)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusOK, relations)
@@ -29,7 +29,7 @@ func (h *Handler) GetRelation(w http.ResponseWriter, r *http.Request) {
 	}
 	rel, err := h.Store.GetRelation(r.Context(), id)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusOK, rel)
@@ -54,13 +54,13 @@ func (h *Handler) CreateRelation(w http.ResponseWriter, r *http.Request) {
 	// Validate type constraints
 	rt, err := h.Store.GetRelationType(r.Context(), in.RelationTypeID)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 
 	sourceItem, err := h.Store.GetItem(r.Context(), in.SourceItemID)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	if !containsUUID(rt.SourceItemTypeIDs, sourceItem.ItemTypeID) {
@@ -70,7 +70,7 @@ func (h *Handler) CreateRelation(w http.ResponseWriter, r *http.Request) {
 
 	targetItem, err := h.Store.GetItem(r.Context(), in.TargetItemID)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	if !containsUUID(rt.TargetItemTypeIDs, targetItem.ItemTypeID) {
@@ -88,7 +88,7 @@ func (h *Handler) CreateRelation(w http.ResponseWriter, r *http.Request) {
 
 	rel, err := h.Store.CreateRelation(r.Context(), in)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusCreated, rel)
@@ -112,7 +112,7 @@ func (h *Handler) UpdateRelation(w http.ResponseWriter, r *http.Request) {
 	// Get existing relation to validate against its type schema
 	existing, err := h.Store.GetRelation(r.Context(), id)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 
@@ -125,7 +125,7 @@ func (h *Handler) UpdateRelation(w http.ResponseWriter, r *http.Request) {
 
 	rel, err := h.Store.UpdateRelation(r.Context(), id, in)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusOK, rel)
@@ -137,7 +137,7 @@ func (h *Handler) DeleteRelation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.Store.DeleteRelation(r.Context(), id); err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

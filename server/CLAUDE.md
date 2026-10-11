@@ -15,6 +15,7 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 | `middleware` | `Authenticate` (JWT HS256, `exp` obligatoire), `RequireAdmin`, `RateLimiter` (`/auth/*`) |
 | `validator`  | `ValidateAttributes(schema, data)` + `FormatValidationError`          |
 | `testutil`   | `MockStore` (champs `XxxFn`), `NewTestServer`, `AdminToken`/`UserToken`, `AuthHeader` |
+| `dbmigrate`  | Migrations tern (`db/migrations`) + seed : sous-commandes `colec-server migrate` / `seed` (`cmd.go`) |
 
 ## Erreurs et réponses
 
@@ -25,6 +26,9 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
   `validator.ValidateAttributes` avec le schéma du méta-type correspondant.
 - Les listes renvoient `model.PaginatedResponse` (`data`, `total`, …).
 - Lire un corps JSON avec `decodeJSON(w, r, &in)` + `respondDecodeError(w, err)` (limite 1 Mio → 413).
+- Logs : `log/slog` (JSON par défaut, `LOG_FORMAT=text` en dev) ; `respondInternal(w, r, err, msg)` et
+  `handleStoreError(w, r, err)` loguent la cause des 500 avec le `request_id` — ne jamais renvoyer `err` au client.
+- `GET /api/v1/healthz` (public) ping la base : 200 `{"status":"ok"}` ou 503.
 - Auth : access token JWT court (`Auth.GenerateToken`) + refresh token opaque dont seul le hash
   SHA-256 est stocké (`store/refresh_token.go`, rotation à chaque `/auth/refresh`).
 

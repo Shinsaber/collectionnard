@@ -10,7 +10,7 @@ Il sera maintenu à jour au fil des échanges et itérations.
 >
 > - [README.md](README.md) — Démarrage rapide, stack, structure du projet
 > - [api/openapi.yaml](api/openapi.yaml) — Spécification complète de l'API REST
-> - [db/schema.sql](db/schema.sql) — Schéma de base de données commenté
+> - [db/migrations/001_init.sql](db/migrations/001_init.sql) — Schéma de base de données commenté (migrations tern)
 
 ---
 

@@ -22,11 +22,11 @@
             initdb -U colec --auth=trust -D "$PGDATA" >/dev/null
             pg_ctl -D "$PGDATA" -o "-k $PGDATA -p 5432" -l "$PGDATA/log" start
             createdb -h "$PGDATA" -U colec colec
-            psql -h "$PGDATA" -U colec -d colec -q -f db/schema.sql
-            psql -h "$PGDATA" -U colec -d colec -q -f db/seed.sql
-            echo "Base initialisée (schema + seed)."
+            (cd server && SEED_ON_EMPTY=true go run . migrate)
+            echo "Base initialisée (migrations + seed)."
           else
             pg_ctl -D "$PGDATA" -o "-k $PGDATA -p 5432" -l "$PGDATA/log" start
+            (cd server && go run . migrate)   # applique les migrations en attente
           fi
         '';
         pgStop = pkgs.writeShellScriptBin "pg-stop" ''
@@ -60,6 +60,7 @@
           DATABASE_URL = "postgres://colec:colec@localhost:5432/colec?sslmode=disable";
           JWT_SECRET = "dev-secret-dev-secret-dev-secret-0000"; # ≥ 32 caractères (exigé par config.go)
           UPLOAD_DIR = "uploads";
+          LOG_FORMAT = "text"; # logs lisibles en dev (json par défaut)
 
           shellHook = ''
             echo "Collectionnard dev shell — go $(go env GOVERSION), node $(node --version)"

@@ -26,3 +26,8 @@ func NewPgStore(ctx context.Context, databaseURL string) (*PgStore, error) {
 func (s *PgStore) Close() {
 	s.pool.Close()
 }
+
+// Ping checks the database connection (used by GET /healthz).
+func (s *PgStore) Ping(ctx context.Context) error {
+	return s.pool.Ping(ctx)
+}

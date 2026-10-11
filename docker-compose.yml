@@ -1,3 +1,5 @@
+# Variables : copier .env.example en .env (JWT_SECRET et POSTGRES_PASSWORD obligatoires).
+# Seul le service web est publié (port 3000) ; l'API et PostgreSQL restent sur le réseau interne.
 services:
   postgres:
     image: postgres:16-alpine
@@ -6,21 +8,36 @@ services:
       POSTGRES_USER: colec
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Définir POSTGRES_PASSWORD dans .env (voir .env.example)}
       POSTGRES_DB: colec
-    ports:
-      - "5432:5432"
     volumes:
-      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
-      - ./db/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U colec"]
+      test: ["CMD-SHELL", "pg_isready -U colec -d colec"]
       interval: 5s
       timeout: 5s
       retries: 5
 
+  # Applique les migrations (db/migrations) puis, si SEED_ON_EMPTY=true et la base est vide,
+  # le jeu de données de dev (db/seed.sql). Se termine ensuite.
+  migrate:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    image: colec-server:local
+    container_name: colec-migrate
+    command: ["colec-server", "migrate"]
+    environment:
+      DATABASE_URL: "postgres://colec:${POSTGRES_PASSWORD}@postgres:5432/colec?sslmode=disable"
+      SEED_ON_EMPTY: ${SEED_ON_EMPTY:-true}
+      LOG_FORMAT: ${LOG_FORMAT:-json}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   server:
     build:
-      context: ./server
+      context: .
+      dockerfile: server/Dockerfile
+    image: colec-server:local
     container_name: colec-server
     environment:
       PORT: "8080"
@@ -29,25 +46,33 @@ services:
       ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-15m}
       REFRESH_TOKEN_TTL: ${REFRESH_TOKEN_TTL:-720h}
       LOGIN_RATE_LIMIT: ${LOGIN_RATE_LIMIT:-10}
-      TRUSTED_PROXY: "true"   # X-Real-IP posé par nginx (service web) ; à retirer si le port 8080 est exposé directement
+      TRUSTED_PROXY: "true"   # X-Real-IP posé par nginx (service web) ; l'API n'est pas publiée directement
       UPLOAD_DIR: "/data/uploads"
       MAX_UPLOAD_SIZE: "10485760"
-    ports:
-      - "8080:8080"
+      LOG_FORMAT: ${LOG_FORMAT:-json}
     volumes:
       - uploads:/data/uploads
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/api/v1/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   web:
     build:
       context: ./web
     container_name: colec-web
     ports:
-      - "3000:80"
+      - "3000:8080"
     depends_on:
-      - server
+      server:
+        condition: service_healthy
 
 volumes:
   pgdata:

@@ -1,4 +1,4 @@
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -6,7 +6,9 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM nginx:alpine
+# Image nginx non-root (uid 101), écoute sur 8080.
+FROM nginxinc/nginx-unprivileged:1.28-alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
+COPY nginx-security-headers.conf /etc/nginx/conf.d/security-headers.inc
+EXPOSE 8080

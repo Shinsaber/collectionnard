@@ -23,6 +23,9 @@ type ItemFilters struct {
 
 // Store defines all data operations.
 type Store interface {
+	// Health
+	Ping(ctx context.Context) error
+
 	// User
 	GetUserByUsername(ctx context.Context, username string) (*model.User, string, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (*model.User, error)

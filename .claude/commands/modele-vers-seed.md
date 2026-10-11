@@ -3,7 +3,7 @@ description: Transformer un document de modèle de données (ex. les.collection.
 argument-hint: <fichier du modèle, ex. les.collection.md>
 ---
 
-Lis le document de modèle `$ARGUMENTS`, puis `db/schema.sql` et `db/seed.sql` pour reprendre exactement le format existant.
+Lis le document de modèle `$ARGUMENTS`, puis `db/migrations/001_init.sql` et `db/seed.sql` pour reprendre exactement le format existant (un changement de schéma = nouvelle migration `db/migrations/NNN_*.sql`, jamais une édition de 001).
 
 Produis un nouveau fichier `db/seed_<domaine>.sql` (ne modifie pas `seed.sql`) contenant :
 

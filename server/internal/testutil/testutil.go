@@ -23,6 +23,7 @@ const TestAccessTTL = 15 * time.Minute
 
 // MockStore implements store.Store with configurable function fields.
 type MockStore struct {
+	PingFn                       func(ctx context.Context) error
 	GetUserByUsernameFn          func(ctx context.Context, username string) (*model.User, string, error)
 	GetUserByIDFn                func(ctx context.Context, id uuid.UUID) (*model.User, error)
 	CreateRefreshTokenFn         func(ctx context.Context, userID uuid.UUID, tokenHash string, expiresAt time.Time) error
@@ -69,6 +70,12 @@ type MockStore struct {
 	GetStatsFn                   func(ctx context.Context) (*model.Stats, error)
 }
 
+func (m *MockStore) Ping(ctx context.Context) error {
+	if m.PingFn != nil {
+		return m.PingFn(ctx)
+	}
+	return nil
+}
 func (m *MockStore) GetUserByUsername(ctx context.Context, username string) (*model.User, string, error) {
 	if m.GetUserByUsernameFn != nil {
 		return m.GetUserByUsernameFn(ctx, username)

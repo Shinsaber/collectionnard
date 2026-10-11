@@ -1,7 +1,8 @@
 -- =============================================================================
 -- Collectionnard — Jeu de données de test MVP : Séries TV
 -- =============================================================================
--- Prérequis : schema.sql exécuté
+-- Prérequis : migrations appliquées (colec-server migrate). Appliqué automatiquement par
+-- `colec-server migrate` si SEED_ON_EMPTY=true et la table users est vide (pg-start, compose).
 -- Scénario : Breaking Bad avec multi-chemin (Diffusion + DVD)
 -- =============================================================================
 

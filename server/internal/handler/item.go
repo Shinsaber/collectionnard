@@ -22,7 +22,7 @@ func (h *Handler) ListItems(w http.ResponseWriter, r *http.Request) {
 
 	items, total, err := h.Store.ListItems(r.Context(), pg, filters)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusOK, model.NewPaginatedResponse(items, total, pg))
@@ -35,7 +35,7 @@ func (h *Handler) GetItem(w http.ResponseWriter, r *http.Request) {
 	}
 	item, err := h.Store.GetItem(r.Context(), id)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusOK, item)
@@ -58,7 +58,7 @@ func (h *Handler) CreateItem(w http.ResponseWriter, r *http.Request) {
 	// Validate attributes against item type schema
 	itemType, err := h.Store.GetItemType(r.Context(), in.ItemTypeID)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 
@@ -71,7 +71,7 @@ func (h *Handler) CreateItem(w http.ResponseWriter, r *http.Request) {
 
 	item, err := h.Store.CreateItem(r.Context(), in)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusCreated, item)
@@ -92,7 +92,7 @@ func (h *Handler) UpdateItem(w http.ResponseWriter, r *http.Request) {
 	if len(in.Attributes) > 0 {
 		existing, err := h.Store.GetItem(r.Context(), id)
 		if err != nil {
-			handleStoreError(w, err)
+			handleStoreError(w, r, err)
 			return
 		}
 		if vErr := validator.ValidateAttributes(existing.ItemType.AttributesSchema, in.Attributes); vErr != nil {
@@ -105,7 +105,7 @@ func (h *Handler) UpdateItem(w http.ResponseWriter, r *http.Request) {
 
 	item, err := h.Store.UpdateItem(r.Context(), id, in)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusOK, item)
@@ -117,7 +117,7 @@ func (h *Handler) DeleteItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.Store.DeleteItem(r.Context(), id); err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -131,7 +131,7 @@ func (h *Handler) ListItemCollections(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	memberships, err := h.Store.ListItemCollections(r.Context(), userID, id)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	if memberships == nil {

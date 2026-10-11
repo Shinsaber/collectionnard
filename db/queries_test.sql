@@ -2,7 +2,7 @@
 -- Collectionnard — Requêtes de test
 -- =============================================================================
 -- Ces requêtes valident que le schéma supporte les cas d'usage du MVP.
--- Exécuter après schema.sql et seed.sql
+-- Exécuter après les migrations (colec-server migrate) et seed.sql
 -- =============================================================================
 
 

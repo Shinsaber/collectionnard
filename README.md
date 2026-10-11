@@ -86,6 +86,38 @@ npm install
 npm run dev
 ```
 
+### Base de données et migrations
+
+Le schéma est géré par des migrations SQL au format [tern](https://github.com/jackc/tern)
+dans `db/migrations/` (`001_init.sql` = schéma complet). Elles sont appliquées par le binaire
+lui-même :
+
+```bash
+cd server
+go run . migrate                      # applique les migrations en attente (table schema_version)
+SEED_ON_EMPTY=true go run . migrate   # idem, puis db/seed.sql si la table users est vide
+go run . seed                         # applique db/seed.sql sans condition (dev)
+```
+
+`pg-start` (shell Nix) et le service `migrate` de docker-compose les lancent automatiquement.
+Pour changer le schéma : ajouter `db/migrations/NNN_description.sql`, ne jamais modifier une
+migration déjà appliquée.
+
+### Mise en production
+
+- Seul le service `web` (nginx, non-root, port 3000) est publié ; `server` et `postgres` restent
+  sur le réseau interne de compose. Placer devant un reverse-proxy qui termine TLS (Caddy,
+  Traefik, nginx) : l'API suppose HTTPS pour les mots de passe et les tokens.
+- `.env` : `JWT_SECRET` aléatoire (≥ 32 caractères), `POSTGRES_PASSWORD` fort,
+  `SEED_ON_EMPTY=false` (sinon le compte `admin/admin` est créé sur une base vide).
+- Les conteneurs tournent sans privilèges (uid 10001 pour l'API, 101 pour nginx) ; les images
+  sont épinglées (`golang:1.27-alpine`, `alpine:3.22`, `node:22-alpine`,
+  `nginxinc/nginx-unprivileged:1.28-alpine`, `postgres:16-alpine`).
+- Santé : `GET /api/v1/healthz` (utilisé par le healthcheck compose) ; logs JSON sur stdout
+  (`LOG_FORMAT=text` pour du lisible, `LOG_LEVEL=debug|info|warn|error`).
+- Pour accéder à PostgreSQL depuis l'hôte : `docker compose exec postgres psql -U colec colec`
+  (ou publier le port dans un `docker-compose.override.yml` local, jamais commité).
+
 ---
 
 ## Structure du projet
@@ -98,7 +130,7 @@ colec/
 ├── api/
 │   └── openapi.yaml        # Spécification OpenAPI 3.1 (référence API)
 ├── db/
-│   ├── schema.sql          # Schéma PostgreSQL (tables, index, triggers)
+│   ├── migrations/         # Migrations SQL tern (001_init.sql = schéma complet)
 │   ├── seed.sql            # Données de test (admin, types, items, relations)
 │   └── queries_test.sql    # Requêtes SQL de test
 ├── server/                 # Backend Go
@@ -107,7 +139,8 @@ colec/
 │   ├── config/             # Configuration (env vars)
 │   └── internal/
 │       ├── handler/        # Handlers HTTP (1 fichier par domaine)
-│       ├── middleware/      # Auth JWT, RequireAdmin
+│       ├── middleware/     # Auth JWT, RequireAdmin, RateLimiter, RequestLogger
+│       ├── dbmigrate/      # Migrations (tern) + seed
 │       ├── model/          # Structs Go (JSON tags)
 │       ├── store/          # Couche d'accès BDD (pgx)
 │       ├── validator/      # Validation JSON Schema
@@ -180,6 +213,7 @@ La spécification complète est dans [api/openapi.yaml](api/openapi.yaml).
 | Collections     | CRUD `/collections` + gestion items             | JWT (owner)                       |
 | Tags            | `GET /tags`                                     | JWT                               |
 | Stats           | `GET /stats`                                    | JWT                               |
+| Santé           | `GET /healthz`                                  | Public                            |
 | Uploads         | `POST /uploads`, `GET /uploads/{filename}`      | Admin (upload) / Public (lecture) |
 
 ---

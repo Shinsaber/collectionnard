@@ -15,7 +15,7 @@ champs JSON, noms de RelationTypes récents) est en **anglais** ou en snake_case
 | [Collectionnard.md](Collectionnard.md)   | Vision, modèle conceptuel, phases de développement (roadmap) |
 | [les.collection.md](les.collection.md)   | Modèle de données BD / Manga (prochain domaine à intégrer)  |
 | [api/openapi.yaml](api/openapi.yaml)     | Spécification OpenAPI 3.1 — **source de vérité de l'API**   |
-| [db/schema.sql](db/schema.sql)           | Schéma PostgreSQL (tables, index GIN, triggers updated_at)  |
+| [db/migrations/](db/migrations/)         | Migrations SQL (tern) ; `001_init.sql` = schéma complet commenté |
 | [db/seed.sql](db/seed.sql)               | Jeu de test « Breaking Bad » (multi-chemin Diffusion + DVD) |
 | [server/CLAUDE.md](server/CLAUDE.md)     | Conventions backend Go                                      |
 | [web/CLAUDE.md](web/CLAUDE.md)           | Conventions frontend Vue                                    |
@@ -73,7 +73,7 @@ nix develop                     # entrer dans le shell (inutile avec direnv)
 nix flake update                # mettre à jour nixpkgs (flake.lock)
 
 # Base de données — au choix :
-pg-start | pg-stop | pg-reset   # PostgreSQL local (données dans ./.pgdata, schema + seed à la création)
+pg-start | pg-stop | pg-reset   # PostgreSQL local (./.pgdata) ; pg-start applique les migrations (+ seed à la création)
 docker compose up postgres      # ou PostgreSQL via Docker (même port 5432 : n'en lancer qu'un)
 
 # Backend (depuis server/)
@@ -97,7 +97,8 @@ nix develop -c npm run build
 # Stack complète conteneurisée (front :3000, API :8080/api/v1, PG :5432)
 cp .env.example .env                 # une fois : JWT_SECRET (≥ 32 car.) et POSTGRES_PASSWORD obligatoires
 docker compose up --build
-docker compose down -v && docker compose up --build   # réinitialise la base
+docker compose down -v && docker compose up --build   # repart d'une base vide (migrations + seed rejoués)
+(cd server && go run . migrate)     # appliquer les migrations à la main (SEED_ON_EMPTY=true pour le seed)
 ```
 
 Comptes de dev (seed) : `admin` / `admin` (rôle admin), `shinsaber` (rôle user).
@@ -107,8 +108,12 @@ Comptes de dev (seed) : `admin` / `admin` (rôle admin), `shinsaber` (rôle user
 1. **Contrat d'API d'abord** : toute modif d'endpoint met à jour, dans cet ordre,
    `api/openapi.yaml` → `server/internal/model` → store → handler (+ test) →
    `web/src/api/types.ts` + `client.ts` → vues.
-2. **Schéma BDD** : modifier `db/schema.sql` (pas de système de migrations pour l'instant).
-   Pour rejouer : `pg-reset` (PG local) ou `docker compose down -v` (Docker). Signaler toute modif cassante.
+2. **Schéma BDD** : ne jamais modifier une migration déjà appliquée ; ajouter
+   `db/migrations/NNN_description.sql` (numéro suivant, format tern : SQL « up », puis optionnellement
+   `---- create above / drop below ----` et le SQL « down »). Les migrations sont appliquées par
+   `colec-server migrate` (`pg-start` et le service compose `migrate` le font automatiquement ;
+   à la main : `cd server && go run . migrate`). Signaler toute modif cassante ; `pg-reset` /
+   `docker compose down -v` ne servent plus qu'à repartir d'une base vide.
 3. **Seed** : UUID lisibles par préfixe — `a…` users, `b…` item_types, `c…` relation_types,
    `d…` collection_types, `e…` items. Garder ce schéma pour les nouveaux jeux de données
    (prendre des plages libres, ne pas renuméroter l'existant).
