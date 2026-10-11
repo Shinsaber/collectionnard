@@ -11,7 +11,7 @@ Séries TV, DVD, livres, cartes à collectionner, vinyles… tout type de collec
 
 | Composant           | Technologie             | Version    |
 | ------------------- | ----------------------- | ---------- |
-| **Backend**         | Go (chi, pgx, JWT)      | 1.22       |
+| **Backend**         | Go (chi 5.3, pgx 5.11, JWT 5.3) | 1.27       |
 | **Base de données** | PostgreSQL              | 16         |
 | **Frontend**        | Vue 3 + TypeScript      | 3.5 / 5.6  |
 | **UI**              | PrimeVue + Tailwind CSS | 4.3 / 3.4  |
@@ -73,6 +73,7 @@ go run .
 | `ACCESS_TOKEN_TTL`  | `15m`       | Durée de vie des access tokens JWT (format Go)                        |
 | `REFRESH_TOKEN_TTL` | `720h`      | Durée de vie des refresh tokens (rotation à chaque utilisation)       |
 | `LOGIN_RATE_LIMIT`  | `10`        | Appels par minute et par IP sur `/auth/login`, `/auth/refresh`, `/auth/logout` |
+| `TRUSTED_PROXY`     | `false`     | `true` derrière un reverse-proxy qui pose `X-Real-IP` (nginx du compose) ; sinon l'IP serait usurpable |
 | `PORT`              | `8080`      | Port HTTP                                                            |
 | `UPLOAD_DIR`        | `uploads`   | Dossier des images uploadées                                         |
 | `MAX_UPLOAD_SIZE`   | `10485760`  | Taille max d'un upload (octets) ; les corps JSON sont limités à 1 Mio |

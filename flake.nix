@@ -42,8 +42,8 @@
       {
         default = pkgs.mkShell {
           packages = with pkgs; [
-            # Backend
-            go
+            # Backend (Go 1.27 : go.mod exige ≥ 1.26, pgx ≥ 5.9 exige ≥ 1.25)
+            go_1_27
             gopls
             gotools
             govulncheck

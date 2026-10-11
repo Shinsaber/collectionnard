@@ -3,7 +3,7 @@
 Module : `github.com/shinsaber/colec` · Entrée : `main.go` · Config par variables
 d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 caractères) sont
 **obligatoires** (le serveur refuse de démarrer sinon) ; `PORT`, `ACCESS_TOKEN_TTL` (15m),
-`REFRESH_TOKEN_TTL` (720h), `LOGIN_RATE_LIMIT` (10/min/IP), `UPLOAD_DIR`, `MAX_UPLOAD_SIZE` ont un défaut.
+`REFRESH_TOKEN_TTL` (720h), `LOGIN_RATE_LIMIT` (10/min/IP), `UPLOAD_DIR`, `MAX_UPLOAD_SIZE`, `TRUSTED_PROXY` (false) ont un défaut.
 
 ## Couches (`internal/`)
 

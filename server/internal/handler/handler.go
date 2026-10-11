@@ -37,7 +37,10 @@ func (h *Handler) Router() chi.Router {
 	// Global middlewares (must be before routes)
 	r.Use(chimiddleware.Logger)
 	r.Use(chimiddleware.Recoverer)
-	r.Use(chimiddleware.RealIP)
+	if h.Config.TrustedProxy {
+		// Only behind nginx (TRUSTED_PROXY=true): otherwise X-Real-IP is client-controlled.
+		r.Use(middleware.TrustedProxyRealIP)
+	}
 
 	// Public, rate-limited per IP (credential stuffing, token guessing)
 	authLimiter := middleware.NewRateLimiter(h.Config.LoginRateLimit, time.Minute)

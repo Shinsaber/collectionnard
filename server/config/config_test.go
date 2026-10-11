@@ -59,3 +59,19 @@ func TestLoad_InvalidTTL(t *testing.T) {
 		t.Fatal("expected error for invalid ACCESS_TOKEN_TTL")
 	}
 }
+
+func TestLoad_TrustedProxy(t *testing.T) {
+	setBaseEnv(t)
+	t.Setenv("TRUSTED_PROXY", "true")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !cfg.TrustedProxy {
+		t.Error("expected TrustedProxy = true")
+	}
+	t.Setenv("TRUSTED_PROXY", "maybe")
+	if _, err := Load(); err == nil {
+		t.Fatal("expected error for invalid TRUSTED_PROXY")
+	}
+}

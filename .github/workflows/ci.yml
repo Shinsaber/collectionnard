@@ -21,8 +21,6 @@ jobs:
       - name: go test
         run: nix develop -c sh -c 'cd server && go test ./...'
       - name: govulncheck
-        # Bloquant une fois les dépendances à jour (lot 3 de docs/audit/03-feuille-de-route.md).
-        continue-on-error: true
         run: nix develop -c sh -c 'cd server && govulncheck ./...'
 
   web:

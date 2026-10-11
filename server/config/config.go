@@ -18,6 +18,7 @@ type Config struct {
 	AccessTokenTTL  time.Duration // lifetime of the JWT access token
 	RefreshTokenTTL time.Duration // lifetime of a refresh token (rotated on use)
 	LoginRateLimit  int           // max calls per minute and per IP on /auth/*
+	TrustedProxy    bool          // trust X-Real-IP set by a reverse proxy (nginx)
 	UploadDir       string
 	MaxUploadSize   int64 // bytes
 }
@@ -63,6 +64,15 @@ func Load() (*Config, error) {
 		loginRateLimit = n
 	}
 
+	trustedProxy := false
+	if v := os.Getenv("TRUSTED_PROXY"); v != "" {
+		b, err := strconv.ParseBool(v)
+		if err != nil {
+			return nil, fmt.Errorf("invalid TRUSTED_PROXY: %q (true/false expected)", v)
+		}
+		trustedProxy = b
+	}
+
 	uploadDir := os.Getenv("UPLOAD_DIR")
 	if uploadDir == "" {
 		uploadDir = "uploads"
@@ -84,6 +94,7 @@ func Load() (*Config, error) {
 		AccessTokenTTL:  accessTTL,
 		RefreshTokenTTL: refreshTTL,
 		LoginRateLimit:  loginRateLimit,
+		TrustedProxy:    trustedProxy,
 		UploadDir:       uploadDir,
 		MaxUploadSize:   maxUploadSize,
 	}, nil

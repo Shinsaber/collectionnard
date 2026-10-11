@@ -319,7 +319,7 @@ La table unique d'items avec attributs dynamiques nécessite une attention parti
 
 | Composant       | Choix                           | Version   |
 | --------------- | ------------------------------- | --------- |
-| Backend         | Go (chi, pgx, JWT, JSON Schema) | 1.22      |
+| Backend         | Go (chi 5.3, pgx 5.11, JWT 5.3, jsonschema v5 — v6 différé, API incompatible, sans CVE) | 1.27 (go.mod ≥ 1.26) |
 | Base de données | PostgreSQL                      | 16        |
 | Frontend        | Vue 3 + TypeScript              | 3.5 / 5.6 |
 | UI              | PrimeVue + Tailwind CSS         | 4.3 / 3.4 |
