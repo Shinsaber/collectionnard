@@ -7,11 +7,11 @@
   >
     <div v-if="node" class="flex flex-col gap-4">
       <div class="flex items-center gap-2">
-        <ElTag type="info" size="small">{{ node.type }}</ElTag>
+        <ElTag type="info" size="small">{{ typeLabel || node.type }}</ElTag>
         <span
           v-if="node.depth === 0"
           class="text-xs text-gray-400 dark:text-gray-500"
-          >(racine)</span
+          >{{ t("graph.nodeDialog.root") }}</span
         >
       </div>
 
@@ -34,10 +34,12 @@
     </div>
 
     <template #footer>
-      <ElButton text @click="$emit('update:visible', false)">Fermer</ElButton>
+      <ElButton text @click="$emit('update:visible', false)">{{
+        t("common.close")
+      }}</ElButton>
       <ElButton type="primary" @click="$emit('open', node!.id)">
-        <i class="pi pi-external-link mr-2" aria-hidden="true"></i> Voir la
-        fiche
+        <i class="pi pi-external-link mr-2" aria-hidden="true"></i>
+        {{ t("graph.nodeDialog.openItem") }}
       </ElButton>
     </template>
   </ElDialog>
@@ -45,11 +47,12 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { useLang } from "@/composables/useLang";
 import {
   defaultImage,
-  displayValue,
   fieldLabel,
+  fieldValue,
   isImageGallery,
   orderedKeys,
   type Schema,
@@ -57,12 +60,13 @@ import {
 import type { GraphNode } from "@/api/types";
 
 // Détail d'un nœud du graphe : image par défaut et attributs (hors galeries),
-// libellés via les x-labels du schéma de l'ItemType.
+// libellés via les x-labels du schéma de l'ItemType ; `typeLabel` = nom affiché du type.
 const props = defineProps<{
   visible: boolean;
   node: GraphNode | null;
   schema: Schema | undefined;
   title: string;
+  typeLabel?: string;
 }>();
 
 defineEmits<{
@@ -71,6 +75,7 @@ defineEmits<{
 }>();
 
 const { lang } = useLang();
+const { t } = useI18n();
 
 const image = computed(() =>
   props.node ? defaultImage(props.schema, props.node.attributes) : "",
@@ -83,7 +88,7 @@ const attributes = computed(() => {
     .filter((k) => k in attrs && !isImageGallery(props.schema, k))
     .map((k) => {
       const value = attrs[k];
-      let text = displayValue(value, lang.value);
+      let text = fieldValue(props.schema, k, value, lang.value);
       if (text === "" && value != null && typeof value === "object") {
         text = JSON.stringify(value);
       }

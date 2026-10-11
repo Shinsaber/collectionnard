@@ -72,24 +72,24 @@ func (a *Auth) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		header := r.Header.Get("Authorization")
 		if header == "" {
-			writeUnauthorized(w, "Token manquant")
+			writeUnauthorized(w, "missing token")
 			return
 		}
 		tokenStr := strings.TrimPrefix(header, "Bearer ")
 		if tokenStr == header {
-			writeUnauthorized(w, "Format Bearer attendu")
+			writeUnauthorized(w, "Bearer token expected")
 			return
 		}
 
 		claims, err := a.ParseToken(tokenStr)
 		if err != nil {
-			writeUnauthorized(w, "Token invalide ou expiré")
+			writeUnauthorized(w, "invalid or expired token")
 			return
 		}
 
 		userID, err := uuid.Parse(claims.Subject)
 		if err != nil {
-			writeUnauthorized(w, "sub invalide")
+			writeUnauthorized(w, "invalid token subject")
 			return
 		}
 
@@ -103,7 +103,7 @@ func (a *Auth) Authenticate(next http.Handler) http.Handler {
 func (a *Auth) RequireAdmin(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if GetRole(r.Context()) != "admin" {
-			writeError(w, http.StatusForbidden, "forbidden", "Droits administrateur requis")
+			writeError(w, http.StatusForbidden, "forbidden", "admin role required")
 			return
 		}
 		next.ServeHTTP(w, r)

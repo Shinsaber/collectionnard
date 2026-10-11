@@ -2,11 +2,12 @@
 // l'affichage. Pendant Go de server/internal/label : les deux implémentations
 // de `renderLabel` doivent rester alignées.
 
+import { DEFAULT_LANG, LANGS, type Lang } from "@/i18n/langs";
+
+export { LANGS, type Lang };
+
 export type Schema = Record<string, unknown>;
 export type Attributes = Record<string, unknown>;
-export type Lang = "fr" | "en";
-
-export const LANGS: Lang[] = ["fr", "en"];
 
 /** Clés essayées, dans l'ordre, quand le schéma n'a pas de `x-label`. */
 export const FALLBACK_LABEL_KEYS = [
@@ -26,7 +27,10 @@ function properties(schema?: Schema | null): Record<string, Schema> {
 }
 
 /** Valeur d'affichage d'un attribut : objet i18n → langue demandée puis repli, tableau → liste, etc. */
-export function displayValue(value: unknown, lang: Lang = "fr"): string {
+export function displayValue(
+  value: unknown,
+  lang: Lang = DEFAULT_LANG,
+): string {
   if (value == null) return "";
   if (Array.isArray(value)) {
     return value
@@ -35,16 +39,31 @@ export function displayValue(value: unknown, lang: Lang = "fr"): string {
       .join(", ");
   }
   if (typeof value === "object") {
-    const obj = value as Record<string, unknown>;
-    const own = obj[lang];
-    if (typeof own === "string" && own !== "") return own;
-    for (const l of LANGS) {
-      const v = obj[l];
-      if (typeof v === "string" && v !== "") return v;
-    }
-    return "";
+    return i18nText(value as Record<string, unknown>, lang);
   }
   return String(value);
+}
+
+/** Ordre de repli : langue demandée, langue par défaut, langues connues, puis les autres clés triées. */
+function fallbackOrder(lang: Lang, keys: string[]): string[] {
+  return [lang, DEFAULT_LANG, ...LANGS, ...[...keys].sort()];
+}
+
+/**
+ * Texte d'un objet i18n (`{fr: "…", en: "…"}`) : la langue demandée, puis la langue
+ * par défaut, puis les autres langues connues, puis toute autre clé (langue saisie mais
+ * pas encore supportée par l'interface). "" si rien. Même ordre que `label.Stringify` (Go).
+ */
+export function i18nText(
+  obj: Record<string, unknown> | null | undefined,
+  lang: Lang = DEFAULT_LANG,
+): string {
+  if (!obj || typeof obj !== "object") return "";
+  for (const l of fallbackOrder(lang, Object.keys(obj))) {
+    const v = obj[l];
+    if (typeof v === "string" && v !== "") return v;
+  }
+  return "";
 }
 
 /** Gabarit `x-label` du schéma, ou "" s'il n'en a pas. */
@@ -60,7 +79,7 @@ export function labelTemplate(schema?: Schema | null): string {
 export function renderLabel(
   schema: Schema | null | undefined,
   attrs: Attributes | null | undefined,
-  lang: Lang = "fr",
+  lang: Lang = DEFAULT_LANG,
 ): string {
   if (!attrs || typeof attrs !== "object") return "";
   const tpl = labelTemplate(schema);
@@ -90,7 +109,7 @@ export function itemLabel(
       }
     | null
     | undefined,
-  lang: Lang = "fr",
+  lang: Lang = DEFAULT_LANG,
 ): string {
   if (!item) return "?";
   const schema = item.item_type?.attributes_schema as Schema | undefined;
@@ -101,17 +120,11 @@ export function itemLabel(
 export function fieldLabel(
   schema: Schema | null | undefined,
   key: string,
-  lang: Lang = "fr",
+  lang: Lang = DEFAULT_LANG,
   fallback: "key" | "pretty" = "key",
 ): string {
-  const labels = schema?.["x-labels"] as
-    Record<string, Record<string, string>> | undefined;
-  const own = labels?.[lang]?.[key];
+  const own = byLang(schema?.["x-labels"], key, lang);
   if (own) return own;
-  for (const l of LANGS) {
-    const v = labels?.[l]?.[key];
-    if (v) return v;
-  }
   if (fallback === "pretty") {
     return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   }
@@ -199,4 +212,87 @@ export function defaultImage(
     }
   }
   return "";
+}
+
+/** Lecture d'une table `{<lang>: {<clé>: "texte"}}` (`x-labels`, `x-enum-labels`), même repli que `i18nText`. */
+function byLang(table: unknown, key: string, lang: Lang): string {
+  if (!table || typeof table !== "object") return "";
+  const t = table as Record<string, Record<string, unknown> | undefined>;
+  for (const l of fallbackOrder(lang, Object.keys(t))) {
+    const v = t[l]?.[key];
+    if (typeof v === "string" && v !== "") return v;
+  }
+  return "";
+}
+
+/**
+ * Libellé d'une valeur d'enum via `x-enum-labels` de la propriété
+ * (`{fr: {tv: "Télévision"}, en: {tv: "TV"}}`), repli sur la valeur brute.
+ */
+export function enumLabel(
+  schema: Schema | null | undefined,
+  key: string,
+  value: unknown,
+  lang: Lang = DEFAULT_LANG,
+): string {
+  const raw = value == null ? "" : String(value);
+  if (raw === "") return "";
+  return byLang(properties(schema)[key]?.["x-enum-labels"], raw, lang) || raw;
+}
+
+/**
+ * Valeur d'affichage d'un attribut connaissant son schéma : libellé d'enum
+ * (`x-enum-labels`, y compris pour un tableau de valeurs), sinon `displayValue`.
+ */
+export function fieldValue(
+  schema: Schema | null | undefined,
+  key: string,
+  value: unknown,
+  lang: Lang = DEFAULT_LANG,
+): string {
+  if (properties(schema)[key]?.["x-enum-labels"]) {
+    if (Array.isArray(value)) {
+      return value
+        .map((v) => enumLabel(schema, key, v, lang))
+        .filter((s) => s !== "")
+        .join(", ");
+    }
+    if (typeof value === "string") return enumLabel(schema, key, value, lang);
+  }
+  return displayValue(value, lang);
+}
+
+/** Méta-type (ItemType, RelationType, CollectionType) tel que lu par `typeTitle` / `typeDescription`. */
+export interface MetaTypeLike {
+  name: string;
+  description?: string | null;
+  attributes_schema?: unknown;
+}
+
+/**
+ * Nom affiché d'un méta-type : extension racine `x-title` de son schéma
+ * (`{fr: "Série", en: "Series"}`), repli sur `name` (identifiant technique).
+ */
+export function typeTitle(
+  type: MetaTypeLike | null | undefined,
+  lang: Lang = DEFAULT_LANG,
+): string {
+  if (!type) return "";
+  const schema = type.attributes_schema as Schema | null | undefined;
+  return (
+    i18nText(schema?.["x-title"] as Record<string, unknown>, lang) || type.name
+  );
+}
+
+/** Description affichée d'un méta-type : `x-description` du schéma, repli sur `description`. */
+export function typeDescription(
+  type: MetaTypeLike | null | undefined,
+  lang: Lang = DEFAULT_LANG,
+): string {
+  if (!type) return "";
+  const schema = type.attributes_schema as Schema | null | undefined;
+  return (
+    i18nText(schema?.["x-description"] as Record<string, unknown>, lang) ||
+    (type.description ?? "")
+  );
 }

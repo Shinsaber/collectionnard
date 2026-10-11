@@ -28,7 +28,7 @@
         v-else-if="field.enum"
         :id="`${uid}-${field.name}`"
         :model-value="(model[field.name] as string | undefined) ?? undefined"
-        placeholder="Choisir..."
+        :placeholder="t('schema.form.choose')"
         clearable
         :class="{ 'is-error': !!errors[field.name] }"
         @update:model-value="update(field.name, $event)"
@@ -36,7 +36,7 @@
         <ElOption
           v-for="opt in field.enum"
           :key="opt"
-          :label="opt"
+          :label="enumLabel(schema, field.name, opt, lang)"
           :value="opt"
         />
       </ElSelect>
@@ -93,7 +93,7 @@
       <div
         v-else-if="field.widget === 'i18n-text'"
         :id="`${uid}-${field.name}`"
-        class="grid grid-cols-2 gap-2"
+        class="grid grid-cols-1 sm:grid-cols-2 gap-2"
         role="group"
         :aria-labelledby="`${uid}-${field.name}-label`"
       >
@@ -149,16 +149,18 @@
       v-if="fields.length === 0"
       class="text-sm text-gray-400 dark:text-gray-500 italic"
     >
-      Aucun attribut défini pour ce type.
+      {{ t("schema.form.noAttributes") }}
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, useId } from "vue";
+import { useI18n } from "vue-i18n";
 import { useLang } from "@/composables/useLang";
 import {
   LANGS,
+  enumLabel,
   fieldLabel,
   imageCategories,
   orderedKeys,
@@ -191,6 +193,7 @@ const emit = defineEmits<{
 // Préfixe unique des ids (plusieurs formulaires peuvent coexister dans une page).
 const uid = useId();
 const { lang } = useLang();
+const { t } = useI18n();
 const model = computed(() => props.modelValue);
 
 const fields = computed<SchemaField[]>(() => {
@@ -285,7 +288,7 @@ function validate(): boolean {
   for (const field of fields.value) {
     const val = model.value[field.name];
     if (field.required && (val === undefined || val === null || val === "")) {
-      errors[field.name] = "Ce champ est requis";
+      errors[field.name] = t("errors.required");
       valid = false;
     }
     if (
@@ -294,7 +297,7 @@ function validate(): boolean {
       val !== "" &&
       !isValidUrl(val)
     ) {
-      errors[field.name] = "URL invalide";
+      errors[field.name] = t("errors.invalidUrl");
       valid = false;
     }
   }

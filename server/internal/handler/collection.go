@@ -38,7 +38,7 @@ func (h *Handler) GetCollection(w http.ResponseWriter, r *http.Request) {
 	}
 	// Ensure user can only see their own collections
 	if col.UserID != middleware.GetUserID(r.Context()) {
-		respondError(w, http.StatusNotFound, "not_found", "Ressource non trouvée")
+		respondError(w, http.StatusNotFound, "not_found", "resource not found")
 		return
 	}
 	respondJSON(w, http.StatusOK, col)
@@ -51,7 +51,7 @@ func (h *Handler) CreateCollection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if in.Name == "" {
-		respondValidationError(w, "Le nom est obligatoire", nil)
+		respondValidationError(w, "name is required", nil)
 		return
 	}
 
@@ -77,7 +77,7 @@ func (h *Handler) UpdateCollection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if col.UserID != middleware.GetUserID(r.Context()) {
-		respondError(w, http.StatusNotFound, "not_found", "Ressource non trouvée")
+		respondError(w, http.StatusNotFound, "not_found", "resource not found")
 		return
 	}
 
@@ -105,7 +105,7 @@ func (h *Handler) DeleteCollection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if col.UserID != middleware.GetUserID(r.Context()) {
-		respondError(w, http.StatusNotFound, "not_found", "Ressource non trouvée")
+		respondError(w, http.StatusNotFound, "not_found", "resource not found")
 		return
 	}
 
@@ -130,7 +130,7 @@ func (h *Handler) ListCollectionItems(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if col.UserID != middleware.GetUserID(r.Context()) {
-		respondError(w, http.StatusNotFound, "not_found", "Ressource non trouvée")
+		respondError(w, http.StatusNotFound, "not_found", "resource not found")
 		return
 	}
 
@@ -164,7 +164,7 @@ func (h *Handler) AddItemToCollection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if col.UserID != middleware.GetUserID(r.Context()) {
-		respondError(w, http.StatusNotFound, "not_found", "Ressource non trouvée")
+		respondError(w, http.StatusNotFound, "not_found", "resource not found")
 		return
 	}
 
@@ -184,7 +184,7 @@ func (h *Handler) AddItemToCollection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if vErr := validator.ValidateAttributes(ct.AttributesSchema, in.Attributes); vErr != nil {
-		respondValidationError(w, "Les attributs ne respectent pas le schéma du type de collection", map[string]any{
+		respondValidationError(w, "attributes do not match the collection type schema", map[string]any{
 			"fields": validator.FormatValidationError(vErr),
 		})
 		return
@@ -193,7 +193,7 @@ func (h *Handler) AddItemToCollection(w http.ResponseWriter, r *http.Request) {
 	ci, err := h.Store.AddCollectionItem(r.Context(), colID, in)
 	if err != nil {
 		if err == store.ErrConflict {
-			respondError(w, http.StatusConflict, "conflict", "Cet item est déjà dans la collection")
+			respondError(w, http.StatusConflict, "conflict", "this item is already in the collection")
 			return
 		}
 		handleStoreError(w, r, err)
@@ -218,7 +218,7 @@ func (h *Handler) UpdateCollectionItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if col.UserID != middleware.GetUserID(r.Context()) {
-		respondError(w, http.StatusNotFound, "not_found", "Ressource non trouvée")
+		respondError(w, http.StatusNotFound, "not_found", "resource not found")
 		return
 	}
 
@@ -239,7 +239,7 @@ func (h *Handler) UpdateCollectionItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if vErr := validator.ValidateAttributes(ct.AttributesSchema, in.Attributes); vErr != nil {
-		respondValidationError(w, "Les attributs ne respectent pas le schéma du type de collection", map[string]any{
+		respondValidationError(w, "attributes do not match the collection type schema", map[string]any{
 			"fields": validator.FormatValidationError(vErr),
 		})
 		return
@@ -269,7 +269,7 @@ func (h *Handler) RemoveItemFromCollection(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	if col.UserID != middleware.GetUserID(r.Context()) {
-		respondError(w, http.StatusNotFound, "not_found", "Ressource non trouvée")
+		respondError(w, http.StatusNotFound, "not_found", "resource not found")
 		return
 	}
 

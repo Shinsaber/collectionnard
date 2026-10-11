@@ -73,7 +73,7 @@ func (rl *RateLimiter) Handler(next http.Handler) http.Handler {
 			seconds := int(retryAfter.Seconds()) + 1
 			w.Header().Set("Retry-After", strconv.Itoa(seconds))
 			writeError(w, http.StatusTooManyRequests, "rate_limited",
-				"Trop de tentatives, réessayez dans "+strconv.Itoa(seconds)+" s")
+				"too many attempts, retry in "+strconv.Itoa(seconds)+" s")
 			return
 		}
 		next.ServeHTTP(w, r)

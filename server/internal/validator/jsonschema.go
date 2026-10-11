@@ -34,7 +34,7 @@ func compile(schemaJSON json.RawMessage) (*jsonschema.Schema, error) {
 	c := jsonschema.NewCompiler()
 	c.Draft = jsonschema.Draft2020
 	c.LoadURL = func(url string) (io.ReadCloser, error) {
-		return nil, fmt.Errorf("référence externe interdite: %s", url)
+		return nil, fmt.Errorf("external reference not allowed: %s", url)
 	}
 	if err := c.AddResource("schema.json", bytes.NewReader(schemaJSON)); err != nil {
 		return nil, fmt.Errorf("invalid schema: %w", err)
@@ -56,17 +56,17 @@ func CheckSchema(schemaJSON json.RawMessage) error {
 	}
 	var obj map[string]any
 	if err := json.Unmarshal(schemaJSON, &obj); err != nil {
-		return fmt.Errorf("JSON invalide: %w", err)
+		return fmt.Errorf("invalid JSON: %w", err)
 	}
 	switch t := obj["type"].(type) {
 	case nil:
-		return errors.New(`"type": "object" est requis à la racine du schéma`)
+		return errors.New(`"type": "object" is required at the schema root`)
 	case string:
 		if t != "object" {
-			return fmt.Errorf(`le type racine doit être "object" (reçu %q)`, t)
+			return fmt.Errorf(`root type must be "object" (got %q)`, t)
 		}
 	default:
-		return errors.New(`le type racine doit être exactement "object"`)
+		return errors.New(`root type must be exactly "object"`)
 	}
 	_, err := compile(schemaJSON)
 	return err

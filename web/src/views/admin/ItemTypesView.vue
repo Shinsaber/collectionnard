@@ -2,10 +2,11 @@
   <div>
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
-        Types d'items
+        {{ t("admin.itemTypes.title") }}
       </h1>
       <ElButton type="primary" @click="openCreate">
-        <i class="pi pi-plus mr-2" aria-hidden="true"></i> Nouveau type
+        <i class="pi pi-plus mr-2" aria-hidden="true"></i>
+        {{ t("admin.shared.newType") }}
       </ElButton>
     </div>
 
@@ -15,22 +16,35 @@
       stripe
       row-key="id"
     >
-      <ElTableColumn prop="name" label="Nom" width="200" />
-      <ElTableColumn prop="description" label="Description" />
-      <ElTableColumn label="Champs schema">
+      <ElTableColumn :label="t('common.name')" width="200">
+        <template #default="{ row }">
+          {{ typeTitle(row as ItemType, lang) }}
+          <span
+            v-if="typeTitle(row as ItemType, lang) !== (row as ItemType).name"
+            class="ml-1 text-xs text-gray-400 dark:text-gray-500"
+            >{{ (row as ItemType).name }}</span
+          >
+        </template>
+      </ElTableColumn>
+      <ElTableColumn :label="t('common.description')">
+        <template #default="{ row }">
+          {{ typeDescription(row as ItemType, lang) }}
+        </template>
+      </ElTableColumn>
+      <ElTableColumn :label="t('admin.itemTypes.schemaFields')">
         <template #default="{ row }">
           <div class="text-xs text-gray-500 dark:text-gray-400">
             {{ schemaFieldNames((row as ItemType).attributes_schema) }}
           </div>
         </template>
       </ElTableColumn>
-      <ElTableColumn label="Actions" width="110">
+      <ElTableColumn :label="t('common.actions')" width="110">
         <template #default="{ row }">
           <div class="flex gap-1">
             <ElButton
               text
               size="small"
-              aria-label="Modifier"
+              :aria-label="t('common.edit')"
               @click="openEdit(row as ItemType)"
             >
               <i class="pi pi-pencil" aria-hidden="true"></i>
@@ -39,7 +53,7 @@
               text
               size="small"
               type="danger"
-              aria-label="Supprimer"
+              :aria-label="t('common.delete')"
               @click="confirmDelete(row as ItemType)"
             >
               <i class="pi pi-trash" aria-hidden="true"></i>
@@ -60,20 +74,30 @@
     <!-- Create / Edit Dialog -->
     <ElDialog
       v-model="dialogVisible"
-      :title="editing ? 'Modifier le type' : 'Nouveau type'"
+      :title="editing ? t('admin.shared.editType') : t('admin.shared.newType')"
       width="48rem"
     >
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-1">
-          <label for="type-name" class="text-sm font-medium">Nom</label>
+          <label for="type-name" class="text-sm font-medium">{{
+            t("admin.shared.technicalName")
+          }}</label>
           <ElInput
             id="type-name"
             v-model="form.name"
-            placeholder="Ex: Series, Episode, DVD..."
+            :placeholder="t('admin.itemTypes.namePlaceholder')"
+            aria-describedby="type-name-help"
           />
+          <small
+            id="type-name-help"
+            class="text-xs text-gray-500 dark:text-gray-400"
+            >{{ t("admin.shared.technicalNameHelp") }}</small
+          >
         </div>
         <div class="flex flex-col gap-1">
-          <label for="type-desc" class="text-sm font-medium">Description</label>
+          <label for="type-desc" class="text-sm font-medium">{{
+            t("common.description")
+          }}</label>
           <ElInput
             id="type-desc"
             v-model="form.description"
@@ -82,15 +106,19 @@
           />
         </div>
         <div class="flex flex-col gap-1">
-          <span class="text-sm font-medium">Attributs</span>
+          <span class="text-sm font-medium">{{
+            t("admin.itemTypes.attributes")
+          }}</span>
           <SchemaBuilder ref="schemaBuilderRef" v-model="schemaValue" />
         </div>
       </div>
       <template #footer>
-        <ElButton text @click="dialogVisible = false">Annuler</ElButton>
+        <ElButton text @click="dialogVisible = false">{{
+          t("common.cancel")
+        }}</ElButton>
         <ElButton type="primary" :loading="saving" @click="save">
           <i class="pi pi-check mr-2" aria-hidden="true"></i>
-          {{ editing ? "Enregistrer" : "Créer" }}
+          {{ editing ? t("common.save") : t("common.create") }}
         </ElButton>
       </template>
     </ElDialog>
@@ -99,16 +127,23 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { useI18n } from "vue-i18n";
 import { itemTypeApi } from "@/api/client";
 import { usePagination } from "@/composables/usePagination";
 import { useNotify } from "@/composables/useNotify";
 import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import { useMetaTypes } from "@/stores/metaTypes";
 import { useLang } from "@/composables/useLang";
-import { fieldLabel, orderedKeys } from "@/lib/schema";
+import {
+  fieldLabel,
+  orderedKeys,
+  typeDescription,
+  typeTitle,
+} from "@/lib/schema";
 import SchemaBuilder from "@/components/common/SchemaBuilder.vue";
 import type { ItemType } from "@/api/types";
 
+const { t } = useI18n();
 const { notifyError, notifySuccess } = useNotify();
 const { confirm } = useConfirmDialog();
 const pag = usePagination(itemTypeApi.list);
@@ -130,7 +165,7 @@ const schemaBuilderRef = ref<InstanceType<typeof SchemaBuilder> | null>(null);
 onMounted(() => load());
 
 function load() {
-  pag.load().catch((e) => notifyError(e, "Chargement impossible"));
+  pag.load().catch((e) => notifyError(e, t("admin.shared.loadFailed")));
 }
 
 function onPageChange(p: number) {
@@ -166,10 +201,10 @@ async function save() {
     const payload = { ...form.value, attributes_schema: schemaValue.value };
     if (editing.value) {
       await itemTypeApi.update(editing.value.id, payload);
-      notifySuccess("Type modifié");
+      notifySuccess(t("admin.shared.updated"));
     } else {
       await itemTypeApi.create(payload);
-      notifySuccess("Type créé");
+      notifySuccess(t("admin.shared.created"));
     }
     dialogVisible.value = false;
     metaTypes.invalidate();
@@ -183,14 +218,16 @@ async function save() {
 
 async function confirmDelete(row: ItemType) {
   const ok = await confirm({
-    message: `Supprimer le type « ${row.name} » ?`,
-    confirmText: "Supprimer",
+    message: t("admin.shared.confirmDelete", {
+      name: typeTitle(row, lang.value),
+    }),
+    confirmText: t("common.delete"),
     danger: true,
   });
   if (!ok) return;
   try {
     await itemTypeApi.delete(row.id);
-    notifySuccess("Type supprimé");
+    notifySuccess(t("admin.shared.deleted"));
     metaTypes.invalidate();
     load();
   } catch (e) {

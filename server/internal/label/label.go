@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -18,7 +19,8 @@ var placeholder = regexp.MustCompile(`\{([A-Za-z0-9_.-]+)\}`)
 // English first (project convention), then the historical French keys.
 var FallbackKeys = []string{"title", "name", "label", "titre", "nom", "number", "numero"}
 
-// Langs is the preference order used to pick a value in an i18n object ({fr, en}).
+// Langs is the preference order used to pick a value in an i18n object ({fr, en});
+// Langs[0] is the default language. It must stay aligned with web/src/i18n/langs.ts.
 var Langs = []string{"fr", "en"}
 
 // Template returns the `x-label` template of a schema, or "" when absent.
@@ -63,7 +65,8 @@ func Render(schema, attrs json.RawMessage, lang string) string {
 
 // Stringify renders an attribute value for display: strings as is, numbers
 // without trailing zeros, booleans, i18n objects by preferred language, arrays
-// joined by ", ".
+// joined by ", ". An i18n object tries lang, then Langs, then its remaining
+// keys sorted alphabetically.
 func Stringify(v any, lang string) string {
 	switch t := v.(type) {
 	case nil:
@@ -90,6 +93,17 @@ func Stringify(v any, lang string) string {
 		}
 		for _, l := range Langs {
 			if s, ok := t[l].(string); ok && s != "" {
+				return s
+			}
+		}
+		// Last resort: any other key, in alphabetical order (same order as the front).
+		keys := make([]string, 0, len(t))
+		for k := range t {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			if s, ok := t[k].(string); ok && s != "" {
 				return s
 			}
 		}

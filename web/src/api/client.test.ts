@@ -1,5 +1,6 @@
 import { AxiosError, type AxiosResponse } from "axios";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
+import { i18n } from "@/i18n";
 import { extractApiError } from "./client";
 
 function axiosError(status: number, data: unknown): AxiosError {
@@ -19,29 +20,40 @@ function axiosError(status: number, data: unknown): AxiosError {
 }
 
 describe("extractApiError", () => {
-  it("renvoie le message APIError et les erreurs par champ (sans le / initial)", () => {
+  afterEach(() => {
+    i18n.global.locale.value = "fr";
+  });
+
+  it("traduit le code d'erreur et renvoie les erreurs par champ (sans le / initial)", () => {
     const e = axiosError(422, {
       error: "validation_error",
-      message: "Les attributs ne respectent pas le schéma",
+      message: "Attributes do not match the schema",
       details: { fields: { "/titre": "required", "/annee": "minimum" } },
     });
     expect(extractApiError(e)).toEqual({
-      message: "Les attributs ne respectent pas le schéma",
+      code: "validation_error",
+      message: "Données invalides",
       fieldErrors: { titre: "required", annee: "minimum" },
     });
   });
 
-  it("n'a pas de fieldErrors sans details", () => {
+  it("suit la langue courante et n'a pas de fieldErrors sans details", () => {
+    i18n.global.locale.value = "en";
     const e = axiosError(404, {
       error: "not_found",
-      message: "Ressource non trouvée",
+      message: "Item not found",
     });
     const res = extractApiError(e);
-    expect(res.message).toBe("Ressource non trouvée");
+    expect(res.message).toBe("Not found");
     expect(res.fieldErrors).toBeUndefined();
   });
 
-  it("retombe sur le message axios si le corps n'a pas de message", () => {
+  it("garde le message du serveur pour un code inconnu", () => {
+    const e = axiosError(418, { error: "teapot", message: "I'm a teapot" });
+    expect(extractApiError(e).message).toBe("I'm a teapot");
+  });
+
+  it("retombe sur le message axios si le corps n'a ni code ni message", () => {
     const e = axiosError(500, { oops: true });
     expect(extractApiError(e).message).toBe("Request failed");
   });

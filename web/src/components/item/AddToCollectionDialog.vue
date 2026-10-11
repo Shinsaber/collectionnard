@@ -1,7 +1,7 @@
 <template>
   <ElDialog
     :model-value="visible"
-    title="Ajouter à une collection"
+    :title="t('items.addToCollection.title')"
     width="32rem"
     @update:model-value="$emit('update:visible', $event)"
   >
@@ -10,20 +10,19 @@
         v-if="availableCollections.length === 0"
         class="text-sm text-gray-400 dark:text-gray-500 italic"
       >
-        Aucune collection disponible (toutes contiennent déjà cet item, ou vous
-        n'avez pas de collection).
+        {{ t("items.addToCollection.empty") }}
       </div>
       <template v-else>
         <div class="flex flex-col gap-1">
           <label
             for="add-to-collection-select"
             class="text-sm font-medium text-gray-700 dark:text-gray-300"
-            >Collection</label
+            >{{ t("items.addToCollection.collection") }}</label
           >
           <ElSelect
             id="add-to-collection-select"
             v-model="selectedCollectionId"
-            placeholder="Choisir une collection…"
+            :placeholder="t('items.addToCollection.chooseCollection')"
           >
             <ElOption
               v-for="c in availableCollections"
@@ -42,7 +41,7 @@
         >
           <span
             class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block"
-            >Attributs contextuels</span
+            >{{ t("items.addToCollection.contextAttributes") }}</span
           >
           <DynamicForm
             ref="formRef"
@@ -55,14 +54,17 @@
     </div>
 
     <template #footer>
-      <ElButton text @click="$emit('update:visible', false)">Annuler</ElButton>
+      <ElButton text @click="$emit('update:visible', false)">{{
+        t("common.cancel")
+      }}</ElButton>
       <ElButton
         type="primary"
         :disabled="!selectedCollectionId"
         :loading="saving"
         @click="submit"
       >
-        <i class="pi pi-plus mr-2" aria-hidden="true"></i> Ajouter
+        <i class="pi pi-plus mr-2" aria-hidden="true"></i>
+        {{ t("common.add") }}
       </ElButton>
     </template>
   </ElDialog>
@@ -70,6 +72,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { collectionApi } from "@/api/client";
 import { useNotify } from "@/composables/useNotify";
 import DynamicForm from "@/components/common/DynamicForm.vue";
@@ -87,6 +90,7 @@ const emit = defineEmits<{
   added: [];
 }>();
 
+const { t } = useI18n();
 const { notifyError, notifySuccess } = useNotify();
 
 const collections = ref<Collection[]>([]);
@@ -119,7 +123,7 @@ watch(
       collections.value = (await collectionApi.list({ per_page: 100 })).data;
     } catch (e) {
       collections.value = [];
-      notifyError(e, "Collections indisponibles");
+      notifyError(e, t("items.addToCollection.collectionsUnavailable"));
     }
   },
 );
@@ -133,7 +137,7 @@ async function submit() {
       item_id: props.item.id,
       attributes: attrs.value,
     });
-    notifySuccess("Item ajouté à la collection");
+    notifySuccess(t("items.addToCollection.added"));
     emit("update:visible", false);
     emit("added");
   } catch (e) {

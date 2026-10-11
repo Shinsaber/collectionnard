@@ -15,6 +15,8 @@ func TestRender(t *testing.T) {
 		{"placeholder manquant → espaces réduits", `{"x-label":"{number}. {title}"}`, `{"title":"Pilot"}`, "fr", ". Pilot"},
 		{"i18n selon la langue", `{"x-label":"{title}"}`, `{"title":{"fr":"Le Pilote","en":"Pilot"}}`, "en", "Pilot"},
 		{"i18n repli fr", `{"x-label":"{title}"}`, `{"title":{"fr":"Le Pilote"}}`, "de", "Le Pilote"},
+		{"i18n repli clés restantes triées", `{"x-label":"{title}"}`, `{"title":{"ja":"パイロット","de":"","es":"Piloto"}}`, "fr", "Piloto"},
+		{"i18n sans valeur utilisable", `{"x-label":"{title}"}`, `{"title":{"de":"","n":1}}`, "fr", ""},
 		{"fallback anglais", `{"type":"object"}`, `{"name":"AMC"}`, "fr", "AMC"},
 		{"fallback français historique", `{}`, `{"titre":"Breaking Bad"}`, "fr", "Breaking Bad"},
 		{"fallback nombre", ``, `{"numero":3}`, "fr", "3"},

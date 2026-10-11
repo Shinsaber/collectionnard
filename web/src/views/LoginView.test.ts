@@ -2,7 +2,9 @@ import { flushPromises, mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import ElementPlus from "element-plus";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { nextTick } from "vue";
 import { createMemoryHistory, createRouter } from "vue-router";
+import { useLang } from "@/composables/useLang";
 import LoginView from "./LoginView.vue";
 
 const { loginMock } = vi.hoisted(() => ({ loginMock: vi.fn() }));
@@ -25,10 +27,13 @@ function mountLogin() {
 }
 
 describe("LoginView", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     setActivePinia(createPinia());
     loginMock.mockReset();
     localStorage.clear();
+    // jsdom annonce en-US : on fixe la langue de l'interface (textes attendus en français).
+    useLang().setLang("fr");
+    await nextTick();
   });
 
   it("connecte l'utilisateur et redirige vers l'accueil", async () => {

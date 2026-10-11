@@ -7,7 +7,7 @@
         class="flex items-center gap-2 mt-2 first:mt-0 mb-0.5 px-2"
       >
         <ElTag size="small" type="info">{{
-          rel.relation_type?.name ?? "?"
+          typeTitle(rel.relation_type, lang) || "?"
         }}</ElTag>
         <span class="text-xs text-gray-400 dark:text-gray-500"
           >({{ typeCount(rel.relation_type_id) }})</span
@@ -49,7 +49,7 @@
           <span
             v-if="orderVal(rel) != null"
             class="bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 text-[11px] font-semibold font-mono rounded-sm px-1.5 py-0.5 shrink-0"
-            title="Ordre"
+            :title="t('items.relations.order')"
           >
             #{{ orderVal(rel) }}
           </span>
@@ -69,7 +69,8 @@
               :key="String(key)"
               class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[11px] rounded-full px-2 py-0.5"
             >
-              {{ attrLabel(rel, String(key)) }}: {{ displayValue(val) }}
+              {{ attrLabel(rel, String(key)) }}:
+              {{ attrValue(rel, String(key), val) }}
             </span>
           </div>
 
@@ -79,11 +80,11 @@
               text
               size="small"
               circle
-              title="Sous-relations"
+              :title="t('items.relations.subRelations')"
               :aria-label="
                 expanded.has(rel.id)
-                  ? 'Replier les sous-relations'
-                  : 'Déplier les sous-relations'
+                  ? t('items.relations.collapse')
+                  : t('items.relations.expand')
               "
               :aria-expanded="expanded.has(rel.id)"
               @click.stop="toggle(rel)"
@@ -102,8 +103,8 @@
               text
               size="small"
               circle
-              title="Modifier"
-              aria-label="Modifier la relation"
+              :title="t('common.edit')"
+              :aria-label="t('items.relations.editRelation')"
               class="opacity-0 group-hover/rel:opacity-100 focus:opacity-100 transition-opacity"
               @click.stop="$emit('edit', rel)"
             >
@@ -115,8 +116,8 @@
               size="small"
               circle
               type="danger"
-              title="Supprimer"
-              aria-label="Supprimer la relation"
+              :title="t('common.delete')"
+              :aria-label="t('items.relations.deleteRelation')"
               class="opacity-0 group-hover/rel:opacity-100 focus:opacity-100 transition-opacity"
               @click.stop="$emit('delete', rel)"
             >
@@ -134,13 +135,14 @@
             v-if="loading.has(rel.id)"
             class="py-2 text-xs text-gray-400 dark:text-gray-500"
           >
-            <i class="pi pi-spin pi-spinner mr-1"></i> Chargement…
+            <i class="pi pi-spin pi-spinner mr-1"></i>
+            {{ t("common.loading") }}
           </div>
           <div
             v-else-if="!children[rel.id]?.length"
             class="py-2 text-xs text-gray-400 dark:text-gray-500 italic"
           >
-            Aucune sous-relation sortante.
+            {{ t("items.relations.noSubRelations") }}
           </div>
           <RelationTree
             v-else
@@ -157,14 +159,17 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { itemApi } from "@/api/client";
 import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";
 import {
-  displayValue as displayAttr,
   fieldLabel,
+  fieldValue,
   itemLabel as renderItemLabel,
   orderedKeys,
+  typeTitle,
+  type Schema,
 } from "@/lib/schema";
 import type { Item, ItemRelation } from "@/api/types";
 
@@ -183,6 +188,7 @@ defineEmits<{
   edit: [rel: ItemRelation];
 }>();
 
+const { t } = useI18n();
 const { lang } = useLang();
 const { notifyError } = useNotify();
 const expanded = ref(new Set<string>());
@@ -199,7 +205,7 @@ function linkedId(rel: ItemRelation): string {
 
 function linkedTypeName(rel: ItemRelation): string {
   const linked = isOutgoing(rel) ? rel.target_item : rel.source_item;
-  return linked?.item_type?.name ?? "?";
+  return typeTitle(linked?.item_type, lang.value) || "?";
 }
 
 function linkedLabel(rel: ItemRelation): string {
@@ -212,8 +218,8 @@ function computeLabel(i: Item): string {
   return renderItemLabel(i, lang.value);
 }
 
-function displayValue(value: unknown): string {
-  return displayAttr(value, lang.value);
+function relSchema(rel: ItemRelation): Schema | undefined {
+  return rel.relation_type?.attributes_schema as Schema | undefined;
 }
 
 // Convention : l'attribut de relation `order` (entier) sert au tri et s'affiche en badge.
@@ -224,10 +230,8 @@ function orderVal(rel: ItemRelation): unknown {
 }
 
 function displayAttrs(rel: ItemRelation): Record<string, unknown> {
-  const schema = rel.relation_type?.attributes_schema as
-    Record<string, unknown> | undefined;
   const result: Record<string, unknown> = {};
-  for (const k of orderedKeys(schema, rel.attributes)) {
+  for (const k of orderedKeys(relSchema(rel), rel.attributes)) {
     if (k === ORDER_KEY || !(k in (rel.attributes ?? {}))) continue;
     result[k] = rel.attributes[k];
   }
@@ -235,9 +239,11 @@ function displayAttrs(rel: ItemRelation): Record<string, unknown> {
 }
 
 function attrLabel(rel: ItemRelation, key: string): string {
-  const schema = rel.relation_type?.attributes_schema as
-    Record<string, unknown> | undefined;
-  return fieldLabel(schema, key, lang.value);
+  return fieldLabel(relSchema(rel), key, lang.value);
+}
+
+function attrValue(rel: ItemRelation, key: string, value: unknown): string {
+  return fieldValue(relSchema(rel), key, value, lang.value);
 }
 
 const sortedRelations = computed(() => {
@@ -291,7 +297,7 @@ async function toggle(rel: ItemRelation) {
     );
   } catch (e) {
     children.value[rel.id] = [];
-    notifyError(e, "Sous-relations indisponibles");
+    notifyError(e, t("items.relations.subRelationsUnavailable"));
   } finally {
     loading.value.delete(rel.id);
     loading.value = new Set(loading.value);

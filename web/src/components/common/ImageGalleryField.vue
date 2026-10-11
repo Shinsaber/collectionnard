@@ -15,8 +15,13 @@
             type="button"
             class="block rounded-sm border focus:outline-hidden focus:ring-2 focus:ring-blue-500"
             :class="{ 'ring-2 ring-blue-500': defaultUrl === url }"
-            :title="'Définir comme image par défaut'"
-            :aria-label="`Définir l'image ${imgIdx + 1} de ${cat.name} comme image par défaut`"
+            :title="t('schema.gallery.setDefault')"
+            :aria-label="
+              t('schema.gallery.setDefaultN', {
+                n: imgIdx + 1,
+                category: cat.name,
+              })
+            "
             :aria-pressed="defaultUrl === url"
             @click="setDefault(url)"
           >
@@ -30,7 +35,9 @@
           <button
             type="button"
             class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
-            :aria-label="`Supprimer l'image ${imgIdx + 1} de ${cat.name}`"
+            :aria-label="
+              t('schema.gallery.removeN', { n: imgIdx + 1, category: cat.name })
+            "
             @click="removeImage(cat.name, imgIdx)"
           >
             ×
@@ -43,7 +50,7 @@
           type="file"
           accept="image/jpeg,image/png,image/gif,image/webp"
           class="hidden"
-          :aria-label="`Fichier image pour ${cat.name}`"
+          :aria-label="t('schema.gallery.file', { category: cat.name })"
           @change="handleUpload(cat.name, $event)"
         />
         <ElButton
@@ -52,12 +59,13 @@
           :loading="uploading[cat.name] ?? false"
           @click="fileInputs[cat.name]?.click()"
         >
-          <i class="pi pi-upload mr-2" aria-hidden="true"></i> Ajouter
+          <i class="pi pi-upload mr-2" aria-hidden="true"></i>
+          {{ t("common.add") }}
         </ElButton>
       </div>
     </div>
     <div v-if="defaultUrl" class="text-xs text-gray-400 dark:text-gray-500">
-      Image par défaut :
+      {{ t("schema.gallery.default") }}
       <span class="font-medium text-gray-600 dark:text-gray-300">{{
         defaultUrl
       }}</span>
@@ -68,6 +76,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from "vue";
 import { uploadApi } from "@/api/client";
+import { useI18n } from "vue-i18n";
 import { useNotify } from "@/composables/useNotify";
 
 // Widget `x-widget: image-gallery` : un tableau d'URLs par catégorie
@@ -83,6 +92,7 @@ const emit = defineEmits<{
 }>();
 
 const { notifyError } = useNotify();
+const { t } = useI18n();
 
 const data = computed(() => props.modelValue ?? {});
 const defaultUrl = computed(() => (data.value.default_image as string) ?? "");
@@ -121,7 +131,7 @@ async function handleUpload(cat: string, event: Event) {
     if (!next.default_image) next.default_image = resp.url;
     emit("update:modelValue", next);
   } catch (e) {
-    notifyError(e, "Upload impossible");
+    notifyError(e, t("schema.gallery.uploadFailed"));
   } finally {
     uploading[cat] = false;
     input.value = "";

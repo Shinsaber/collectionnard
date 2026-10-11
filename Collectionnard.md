@@ -162,7 +162,10 @@ une abstraction de ce schéma ; elle n'existe pas dans l'implémentation.
 | -------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `x-order`            | racine    | Ordre d'affichage des champs (tableau de clés ; les clés absentes suivent)                                                                                                                               |
 | `x-labels`           | racine    | Libellés par langue : `{ "fr": { "title": "Titre" }, "en": { "title": "Title" } }`                                                                                                                       |
-| `x-widget`           | propriété | Widget dédié : `i18n-text` (objet `{fr, en}`), `image-gallery` (objet de catégories)                                                                                                                     |
+| `x-title`            | racine    | Nom affiché du méta-type par langue : `{ "fr": "Série", "en": "Series" }` ; repli sur la colonne `name` (identifiant technique anglais) |
+| `x-description`      | racine    | Description du méta-type par langue ; repli sur la colonne `description` |
+| `x-enum-labels`      | propriété | Libellés des valeurs d'un `enum` par langue : `{ "fr": { "tv": "Télévision" }, "en": { "tv": "TV" } }` ; repli sur la valeur brute |
+| `x-widget`           | propriété | Widget dédié : `i18n-text` (objet `{fr, en, …}` : une chaîne par langue, codes supplémentaires acceptés), `image-gallery` (objet de catégories)                                                                                                                     |
 | `x-image-categories` | propriété | Catégories d'images et ratios : `{ "poster": { "ratio": "2/3" } }` (avec `image-gallery`)                                                                                                                |
 | `x-label`            | racine    | Gabarit du libellé des instances : `"{title}"`, `"{number}. {title}"`, `"{last_name} {first_name}"` ; sans gabarit, repli sur `title`, `name`, `label` (Go `internal/label`, TS `web/src/lib/schema.ts`) |
 
@@ -170,6 +173,20 @@ Règles d'affichage dérivées du schéma lui-même (pas d'extension) : un `inte
 **et** `maximum` est rendu par un curseur ; un `enum` par une liste déroulante ; `format: date` / `uri` par
 le champ adapté. Toute nouvelle extension doit être gérée par `DynamicForm.vue` **et** `SchemaBuilder.vue`,
 et documentée ici et dans le README.
+
+### Langues (i18n)
+
+L'interface (vue-i18n) et les données suivent la même langue, choisie dans l'en-tête (mémorisée, sinon
+langue du navigateur, sinon `fr`). Toute valeur multilingue (objet `i18n-text`, `x-title`, `x-labels`,
+`x-enum-labels`) se lit avec le même repli : langue demandée → `fr` → autres langues connues → toute autre
+clé (ordre alphabétique) — `i18nText` côté TS, `label.Stringify` côté Go. L'API renvoie des codes d'erreur
+stables (`error`) traduits par le front ; son `message` est un texte technique en anglais.
+
+Ajouter une langue (ex. `de`) : l'ajouter à `LANGS` et `LANG_NAMES` (`web/src/i18n/langs.ts`) et à `Langs`
+(`server/internal/label/label.go`) ; créer `web/src/i18n/locales/de/` (même forme que `fr`, imposée par le
+compilateur et vérifiée par `i18n.test.ts`) ; brancher catalogue et locale Element Plus dans
+`web/src/i18n/index.ts`. Les schémas existants n'ont pas à migrer : les objets `i18n-text` acceptent déjà
+d'autres codes de langue, et les traductions de types / champs / enums se complètent dans le SchemaBuilder.
 
 ---
 
@@ -337,6 +354,7 @@ Lots de `docs/audit/03-feuille-de-route.md`, branche `remise-a-niveau` :
 
 ### Phase 2 : Enrichissement
 
+- [x] Couverture multilingue : interface entière traduite (vue-i18n, fr/en, langues ajoutables via un registre), locale Element Plus, noms de types (`x-title` / `x-description`), valeurs d'enum (`x-enum-labels`), erreurs API traduites par code (messages serveur en anglais), langue du navigateur détectée
 - [ ] Recherche avancée : filtres `attributes[champ]` (index GIN `@>`), tri par attribut (lot 14)
 - [ ] Statistiques et visualisation graphiques
 - [ ] Import/Export CSV/JSON (lot 12)

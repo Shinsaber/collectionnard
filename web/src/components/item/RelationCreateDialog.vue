@@ -1,7 +1,7 @@
 <template>
   <ElDialog
     :model-value="visible"
-    title="Créer une relation"
+    :title="t('items.relationCreate.title')"
     width="34rem"
     @update:model-value="$emit('update:visible', $event)"
   >
@@ -10,18 +10,18 @@
         <label
           for="relation-type-select"
           class="text-sm font-medium text-gray-700 dark:text-gray-300"
-          >Type de relation</label
+          >{{ t("items.relationCreate.relationType") }}</label
         >
         <ElSelect
           id="relation-type-select"
           v-model="relationTypeId"
-          placeholder="Choisir un type…"
+          :placeholder="t('items.relationCreate.chooseType')"
           @change="onRelationTypeChange"
         >
           <ElOption
             v-for="rt in availableRelationTypes"
             :key="rt.id"
-            :label="rt.name"
+            :label="typeTitle(rt, lang)"
             :value="rt.id"
           />
         </ElSelect>
@@ -31,7 +31,7 @@
         <label
           for="relation-direction-select"
           class="text-sm font-medium text-gray-700 dark:text-gray-300"
-          >Direction</label
+          >{{ t("items.relationCreate.direction") }}</label
         >
         <ElSelect
           id="relation-direction-select"
@@ -51,7 +51,7 @@
         <label
           for="relation-item-select"
           class="text-sm font-medium text-gray-700 dark:text-gray-300"
-          >Item lié</label
+          >{{ t("items.relationCreate.linkedItem") }}</label
         >
         <ElSelect
           id="relation-item-select"
@@ -60,7 +60,7 @@
           remote
           :remote-method="loadCandidates"
           :loading="searching"
-          placeholder="Sélectionner un item… (tapez pour rechercher)"
+          :placeholder="t('items.relationCreate.selectItem')"
         >
           <ElOption
             v-for="c in candidates"
@@ -70,7 +70,7 @@
           >
             <div class="flex items-center gap-2">
               <ElTag size="small" type="info">{{
-                c.item_type?.name ?? "?"
+                typeTitle(c.item_type, lang) || "?"
               }}</ElTag>
               <span>{{ c._label }}</span>
             </div>
@@ -81,7 +81,7 @@
       <div v-if="hasFields">
         <span
           class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block"
-          >Attributs</span
+          >{{ t("items.relationCreate.attributes") }}</span
         >
         <DynamicForm
           ref="formRef"
@@ -93,14 +93,17 @@
     </div>
 
     <template #footer>
-      <ElButton text @click="$emit('update:visible', false)">Annuler</ElButton>
+      <ElButton text @click="$emit('update:visible', false)">{{
+        t("common.cancel")
+      }}</ElButton>
       <ElButton
         type="primary"
         :disabled="!relationTypeId || !targetItemId"
         :loading="saving"
         @click="submit"
       >
-        <i class="pi pi-plus mr-2" aria-hidden="true"></i> Créer
+        <i class="pi pi-plus mr-2" aria-hidden="true"></i>
+        {{ t("common.create") }}
       </ElButton>
     </template>
   </ElDialog>
@@ -108,11 +111,12 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { itemApi, relationApi } from "@/api/client";
 import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";
 import { useMetaTypes } from "@/stores/metaTypes";
-import { itemLabel } from "@/lib/schema";
+import { itemLabel, typeTitle } from "@/lib/schema";
 import DynamicForm from "@/components/common/DynamicForm.vue";
 import type { Item, ItemRelation } from "@/api/types";
 
@@ -130,6 +134,7 @@ const emit = defineEmits<{
   created: [];
 }>();
 
+const { t } = useI18n();
 const { lang } = useLang();
 const { notifyError, notifySuccess } = useNotify();
 const metaTypes = useMetaTypes();
@@ -162,9 +167,9 @@ const directionOptions = computed(() => {
   const typeId = props.item.item_type_id;
   const opts: { label: string; value: Direction }[] = [];
   if (rt.source_item_type_ids?.includes(typeId))
-    opts.push({ label: "→ sortant (cet item est la source)", value: "source" });
+    opts.push({ label: t("items.relationCreate.outgoing"), value: "source" });
   if (rt.target_item_type_ids?.includes(typeId))
-    opts.push({ label: "← entrant (cet item est la cible)", value: "target" });
+    opts.push({ label: t("items.relationCreate.incoming"), value: "target" });
   return opts;
 });
 
@@ -188,7 +193,7 @@ watch(
     try {
       await metaTypes.loadRelationTypes();
     } catch (e) {
-      notifyError(e, "Types de relation indisponibles");
+      notifyError(e, t("items.relationCreate.typesUnavailable"));
     }
   },
 );
@@ -235,7 +240,7 @@ async function loadCandidates(search: string) {
       .filter((i) => i.id !== props.item.id && !alreadyLinked.has(i.id))
       .map((i) => ({ ...i, _label: itemLabel(i, lang.value) }));
   } catch (e) {
-    notifyError(e, "Recherche impossible");
+    notifyError(e, t("items.relationCreate.searchFailed"));
   } finally {
     searching.value = false;
   }
@@ -253,7 +258,7 @@ async function submit() {
       target_item_id: outgoing ? targetItemId.value : props.item.id,
       attributes: attrs.value,
     });
-    notifySuccess("Relation créée");
+    notifySuccess(t("items.relationCreate.created"));
     emit("update:visible", false);
     emit("created");
   } catch (e) {

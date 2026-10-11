@@ -1,27 +1,12 @@
 <template>
   <div class="flex flex-col gap-4">
-    <!-- Root: item label template (x-label) -->
-    <div
-      class="flex flex-col gap-1 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800"
-    >
-      <label
-        :for="`${uid}-xlabel`"
-        class="text-xs font-medium text-gray-500 dark:text-gray-400"
-        >Libellé des instances (<code>x-label</code>)</label
-      >
-      <ElInput
-        :id="`-xlabel`"
-        v-model="xLabel"
-        placeholder="ex. {title} ou {number}. {title}"
-        class="font-mono"
-      />
-      <span class="text-[11px] text-gray-400 dark:text-gray-500">
-        Gabarit avec les clés des champs entre accolades ; sans gabarit, le
-        premier champ <code>title</code>, <code>name</code> ou
-        <code>label</code>
-        est utilisé.
-      </span>
-    </div>
+    <!-- Root: displayed type name/description per language, item label template -->
+    <SchemaRootCard
+      v-model:x-label="xLabel"
+      v-model:title="xTitle"
+      v-model:description="xDescription"
+      :labels="ft.labels"
+    />
 
     <!-- Field list -->
     <SchemaFieldCard
@@ -43,13 +28,14 @@
       v-if="fields.length === 0"
       class="text-sm text-gray-400 italic text-center py-4 border border-dashed border-gray-300 rounded-lg"
     >
-      Aucun champ défini. Cliquez sur « Ajouter un champ » pour commencer.
+      {{ t("schema.builder.empty") }}
     </div>
 
     <!-- Actions -->
     <div class="flex items-center gap-2">
       <ElButton size="small" plain @click="fields.push(emptyField())">
-        <i class="pi pi-plus mr-2" aria-hidden="true"></i> Ajouter un champ
+        <i class="pi pi-plus mr-2" aria-hidden="true"></i>
+        {{ t("schema.builder.addField") }}
       </ElButton>
       <div class="flex-1"></div>
       <ElButton
@@ -63,7 +49,9 @@
           class="mr-2"
           aria-hidden="true"
         ></i>
-        {{ showRaw ? "Masquer JSON" : "Voir JSON" }}
+        {{
+          showRaw ? t("schema.builder.hideJson") : t("schema.builder.showJson")
+        }}
       </ElButton>
     </div>
 
@@ -74,7 +62,7 @@
         type="textarea"
         readonly
         :rows="12"
-        aria-label="JSON Schema généré"
+        :aria-label="t('schema.builder.generatedJson')"
         class="font-mono text-xs"
       />
     </div>
@@ -82,18 +70,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, useId, watch, type PropType } from "vue";
+import { computed, ref, watch, type PropType } from "vue";
+import { useI18n } from "vue-i18n";
+import { LANGS } from "@/i18n/langs";
 import SchemaFieldCard from "./SchemaFieldCard.vue";
+import SchemaRootCard from "./SchemaRootCard.vue";
 import {
   MANAGED_PROPERTY_KEYS,
   MANAGED_ROOT_KEYS,
+  LANG_CODE_PATTERN,
   arrayTypeOption,
   baseTypeOptions,
+  cleanEnumLabels,
+  column,
   defaultFeatures,
   emptyField,
   i18nTypeOption,
   imageGalleryTypeOption,
   parseImageCategories,
+  stringMap,
   type SchemaBuilderFeatures,
   type SchemaField,
 } from "./schemaBuilderTypes";
@@ -116,7 +111,7 @@ const emit = defineEmits<{
   (e: "update:modelValue", value: Record<string, unknown>): void;
 }>();
 
-const uid = useId();
+const { t } = useI18n();
 
 const ft = computed<SchemaBuilderFeatures>(() => ({
   ...defaultFeatures,
@@ -135,6 +130,9 @@ const fields = ref<SchemaField[]>([]);
 const showRaw = ref(false);
 // Gabarit du libellé des instances (extension racine x-label), ex. "{number}. {title}".
 const xLabel = ref("");
+// Nom et description affichés du méta-type, par langue (extensions racine x-title / x-description).
+const xTitle = ref<Record<string, string>>({});
+const xDescription = ref<Record<string, string>>({});
 // Mots-clés racine inconnus, restitués à l'identique.
 const rootExtra = ref<Record<string, unknown>>({});
 
@@ -150,8 +148,6 @@ function parseSchema(schema: Record<string, unknown>): SchemaField[] {
     Record<string, string>
   >;
   const xOrder = (schema["x-order"] ?? []) as string[];
-  const labelsFr = xLabels["fr"] ?? {};
-  const labelsEn = xLabels["en"] ?? {};
 
   const keys =
     xOrder.length > 0
@@ -175,8 +171,7 @@ function parseSchema(schema: Record<string, unknown>): SchemaField[] {
       return {
         key,
         type,
-        labelFr: labelsFr[key] ?? "",
-        labelEn: labelsEn[key] ?? "",
+        labels: column(xLabels, key),
         required: required.includes(key),
         description: (prop.description as string) ?? null,
         defaultValue: prop.default ?? null,
@@ -185,6 +180,9 @@ function parseSchema(schema: Record<string, unknown>): SchemaField[] {
         pattern: (prop.pattern as string) ?? null,
         format: (prop.format as string) ?? null,
         enum: (prop.enum as string[]) ?? null,
+        enumLabels:
+          (prop["x-enum-labels"] as Record<string, Record<string, string>>) ??
+          null,
         minimum: (prop.minimum as number) ?? null,
         maximum: (prop.maximum as number) ?? null,
         exclusiveMinimum: (prop.exclusiveMinimum as number) ?? null,
@@ -216,7 +214,11 @@ function buildProperty(f: SchemaField): Record<string, unknown> {
     if (f.maxLength != null && f.maxLength > 0) prop.maxLength = f.maxLength;
     if (f.pattern) prop.pattern = f.pattern;
     if (f.format) prop.format = f.format;
-    if (f.enum && f.enum.length > 0) prop.enum = f.enum;
+    if (f.enum && f.enum.length > 0) {
+      prop.enum = f.enum;
+      const enumLabels = cleanEnumLabels(f.enumLabels, f.enum);
+      if (enumLabels) prop["x-enum-labels"] = enumLabels;
+    }
     if (f.defaultValue != null) prop.default = f.defaultValue;
   }
   if (f.type === "integer" || f.type === "number") {
@@ -233,8 +235,13 @@ function buildProperty(f: SchemaField): Record<string, unknown> {
   if (f.type === "i18n-text") {
     prop.type = "object";
     prop["x-widget"] = "i18n-text";
-    prop.properties = { fr: { type: "string" }, en: { type: "string" } };
-    prop.additionalProperties = false;
+    // Une chaîne par langue connue ; d'autres codes de langue restent acceptés
+    // (ajout futur d'une langue sans migrer les schémas existants).
+    prop.properties = Object.fromEntries(
+      LANGS.map((l) => [l, { type: "string" }]),
+    );
+    prop.propertyNames = { pattern: LANG_CODE_PATTERN };
+    prop.additionalProperties = { type: "string" };
   }
   if (f.type === "image-gallery") {
     const cats = (
@@ -266,15 +273,15 @@ function buildProperty(f: SchemaField): Record<string, unknown> {
 const schema = computed<Record<string, unknown>>(() => {
   const properties: Record<string, Record<string, unknown>> = {};
   const requiredKeys: string[] = [];
-  const labelsFr: Record<string, string> = {};
-  const labelsEn: Record<string, string> = {};
+  const xLabels: Record<string, Record<string, string>> = {};
 
   const named = fields.value.filter((f) => f.key.trim());
   for (const f of named) {
     properties[f.key] = buildProperty(f);
     if (f.required) requiredKeys.push(f.key);
-    if (f.labelFr) labelsFr[f.key] = f.labelFr;
-    if (f.labelEn) labelsEn[f.key] = f.labelEn;
+    for (const [l, text] of Object.entries(f.labels ?? {})) {
+      if (text) (xLabels[l] ??= {})[f.key] = text;
+    }
   }
 
   const result: Record<string, unknown> = {
@@ -286,10 +293,10 @@ const schema = computed<Record<string, unknown>>(() => {
   };
   if (xLabel.value.trim()) result["x-label"] = xLabel.value.trim();
   if (requiredKeys.length > 0) result.required = requiredKeys;
-  const xLabels: Record<string, Record<string, string>> = {};
-  if (Object.keys(labelsFr).length > 0) xLabels.fr = labelsFr;
-  if (Object.keys(labelsEn).length > 0) xLabels.en = labelsEn;
   if (Object.keys(xLabels).length > 0) result["x-labels"] = xLabels;
+  if (Object.keys(xTitle.value).length > 0) result["x-title"] = xTitle.value;
+  if (Object.keys(xDescription.value).length > 0)
+    result["x-description"] = xDescription.value;
   return result;
 });
 
@@ -308,6 +315,8 @@ let initialized = false;
 function loadFrom(value: Record<string, unknown>) {
   fields.value = parseSchema(value);
   xLabel.value = typeof value["x-label"] === "string" ? value["x-label"] : "";
+  xTitle.value = stringMap(value["x-title"]);
+  xDescription.value = stringMap(value["x-description"]);
   rootExtra.value = Object.fromEntries(
     Object.entries(value ?? {}).filter(([k]) => !MANAGED_ROOT_KEYS.has(k)),
   );

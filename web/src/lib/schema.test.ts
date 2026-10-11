@@ -3,11 +3,16 @@ import fixtures from "../../tests/fixtures/seed-schemas.json";
 import {
   defaultImage,
   displayValue,
+  enumLabel,
   fieldLabel,
+  fieldValue,
+  i18nText,
   isImageGallery,
   itemLabel,
   orderedKeys,
   renderLabel,
+  typeDescription,
+  typeTitle,
   type Schema,
 } from "./schema";
 
@@ -114,5 +119,56 @@ describe("galeries", () => {
       }),
     ).toBe("/p.jpg");
     expect(defaultImage(series, { images: { poster: [] } })).toBe("");
+  });
+});
+
+describe("i18n : objets multilingues, enums, noms de types", () => {
+  it("i18nText : langue demandée, défaut, langues connues puis autres clés triées", () => {
+    expect(i18nText({ fr: "Bonjour", en: "Hello" }, "en")).toBe("Hello");
+    expect(i18nText({ fr: "Bonjour", en: "" }, "en")).toBe("Bonjour");
+    expect(i18nText({ en: "Hello" }, "fr")).toBe("Hello");
+    expect(i18nText({ es: "Hola", de: "Hallo" }, "fr")).toBe("Hallo");
+    expect(i18nText({}, "fr")).toBe("");
+  });
+
+  const schema: Schema = {
+    type: "object",
+    properties: {
+      type: {
+        type: "string",
+        enum: ["tv", "web"],
+        "x-enum-labels": { fr: { tv: "Télévision" }, en: { tv: "TV" } },
+      },
+      tags: {
+        type: "array",
+        "x-enum-labels": { fr: { a: "Un" } },
+      },
+    },
+  };
+
+  it("enumLabel / fieldValue traduisent les valeurs d'enum", () => {
+    expect(enumLabel(schema, "type", "tv", "en")).toBe("TV");
+    expect(enumLabel(schema, "type", "tv", "fr")).toBe("Télévision");
+    expect(enumLabel(schema, "type", "web", "fr")).toBe("web");
+    expect(fieldValue(schema, "type", "tv", "fr")).toBe("Télévision");
+    expect(fieldValue(schema, "tags", ["a", "b"], "en")).toBe("Un, b");
+    expect(fieldValue(schema, "other", { fr: "x" }, "en")).toBe("x");
+  });
+
+  it("typeTitle / typeDescription lisent x-title / x-description avec repli", () => {
+    const t = {
+      name: "Series",
+      description: "Série télévisée",
+      attributes_schema: { "x-title": { fr: "Série", en: "Series" } },
+    };
+    expect(typeTitle(t, "fr")).toBe("Série");
+    expect(typeTitle({ name: "Raw" }, "fr")).toBe("Raw");
+    expect(typeDescription(t, "en")).toBe("Série télévisée");
+    expect(
+      typeDescription(
+        { ...t, attributes_schema: { "x-description": { en: "TV series" } } },
+        "en",
+      ),
+    ).toBe("TV series");
   });
 });

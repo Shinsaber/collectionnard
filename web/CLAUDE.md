@@ -1,6 +1,6 @@
 # Frontend Vue — conventions
 
-Vue 3 `<script setup lang="ts">` · Element Plus 2 (MIT, composants globaux `El*`, locale fr, mode sombre via `html.dark`) · Tailwind 4 (`@tailwindcss/vite`, thème et variante `dark` dans `src/assets/main.css`, pas de `tailwind.config.js`) ·
+Vue 3 `<script setup lang="ts">` · Element Plus 2 (MIT, composants globaux `El*`, locale suivant la langue de l'app via `ElConfigProvider`, mode sombre via `html.dark`) · Tailwind 4 (`@tailwindcss/vite`, thème et variante `dark` dans `src/assets/main.css`, pas de `tailwind.config.js`) ·
 Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
 
 ## Organisation
@@ -13,13 +13,14 @@ Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
 | `src/router/index.ts`                 | Routes ; `meta: { public: true }` pour les pages sans auth                                                                                  |
 | `src/views/`, `views/admin/`          | Pages (admin = gestion des méta-types)                                                                                                      |
 | `components/common/DynamicForm.vue`   | Formulaire généré depuis un JSON Schema (+ `ImageGalleryField.vue`)                                                                         |
-| `components/common/SchemaBuilder.vue` | Éditeur visuel de JSON Schema (admin) : coquille + `SchemaFieldCard.vue` + `SchemaFieldConstraints.vue`, types dans `schemaBuilderTypes.ts` |
+| `components/common/SchemaBuilder.vue` | Éditeur visuel de JSON Schema (admin) : coquille + `SchemaRootCard.vue` (x-label, x-title, x-description) + `SchemaFieldCard.vue` + `SchemaFieldConstraints.vue` (+ `SchemaEnumLabels.vue`), types dans `schemaBuilderTypes.ts` |
 | `components/item/`                    | `ItemGallery`, `RelationTree`, dialogues `ItemEditDialog`, `AddToCollectionDialog`, `RelationCreateDialog`, `RelationEditDialog`            |
 | `components/graph/`                   | `GraphNodeDialog`                                                                                                                           |
 | `src/stores/metaTypes.ts`             | Cache des ItemTypes / RelationTypes / CollectionTypes (`invalidate()` après toute écriture admin)                                           |
 | `src/composables/`                    | `useTheme`, `useLang`, `useNotify` (ElMessage), `useConfirmDialog` (ElMessageBox → promesse booléenne), `usePagination`                   |
 | `components/common/AppSpinner.vue`    | Indicateur de chargement                                                                                                                    |
 | `src/lib/schema.ts`                   | Lecture des schémas et extensions x-* (pendant de `server/internal/label`)                                                                  |
+| `src/i18n/`                          | vue-i18n : registre des langues (`langs.ts`), instance + locales Element Plus (`index.ts`), catalogues `locales/<lang>/<ns>.ts` (fr = référence typée) |
 
 ## Règles
 
@@ -28,7 +29,12 @@ Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
 - Ne jamais coder en dur un ItemType/champ métier (« Series », « title »…) dans une vue :
   tout affichage d'attributs passe par `src/lib/schema.ts` (`itemLabel`, `fieldLabel`, `displayValue`,
   `orderedKeys`, `isImageGallery`, `defaultImage`) qui lit `x-label`, `x-order`, `x-labels`, `x-widget`.
-- Libellés UI en français ; langue des libellés de champs via `useLang()` (fr/en, persistée).
+- Aucun texte d'interface en dur : `const { t } = useI18n()` et une clé dans `src/i18n/locales/fr/<ns>.ts` **et** `en/<ns>.ts`
+  (le compilateur et `i18n.test.ts` exigent les mêmes clés). Hors composant : `i18n.global.t`. Listes d'options ou libellés
+  dépendant de la langue : `computed`. Ne pas nommer `t` une variable de boucle.
+- Langue courante : `useLang()` (`lang`, `setLang` ; persistée, sinon langue du navigateur). Noms de méta-types affichés :
+  `typeTitle` / `typeDescription` ; valeurs d'attributs : `fieldValue` (libellés d'enum) — jamais `name` brut à l'écran.
+  Dates et nombres : `toLocale…(lang.value)`. Les tests tournent en français (`tests/setup.ts`).
 - Erreurs : jamais de `catch {}` silencieux — `const { notifyError } = useNotify()` puis `notifyError(e)`
   (affiche le message de l'API, y compris le 413 d'un upload).
 - Accessibilité : un `aria-label` sur tout bouton sans texte (icônes `pi pi-*` dans le slot d'`ElButton`,
@@ -41,5 +47,5 @@ Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
 - Après modification : `npm run lint && npm run format:check && npm run type-check && npm test`
   (`npm run lint:fix` et `npm run format` corrigent automatiquement). Tests unitaires : `vitest`,
   fichiers `src/**/*.test.ts` (environnement jsdom, stubs `matchMedia` et `ResizeObserver` dans
-  `tests/setup.ts`). Les composants se montent avec `global.plugins: [ElementPlus]` ; les 13 schémas du seed sont disponibles dans
+  `tests/setup.ts`). Les composants se montent avec `global.plugins: [ElementPlus]` (vue-i18n est ajouté globalement par `tests/setup.ts`) ; les 13 schémas du seed sont disponibles dans
   `tests/fixtures/seed-schemas.json` (régénérer depuis `db/seed.sql` si le seed change).

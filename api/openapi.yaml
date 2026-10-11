@@ -1055,19 +1055,27 @@ components:
       type: object
       description: |
         Format d'erreur standard. Toutes les erreurs API suivent ce format.
+        Le client affiche l'erreur en traduisant le code `error` dans la langue de l'utilisateur ;
+        `message` n'est qu'un repli technique (en anglais, non traduit, susceptible d'évoluer).
         Le champ `details` est optionnel et peut contenir des informations
         spécifiques au type d'erreur (ex: erreurs de validation par champ).
       properties:
         error:
           type: string
           description: |
-            Code d'erreur machine, stable et utilisable par le code client.
-            Exemples : `validation_error`, `not_found`, `conflict`, `unauthorized`, `forbidden`.
+            Code d'erreur machine **stable**, destiné à être traduit côté client (clé i18n).
+            Valeurs émises : `bad_request` (400), `unauthorized` (401), `forbidden` (403),
+            `not_found` (404), `conflict` (409), `payload_too_large` (413),
+            `validation_error` (422), `rate_limited` (429), `internal` (500),
+            `timeout` (503, exploration du graphe trop longue).
+            Un client doit prévoir un libellé générique pour un code inconnu.
           example: validation_error
         message:
           type: string
-          description: Message lisible par un humain, localisé si possible.
-          example: Les attributs ne respectent pas le schéma du type
+          description: |
+            Texte technique en anglais, destiné au débogage et aux journaux ; non traduit,
+            son libellé exact n'est pas garanti. L'interface utilisateur s'appuie sur `error`.
+          example: attributes do not match the item type schema
         details:
           type: object
           description: |
@@ -1075,8 +1083,8 @@ components:
             invalides et la raison de l'erreur pour chacun.
           example:
             fields:
-              title: "required — ce champ est obligatoire"
-              start_year: "minimum — doit être >= 1900"
+              "/": "missing properties: 'title'"
+              "/start_year": "must be >= 1900 but found 1800"
 
     # -------------------------------------------------------------------------
     # Upload
@@ -1145,7 +1153,7 @@ components:
             $ref: "#/components/schemas/Error"
           example:
             error: not_found
-            message: Ressource non trouvée
+            message: resource not found
     Unauthorized:
       description: |
         Non authentifié. Le token JWT est absent, expiré ou invalide.
@@ -1157,7 +1165,7 @@ components:
             $ref: "#/components/schemas/Error"
           example:
             error: unauthorized
-            message: Token manquant ou invalide
+            message: invalid or expired token
     Forbidden:
       description: |
         Droits insuffisants. L'utilisateur est authentifié mais son rôle
@@ -1168,7 +1176,7 @@ components:
             $ref: "#/components/schemas/Error"
           example:
             error: forbidden
-            message: Droits administrateur requis
+            message: admin role required
     ValidationError:
       description: |
         Erreur de validation. Les données envoyées ne respectent pas le JSON Schema
@@ -1180,11 +1188,11 @@ components:
             $ref: "#/components/schemas/Error"
           example:
             error: validation_error
-            message: Les attributs ne respectent pas le schéma du type
+            message: attributes do not match the item type schema
             details:
               fields:
-                title: "required — ce champ est obligatoire"
-                start_year: "minimum — doit être >= 1900"
+                "/": "missing properties: 'title'"
+                "/start_year": "must be >= 1900 but found 1800"
     Conflict:
       description: |
         Conflit. L'opération est impossible car elle violerait une contrainte d'unicité
@@ -1195,7 +1203,7 @@ components:
             $ref: "#/components/schemas/Error"
           example:
             error: conflict
-            message: Cet item est déjà dans la collection
+            message: this item is already in the collection
     TooManyRequests:
       description: |
         Trop de requêtes depuis cette adresse IP sur les endpoints `/auth/*`
@@ -1212,7 +1220,7 @@ components:
             $ref: "#/components/schemas/Error"
           example:
             error: rate_limited
-            message: Trop de tentatives, réessayez dans 42 s
+            message: too many attempts, retry in 42 s
     PayloadTooLarge:
       description: |
         Corps de requête JSON supérieur à 1 Mio (les uploads ont leur propre limite,
@@ -1223,7 +1231,7 @@ components:
             $ref: "#/components/schemas/Error"
           example:
             error: payload_too_large
-            message: Corps de requête trop volumineux (max 1048576 octets)
+            message: request body too large (max 1048576 bytes)
 
     BadRequest:
       description: |
@@ -1235,7 +1243,7 @@ components:
             $ref: "#/components/schemas/Error"
           example:
             error: bad_request
-            message: "UUID invalide: id"
+            message: "invalid UUID: id"
     InternalError:
       description: |
         Erreur interne. La cause est journalisée côté serveur avec le `request_id` de la requête ;
@@ -1246,7 +1254,7 @@ components:
             $ref: "#/components/schemas/Error"
           example:
             error: internal
-            message: Erreur interne
+            message: internal error
 
 # =============================================================================
 # ENDPOINTS
@@ -1347,7 +1355,7 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: unauthorized
-                message: Nom d'utilisateur ou mot de passe incorrect
+                message: invalid username or password
         "429":
           $ref: "#/components/responses/TooManyRequests"
 
@@ -1397,7 +1405,7 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: unauthorized
-                message: Refresh token invalide ou expiré
+                message: invalid or expired refresh token
         "429":
           $ref: "#/components/responses/TooManyRequests"
 
@@ -3031,7 +3039,7 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: payload_too_large
-                message: Fichier trop volumineux (max 10 Mo)
+                message: file too large (max 10 MiB)
 
   /uploads/{filename}:
     parameters:

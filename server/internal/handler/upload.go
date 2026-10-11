@@ -31,16 +31,16 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 		var tooLarge *http.MaxBytesError
 		if errors.As(err, &tooLarge) {
 			respondError(w, http.StatusRequestEntityTooLarge, "payload_too_large",
-				fmt.Sprintf("Fichier trop volumineux (max %d Mo)", maxSize/(1<<20)))
+				fmt.Sprintf("file too large (max %d MiB)", maxSize/(1<<20)))
 			return
 		}
-		respondError(w, http.StatusBadRequest, "bad_request", "Formulaire multipart invalide")
+		respondError(w, http.StatusBadRequest, "bad_request", "invalid multipart form")
 		return
 	}
 
 	file, _, err := r.FormFile("file")
 	if err != nil {
-		respondError(w, http.StatusBadRequest, "bad_request", "Champ 'file' manquant")
+		respondError(w, http.StatusBadRequest, "bad_request", "missing 'file' field")
 		return
 	}
 	defer func() { _ = file.Close() }()
@@ -49,7 +49,7 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 	buf := make([]byte, 512)
 	n, err := file.Read(buf)
 	if err != nil && err != io.EOF {
-		respondInternal(w, r, err, "Impossible de lire le fichier")
+		respondInternal(w, r, err, "cannot read file")
 		return
 	}
 	contentType := http.DetectContentType(buf[:n])
@@ -57,20 +57,20 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 	ext, ok := allowedMimeTypes[contentType]
 	if !ok {
 		respondError(w, http.StatusBadRequest, "bad_request",
-			fmt.Sprintf("Type de fichier non autorisé: %s. Types acceptés: %s",
+			fmt.Sprintf("file type not allowed: %s (accepted: %s)",
 				contentType, strings.Join(allowedExtensions(), ", ")))
 		return
 	}
 
 	// Reset reader to beginning
 	if _, err := file.Seek(0, io.SeekStart); err != nil {
-		respondInternal(w, r, err, "Erreur interne")
+		respondInternal(w, r, err, "internal error")
 		return
 	}
 
 	// Ensure upload directory exists
 	if err := os.MkdirAll(h.Config.UploadDir, 0o750); err != nil {
-		respondInternal(w, r, err, "Impossible de créer le dossier uploads")
+		respondInternal(w, r, err, "cannot create upload directory")
 		return
 	}
 
@@ -81,7 +81,7 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 	// destPath = UPLOAD_DIR + UUID + extension issue de allowedMimeTypes : aucune donnée client.
 	dst, err := os.Create(destPath) //nolint:gosec // nom généré (UUID), extension issue d'une liste blanche
 	if err != nil {
-		respondInternal(w, r, err, "Impossible de sauvegarder le fichier")
+		respondInternal(w, r, err, "cannot save file")
 		return
 	}
 	defer func() { _ = dst.Close() }()
@@ -89,7 +89,7 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 	written, err := io.Copy(dst, file)
 	if err != nil {
 		_ = os.Remove(destPath) // cleanup on failure
-		respondInternal(w, r, err, "Erreur d'écriture du fichier")
+		respondInternal(w, r, err, "cannot write file")
 		return
 	}
 

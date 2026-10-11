@@ -1,0 +1,98 @@
+// Formulaire dynamique (DynamicForm, ImageGalleryField) et éditeur de schéma (SchemaBuilder…).
+export default {
+  example: "ex. {v}",
+  types: {
+    string: "Texte",
+    integer: "Entier",
+    number: "Nombre",
+    boolean: "Booléen",
+    array: "Tableau",
+    i18nText: "Texte multilingue",
+    imageGallery: "Galerie d'images",
+  },
+  formats: {
+    uri: "URI / URL",
+    date: "Date",
+    dateTime: "Date et heure",
+    email: "E-mail",
+  },
+  form: {
+    choose: "Choisir…",
+    noAttributes: "Aucun attribut défini pour ce type.",
+  },
+  gallery: {
+    setDefault: "Définir comme image par défaut",
+    setDefaultN: "Définir l'image {n} de {category} comme image par défaut",
+    removeN: "Supprimer l'image {n} de {category}",
+    file: "Fichier image pour {category}",
+    default: "Image par défaut :",
+    uploadFailed: "Envoi de l'image impossible",
+  },
+  builder: {
+    empty:
+      "Aucun champ défini. Cliquez sur « Ajouter un champ » pour commencer.",
+    addField: "Ajouter un champ",
+    showJson: "Voir le JSON",
+    hideJson: "Masquer le JSON",
+    generatedJson: "JSON Schema généré",
+  },
+  root: {
+    title: "Nom affiché ({lang})",
+    titlePlaceholder: "ex. Série",
+    description: "Description ({lang})",
+    titleHelp:
+      "Nom et description du type tels qu'affichés dans l'interface ; sans traduction, l'identifiant technique est utilisé.",
+    xLabel: "Libellé des instances",
+    xLabelPlaceholder:
+      "ex. {'{'}title{'}'} ou {'{'}number{'}'}. {'{'}title{'}'}",
+    xLabelHelp:
+      "Gabarit avec les clés des champs entre accolades ; sans gabarit, le premier champ title, name ou label est utilisé.",
+  },
+  field: {
+    moveUp: "Monter le champ",
+    moveDown: "Descendre le champ",
+    key: "Clé du champ",
+    keyPlaceholder: "clé (ex. title)",
+    type: "Type du champ",
+    required: "Champ requis",
+    requiredShort: "Req.",
+    remove: "Supprimer le champ",
+    addAfter: "Ajouter un champ après",
+  },
+  constraints: {
+    label: "Libellé {lang}",
+    labelPlaceholder: "ex. Titre",
+    descriptionPlaceholder: "Description du champ",
+    minLength: "Min. caractères",
+    maxLength: "Max. caractères",
+    pattern: "Motif (regex)",
+    format: "Format",
+    enum: "Valeurs (enum, séparées par des virgules)",
+    default: "Valeur par défaut",
+    minimum: "Min",
+    maximum: "Max",
+    exclusiveMinimum: "Min exclusif",
+    exclusiveMaximum: "Max exclusif",
+    multipleOf: "Multiple de",
+    i18nTextHelp:
+      "Génère un objet avec une chaîne par langue ({langs}) : les utilisateurs saisiront une valeur par langue.",
+    imageCategories: "Catégories d'images",
+    categoryName: "Nom (ex. poster)",
+    categoryNameN: "Nom de la catégorie {n}",
+    categoryRatio: "Ratio (ex. 2/3)",
+    categoryRatioN: "Ratio de la catégorie {n}",
+    categoryRemoveN: "Supprimer la catégorie {n}",
+    addCategory: "Ajouter une catégorie",
+    imageGalleryHelp:
+      "Génère un objet avec un tableau d'URLs par catégorie et un sélecteur d'image par défaut. Le ratio est au format CSS (ex. 2/3, 16/9, 3/1).",
+    itemsType: "Type des éléments",
+    uniqueItems: "Éléments uniques",
+    minItems: "Min. éléments",
+    maxItems: "Max. éléments",
+  },
+  enumLabels: {
+    caption: "Libellés affichés des valeurs",
+    value: "Valeur",
+    inputLabel: "Libellé de « {value} » en {lang}",
+  },
+};

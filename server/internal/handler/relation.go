@@ -46,7 +46,7 @@ func (h *Handler) CreateRelation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if in.SourceItemID == in.TargetItemID {
-		respondValidationError(w, "Un item ne peut pas être relié à lui-même", nil)
+		respondValidationError(w, "an item cannot be related to itself", nil)
 		return
 	}
 
@@ -67,7 +67,7 @@ func (h *Handler) CreateRelation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !containsUUID(rt.SourceItemTypeIDs, sourceItem.ItemTypeID) {
-		respondValidationError(w, "Le type de l'item source ne correspond pas aux contraintes du RelationType", nil)
+		respondValidationError(w, "source item type is not allowed by the relation type", nil)
 		return
 	}
 
@@ -77,13 +77,13 @@ func (h *Handler) CreateRelation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !containsUUID(rt.TargetItemTypeIDs, targetItem.ItemTypeID) {
-		respondValidationError(w, "Le type de l'item cible ne correspond pas aux contraintes du RelationType", nil)
+		respondValidationError(w, "target item type is not allowed by the relation type", nil)
 		return
 	}
 
 	// Validate attributes against relation type schema
 	if vErr := validator.ValidateAttributes(rt.AttributesSchema, in.Attributes); vErr != nil {
-		respondValidationError(w, "Les attributs ne respectent pas le schéma du type de relation", map[string]any{
+		respondValidationError(w, "attributes do not match the relation type schema", map[string]any{
 			"fields": validator.FormatValidationError(vErr),
 		})
 		return
@@ -120,7 +120,7 @@ func (h *Handler) UpdateRelation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if vErr := validator.ValidateAttributes(existing.RelationType.AttributesSchema, in.Attributes); vErr != nil {
-		respondValidationError(w, "Les attributs ne respectent pas le schéma du type de relation", map[string]any{
+		respondValidationError(w, "attributes do not match the relation type schema", map[string]any{
 			"fields": validator.FormatValidationError(vErr),
 		})
 		return

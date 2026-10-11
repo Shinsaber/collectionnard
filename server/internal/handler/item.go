@@ -20,7 +20,7 @@ func (h *Handler) ListItems(w http.ResponseWriter, r *http.Request) {
 	}
 	if len(q.Get("search")) > maxSearchLength || len(q.Get("tag")) > maxSearchLength {
 		respondError(w, http.StatusBadRequest, "bad_request",
-			fmt.Sprintf("search et tag sont limités à %d caractères", maxSearchLength))
+			fmt.Sprintf("search and tag are limited to %d characters", maxSearchLength))
 		return
 	}
 	sort, ok := parseSort(w, r)
@@ -62,7 +62,7 @@ func (h *Handler) CreateItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if in.ItemTypeID.String() == "00000000-0000-0000-0000-000000000000" {
-		respondValidationError(w, "item_type_id est obligatoire", nil)
+		respondValidationError(w, "item_type_id is required", nil)
 		return
 	}
 	if len(in.Attributes) == 0 {
@@ -77,7 +77,7 @@ func (h *Handler) CreateItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if vErr := validator.ValidateAttributes(itemType.AttributesSchema, in.Attributes); vErr != nil {
-		respondValidationError(w, "Les attributs ne respectent pas le schéma du type", map[string]any{
+		respondValidationError(w, "attributes do not match the item type schema", map[string]any{
 			"fields": validator.FormatValidationError(vErr),
 		})
 		return
@@ -110,7 +110,7 @@ func (h *Handler) UpdateItem(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if vErr := validator.ValidateAttributes(existing.ItemType.AttributesSchema, in.Attributes); vErr != nil {
-			respondValidationError(w, "Les attributs ne respectent pas le schéma du type", map[string]any{
+			respondValidationError(w, "attributes do not match the item type schema", map[string]any{
 				"fields": validator.FormatValidationError(vErr),
 			})
 			return

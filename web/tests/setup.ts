@@ -1,4 +1,4 @@
-// Environnement jsdom : certains composants PrimeVue (Select, …) interrogent
+// Environnement jsdom : certains composants Element Plus interrogent
 // window.matchMedia, absent de jsdom.
 import { vi } from "vitest";
 
@@ -29,4 +29,18 @@ if (typeof window !== "undefined" && !("ResizeObserver" in window)) {
     writable: true,
     value: ResizeObserverStub,
   });
+}
+
+// vue-i18n : installé sur tous les montages de composants (langue par défaut : fr).
+import { config } from "@vue/test-utils";
+import { i18n } from "@/i18n";
+
+config.global.plugins = [...(config.global.plugins ?? []), i18n];
+
+// jsdom annonce `en-US` : on fige la langue des tests sur le français (useLang lit
+// d'abord la préférence mémorisée).
+try {
+  localStorage.setItem("colec-lang", "fr");
+} catch {
+  /* stockage indisponible */
 }

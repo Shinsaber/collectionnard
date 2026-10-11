@@ -1,38 +1,32 @@
 <template>
   <div class="p-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-    <div v-if="features.labels" class="flex flex-col gap-1">
-      <label :for="`${uid}-fr`" class="text-xs font-medium text-gray-500"
-        >Label FR</label
+    <div
+      v-for="l in features.labels ? LANGS : []"
+      :key="l"
+      class="flex flex-col gap-1"
+    >
+      <label
+        :for="`${uid}-label-${l}`"
+        class="text-xs font-medium text-gray-500"
+        >{{ t("schema.constraints.label", { lang: l.toUpperCase() }) }}</label
       >
       <ElInput
-        :id="`${uid}-fr`"
-        :model-value="field.labelFr"
-        placeholder="ex: Titre"
+        :id="`${uid}-label-${l}`"
+        :model-value="field.labels?.[l] ?? ''"
+        :placeholder="t('schema.constraints.labelPlaceholder')"
         class="text-sm"
-        @update:model-value="set('labelFr', $event)"
-      />
-    </div>
-    <div v-if="features.labels" class="flex flex-col gap-1">
-      <label :for="`${uid}-en`" class="text-xs font-medium text-gray-500"
-        >Label EN</label
-      >
-      <ElInput
-        :id="`${uid}-en`"
-        :model-value="field.labelEn"
-        placeholder="ex: Title"
-        class="text-sm"
-        @update:model-value="set('labelEn', $event)"
+        @update:model-value="setLabel(l, String($event ?? ''))"
       />
     </div>
 
     <div v-if="features.description" class="flex flex-col gap-1 md:col-span-2">
-      <label :for="`${uid}-desc`" class="text-xs font-medium text-gray-500"
-        >Description</label
-      >
+      <label :for="`${uid}-desc`" class="text-xs font-medium text-gray-500">{{
+        t("common.description")
+      }}</label>
       <ElInput
         :id="`${uid}-desc`"
         :model-value="field.description ?? ''"
-        placeholder="Description du champ"
+        :placeholder="t('schema.constraints.descriptionPlaceholder')"
         class="text-sm"
         @update:model-value="set('description', $event || null)"
       />
@@ -41,9 +35,9 @@
     <!-- ── String constraints ── -->
     <template v-if="field.type === 'string'">
       <div v-if="features.minLength" class="flex flex-col gap-1">
-        <label :for="`${uid}-minlen`" class="text-xs text-gray-500"
-          >Min. caractères</label
-        >
+        <label :for="`${uid}-minlen`" class="text-xs text-gray-500">{{
+          t("schema.constraints.minLength")
+        }}</label>
         <ElInputNumber
           :id="`${uid}-minlen`"
           :model-value="field.minLength ?? undefined"
@@ -52,9 +46,9 @@
         />
       </div>
       <div v-if="features.maxLength" class="flex flex-col gap-1">
-        <label :for="`${uid}-maxlen`" class="text-xs text-gray-500"
-          >Max. caractères</label
-        >
+        <label :for="`${uid}-maxlen`" class="text-xs text-gray-500">{{
+          t("schema.constraints.maxLength")
+        }}</label>
         <ElInputNumber
           :id="`${uid}-maxlen`"
           :model-value="field.maxLength ?? undefined"
@@ -63,55 +57,61 @@
         />
       </div>
       <div v-if="features.pattern" class="flex flex-col gap-1">
-        <label :for="`${uid}-pattern`" class="text-xs text-gray-500"
-          >Pattern (regex)</label
-        >
+        <label :for="`${uid}-pattern`" class="text-xs text-gray-500">{{
+          t("schema.constraints.pattern")
+        }}</label>
         <ElInput
           :id="`${uid}-pattern`"
           :model-value="field.pattern ?? ''"
-          placeholder="ex: ^[A-Z].*"
+          :placeholder="t('schema.example', { v: '^[A-Z].*' })"
           class="font-mono"
           @update:model-value="set('pattern', $event || null)"
         />
       </div>
       <div v-if="features.format" class="flex flex-col gap-1">
-        <label :for="`${uid}-format`" class="text-xs text-gray-500"
-          >Format</label
-        >
+        <label :for="`${uid}-format`" class="text-xs text-gray-500">{{
+          t("schema.constraints.format")
+        }}</label>
         <ElSelect
           :id="`${uid}-format`"
           :model-value="field.format ?? undefined"
-          placeholder="Aucun"
+          :placeholder="t('common.none')"
           clearable
           @update:model-value="set('format', $event || null)"
         >
           <ElOption
             v-for="o in formatOptions"
             :key="o.value"
-            :label="o.label"
+            :label="t(o.labelKey)"
             :value="o.value"
           />
         </ElSelect>
       </div>
       <div v-if="features.enum" class="flex flex-col gap-1 md:col-span-2">
-        <label :for="`${uid}-enum`" class="text-xs text-gray-500"
-          >Valeurs (enum, séparées par des virgules)</label
-        >
+        <label :for="`${uid}-enum`" class="text-xs text-gray-500">{{
+          t("schema.constraints.enum")
+        }}</label>
         <ElInput
           :id="`${uid}-enum`"
           :model-value="(field.enum ?? []).join(', ')"
           placeholder="new, good, poor"
           @update:model-value="set('enum', parseEnum(String($event ?? '')))"
         />
+        <SchemaEnumLabels
+          v-if="features.labels && (field.enum ?? []).length > 0"
+          :values="field.enum ?? []"
+          :model-value="field.enumLabels ?? {}"
+          @update:model-value="set('enumLabels', $event)"
+        />
       </div>
       <div v-if="features.default" class="flex flex-col gap-1">
-        <label :for="`${uid}-default`" class="text-xs text-gray-500"
-          >Valeur par défaut</label
-        >
+        <label :for="`${uid}-default`" class="text-xs text-gray-500">{{
+          t("schema.constraints.default")
+        }}</label>
         <ElInput
           :id="`${uid}-default`"
           :model-value="String(field.defaultValue ?? '')"
-          placeholder="ex: N/A"
+          :placeholder="t('schema.example', { v: 'N/A' })"
           @update:model-value="set('defaultValue', $event ? $event : null)"
         />
       </div>
@@ -120,7 +120,9 @@
     <!-- ── Number / Integer constraints ── -->
     <template v-if="field.type === 'integer' || field.type === 'number'">
       <div v-if="features.minimum" class="flex flex-col gap-1">
-        <label :for="`${uid}-min`" class="text-xs text-gray-500">Min</label>
+        <label :for="`${uid}-min`" class="text-xs text-gray-500">{{
+          t("schema.constraints.minimum")
+        }}</label>
         <ElInputNumber
           :id="`${uid}-min`"
           :model-value="field.minimum ?? undefined"
@@ -128,7 +130,9 @@
         />
       </div>
       <div v-if="features.maximum" class="flex flex-col gap-1">
-        <label :for="`${uid}-max`" class="text-xs text-gray-500">Max</label>
+        <label :for="`${uid}-max`" class="text-xs text-gray-500">{{
+          t("schema.constraints.maximum")
+        }}</label>
         <ElInputNumber
           :id="`${uid}-max`"
           :model-value="field.maximum ?? undefined"
@@ -136,9 +140,9 @@
         />
       </div>
       <div v-if="features.exclusiveMinimum" class="flex flex-col gap-1">
-        <label :for="`${uid}-xmin`" class="text-xs text-gray-500"
-          >Min exclusif</label
-        >
+        <label :for="`${uid}-xmin`" class="text-xs text-gray-500">{{
+          t("schema.constraints.exclusiveMinimum")
+        }}</label>
         <ElInputNumber
           :id="`${uid}-xmin`"
           :model-value="field.exclusiveMinimum ?? undefined"
@@ -146,9 +150,9 @@
         />
       </div>
       <div v-if="features.exclusiveMaximum" class="flex flex-col gap-1">
-        <label :for="`${uid}-xmax`" class="text-xs text-gray-500"
-          >Max exclusif</label
-        >
+        <label :for="`${uid}-xmax`" class="text-xs text-gray-500">{{
+          t("schema.constraints.exclusiveMaximum")
+        }}</label>
         <ElInputNumber
           :id="`${uid}-xmax`"
           :model-value="field.exclusiveMaximum ?? undefined"
@@ -156,9 +160,9 @@
         />
       </div>
       <div v-if="features.multipleOf" class="flex flex-col gap-1">
-        <label :for="`${uid}-mult`" class="text-xs text-gray-500"
-          >Multiple de</label
-        >
+        <label :for="`${uid}-mult`" class="text-xs text-gray-500">{{
+          t("schema.constraints.multipleOf")
+        }}</label>
         <ElInputNumber
           :id="`${uid}-mult`"
           :model-value="field.multipleOf ?? undefined"
@@ -168,9 +172,9 @@
         />
       </div>
       <div v-if="features.default" class="flex flex-col gap-1">
-        <label :for="`${uid}-ndefault`" class="text-xs text-gray-500"
-          >Valeur par défaut</label
-        >
+        <label :for="`${uid}-ndefault`" class="text-xs text-gray-500">{{
+          t("schema.constraints.default")
+        }}</label>
         <ElInputNumber
           :id="`${uid}-ndefault`"
           :model-value="(field.defaultValue as number | undefined) ?? undefined"
@@ -182,15 +186,15 @@
     <!-- ── Boolean constraints ── -->
     <template v-if="field.type === 'boolean' && features.default">
       <div class="flex flex-col gap-1">
-        <label :for="`${uid}-bdefault`" class="text-xs text-gray-500"
-          >Valeur par défaut</label
-        >
+        <label :for="`${uid}-bdefault`" class="text-xs text-gray-500">{{
+          t("schema.constraints.default")
+        }}</label>
         <ElSelect
           :id="`${uid}-bdefault`"
           :model-value="
             (field.defaultValue as boolean | undefined) ?? undefined
           "
-          placeholder="Aucune"
+          :placeholder="t('common.none')"
           clearable
           @update:model-value="
             set('defaultValue', $event === '' ? null : $event)
@@ -199,7 +203,7 @@
           <ElOption
             v-for="o in boolDefaultOptions"
             :key="String(o.value)"
-            :label="o.label"
+            :label="t(o.labelKey)"
             :value="o.value"
           />
         </ElSelect>
@@ -211,15 +215,15 @@
       v-if="field.type === 'i18n-text'"
       class="md:col-span-2 text-xs text-gray-400 italic"
     >
-      Génère un objet
-      <code class="bg-gray-200 px-1 rounded-sm">{ "fr": "…", "en": "…" }</code>
-      — les utilisateurs saisiront une valeur par langue.
+      {{ t("schema.constraints.i18nTextHelp", { langs: LANGS.join(", ") }) }}
     </div>
 
     <!-- ── Image gallery config ── -->
     <template v-if="field.type === 'image-gallery'">
       <div class="flex flex-col gap-2 md:col-span-2">
-        <span class="text-xs text-gray-500">Catégories d'images</span>
+        <span class="text-xs text-gray-500">{{
+          t("schema.constraints.imageCategories")
+        }}</span>
         <div
           v-for="(cat, catIdx) in field.imageCategories ?? []"
           :key="catIdx"
@@ -227,8 +231,10 @@
         >
           <ElInput
             :model-value="cat.name"
-            placeholder="Nom (ex: poster)"
-            :aria-label="`Nom de la catégorie ${catIdx + 1}`"
+            :placeholder="t('schema.constraints.categoryName')"
+            :aria-label="
+              t('schema.constraints.categoryNameN', { n: catIdx + 1 })
+            "
             class="text-sm flex-1"
             @update:model-value="
               updateCategory(catIdx, 'name', String($event ?? ''))
@@ -236,8 +242,10 @@
           />
           <ElInput
             :model-value="cat.ratio"
-            placeholder="Ratio (ex: 2/3)"
-            :aria-label="`Ratio de la catégorie ${catIdx + 1}`"
+            :placeholder="t('schema.constraints.categoryRatio')"
+            :aria-label="
+              t('schema.constraints.categoryRatioN', { n: catIdx + 1 })
+            "
             class="text-sm w-24"
             @update:model-value="
               updateCategory(catIdx, 'ratio', String($event ?? ''))
@@ -247,29 +255,30 @@
             text
             size="small"
             type="danger"
-            :aria-label="`Supprimer la catégorie ${catIdx + 1}`"
+            :aria-label="
+              t('schema.constraints.categoryRemoveN', { n: catIdx + 1 })
+            "
             @click="removeCategory(catIdx)"
           >
             <i class="pi pi-times" aria-hidden="true"></i>
           </ElButton>
         </div>
         <ElButton text size="small" class="self-start" @click="addCategory">
-          <i class="pi pi-plus mr-1" aria-hidden="true"></i> Ajouter une
-          catégorie
+          <i class="pi pi-plus mr-1" aria-hidden="true"></i>
+          {{ t("schema.constraints.addCategory") }}
         </ElButton>
       </div>
       <div class="md:col-span-2 text-xs text-gray-400 italic">
-        Génère un objet avec un tableau d'URLs par catégorie et un sélecteur
-        d'image par défaut. Le ratio est au format CSS (ex: 2/3, 16/9, 3/1).
+        {{ t("schema.constraints.imageGalleryHelp") }}
       </div>
     </template>
 
     <!-- ── Array constraints ── -->
     <template v-if="field.type === 'array'">
       <div class="flex flex-col gap-1">
-        <label :for="`${uid}-items`" class="text-xs text-gray-500"
-          >Type des éléments</label
-        >
+        <label :for="`${uid}-items`" class="text-xs text-gray-500">{{
+          t("schema.constraints.itemsType")
+        }}</label>
         <ElSelect
           :id="`${uid}-items`"
           :model-value="field.itemsType ?? 'string'"
@@ -278,7 +287,7 @@
           <ElOption
             v-for="o in arrayItemTypeOptions"
             :key="o.value"
-            :label="o.label"
+            :label="t(o.labelKey)"
             :value="o.value"
           />
         </ElSelect>
@@ -289,14 +298,14 @@
           :model-value="field.uniqueItems ?? false"
           @update:model-value="set('uniqueItems', $event)"
         />
-        <label :for="`${uid}-unique`" class="text-xs text-gray-500"
-          >Éléments uniques</label
-        >
+        <label :for="`${uid}-unique`" class="text-xs text-gray-500">{{
+          t("schema.constraints.uniqueItems")
+        }}</label>
       </div>
       <div v-if="features.minItems" class="flex flex-col gap-1">
-        <label :for="`${uid}-minitems`" class="text-xs text-gray-500"
-          >Min. éléments</label
-        >
+        <label :for="`${uid}-minitems`" class="text-xs text-gray-500">{{
+          t("schema.constraints.minItems")
+        }}</label>
         <ElInputNumber
           :id="`${uid}-minitems`"
           :model-value="field.minItems ?? undefined"
@@ -305,9 +314,9 @@
         />
       </div>
       <div v-if="features.maxItems" class="flex flex-col gap-1">
-        <label :for="`${uid}-maxitems`" class="text-xs text-gray-500"
-          >Max. éléments</label
-        >
+        <label :for="`${uid}-maxitems`" class="text-xs text-gray-500">{{
+          t("schema.constraints.maxItems")
+        }}</label>
         <ElInputNumber
           :id="`${uid}-maxitems`"
           :model-value="field.maxItems ?? undefined"
@@ -321,6 +330,9 @@
 
 <script setup lang="ts">
 import { useId } from "vue";
+import { useI18n } from "vue-i18n";
+import { LANGS } from "@/i18n/langs";
+import SchemaEnumLabels from "./SchemaEnumLabels.vue";
 import {
   arrayItemTypeOptions,
   boolDefaultOptions,
@@ -341,10 +353,17 @@ const emit = defineEmits<{
   "update:field": [patch: Partial<SchemaField>];
 }>();
 
+const { t } = useI18n();
 const uid = useId();
 
 function set<K extends keyof SchemaField>(key: K, value: unknown) {
   emit("update:field", { [key]: value } as Partial<SchemaField>);
+}
+
+function setLabel(l: string, value: string) {
+  const labels = { ...(props.field.labels ?? {}), [l]: value };
+  if (!value) delete labels[l];
+  set("labels", labels);
 }
 
 function updateCategory(catIdx: number, key: "name" | "ratio", value: string) {

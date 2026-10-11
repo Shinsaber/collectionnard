@@ -37,7 +37,7 @@ func (h *Handler) GetItemGraph(w http.ResponseWriter, r *http.Request) {
 		d, err := strconv.Atoi(v)
 		if err != nil || d < 1 || d > depthLimit {
 			respondError(w, http.StatusBadRequest, "bad_request",
-				fmt.Sprintf("max_depth doit être un entier entre 1 et %d", depthLimit))
+				fmt.Sprintf("max_depth must be an integer between 1 and %d", depthLimit))
 			return
 		}
 		maxDepth = d
@@ -52,14 +52,14 @@ func (h *Handler) GetItemGraph(w http.ResponseWriter, r *http.Request) {
 			}
 			id, err := uuid.Parse(raw)
 			if err != nil {
-				respondError(w, http.StatusBadRequest, "bad_request", "relation_type_ids: UUID invalide: "+raw)
+				respondError(w, http.StatusBadRequest, "bad_request", "invalid UUID in relation_type_ids: "+raw)
 				return
 			}
 			relationTypeIDs = append(relationTypeIDs, id)
 		}
 		if len(relationTypeIDs) > graphMaxRelationTypes {
 			respondError(w, http.StatusBadRequest, "bad_request",
-				fmt.Sprintf("relation_type_ids: %d identifiants maximum", graphMaxRelationTypes))
+				fmt.Sprintf("relation_type_ids: at most %d ids", graphMaxRelationTypes))
 			return
 		}
 	}
@@ -71,7 +71,7 @@ func (h *Handler) GetItemGraph(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
 			respondError(w, http.StatusServiceUnavailable, "timeout",
-				"Exploration du graphe trop longue : réduisez max_depth ou filtrez par relation_type_ids")
+				"graph traversal timed out: lower max_depth or filter by relation_type_ids")
 			return
 		}
 		handleStoreError(w, r, err)

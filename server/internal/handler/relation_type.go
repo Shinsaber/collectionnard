@@ -45,7 +45,7 @@ func (h *Handler) CreateRelationType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if in.Name == "" {
-		respondValidationError(w, "Le nom est obligatoire", nil)
+		respondValidationError(w, "name is required", nil)
 		return
 	}
 	if !checkAttributesSchema(w, in.AttributesSchema) {

@@ -18,12 +18,12 @@ func TestCheckSchema(t *testing.T) {
 		{"valid object", `{"type":"object","required":["title"],"properties":{"title":{"type":"string"}}}`, true, ""},
 		{"missing type", `{"properties":{"a":{"type":"string"}}}`, false, `"type": "object"`},
 		{"wrong type", `{"type":"objet"}`, false, `"object"`},
-		{"array type", `{"type":["object","null"]}`, false, "exactement"},
-		{"not an object", `[1,2]`, false, "JSON invalide"},
-		{"broken json", `{"type":"object",`, false, "JSON invalide"},
+		{"array type", `{"type":["object","null"]}`, false, "exactly"},
+		{"not an object", `[1,2]`, false, "invalid JSON"},
+		{"broken json", `{"type":"object",`, false, "invalid JSON"},
 		{"bad keyword value", `{"type":"object","properties":{"a":{"type":"strng"}}}`, false, "invalid schema"},
-		{"external ref", `{"type":"object","properties":{"a":{"$ref":"http://example.com/x.json"}}}`, false, "externe"},
-		{"file ref", `{"type":"object","properties":{"a":{"$ref":"file:///etc/passwd"}}}`, false, "externe"},
+		{"external ref", `{"type":"object","properties":{"a":{"$ref":"http://example.com/x.json"}}}`, false, "external reference"},
+		{"file ref", `{"type":"object","properties":{"a":{"$ref":"file:///etc/passwd"}}}`, false, "external reference"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -177,10 +177,10 @@ func respondDecodeError(w http.ResponseWriter, err error) {
 	var tooLarge *http.MaxBytesError
 	if errors.As(err, &tooLarge) {
 		respondError(w, http.StatusRequestEntityTooLarge, "payload_too_large",
-			fmt.Sprintf("Corps de requête trop volumineux (max %d octets)", tooLarge.Limit))
+			fmt.Sprintf("request body too large (max %d bytes)", tooLarge.Limit))
 		return
 	}
-	respondError(w, http.StatusBadRequest, "bad_request", "JSON invalide")
+	respondError(w, http.StatusBadRequest, "bad_request", "invalid JSON body")
 }
 
 // hasAttributes reports whether a JSON `attributes` field was actually provided
@@ -202,7 +202,7 @@ func parseSort(w http.ResponseWriter, r *http.Request) (string, bool) {
 	}
 	if !sortFields[strings.TrimPrefix(sort, "-")] {
 		respondError(w, http.StatusBadRequest, "bad_request",
-			"sort invalide : valeurs acceptées created_at, updated_at (préfixe - pour descendant)")
+			"invalid sort: accepted values are created_at, updated_at (prefix with - for descending)")
 		return "", false
 	}
 	return sort, true
@@ -212,7 +212,7 @@ func parseSort(w http.ResponseWriter, r *http.Request) (string, bool) {
 // whether the caller may continue.
 func checkAttributesSchema(w http.ResponseWriter, schema json.RawMessage) bool {
 	if err := validator.CheckSchema(schema); err != nil {
-		respondValidationError(w, "Le JSON Schema des attributs est invalide", map[string]any{
+		respondValidationError(w, "invalid attributes JSON Schema", map[string]any{
 			"fields": map[string]string{"attributes_schema": err.Error()},
 		})
 		return false
@@ -222,8 +222,8 @@ func checkAttributesSchema(w http.ResponseWriter, schema json.RawMessage) bool {
 
 // respondMissingAttributes emits the 422 used when a PUT omits `attributes`.
 func respondMissingAttributes(w http.ResponseWriter) {
-	respondValidationError(w, "Le champ attributes est requis", map[string]any{
-		"fields": map[string]string{"attributes": "required — ce champ est obligatoire"},
+	respondValidationError(w, "attributes is required", map[string]any{
+		"fields": map[string]string{"attributes": "required"},
 	})
 }
 
@@ -231,7 +231,7 @@ func parseUUID(w http.ResponseWriter, r *http.Request, param string) (uuid.UUID,
 	raw := chi.URLParam(r, param)
 	id, err := uuid.Parse(raw)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, "bad_request", "UUID invalide: "+param)
+		respondError(w, http.StatusBadRequest, "bad_request", "invalid UUID: "+param)
 		return uuid.Nil, false
 	}
 	return id, true
@@ -267,7 +267,7 @@ func parseOptionalUUID(w http.ResponseWriter, r *http.Request, param string) (*u
 	}
 	id, err := uuid.Parse(raw)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, "bad_request", "UUID invalide: "+param)
+		respondError(w, http.StatusBadRequest, "bad_request", "invalid UUID: "+param)
 		return nil, false
 	}
 	return &id, true
@@ -285,11 +285,11 @@ func containsUUID(ids []uuid.UUID, target uuid.UUID) bool {
 func handleStoreError(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
 	case errors.Is(err, store.ErrNotFound):
-		respondError(w, http.StatusNotFound, "not_found", "Ressource non trouvée")
+		respondError(w, http.StatusNotFound, "not_found", "resource not found")
 	case errors.Is(err, store.ErrConflict):
-		respondError(w, http.StatusConflict, "conflict", "Conflit — ressource existante")
+		respondError(w, http.StatusConflict, "conflict", "resource already exists")
 	default:
-		respondInternal(w, r, err, "Erreur interne")
+		respondInternal(w, r, err, "internal error")
 	}
 }
 

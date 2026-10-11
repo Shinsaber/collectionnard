@@ -1,18 +1,18 @@
 <template>
   <div>
     <div class="flex items-center gap-3 mb-4">
-      <ElButton text aria-label="Retour" @click="router.back()">
+      <ElButton text :aria-label="t('common.back')" @click="router.back()">
         <i class="pi pi-arrow-left" aria-hidden="true"></i>
       </ElButton>
       <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
-        Graphe de relations
+        {{ t("graph.view.title") }}
       </h1>
       <div class="flex-1"></div>
       <div class="flex items-center gap-2">
         <label
           for="graph-depth"
           class="text-sm text-gray-600 dark:text-gray-400"
-          >Profondeur :</label
+          >{{ t("graph.view.depth") }}</label
         >
         <ElInputNumber
           id="graph-depth"
@@ -33,7 +33,7 @@
       :closable="false"
       show-icon
       class="mb-3"
-      title="Graphe tronqué : la limite de nœuds du serveur est atteinte. Réduisez la profondeur pour voir l'ensemble des relations."
+      :title="t('graph.view.truncated')"
     />
 
     <AppSpinner v-if="loading" />
@@ -60,7 +60,7 @@
           class="inline-block w-3 h-3 rounded-xs"
           :style="{ backgroundColor: color }"
         ></span>
-        {{ typeName }}
+        {{ typeDisplay(String(typeName)) }}
       </span>
     </div>
 
@@ -69,13 +69,15 @@
       :node="selectedNode"
       :schema="selectedNode ? itemTypeSchemas[selectedNode.type] : undefined"
       :title="selectedNodeTitle"
+      :type-label="selectedNode ? typeDisplay(selectedNode.type) : ''"
       @open="openItem"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { useTheme } from "@/composables/useTheme";
 import AppSpinner from "@/components/common/AppSpinner.vue";
@@ -89,8 +91,10 @@ import { useNotify } from "@/composables/useNotify";
 import {
   displayValue,
   fieldLabel,
+  fieldValue,
   orderedKeys,
   renderLabel,
+  typeTitle,
 } from "@/lib/schema";
 import GraphNodeDialog from "@/components/graph/GraphNodeDialog.vue";
 import type { GraphNode, GraphEdge, GraphResponse } from "@/api/types";
@@ -104,6 +108,7 @@ const maxDepth = ref(3);
 const truncated = ref(false);
 const auth = useAuthStore();
 const { lang } = useLang();
+const { t } = useI18n();
 const { notifyError } = useNotify();
 const loading = ref(true);
 
@@ -140,17 +145,43 @@ const metaTypes = useMetaTypes();
 const itemTypeSchemas = computed(() => metaTypes.itemTypeSchemasByName);
 const relationTypeSchemas = computed(() => metaTypes.relationTypeSchemasByName);
 
+// Méta-types par nom (nœuds et arêtes ne portent que le nom) : nom affiché via x-title.
+const itemTypesByName = computed(
+  () => new Map(metaTypes.itemTypes.map((it) => [it.name, it])),
+);
+const relationTypesByName = computed(
+  () => new Map(metaTypes.relationTypes.map((rt) => [rt.name, rt])),
+);
+function typeDisplay(name: string): string {
+  return typeTitle(itemTypesByName.value.get(name), lang.value) || name;
+}
+function relationDisplay(name: string): string {
+  return typeTitle(relationTypesByName.value.get(name), lang.value) || name;
+}
+
 async function loadSchemas() {
   await Promise.all([metaTypes.loadItemTypes(), metaTypes.loadRelationTypes()]);
 }
 
-// Le serveur calcule `label` avec le x-label de l'ItemType ; repli local sinon.
+// Le serveur calcule `label` en français : on le recalcule dans la langue courante
+// avec le x-label de l'ItemType, repli sur celui du serveur.
 function nodeTitle(n: GraphNode): string {
   return (
-    n.label ||
     renderLabel(itemTypeSchemas.value[n.type], n.attributes, lang.value) ||
+    n.label ||
     n.id.slice(0, 8)
   );
+}
+
+// Données d'affichage d'un nœud dépendant de la langue (titre, badge du type).
+function nodeVisual(n: GraphNode, isRoot: boolean) {
+  const color = getColor(n.type);
+  const typeLabel = typeDisplay(n.type);
+  return {
+    title: nodeTitle(n),
+    typeSvg: makeTypeSvg(typeLabel, color, isRoot),
+    nodeWidth: Math.max(typeLabel.length * 7.5 + 24, 50),
+  };
 }
 
 // ── SVG badge for type label inside node ──
@@ -191,10 +222,11 @@ function edgeLabel(e: GraphEdge): string {
     .map((k) =>
       k === "order"
         ? `#${displayValue(attrs[k], lang.value)}`
-        : `${fieldLabel(schema, k, lang.value)} ${displayValue(attrs[k], lang.value)}`,
+        : `${fieldLabel(schema, k, lang.value)} ${fieldValue(schema, k, attrs[k], lang.value)}`,
     );
-  if (parts.length) return `${e.relation_type}\n${parts.join(" · ")}`;
-  return e.relation_type;
+  const name = relationDisplay(e.relation_type);
+  if (parts.length) return `${name}\n${parts.join(" · ")}`;
+  return name;
 }
 
 // ── Node detail modal helpers ──
@@ -223,7 +255,7 @@ async function loadGraph() {
     renderGraph(graph);
   } catch (e) {
     loading.value = false;
-    notifyError(e, "Graphe indisponible");
+    notifyError(e, t("graph.view.loadFailed"));
   }
 }
 
@@ -240,20 +272,15 @@ function renderGraph(graph: GraphResponse) {
   const elements: cytoscape.ElementDefinition[] = [
     // Nodes
     ...allNodes.map((n) => {
-      const color = getColor(n.type);
       const isRoot = n.id === graph.root.id;
-      const title = nodeTitle(n);
-      const w = Math.max(n.type.length * 7.5 + 24, 50);
       return {
         data: {
           id: n.id,
-          title,
           type: n.type,
-          color,
+          color: getColor(n.type),
           isRoot,
           nodeData: n,
-          typeSvg: makeTypeSvg(n.type, color, isRoot),
-          nodeWidth: w,
+          ...nodeVisual(n, isRoot),
         },
       };
     }),
@@ -354,9 +381,24 @@ function renderGraph(graph: GraphResponse) {
   });
 }
 
+// Changement de langue : libellés des nœuds et arêtes recalculés sans recharger le graphe.
+watch(lang, () => {
+  if (!cy) return;
+  cy.batch(() => {
+    cy!.nodes().forEach((node) => {
+      node.data(
+        nodeVisual(node.data("nodeData") as GraphNode, !!node.data("isRoot")),
+      );
+    });
+    cy!.edges().forEach((edge) => {
+      edge.data("label", edgeLabel(edge.data("edgeData") as GraphEdge));
+    });
+  });
+});
+
 onMounted(async () => {
   await loadSchemas().catch((e) =>
-    notifyError(e, "Schémas des types indisponibles"),
+    notifyError(e, t("graph.view.schemasFailed")),
   );
   await loadGraph();
 });

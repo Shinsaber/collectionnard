@@ -2,10 +2,11 @@
   <div>
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
-        Mes collections
+        {{ t("collections.list.title") }}
       </h1>
       <ElButton type="primary" @click="openCreate">
-        <i class="pi pi-plus mr-2" aria-hidden="true"></i> Nouvelle collection
+        <i class="pi pi-plus mr-2" aria-hidden="true"></i>
+        {{ t("collections.list.new") }}
       </ElButton>
     </div>
 
@@ -13,17 +14,17 @@
     <div class="flex gap-3 mb-4">
       <ElSelect
         v-model="filterTypeId"
-        placeholder="Tous les types"
+        :placeholder="t('collections.list.allTypes')"
         clearable
         class="w-48!"
-        aria-label="Filtrer par type de collection"
+        :aria-label="t('collections.list.filterByType')"
         @change="reload"
       >
         <ElOption
-          v-for="t in collectionTypes"
-          :key="t.id"
-          :label="t.name"
-          :value="t.id"
+          v-for="ct in collectionTypes"
+          :key="ct.id"
+          :label="typeTitle(ct, lang)"
+          :value="ct.id"
         />
       </ElSelect>
     </div>
@@ -45,7 +46,7 @@
             {{ col.name }}
           </h3>
           <ElTag type="info" size="small">{{
-            col.collection_type?.name ?? "?"
+            col.collection_type ? typeTitle(col.collection_type, lang) : "?"
           }}</ElTag>
         </div>
         <p
@@ -55,13 +56,14 @@
           {{ col.description }}
         </p>
         <div class="text-sm text-gray-400 dark:text-gray-500">
-          <i class="pi pi-box mr-1"></i> {{ col.item_count }} items
+          <i class="pi pi-box mr-1" aria-hidden="true"></i>
+          {{ t("collections.itemCount", col.item_count) }}
         </div>
         <div class="flex gap-1 mt-3 justify-end" @click.stop @keyup.stop>
           <ElButton
             text
             size="small"
-            aria-label="Modifier"
+            :aria-label="t('common.edit')"
             @click="openEdit(col)"
           >
             <i class="pi pi-pencil" aria-hidden="true"></i>
@@ -70,7 +72,7 @@
             text
             size="small"
             type="danger"
-            aria-label="Supprimer"
+            :aria-label="t('common.delete')"
             @click="confirmDelete(col)"
           >
             <i class="pi pi-trash" aria-hidden="true"></i>
@@ -84,44 +86,50 @@
       class="text-center text-gray-400 dark:text-gray-500 py-12"
     >
       <i class="pi pi-bookmark text-4xl mb-2"></i>
-      <p>Aucune collection. Créez-en une pour commencer !</p>
+      <p>{{ t("collections.list.empty") }}</p>
     </div>
 
     <!-- Create / Edit Dialog -->
     <ElDialog
       v-model="dialogVisible"
-      :title="editing ? 'Modifier' : 'Nouvelle collection'"
+      :title="
+        editing ? t('collections.list.editTitle') : t('collections.list.new')
+      "
       width="28rem"
     >
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-1">
-          <label for="col-type" class="text-sm font-medium"
-            >Type de collection</label
-          >
+          <label for="col-type" class="text-sm font-medium">{{
+            t("collections.list.collectionType")
+          }}</label>
           <ElSelect
             id="col-type"
             v-model="form.collection_type_id"
-            placeholder="Choisir..."
+            :placeholder="t('collections.list.choose')"
             :disabled="!!editing"
           >
             <ElOption
-              v-for="t in collectionTypes"
-              :key="t.id"
-              :label="t.name"
-              :value="t.id"
+              v-for="ct in collectionTypes"
+              :key="ct.id"
+              :label="typeTitle(ct, lang)"
+              :value="ct.id"
             />
           </ElSelect>
         </div>
         <div class="flex flex-col gap-1">
-          <label for="col-name" class="text-sm font-medium">Nom</label>
+          <label for="col-name" class="text-sm font-medium">{{
+            t("common.name")
+          }}</label>
           <ElInput
             id="col-name"
             v-model="form.name"
-            placeholder="Ma collection de..."
+            :placeholder="t('collections.list.namePlaceholder')"
           />
         </div>
         <div class="flex flex-col gap-1">
-          <label for="col-desc" class="text-sm font-medium">Description</label>
+          <label for="col-desc" class="text-sm font-medium">{{
+            t("common.description")
+          }}</label>
           <ElInput
             id="col-desc"
             v-model="form.description"
@@ -131,10 +139,12 @@
         </div>
       </div>
       <template #footer>
-        <ElButton text @click="dialogVisible = false">Annuler</ElButton>
+        <ElButton text @click="dialogVisible = false">{{
+          t("common.cancel")
+        }}</ElButton>
         <ElButton type="primary" :loading="saving" @click="save">
           <i class="pi pi-check mr-2" aria-hidden="true"></i>
-          {{ editing ? "Enregistrer" : "Créer" }}
+          {{ editing ? t("common.save") : t("common.create") }}
         </ElButton>
       </template>
     </ElDialog>
@@ -143,16 +153,21 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { collectionApi } from "@/api/client";
 import { usePagination } from "@/composables/usePagination";
+import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";
 import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import { useMetaTypes } from "@/stores/metaTypes";
+import { typeTitle } from "@/lib/schema";
 import AppSpinner from "@/components/common/AppSpinner.vue";
 import type { Collection } from "@/api/types";
 
 const router = useRouter();
+const { t } = useI18n();
+const { lang } = useLang();
 const { notifyError, notifySuccess } = useNotify();
 const { confirm } = useConfirmDialog();
 const pag = usePagination(collectionApi.list);
@@ -168,7 +183,7 @@ const form = ref({ collection_type_id: "", name: "", description: "" });
 onMounted(async () => {
   await metaTypes
     .loadCollectionTypes()
-    .catch((e) => notifyError(e, "Types de collection indisponibles"));
+    .catch((e) => notifyError(e, t("collections.typesUnavailable")));
   reload();
 });
 
@@ -176,7 +191,7 @@ function reload() {
   pag.page.value = 1;
   pag
     .load(filterTypeId.value ? { collection_type_id: filterTypeId.value } : {})
-    .catch((e) => notifyError(e, "Chargement impossible"));
+    .catch((e) => notifyError(e, t("collections.loadFailed")));
 }
 
 function openCreate() {
@@ -203,10 +218,10 @@ async function save() {
         name: form.value.name,
         description: form.value.description,
       });
-      notifySuccess("Collection modifiée");
+      notifySuccess(t("collections.list.updated"));
     } else {
       await collectionApi.create(form.value);
-      notifySuccess("Collection créée");
+      notifySuccess(t("collections.list.created"));
     }
     dialogVisible.value = false;
     reload();
@@ -219,14 +234,14 @@ async function save() {
 
 async function confirmDelete(col: Collection) {
   const ok = await confirm({
-    message: `Supprimer la collection « ${col.name} » ? Les items ne seront pas supprimés.`,
-    confirmText: "Supprimer",
+    message: t("collections.list.confirmDelete", { name: col.name }),
+    confirmText: t("common.delete"),
     danger: true,
   });
   if (!ok) return;
   try {
     await collectionApi.delete(col.id);
-    notifySuccess("Collection supprimée");
+    notifySuccess(t("collections.list.deleted"));
     reload();
   } catch (e) {
     notifyError(e);

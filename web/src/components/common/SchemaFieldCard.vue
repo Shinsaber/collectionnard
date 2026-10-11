@@ -10,7 +10,7 @@
         text
         size="small"
         circle
-        aria-label="Monter le champ"
+        :aria-label="t('schema.field.moveUp')"
         :disabled="index === 0"
         @click="$emit('move', -1)"
       >
@@ -20,7 +20,7 @@
         text
         size="small"
         circle
-        aria-label="Descendre le champ"
+        :aria-label="t('schema.field.moveDown')"
         :disabled="index === count - 1"
         @click="$emit('move', 1)"
       >
@@ -29,8 +29,8 @@
 
       <ElInput
         :model-value="field.key"
-        placeholder="clé (ex: title)"
-        aria-label="Clé du champ"
+        :placeholder="t('schema.field.keyPlaceholder')"
+        :aria-label="t('schema.field.key')"
         size="small"
         class="flex-1"
         @update:model-value="set('key', $event)"
@@ -38,7 +38,7 @@
 
       <ElSelect
         :model-value="field.type"
-        aria-label="Type du champ"
+        :aria-label="t('schema.field.type')"
         size="small"
         class="w-36!"
         @update:model-value="set('type', $event)"
@@ -46,7 +46,7 @@
         <ElOption
           v-for="o in typeOptions"
           :key="o.value"
-          :label="o.label"
+          :label="t(o.labelKey)"
           :value="o.value"
         />
       </ElSelect>
@@ -54,10 +54,10 @@
       <ElCheckbox
         :id="`${uid}-req`"
         :model-value="field.required"
-        title="Champ requis"
+        :title="t('schema.field.required')"
         size="small"
         @update:model-value="set('required', $event)"
-        >Req.</ElCheckbox
+        >{{ t("schema.field.requiredShort") }}</ElCheckbox
       >
 
       <ElButton
@@ -65,7 +65,7 @@
         type="danger"
         size="small"
         circle
-        aria-label="Supprimer le champ"
+        :aria-label="t('schema.field.remove')"
         @click="$emit('remove')"
       >
         <i class="pi pi-trash" aria-hidden="true"></i>
@@ -75,8 +75,8 @@
         text
         size="small"
         circle
-        title="Ajouter un champ après"
-        aria-label="Ajouter un champ après"
+        :title="t('schema.field.addAfter')"
+        :aria-label="t('schema.field.addAfter')"
         @click="$emit('add-after')"
       >
         <i class="pi pi-plus" aria-hidden="true"></i>
@@ -93,6 +93,7 @@
 
 <script setup lang="ts">
 import { useId } from "vue";
+import { useI18n } from "vue-i18n";
 import SchemaFieldConstraints from "./SchemaFieldConstraints.vue";
 import type {
   Option,
@@ -118,6 +119,7 @@ const emit = defineEmits<{
   "add-after": [];
 }>();
 
+const { t } = useI18n();
 const uid = useId();
 
 function set<K extends keyof SchemaField>(key: K, value: unknown) {

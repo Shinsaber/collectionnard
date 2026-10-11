@@ -100,3 +100,53 @@ itTop(
     expect(out["x-future"]).toEqual({ a: 1 });
   },
 );
+
+// Internationalisation : nom/description du type par langue, libellés d'enum, libellés
+// de langues que l'interface ne supporte pas encore (conservés), objet i18n-text extensible.
+itTop(
+  "conserve x-title, x-description, x-enum-labels et les langues inconnues",
+  async () => {
+    const out = await roundTrip({
+      type: "object",
+      "x-title": { fr: "Série", en: "Series", de: "Serie" },
+      "x-description": { fr: "Série télévisée" },
+      "x-labels": { fr: { kind: "Genre" }, de: { kind: "Art" } },
+      properties: {
+        kind: {
+          type: "string",
+          enum: ["tv", "web"],
+          "x-enum-labels": { fr: { tv: "Télévision" }, en: { tv: "TV" } },
+        },
+      },
+    });
+    expect(out["x-title"]).toEqual({ fr: "Série", en: "Series", de: "Serie" });
+    expect(out["x-description"]).toEqual({ fr: "Série télévisée" });
+    expect(out["x-labels"]).toEqual({
+      fr: { kind: "Genre" },
+      de: { kind: "Art" },
+    });
+    expect(
+      ((out.properties as Props).kind as Record<string, unknown>)[
+        "x-enum-labels"
+      ],
+    ).toEqual({ fr: { tv: "Télévision" }, en: { tv: "TV" } });
+  },
+);
+
+itTop("génère un i18n-text ouvert aux langues futures", async () => {
+  const out = await roundTrip({
+    type: "object",
+    properties: {
+      synopsis: {
+        type: "object",
+        "x-widget": "i18n-text",
+        properties: { fr: { type: "string" } },
+        additionalProperties: false,
+      },
+    },
+  });
+  const prop = (out.properties as Props).synopsis as Record<string, unknown>;
+  expect(Object.keys(prop.properties as object)).toEqual(["fr", "en"]);
+  expect(prop.additionalProperties).toEqual({ type: "string" });
+  expect(prop.propertyNames).toBeTruthy();
+});

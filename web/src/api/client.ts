@@ -39,6 +39,7 @@ import type {
   PaginationParams,
   UploadResponse,
 } from "./types";
+import { i18n } from "@/i18n";
 
 const BASE_URL = "/api/v1";
 
@@ -125,16 +126,27 @@ http.interceptors.response.use(
 );
 
 // ── API Error Helper ──────────────────────────────────────────────────
+/**
+ * Erreur d'appel API prête à afficher : le code `error` de la réponse est traduit
+ * (`errors.api.<code>`) ; à défaut, le `message` du serveur (en anglais), puis celui d'axios.
+ * `code` vaut `network` quand le serveur n'a pas répondu.
+ */
 export function extractApiError(e: unknown): {
+  code?: string;
   message: string;
   fieldErrors?: Record<string, string>;
 } {
+  const { t, te } = i18n.global;
   if (axios.isAxiosError(e) && e.response?.data) {
     const data = e.response.data as Record<string, unknown>;
-    const message = (data.message as string) ?? e.message;
+    const code = typeof data.error === "string" ? data.error : undefined;
+    const key = `errors.api.${code}`;
+    const message =
+      code && te(key) ? t(key) : ((data.message as string) ?? e.message);
     const details = data.details as
       { fields?: Record<string, string> } | undefined;
     return {
+      code,
       message,
       fieldErrors: details?.fields
         ? Object.fromEntries(
@@ -146,7 +158,10 @@ export function extractApiError(e: unknown): {
         : undefined,
     };
   }
-  return { message: e instanceof Error ? e.message : "Erreur inconnue" };
+  if (axios.isAxiosError(e) && !e.response && e.request) {
+    return { code: "network", message: t("errors.network") };
+  }
+  return { message: e instanceof Error ? e.message : t("errors.unknown") };
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────

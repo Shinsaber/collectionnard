@@ -2,10 +2,11 @@
   <div>
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
-        Catalogue
+        {{ t("items.list.title") }}
       </h1>
       <ElButton v-if="auth.isAdmin" type="primary" @click="openCreate">
-        <i class="pi pi-plus mr-2" aria-hidden="true"></i> Nouvel item
+        <i class="pi pi-plus mr-2" aria-hidden="true"></i>
+        {{ t("items.list.newItem") }}
       </ElButton>
     </div>
 
@@ -13,36 +14,36 @@
     <div class="flex gap-3 mb-4 flex-wrap">
       <ElSelect
         v-model="filters.item_type_id"
-        placeholder="Tous les types"
+        :placeholder="t('items.list.allTypes')"
         clearable
         class="w-48!"
-        aria-label="Filtrer par type"
+        :aria-label="t('items.list.filterByType')"
         @change="reload"
       >
         <ElOption
-          v-for="t in itemTypes"
-          :key="t.id"
-          :label="t.name"
-          :value="t.id"
+          v-for="type in itemTypes"
+          :key="type.id"
+          :label="typeTitle(type, lang)"
+          :value="type.id"
         />
       </ElSelect>
       <ElInput
         v-model="filters.search"
-        placeholder="Rechercher..."
+        :placeholder="t('items.list.searchPlaceholder')"
         clearable
         class="w-64!"
-        aria-label="Recherche"
+        :aria-label="t('common.search')"
         @keyup.enter="reload"
       />
       <ElInput
         v-model="filters.tag"
-        placeholder="Tag..."
+        :placeholder="t('items.list.tagPlaceholder')"
         clearable
         class="w-32!"
-        aria-label="Tag"
+        :aria-label="t('items.list.tag')"
         @keyup.enter="reload"
       />
-      <ElButton aria-label="Rechercher" @click="reload">
+      <ElButton :aria-label="t('common.search')" @click="reload">
         <i class="pi pi-search" aria-hidden="true"></i>
       </ElButton>
     </div>
@@ -56,40 +57,44 @@
       class="cursor-pointer"
       @row-click="goToItem"
     >
-      <ElTableColumn label="Type" width="140">
+      <ElTableColumn :label="t('common.type')" width="140">
         <template #default="{ row }">
           <ElTag type="info" size="small">{{
-            (row as Item).item_type?.name ?? "?"
+            typeTitle((row as Item).item_type, lang) || "?"
           }}</ElTag>
         </template>
       </ElTableColumn>
-      <ElTableColumn label="Label">
+      <ElTableColumn :label="t('items.list.colLabel')">
         <template #default="{ row }">
           {{ itemLabel(row as Item) }}
         </template>
       </ElTableColumn>
-      <ElTableColumn label="Tags">
+      <ElTableColumn :label="t('items.list.colTags')">
         <template #default="{ row }">
           <div class="flex gap-1 flex-wrap">
             <ElTag
-              v-for="t in (row as Item).tags ?? []"
-              :key="t.id"
+              v-for="tag in (row as Item).tags ?? []"
+              :key="tag.id"
               type="info"
               effect="plain"
               size="small"
-              >{{ t.name }}</ElTag
+              >{{ tag.name }}</ElTag
             >
           </div>
         </template>
       </ElTableColumn>
-      <ElTableColumn v-if="auth.isAdmin" label="Actions" width="150">
+      <ElTableColumn
+        v-if="auth.isAdmin"
+        :label="t('common.actions')"
+        width="150"
+      >
         <template #default="{ row }">
           <div class="flex gap-1">
             <ElButton
               text
               size="small"
-              title="Graphe"
-              aria-label="Voir le graphe"
+              :title="t('items.list.graph')"
+              :aria-label="t('items.list.viewGraph')"
               @click.stop="router.push(`/items/${(row as Item).id}/graph`)"
             >
               <i class="pi pi-sitemap" aria-hidden="true"></i>
@@ -97,7 +102,7 @@
             <ElButton
               text
               size="small"
-              aria-label="Modifier"
+              :aria-label="t('common.edit')"
               @click.stop="openEdit(row as Item)"
             >
               <i class="pi pi-pencil" aria-hidden="true"></i>
@@ -106,7 +111,7 @@
               text
               size="small"
               type="danger"
-              aria-label="Supprimer"
+              :aria-label="t('common.delete')"
               @click.stop="confirmDelete(row as Item)"
             >
               <i class="pi pi-trash" aria-hidden="true"></i>
@@ -137,6 +142,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { itemApi } from "@/api/client";
 import { useMetaTypes } from "@/stores/metaTypes";
 import { useNotify } from "@/composables/useNotify";
@@ -144,12 +150,13 @@ import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import { usePagination } from "@/composables/usePagination";
 import { useAuthStore } from "@/stores/auth";
 import { useLang } from "@/composables/useLang";
-import { itemLabel as renderItemLabel } from "@/lib/schema";
+import { itemLabel as renderItemLabel, typeTitle } from "@/lib/schema";
 import ItemEditDialog from "@/components/item/ItemEditDialog.vue";
 import type { Item } from "@/api/types";
 
 const auth = useAuthStore();
 const router = useRouter();
+const { t } = useI18n();
 const { lang } = useLang();
 const { notifyError, notifySuccess } = useNotify();
 const { confirm } = useConfirmDialog();
@@ -167,18 +174,22 @@ const editing = ref<Item | null>(null);
 onMounted(async () => {
   await metaTypes
     .loadItemTypes()
-    .catch((e) => notifyError(e, "Types indisponibles"));
+    .catch((e) => notifyError(e, t("items.list.typesUnavailable")));
   reload();
 });
 
 function reload() {
   pag.page.value = 1;
-  pag.load(filters.value).catch((e) => notifyError(e, "Chargement impossible"));
+  pag
+    .load(filters.value)
+    .catch((e) => notifyError(e, t("items.list.loadFailed")));
 }
 
 function onPageChange(p: number) {
   pag.goToPage(p);
-  pag.load(filters.value).catch((e) => notifyError(e, "Chargement impossible"));
+  pag
+    .load(filters.value)
+    .catch((e) => notifyError(e, t("items.list.loadFailed")));
 }
 
 function itemLabel(item: Item): string {
@@ -201,14 +212,14 @@ function openEdit(row: Item) {
 
 async function confirmDelete(row: Item) {
   const ok = await confirm({
-    message: `Supprimer « ${itemLabel(row as Item)} » ?`,
-    confirmText: "Supprimer",
+    message: t("items.list.confirmDelete", { label: itemLabel(row as Item) }),
+    confirmText: t("common.delete"),
     danger: true,
   });
   if (!ok) return;
   try {
     await itemApi.delete(row.id);
-    notifySuccess("Item supprimé");
+    notifySuccess(t("items.list.deleted"));
     pag.load(filters.value);
   } catch (e) {
     notifyError(e);

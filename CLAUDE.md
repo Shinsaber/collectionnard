@@ -7,7 +7,9 @@ validées contre ce schéma.
 
 Langue du projet : **français** (docs, commits, échanges). Le socle de données est en **anglais**
 snake_case ASCII : identifiants, clés JSON des attributs, noms de RelationTypes, valeurs d'enum ;
-l'affichage traduit via `x-labels` (fr/en, bascule dans l'en-tête). Le seed TV suit cette convention
+l'affichage traduit via `x-labels`, `x-title`, `x-enum-labels` (fr/en, sélecteur dans l'en-tête). L'interface passe par
+vue-i18n (`web/src/i18n/`, registre des langues `langs.ts`) ; l'API renvoie des codes d'erreur traduits par le front et
+des messages techniques en anglais. Ajouter une langue : `Collectionnard.md` § 3 « Langues ». Le seed TV suit cette convention
 (`title`, `start_year`, `broadcast_on`, `Ownership`…) ; un changement de clé = nouvelle migration + seed.
 
 ## Documents de référence (à lire selon le besoin, ne pas tout charger d'office)
@@ -45,7 +47,9 @@ l'affichage traduit via `x-labels` (fr/en, bascule dans l'en-tête). Le seed TV 
 
 `x-label` (gabarit du libellé d'une instance : `"{number}. {title}"` — Go `internal/label`, TS
 `web/src/lib/schema.ts`, à garder alignés), `x-order` (ordre des champs), `x-labels` (`{fr:{…}, en:{…}}`),
-`x-widget` (`image-gallery`, `i18n-text`), `x-image-categories` (`{poster:{ratio:"2/3"}}`). Pas de widget
+`x-widget` (`image-gallery`, `i18n-text`), `x-image-categories` (`{poster:{ratio:"2/3"}}`), `x-title` / `x-description`
+(nom et description affichés du méta-type par langue, repli sur `name` / `description`), `x-enum-labels` (propriété :
+`{fr:{tv:"Télévision"}}`). Pas de widget
 `slider` : le curseur est automatique quand `minimum` **et** `maximum` sont définis.
 Toute nouvelle extension doit être gérée dans `DynamicForm.vue` **et** `SchemaBuilder.vue` (qui conserve
 les mots-clés qu'il ne connaît pas), lue via `lib/schema.ts`, et documentée dans le README et

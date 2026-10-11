@@ -26,7 +26,12 @@
           >
             <img
               :src="url"
-              :alt="`${cat.name} ${imgIdx + 1}`"
+              :alt="
+                t('items.gallery.imageAlt', {
+                  category: cat.name,
+                  n: imgIdx + 1,
+                })
+              "
               class="w-32 object-cover rounded-lg border"
               :style="{ aspectRatio: cat.ratio || '1/1' }"
               :class="{ 'ring-2 ring-blue-500': defaultUrl === url }"
@@ -34,14 +39,14 @@
             <span
               v-if="defaultUrl === url"
               class="absolute top-1 left-1 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded-sm"
-              >défaut</span
+              >{{ t("items.gallery.default") }}</span
             >
           </div>
           <div
             v-if="urlsOf(cat.name).length === 0"
             class="text-sm text-gray-400 dark:text-gray-500 italic py-4"
           >
-            Aucune image dans cette catégorie.
+            {{ t("items.gallery.empty") }}
           </div>
         </div>
       </ElTabPane>
@@ -51,6 +56,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useLang } from "@/composables/useLang";
 import {
   fieldLabel,
@@ -66,6 +72,7 @@ const props = defineProps<{
   schema: Schema | null | undefined;
 }>();
 
+const { t } = useI18n();
 const { lang } = useLang();
 
 const gallery = computed(() => {

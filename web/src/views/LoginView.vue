@@ -11,17 +11,39 @@
         📦 Collectionnard
       </h1>
 
+      <!-- Sélecteur de langue (l'en-tête de l'application n'est pas visible ici) -->
+      <div
+        class="flex justify-center gap-1 mb-4"
+        role="group"
+        :aria-label="t('auth.language')"
+      >
+        <ElButton
+          v-for="l in langs"
+          :key="l"
+          text
+          size="small"
+          class="font-mono"
+          :type="l === lang ? 'primary' : undefined"
+          :title="langNames[l]"
+          :aria-label="langNames[l]"
+          :aria-pressed="l === lang"
+          :lang="l"
+          @click="setLang(l)"
+          >{{ l.toUpperCase() }}</ElButton
+        >
+      </div>
+
       <form class="flex flex-col gap-4" @submit.prevent="handleLogin">
         <div class="flex flex-col gap-1">
           <label
             for="username"
             class="text-sm font-medium text-gray-700 dark:text-gray-300"
-            >Utilisateur</label
+            >{{ t("auth.username") }}</label
           >
           <ElInput
             id="username"
             v-model="username"
-            placeholder="Nom d'utilisateur"
+            :placeholder="t('auth.usernamePlaceholder')"
             autocomplete="username"
             autofocus
           />
@@ -31,7 +53,7 @@
           <label
             for="password"
             class="text-sm font-medium text-gray-700 dark:text-gray-300"
-            >Mot de passe</label
+            >{{ t("auth.password") }}</label
           >
           <ElInput
             id="password"
@@ -51,7 +73,8 @@
         />
 
         <ElButton type="primary" native-type="submit" :loading="loading">
-          <i class="pi pi-sign-in mr-2" aria-hidden="true"></i> Se connecter
+          <i class="pi pi-sign-in mr-2" aria-hidden="true"></i>
+          {{ t("auth.login") }}
         </ElButton>
       </form>
     </div>
@@ -59,26 +82,32 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import { useLang } from "@/composables/useLang";
 
 const auth = useAuthStore();
 const router = useRouter();
+const { t } = useI18n();
+const { lang, setLang, langs, langNames } = useLang();
 
 const username = ref("");
 const password = ref("");
 const loading = ref(false);
-const error = ref("");
+// Clé de catalogue plutôt que texte : le message suit un changement de langue.
+const errorKey = ref("");
+const error = computed(() => (errorKey.value ? t(errorKey.value) : ""));
 
 async function handleLogin() {
-  error.value = "";
+  errorKey.value = "";
   loading.value = true;
   try {
     await auth.login({ username: username.value, password: password.value });
     router.push("/");
   } catch {
-    error.value = "Identifiants invalides";
+    errorKey.value = "auth.invalidCredentials";
   } finally {
     loading.value = false;
   }

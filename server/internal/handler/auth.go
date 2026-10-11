@@ -35,7 +35,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.Username == "" || req.Password == "" {
-		respondError(w, http.StatusBadRequest, "bad_request", "username et password requis")
+		respondError(w, http.StatusBadRequest, "bad_request", "username and password are required")
 		return
 	}
 
@@ -43,15 +43,15 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			_ = bcrypt.CompareHashAndPassword(dummyHash, []byte(req.Password))
-			respondError(w, http.StatusUnauthorized, "unauthorized", "Nom d'utilisateur ou mot de passe incorrect")
+			respondError(w, http.StatusUnauthorized, "unauthorized", "invalid username or password")
 			return
 		}
-		respondInternal(w, r, err, "Erreur interne")
+		respondInternal(w, r, err, "internal error")
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(req.Password)); err != nil {
-		respondError(w, http.StatusUnauthorized, "unauthorized", "Nom d'utilisateur ou mot de passe incorrect")
+		respondError(w, http.StatusUnauthorized, "unauthorized", "invalid username or password")
 		return
 	}
 
@@ -67,17 +67,17 @@ func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.RefreshToken == "" {
-		respondError(w, http.StatusBadRequest, "bad_request", "refresh_token requis")
+		respondError(w, http.StatusBadRequest, "bad_request", "refresh_token is required")
 		return
 	}
 
 	userID, err := h.Store.ConsumeRefreshToken(r.Context(), hashToken(req.RefreshToken))
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			respondError(w, http.StatusUnauthorized, "unauthorized", "Refresh token invalide ou expiré")
+			respondError(w, http.StatusUnauthorized, "unauthorized", "invalid or expired refresh token")
 			return
 		}
-		respondInternal(w, r, err, "Erreur interne")
+		respondInternal(w, r, err, "internal error")
 		return
 	}
 
@@ -86,10 +86,10 @@ func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 	user, err := h.Store.GetUserByID(r.Context(), userID)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			respondError(w, http.StatusUnauthorized, "unauthorized", "Utilisateur inconnu")
+			respondError(w, http.StatusUnauthorized, "unauthorized", "unknown user")
 			return
 		}
-		respondInternal(w, r, err, "Erreur interne")
+		respondInternal(w, r, err, "internal error")
 		return
 	}
 
@@ -104,11 +104,11 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.RefreshToken == "" {
-		respondError(w, http.StatusBadRequest, "bad_request", "refresh_token requis")
+		respondError(w, http.StatusBadRequest, "bad_request", "refresh_token is required")
 		return
 	}
 	if err := h.Store.DeleteRefreshToken(r.Context(), hashToken(req.RefreshToken)); err != nil {
-		respondInternal(w, r, err, "Erreur interne")
+		respondInternal(w, r, err, "internal error")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -128,19 +128,19 @@ func (h *Handler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) issueTokens(w http.ResponseWriter, r *http.Request, user *model.User) {
 	access, err := h.Auth.GenerateToken(user.ID, user.Role)
 	if err != nil {
-		respondInternal(w, r, err, "Erreur génération token")
+		respondInternal(w, r, err, "token generation failed")
 		return
 	}
 
 	raw := make([]byte, refreshTokenBytes)
 	if _, err := rand.Read(raw); err != nil {
-		respondInternal(w, r, err, "Erreur génération token")
+		respondInternal(w, r, err, "token generation failed")
 		return
 	}
 	refresh := base64.RawURLEncoding.EncodeToString(raw)
 	expiresAt := time.Now().Add(h.Config.RefreshTokenTTL)
 	if err := h.Store.CreateRefreshToken(r.Context(), user.ID, hashToken(refresh), expiresAt); err != nil {
-		respondInternal(w, r, err, "Erreur interne")
+		respondInternal(w, r, err, "internal error")
 		return
 	}
 

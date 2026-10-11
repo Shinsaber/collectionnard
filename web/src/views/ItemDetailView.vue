@@ -3,7 +3,7 @@
 
   <div v-else-if="item">
     <div class="flex items-center gap-3 mb-6">
-      <ElButton text aria-label="Retour" @click="router.back()">
+      <ElButton text :aria-label="t('common.back')" @click="router.back()">
         <i class="pi pi-arrow-left" aria-hidden="true"></i>
       </ElButton>
       <div>
@@ -12,35 +12,37 @@
         </h1>
         <div class="flex items-center gap-2 mt-1">
           <ElTag type="info" size="small">{{
-            item.item_type?.name ?? "?"
+            typeTitle(item.item_type, lang) || "?"
           }}</ElTag>
           <ElTag
-            v-for="t in item.tags ?? []"
-            :key="t.id"
+            v-for="tag in item.tags ?? []"
+            :key="tag.id"
             type="info"
             effect="plain"
             size="small"
-            >{{ t.name }}</ElTag
+            >{{ tag.name }}</ElTag
           >
         </div>
       </div>
       <div class="flex-1"></div>
       <ElButton v-if="auth.isAdmin" plain @click="editDialogVisible = true">
-        <i class="pi pi-pencil mr-2" aria-hidden="true"></i> Modifier
+        <i class="pi pi-pencil mr-2" aria-hidden="true"></i>
+        {{ t("common.edit") }}
       </ElButton>
       <ElButton plain @click="addToCollectionVisible = true">
-        <i class="pi pi-plus mr-2" aria-hidden="true"></i> Ajouter à une
-        collection
+        <i class="pi pi-plus mr-2" aria-hidden="true"></i>
+        {{ t("items.detail.addToCollection") }}
       </ElButton>
-      <ElButton plain @click="router.push(`/items//graph`)">
-        <i class="pi pi-sitemap mr-2" aria-hidden="true"></i> Graphe
+      <ElButton plain @click="router.push(`/items/${item.id}/graph`)">
+        <i class="pi pi-sitemap mr-2" aria-hidden="true"></i>
+        {{ t("items.detail.graph") }}
       </ElButton>
     </div>
 
     <!-- Attributes -->
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
       <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">
-        Attributs
+        {{ t("items.detail.attributes") }}
       </h2>
       <div class="flex gap-6">
         <div v-if="defaultImageUrl" class="shrink-0">
@@ -48,7 +50,7 @@
             :src="defaultImageUrl"
             class="w-48 h-auto rounded-lg shadow-sm object-cover"
             :style="{ aspectRatio: defaultImageRatio }"
-            :alt="`Image par défaut : ${title}`"
+            :alt="t('items.detail.defaultImageAlt', { title })"
           />
         </div>
 
@@ -59,7 +61,7 @@
                 {{ fieldLabel(schema, key, lang) }}
               </dt>
               <dd class="text-gray-800 dark:text-gray-200">
-                {{ displayValue(item.attributes[key], lang) }}
+                {{ fieldValue(schema, key, item.attributes[key], lang) }}
               </dd>
             </div>
           </template>
@@ -73,7 +75,7 @@
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">
-          Relations
+          {{ t("items.detail.relations") }}
         </h2>
         <ElButton
           v-if="auth.isAdmin"
@@ -81,7 +83,8 @@
           size="small"
           @click="createRelationVisible = true"
         >
-          <i class="pi pi-plus mr-2" aria-hidden="true"></i> Créer une relation
+          <i class="pi pi-plus mr-2" aria-hidden="true"></i>
+          {{ t("items.detail.createRelation") }}
         </ElButton>
       </div>
 
@@ -89,7 +92,7 @@
         v-if="relations.length === 0"
         class="text-sm text-gray-400 dark:text-gray-500 italic"
       >
-        Aucune relation trouvée.
+        {{ t("items.detail.noRelations") }}
       </div>
 
       <div v-else class="flex flex-col gap-5">
@@ -111,7 +114,7 @@
       class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mt-6"
     >
       <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">
-        Dans vos collections
+        {{ t("items.detail.inYourCollections") }}
       </h2>
       <div class="flex flex-col gap-2">
         <div
@@ -120,7 +123,7 @@
           class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
         >
           <ElTag type="info" size="small">{{
-            ic.collection.collection_type?.name ?? "?"
+            typeTitle(ic.collection.collection_type, lang) || "?"
           }}</ElTag>
           <router-link
             :to="`/collections/${ic.collection.id}`"
@@ -135,7 +138,7 @@
               class="bg-gray-200 dark:bg-gray-600 dark:text-gray-300 rounded-sm px-2 py-0.5"
             >
               {{ ctxLabel(ic.collection, String(key)) }}:
-              {{ displayValue(val, lang) }}
+              {{ ctxValue(ic.collection, String(key), val) }}
             </span>
           </div>
         </div>
@@ -172,6 +175,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import AppSpinner from "@/components/common/AppSpinner.vue";
 import { itemApi, relationApi } from "@/api/client";
@@ -180,12 +184,13 @@ import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";
 import {
   defaultImage,
-  displayValue,
   fieldLabel,
+  fieldValue,
   imageCategories,
   isImageGallery,
   itemLabel,
   orderedKeys,
+  typeTitle,
   type Schema,
 } from "@/lib/schema";
 import ItemEditDialog from "@/components/item/ItemEditDialog.vue";
@@ -198,6 +203,7 @@ import type { Item, ItemCollectionMembership, ItemRelation } from "@/api/types";
 
 const props = defineProps<{ id: string }>();
 const router = useRouter();
+const { t } = useI18n();
 const auth = useAuthStore();
 const { confirm } = useConfirmDialog();
 const { lang } = useLang();
@@ -264,15 +270,25 @@ const groupedRelations = computed(() => {
   return [...groups.values()];
 });
 
+function ctxSchema(
+  collection: ItemCollectionMembership["collection"],
+): Schema | undefined {
+  return collection.collection_type?.attributes_schema as Schema | undefined;
+}
+
 function ctxLabel(
   collection: ItemCollectionMembership["collection"],
   key: string,
 ): string {
-  return fieldLabel(
-    collection.collection_type?.attributes_schema as Schema | undefined,
-    key,
-    lang.value,
-  );
+  return fieldLabel(ctxSchema(collection), key, lang.value);
+}
+
+function ctxValue(
+  collection: ItemCollectionMembership["collection"],
+  key: string,
+  value: unknown,
+): string {
+  return fieldValue(ctxSchema(collection), key, value, lang.value);
 }
 
 function openEditRelation(rel: ItemRelation) {
@@ -284,14 +300,16 @@ async function confirmDeleteRelation(rel: ItemRelation) {
   const linked =
     rel.source_item_id === item.value?.id ? rel.target_item : rel.source_item;
   const ok = await confirm({
-    message: `Supprimer la relation avec « ${itemLabel(linked, lang.value)} » ?`,
-    confirmText: "Supprimer",
+    message: t("items.detail.confirmDeleteRelation", {
+      label: itemLabel(linked, lang.value),
+    }),
+    confirmText: t("common.delete"),
     danger: true,
   });
   if (!ok) return;
   try {
     await relationApi.delete(rel.id);
-    notifySuccess("Relation supprimée");
+    notifySuccess(t("items.detail.relationDeleted"));
     relations.value = relations.value.filter((r) => r.id !== rel.id);
   } catch (e) {
     notifyError(e);
@@ -303,7 +321,7 @@ async function reloadRelations() {
   try {
     relations.value = (await itemApi.relations(item.value.id)) ?? [];
   } catch (e) {
-    notifyError(e, "Relations indisponibles");
+    notifyError(e, t("items.detail.relationsUnavailable"));
   }
 }
 
@@ -312,7 +330,7 @@ async function loadCollections(itemId: string) {
     itemCollections.value = await itemApi.collections(itemId);
   } catch (e) {
     itemCollections.value = [];
-    notifyError(e, "Collections indisponibles");
+    notifyError(e, t("items.detail.collectionsUnavailable"));
   }
 }
 
@@ -327,7 +345,7 @@ async function loadItem(id: string) {
     relations.value = rels ?? [];
     loadCollections(id);
   } catch (e) {
-    notifyError(e, "Item introuvable");
+    notifyError(e, t("items.detail.notFound"));
   } finally {
     loading.value = false;
   }

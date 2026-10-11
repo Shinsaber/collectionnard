@@ -1,0 +1,29 @@
+// Catalogue français — langue de référence : sa forme (`Messages`) est imposée aux autres
+// langues par le compilateur. Un fichier par espace de noms (`t("items.title")`…).
+import admin from "./admin";
+import auth from "./auth";
+import collections from "./collections";
+import common from "./common";
+import dashboard from "./dashboard";
+import errors from "./errors";
+import graph from "./graph";
+import items from "./items";
+import layout from "./layout";
+import schema from "./schema";
+
+const fr = {
+  admin,
+  auth,
+  collections,
+  common,
+  dashboard,
+  errors,
+  graph,
+  items,
+  layout,
+  schema,
+};
+
+export type Messages = typeof fr;
+
+export default fr;

@@ -242,8 +242,11 @@ Le projet utilise des extensions custom dans les JSON Schemas pour piloter le fr
 | -------------------- | -------------------------------------------------------------------------------------------------------- |
 | `x-label`            | Gabarit du libellé des instances (`"{title}"`, `"{number}. {title}"`) ; repli `title` / `name` / `label` |
 | `x-order`            | Ordre d'affichage des champs (array de clés)                                                             |
-| `x-labels`           | Labels i18n par langue (`{fr: {champ: "Label"}, en: {…}}`) ; la langue se bascule dans l'en-tête (FR/EN) |
-| `x-widget`           | Widget spécifique : `image-gallery`, `i18n-text`                                                         |
+| `x-labels`           | Libellés des champs par langue (`{fr: {champ: "Libellé"}, en: {…}}`) ; langue choisie dans l'en-tête  |
+| `x-title`            | Nom affiché du type par langue (`{fr: "Série", en: "Series"}`) ; repli sur `name`                         |
+| `x-description`      | Description du type par langue ; repli sur `description`                                                 |
+| `x-enum-labels`      | (propriété) Libellés des valeurs d'enum par langue (`{fr: {tv: "Télévision"}, en: {tv: "TV"}}`)          |
+| `x-widget`           | Widget spécifique : `image-gallery`, `i18n-text` (une chaîne par langue)                                                         |
 | `x-image-categories` | Catégories d'images avec ratios (`{poster: {ratio: "2/3"}}`)                                             |
 
 Sans extension, le widget découle du schéma : `enum` → liste déroulante, `integer`/`number` avec `minimum`
