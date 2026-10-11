@@ -30,14 +30,17 @@ Séries TV, DVD, livres, cartes à collectionner, vinyles… tout type de collec
 ### Lancer le projet
 
 ```bash
+cp .env.example .env      # puis renseigner JWT_SECRET (openssl rand -base64 48) et POSTGRES_PASSWORD
 docker compose up --build
 ```
+
+Sans `.env`, `docker compose` refuse de démarrer : aucun secret n'a de valeur par défaut.
 
 | Service        | URL                          | Description                        |
 | -------------- | ---------------------------- | ---------------------------------- |
 | **Frontend**   | http://localhost:3000        | SPA Vue 3                          |
 | **API**        | http://localhost:8080/api/v1 | API REST                           |
-| **PostgreSQL** | localhost:5432               | BDD (user: `colec`, pass: `colec`) |
+| **PostgreSQL** | localhost:5432               | BDD (user: `colec`, pass: `POSTGRES_PASSWORD`) |
 
 ### Utilisateur par défaut
 
@@ -55,9 +58,24 @@ password: admin
 ```bash
 cd server
 export DATABASE_URL="postgres://colec:colec@localhost:5432/colec?sslmode=disable"
-export JWT_SECRET="dev-secret"
+export JWT_SECRET="dev-secret-dev-secret-dev-secret-0000"   # 32 caractères minimum
 go run .
 ```
+
+(Le shell Nix du dépôt exporte déjà ces variables.)
+
+### Variables d'environnement du serveur
+
+| Variable            | Défaut      | Rôle                                                                 |
+| ------------------- | ----------- | -------------------------------------------------------------------- |
+| `DATABASE_URL`      | **requis**  | DSN PostgreSQL                                                       |
+| `JWT_SECRET`        | **requis**  | Clé HS256 des access tokens, 32 caractères minimum                   |
+| `ACCESS_TOKEN_TTL`  | `15m`       | Durée de vie des access tokens JWT (format Go)                        |
+| `REFRESH_TOKEN_TTL` | `720h`      | Durée de vie des refresh tokens (rotation à chaque utilisation)       |
+| `LOGIN_RATE_LIMIT`  | `10`        | Appels par minute et par IP sur `/auth/login`, `/auth/refresh`, `/auth/logout` |
+| `PORT`              | `8080`      | Port HTTP                                                            |
+| `UPLOAD_DIR`        | `uploads`   | Dossier des images uploadées                                         |
+| `MAX_UPLOAD_SIZE`   | `10485760`  | Taille max d'un upload (octets) ; les corps JSON sont limités à 1 Mio |
 
 **Frontend** :
 
@@ -151,7 +169,7 @@ La spécification complète est dans [api/openapi.yaml](api/openapi.yaml).
 
 | Domaine         | Endpoints                                       | Auth                              |
 | --------------- | ----------------------------------------------- | --------------------------------- |
-| Auth            | `POST /auth/login`, `GET /auth/me`              | Public / JWT                      |
+| Auth            | `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me` | Public (rate-limited) / JWT |
 | ItemTypes       | CRUD `/item-types`                              | Admin                             |
 | RelationTypes   | CRUD `/relation-types`                          | Admin                             |
 | CollectionTypes | CRUD `/collection-types`                        | Admin                             |

@@ -23,6 +23,19 @@ CREATE TABLE users (
     updated_at  TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
 
+-- 1b. Refresh tokens (rotation : un token est supprimé dès qu'il est consommé)
+-- Seul le hash SHA-256 du token est stocké ; le token brut n'est connu que du client.
+CREATE TABLE refresh_tokens (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash  CHAR(64) NOT NULL UNIQUE,
+    expires_at  TIMESTAMPTZ NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_refresh_tokens_user    ON refresh_tokens (user_id);
+CREATE INDEX idx_refresh_tokens_expires ON refresh_tokens (expires_at);
+
 -- =============================================================================
 -- 2. META-TYPES (schémas dynamiques)
 -- =============================================================================

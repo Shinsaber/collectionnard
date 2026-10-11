@@ -7,8 +7,14 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  token: string;
+  token: string; // access token JWT (courte durée)
+  refresh_token: string; // token opaque, rotation à chaque refresh
+  expires_in: number; // durée de vie de `token` en secondes
   user: User;
+}
+
+export interface RefreshRequest {
+  refresh_token: string;
 }
 
 // ---------- User ----------

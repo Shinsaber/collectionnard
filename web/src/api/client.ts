@@ -1,7 +1,14 @@
-import axios from "axios";
+import axios, { type InternalAxiosRequestConfig } from "axios";
+import {
+  clearTokens,
+  getAccessToken,
+  getRefreshToken,
+  setTokens,
+} from "./tokens";
 import type {
   LoginRequest,
   LoginResponse,
+  RefreshRequest,
   User,
   ItemType,
   ItemTypeCreate,
@@ -33,31 +40,87 @@ import type {
   UploadResponse,
 } from "./types";
 
+const BASE_URL = "/api/v1";
+
 const http = axios.create({
-  baseURL: "/api/v1",
+  baseURL: BASE_URL,
   headers: { "Content-Type": "application/json" },
 });
 
-// Inject JWT token from localStorage
+// Inject the access token
 http.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// Redirect to login on 401
+// ── Refresh automatique ──────────────────────────────────────────────
+// Sur un 401, on tente une fois de renouveler l'access token avec le refresh
+// token, puis on rejoue la requête. Un seul refresh est en vol à la fois
+// (les requêtes concurrentes attendent la même promesse). En cas d'échec,
+// la session est purgée et l'utilisateur renvoyé sur /login.
+
+type RetriableConfig = InternalAxiosRequestConfig & { _retried?: boolean };
+
+// Endpoints dont un 401 ne doit pas déclencher de refresh.
+const NO_REFRESH_PATHS = ["/auth/login", "/auth/refresh", "/auth/logout"];
+
+let refreshing: Promise<string | null> | null = null;
+
+async function refreshAccessToken(): Promise<string | null> {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return null;
+  try {
+    // axios « nu » : on ne veut pas repasser par les intercepteurs de `http`.
+    const { data } = await axios.post<LoginResponse>(
+      `${BASE_URL}/auth/refresh`,
+      { refresh_token: refreshToken } satisfies RefreshRequest,
+    );
+    setTokens(data.token, data.refresh_token);
+    return data.token;
+  } catch {
+    return null;
+  }
+}
+
+function redirectToLogin(): void {
+  clearTokens();
+  if (window.location.pathname !== "/login") {
+    window.location.href = "/login";
+  }
+}
+
 http.interceptors.response.use(
   (r) => r,
-  (error) => {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
-      localStorage.removeItem("token");
-      if (window.location.pathname !== "/login") {
-        window.location.href = "/login";
-      }
+  async (error) => {
+    if (!axios.isAxiosError(error) || error.response?.status !== 401) {
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
+    const config = error.config as RetriableConfig | undefined;
+    const url = config?.url ?? "";
+    if (NO_REFRESH_PATHS.some((p) => url.startsWith(p))) {
+      // Identifiants invalides ou refresh token mort : pas de retry.
+      if (!url.startsWith("/auth/login")) redirectToLogin();
+      return Promise.reject(error);
+    }
+    if (!config || config._retried) {
+      redirectToLogin();
+      return Promise.reject(error);
+    }
+    config._retried = true;
+
+    refreshing ??= refreshAccessToken().finally(() => {
+      refreshing = null;
+    });
+    const newToken = await refreshing;
+    if (!newToken) {
+      redirectToLogin();
+      return Promise.reject(error);
+    }
+    config.headers.Authorization = `Bearer ${newToken}`;
+    return http(config);
   },
 );
 
@@ -91,6 +154,16 @@ export function extractApiError(e: unknown): {
 export const authApi = {
   login: (data: LoginRequest) =>
     http.post<LoginResponse>("/auth/login", data).then((r) => r.data),
+  refresh: (refreshToken: string) =>
+    http
+      .post<LoginResponse>("/auth/refresh", {
+        refresh_token: refreshToken,
+      } satisfies RefreshRequest)
+      .then((r) => r.data),
+  logout: (refreshToken: string) =>
+    http.post<void>("/auth/logout", {
+      refresh_token: refreshToken,
+    } satisfies RefreshRequest),
   me: () => http.get<User>("/auth/me").then((r) => r.data),
 };
 

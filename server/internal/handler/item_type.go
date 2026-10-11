@@ -31,8 +31,8 @@ func (h *Handler) GetItemType(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) CreateItemType(w http.ResponseWriter, r *http.Request) {
 	var in model.ItemTypeCreate
-	if err := decodeJSON(r, &in); err != nil {
-		respondError(w, http.StatusBadRequest, "bad_request", "JSON invalide")
+	if err := decodeJSON(w, r, &in); err != nil {
+		respondDecodeError(w, err)
 		return
 	}
 	if in.Name == "" {
@@ -57,8 +57,8 @@ func (h *Handler) UpdateItemType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var in model.ItemTypeUpdate
-	if err := decodeJSON(r, &in); err != nil {
-		respondError(w, http.StatusBadRequest, "bad_request", "JSON invalide")
+	if err := decodeJSON(w, r, &in); err != nil {
+		respondDecodeError(w, err)
 		return
 	}
 	it, err := h.Store.UpdateItemType(r.Context(), id, in)

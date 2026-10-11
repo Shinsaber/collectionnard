@@ -43,8 +43,8 @@ func (h *Handler) GetCollection(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) CreateCollection(w http.ResponseWriter, r *http.Request) {
 	var in model.CollectionCreate
-	if err := decodeJSON(r, &in); err != nil {
-		respondError(w, http.StatusBadRequest, "bad_request", "JSON invalide")
+	if err := decodeJSON(w, r, &in); err != nil {
+		respondDecodeError(w, err)
 		return
 	}
 	if in.Name == "" {
@@ -79,8 +79,8 @@ func (h *Handler) UpdateCollection(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var in model.CollectionUpdate
-	if err := decodeJSON(r, &in); err != nil {
-		respondError(w, http.StatusBadRequest, "bad_request", "JSON invalide")
+	if err := decodeJSON(w, r, &in); err != nil {
+		respondDecodeError(w, err)
 		return
 	}
 	updated, err := h.Store.UpdateCollection(r.Context(), id, in)
@@ -161,8 +161,8 @@ func (h *Handler) AddItemToCollection(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var in model.CollectionItemAdd
-	if err := decodeJSON(r, &in); err != nil {
-		respondError(w, http.StatusBadRequest, "bad_request", "JSON invalide")
+	if err := decodeJSON(w, r, &in); err != nil {
+		respondDecodeError(w, err)
 		return
 	}
 	if len(in.Attributes) == 0 {
@@ -215,8 +215,12 @@ func (h *Handler) UpdateCollectionItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var in model.CollectionItemUpdate
-	if err := decodeJSON(r, &in); err != nil {
-		respondError(w, http.StatusBadRequest, "bad_request", "JSON invalide")
+	if err := decodeJSON(w, r, &in); err != nil {
+		respondDecodeError(w, err)
+		return
+	}
+	if !hasAttributes(in.Attributes) {
+		respondMissingAttributes(w)
 		return
 	}
 

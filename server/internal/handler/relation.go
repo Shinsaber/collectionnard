@@ -37,8 +37,8 @@ func (h *Handler) GetRelation(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) CreateRelation(w http.ResponseWriter, r *http.Request) {
 	var in model.ItemRelationCreate
-	if err := decodeJSON(r, &in); err != nil {
-		respondError(w, http.StatusBadRequest, "bad_request", "JSON invalide")
+	if err := decodeJSON(w, r, &in); err != nil {
+		respondDecodeError(w, err)
 		return
 	}
 
@@ -100,8 +100,12 @@ func (h *Handler) UpdateRelation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var in model.ItemRelationUpdate
-	if err := decodeJSON(r, &in); err != nil {
-		respondError(w, http.StatusBadRequest, "bad_request", "JSON invalide")
+	if err := decodeJSON(w, r, &in); err != nil {
+		respondDecodeError(w, err)
+		return
+	}
+	if !hasAttributes(in.Attributes) {
+		respondMissingAttributes(w)
 		return
 	}
 

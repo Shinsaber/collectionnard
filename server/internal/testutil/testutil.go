@@ -16,12 +16,19 @@ import (
 	"github.com/shinsaber/colec/internal/store"
 )
 
-const TestSecret = "test-secret"
+const TestSecret = "test-secret-test-secret-test-secret-00"
+
+// TestAccessTTL is the access token lifetime used by the test servers.
+const TestAccessTTL = 15 * time.Minute
 
 // MockStore implements store.Store with configurable function fields.
 type MockStore struct {
 	GetUserByUsernameFn  func(ctx context.Context, username string) (*model.User, string, error)
 	GetUserByIDFn        func(ctx context.Context, id uuid.UUID) (*model.User, error)
+	CreateRefreshTokenFn func(ctx context.Context, userID uuid.UUID, tokenHash string, expiresAt time.Time) error
+	ConsumeRefreshTokenFn func(ctx context.Context, tokenHash string) (uuid.UUID, error)
+	DeleteRefreshTokenFn func(ctx context.Context, tokenHash string) error
+	DeleteExpiredRefreshTokensFn func(ctx context.Context) (int64, error)
 	ListItemTypesFn      func(ctx context.Context, pg model.Pagination) ([]model.ItemType, int, error)
 	GetItemTypeFn        func(ctx context.Context, id uuid.UUID) (*model.ItemType, error)
 	CreateItemTypeFn     func(ctx context.Context, in model.ItemTypeCreate) (*model.ItemType, error)
@@ -69,6 +76,22 @@ func (m *MockStore) GetUserByUsername(ctx context.Context, username string) (*mo
 func (m *MockStore) GetUserByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
 	if m.GetUserByIDFn != nil { return m.GetUserByIDFn(ctx, id) }
 	return nil, store.ErrNotFound
+}
+func (m *MockStore) CreateRefreshToken(ctx context.Context, userID uuid.UUID, tokenHash string, expiresAt time.Time) error {
+	if m.CreateRefreshTokenFn != nil { return m.CreateRefreshTokenFn(ctx, userID, tokenHash, expiresAt) }
+	return nil
+}
+func (m *MockStore) ConsumeRefreshToken(ctx context.Context, tokenHash string) (uuid.UUID, error) {
+	if m.ConsumeRefreshTokenFn != nil { return m.ConsumeRefreshTokenFn(ctx, tokenHash) }
+	return uuid.Nil, store.ErrNotFound
+}
+func (m *MockStore) DeleteRefreshToken(ctx context.Context, tokenHash string) error {
+	if m.DeleteRefreshTokenFn != nil { return m.DeleteRefreshTokenFn(ctx, tokenHash) }
+	return nil
+}
+func (m *MockStore) DeleteExpiredRefreshTokens(ctx context.Context) (int64, error) {
+	if m.DeleteExpiredRefreshTokensFn != nil { return m.DeleteExpiredRefreshTokensFn(ctx) }
+	return 0, nil
 }
 func (m *MockStore) ListItemTypes(ctx context.Context, pg model.Pagination) ([]model.ItemType, int, error) {
 	if m.ListItemTypesFn != nil { return m.ListItemTypesFn(ctx, pg) }
@@ -244,13 +267,25 @@ func RegularUser() *model.User {
 	}
 }
 
-func NewTestHandler(mockStore *MockStore) *handler.Handler {
-	auth := middleware.NewAuth(TestSecret)
-	cfg := &config.Config{
-		Port:          8080,
-		UploadDir:     os.TempDir(),
-		MaxUploadSize: 10 << 20,
+// TestConfig returns the configuration used by NewTestHandler (copy it to tweak a field).
+func TestConfig() *config.Config {
+	return &config.Config{
+		Port:            8080,
+		JWTSecret:       TestSecret,
+		AccessTokenTTL:  TestAccessTTL,
+		RefreshTokenTTL: 24 * time.Hour,
+		LoginRateLimit:  1000,
+		UploadDir:       os.TempDir(),
+		MaxUploadSize:   10 << 20,
 	}
+}
+
+func NewTestHandler(mockStore *MockStore) *handler.Handler {
+	return NewTestHandlerWithConfig(mockStore, TestConfig())
+}
+
+func NewTestHandlerWithConfig(mockStore *MockStore, cfg *config.Config) *handler.Handler {
+	auth := middleware.NewAuth(cfg.JWTSecret, cfg.AccessTokenTTL)
 	return handler.New(mockStore, auth, cfg)
 }
 
@@ -260,13 +295,13 @@ func NewTestServer(mockStore *MockStore) *httptest.Server {
 }
 
 func AdminToken() string {
-	auth := middleware.NewAuth(TestSecret)
+	auth := middleware.NewAuth(TestSecret, TestAccessTTL)
 	t, _ := auth.GenerateToken(AdminID, "admin")
 	return t
 }
 
 func UserToken() string {
-	auth := middleware.NewAuth(TestSecret)
+	auth := middleware.NewAuth(TestSecret, TestAccessTTL)
 	t, _ := auth.GenerateToken(UserID, "user")
 	return t
 }

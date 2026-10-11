@@ -31,8 +31,10 @@ info:
 
     ### Authentification
 
-    L'API utilise des **JWT Bearer tokens**. Obtenez un token via `POST /auth/login`,
-    puis envoyez-le dans le header `Authorization: Bearer <token>`.
+    L'API utilise des **JWT Bearer tokens** de courte durée (défaut 15 min) accompagnés d'un
+    **refresh token** à rotation. Obtenez le couple via `POST /auth/login`, envoyez l'access
+    token dans le header `Authorization: Bearer <token>`, renouvelez-le avec `POST /auth/refresh`
+    et révoquez le refresh token avec `POST /auth/logout`.
 
     ### Rôles
 
@@ -192,14 +194,41 @@ components:
 
     LoginResponse:
       type: object
-      description: Réponse d'authentification contenant le token JWT et le profil utilisateur.
+      description: |
+        Réponse d'authentification : un access token JWT de courte durée, un refresh token
+        opaque pour le renouveler, et le profil utilisateur. Renvoyée par `POST /auth/login`
+        et `POST /auth/refresh`.
+      required: [token, refresh_token, expires_in, user]
       properties:
         token:
           type: string
-          description: "Token JWT à utiliser dans le header `Authorization: Bearer <token>`."
+          description: |
+            Access token JWT (HS256, claims `sub`, `role`, `iss`, `iat`, `exp`) à envoyer dans le
+            header `Authorization: Bearer <token>`. Durée de vie `ACCESS_TOKEN_TTL` (défaut 15 min).
           example: eyJhbGciOiJIUzI1NiIs...
+        refresh_token:
+          type: string
+          description: |
+            Token opaque (256 bits, base64url) permettant d'obtenir un nouveau couple de tokens via
+            `POST /auth/refresh`. **Usage unique** : chaque refresh invalide le token présenté et en
+            renvoie un nouveau (rotation). Durée de vie `REFRESH_TOKEN_TTL` (défaut 30 jours).
+            Révocable via `POST /auth/logout`.
+          example: 3q2-7wAAAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHw
+        expires_in:
+          type: integer
+          description: Durée de validité de `token` en secondes.
+          example: 900
         user:
           $ref: "#/components/schemas/User"
+
+    RefreshRequest:
+      type: object
+      description: Corps de `POST /auth/refresh` et `POST /auth/logout`.
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+          description: Refresh token reçu lors du login ou du dernier refresh.
 
     # -------------------------------------------------------------------------
     # User
@@ -1058,7 +1087,8 @@ components:
     Unauthorized:
       description: |
         Non authentifié. Le token JWT est absent, expiré ou invalide.
-        Utilisez `POST /auth/login` pour obtenir un nouveau token.
+        Utilisez `POST /auth/refresh` (refresh token valide) ou `POST /auth/login`
+        pour obtenir un nouveau token.
       content:
         application/json:
           schema:
@@ -1104,6 +1134,34 @@ components:
           example:
             error: conflict
             message: Cet item est déjà dans la collection
+    TooManyRequests:
+      description: |
+        Trop de requêtes depuis cette adresse IP sur les endpoints `/auth/*`
+        (limite `LOGIN_RATE_LIMIT` par minute, défaut 10). Le header `Retry-After`
+        indique le délai d'attente en secondes.
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Secondes à attendre avant de réessayer.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: rate_limited
+            message: Trop de tentatives, réessayez dans 42 s
+    PayloadTooLarge:
+      description: |
+        Corps de requête JSON supérieur à 1 Mio (les uploads ont leur propre limite,
+        `MAX_UPLOAD_SIZE`).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: payload_too_large
+            message: Corps de requête trop volumineux (max 1048576 octets)
 
 # =============================================================================
 # ENDPOINTS
@@ -1117,11 +1175,15 @@ paths:
       tags: [Auth]
       summary: Authentification
       description: |
-        Authentifie un utilisateur et retourne un token JWT.
-        Ce token doit être envoyé dans le header `Authorization: Bearer <token>`
+        Authentifie un utilisateur et retourne un access token JWT et un refresh token.
+        L'access token doit être envoyé dans le header `Authorization: Bearer <token>`
         pour tous les appels authentifiés.
 
-        Le token a une durée de validité configurable côté serveur (défaut : 24h).
+        L'access token expire après `ACCESS_TOKEN_TTL` (défaut 15 min, voir `expires_in`) ;
+        le client le renouvelle avec `POST /auth/refresh`. Le refresh token expire après
+        `REFRESH_TOKEN_TTL` (défaut 30 jours) et est révoqué par `POST /auth/logout`.
+
+        Limité à `LOGIN_RATE_LIMIT` appels par minute et par adresse IP (défaut 10).
       operationId: login
       security: []
       requestBody:
@@ -1137,6 +1199,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LoginResponse"
+        "400":
+          description: JSON invalide ou `username` / `password` manquant.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Identifiants invalides.
           content:
@@ -1146,6 +1214,82 @@ paths:
               example:
                 error: unauthorized
                 message: Nom d'utilisateur ou mot de passe incorrect
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Renouvellement des tokens
+      description: |
+        Échange un refresh token valide contre un nouvel access token **et** un nouveau
+        refresh token. Le refresh token présenté est invalidé (rotation) : un token déjà
+        consommé, expiré ou révoqué renvoie 401 et le client doit se reconnecter.
+
+        L'utilisateur est relu en base : un compte supprimé ou dont le rôle a changé est
+        pris en compte au plus tard au prochain refresh.
+
+        Soumis à la même limitation de débit que `/auth/login`.
+      operationId: refreshToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        "200":
+          description: Nouveaux tokens.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          description: JSON invalide ou `refresh_token` manquant.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Refresh token inconnu, expiré, déjà utilisé ou utilisateur supprimé.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: unauthorized
+                message: Refresh token invalide ou expiré
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Déconnexion
+      description: |
+        Révoque le refresh token présenté. L'access token courant reste valide jusqu'à
+        son expiration (au plus `ACCESS_TOKEN_TTL`). Révoquer un token inconnu n'est pas
+        une erreur (204 également).
+      operationId: logout
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        "204":
+          description: Refresh token révoqué.
+        "400":
+          description: JSON invalide ou `refresh_token` manquant.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
 
   /auth/me:
     get:

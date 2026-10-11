@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/shinsaber/colec/internal/model"
@@ -25,6 +26,12 @@ type Store interface {
 	// User
 	GetUserByUsername(ctx context.Context, username string) (*model.User, string, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (*model.User, error)
+
+	// RefreshToken (hash SHA-256 du token, jamais le token brut)
+	CreateRefreshToken(ctx context.Context, userID uuid.UUID, tokenHash string, expiresAt time.Time) error
+	ConsumeRefreshToken(ctx context.Context, tokenHash string) (uuid.UUID, error)
+	DeleteRefreshToken(ctx context.Context, tokenHash string) error
+	DeleteExpiredRefreshTokens(ctx context.Context) (int64, error)
 
 	// ItemType
 	ListItemTypes(ctx context.Context, pg model.Pagination) ([]model.ItemType, int, error)

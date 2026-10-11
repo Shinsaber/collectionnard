@@ -1,11 +1,15 @@
 package handler
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
@@ -35,8 +39,14 @@ func (h *Handler) Router() chi.Router {
 	r.Use(chimiddleware.Recoverer)
 	r.Use(chimiddleware.RealIP)
 
-	// Public
-	r.Post("/api/v1/auth/login", h.Login)
+	// Public, rate-limited per IP (credential stuffing, token guessing)
+	authLimiter := middleware.NewRateLimiter(h.Config.LoginRateLimit, time.Minute)
+	r.Group(func(r chi.Router) {
+		r.Use(authLimiter.Handler)
+		r.Post("/api/v1/auth/login", h.Login)
+		r.Post("/api/v1/auth/refresh", h.Refresh)
+		r.Post("/api/v1/auth/logout", h.Logout)
+	})
 
 	// Serve uploaded files (public — img tags can't send Authorization headers)
 	uploadsPrefix := "/api/v1/uploads/"
@@ -144,9 +154,38 @@ func respondValidationError(w http.ResponseWriter, message string, details inter
 	})
 }
 
-func decodeJSON(r *http.Request, v interface{}) error {
+// maxJSONBody caps the size of JSON request bodies (uploads have their own limit).
+const maxJSONBody = 1 << 20 // 1 MiB
+
+func decodeJSON(w http.ResponseWriter, r *http.Request, v any) error {
+	r.Body = http.MaxBytesReader(w, r.Body, maxJSONBody)
 	defer r.Body.Close()
 	return json.NewDecoder(r.Body).Decode(v)
+}
+
+// respondDecodeError maps a decodeJSON failure to 413 (body too large) or 400.
+func respondDecodeError(w http.ResponseWriter, err error) {
+	var tooLarge *http.MaxBytesError
+	if errors.As(err, &tooLarge) {
+		respondError(w, http.StatusRequestEntityTooLarge, "payload_too_large",
+			fmt.Sprintf("Corps de requête trop volumineux (max %d octets)", tooLarge.Limit))
+		return
+	}
+	respondError(w, http.StatusBadRequest, "bad_request", "JSON invalide")
+}
+
+// hasAttributes reports whether a JSON `attributes` field was actually provided
+// (absent and `null` are both treated as missing).
+func hasAttributes(attrs json.RawMessage) bool {
+	trimmed := bytes.TrimSpace(attrs)
+	return len(trimmed) > 0 && !bytes.Equal(trimmed, []byte("null"))
+}
+
+// respondMissingAttributes emits the 422 used when a PUT omits `attributes`.
+func respondMissingAttributes(w http.ResponseWriter) {
+	respondValidationError(w, "Le champ attributes est requis", map[string]any{
+		"fields": map[string]string{"attributes": "required — ce champ est obligatoire"},
+	})
 }
 
 func parseUUID(w http.ResponseWriter, r *http.Request, param string) (uuid.UUID, bool) {

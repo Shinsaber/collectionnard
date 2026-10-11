@@ -31,8 +31,8 @@ func (h *Handler) GetCollectionType(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) CreateCollectionType(w http.ResponseWriter, r *http.Request) {
 	var in model.CollectionTypeCreate
-	if err := decodeJSON(r, &in); err != nil {
-		respondError(w, http.StatusBadRequest, "bad_request", "JSON invalide")
+	if err := decodeJSON(w, r, &in); err != nil {
+		respondDecodeError(w, err)
 		return
 	}
 	if in.Name == "" {
@@ -54,8 +54,8 @@ func (h *Handler) UpdateCollectionType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var in model.CollectionTypeUpdate
-	if err := decodeJSON(r, &in); err != nil {
-		respondError(w, http.StatusBadRequest, "bad_request", "JSON invalide")
+	if err := decodeJSON(w, r, &in); err != nil {
+		respondDecodeError(w, err)
 		return
 	}
 	ct, err := h.Store.UpdateCollectionType(r.Context(), id, in)

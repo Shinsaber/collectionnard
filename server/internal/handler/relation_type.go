@@ -35,8 +35,8 @@ func (h *Handler) GetRelationType(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) CreateRelationType(w http.ResponseWriter, r *http.Request) {
 	var in model.RelationTypeCreate
-	if err := decodeJSON(r, &in); err != nil {
-		respondError(w, http.StatusBadRequest, "bad_request", "JSON invalide")
+	if err := decodeJSON(w, r, &in); err != nil {
+		respondDecodeError(w, err)
 		return
 	}
 	if in.Name == "" {
@@ -58,8 +58,8 @@ func (h *Handler) UpdateRelationType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var in model.RelationTypeUpdate
-	if err := decodeJSON(r, &in); err != nil {
-		respondError(w, http.StatusBadRequest, "bad_request", "JSON invalide")
+	if err := decodeJSON(w, r, &in); err != nil {
+		respondDecodeError(w, err)
 		return
 	}
 	rt, err := h.Store.UpdateRelationType(r.Context(), id, in)
