@@ -41,7 +41,6 @@ jobs:
         run: nix develop -c sh -c 'cd web && npm test'
       - name: build
         run: nix develop -c sh -c 'cd web && npm run build'
-      - name: npm audit
-        # Bloquant une fois les dépendances à jour (lot 4 de docs/audit/03-feuille-de-route.md).
-        continue-on-error: true
-        run: nix develop -c sh -c 'cd web && npm audit --audit-level=high'
+      - name: npm audit (dépendances de production)
+        # Les devDependencies (chaîne tailwind 3 → braces) sont auditées au lot 11 (Tailwind 4).
+        run: nix develop -c sh -c 'cd web && npm audit --audit-level=high --omit=dev'

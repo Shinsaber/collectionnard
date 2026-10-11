@@ -49,7 +49,7 @@ et documentée dans le README.
 ## Stack
 
 Go 1.27 (chi 5.3, pgx 5.11, golang-jwt 5.3, santhosh-tekuri/jsonschema v5) · PostgreSQL 16 ·
-Vue 3.5 + TypeScript 5.6 · PrimeVue 4 + Tailwind 3 · Cytoscape.js · Vite 6 · Docker Compose.
+Vue 3.5 + TypeScript 5.6 · PrimeVue 4.5 (`@primeuix/themes`) + Tailwind 3 · Cytoscape.js · Vite 6 · Docker Compose.
 
 ## Environnement : Nix
 

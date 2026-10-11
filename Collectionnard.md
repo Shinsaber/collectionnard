@@ -322,10 +322,10 @@ La table unique d'items avec attributs dynamiques nécessite une attention parti
 | Backend         | Go (chi 5.3, pgx 5.11, JWT 5.3, jsonschema v5 — v6 différé, API incompatible, sans CVE) | 1.27 (go.mod ≥ 1.26) |
 | Base de données | PostgreSQL                      | 16        |
 | Frontend        | Vue 3 + TypeScript              | 3.5 / 5.6 |
-| UI              | PrimeVue + Tailwind CSS         | 4.3 / 3.4 |
-| Graphes         | Cytoscape.js                    | 3.30      |
-| Build           | Vite                            | 6.0       |
-| Déploiement     | Docker Compose (3 services)     | —         |
+| UI              | PrimeVue (@primeuix/themes) + Tailwind CSS | 4.5 / 3.4 |
+| Graphes         | Cytoscape.js                    | 3.34      |
+| Build           | Vite                            | 6.4       |
+| Déploiement     | Docker Compose (4 services : postgres, migrate, server, web) | — |
 | Packaging       | NixOS flake possible            | À voir    |
 
 ---

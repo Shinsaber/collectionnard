@@ -1,6 +1,6 @@
 # Frontend Vue — conventions
 
-Vue 3 `<script setup lang="ts">` · PrimeVue 4 (thème via `@primevue/themes`) · Tailwind 3 ·
+Vue 3 `<script setup lang="ts">` · PrimeVue 4 (thème Aura via `@primeuix/themes`) · Tailwind 3 ·
 Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
 
 ## Organisation
