@@ -13,10 +13,10 @@
       :lazy="true"
       :paginator="true"
       :rows="pag.perPage.value"
-      :totalRecords="pag.total.value"
+      :total-records="pag.total.value"
+      striped-rows
+      data-key="id"
       @page="onPageChange"
-      stripedRows
-      dataKey="id"
     >
       <Column field="name" header="Nom" sortable />
       <Column field="description" header="Description" />
@@ -81,8 +81,8 @@
             <MultiSelect
               v-model="form.source_item_type_ids"
               :options="itemTypes"
-              optionLabel="name"
-              optionValue="id"
+              option-label="name"
+              option-value="id"
               placeholder="Choisir..."
               display="chip"
             />
@@ -92,8 +92,8 @@
             <MultiSelect
               v-model="form.target_item_type_ids"
               :options="itemTypes"
-              optionLabel="name"
-              optionValue="id"
+              option-label="name"
+              option-value="id"
               placeholder="Choisir..."
               display="chip"
             />

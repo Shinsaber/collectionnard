@@ -54,11 +54,11 @@
           <Tag v-if="auth.isAdmin" value="admin" severity="warn" class="ml-1" />
         </span>
         <Button
+          v-tooltip="theme === 'dark' ? 'Mode clair' : 'Mode sombre'"
           :icon="theme === 'dark' ? 'pi pi-sun' : 'pi pi-moon'"
           text
           severity="secondary"
           @click="toggleTheme"
-          v-tooltip="theme === 'dark' ? 'Mode clair' : 'Mode sombre'"
         />
         <Button
           icon="pi pi-sign-out"

@@ -15,9 +15,7 @@ export const useAuthStore = defineStore("auth", () => {
 
   // Un refresh token suffit à considérer la session ouverte : le client HTTP
   // renouvelle l'access token à la première requête si nécessaire.
-  const isAuthenticated = computed(
-    () => !!token.value || !!getRefreshToken(),
-  );
+  const isAuthenticated = computed(() => !!token.value || !!getRefreshToken());
   const isAdmin = computed(() => user.value?.role === "admin");
 
   async function login(credentials: LoginRequest) {

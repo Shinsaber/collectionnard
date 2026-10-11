@@ -1,0 +1,28 @@
+# Frontend Vue — conventions
+
+Vue 3 `<script setup lang="ts">` · PrimeVue 4 (thème via `@primevue/themes`) · Tailwind 3 ·
+Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
+
+## Organisation
+
+| Chemin                         | Rôle                                                          |
+| ------------------------------ | ------------------------------------------------------------- |
+| `src/api/types.ts`             | Types TS **miroir des structs Go** (`server/internal/model`)  |
+| `src/api/client.ts`            | **Seul** point d'appel HTTP (axios, `baseURL: /api/v1`, JWT)   |
+| `src/stores/auth.ts`           | Store Pinia d'authentification                                |
+| `src/router/index.ts`          | Routes ; `meta: { public: true }` pour les pages sans auth    |
+| `src/views/`, `views/admin/`   | Pages (admin = gestion des méta-types)                        |
+| `components/common/DynamicForm.vue`   | Formulaire généré depuis un JSON Schema           |
+| `components/common/SchemaBuilder.vue` | Éditeur visuel de JSON Schema (admin)             |
+| `src/composables/`             | `useTheme`, `usePagination`                                   |
+
+## Règles
+
+- Pas d'`axios` direct dans les vues/composants : ajouter une fonction dans `client.ts`.
+- Quand un modèle Go change, mettre `types.ts` à jour dans le même changement.
+- Ne jamais coder en dur un ItemType/champ métier (« Serie », « titre »…) dans une vue :
+  tout affichage d'attributs passe par le JSON Schema (`x-order`, `x-labels`, `x-widget`).
+- Libellés UI en français ; labels de champs via `x-labels` (fr/en).
+- Après modification : `npm run lint && npm run format:check && npm run type-check && npm test`
+  (`npm run lint:fix` et `npm run format` corrigent automatiquement). Tests unitaires : `vitest`,
+  fichiers `src/**/*.test.ts` (environnement jsdom).

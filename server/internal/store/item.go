@@ -13,7 +13,7 @@ import (
 
 func (s *PgStore) ListItems(ctx context.Context, pg model.Pagination, f ItemFilters) ([]model.Item, int, error) {
 	where := []string{"1=1"}
-	args := []interface{}{}
+	args := []any{}
 	argN := 1
 
 	if f.ItemTypeID != nil {
@@ -36,7 +36,7 @@ func (s *PgStore) ListItems(ctx context.Context, pg model.Pagination, f ItemFilt
 	whereClause := strings.Join(where, " AND ")
 
 	var total int
-	countArgs := make([]interface{}, len(args))
+	countArgs := make([]any, len(args))
 	copy(countArgs, args)
 	err := s.pool.QueryRow(ctx,
 		fmt.Sprintf(`SELECT count(*) FROM items i WHERE %s`, whereClause),
@@ -132,7 +132,7 @@ func (s *PgStore) CreateItem(ctx context.Context, in model.ItemCreate) (*model.I
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }() // sans effet après Commit
 
 	attrs := in.Attributes
 	if len(attrs) == 0 {
@@ -172,7 +172,7 @@ func (s *PgStore) UpdateItem(ctx context.Context, id uuid.UUID, in model.ItemUpd
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }() // sans effet après Commit
 
 	if len(in.Attributes) > 0 {
 		ct, err := tx.Exec(ctx,
@@ -212,7 +212,7 @@ func (s *PgStore) DeleteItem(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }() // sans effet après Commit
 
 	// Delete relations
 	_, err = tx.Exec(ctx, `DELETE FROM item_relations WHERE source_item_id = $1 OR target_item_id = $1`, id)

@@ -21,7 +21,7 @@ func isForeignKeyViolation(err error) bool {
 	return false
 }
 
-func nullableJSON(data json.RawMessage) interface{} {
+func nullableJSON(data json.RawMessage) any {
 	if len(data) == 0 {
 		return nil
 	}

@@ -11,7 +11,7 @@
         📦 Collectionnard
       </h1>
 
-      <form @submit.prevent="handleLogin" class="flex flex-col gap-4">
+      <form class="flex flex-col gap-4" @submit.prevent="handleLogin">
         <div class="flex flex-col gap-1">
           <label
             for="username"

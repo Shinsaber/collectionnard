@@ -16,8 +16,8 @@
           size="small"
           rounded
           :disabled="idx === 0"
-          @click="move(idx, -1)"
           class="!w-6 !h-6"
+          @click="move(idx, -1)"
         />
         <Button
           icon="pi pi-chevron-down"
@@ -25,32 +25,32 @@
           size="small"
           rounded
           :disabled="idx === fields.length - 1"
-          @click="move(idx, 1)"
           class="!w-6 !h-6"
+          @click="move(idx, 1)"
         />
 
         <InputText
-          :modelValue="field.key"
-          @update:modelValue="updateField(idx, 'key', $event)"
+          :model-value="field.key"
           placeholder="clé (ex: titre)"
           class="text-sm flex-1"
+          @update:model-value="updateField(idx, 'key', $event)"
         />
 
         <Select
-          :modelValue="field.type"
-          @update:modelValue="updateField(idx, 'type', $event)"
+          :model-value="field.type"
           :options="availableTypeOptions"
-          optionLabel="label"
-          optionValue="value"
+          option-label="label"
+          option-value="value"
           class="text-sm w-32"
+          @update:model-value="updateField(idx, 'type', $event)"
         />
 
-        <div class="flex items-center gap-1" v-tooltip="'Champ requis'">
+        <div v-tooltip="'Champ requis'" class="flex items-center gap-1">
           <Checkbox
-            :modelValue="field.required"
-            @update:modelValue="updateField(idx, 'required', $event)"
+            :model-value="field.required"
             :binary="true"
-            :inputId="`req-${idx}`"
+            :input-id="`req-${idx}`"
+            @update:model-value="updateField(idx, 'required', $event)"
           />
           <label :for="`req-${idx}`" class="text-xs text-gray-500">Req.</label>
         </div>
@@ -61,18 +61,18 @@
           severity="danger"
           size="small"
           rounded
-          @click="removeField(idx)"
           class="!w-7 !h-7"
+          @click="removeField(idx)"
         />
 
         <Button
+          v-tooltip="'Ajouter un champ après'"
           icon="pi pi-plus"
           text
           size="small"
           rounded
-          @click="addFieldAfter(idx)"
-          v-tooltip="'Ajouter un champ après'"
           class="!w-7 !h-7"
+          @click="addFieldAfter(idx)"
         />
       </div>
 
@@ -82,10 +82,10 @@
         <div v-if="ft.labels" class="flex flex-col gap-1">
           <label class="text-xs font-medium text-gray-500">Label FR</label>
           <InputText
-            :modelValue="field.labelFr"
-            @update:modelValue="updateField(idx, 'labelFr', $event)"
+            :model-value="field.labelFr"
             placeholder="ex: Titre"
             class="text-sm"
+            @update:model-value="updateField(idx, 'labelFr', $event)"
           />
         </div>
 
@@ -93,10 +93,10 @@
         <div v-if="ft.labels" class="flex flex-col gap-1">
           <label class="text-xs font-medium text-gray-500">Label EN</label>
           <InputText
-            :modelValue="field.labelEn"
-            @update:modelValue="updateField(idx, 'labelEn', $event)"
+            :model-value="field.labelEn"
             placeholder="ex: Title"
             class="text-sm"
+            @update:model-value="updateField(idx, 'labelEn', $event)"
           />
         </div>
 
@@ -104,10 +104,12 @@
         <div v-if="ft.description" class="flex flex-col gap-1 md:col-span-2">
           <label class="text-xs font-medium text-gray-500">Description</label>
           <InputText
-            :modelValue="field.description ?? ''"
-            @update:modelValue="updateField(idx, 'description', $event || null)"
+            :model-value="field.description ?? ''"
             placeholder="Description du champ"
             class="text-sm"
+            @update:model-value="
+              updateField(idx, 'description', $event || null)
+            "
           />
         </div>
 
@@ -116,43 +118,43 @@
           <div v-if="ft.minLength" class="flex flex-col gap-1">
             <label class="text-xs text-gray-500">Min. caractères</label>
             <InputNumber
-              :modelValue="field.minLength ?? null"
-              @update:modelValue="updateField(idx, 'minLength', $event)"
+              :model-value="field.minLength ?? null"
               :min="0"
-              :useGrouping="false"
+              :use-grouping="false"
               class="text-sm"
+              @update:model-value="updateField(idx, 'minLength', $event)"
             />
           </div>
           <div v-if="ft.maxLength" class="flex flex-col gap-1">
             <label class="text-xs text-gray-500">Max. caractères</label>
             <InputNumber
-              :modelValue="field.maxLength ?? null"
-              @update:modelValue="updateField(idx, 'maxLength', $event)"
+              :model-value="field.maxLength ?? null"
               :min="0"
-              :useGrouping="false"
+              :use-grouping="false"
               class="text-sm"
+              @update:model-value="updateField(idx, 'maxLength', $event)"
             />
           </div>
           <div v-if="ft.pattern" class="flex flex-col gap-1">
             <label class="text-xs text-gray-500">Pattern (regex)</label>
             <InputText
-              :modelValue="field.pattern ?? ''"
-              @update:modelValue="updateField(idx, 'pattern', $event || null)"
+              :model-value="field.pattern ?? ''"
               placeholder="ex: ^[A-Z].*"
               class="text-sm font-mono"
+              @update:model-value="updateField(idx, 'pattern', $event || null)"
             />
           </div>
           <div v-if="ft.format" class="flex flex-col gap-1">
             <label class="text-xs text-gray-500">Format</label>
             <Select
-              :modelValue="field.format ?? null"
-              @update:modelValue="updateField(idx, 'format', $event)"
+              :model-value="field.format ?? null"
               :options="formatOptions"
-              optionLabel="label"
-              optionValue="value"
+              option-label="label"
+              option-value="value"
               placeholder="Aucun"
-              showClear
+              show-clear
               class="text-sm"
+              @update:model-value="updateField(idx, 'format', $event)"
             />
           </div>
           <div v-if="ft.enum" class="flex flex-col gap-1 md:col-span-2">
@@ -160,23 +162,23 @@
               >Valeurs (enum, séparées par des virgules)</label
             >
             <InputText
-              :modelValue="(field.enum ?? []).join(', ')"
-              @update:modelValue="
-                updateField(idx, 'enum', parseEnum(String($event ?? '')))
-              "
+              :model-value="(field.enum ?? []).join(', ')"
               placeholder="neuf, bon, mauvais"
               class="text-sm"
+              @update:model-value="
+                updateField(idx, 'enum', parseEnum(String($event ?? '')))
+              "
             />
           </div>
           <div v-if="ft.default" class="flex flex-col gap-1">
             <label class="text-xs text-gray-500">Valeur par défaut</label>
             <InputText
-              :modelValue="String(field.defaultValue ?? '')"
-              @update:modelValue="
-                updateField(idx, 'defaultValue', $event ? $event : null)
-              "
+              :model-value="String(field.defaultValue ?? '')"
               placeholder="ex: N/A"
               class="text-sm"
+              @update:model-value="
+                updateField(idx, 'defaultValue', $event ? $event : null)
+              "
             />
           </div>
         </template>
@@ -186,56 +188,56 @@
           <div v-if="ft.minimum" class="flex flex-col gap-1">
             <label class="text-xs text-gray-500">Min</label>
             <InputNumber
-              :modelValue="field.minimum ?? null"
-              @update:modelValue="updateField(idx, 'minimum', $event)"
-              :useGrouping="false"
+              :model-value="field.minimum ?? null"
+              :use-grouping="false"
               class="text-sm"
+              @update:model-value="updateField(idx, 'minimum', $event)"
             />
           </div>
           <div v-if="ft.maximum" class="flex flex-col gap-1">
             <label class="text-xs text-gray-500">Max</label>
             <InputNumber
-              :modelValue="field.maximum ?? null"
-              @update:modelValue="updateField(idx, 'maximum', $event)"
-              :useGrouping="false"
+              :model-value="field.maximum ?? null"
+              :use-grouping="false"
               class="text-sm"
+              @update:model-value="updateField(idx, 'maximum', $event)"
             />
           </div>
           <div v-if="ft.exclusiveMinimum" class="flex flex-col gap-1">
             <label class="text-xs text-gray-500">Min exclusif</label>
             <InputNumber
-              :modelValue="field.exclusiveMinimum ?? null"
-              @update:modelValue="updateField(idx, 'exclusiveMinimum', $event)"
-              :useGrouping="false"
+              :model-value="field.exclusiveMinimum ?? null"
+              :use-grouping="false"
               class="text-sm"
+              @update:model-value="updateField(idx, 'exclusiveMinimum', $event)"
             />
           </div>
           <div v-if="ft.exclusiveMaximum" class="flex flex-col gap-1">
             <label class="text-xs text-gray-500">Max exclusif</label>
             <InputNumber
-              :modelValue="field.exclusiveMaximum ?? null"
-              @update:modelValue="updateField(idx, 'exclusiveMaximum', $event)"
-              :useGrouping="false"
+              :model-value="field.exclusiveMaximum ?? null"
+              :use-grouping="false"
               class="text-sm"
+              @update:model-value="updateField(idx, 'exclusiveMaximum', $event)"
             />
           </div>
           <div v-if="ft.multipleOf" class="flex flex-col gap-1">
             <label class="text-xs text-gray-500">Multiple de</label>
             <InputNumber
-              :modelValue="field.multipleOf ?? null"
-              @update:modelValue="updateField(idx, 'multipleOf', $event)"
-              :useGrouping="false"
+              :model-value="field.multipleOf ?? null"
+              :use-grouping="false"
               :min="1"
               class="text-sm"
+              @update:model-value="updateField(idx, 'multipleOf', $event)"
             />
           </div>
           <div v-if="ft.default" class="flex flex-col gap-1">
             <label class="text-xs text-gray-500">Valeur par défaut</label>
             <InputNumber
-              :modelValue="(field.defaultValue as number | null) ?? null"
-              @update:modelValue="updateField(idx, 'defaultValue', $event)"
-              :useGrouping="false"
+              :model-value="(field.defaultValue as number | null) ?? null"
+              :use-grouping="false"
               class="text-sm"
+              @update:model-value="updateField(idx, 'defaultValue', $event)"
             />
           </div>
         </template>
@@ -245,14 +247,14 @@
           <div class="flex flex-col gap-1">
             <label class="text-xs text-gray-500">Valeur par défaut</label>
             <Select
-              :modelValue="field.defaultValue ?? null"
-              @update:modelValue="updateField(idx, 'defaultValue', $event)"
+              :model-value="field.defaultValue ?? null"
               :options="boolDefaultOptions"
-              optionLabel="label"
-              optionValue="value"
+              option-label="label"
+              option-value="value"
               placeholder="Aucune"
-              showClear
+              show-clear
               class="text-sm"
+              @update:model-value="updateField(idx, 'defaultValue', $event)"
             />
           </div>
         </template>
@@ -278,16 +280,18 @@
               class="flex items-center gap-2"
             >
               <InputText
-                :modelValue="cat.name"
-                @update:modelValue="
-                  updateImageCategory(idx, catIdx, 'name', String($event ?? ''))
-                "
+                :model-value="cat.name"
                 placeholder="Nom (ex: poster)"
                 class="text-sm flex-1"
+                @update:model-value="
+                  updateImageCategory(idx, catIdx, 'name', String($event ?? ''))
+                "
               />
               <InputText
-                :modelValue="cat.ratio"
-                @update:modelValue="
+                :model-value="cat.ratio"
+                placeholder="Ratio (ex: 2/3)"
+                class="text-sm w-24"
+                @update:model-value="
                   updateImageCategory(
                     idx,
                     catIdx,
@@ -295,13 +299,11 @@
                     String($event ?? ''),
                   )
                 "
-                placeholder="Ratio (ex: 2/3)"
-                class="text-sm w-24"
               />
               <button
                 class="text-red-400 hover:text-red-600 text-sm"
-                @click="removeImageCategory(idx, catIdx)"
                 title="Supprimer"
+                @click="removeImageCategory(idx, catIdx)"
               >
                 ×
               </button>
@@ -324,20 +326,20 @@
           <div class="flex flex-col gap-1">
             <label class="text-xs text-gray-500">Type des éléments</label>
             <Select
-              :modelValue="field.itemsType ?? 'string'"
-              @update:modelValue="updateField(idx, 'itemsType', $event)"
+              :model-value="field.itemsType ?? 'string'"
               :options="arrayItemTypeOptions"
-              optionLabel="label"
-              optionValue="value"
+              option-label="label"
+              option-value="value"
               class="text-sm"
+              @update:model-value="updateField(idx, 'itemsType', $event)"
             />
           </div>
           <div v-if="ft.uniqueItems" class="flex items-center gap-2 pt-5">
             <Checkbox
-              :modelValue="field.uniqueItems ?? false"
-              @update:modelValue="updateField(idx, 'uniqueItems', $event)"
+              :model-value="field.uniqueItems ?? false"
               :binary="true"
-              :inputId="`unique-${idx}`"
+              :input-id="`unique-${idx}`"
+              @update:model-value="updateField(idx, 'uniqueItems', $event)"
             />
             <label :for="`unique-${idx}`" class="text-xs text-gray-500"
               >Éléments uniques</label
@@ -346,21 +348,21 @@
           <div v-if="ft.minItems" class="flex flex-col gap-1">
             <label class="text-xs text-gray-500">Min. éléments</label>
             <InputNumber
-              :modelValue="field.minItems ?? null"
-              @update:modelValue="updateField(idx, 'minItems', $event)"
+              :model-value="field.minItems ?? null"
               :min="0"
-              :useGrouping="false"
+              :use-grouping="false"
               class="text-sm"
+              @update:model-value="updateField(idx, 'minItems', $event)"
             />
           </div>
           <div v-if="ft.maxItems" class="flex flex-col gap-1">
             <label class="text-xs text-gray-500">Max. éléments</label>
             <InputNumber
-              :modelValue="field.maxItems ?? null"
-              @update:modelValue="updateField(idx, 'maxItems', $event)"
+              :model-value="field.maxItems ?? null"
               :min="0"
-              :useGrouping="false"
+              :use-grouping="false"
               class="text-sm"
+              @update:model-value="updateField(idx, 'maxItems', $event)"
             />
           </div>
         </template>
@@ -397,7 +399,7 @@
     <!-- Raw JSON preview -->
     <div v-if="showRaw" class="flex flex-col gap-1">
       <Textarea
-        :modelValue="JSON.stringify(schema, null, 2)"
+        :model-value="JSON.stringify(schema, null, 2)"
         readonly
         rows="12"
         class="font-mono text-xs bg-gray-100"

@@ -11,7 +11,7 @@ import (
 
 func (s *PgStore) ListRelationTypes(ctx context.Context, pg model.Pagination, sourceTypeID, targetTypeID *uuid.UUID) ([]model.RelationType, int, error) {
 	where := "1=1"
-	args := []interface{}{}
+	args := []any{}
 	argN := 1
 
 	if sourceTypeID != nil {
@@ -26,7 +26,7 @@ func (s *PgStore) ListRelationTypes(ctx context.Context, pg model.Pagination, so
 	}
 
 	var total int
-	countArgs := make([]interface{}, len(args))
+	countArgs := make([]any, len(args))
 	copy(countArgs, args)
 	err := s.pool.QueryRow(ctx,
 		fmt.Sprintf(`SELECT count(*) FROM relation_types rt WHERE %s`, where),
@@ -109,7 +109,7 @@ func (s *PgStore) CreateRelationType(ctx context.Context, in model.RelationTypeC
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }() // sans effet après Commit
 
 	var id uuid.UUID
 	err = tx.QueryRow(ctx,
@@ -148,7 +148,7 @@ func (s *PgStore) UpdateRelationType(ctx context.Context, id uuid.UUID, in model
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }() // sans effet après Commit
 
 	ct, err := tx.Exec(ctx,
 		`UPDATE relation_types SET

@@ -133,8 +133,7 @@ export function extractApiError(e: unknown): {
     const data = e.response.data as Record<string, unknown>;
     const message = (data.message as string) ?? e.message;
     const details = data.details as
-      | { fields?: Record<string, string> }
-      | undefined;
+      { fields?: Record<string, string> } | undefined;
     return {
       message,
       fieldErrors: details?.fields
@@ -282,9 +281,10 @@ export const collectionApi = {
     params?: PaginationParams & { item_type_id?: string; sort?: string },
   ) =>
     http
-      .get<
-        PaginatedResponse<CollectionItem>
-      >(`/collections/${collectionId}/items`, { params })
+      .get<PaginatedResponse<CollectionItem>>(
+        `/collections/${collectionId}/items`,
+        { params },
+      )
       .then((r) => r.data),
   addItem: (collectionId: string, data: CollectionItemAdd) =>
     http

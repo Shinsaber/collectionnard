@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  go:
+    name: Backend Go
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - name: gofmt
+        run: nix develop -c sh -c 'cd server && test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }'
+      - name: go vet
+        run: nix develop -c sh -c 'cd server && go vet ./...'
+      - name: golangci-lint
+        run: nix develop -c sh -c 'cd server && golangci-lint run ./...'
+      - name: go test
+        run: nix develop -c sh -c 'cd server && go test ./...'
+      - name: govulncheck
+        # Bloquant une fois les dépendances à jour (lot 3 de docs/audit/03-feuille-de-route.md).
+        continue-on-error: true
+        run: nix develop -c sh -c 'cd server && govulncheck ./...'
+
+  web:
+    name: Frontend Vue
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - name: npm ci
+        run: nix develop -c sh -c 'cd web && npm ci'
+      - name: lint
+        run: nix develop -c sh -c 'cd web && npm run lint'
+      - name: format
+        run: nix develop -c sh -c 'cd web && npm run format:check'
+      - name: type-check
+        run: nix develop -c sh -c 'cd web && npm run type-check'
+      - name: test
+        run: nix develop -c sh -c 'cd web && npm test'
+      - name: build
+        run: nix develop -c sh -c 'cd web && npm run build'
+      - name: npm audit
+        # Bloquant une fois les dépendances à jour (lot 4 de docs/audit/03-feuille-de-route.md).
+        continue-on-error: true
+        run: nix develop -c sh -c 'cd web && npm audit --audit-level=high'

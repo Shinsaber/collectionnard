@@ -47,13 +47,13 @@
       </div>
 
       <div
-        class="bg-white dark:bg-gray-800 rounded-lg shadow p-6"
         v-if="stats.items_by_type?.length"
+        class="bg-white dark:bg-gray-800 rounded-lg shadow p-6"
       >
         <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">
           Items par type
         </h2>
-        <DataTable :value="stats.items_by_type" stripedRows>
+        <DataTable :value="stats.items_by_type" striped-rows>
           <Column field="type_name" header="Type" />
           <Column field="count" header="Nombre" />
         </DataTable>

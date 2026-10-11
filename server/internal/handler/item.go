@@ -63,7 +63,7 @@ func (h *Handler) CreateItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if vErr := validator.ValidateAttributes(itemType.AttributesSchema, in.Attributes); vErr != nil {
-		respondValidationError(w, "Les attributs ne respectent pas le schéma du type", map[string]interface{}{
+		respondValidationError(w, "Les attributs ne respectent pas le schéma du type", map[string]any{
 			"fields": validator.FormatValidationError(vErr),
 		})
 		return
@@ -96,7 +96,7 @@ func (h *Handler) UpdateItem(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if vErr := validator.ValidateAttributes(existing.ItemType.AttributesSchema, in.Attributes); vErr != nil {
-			respondValidationError(w, "Les attributs ne respectent pas le schéma du type", map[string]interface{}{
+			respondValidationError(w, "Les attributs ne respectent pas le schéma du type", map[string]any{
 				"fields": validator.FormatValidationError(vErr),
 			})
 			return

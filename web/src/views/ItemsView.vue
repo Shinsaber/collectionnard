@@ -17,24 +17,24 @@
       <Select
         v-model="filters.item_type_id"
         :options="itemTypes"
-        optionLabel="name"
-        optionValue="id"
+        option-label="name"
+        option-value="id"
         placeholder="Tous les types"
-        showClear
+        show-clear
         class="w-48"
         @change="reload"
       />
       <InputText
         v-model="filters.search"
         placeholder="Rechercher..."
-        @keyup.enter="reload"
         class="w-64"
+        @keyup.enter="reload"
       />
       <InputText
         v-model="filters.tag"
         placeholder="Tag..."
-        @keyup.enter="reload"
         class="w-32"
+        @keyup.enter="reload"
       />
       <Button icon="pi pi-search" @click="reload" />
     </div>
@@ -45,12 +45,12 @@
       :lazy="true"
       :paginator="true"
       :rows="pag.perPage.value"
-      :totalRecords="pag.total.value"
+      :total-records="pag.total.value"
+      striped-rows
+      data-key="id"
+      class="cursor-pointer"
       @page="onPageChange"
       @row-click="goToItem"
-      stripedRows
-      dataKey="id"
-      class="cursor-pointer"
     >
       <Column header="Type" style="width: 120px">
         <template #body="{ data: row }">
@@ -75,15 +75,15 @@
           </div>
         </template>
       </Column>
-      <Column header="Actions" style="width: 140px" v-if="auth.isAdmin">
+      <Column v-if="auth.isAdmin" header="Actions" style="width: 140px">
         <template #body="{ data: row }">
           <div class="flex gap-1">
             <Button
+              v-tooltip="'Graphe'"
               icon="pi pi-sitemap"
               text
               size="small"
               @click.stop="router.push(`/items/${row.id}/graph`)"
-              v-tooltip="'Graphe'"
             />
             <Button
               icon="pi pi-pencil"

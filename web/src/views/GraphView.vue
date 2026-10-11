@@ -14,10 +14,10 @@
           v-model="maxDepth"
           :min="1"
           :max="10"
-          showButtons
+          show-buttons
           :step="1"
           class="w-24"
-          @update:modelValue="loadGraph"
+          @update:model-value="loadGraph"
         />
       </div>
     </div>

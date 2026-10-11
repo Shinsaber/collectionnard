@@ -13,10 +13,10 @@
       :lazy="true"
       :paginator="true"
       :rows="pag.perPage.value"
-      :totalRecords="pag.total.value"
+      :total-records="pag.total.value"
+      striped-rows
+      data-key="id"
       @page="onPageChange"
-      stripedRows
-      dataKey="id"
     >
       <Column field="name" header="Nom" sortable />
       <Column field="description" header="Description" />

@@ -24,7 +24,7 @@ func ValidateAttributes(schemaJSON, dataJSON json.RawMessage) error {
 		return fmt.Errorf("invalid schema: %w", err)
 	}
 
-	var data interface{}
+	var data any
 	if err := json.Unmarshal(dataJSON, &data); err != nil {
 		return fmt.Errorf("invalid JSON data: %w", err)
 	}

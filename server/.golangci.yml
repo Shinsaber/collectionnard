@@ -1,0 +1,23 @@
+# golangci-lint v2 — https://golangci-lint.run/usage/configuration/
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  # standard = errcheck, govet, ineffassign, staticcheck, unused
+  default: standard
+  enable:
+    - bodyclose
+    - gosec
+    - unconvert
+    - nolintlint
+  exclusions:
+    rules:
+      # Les tests ferment les corps via defer et ignorent volontairement certaines erreurs.
+      - path: _test\.go
+        linters: [bodyclose, errcheck, gosec]
+
+formatters:
+  enable:
+    - gofmt

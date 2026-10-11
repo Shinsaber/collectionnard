@@ -176,7 +176,7 @@ func (h *Handler) AddItemToCollection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if vErr := validator.ValidateAttributes(ct.AttributesSchema, in.Attributes); vErr != nil {
-		respondValidationError(w, "Les attributs ne respectent pas le schéma du type de collection", map[string]interface{}{
+		respondValidationError(w, "Les attributs ne respectent pas le schéma du type de collection", map[string]any{
 			"fields": validator.FormatValidationError(vErr),
 		})
 		return
@@ -231,7 +231,7 @@ func (h *Handler) UpdateCollectionItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if vErr := validator.ValidateAttributes(ct.AttributesSchema, in.Attributes); vErr != nil {
-		respondValidationError(w, "Les attributs ne respectent pas le schéma du type de collection", map[string]interface{}{
+		respondValidationError(w, "Les attributs ne respectent pas le schéma du type de collection", map[string]any{
 			"fields": validator.FormatValidationError(vErr),
 		})
 		return

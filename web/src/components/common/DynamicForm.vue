@@ -9,36 +9,36 @@
       <!-- String -->
       <InputText
         v-if="field.type === 'string' && !field.enum && !field.format"
-        :modelValue="getString(field.name)"
-        @update:modelValue="update(field.name, $event)"
+        :model-value="getString(field.name)"
         :placeholder="field.label"
+        @update:model-value="update(field.name, $event)"
       />
 
       <!-- String with format: uri -->
       <InputText
         v-else-if="field.type === 'string' && field.format === 'uri'"
-        :modelValue="getString(field.name)"
-        @update:modelValue="update(field.name, $event)"
+        :model-value="getString(field.name)"
         type="url"
         :placeholder="field.label"
         :invalid="!!errors[field.name]"
+        @update:model-value="update(field.name, $event)"
       />
 
       <!-- String with format: date -->
       <InputText
         v-else-if="field.type === 'string' && field.format === 'date'"
-        :modelValue="getString(field.name)"
-        @update:modelValue="update(field.name, $event)"
+        :model-value="getString(field.name)"
         type="date"
+        @update:model-value="update(field.name, $event)"
       />
 
       <!-- Enum -->
       <Select
         v-else-if="field.enum"
-        :modelValue="model[field.name]"
-        @update:modelValue="update(field.name, $event)"
+        :model-value="model[field.name]"
         :options="field.enum"
         :placeholder="'Choisir...'"
+        @update:model-value="update(field.name, $event)"
       />
 
       <!-- Integer / Number with slider (when min & max defined) -->
@@ -51,12 +51,12 @@
         class="flex items-center gap-3"
       >
         <Slider
-          :modelValue="getNumber(field.name) ?? field.minimum"
-          @update:modelValue="update(field.name, $event)"
+          :model-value="getNumber(field.name) ?? field.minimum"
           :min="field.minimum"
           :max="field.maximum"
           :step="field.type === 'integer' ? 1 : 0.01"
           class="flex-1"
+          @update:model-value="update(field.name, $event)"
         />
         <span class="text-sm font-mono w-12 text-right">{{
           getNumber(field.name) ?? field.minimum
@@ -66,21 +66,21 @@
       <!-- Integer / Number (no slider) -->
       <InputNumber
         v-else-if="field.type === 'integer' || field.type === 'number'"
-        :modelValue="getNumber(field.name)"
-        @update:modelValue="update(field.name, $event)"
+        :model-value="getNumber(field.name)"
         :min="field.minimum"
         :max="field.maximum"
-        :useGrouping="false"
-        :minFractionDigits="field.type === 'number' ? 0 : undefined"
-        :maxFractionDigits="field.type === 'number' ? 2 : 0"
+        :use-grouping="false"
+        :min-fraction-digits="field.type === 'number' ? 0 : undefined"
+        :max-fraction-digits="field.type === 'number' ? 2 : 0"
+        @update:model-value="update(field.name, $event)"
       />
 
       <!-- Boolean -->
       <Checkbox
         v-else-if="field.type === 'boolean'"
-        :modelValue="!!model[field.name]"
-        @update:modelValue="update(field.name, $event)"
+        :model-value="!!model[field.name]"
         :binary="true"
+        @update:model-value="update(field.name, $event)"
       />
 
       <!-- Fallback: textarea for objects/arrays -->
@@ -89,23 +89,23 @@
           <div class="flex flex-col gap-1">
             <label class="text-xs text-gray-400 dark:text-gray-500">FR</label>
             <Textarea
-              :modelValue="getI18n(field.name, 'fr')"
-              @update:modelValue="
-                updateI18n(field.name, 'fr', String($event ?? ''))
-              "
+              :model-value="getI18n(field.name, 'fr')"
               rows="2"
               :placeholder="field.label + ' (FR)'"
+              @update:model-value="
+                updateI18n(field.name, 'fr', String($event ?? ''))
+              "
             />
           </div>
           <div class="flex flex-col gap-1">
             <label class="text-xs text-gray-400 dark:text-gray-500">EN</label>
             <Textarea
-              :modelValue="getI18n(field.name, 'en')"
-              @update:modelValue="
-                updateI18n(field.name, 'en', String($event ?? ''))
-              "
+              :model-value="getI18n(field.name, 'en')"
               rows="2"
               :placeholder="field.label + ' (EN)'"
+              @update:model-value="
+                updateI18n(field.name, 'en', String($event ?? ''))
+              "
             />
           </div>
         </div>
@@ -140,13 +140,13 @@
                     'ring-2 ring-blue-500':
                       getGalleryDefault(field.name) === url,
                   }"
-                  @click="setGalleryDefault(field.name, url)"
                   :title="'Cliquer pour définir comme image par défaut'"
+                  @click="setGalleryDefault(field.name, url)"
                 />
                 <button
                   class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  @click="removeGalleryImage(field.name, cat.name, imgIdx)"
                   title="Supprimer"
+                  @click="removeGalleryImage(field.name, cat.name, imgIdx)"
                 >
                   ×
                 </button>
@@ -154,9 +154,9 @@
             </div>
             <div class="flex items-center gap-2">
               <input
+                :ref="(el) => setFileRef(field.name, cat.name, el)"
                 type="file"
                 accept="image/jpeg,image/png,image/gif,image/webp"
-                :ref="(el) => setFileRef(field.name, cat.name, el)"
                 class="hidden"
                 @change="handleFileUpload(field.name, cat.name, $event)"
               />
@@ -185,10 +185,10 @@
       <!-- Fallback: textarea for other objects/arrays -->
       <Textarea
         v-else
-        :modelValue="JSON.stringify(model[field.name] ?? '', null, 2)"
-        @update:modelValue="updateJson(field.name, $event)"
+        :model-value="JSON.stringify(model[field.name] ?? '', null, 2)"
         rows="3"
         class="font-mono text-xs"
+        @update:model-value="updateJson(field.name, $event)"
       />
 
       <!-- Field error message -->
@@ -245,16 +245,14 @@ const lang = "fr"; // TODO: make configurable
 
 const fields = computed<SchemaField[]>(() => {
   const properties = props.schema?.properties as
-    | Record<string, Record<string, unknown>>
-    | undefined;
+    Record<string, Record<string, unknown>> | undefined;
   if (!properties) return [];
 
   const required = (props.schema?.required as string[]) ?? [];
   const xOrder = (props.schema?.["x-order"] as string[]) ?? [];
   const labels = (
     props.schema?.["x-labels"] as
-      | Record<string, Record<string, string>>
-      | undefined
+      Record<string, Record<string, string>> | undefined
   )?.[lang];
 
   const keys =
@@ -281,8 +279,7 @@ const fields = computed<SchemaField[]>(() => {
         minimum: prop.minimum as number | undefined,
         maximum: prop.maximum as number | undefined,
         widget: (prop as Record<string, unknown>)["x-widget"] as
-          | string
-          | undefined,
+          string | undefined,
         imageCategories: parseImageCategories(
           (prop as Record<string, unknown>)["x-image-categories"],
         ),

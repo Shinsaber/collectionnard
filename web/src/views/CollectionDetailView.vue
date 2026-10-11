@@ -41,10 +41,10 @@
       :lazy="true"
       :paginator="true"
       :rows="items.perPage.value"
-      :totalRecords="items.total.value"
+      :total-records="items.total.value"
+      striped-rows
+      data-key="id"
       @page="onPageChange"
-      stripedRows
-      dataKey="id"
     >
       <Column header="Type" style="width: 100px">
         <template #body="{ data: ci }">
@@ -114,17 +114,17 @@
             icon="pi pi-search"
             text
             size="small"
-            @click="searchItems"
             class="self-start"
+            @click="searchItems"
           />
         </div>
 
         <DataTable
           v-if="searchResults.length"
-          :value="searchResults"
-          selectionMode="single"
           v-model:selection="selectedItem"
-          dataKey="id"
+          :value="searchResults"
+          selection-mode="single"
+          data-key="id"
           class="text-sm"
         >
           <Column field="item_type.name" header="Type" style="width: 80px" />
@@ -135,7 +135,7 @@
 
         <div v-if="selectedItem && collectionTypeSchema">
           <h4 class="text-sm font-medium mb-2">Attributs contextuels</h4>
-          <DynamicForm :schema="collectionTypeSchema" v-model="addAttributes" />
+          <DynamicForm v-model="addAttributes" :schema="collectionTypeSchema" />
         </div>
       </div>
       <template #footer>
@@ -159,8 +159,8 @@
     >
       <DynamicForm
         v-if="collectionTypeSchema"
-        :schema="collectionTypeSchema"
         v-model="editAttributes"
+        :schema="collectionTypeSchema"
       />
       <template #footer>
         <Button label="Annuler" text @click="editDialogVisible = false" />
@@ -266,8 +266,7 @@ function itemLabel(item?: Item | null): string {
 
 function ctxAttrLabel(key: string): string {
   const schema = collection.value?.collection_type?.attributes_schema as
-    | Record<string, unknown>
-    | undefined;
+    Record<string, unknown> | undefined;
   const labels = (
     schema?.["x-labels"] as Record<string, Record<string, string>> | undefined
   )?.["fr"];

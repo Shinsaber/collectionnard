@@ -8,7 +8,7 @@ import (
 
 func (s *PgStore) ListTags(ctx context.Context, search string) ([]model.Tag, error) {
 	query := `SELECT id, name FROM tags`
-	args := []interface{}{}
+	args := []any{}
 
 	if search != "" {
 		query += ` WHERE lower(name) LIKE lower($1)`

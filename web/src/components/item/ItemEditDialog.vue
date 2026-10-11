@@ -1,20 +1,20 @@
 <template>
   <Dialog
     :visible="visible"
-    @update:visible="$emit('update:visible', $event)"
     :header="item ? 'Modifier l\'item' : 'Nouvel item'"
     modal
     class="w-full max-w-lg"
+    @update:visible="$emit('update:visible', $event)"
   >
     <div class="flex flex-col gap-4">
       <!-- Type selector (create mode only) -->
-      <div class="flex flex-col gap-1" v-if="!item">
+      <div v-if="!item" class="flex flex-col gap-1">
         <label class="text-sm font-medium">Type</label>
         <Select
           v-model="form.item_type_id"
           :options="itemTypes"
-          optionLabel="name"
-          optionValue="id"
+          option-label="name"
+          option-value="id"
           placeholder="Choisir un type..."
           @change="form.attributes = {}"
         />
@@ -24,10 +24,10 @@
       </div>
 
       <DynamicForm
-        ref="dynamicFormRef"
         v-if="currentSchema"
-        :schema="currentSchema"
+        ref="dynamicFormRef"
         v-model="form.attributes"
+        :schema="currentSchema"
       />
 
       <div class="flex flex-col gap-1">

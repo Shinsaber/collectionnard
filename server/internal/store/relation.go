@@ -26,7 +26,7 @@ func (s *PgStore) ListItemRelations(ctx context.Context, itemID uuid.UUID, relat
 		JOIN items ti ON ti.id = ir.target_item_id
 		JOIN item_types tit ON tit.id = ti.item_type_id
 		WHERE (ir.source_item_id = $1 OR ir.target_item_id = $1)`
-	args := []interface{}{itemID}
+	args := []any{itemID}
 
 	if relationTypeID != nil {
 		query += ` AND ir.relation_type_id = $2`

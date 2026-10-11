@@ -67,7 +67,7 @@ func (h *Handler) Router() chi.Router {
 			http.NotFound(w, r)
 			return
 		}
-		http.ServeFile(w, r, filepath.Join(string(uploadsDir), name))
+		http.ServeFile(w, r, filepath.Join(string(uploadsDir), name)) //nolint:gosec // name sans "/" ni "..", extension en liste blanche (ci-dessus)
 	})
 
 	// Authenticated
@@ -136,17 +136,17 @@ func (h *Handler) Router() chi.Router {
 
 // --- Helpers ---
 
-func respondJSON(w http.ResponseWriter, status int, v interface{}) {
+func respondJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(v)
+	_ = json.NewEncoder(w).Encode(v)
 }
 
 func respondError(w http.ResponseWriter, status int, code, message string) {
 	respondJSON(w, status, model.APIError{Error: code, Message: message})
 }
 
-func respondValidationError(w http.ResponseWriter, message string, details interface{}) {
+func respondValidationError(w http.ResponseWriter, message string, details any) {
 	respondJSON(w, http.StatusUnprocessableEntity, model.APIError{
 		Error:   "validation_error",
 		Message: message,
@@ -159,7 +159,7 @@ const maxJSONBody = 1 << 20 // 1 MiB
 
 func decodeJSON(w http.ResponseWriter, r *http.Request, v any) error {
 	r.Body = http.MaxBytesReader(w, r.Body, maxJSONBody)
-	defer r.Body.Close()
+	defer func() { _ = r.Body.Close() }()
 	return json.NewDecoder(r.Body).Decode(v)
 }
 

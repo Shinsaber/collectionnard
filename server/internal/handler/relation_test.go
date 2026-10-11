@@ -1,8 +1,8 @@
 package handler_test
 
 import (
-	"context"
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -27,12 +27,14 @@ func TestCreateRelation_TypeConstraintValidation(t *testing.T) {
 		ID: rtID, Name: "contient_episode",
 		SourceItemTypeIDs: []uuid.UUID{serieTypeID}, TargetItemTypeIDs: []uuid.UUID{episodeTypeID},
 		AttributesSchema: json.RawMessage(`{}`),
-		CreatedAt: time.Now(), UpdatedAt: time.Now(),
+		CreatedAt:        time.Now(), UpdatedAt: time.Now(),
 	}
 
 	mock := &testutil.MockStore{
 		GetRelationTypeFn: func(_ context.Context, id uuid.UUID) (*model.RelationType, error) {
-			if id == rtID { return rt, nil }
+			if id == rtID {
+				return rt, nil
+			}
 			return nil, store.ErrNotFound
 		},
 		GetItemFn: func(_ context.Context, id uuid.UUID) (*model.Item, error) {
@@ -65,7 +67,9 @@ func TestCreateRelation_TypeConstraintValidation(t *testing.T) {
 	req, _ := http.NewRequest("POST", srv.URL+"/api/v1/relations", bytes.NewReader(body))
 	req.Header = testutil.AuthHeader(testutil.AdminToken())
 	resp, err := http.DefaultClient.Do(req)
-	if err != nil { t.Fatalf("request: %v", err) }
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusCreated {
 		b, _ := io.ReadAll(resp.Body)
@@ -78,7 +82,10 @@ func TestCreateRelation_TypeConstraintValidation(t *testing.T) {
 	})
 	req, _ = http.NewRequest("POST", srv.URL+"/api/v1/relations", bytes.NewReader(body))
 	req.Header = testutil.AuthHeader(testutil.AdminToken())
-	resp2, _ := http.DefaultClient.Do(req)
+	resp2, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
 	defer resp2.Body.Close()
 	if resp2.StatusCode != http.StatusUnprocessableEntity {
 		t.Fatalf("expected 422, got %d", resp2.StatusCode)
@@ -96,7 +103,10 @@ func TestCreateRelation_SelfReference(t *testing.T) {
 	})
 	req, _ := http.NewRequest("POST", srv.URL+"/api/v1/relations", bytes.NewReader(body))
 	req.Header = testutil.AuthHeader(testutil.AdminToken())
-	resp, _ := http.DefaultClient.Do(req)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusUnprocessableEntity {

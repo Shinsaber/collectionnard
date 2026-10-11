@@ -76,34 +76,34 @@
           <!-- Actions -->
           <div class="flex gap-0.5 shrink-0">
             <Button
+              v-tooltip="'Sous-relations'"
               :icon="
                 expanded.has(rel.id) ? 'pi pi-chevron-up' : 'pi pi-chevron-down'
               "
               text
               size="small"
               rounded
-              v-tooltip="'Sous-relations'"
               @click.stop="toggle(rel)"
             />
             <Button
               v-if="showDelete"
+              v-tooltip="'Modifier'"
               icon="pi pi-pencil"
               text
               size="small"
               rounded
               class="opacity-0 group-hover/rel:opacity-100 transition-opacity"
-              v-tooltip="'Modifier'"
               @click.stop="$emit('edit', rel)"
             />
             <Button
               v-if="showDelete"
+              v-tooltip="'Supprimer'"
               icon="pi pi-trash"
               text
               size="small"
               rounded
               severity="danger"
               class="opacity-0 group-hover/rel:opacity-100 transition-opacity"
-              v-tooltip="'Supprimer'"
               @click.stop="$emit('delete', rel)"
             />
           </div>
@@ -225,8 +225,7 @@ function displayAttrs(rel: ItemRelation): Record<string, unknown> {
 
 function attrLabel(rel: ItemRelation, key: string): string {
   const schema = rel.relation_type?.attributes_schema as
-    | Record<string, unknown>
-    | undefined;
+    Record<string, unknown> | undefined;
   const labels = (
     schema?.["x-labels"] as Record<string, Record<string, string>> | undefined
   )?.["fr"];

@@ -80,7 +80,7 @@ func (h *Handler) CreateRelation(w http.ResponseWriter, r *http.Request) {
 
 	// Validate attributes against relation type schema
 	if vErr := validator.ValidateAttributes(rt.AttributesSchema, in.Attributes); vErr != nil {
-		respondValidationError(w, "Les attributs ne respectent pas le schéma du type de relation", map[string]interface{}{
+		respondValidationError(w, "Les attributs ne respectent pas le schéma du type de relation", map[string]any{
 			"fields": validator.FormatValidationError(vErr),
 		})
 		return
@@ -117,7 +117,7 @@ func (h *Handler) UpdateRelation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if vErr := validator.ValidateAttributes(existing.RelationType.AttributesSchema, in.Attributes); vErr != nil {
-		respondValidationError(w, "Les attributs ne respectent pas le schéma du type de relation", map[string]interface{}{
+		respondValidationError(w, "Les attributs ne respectent pas le schéma du type de relation", map[string]any{
 			"fields": validator.FormatValidationError(vErr),
 		})
 		return

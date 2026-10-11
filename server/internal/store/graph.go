@@ -12,7 +12,7 @@ import (
 
 func (s *PgStore) GetItemGraph(ctx context.Context, itemID uuid.UUID, maxDepth int, relationTypeIDs []uuid.UUID) (*model.GraphResponse, error) {
 	rtFilter := ""
-	args := []interface{}{itemID, maxDepth}
+	args := []any{itemID, maxDepth}
 	if len(relationTypeIDs) > 0 {
 		placeholders := make([]string, len(relationTypeIDs))
 		for i, id := range relationTypeIDs {
@@ -115,7 +115,7 @@ func (s *PgStore) GetItemGraph(ctx context.Context, itemID uuid.UUID, maxDepth i
 		FROM item_relations ir
 		JOIN relation_types rt ON rt.id = ir.relation_type_id
 		WHERE ir.source_item_id = ANY($1) AND ir.target_item_id = ANY($1)`
-	edgeArgs := []interface{}{allIDs}
+	edgeArgs := []any{allIDs}
 
 	if len(relationTypeIDs) > 0 {
 		edgeQuery += ` AND ir.relation_type_id = ANY($2)`
@@ -140,7 +140,7 @@ func (s *PgStore) GetItemGraph(ctx context.Context, itemID uuid.UUID, maxDepth i
 }
 
 func extractLabel(attrs json.RawMessage) string {
-	var m map[string]interface{}
+	var m map[string]any
 	if err := json.Unmarshal(attrs, &m); err != nil {
 		return ""
 	}

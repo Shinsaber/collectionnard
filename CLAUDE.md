@@ -1,0 +1,128 @@
+# Collectionnard — Contexte pour Claude
+
+Application **générique** de gestion de collections (séries TV, DVD, BD/manga, cartes…).
+Principe central : **aucun type de collection n'est codé en dur**. Tout passe par des
+méta-types qui portent un **JSON Schema**, et des instances qui portent des valeurs JSONB
+validées contre ce schéma.
+
+Langue du projet : **français** (docs, commits, échanges). Le code (identifiants, noms de
+champs JSON, noms de RelationTypes récents) est en **anglais** ou en snake_case ASCII.
+
+## Documents de référence (à lire selon le besoin, ne pas tout charger d'office)
+
+| Fichier                                  | Contenu                                                     |
+| ---------------------------------------- | ----------------------------------------------------------- |
+| [Collectionnard.md](Collectionnard.md)   | Vision, modèle conceptuel, phases de développement (roadmap) |
+| [les.collection.md](les.collection.md)   | Modèle de données BD / Manga (prochain domaine à intégrer)  |
+| [api/openapi.yaml](api/openapi.yaml)     | Spécification OpenAPI 3.1 — **source de vérité de l'API**   |
+| [db/schema.sql](db/schema.sql)           | Schéma PostgreSQL (tables, index GIN, triggers updated_at)  |
+| [db/seed.sql](db/seed.sql)               | Jeu de test « Breaking Bad » (multi-chemin Diffusion + DVD) |
+| [server/CLAUDE.md](server/CLAUDE.md)     | Conventions backend Go                                      |
+| [web/CLAUDE.md](web/CLAUDE.md)           | Conventions frontend Vue                                    |
+| [docs/audit/](docs/audit/BRIEF.md)       | Brief et résultats de l'audit approfondi (`/audit`)         |
+
+## Modèle en une table
+
+| Méta-type        | Instance         | Le JSON Schema décrit…                          |
+| ---------------- | ---------------- | ----------------------------------------------- |
+| `ItemType`       | `Item`           | les attributs de l'item (titre, année, ISBN…)   |
+| `RelationType`   | `ItemRelation`   | les attributs du lien (disque, piste, rôle…)    |
+| `CollectionType` | `CollectionItem` | les attributs user↔item (état, prix, note…)     |
+
+- Les items forment un **graphe orienté libre** : un même nœud peut être atteint par plusieurs
+  chemins (ex. Épisode via Saison *et* via DVD). Ne jamais modéliser en arbre strict.
+- Un `RelationType` a **plusieurs** types source et cible possibles (tables de jonction
+  `relation_type_sources` / `relation_type_targets`, champs `source_item_type_ids` /
+  `target_item_type_ids`). Le TODO « arrays » de `les.collection.md` est donc déjà traité.
+- Les données propres à un utilisateur (état, prix payé, note) vont sur `CollectionItem`,
+  **jamais** sur `Item`.
+- `Collectionnard.md` parle d'`AttributeDefinition` : c'est le concept historique.
+  **L'implémentation réelle est le JSON Schema** (`attributes_schema` JSONB).
+
+### Extensions JSON Schema maison (pilotent le front)
+
+`x-order` (ordre des champs), `x-labels` (`{fr:{…}, en:{…}}`), `x-widget`
+(`image-gallery`, `slider`, `i18n-text`), `x-image-categories` (`{poster:{ratio:"2/3"}}`).
+Toute nouvelle extension doit être gérée dans `DynamicForm.vue` **et** `SchemaBuilder.vue`,
+et documentée dans le README.
+
+## Stack
+
+Go 1.22 (chi, pgx v5, golang-jwt, santhosh-tekuri/jsonschema) · PostgreSQL 16 ·
+Vue 3.5 + TypeScript 5.6 · PrimeVue 4 + Tailwind 3 · Cytoscape.js · Vite 6 · Docker Compose.
+
+## Environnement : Nix
+
+Le développeur travaille sous **Nix**. Les outils (Go, Node 22, PostgreSQL 16, gopls) viennent
+du `flake.nix` ; ils ne sont **pas** installés globalement.
+
+- `flake.nix` et `flake.lock` **doivent rester suivis par git** : les flakes ignorent les fichiers non
+  suivis (`error: Path … is not tracked by Git`). Après avoir ajouté un fichier référencé par le
+  flake, le `git add` avant `nix develop` ; en secours, `nix develop path:$PWD -c …`.
+- Si `direnv` est actif (`.envrc` → `use flake`), `go`, `node` et `psql` sont déjà dans le PATH.
+- Sinon, ou si `go`/`npm` est introuvable : **préfixer chaque commande par `nix develop -c`**.
+  Ne jamais proposer `apt`, `brew`, `go install` global ou `npm -g` pour installer un outil :
+  l'ajouter à `packages` dans `flake.nix`.
+- Le shell exporte `DATABASE_URL`, `JWT_SECRET` (≥ 32 caractères, exigé par le serveur), `UPLOAD_DIR`
+  (valeurs de dev).
+
+## Commandes
+
+```bash
+nix develop                     # entrer dans le shell (inutile avec direnv)
+nix flake update                # mettre à jour nixpkgs (flake.lock)
+
+# Base de données — au choix :
+pg-start | pg-stop | pg-reset   # PostgreSQL local (données dans ./.pgdata, schema + seed à la création)
+docker compose up postgres      # ou PostgreSQL via Docker (même port 5432 : n'en lancer qu'un)
+
+# Backend (depuis server/)
+nix develop -c go build ./...
+nix develop -c gofmt -l .            # doit ne rien afficher
+nix develop -c go vet ./...
+nix develop -c golangci-lint run ./...
+nix develop -c go test ./...
+nix develop -c govulncheck ./...
+nix develop -c go run .
+
+# Frontend (depuis web/)
+nix develop -c npm install
+nix develop -c npm run dev          # Vite
+nix develop -c npm run type-check   # vue-tsc — à lancer après toute modif TS/Vue
+nix develop -c npm run lint         # eslint (flat config) ; `lint:fix` pour corriger
+nix develop -c npm run format:check # prettier ; `format` pour réécrire
+nix develop -c npm test             # vitest (src/**/*.test.ts)
+nix develop -c npm run build
+
+# Stack complète conteneurisée (front :3000, API :8080/api/v1, PG :5432)
+cp .env.example .env                 # une fois : JWT_SECRET (≥ 32 car.) et POSTGRES_PASSWORD obligatoires
+docker compose up --build
+docker compose down -v && docker compose up --build   # réinitialise la base
+```
+
+Comptes de dev (seed) : `admin` / `admin` (rôle admin), `shinsaber` (rôle user).
+
+## Règles de travail
+
+1. **Contrat d'API d'abord** : toute modif d'endpoint met à jour, dans cet ordre,
+   `api/openapi.yaml` → `server/internal/model` → store → handler (+ test) →
+   `web/src/api/types.ts` + `client.ts` → vues.
+2. **Schéma BDD** : modifier `db/schema.sql` (pas de système de migrations pour l'instant).
+   Pour rejouer : `pg-reset` (PG local) ou `docker compose down -v` (Docker). Signaler toute modif cassante.
+3. **Seed** : UUID lisibles par préfixe — `a…` users, `b…` item_types, `c…` relation_types,
+   `d…` collection_types, `e…` items. Garder ce schéma pour les nouveaux jeux de données
+   (prendre des plages libres, ne pas renuméroter l'existant).
+4. Avant de dire « terminé » : `gofmt -l .` + `go vet` + `golangci-lint run` + `go test ./...` côté
+   server, `npm run lint` + `npm run format:check` + `npm run type-check` + `npm test` côté web,
+   selon ce qui a été touché (via `nix develop -c` si besoin). La CI (`.github/workflows/ci.yml`)
+   rejoue exactement ces étapes.
+5. Mettre à jour les cases à cocher de la section « Phases » de `Collectionnard.md`
+   quand une fonctionnalité de la roadmap est livrée.
+6. Ne jamais committer de secrets : `JWT_SECRET` et `POSTGRES_PASSWORD` viennent de `.env`
+   (ignoré par git, modèle dans `.env.example`) ; le serveur refuse un `JWT_SECRET` < 32 caractères.
+
+## Où en est le projet
+
+Phase 1 (MVP) : terminée. Prochaines pistes (Phase 2, voir `Collectionnard.md` §8) :
+recherche avancée, statistiques graphiques, **import/export CSV/JSON**, soumission d'items
+par les users. Domaine en préparation : **BD / Manga** (`les.collection.md`).

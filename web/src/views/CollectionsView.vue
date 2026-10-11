@@ -16,10 +16,10 @@
       <Select
         v-model="filterTypeId"
         :options="collectionTypes"
-        optionLabel="name"
-        optionValue="id"
+        option-label="name"
+        option-value="id"
         placeholder="Tous les types"
-        showClear
+        show-clear
         class="w-48"
         @change="reload"
       />
@@ -94,8 +94,8 @@
           <Select
             v-model="form.collection_type_id"
             :options="collectionTypes"
-            optionLabel="name"
-            optionValue="id"
+            option-label="name"
+            option-value="id"
             placeholder="Choisir..."
             :disabled="!!editing"
           />

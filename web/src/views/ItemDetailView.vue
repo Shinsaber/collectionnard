@@ -27,15 +27,15 @@
         icon="pi pi-pencil"
         label="Modifier"
         outlined
-        @click="openEdit"
         class="mr-2"
+        @click="openEdit"
       />
       <Button
         icon="pi pi-plus"
         label="Ajouter à une collection"
         outlined
-        @click="openAddToCollection"
         class="mr-2"
+        @click="openAddToCollection"
       />
       <Button
         icon="pi pi-sitemap"
@@ -264,8 +264,8 @@
             <Select
               v-model="selectedCollectionId"
               :options="availableCollections"
-              optionLabel="name"
-              optionValue="id"
+              option-label="name"
+              option-value="id"
               placeholder="Choisir une collection…"
             />
           </div>
@@ -282,8 +282,8 @@
             >
             <DynamicForm
               :schema="selectedCollectionSchema"
-              :modelValue="addToCollectionAttrs"
-              @update:modelValue="addToCollectionAttrs = $event"
+              :model-value="addToCollectionAttrs"
+              @update:model-value="addToCollectionAttrs = $event"
             />
           </div>
         </template>
@@ -316,8 +316,8 @@
           <Select
             v-model="newRelationTypeId"
             :options="availableRelationTypes"
-            optionLabel="name"
-            optionValue="id"
+            option-label="name"
+            option-value="id"
             placeholder="Choisir un type…"
             @change="onRelationTypeChange"
           />
@@ -330,8 +330,8 @@
           <Select
             v-model="newRelationDirection"
             :options="directionOptions"
-            optionLabel="label"
-            optionValue="value"
+            option-label="label"
+            option-value="value"
           />
         </div>
 
@@ -342,13 +342,13 @@
           <Select
             v-model="newRelationTargetItemId"
             :options="searchedItems"
-            optionLabel="_label"
-            optionValue="id"
+            option-label="_label"
+            option-value="id"
             filter
-            :filterPlaceholder="'Rechercher un item…'"
-            @filter="onItemFilter"
+            :filter-placeholder="'Rechercher un item…'"
             :loading="searchingItems"
             placeholder="Sélectionner un item…"
+            @filter="onItemFilter"
           >
             <template #option="{ option }">
               <div class="flex items-center gap-2">
@@ -374,8 +374,8 @@
           >
           <DynamicForm
             :schema="newRelationSchema"
-            :modelValue="newRelationAttrs"
-            @update:modelValue="newRelationAttrs = $event"
+            :model-value="newRelationAttrs"
+            @update:model-value="newRelationAttrs = $event"
           />
         </div>
       </div>
@@ -422,8 +422,8 @@
           >
           <DynamicForm
             :schema="editRelationSchema"
-            :modelValue="editRelationAttrs"
-            @update:modelValue="editRelationAttrs = $event"
+            :model-value="editRelationAttrs"
+            @update:model-value="editRelationAttrs = $event"
           />
         </div>
         <div v-else class="text-sm text-gray-400 dark:text-gray-500 italic">
@@ -532,8 +532,7 @@ function linkedItemLabel(rel: ItemRelation): string {
 
 function attrLabel(key: string): string {
   const schema = item.value?.item_type?.attributes_schema as
-    | Record<string, unknown>
-    | undefined;
+    Record<string, unknown> | undefined;
   const labels = (
     schema?.["x-labels"] as Record<string, Record<string, string>> | undefined
   )?.["fr"];
@@ -552,11 +551,9 @@ function displayValue(value: unknown): string {
 
 function isImageGallery(key: string): boolean {
   const schema = item.value?.item_type?.attributes_schema as
-    | Record<string, unknown>
-    | undefined;
+    Record<string, unknown> | undefined;
   const props = schema?.properties as
-    | Record<string, Record<string, unknown>>
-    | undefined;
+    Record<string, Record<string, unknown>> | undefined;
   return props?.[key]?.["x-widget"] === "image-gallery";
 }
 
@@ -564,11 +561,9 @@ function getSchemaImageCategories(
   key: string,
 ): { name: string; ratio: string }[] {
   const schema = item.value?.item_type?.attributes_schema as
-    | Record<string, unknown>
-    | undefined;
+    Record<string, unknown> | undefined;
   const props = schema?.properties as
-    | Record<string, Record<string, unknown>>
-    | undefined;
+    Record<string, Record<string, unknown>> | undefined;
   const raw = props?.[key]?.["x-image-categories"];
   if (raw && typeof raw === "object" && !Array.isArray(raw)) {
     return Object.entries(raw as Record<string, { ratio?: string }>).map(
@@ -638,8 +633,7 @@ const imageGalleryField = computed<{
 const orderedAttributeKeys = computed<string[]>(() => {
   if (!item.value) return [];
   const schema = item.value.item_type?.attributes_schema as
-    | Record<string, unknown>
-    | undefined;
+    Record<string, unknown> | undefined;
   const xOrder = (schema?.["x-order"] as string[]) ?? [];
   const allKeys = Object.keys(item.value.attributes);
   if (xOrder.length > 0) {
@@ -735,8 +729,7 @@ function ctxLabel(
   key: string,
 ): string {
   const schema = collection.collection_type?.attributes_schema as
-    | Record<string, unknown>
-    | undefined;
+    Record<string, unknown> | undefined;
   const labels = (
     schema?.["x-labels"] as Record<string, Record<string, string>> | undefined
   )?.["fr"];
