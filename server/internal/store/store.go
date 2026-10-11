@@ -104,4 +104,14 @@ type Store interface {
 
 	// Stats
 	GetStats(ctx context.Context) (*model.Stats, error)
+
+	// Import / export (catalogue only: meta-types, items, relations, tags)
+	ExportCatalog(ctx context.Context) (*model.CatalogExport, error)
+	// ImportCatalog upserts the catalogue by id in one transaction, rolled back on
+	// any validation error or when dryRun is set. A returned error is an
+	// infrastructure failure; validation problems are in the report.
+	ImportCatalog(ctx context.Context, cat *model.CatalogExport, dryRun bool) (*model.ImportReport, error)
+	// ImportCollection restores a collection export into the account of userID
+	// (same contract as ImportCatalog: validation errors are in the report).
+	ImportCollection(ctx context.Context, userID uuid.UUID, exp *model.CollectionExport, dryRun bool) (*model.ImportReport, error)
 }

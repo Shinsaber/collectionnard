@@ -18,6 +18,12 @@ export default {
     confirmDelete: "Supprimer « {label} » ?",
     deleted: "Item supprimé",
   },
+  // Export CSV du catalogue (ItemsView)
+  export: {
+    csv: "Exporter en CSV",
+    chooseTypeFirst: "Choisissez d'abord un type d'item",
+    failed: "Export impossible",
+  },
   // Recherche avancée du catalogue (ItemsView, ItemSearchFilters, RelatedToTag)
   search: {
     filters: "Filtres",

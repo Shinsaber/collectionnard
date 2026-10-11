@@ -155,6 +155,11 @@ const adminLinks = computed(() => [
     label: t("layout.nav.collectionTypes"),
     icon: "pi pi-tags",
   },
+  {
+    to: "/admin/import-export",
+    label: t("layout.nav.importExport"),
+    icon: "pi pi-database",
+  },
 ]);
 
 function handleLogout() {

@@ -18,6 +18,11 @@ const en: typeof fr = {
     confirmDelete: "Delete “{label}”?",
     deleted: "Item deleted",
   },
+  export: {
+    csv: "Export as CSV",
+    chooseTypeFirst: "Choose an item type first",
+    failed: "Export failed",
+  },
   search: {
     filters: "Filters",
     reset: "Reset",

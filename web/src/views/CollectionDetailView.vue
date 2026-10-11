@@ -24,6 +24,12 @@
         </div>
       </div>
       <div class="flex-1"></div>
+      <ExportButton
+        :label="t('collections.detail.export')"
+        :formats="['json', 'csv']"
+        :run="exportCollection"
+        :error-summary="t('collections.detail.exportFailed')"
+      />
       <ElButton type="primary" @click="openAddItem">
         <i class="pi pi-plus mr-2" aria-hidden="true"></i>
         {{ t("collections.detail.addItem") }}
@@ -207,7 +213,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
-import { collectionApi, itemApi } from "@/api/client";
+import { collectionApi, importExportApi, itemApi } from "@/api/client";
 import { usePagination } from "@/composables/usePagination";
 import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";
@@ -220,6 +226,10 @@ import {
 } from "@/lib/schema";
 import AppSpinner from "@/components/common/AppSpinner.vue";
 import DynamicForm from "@/components/common/DynamicForm.vue";
+import ExportButton, {
+  type ExportFormat,
+} from "@/components/common/ExportButton.vue";
+import { defaultDelimiter } from "@/lib/csv";
 import type { Collection, CollectionItem, Item } from "@/api/types";
 
 const props = defineProps<{ id: string }>();
@@ -239,6 +249,12 @@ const items = usePagination((params: Record<string, unknown>) =>
 const collectionTypeSchema = computed(
   () => collection.value?.collection_type?.attributes_schema ?? null,
 );
+
+const exportCollection = (format: ExportFormat) =>
+  importExportApi.exportCollection(props.id, format, {
+    delimiter: defaultDelimiter(lang.value),
+    lang: lang.value,
+  });
 
 // Add item
 const addDialogVisible = ref(false);

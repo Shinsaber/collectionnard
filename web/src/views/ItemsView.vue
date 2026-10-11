@@ -76,6 +76,14 @@
       <ElButton v-if="hasCriteria" text @click="resetAll">
         {{ t("items.search.reset") }}
       </ElButton>
+      <ExportButton
+        :label="t('items.export.csv')"
+        :formats="['csv']"
+        :run="exportCsv"
+        :error-summary="t('items.export.failed')"
+        :disabled="!selectedType"
+        :title="selectedType ? undefined : t('items.export.chooseTypeFirst')"
+      />
     </div>
 
     <!-- Related-to filter (from an item page) -->
@@ -194,7 +202,7 @@
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { itemApi } from "@/api/client";
+import { importExportApi, itemApi } from "@/api/client";
 import { useMetaTypes } from "@/stores/metaTypes";
 import { useNotify } from "@/composables/useNotify";
 import { useConfirmDialog } from "@/composables/useConfirmDialog";
@@ -217,6 +225,8 @@ import {
 import ItemEditDialog from "@/components/item/ItemEditDialog.vue";
 import ItemSearchFilters from "@/components/item/ItemSearchFilters.vue";
 import RelatedToTag from "@/components/item/RelatedToTag.vue";
+import ExportButton from "@/components/common/ExportButton.vue";
+import { defaultDelimiter } from "@/lib/csv";
 import type { Item, ItemListParams } from "@/api/types";
 
 const auth = useAuthStore();
@@ -331,6 +341,13 @@ onMounted(async () => {
   load();
   watch(() => route.query, load);
 });
+
+// Export CSV : recherche courante sans pagination, séparateur selon la langue.
+function exportCsv() {
+  const { page: _page, ...params } = toQuery(state.value);
+  const opts = { delimiter: defaultDelimiter(lang.value), lang: lang.value };
+  return importExportApi.exportItemsCsv({ ...params, ...opts });
+}
 
 function onPageChange(p: number) {
   router.replace({ query: toQuery({ ...state.value, page: p }) });

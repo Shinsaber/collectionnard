@@ -1,6 +1,16 @@
 import type fr from "../fr/collections";
 
 const en: typeof fr = {
+  import: {
+    button: "Import",
+    title: "Import a collection",
+    help: "Choose a file exported from a collection (JSON). If it matches one of your collections, that collection becomes exactly the content of the file: items missing from the file are removed from it. Otherwise a new collection is created. Items must exist in the catalogue. Start with a simulation.",
+    file: "Collection export (.json)",
+    confirm: "Import “{name}”?",
+    confirmWithRemoval:
+      "Import this file? | Import this file? {n} item missing from the file will be removed from the collection. | Import this file? {n} items missing from the file will be removed from the collection.",
+    done: "Collection imported",
+  },
   itemCount: "no items | {n} item | {n} items",
   loadFailed: "Loading failed",
   typesUnavailable: "Collection types unavailable",
@@ -38,6 +48,8 @@ const en: typeof fr = {
     confirmRemove: "Remove “{label}” from the collection?",
     remove: "Remove",
     itemRemoved: "Item removed",
+    export: "Export",
+    exportFailed: "Export failed",
   },
 };
 

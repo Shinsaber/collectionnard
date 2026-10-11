@@ -1,5 +1,16 @@
 // Catalogue « collections » (français, langue de référence : les autres langues en suivent la forme).
 export default {
+  // Import d'une collection (CollectionImportDialog)
+  import: {
+    button: "Importer",
+    title: "Importer une collection",
+    help: "Choisissez un fichier exporté depuis une collection (JSON). S'il correspond à l'une de vos collections, elle devient exactement le contenu du fichier : les items absents du fichier en sont retirés. Sinon, une nouvelle collection est créée. Les items doivent exister dans le catalogue. Commencez par une simulation.",
+    file: "Export de collection (.json)",
+    confirm: "Importer « {name} » ?",
+    confirmWithRemoval:
+      "Importer ce fichier ? | Importer ce fichier ? {n} item absent du fichier sera retiré de la collection. | Importer ce fichier ? {n} items absents du fichier seront retirés de la collection.",
+    done: "Collection importée",
+  },
   itemCount: "aucun item | {n} item | {n} items",
   loadFailed: "Chargement impossible",
   typesUnavailable: "Types de collection indisponibles",
@@ -37,5 +48,7 @@ export default {
     confirmRemove: "Retirer « {label} » de la collection ?",
     remove: "Retirer",
     itemRemoved: "Item retiré",
+    export: "Exporter",
+    exportFailed: "Export impossible",
   },
 };

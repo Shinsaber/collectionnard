@@ -1,7 +1,7 @@
 import { AxiosError, type AxiosResponse } from "axios";
 import { afterEach, describe, expect, it } from "vitest";
 import { i18n } from "@/i18n";
-import { extractApiError } from "./client";
+import { extractApiError, filenameFromDisposition } from "./client";
 
 function axiosError(status: number, data: unknown): AxiosError {
   return new AxiosError(
@@ -61,5 +61,34 @@ describe("extractApiError", () => {
   it("gère une Error classique et une valeur inconnue", () => {
     expect(extractApiError(new Error("boom")).message).toBe("boom");
     expect(extractApiError("???").message).toBe("Erreur inconnue");
+  });
+});
+
+describe("filenameFromDisposition", () => {
+  it("lit le nom entre guillemets ou non", () => {
+    expect(
+      filenameFromDisposition('attachment; filename="items.csv"', "x"),
+    ).toBe("items.csv");
+    expect(filenameFromDisposition("attachment; filename=a.json", "x")).toBe(
+      "a.json",
+    );
+  });
+
+  it("décode la forme filename* (RFC 5987)", () => {
+    expect(
+      filenameFromDisposition(
+        "attachment; filename*=UTF-8''s%C3%A9ries.csv",
+        "x",
+      ),
+    ).toBe("séries.csv");
+  });
+
+  it("repli sans en-tête ou sans nom", () => {
+    expect(filenameFromDisposition(undefined, "fallback.csv")).toBe(
+      "fallback.csv",
+    );
+    expect(filenameFromDisposition("attachment", "fallback.csv")).toBe(
+      "fallback.csv",
+    );
   });
 });

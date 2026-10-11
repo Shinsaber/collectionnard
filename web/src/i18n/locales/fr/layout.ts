@@ -7,6 +7,7 @@ export default {
     itemTypes: "Types",
     relationTypes: "Relations",
     collectionTypes: "Types coll.",
+    importExport: "Import / export",
   },
   adminSection: "Admin",
   adminBadge: "admin",

@@ -224,6 +224,7 @@ La spécification complète est dans [api/openapi.yaml](api/openapi.yaml).
 | RelationTypes   | CRUD `/relation-types`                                                        | Admin                             |
 | CollectionTypes | CRUD `/collection-types`                                                      | Admin                             |
 | Items           | CRUD `/items` + recherche plein texte, filtres et tri par attribut, `related_to` | Admin (écriture)                  |
+| Import / export  | `GET /export`, `POST /import` (catalogue JSON, admin), `GET /items/export` (CSV), `GET /collections/{id}/export`, `POST /collections/import` | Admin / Authentifié |
 | Relations       | CRUD `/relations` + `GET /items/{id}/relations`                               | Admin (écriture)                  |
 | Graph           | `GET /items/{id}/graph`                                                       | JWT                               |
 | Collections     | CRUD `/collections` + gestion items                                           | JWT (owner)                       |

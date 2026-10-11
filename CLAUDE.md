@@ -141,6 +141,6 @@ Nouveau compte : `go run . hash-password <mdp>` puis `INSERT INTO users …`.
 
 Phase 1 (MVP) : terminée. Phase 1.5 (remise à niveau issue de l'audit, branche `remise-a-niveau`,
 lots 0 à 11 livrés, voir `Collectionnard.md` §8 et `docs/audit/03-feuille-de-route.md`) : en cours.
-Phase 2 livrée en partie : multilingue, recherche avancée (lot 14). Prochaines pistes (voir `Collectionnard.md` §8) :
-statistiques graphiques, **import/export CSV/JSON**, soumission d'items
+Phase 2 livrée en partie : multilingue, recherche avancée (lot 14), import/export (lot 12). Prochaines pistes
+(voir `Collectionnard.md` §8) : statistiques graphiques, soumission d'items
 par les users. Domaine en préparation : **BD / Manga** (`les.collection.md`).

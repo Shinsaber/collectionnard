@@ -4,10 +4,16 @@
       <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
         {{ t("collections.list.title") }}
       </h1>
-      <ElButton type="primary" @click="openCreate">
-        <i class="pi pi-plus mr-2" aria-hidden="true"></i>
-        {{ t("collections.list.new") }}
-      </ElButton>
+      <div class="flex gap-2">
+        <ElButton @click="importVisible = true">
+          <i class="pi pi-upload mr-2" aria-hidden="true"></i>
+          {{ t("collections.import.button") }}
+        </ElButton>
+        <ElButton type="primary" @click="openCreate">
+          <i class="pi pi-plus mr-2" aria-hidden="true"></i>
+          {{ t("collections.list.new") }}
+        </ElButton>
+      </div>
     </div>
 
     <!-- Filter -->
@@ -148,6 +154,11 @@
         </ElButton>
       </template>
     </ElDialog>
+
+    <CollectionImportDialog
+      v-model:visible="importVisible"
+      @imported="(id) => router.push(`/collections/${id}`)"
+    />
   </div>
 </template>
 
@@ -163,9 +174,11 @@ import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import { useMetaTypes } from "@/stores/metaTypes";
 import { typeTitle } from "@/lib/schema";
 import AppSpinner from "@/components/common/AppSpinner.vue";
+import CollectionImportDialog from "@/components/collection/CollectionImportDialog.vue";
 import type { Collection } from "@/api/types";
 
 const router = useRouter();
+const importVisible = ref(false);
 const { t } = useI18n();
 const { lang } = useLang();
 const { notifyError, notifySuccess } = useNotify();

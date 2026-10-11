@@ -53,6 +53,8 @@ var (
 var (
 	ctx = context.Background()
 	s   *store.PgStore
+	// baseURL is the DATABASE_URL the test databases are created next to.
+	baseURL string
 )
 
 func TestMain(m *testing.M) {
@@ -60,6 +62,7 @@ func TestMain(m *testing.M) {
 	if base == "" {
 		base = "postgres://colec:colec@localhost:5432/colec?sslmode=disable"
 	}
+	baseURL = base
 	u, err := url.Parse(base)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "DATABASE_URL:", err)

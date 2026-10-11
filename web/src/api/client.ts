@@ -38,6 +38,8 @@ import type {
   PaginatedResponse,
   PaginationParams,
   ItemListParams,
+  CsvDelimiter,
+  ImportReport,
   UploadResponse,
 } from "./types";
 import { i18n } from "@/i18n";
@@ -340,4 +342,93 @@ export const uploadApi = {
       })
       .then((r) => r.data);
   },
+};
+
+// ── Import / export ───────────────────────────────────────────────────
+/** Nom de fichier de l'en-tête Content-Disposition (`attachment; filename="x.csv"`). */
+export function filenameFromDisposition(
+  header: string | undefined,
+  fallback: string,
+): string {
+  const m = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(header ?? "");
+  return m ? decodeURIComponent(m[1]!) : fallback;
+}
+
+/** Télécharge une réponse en pièce jointe (le JWT impose de passer par axios, pas par un lien). */
+async function download(
+  url: string,
+  params: object,
+  fallbackName: string,
+): Promise<void> {
+  const res = await http
+    .get<Blob>(url, {
+      params,
+      responseType: "blob",
+      paramsSerializer: { indexes: null },
+    })
+    .catch(async (e: unknown) => {
+      // En `blob`, le corps d'une erreur (APIError JSON) arrive aussi en Blob : on le relit
+      // pour que extractApiError / notifyError affichent le code traduit.
+      if (axios.isAxiosError(e) && e.response?.data instanceof Blob) {
+        try {
+          e.response.data = JSON.parse(await e.response.data.text());
+        } catch {
+          /* corps non JSON : erreur laissée telle quelle */
+        }
+      }
+      throw e;
+    });
+  const name = filenameFromDisposition(
+    res.headers["content-disposition"] as string | undefined,
+    fallbackName,
+  );
+  const href = URL.createObjectURL(res.data);
+  const a = document.createElement("a");
+  a.href = href;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(href);
+}
+
+export const importExportApi = {
+  /** Catalogue complet en JSON (admin). */
+  exportCatalog: () => download("/export", {}, "collectionnard-catalog.json"),
+  /**
+   * Importe un fichier d'export (admin). Renvoie le rapport aussi pour un 422 (erreurs de
+   * validation, rien d'appliqué) ; les autres erreurs sont levées.
+   */
+  importCatalog: (file: Blob, dryRun: boolean) =>
+    http
+      .post<ImportReport>("/import", file, {
+        params: { dry_run: dryRun },
+        headers: { "Content-Type": "application/json" },
+        validateStatus: (s) => s === 200 || s === 422,
+      })
+      .then((r) => r.data),
+  /** Importe un export de collection dans le compte courant (même contrat que importCatalog). */
+  importCollection: (file: Blob, dryRun: boolean) =>
+    http
+      .post<ImportReport>("/collections/import", file, {
+        params: { dry_run: dryRun },
+        headers: { "Content-Type": "application/json" },
+        validateStatus: (s) => s === 200 || s === 422,
+      })
+      .then((r) => r.data),
+  /** Items d'un type en CSV, avec les filtres de la recherche (item_type_id requis). */
+  exportItemsCsv: (
+    params: ItemListParams & { delimiter?: CsvDelimiter; lang?: string },
+  ) => download("/items/export", params, "items.csv"),
+  /** Une collection de l'utilisateur, en JSON ou CSV. */
+  exportCollection: (
+    id: string,
+    format: "json" | "csv",
+    opts: { delimiter?: CsvDelimiter; lang?: string } = {},
+  ) =>
+    download(
+      `/collections/${id}/export`,
+      { format, ...opts },
+      `collection.${format}`,
+    ),
 };

@@ -16,27 +16,42 @@ import (
 
 func (h *Handler) ListItems(w http.ResponseWriter, r *http.Request) {
 	pg := parsePagination(r)
+	filters, ok := h.parseItemFilters(w, r)
+	if !ok {
+		return
+	}
+	items, total, err := h.Store.ListItems(r.Context(), pg, filters)
+	if err != nil {
+		handleStoreError(w, r, err)
+		return
+	}
+	respondJSON(w, http.StatusOK, model.NewPaginatedResponse(items, total, pg))
+}
+
+// parseItemFilters reads the search parameters of GET /items (also used by
+// GET /items/export). It answers 400 and returns ok=false on any invalid one.
+func (h *Handler) parseItemFilters(w http.ResponseWriter, r *http.Request) (store.ItemFilters, bool) {
 	q := r.URL.Query()
 	itemTypeID, ok := parseOptionalUUID(w, r, "item_type_id")
 	if !ok {
-		return
+		return store.ItemFilters{}, false
 	}
 	relatedTo, ok := parseOptionalUUID(w, r, "related_to")
 	if !ok {
-		return
+		return store.ItemFilters{}, false
 	}
 	relationTypeID, ok := parseOptionalUUID(w, r, "relation_type_id")
 	if !ok {
-		return
+		return store.ItemFilters{}, false
 	}
 	if relationTypeID != nil && relatedTo == nil {
 		respondError(w, http.StatusBadRequest, "bad_request", "relation_type_id requires related_to")
-		return
+		return store.ItemFilters{}, false
 	}
 	if len(q.Get("search")) > maxSearchLength || len(q.Get("tag")) > maxSearchLength {
 		respondError(w, http.StatusBadRequest, "bad_request",
 			fmt.Sprintf("search and tag are limited to %d characters", maxSearchLength))
-		return
+		return store.ItemFilters{}, false
 	}
 	filters := store.ItemFilters{
 		ItemTypeID:     itemTypeID,
@@ -45,16 +60,7 @@ func (h *Handler) ListItems(w http.ResponseWriter, r *http.Request) {
 		RelatedTo:      relatedTo,
 		RelationTypeID: relationTypeID,
 	}
-	if !h.parseItemSearch(w, r, &filters) {
-		return
-	}
-
-	items, total, err := h.Store.ListItems(r.Context(), pg, filters)
-	if err != nil {
-		handleStoreError(w, r, err)
-		return
-	}
-	respondJSON(w, http.StatusOK, model.NewPaginatedResponse(items, total, pg))
+	return filters, h.parseItemSearch(w, r, &filters)
 }
 
 // itemSortFields are the non-attribute sorts of GET /items.

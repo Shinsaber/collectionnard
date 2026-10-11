@@ -357,7 +357,7 @@ Lots de `docs/audit/03-feuille-de-route.md`, branche `remise-a-niveau` :
 - [x] Couverture multilingue : interface entière traduite (vue-i18n, fr/en, langues ajoutables via un registre), locale Element Plus, noms de types (`x-title` / `x-description`), valeurs d'enum (`x-enum-labels`), erreurs API traduites par code (messages serveur en anglais), langue du navigateur détectée
 - [x] Recherche avancée (lot 14) : plein texte indexé (`search_tsv`, préfixes, sans accents), filtres par attribut pilotés par le schéma (`attr.<clé>[.gte|lte|contains]`, égalité via l'index GIN `@>`), tri par attribut, filtre `related_to`, critères dans l'URL du catalogue
 - [ ] Statistiques et visualisation graphiques
-- [ ] Import/Export CSV/JSON (lot 12)
+- [x] Import/Export (lot 12) : export JSON du catalogue et réimportation idempotente (UUID conservés, mise à jour par id, jamais de suppression, tout ou rien, simulation `dry_run` avec rapport par entité) ; exports CSV des items d'un type (filtres de la recherche) ; export d'une collection (JSON ou CSV) et réimportation JSON dans son compte (la collection devient le contenu du fichier, sinon copie), BOM UTF-8, séparateur au choix, protection contre l'injection de formules
 - [ ] Domaine BD / Manga : seed `les.collection.md`, rôles multiples (lot 13)
 - [ ] Soumission d'items par les users (validation admin)
 

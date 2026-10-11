@@ -93,6 +93,7 @@ func (h *Handler) Router() chi.Router {
 		r.Get("/api/v1/collection-types", h.ListCollectionTypes)
 		r.Get("/api/v1/collection-types/{id}", h.GetCollectionType)
 		r.Get("/api/v1/items", h.ListItems)
+		r.Get("/api/v1/items/export", h.ExportItemsCSV)
 		r.Get("/api/v1/items/{id}", h.GetItem)
 		r.Get("/api/v1/items/{id}/relations", h.ListItemRelations)
 		r.Get("/api/v1/items/{id}/graph", h.GetItemGraph)
@@ -104,9 +105,11 @@ func (h *Handler) Router() chi.Router {
 		// User collection endpoints
 		r.Get("/api/v1/collections", h.ListCollections)
 		r.Post("/api/v1/collections", h.CreateCollection)
+		r.Post("/api/v1/collections/import", h.ImportCollection)
 		r.Get("/api/v1/collections/{id}", h.GetCollection)
 		r.Put("/api/v1/collections/{id}", h.UpdateCollection)
 		r.Delete("/api/v1/collections/{id}", h.DeleteCollection)
+		r.Get("/api/v1/collections/{id}/export", h.ExportCollection)
 		r.Get("/api/v1/collections/{id}/items", h.ListCollectionItems)
 		r.Post("/api/v1/collections/{id}/items", h.AddItemToCollection)
 		r.Put("/api/v1/collections/{collectionId}/items/{itemId}", h.UpdateCollectionItem)
@@ -116,6 +119,8 @@ func (h *Handler) Router() chi.Router {
 		r.Group(func(r chi.Router) {
 			r.Use(h.Auth.RequireAdmin)
 
+			r.Get("/api/v1/export", h.ExportCatalog)
+			r.Post("/api/v1/import", h.ImportCatalog)
 			r.Post("/api/v1/item-types", h.CreateItemType)
 			r.Put("/api/v1/item-types/{id}", h.UpdateItemType)
 			r.Delete("/api/v1/item-types/{id}", h.DeleteItemType)

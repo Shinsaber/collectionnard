@@ -279,3 +279,41 @@ export interface UploadResponse {
   filename: string;
   size: number;
 }
+
+// ---------- Import / export ----------
+export type CsvDelimiter = "comma" | "semicolon" | "tab";
+
+export interface ImportCounts {
+  created: number;
+  updated: number;
+  unchanged: number;
+  /** Import de collection : items retirés car absents du fichier. */
+  removed?: number;
+}
+
+export type ImportEntity =
+  | "file"
+  | "item_types"
+  | "collection_types"
+  | "relation_types"
+  | "items"
+  | "relations"
+  | "collection";
+
+export interface ImportError {
+  entity: ImportEntity;
+  /** Position dans la liste (0-based), -1 pour une erreur de fichier. */
+  index: number;
+  id?: string;
+  message: string;
+}
+
+/** Rapport de POST /import (200 si appliqué ou simulation sans erreur, 422 sinon). */
+export interface ImportReport {
+  dry_run: boolean;
+  applied: boolean;
+  /** Import de collection : collection créée ou mise à jour. */
+  collection_id?: string;
+  counts: Partial<Record<ImportEntity, ImportCounts>>;
+  errors: ImportError[];
+}

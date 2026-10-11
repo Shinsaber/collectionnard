@@ -154,6 +154,12 @@ tags:
       Upload et récupération de fichiers images. Les images sont stockées localement
       sur le serveur. L'upload est réservé aux admins ; la lecture (`GET /uploads/{filename}`)
       est publique car les balises `<img>` ne peuvent pas envoyer d'en-tête Authorization.
+  - name: ImportExport
+    description: |
+      Export du catalogue (JSON, admin) et réimportation idempotente (les UUID sont conservés :
+      réimporter un export met à jour, ne duplique pas, ne supprime jamais) ; exports CSV des
+      items d'un type et d'une collection, pour un tableur. Les comptes et les collections des
+      utilisateurs ne font pas partie de l'export du catalogue.
   - name: Health
     description: |
       État de santé de l'API (connexion à la base). Public, utilisé par le healthcheck
@@ -1089,6 +1095,160 @@ components:
     # -------------------------------------------------------------------------
     # Upload
     # -------------------------------------------------------------------------
+    CatalogExport:
+      type: object
+      description: |
+        Catalogue complet (format `collectionnard.catalog`, version 1) : méta-types, items (avec
+        les noms de leurs tags) et relations, chaque liste triée par `id` pour des diffs stables.
+        Sans horodatage par entité ni données d'utilisateur. Accepté tel quel par `POST /import`.
+      required: [format, version, item_types, relation_types, collection_types, items, relations]
+      properties:
+        format:
+          type: string
+          enum: [collectionnard.catalog]
+        version:
+          type: integer
+          enum: [1]
+        exported_at:
+          type: string
+          format: date-time
+          description: Informatif, ignoré à l'import.
+        item_types:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExportMetaType"
+        collection_types:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExportMetaType"
+        relation_types:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/ExportMetaType"
+              - type: object
+                required: [source_item_type_ids, target_item_type_ids]
+                properties:
+                  source_item_type_ids:
+                    type: array
+                    items: { type: string, format: uuid }
+                  target_item_type_ids:
+                    type: array
+                    items: { type: string, format: uuid }
+        items:
+          type: array
+          items:
+            type: object
+            required: [id, item_type_id, attributes]
+            properties:
+              id: { type: string, format: uuid }
+              item_type_id: { type: string, format: uuid }
+              attributes: { type: object, additionalProperties: true }
+              tags:
+                type: array
+                items: { type: string }
+                description: Noms des tags ; à l'import, remplace l'ensemble des tags de l'item.
+        relations:
+          type: array
+          items:
+            type: object
+            required: [id, relation_type_id, source_item_id, target_item_id]
+            properties:
+              id: { type: string, format: uuid }
+              relation_type_id: { type: string, format: uuid }
+              source_item_id: { type: string, format: uuid }
+              target_item_id: { type: string, format: uuid }
+              attributes: { type: object, additionalProperties: true }
+    ExportMetaType:
+      type: object
+      required: [id, name, attributes_schema]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        attributes_schema: { type: object, additionalProperties: true }
+    ImportReport:
+      type: object
+      description: |
+        Résultat d'un import. `applied` est vrai seulement si l'import a été validé (aucune
+        erreur et pas `dry_run`). Une entité identique à l'existant compte comme `unchanged`.
+      required: [dry_run, applied, counts, errors]
+      properties:
+        dry_run: { type: boolean }
+        applied: { type: boolean }
+        collection_id:
+          type: string
+          format: uuid
+          description: Import de collection seulement — collection créée ou mise à jour.
+        counts:
+          type: object
+          description: |
+            Par liste : `item_types`, `collection_types`, `relation_types`, `items`, `relations` pour le
+            catalogue ; `collection` et `items` pour une collection (`removed` : items retirés).
+          additionalProperties:
+            type: object
+            required: [created, updated, unchanged]
+            properties:
+              created: { type: integer }
+              updated: { type: integer }
+              unchanged: { type: integer }
+              removed: { type: integer }
+        errors:
+          type: array
+          description: Au plus 100 erreurs, dans l'ordre du fichier.
+          items:
+            type: object
+            required: [entity, index, message]
+            properties:
+              entity:
+                type: string
+                enum: [file, item_types, collection_types, relation_types, items, relations, collection]
+              index:
+                type: integer
+                description: Position dans la liste (0-based), -1 pour une erreur de fichier.
+              id: { type: string, format: uuid }
+              message:
+                type: string
+                description: Texte technique en anglais (cause, champ fautif).
+      example:
+        dry_run: true
+        applied: false
+        counts:
+          items: { created: 2, updated: 0, unchanged: 8 }
+        errors:
+          - entity: items
+            index: 3
+            id: e0000000-0000-0000-0000-000000000099
+            message: "attributes: /start_year: must be >= 1900 but found 1800"
+    CollectionExport:
+      type: object
+      description: Collection d'un utilisateur et ses items (format `collectionnard.collection`, version 1).
+      required: [format, version, collection, items]
+      properties:
+        format: { type: string, enum: [collectionnard.collection] }
+        version: { type: integer, enum: [1] }
+        exported_at: { type: string, format: date-time }
+        collection:
+          type: object
+          properties:
+            id: { type: string, format: uuid }
+            name: { type: string }
+            description: { type: string }
+            collection_type: { $ref: "#/components/schemas/ExportMetaType" }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id: { type: string, format: uuid }
+              item_type: { type: string, description: Nom technique de l'ItemType. }
+              label: { type: string, description: Libellé (`x-label`) dans la langue `lang`. }
+              item_attributes: { type: object, additionalProperties: true }
+              attributes:
+                type: object
+                additionalProperties: true
+                description: Attributs contextuels (schéma du CollectionType).
+              added_at: { type: string, format: date-time }
     UploadResponse:
       type: object
       description: Réponse après un upload réussi.
@@ -1118,6 +1278,21 @@ components:
         type: integer
         default: 1
         minimum: 1
+    csvDelimiter:
+      name: delimiter
+      in: query
+      description: Séparateur CSV (`semicolon` pour un tableur configuré en français).
+      schema:
+        type: string
+        enum: [comma, semicolon, tab]
+        default: comma
+    lang:
+      name: lang
+      in: query
+      description: Langue des libellés (`x-label`) et des objets i18n affichés ; défaut `fr`.
+      schema:
+        type: string
+        default: fr
     per_page:
       name: per_page
       in: query
@@ -3171,3 +3346,209 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Stats"
+  # ===========================================================================
+  # Import / export
+  # ===========================================================================
+  /export:
+    get:
+      tags: [ImportExport]
+      summary: Exporter le catalogue (JSON)
+      description: |
+        Méta-types, items et relations, au format `collectionnard.catalog`. Servi en pièce jointe
+        (`Content-Disposition: attachment; filename="collectionnard-catalog-<date>.json"`).
+        Réservé aux admins.
+      operationId: exportCatalog
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Catalogue.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogExport"
+  /import:
+    post:
+      tags: [ImportExport]
+      summary: Importer un catalogue (JSON)
+      description: |
+        Importe un `CatalogExport` dans une transaction unique : chaque entité est créée si son
+        `id` est inconnu, mise à jour sinon (remplacement complet, comme `PUT`) ; rien n'est jamais
+        supprimé. Ordre : item_types, collection_types, relation_types (jonctions remplacées),
+        items (tags remplacés), relations.
+
+        Validation : schémas des méta-types (comme à l'écriture), attributs de chaque item et de
+        chaque relation contre le schéma de leur type (celui du fichier s'il y figure, sinon celui
+        de la base), types source / cible autorisés des relations, unicité des noms et des triplets
+        (type, source, cible) des relations.
+
+        Au moindre problème, **rien n'est appliqué** : réponse 422 avec le rapport complet.
+        `dry_run=true` valide et compte sans rien écrire. Corps limité à `MAX_IMPORT_SIZE`
+        (défaut 20 Mio). Réservé aux admins.
+      operationId: importCatalog
+      parameters:
+        - name: dry_run
+          in: query
+          description: Simuler l'import (rapport complet, aucune écriture).
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CatalogExport"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Import appliqué (ou simulation sans erreur).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportReport"
+        "422":
+          description: Erreurs de validation ; rien n'a été appliqué.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportReport"
+  /items/export:
+    get:
+      tags: [ImportExport]
+      summary: Exporter des items en CSV
+      description: |
+        Items d'un type (`item_type_id` obligatoire), avec les mêmes filtres et le même tri que
+        `GET /items` (`search`, `tag`, `attr.*`, `related_to`, `sort`…), sans pagination
+        (10 000 lignes au plus). UTF-8 avec BOM (ouverture directe dans un tableur).
+
+        Colonnes : `id`, `label` (libellé `x-label` dans la langue `lang`), `tags` (séparés par
+        `; `), puis une colonne par propriété du schéma dans l'ordre `x-order`, d'en-tête = la clé.
+        Un objet i18n-text donne une colonne par langue (`synopsis.fr`, `synopsis.en`) ; un tableau
+        de scalaires est joint par `; ` ; tout autre objet (galerie d'images) est écrit en JSON.
+      operationId: exportItemsCsv
+      parameters:
+        - name: item_type_id
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: "#/components/parameters/csvDelimiter"
+        - $ref: "#/components/parameters/lang"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Fichier CSV en pièce jointe.
+          content:
+            text/csv:
+              schema:
+                type: string
+  /collections/{id}/export:
+    get:
+      tags: [ImportExport]
+      summary: Exporter une collection (JSON ou CSV)
+      description: |
+        Collection de l'utilisateur connecté (404 pour celle d'un autre) et tous ses items.
+        CSV : `item_id`, `item_type`, `label`, puis une colonne par propriété du schéma du
+        CollectionType (mêmes règles que `GET /items/export`), puis `added_at`.
+      operationId: exportCollection
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+        - $ref: "#/components/parameters/csvDelimiter"
+        - $ref: "#/components/parameters/lang"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Fichier en pièce jointe.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectionExport"
+            text/csv:
+              schema:
+                type: string
+  /collections/import:
+    post:
+      tags: [ImportExport]
+      summary: Importer une collection (JSON)
+      description: |
+        Importe un `CollectionExport` dans le compte de l'utilisateur connecté, en une transaction.
+
+        - **Cible** : si `collection.id` désigne une collection de l'utilisateur, elle est mise à
+          jour et devient exactement le contenu du fichier (nom, description, type, items ; les items
+          absents du fichier sont **retirés**). Sinon une collection est créée (avec cet id s'il est
+          libre, un nouvel id s'il appartient à quelqu'un d'autre). Un nom déjà pris par une autre
+          collection de l'utilisateur reçoit un suffixe (`Mes DVD (2)`).
+        - **Type** : `collection.collection_type.id`, à défaut son `name` ; inconnu → erreur de fichier.
+        - **Items** : chaque `item_id` doit exister dans le catalogue (une seule fois dans le
+          fichier) ; `attributes` est validé contre le schéma du CollectionType ; `added_at` est
+          conservé à la création. `item_type`, `label` et `item_attributes` sont informatifs.
+
+        Au moindre problème rien n'est appliqué (422 + rapport) ; `dry_run=true` simule.
+      operationId: importCollection
+      parameters:
+        - name: dry_run
+          in: query
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CollectionExport"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Import appliqué (ou simulation sans erreur) ; `collection_id` désigne la collection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportReport"
+        "422":
+          description: Erreurs de validation ; rien n'a été appliqué.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportReport"

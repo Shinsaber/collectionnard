@@ -70,6 +70,9 @@ type MockStore struct {
 	ListItemCollectionsFn        func(ctx context.Context, userID, itemID uuid.UUID) ([]model.ItemCollectionMembership, error)
 	ListTagsFn                   func(ctx context.Context, search string) ([]model.Tag, error)
 	GetStatsFn                   func(ctx context.Context) (*model.Stats, error)
+	ExportCatalogFn              func(ctx context.Context) (*model.CatalogExport, error)
+	ImportCatalogFn              func(ctx context.Context, cat *model.CatalogExport, dryRun bool) (*model.ImportReport, error)
+	ImportCollectionFn           func(ctx context.Context, userID uuid.UUID, exp *model.CollectionExport, dryRun bool) (*model.ImportReport, error)
 }
 
 func (m *MockStore) Ping(ctx context.Context) error {
@@ -343,6 +346,27 @@ func (m *MockStore) GetStats(ctx context.Context) (*model.Stats, error) {
 	return &model.Stats{}, nil
 }
 
+func (m *MockStore) ExportCatalog(ctx context.Context) (*model.CatalogExport, error) {
+	if m.ExportCatalogFn != nil {
+		return m.ExportCatalogFn(ctx)
+	}
+	return &model.CatalogExport{Format: model.CatalogFormat, Version: model.ExportVersion}, nil
+}
+
+func (m *MockStore) ImportCatalog(ctx context.Context, cat *model.CatalogExport, dryRun bool) (*model.ImportReport, error) {
+	if m.ImportCatalogFn != nil {
+		return m.ImportCatalogFn(ctx, cat, dryRun)
+	}
+	return model.NewImportReport(dryRun), nil
+}
+
+func (m *MockStore) ImportCollection(ctx context.Context, userID uuid.UUID, exp *model.CollectionExport, dryRun bool) (*model.ImportReport, error) {
+	if m.ImportCollectionFn != nil {
+		return m.ImportCollectionFn(ctx, userID, exp, dryRun)
+	}
+	return model.NewCollectionImportReport(dryRun), nil
+}
+
 // --- Test helpers ---
 
 var (
@@ -375,6 +399,7 @@ func TestConfig() *config.Config {
 		GraphMaxNodes:   500,
 		UploadDir:       os.TempDir(),
 		MaxUploadSize:   10 << 20,
+		MaxImportSize:   1 << 20,
 	}
 }
 

@@ -3,7 +3,7 @@
 Module : `github.com/shinsaber/colec` · Entrée : `main.go` · Config par variables
 d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 caractères) sont
 **obligatoires** (le serveur refuse de démarrer sinon) ; `PORT`, `ACCESS_TOKEN_TTL` (15m),
-`REFRESH_TOKEN_TTL` (720h), `LOGIN_RATE_LIMIT` (10/min/IP), `UPLOAD_DIR`, `MAX_UPLOAD_SIZE`, `TRUSTED_PROXY` (false) ont un défaut.
+`REFRESH_TOKEN_TTL` (720h), `LOGIN_RATE_LIMIT` (10/min/IP), `UPLOAD_DIR`, `MAX_UPLOAD_SIZE`, `MAX_IMPORT_SIZE` (20 Mio), `TRUSTED_PROXY` (false) ont un défaut.
 
 ## Couches (`internal/`)
 
@@ -17,6 +17,7 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 | `testutil`   | `MockStore` (champs `XxxFn`), `NewTestServer`, `AdminToken`/`UserToken`, `AuthHeader`                |
 | `label`      | `Render(schema, attrs, lang)` : libellé d'un item via `x-label` (pendant de `web/src/lib/schema.ts`) |
 | `itemquery`  | Recherche avancée de `GET /items` : filtres `attr.<clé>[.<op>]`, tri `attr.<clé>`, requête plein texte — validés contre le schéma du type (pendant de `web/src/lib/itemSearch.ts`) |
+| `csvexport`  | Mise à plat CSV des attributs (colonnes depuis le schéma, i18n-text → `clé.langue`, BOM, anti-injection de formules) |
 | `dbmigrate`  | Migrations tern (`db/migrations`) + seed : sous-commandes `colec-server migrate` / `seed` (`cmd.go`) |
 
 ## Erreurs et réponses
@@ -35,6 +36,9 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 - `GET /items` : filtres et tri par attribut exigent `item_type_id` et passent par `itemquery` (clé présente dans le
   schéma, opérateur adapté au type, valeurs typées) ; le store n'injecte jamais une clé dans le SQL (`attributes -> $n::text`).
   Plein texte : colonne générée `search_tsv` + `f_unaccent` (migration 003, extension `unaccent`).
+- Import (`store/export.go`) : une transaction, un savepoint par entité (toutes les erreurs du fichier sont listées),
+  upsert `ON CONFLICT (id) … WHERE IS DISTINCT FROM … RETURNING (xmax = 0)` → créé / mis à jour / inchangé ; rollback si
+  erreur ou `dry_run`. Toute nouvelle table du catalogue doit être ajoutée à l'export **et** à l'import.
 - Les listes renvoient `model.PaginatedResponse` (`data`, `total`, …).
 - Lire un corps JSON avec `decodeJSON(w, r, &in)` + `respondDecodeError(w, err)` (limite 1 Mio → 413).
 - Logs : `log/slog` (JSON par défaut, `LOG_FORMAT=text` en dev) ; `respondInternal(w, r, err, msg)` et

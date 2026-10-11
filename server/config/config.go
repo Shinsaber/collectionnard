@@ -22,6 +22,7 @@ type Config struct {
 	GraphMaxNodes   int           // max nodes returned by GET /items/{id}/graph
 	UploadDir       string
 	MaxUploadSize   int64 // bytes
+	MaxImportSize   int64 // bytes, body of POST /import
 }
 
 // Load reads the configuration from the environment. DATABASE_URL and
@@ -97,6 +98,15 @@ func Load() (*Config, error) {
 		maxUploadSize = s
 	}
 
+	maxImportSize := int64(20 << 20) // 20 MiB default
+	if v := os.Getenv("MAX_IMPORT_SIZE"); v != "" {
+		s, err := strconv.ParseInt(v, 10, 64)
+		if err != nil || s <= 0 {
+			return nil, fmt.Errorf("invalid MAX_IMPORT_SIZE: %q", v)
+		}
+		maxImportSize = s
+	}
+
 	return &Config{
 		Port:            port,
 		DatabaseURL:     dbURL,
@@ -108,6 +118,7 @@ func Load() (*Config, error) {
 		GraphMaxNodes:   graphMaxNodes,
 		UploadDir:       uploadDir,
 		MaxUploadSize:   maxUploadSize,
+		MaxImportSize:   maxImportSize,
 	}, nil
 }
 
