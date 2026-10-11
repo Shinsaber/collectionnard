@@ -1,0 +1,304 @@
+[
+  {
+    "id": "b0000000-0000-0000-0000-000000000001",
+    "name": "Serie",
+    "schema": {
+      "type": "object",
+      "required": ["titre"],
+      "x-labels": {
+        "fr": {
+          "titre": "Titre",
+          "synopsis": "Synopsis",
+          "annee_debut": "Année de début",
+          "annee_fin": "Année de fin",
+          "images": "Images"
+        },
+        "en": {
+          "titre": "Title",
+          "synopsis": "Synopsis",
+          "annee_debut": "Start Year",
+          "annee_fin": "End Year",
+          "images": "Images"
+        }
+      },
+      "properties": {
+        "titre": { "type": "string", "minLength": 1 },
+        "synopsis": {
+          "type": "object",
+          "x-widget": "i18n-text",
+          "properties": {
+            "fr": { "type": "string" },
+            "en": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "annee_debut": { "type": "integer", "minimum": 1900 },
+        "annee_fin": { "type": "integer", "minimum": 1900 },
+        "images": {
+          "type": "object",
+          "x-widget": "image-gallery",
+          "x-image-categories": {
+            "poster": { "ratio": "2/3" },
+            "screenshot": { "ratio": "16/9" },
+            "banner": { "ratio": "3/1" }
+          },
+          "properties": {
+            "default_image": { "type": "string" },
+            "poster": { "type": "array", "items": { "type": "string" } },
+            "screenshot": { "type": "array", "items": { "type": "string" } },
+            "banner": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "b0000000-0000-0000-0000-000000000002",
+    "name": "Diffusion",
+    "schema": {
+      "type": "object",
+      "required": ["nom"],
+      "x-labels": {
+        "fr": { "nom": "Nom", "type": "Type", "chaine": "Support" },
+        "en": { "nom": "Name", "type": "Type", "chaine": "Support" }
+      },
+      "properties": {
+        "nom": { "type": "string", "minLength": 1 },
+        "type": {
+          "type": "string",
+          "enum": ["TV", "streaming", "cable", "web"]
+        },
+        "chaine": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "b0000000-0000-0000-0000-000000000003",
+    "name": "Saison",
+    "schema": {
+      "type": "object",
+      "required": ["numero"],
+      "x-labels": {
+        "fr": { "nom": "Nom", "numero": "Numéro", "annee": "Année" },
+        "en": { "nom": "Name", "numero": "Number", "annee": "Year" }
+      },
+      "properties": {
+        "nom": { "type": "string", "minLength": 1 },
+        "numero": { "type": "integer", "minimum": 1 },
+        "annee": { "type": "integer", "minimum": 1900 }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "b0000000-0000-0000-0000-000000000004",
+    "name": "Episode",
+    "schema": {
+      "type": "object",
+      "required": ["numero", "titre"],
+      "x-labels": {
+        "fr": {
+          "numero": "Numéro",
+          "titre": "Titre",
+          "duree": "Durée (min)",
+          "synopsis": "Synopsis"
+        },
+        "en": {
+          "numero": "Number",
+          "titre": "Title",
+          "duree": "Duration (min)",
+          "synopsis": "Synopsis"
+        }
+      },
+      "properties": {
+        "numero": { "type": "integer", "minimum": 1 },
+        "titre": { "type": "string", "minLength": 1 },
+        "duree": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Durée en minutes"
+        },
+        "synopsis": {
+          "type": "object",
+          "x-widget": "i18n-text",
+          "properties": {
+            "fr": { "type": "string" },
+            "en": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "b0000000-0000-0000-0000-000000000005",
+    "name": "DVD",
+    "schema": {
+      "type": "object",
+      "required": ["titre"],
+      "x-labels": {
+        "fr": {
+          "titre": "Titre",
+          "editeur": "Éditeur",
+          "annee_sortie": "Année de sortie",
+          "nb_disques": "Nombre de disques"
+        },
+        "en": {
+          "titre": "Title",
+          "editeur": "Publisher",
+          "annee_sortie": "Release Year",
+          "nb_disques": "Number of Discs"
+        }
+      },
+      "properties": {
+        "titre": { "type": "string", "minLength": 1 },
+        "editeur": { "type": "string" },
+        "annee_sortie": { "type": "integer", "minimum": 1900 },
+        "nb_disques": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "c0000000-0000-0000-0000-000000000001",
+    "name": "diffuse_en",
+    "schema": {
+      "type": "object",
+      "x-labels": {
+        "fr": { "annee_debut_diff": "Année de début de diffusion" },
+        "en": { "annee_debut_diff": "Broadcast Start Year" }
+      },
+      "properties": {
+        "annee_debut_diff": { "type": "integer", "minimum": 1900 }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "c0000000-0000-0000-0000-000000000002",
+    "name": "contient_saison",
+    "schema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "c0000000-0000-0000-0000-000000000003",
+    "name": "contient_episode",
+    "schema": {
+      "type": "object",
+      "x-labels": {
+        "fr": { "ordre": "Ordre" },
+        "en": { "ordre": "Order" }
+      },
+      "properties": {
+        "ordre": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "c0000000-0000-0000-0000-000000000004",
+    "name": "edite_en",
+    "schema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "c0000000-0000-0000-0000-000000000005",
+    "name": "inclut_episode",
+    "schema": {
+      "type": "object",
+      "x-labels": {
+        "fr": { "disque": "Disque", "piste": "Piste" },
+        "en": { "disque": "Disc", "piste": "Track" }
+      },
+      "properties": {
+        "disque": { "type": "integer", "minimum": 1 },
+        "piste": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "d0000000-0000-0000-0000-000000000001",
+    "name": "Possession",
+    "schema": {
+      "type": "object",
+      "x-labels": {
+        "fr": {
+          "etat_physique": "État physique",
+          "prix_achat": "Prix d\u0027achat",
+          "date_acquisition": "Date d\u0027acquisition"
+        },
+        "en": {
+          "etat_physique": "Physical Condition",
+          "prix_achat": "Purchase Price",
+          "date_acquisition": "Acquisition Date"
+        }
+      },
+      "properties": {
+        "etat_physique": {
+          "type": "string",
+          "enum": ["neuf", "très bon", "bon", "acceptable", "mauvais"]
+        },
+        "prix_achat": { "type": "number", "minimum": 0 },
+        "date_acquisition": { "type": "string", "format": "date" }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "d0000000-0000-0000-0000-000000000002",
+    "name": "Visionnage",
+    "schema": {
+      "type": "object",
+      "x-labels": {
+        "fr": {
+          "date_vue": "Date de visionnage",
+          "note": "Note",
+          "progression": "Progression"
+        },
+        "en": {
+          "date_vue": "Watch Date",
+          "note": "Rating",
+          "progression": "Progress"
+        }
+      },
+      "properties": {
+        "date_vue": { "type": "string", "format": "date" },
+        "note": { "type": "integer", "minimum": 0, "maximum": 10 },
+        "progression": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Pourcentage"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "d0000000-0000-0000-0000-000000000003",
+    "name": "Wishlist",
+    "schema": {
+      "type": "object",
+      "x-labels": {
+        "fr": { "priorite": "Priorité", "budget_max": "Budget maximum" },
+        "en": { "priorite": "Priority", "budget_max": "Maximum Budget" }
+      },
+      "properties": {
+        "priorite": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "budget_max": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": false
+    }
+  }
+]

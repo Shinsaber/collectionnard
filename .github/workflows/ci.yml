@@ -23,6 +23,30 @@ jobs:
       - name: govulncheck
         run: nix develop -c sh -c 'cd server && govulncheck ./...'
 
+  go-integration:
+    name: Backend Go — intégration PostgreSQL
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: colec
+          POSTGRES_PASSWORD: colec
+          POSTGRES_DB: colec
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U colec"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://colec:colec@localhost:5432/colec?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - name: go test -tags integration (store)
+        run: nix develop -c sh -c 'cd server && go test -tags integration ./internal/store/'
+
   web:
     name: Frontend Vue
     runs-on: ubuntu-latest

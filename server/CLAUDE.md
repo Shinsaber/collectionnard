@@ -52,7 +52,15 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 
 ## Tests
 
-Les tests de handlers n'ont **pas besoin de PostgreSQL** (tout passe par `MockStore`).
+Trois niveaux :
+
+- **Unitaires** (`go test ./...`) : handlers via `MockStore`, middleware, config, validator, dbmigrate,
+  helpers du store — sans PostgreSQL.
+- **Intégration** (`go test -tags integration ./internal/store/`, fichier `store/integration_test.go`) :
+  crée une base `colec_test` à côté de `DATABASE_URL`, applique migrations + seed, exerce le SQL réel
+  (graphe multi-chemin, filtres, cascades, 409, jonctions, refresh tokens) puis supprime la base.
+  Nécessite PostgreSQL (`pg-start`) ; job dédié en CI.
+- Les tests de handlers n'ont **pas besoin de PostgreSQL** (tout passe par `MockStore`).
 Un champ `XxxFn` non renseigné fait renvoyer `store.ErrNotFound` par défaut : ne définir
 que les fonctions utiles au cas testé. Fixtures prêtes : `SampleItemType()`, `SampleItem()`,
 `AdminUser()`, `RegularUser()`.

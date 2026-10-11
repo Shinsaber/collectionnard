@@ -25,4 +25,6 @@ Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
 - Libellés UI en français ; labels de champs via `x-labels` (fr/en).
 - Après modification : `npm run lint && npm run format:check && npm run type-check && npm test`
   (`npm run lint:fix` et `npm run format` corrigent automatiquement). Tests unitaires : `vitest`,
-  fichiers `src/**/*.test.ts` (environnement jsdom).
+  fichiers `src/**/*.test.ts` (environnement jsdom). Les composants PrimeVue se montent avec
+  `global.plugins: [[PrimeVue, { unstyled: true }]]` ; les 13 schémas du seed sont disponibles dans
+  `tests/fixtures/seed-schemas.json` (régénérer depuis `db/seed.sql` si le seed change).
