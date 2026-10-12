@@ -16,6 +16,8 @@ import (
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 	"github.com/shinsaber/colec/config"
+	"github.com/shinsaber/colec/internal/external"
+	"github.com/shinsaber/colec/internal/external/bdmanga"
 	"github.com/shinsaber/colec/internal/middleware"
 	"github.com/shinsaber/colec/internal/model"
 	"github.com/shinsaber/colec/internal/store"
@@ -26,10 +28,13 @@ type Handler struct {
 	Store  store.Store
 	Auth   *middleware.Auth
 	Config *config.Config
+	// BDManga is the connector to the external sources of the BD / Manga domain.
+	BDManga *bdmanga.Connector
 }
 
 func New(s store.Store, auth *middleware.Auth, cfg *config.Config) *Handler {
-	return &Handler{Store: s, Auth: auth, Config: cfg}
+	fetch := external.NewClient(cfg.ExternalUserAgent)
+	return &Handler{Store: s, Auth: auth, Config: cfg, BDManga: bdmanga.New(s, fetch)}
 }
 
 // Router builds the chi router with all routes.
@@ -121,6 +126,13 @@ func (h *Handler) Router() chi.Router {
 
 			r.Get("/api/v1/export", h.ExportCatalog)
 			r.Post("/api/v1/import", h.ImportCatalog)
+
+			// External sources (BD / Manga: Wikidata, BnF)
+			r.Get("/api/v1/external/bd-manga/works", h.SearchExternalWorks)
+			r.Get("/api/v1/external/bd-manga/editions", h.SearchExternalEditions)
+			r.Post("/api/v1/external/bd-manga/preview", h.PreviewExternal)
+			r.Post("/api/v1/external/bd-manga/import", h.ImportExternal)
+
 			r.Post("/api/v1/item-types", h.CreateItemType)
 			r.Put("/api/v1/item-types/{id}", h.UpdateItemType)
 			r.Delete("/api/v1/item-types/{id}", h.DeleteItemType)

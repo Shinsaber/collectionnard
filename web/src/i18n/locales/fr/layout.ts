@@ -8,6 +8,7 @@ export default {
     relationTypes: "Relations",
     collectionTypes: "Types coll.",
     importExport: "Import / export",
+    externalImport: "Sources externes",
   },
   adminSection: "Admin",
   adminBadge: "admin",

@@ -5,7 +5,7 @@ Recherche du 2026-10-11 (licences et conditions d'utilisation vérifiées ce jou
 
 **Décision actuelle** : seules **Wikidata** et la **BnF** sont retenues pour le domaine BD / Manga
 (voir [`les.collection.md`](../les.collection.md) § « Sources de référence »). Les autres sources sont
-documentées ici pour plus tard (Phase 4 : intégrations).
+documentées ici pour plus tard (Phase 3 : récupération automatique externe).
 
 ## Synthèse
 
@@ -55,8 +55,32 @@ documentées ici pour plus tard (Phase 4 : intégrations).
 - **Point de vigilance** : en **juin 2026**, la BnF a changé d'outil (Noemi), de format et de modèle de
   catalogage, ce qui « a des effets sur les données du Catalogue général »
   ([centre d'aide](https://www.bnf.fr/fr/centre-d-aide/recuperation-de-donnees)). L'`explain` SRU listait
-  encore les index et formats ci-dessus le 2026-10-11, mais les zones UNIMARC et la structure des notices
-  sont à revalider au moment de coder un connecteur.
+  encore les index et formats ci-dessus le 2026-10-11 ; les zones UNIMARC lues par le connecteur ont été
+  vérifiées ce jour-là sur des notices réelles (voir « Connecteur implémenté »).
+
+## Connecteur implémenté (Phase 3)
+
+Code : `server/internal/external/` (client HTTP commun, `wikidata/`, `bnf/`, connecteur `bdmanga/`) ; usage et limites
+dans [`les.collection.md`](../les.collection.md) § « Import depuis les sources ». Le serveur interroge les sources
+lui-même (pas le navigateur) : User-Agent identifié (`EXTERNAL_USER_AGENT`, nom + contact comme le demandent les
+règles de Wikimedia), délai de 20 s par appel, réponses limitées à 20 Mio et gardées 15 min en mémoire (l'aperçu
+puis l'import d'une même sélection n'interrogent les sources qu'une fois).
+
+Constats faits en codant le connecteur (2026-10-11), utiles pour les prochains :
+
+- **Wikidata** : la recherche filtrée par classe passe par CirrusSearch (`list=search`,
+  `haswbstatement:P31=Q…|P31=Q…`), bien plus pertinente que `wbsearchentities` (qui mélange anime, jeux, films) ;
+  `wbgetentities` accepte 50 identifiants par appel mais échoue en entier si l'un d'eux est inconnu ; le code ISO
+  d'un pays (`P297`) se lit avec `wbgetclaims` sans télécharger l'entité (plusieurs Mio pour un pays). Le libellé
+  `mul` d'un prénom japonais peut être en kana : préférer `en` / `fr`. `P268` (BnF) est rarement renseigné sur les
+  séries de manga : le lien Wikidata → BnF passe par la recherche de l'édition.
+- **BnF (SRU, après Noemi)** : un tome se rattache à son édition par la zone **461** (ensemble multivolume, index
+  `bib.ens2bib`) ou **410** (collection éditoriale, index `bib.col2bib`) avec le numéro de notice en `$0` (l'ARK s'en
+  déduit : caractère de contrôle NOID calculé sur `cb` + numéro) ; le numéro du tome est en `$v`, à défaut en 225 `$v`
+  ou 200 `$h`. Le type de notice (position 6 du label) est parfois vide sur les notices d'ensemble : ne filtrer que
+  les types non textuels (vidéo, son, multimédia…). Les titres portent des caractères de non-classement (U+0088 /
+  U+0089) à retirer. Prix en 010 `$d` (francs pour les notices anciennes), pagination en 215 `$a`, EAN en 073 `$a`.
+  `maximumRecords` accepte 1000 notices (≈ 1 Mio pour 150 tomes UNIMARC).
 
 ## Sources pour plus tard
 

@@ -16,6 +16,10 @@ const en: typeof fr = {
     rate_limited: "Too many attempts, please retry in a moment",
     timeout: "The server took too long to respond",
     internal: "Internal server error",
+    connector_unavailable:
+      "Comics / Manga types missing from the catalogue (load db/seed_bd_manga.sql)",
+    external_unavailable:
+      "External source (Wikidata, BnF) unreachable, try again later",
   },
 };
 

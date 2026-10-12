@@ -1,0 +1,1029 @@
+{
+ "entities" : {
+  "Q15051307" : {
+   "claims" : {
+    "P110" : [
+     {
+      "mainsnak" : {
+       "datatype" : "wikibase-item",
+       "datavalue" : {
+        "type" : "wikibase-entityid",
+        "value" : {
+         "entity-type" : "item",
+         "id" : "Q208582",
+         "numeric-id" : 208582
+        }
+       },
+       "property" : "P110",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P1476" : [
+     {
+      "mainsnak" : {
+       "datatype" : "monolingualtext",
+       "datavalue" : {
+        "type" : "monolingualtext",
+        "value" : {
+         "language" : "ja",
+         "text" : "ドラゴンボール"
+        }
+       },
+       "property" : "P1476",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P2360" : [
+     {
+      "mainsnak" : {
+       "datatype" : "wikibase-item",
+       "datavalue" : {
+        "type" : "wikibase-entityid",
+        "value" : {
+         "entity-type" : "item",
+         "id" : "Q231302",
+         "numeric-id" : 231302
+        }
+       },
+       "property" : "P2360",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P2635" : [
+     {
+      "mainsnak" : {
+       "datatype" : "quantity",
+       "datavalue" : {
+        "type" : "quantity",
+        "value" : {
+         "amount" : "+42",
+         "unit" : "http://www.wikidata.org/entity/Q1238720"
+        }
+       },
+       "property" : "P2635",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     },
+     {
+      "mainsnak" : {
+       "datatype" : "quantity",
+       "datavalue" : {
+        "type" : "quantity",
+        "value" : {
+         "amount" : "+520",
+         "unit" : "http://www.wikidata.org/entity/Q53460949"
+        }
+       },
+       "property" : "P2635",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P31" : [
+     {
+      "mainsnak" : {
+       "datatype" : "wikibase-item",
+       "datavalue" : {
+        "type" : "wikibase-entityid",
+        "value" : {
+         "entity-type" : "item",
+         "id" : "Q21198342",
+         "numeric-id" : 21198342
+        }
+       },
+       "property" : "P31",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P495" : [
+     {
+      "mainsnak" : {
+       "datatype" : "wikibase-item",
+       "datavalue" : {
+        "type" : "wikibase-entityid",
+        "value" : {
+         "entity-type" : "item",
+         "id" : "Q17",
+         "numeric-id" : 17
+        }
+       },
+       "property" : "P495",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P50" : [
+     {
+      "mainsnak" : {
+       "datatype" : "wikibase-item",
+       "datavalue" : {
+        "type" : "wikibase-entityid",
+        "value" : {
+         "entity-type" : "item",
+         "id" : "Q208582",
+         "numeric-id" : 208582
+        }
+       },
+       "property" : "P50",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P580" : [
+     {
+      "mainsnak" : {
+       "datatype" : "time",
+       "datavalue" : {
+        "type" : "time",
+        "value" : {
+         "after" : 0,
+         "before" : 0,
+         "calendarmodel" : "http://www.wikidata.org/entity/Q1985727",
+         "precision" : 11,
+         "time" : "+1984-11-20T00:00:00Z",
+         "timezone" : 0
+        }
+       },
+       "property" : "P580",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P582" : [
+     {
+      "mainsnak" : {
+       "datatype" : "time",
+       "datavalue" : {
+        "type" : "time",
+        "value" : {
+         "after" : 0,
+         "before" : 0,
+         "calendarmodel" : "http://www.wikidata.org/entity/Q1985727",
+         "precision" : 11,
+         "time" : "+1995-05-23T00:00:00Z",
+         "timezone" : 0
+        }
+       },
+       "property" : "P582",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P8345" : [
+     {
+      "mainsnak" : {
+       "datatype" : "wikibase-item",
+       "datavalue" : {
+        "type" : "wikibase-entityid",
+        "value" : {
+         "entity-type" : "item",
+         "id" : "Q2020",
+         "numeric-id" : 2020
+        }
+       },
+       "property" : "P8345",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ]
+   },
+   "descriptions" : {
+    "en" : {
+     "language" : "en",
+     "value" : "Japanese manga series"
+    },
+    "fr" : {
+     "language" : "fr",
+     "value" : "série de manga"
+    },
+    "ja" : {
+     "language" : "ja",
+     "value" : "鳥山明による日本の漫画作品"
+    },
+    "ko" : {
+     "language" : "ko",
+     "value" : "도리야마 아키라가 그린 일본의 만화"
+    },
+    "zh" : {
+     "language" : "zh",
+     "value" : "日本系列漫畫"
+    }
+   },
+   "id" : "Q15051307",
+   "labels" : {
+    "en" : {
+     "language" : "en",
+     "value" : "Dragon Ball"
+    },
+    "fr" : {
+     "language" : "fr",
+     "value" : "Dragon Ball"
+    },
+    "ja" : {
+     "language" : "ja",
+     "value" : "ドラゴンボール"
+    },
+    "ko" : {
+     "language" : "ko",
+     "value" : "드래곤볼"
+    },
+    "zh" : {
+     "language" : "zh",
+     "value" : "龙珠"
+    }
+   }
+  },
+  "Q2020" : {
+   "claims" : {
+    "P1476" : [
+     {
+      "mainsnak" : {
+       "datatype" : "monolingualtext",
+       "datavalue" : {
+        "type" : "monolingualtext",
+        "value" : {
+         "language" : "ja",
+         "text" : "ドラゴンボール"
+        }
+       },
+       "property" : "P1476",
+       "snaktype" : "value"
+      },
+      "qualifiers" : {
+       "P2125" : [
+        {
+         "datatype" : "string",
+         "datavalue" : {
+          "type" : "string",
+          "value" : "Doragon Bōru"
+         },
+         "property" : "P2125",
+         "snaktype" : "value"
+        }
+       ],
+       "P7452" : [
+        {
+         "datatype" : "wikibase-item",
+         "datavalue" : {
+          "type" : "wikibase-entityid",
+          "value" : {
+           "entity-type" : "item",
+           "id" : "Q135719296",
+           "numeric-id" : 135719296
+          }
+         },
+         "property" : "P7452",
+         "snaktype" : "value"
+        }
+       ]
+      },
+      "rank" : "preferred"
+     },
+     {
+      "mainsnak" : {
+       "datatype" : "monolingualtext",
+       "datavalue" : {
+        "type" : "monolingualtext",
+        "value" : {
+         "language" : "en",
+         "text" : "DRAGON BALL"
+        }
+       },
+       "property" : "P1476",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P268" : [
+     {
+      "mainsnak" : {
+       "datatype" : "external-id",
+       "datavalue" : {
+        "type" : "string",
+        "value" : "14534411x"
+       },
+       "property" : "P268",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P31" : [
+     {
+      "mainsnak" : {
+       "datatype" : "wikibase-item",
+       "datavalue" : {
+        "type" : "wikibase-entityid",
+        "value" : {
+         "entity-type" : "item",
+         "id" : "Q196600",
+         "numeric-id" : 196600
+        }
+       },
+       "property" : "P31",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P495" : [
+     {
+      "mainsnak" : {
+       "datatype" : "wikibase-item",
+       "datavalue" : {
+        "type" : "wikibase-entityid",
+        "value" : {
+         "entity-type" : "item",
+         "id" : "Q17",
+         "numeric-id" : 17
+        }
+       },
+       "property" : "P495",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P50" : [
+     {
+      "mainsnak" : {
+       "datatype" : "wikibase-item",
+       "datavalue" : {
+        "type" : "wikibase-entityid",
+        "value" : {
+         "entity-type" : "item",
+         "id" : "Q208582",
+         "numeric-id" : 208582
+        }
+       },
+       "property" : "P50",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P580" : [
+     {
+      "mainsnak" : {
+       "datatype" : "time",
+       "datavalue" : {
+        "type" : "time",
+        "value" : {
+         "after" : 0,
+         "before" : 0,
+         "calendarmodel" : "http://www.wikidata.org/entity/Q1985727",
+         "precision" : 11,
+         "time" : "+1984-12-03T00:00:00Z",
+         "timezone" : 0
+        }
+       },
+       "property" : "P580",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ]
+   },
+   "descriptions" : {
+    "en" : {
+     "language" : "en",
+     "value" : "Japanese media franchise"
+    },
+    "fr" : {
+     "language" : "fr",
+     "value" : "franchise médiatique japonaise"
+    },
+    "ja" : {
+     "language" : "ja",
+     "value" : "日本の漫画、メディアミックス作品"
+    },
+    "ko" : {
+     "language" : "ko",
+     "value" : "일본의 미디어 프랜차이즈"
+    },
+    "zh" : {
+     "language" : "zh",
+     "value" : "日本漫畫家鳥山明的代表作之一"
+    }
+   },
+   "id" : "Q2020",
+   "labels" : {
+    "en" : {
+     "language" : "en",
+     "value" : "Dragon Ball"
+    },
+    "fr" : {
+     "language" : "fr",
+     "value" : "Dragon Ball"
+    },
+    "ja" : {
+     "language" : "ja",
+     "value" : "ドラゴンボール"
+    },
+    "ko" : {
+     "language" : "ko",
+     "value" : "드래곤볼"
+    },
+    "zh" : {
+     "language" : "zh",
+     "value" : "七龍珠"
+    }
+   }
+  },
+  "Q208582" : {
+   "claims" : {
+    "P1559" : [
+     {
+      "mainsnak" : {
+       "datatype" : "monolingualtext",
+       "datavalue" : {
+        "type" : "monolingualtext",
+        "value" : {
+         "language" : "ja",
+         "text" : "鳥山 明"
+        }
+       },
+       "property" : "P1559",
+       "snaktype" : "value"
+      },
+      "qualifiers" : {
+       "P1814" : [
+        {
+         "datatype" : "string",
+         "datavalue" : {
+          "type" : "string",
+          "value" : "とりやま あきら"
+         },
+         "property" : "P1814",
+         "snaktype" : "value"
+        }
+       ],
+       "P2125" : [
+        {
+         "datatype" : "string",
+         "datavalue" : {
+          "type" : "string",
+          "value" : "Toriyama Akira"
+         },
+         "property" : "P2125",
+         "snaktype" : "value"
+        }
+       ]
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P268" : [
+     {
+      "mainsnak" : {
+       "datatype" : "external-id",
+       "datavalue" : {
+        "type" : "string",
+        "value" : "12336978f"
+       },
+       "property" : "P268",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P27" : [
+     {
+      "mainsnak" : {
+       "datatype" : "wikibase-item",
+       "datavalue" : {
+        "type" : "wikibase-entityid",
+        "value" : {
+         "entity-type" : "item",
+         "id" : "Q17",
+         "numeric-id" : 17
+        }
+       },
+       "property" : "P27",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P31" : [
+     {
+      "mainsnak" : {
+       "datatype" : "wikibase-item",
+       "datavalue" : {
+        "type" : "wikibase-entityid",
+        "value" : {
+         "entity-type" : "item",
+         "id" : "Q5",
+         "numeric-id" : 5
+        }
+       },
+       "property" : "P31",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P569" : [
+     {
+      "mainsnak" : {
+       "datatype" : "time",
+       "datavalue" : {
+        "type" : "time",
+        "value" : {
+         "after" : 0,
+         "before" : 0,
+         "calendarmodel" : "http://www.wikidata.org/entity/Q1985727",
+         "precision" : 11,
+         "time" : "+1955-04-05T00:00:00Z",
+         "timezone" : 0
+        }
+       },
+       "property" : "P569",
+       "snaktype" : "value"
+      },
+      "qualifiers" : {
+       "P7452" : [
+        {
+         "datatype" : "wikibase-item",
+         "datavalue" : {
+          "type" : "wikibase-entityid",
+          "value" : {
+           "entity-type" : "item",
+           "id" : "Q71536040",
+           "numeric-id" : 71536040
+          }
+         },
+         "property" : "P7452",
+         "snaktype" : "value"
+        }
+       ]
+      },
+      "rank" : "preferred"
+     }
+    ],
+    "P734" : [
+     {
+      "mainsnak" : {
+       "datatype" : "wikibase-item",
+       "datavalue" : {
+        "type" : "wikibase-entityid",
+        "value" : {
+         "entity-type" : "item",
+         "id" : "Q27156446",
+         "numeric-id" : 27156446
+        }
+       },
+       "property" : "P734",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P735" : [
+     {
+      "mainsnak" : {
+       "datatype" : "wikibase-item",
+       "datavalue" : {
+        "type" : "wikibase-entityid",
+        "value" : {
+         "entity-type" : "item",
+         "id" : "Q29564036",
+         "numeric-id" : 29564036
+        }
+       },
+       "property" : "P735",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ]
+   },
+   "descriptions" : {
+    "en" : {
+     "language" : "en",
+     "value" : "Japanese manga artist and character designer (1955-2024)"
+    },
+    "fr" : {
+     "language" : "fr",
+     "value" : "auteur de manga et character designer japonais (1955-2024)"
+    },
+    "ja" : {
+     "language" : "ja",
+     "value" : "日本の漫画家 (1955-2024)"
+    },
+    "ko" : {
+     "language" : "ko",
+     "value" : "일본의 만화가 (1955–2024)"
+    },
+    "zh" : {
+     "language" : "zh",
+     "value" : "日本漫畫家"
+    }
+   },
+   "id" : "Q208582",
+   "labels" : {
+    "en" : {
+     "language" : "en",
+     "value" : "Akira Toriyama"
+    },
+    "fr" : {
+     "language" : "fr",
+     "value" : "Akira Toriyama"
+    },
+    "ja" : {
+     "language" : "ja",
+     "value" : "鳥山明"
+    },
+    "ko" : {
+     "language" : "ko",
+     "value" : "도리야마 아키라"
+    },
+    "mul" : {
+     "language" : "mul",
+     "value" : "Akira Toriyama"
+    },
+    "zh" : {
+     "language" : "zh",
+     "value" : "鳥山明"
+    }
+   }
+  },
+  "Q27156446" : {
+   "claims" : {
+    "P31" : [
+     {
+      "mainsnak" : {
+       "datatype" : "wikibase-item",
+       "datavalue" : {
+        "type" : "wikibase-entityid",
+        "value" : {
+         "entity-type" : "item",
+         "id" : "Q101352",
+         "numeric-id" : 101352
+        }
+       },
+       "property" : "P31",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ]
+   },
+   "descriptions" : {
+    "en" : {
+     "language" : "en",
+     "value" : "Japanese family name (鳥山)"
+    },
+    "fr" : {
+     "language" : "fr",
+     "value" : "nom de famille japonais (鳥山)"
+    },
+    "ja" : {
+     "language" : "ja",
+     "value" : "日本語の姓 (とりやま)"
+    },
+    "ko" : {
+     "language" : "ko",
+     "value" : "성씨 (鳥山)"
+    },
+    "zh" : {
+     "language" : "zh",
+     "value" : "日本姓氏（とりやま，Toriyama）"
+    }
+   },
+   "id" : "Q27156446",
+   "labels" : {
+    "en" : {
+     "language" : "en",
+     "value" : "Toriyama"
+    },
+    "fr" : {
+     "language" : "fr",
+     "value" : "Toriyama"
+    },
+    "ja" : {
+     "language" : "ja",
+     "value" : "鳥山"
+    },
+    "zh" : {
+     "language" : "zh",
+     "value" : "鳥山"
+    }
+   }
+  },
+  "Q29564036" : {
+   "claims" : {
+    "P31" : [
+     {
+      "mainsnak" : {
+       "datatype" : "wikibase-item",
+       "datavalue" : {
+        "type" : "wikibase-entityid",
+        "value" : {
+         "entity-type" : "item",
+         "id" : "Q3409032",
+         "numeric-id" : 3409032
+        }
+       },
+       "property" : "P31",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     },
+     {
+      "mainsnak" : {
+       "datatype" : "wikibase-item",
+       "datavalue" : {
+        "type" : "wikibase-entityid",
+        "value" : {
+         "entity-type" : "item",
+         "id" : "Q22812564",
+         "numeric-id" : 22812564
+        }
+       },
+       "property" : "P31",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ]
+   },
+   "descriptions" : {
+    "en" : {
+     "language" : "en",
+     "value" : "Japanese unisex given name (明)"
+    },
+    "fr" : {
+     "language" : "fr",
+     "value" : "prénom épicène"
+    },
+    "ja" : {
+     "language" : "ja",
+     "value" : "男女共用の名前 (あきら)"
+    },
+    "ko" : {
+     "language" : "ko",
+     "value" : "남녀공통 이름"
+    },
+    "zh" : {
+     "language" : "zh",
+     "value" : "日語男性人名"
+    }
+   },
+   "id" : "Q29564036",
+   "labels" : {
+    "en" : {
+     "language" : "en",
+     "value" : "Akira"
+    },
+    "ja" : {
+     "language" : "ja",
+     "value" : "明"
+    },
+    "mul" : {
+     "language" : "mul",
+     "value" : "明"
+    },
+    "zh" : {
+     "language" : "zh",
+     "value" : "明"
+    }
+   }
+  },
+  "Q64230248" : {
+   "claims" : {
+    "P1476" : [
+     {
+      "mainsnak" : {
+       "datatype" : "monolingualtext",
+       "datavalue" : {
+        "type" : "monolingualtext",
+        "value" : {
+         "language" : "ja",
+         "text" : "ドラゴンボール超"
+        }
+       },
+       "property" : "P1476",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P2360" : [
+     {
+      "mainsnak" : {
+       "datatype" : "wikibase-item",
+       "datavalue" : {
+        "type" : "wikibase-entityid",
+        "value" : {
+         "entity-type" : "item",
+         "id" : "Q231302",
+         "numeric-id" : 231302
+        }
+       },
+       "property" : "P2360",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P2635" : [
+     {
+      "mainsnak" : {
+       "datatype" : "quantity",
+       "datavalue" : {
+        "type" : "quantity",
+        "value" : {
+         "amount" : "+24",
+         "unit" : "http://www.wikidata.org/entity/Q1238720"
+        }
+       },
+       "property" : "P2635",
+       "snaktype" : "value"
+      },
+      "qualifiers" : {
+       "P813" : [
+        {
+         "datatype" : "time",
+         "datavalue" : {
+          "type" : "time",
+          "value" : {
+           "after" : 0,
+           "before" : 0,
+           "calendarmodel" : "http://www.wikidata.org/entity/Q1985727",
+           "precision" : 11,
+           "time" : "+2025-04-04T00:00:00Z",
+           "timezone" : 0
+          }
+         },
+         "property" : "P813",
+         "snaktype" : "value"
+        }
+       ]
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P31" : [
+     {
+      "mainsnak" : {
+       "datatype" : "wikibase-item",
+       "datavalue" : {
+        "type" : "wikibase-entityid",
+        "value" : {
+         "entity-type" : "item",
+         "id" : "Q21198342",
+         "numeric-id" : 21198342
+        }
+       },
+       "property" : "P31",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P495" : [
+     {
+      "mainsnak" : {
+       "datatype" : "wikibase-item",
+       "datavalue" : {
+        "type" : "wikibase-entityid",
+        "value" : {
+         "entity-type" : "item",
+         "id" : "Q17",
+         "numeric-id" : 17
+        }
+       },
+       "property" : "P495",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P50" : [
+     {
+      "mainsnak" : {
+       "datatype" : "wikibase-item",
+       "datavalue" : {
+        "type" : "wikibase-entityid",
+        "value" : {
+         "entity-type" : "item",
+         "id" : "Q208582",
+         "numeric-id" : 208582
+        }
+       },
+       "property" : "P50",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     },
+     {
+      "mainsnak" : {
+       "datatype" : "wikibase-item",
+       "datavalue" : {
+        "type" : "wikibase-entityid",
+        "value" : {
+         "entity-type" : "item",
+         "id" : "Q24838002",
+         "numeric-id" : 24838002
+        }
+       },
+       "property" : "P50",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P580" : [
+     {
+      "mainsnak" : {
+       "datatype" : "time",
+       "datavalue" : {
+        "type" : "time",
+        "value" : {
+         "after" : 0,
+         "before" : 0,
+         "calendarmodel" : "http://www.wikidata.org/entity/Q1985727",
+         "precision" : 11,
+         "time" : "+2015-06-20T00:00:00Z",
+         "timezone" : 0
+        }
+       },
+       "property" : "P580",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ],
+    "P8345" : [
+     {
+      "mainsnak" : {
+       "datatype" : "wikibase-item",
+       "datavalue" : {
+        "type" : "wikibase-entityid",
+        "value" : {
+         "entity-type" : "item",
+         "id" : "Q2020",
+         "numeric-id" : 2020
+        }
+       },
+       "property" : "P8345",
+       "snaktype" : "value"
+      },
+      "rank" : "normal"
+     }
+    ]
+   },
+   "descriptions" : {
+    "en" : {
+     "language" : "en",
+     "value" : "manga series within the larger Dragon Ball manga series"
+    },
+    "fr" : {
+     "language" : "fr",
+     "value" : "série de manga adaptée de la série animée éponyme"
+    },
+    "ja" : {
+     "language" : "ja",
+     "value" : "日本の漫画作品"
+    },
+    "zh" : {
+     "language" : "zh",
+     "value" : "日本系列漫畫"
+    }
+   },
+   "id" : "Q64230248",
+   "labels" : {
+    "en" : {
+     "language" : "en",
+     "value" : "Dragon Ball Super"
+    },
+    "fr" : {
+     "language" : "fr",
+     "value" : "Dragon Ball Super"
+    },
+    "ja" : {
+     "language" : "ja",
+     "value" : "ドラゴンボール超"
+    }
+   }
+  }
+ },
+ "success" : 1
+}

@@ -73,6 +73,8 @@ type MockStore struct {
 	ExportCatalogFn              func(ctx context.Context) (*model.CatalogExport, error)
 	ImportCatalogFn              func(ctx context.Context, cat *model.CatalogExport, dryRun bool) (*model.ImportReport, error)
 	ImportCollectionFn           func(ctx context.Context, userID uuid.UUID, exp *model.CollectionExport, dryRun bool) (*model.ImportReport, error)
+	FindItemsByAttributeFn       func(ctx context.Context, itemTypeID uuid.UUID, path, values []string, fold bool) ([]model.Item, error)
+	ListRelationsBetweenFn       func(ctx context.Context, ids []uuid.UUID) ([]model.ItemRelation, error)
 }
 
 func (m *MockStore) Ping(ctx context.Context) error {
@@ -478,4 +480,19 @@ func init() {
 	if os.Getenv("TEST_LOG") == "" {
 		slog.SetDefault(slog.New(slog.NewTextHandler(io.Discard, nil)))
 	}
+}
+
+// FindItemsByAttribute finds nothing by default (every proposed item is new).
+func (m *MockStore) FindItemsByAttribute(ctx context.Context, itemTypeID uuid.UUID, path, values []string, fold bool) ([]model.Item, error) {
+	if m.FindItemsByAttributeFn != nil {
+		return m.FindItemsByAttributeFn(ctx, itemTypeID, path, values, fold)
+	}
+	return nil, nil
+}
+
+func (m *MockStore) ListRelationsBetween(ctx context.Context, ids []uuid.UUID) ([]model.ItemRelation, error) {
+	if m.ListRelationsBetweenFn != nil {
+		return m.ListRelationsBetweenFn(ctx, ids)
+	}
+	return nil, nil
 }

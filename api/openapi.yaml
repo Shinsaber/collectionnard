@@ -160,6 +160,20 @@ tags:
       réimporter un export met à jour, ne duplique pas, ne supprime jamais) ; exports CSV des
       items d'un type et d'une collection, pour un tableur. Les comptes et les collections des
       utilisateurs ne font pas partie de l'export du catalogue.
+  - name: External
+    description: |
+      **Admin uniquement.** Récupération depuis des sources ouvertes, connecteur BD / Manga :
+      œuvres, univers et auteurs sur **Wikidata** (CC0), éditions françaises et tomes sur la **BnF**
+      (Licence Ouverte : source et date de récupération écrites dans `sources`). Parcours :
+      recherche (`works`, `editions`) → aperçu (`preview`) → simulation puis import (`import`,
+      même rapport que `POST /import`).
+
+      Le connecteur écrit dans les types du domaine BD / Manga, trouvés par nom technique (`Manga`,
+      `Comic`, `Universe`, `Edition`, `Volume`, `Person`, `Publisher` ; relations `contains_work`,
+      `created_by`, `published_as`, `edited_by`, `contains_volume`) : s'il en manque, 409
+      `connector_unavailable`. Les items déjà présents (même QID Wikidata, ARK BnF, ISBN, ou nom
+      d'éditeur sans casse ni accents) gardent leurs valeurs : la source ne remplit que les champs
+      vides. Source injoignable : 502 `external_unavailable`.
   - name: Health
     description: |
       État de santé de l'API (connexion à la base). Public, utilisé par le healthcheck
@@ -1073,7 +1087,8 @@ components:
             Valeurs émises : `bad_request` (400), `unauthorized` (401), `forbidden` (403),
             `not_found` (404), `conflict` (409), `payload_too_large` (413),
             `validation_error` (422), `rate_limited` (429), `internal` (500),
-            `timeout` (503, exploration du graphe trop longue).
+            `timeout` (503, exploration du graphe trop longue), `connector_unavailable` (409, types d'un
+            connecteur absents du catalogue), `external_unavailable` (502, source externe injoignable).
             Un client doit prévoir un libellé générique pour un code inconnu.
           example: validation_error
         message:
@@ -1249,6 +1264,129 @@ components:
                 additionalProperties: true
                 description: Attributs contextuels (schéma du CollectionType).
               added_at: { type: string, format: date-time }
+    ExternalWorkHit:
+      type: object
+      description: Œuvre (manga ou BD) trouvée sur Wikidata.
+      required: [wikidata_id, label, item_type_id, source_url]
+      properties:
+        wikidata_id: { type: string, example: Q15051307 }
+        label: { type: string, description: "Libellé Wikidata (fr, à défaut en)." }
+        description: { type: string }
+        item_type_id:
+          type: string
+          format: uuid
+          description: ItemType proposé (`Manga` ou `Comic`).
+        start_year: { type: integer }
+        existing_item_id:
+          type: string
+          format: uuid
+          description: Item du catalogue portant déjà ce QID.
+        source_url: { type: string, format: uri }
+    ExternalEditionHit:
+      type: object
+      description: |
+        Édition française trouvée à la BnF : ensemble multivolume (zone 461 des tomes) ou collection
+        éditoriale (zone 410).
+      required: [bnf_ark, title, publishers, source_url]
+      properties:
+        bnf_ark: { type: string, example: "ark:/12148/cb343384394" }
+        title: { type: string }
+        publishers: { type: array, items: { type: string } }
+        start_year: { type: integer }
+        existing_item_id: { type: string, format: uuid }
+        source_url: { type: string, format: uri }
+        matched_volume:
+          type: object
+          description: Recherche par ISBN seulement — le tome qui porte cet ISBN.
+          required: [bnf_ark, title]
+          properties:
+            bnf_ark: { type: string }
+            number: { type: integer }
+            title: { type: string }
+            isbn: { type: string }
+    ExternalImportRequest:
+      type: object
+      description: Sélection d'une œuvre Wikidata et / ou d'éditions BnF (au moins l'une des deux).
+      properties:
+        work:
+          type: string
+          pattern: "^Q[1-9][0-9]*$"
+          description: QID Wikidata de l'œuvre.
+        editions:
+          type: array
+          maxItems: 10
+          items: { type: string, pattern: "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$" }
+          description: ARK BnF des éditions (leurs tomes sont proposés).
+        selected:
+          type: array
+          items: { type: string }
+          description: Import seulement — clés (`key`) des nœuds de l'aperçu à écrire.
+        overrides:
+          type: object
+          description: |
+            Import seulement — corrections faites dans l'aperçu : clé de nœud → attributs complets, qui
+            remplacent ceux proposés (validés contre le schéma du type par l'import). Le nœud doit être
+            sélectionné. Pour un tome, l'ordre dans son édition suit le `number` corrigé.
+          additionalProperties: { type: object, additionalProperties: true }
+      example:
+        work: Q15051307
+        editions: ["ark:/12148/cb343384394"]
+    ExternalNode:
+      type: object
+      description: |
+        Item proposé. `attributes` est ce qui serait écrit : les valeurs existantes complétées par la
+        source. Un nœud non sélectionné n'est pas écrit ; une relation est écrite quand chacune de ses
+        extrémités est sélectionnée ou déjà dans le catalogue.
+      required: [key, role, item_type_id, attributes, status, selected, source_url]
+      properties:
+        key:
+          type: string
+          description: Identifiant du nœud (`wikidata:Q…`, `bnf:cb…`, `publisher:<nom>`).
+        role:
+          type: string
+          enum: [work, universe, person, edition, publisher, volume]
+        item_type_id: { type: string, format: uuid }
+        attributes: { type: object, additionalProperties: true }
+        existing_item_id: { type: string, format: uuid }
+        status:
+          type: string
+          enum: [new, update, unchanged]
+          description: "`new` créé, `update` item existant dont des champs vides seront remplis, `unchanged` rien à ajouter."
+        selected:
+          type: boolean
+          description: Sélection par défaut (faux pour une réimpression ou un tome sans numéro).
+        parent: { type: string, description: Clé du nœud dont il dépend (affichage en arbre). }
+        source_url: { type: string, format: uri }
+        note:
+          type: string
+          enum: [reprint, no_number]
+          description: "`reprint` un autre tome de l'édition a le même numéro, `no_number` numéro absent de la notice (0 proposé)."
+    ExternalRelation:
+      type: object
+      required: [relation_type_id, from, to, attributes]
+      properties:
+        relation_type_id: { type: string, format: uuid }
+        from: { type: string, description: Clé du nœud source. }
+        to: { type: string, description: Clé du nœud cible. }
+        attributes: { type: object, additionalProperties: true }
+        existing_id: { type: string, format: uuid, description: Relation déjà présente (réutilisée). }
+    ExternalPlan:
+      type: object
+      required: [retrieved_at, nodes, relations]
+      properties:
+        retrieved_at: { type: string, format: date, description: Date de récupération (écrite dans `sources`). }
+        nodes: { type: array, items: { $ref: "#/components/schemas/ExternalNode" } }
+        relations: { type: array, items: { $ref: "#/components/schemas/ExternalRelation" } }
+    ExternalImportReport:
+      allOf:
+        - $ref: "#/components/schemas/ImportReport"
+        - type: object
+          required: [item_ids]
+          properties:
+            item_ids:
+              type: object
+              description: Clé de nœud → id de l'item écrit (les nouveaux id ne valent qu'une fois l'import appliqué).
+              additionalProperties: { type: string, format: uuid }
     UploadResponse:
       type: object
       description: Réponse après un upload réussi.
@@ -1406,6 +1544,27 @@ components:
           example:
             error: payload_too_large
             message: request body too large (max 1048576 bytes)
+
+    ConnectorUnavailable:
+      description: |
+        Le catalogue ne contient pas tous les types du domaine BD / Manga que le connecteur écrit
+        (`db/seed_bd_manga.sql`) ; `message` les liste.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: connector_unavailable
+            message: "BD / Manga types missing from the catalogue: Volume, contains_volume"
+    ExternalUnavailable:
+      description: Source externe (Wikidata, BnF) injoignable, trop lente ou réponse illisible.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: external_unavailable
+            message: "external source unavailable: catalogue.bnf.fr answered HTTP 503"
 
     BadRequest:
       description: |
@@ -3552,3 +3711,130 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ImportReport"
+  # ===========================================================================
+  # Sources externes (connecteur BD / Manga)
+  # ===========================================================================
+  /external/bd-manga/works:
+    get:
+      tags: [External]
+      summary: Rechercher une œuvre sur Wikidata
+      description: |
+        Recherche par titre parmi les séries de manga, séries de bande dessinée, romans graphiques,
+        comic strips, webtoons… (classes Wikidata), meilleure correspondance d'abord (20 au plus).
+      operationId: searchExternalWorks
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Titre recherché (2 à 200 caractères).
+          schema: { type: string, minLength: 2, maxLength: 200 }
+      responses:
+        "200":
+          description: Œuvres trouvées.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ExternalWorkHit" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/ConnectorUnavailable" }
+        "502": { $ref: "#/components/responses/ExternalUnavailable" }
+  /external/bd-manga/editions:
+    get:
+      tags: [External]
+      summary: Rechercher une édition française à la BnF
+      description: |
+        Par titre (`q`, index `bib.serialtitle`, 50 notices au plus, hors vidéos et sons) ou par ISBN
+        d'un tome (`isbn`, ISBN-10 / 13 ou EAN, tirets acceptés) : l'édition qui contient ce tome.
+        Exactement un des deux paramètres.
+      operationId: searchExternalEditions
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string, minLength: 2, maxLength: 200 }
+        - name: isbn
+          in: query
+          schema: { type: string, example: "978-2-87695-205-8" }
+      responses:
+        "200":
+          description: Éditions trouvées.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ExternalEditionHit" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/ConnectorUnavailable" }
+        "502": { $ref: "#/components/responses/ExternalUnavailable" }
+  /external/bd-manga/preview:
+    post:
+      tags: [External]
+      summary: Aperçu des items proposés
+      description: |
+        Récupère l'œuvre (titre, années, public, nombre de tomes VO…), son univers (`P8345`) et ses
+        auteurs (`P50` auteur, `P58` scénariste, `P110` dessinateur → `roles`) sur Wikidata ; pour
+        chaque édition, ses éditeurs et tous ses tomes (numéro, titre, ISBN, pages, prix en euros) à
+        la BnF. Chaque nœud est rapproché du catalogue (statut `new` / `update` / `unchanged`).
+        Les réimpressions (même numéro) et les tomes sans numéro ne sont pas sélectionnés par défaut.
+      operationId: previewExternal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExternalImportRequest" }
+      responses:
+        "200":
+          description: Items et relations proposés.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExternalPlan" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/ConnectorUnavailable" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "502": { $ref: "#/components/responses/ExternalUnavailable" }
+  /external/bd-manga/import:
+    post:
+      tags: [External]
+      summary: Simuler ou importer la sélection
+      description: |
+        Reconstruit l'aperçu de la même sélection (réponses des sources gardées en cache 15 min), garde
+        les nœuds de `selected` et les passe par l'import du catalogue (`POST /import`) : une transaction,
+        rien n'est appliqué au moindre problème (422 + rapport), `dry_run=true` simule. Les items
+        existants gardent leurs tags et leurs valeurs (seuls les champs vides sont remplis).
+      operationId: importExternal
+      parameters:
+        - name: dry_run
+          in: query
+          description: Simuler l'import (rapport complet, aucune écriture).
+          schema: { type: boolean, default: false }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExternalImportRequest" }
+      responses:
+        "200":
+          description: Import appliqué (ou simulation sans erreur).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExternalImportReport" }
+        "422":
+          description: Erreurs de validation ; rien n'a été appliqué.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExternalImportReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/ConnectorUnavailable" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "502": { $ref: "#/components/responses/ExternalUnavailable" }

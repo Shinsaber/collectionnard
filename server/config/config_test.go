@@ -75,3 +75,15 @@ func TestLoad_TrustedProxy(t *testing.T) {
 		t.Fatal("expected error for invalid TRUSTED_PROXY")
 	}
 }
+
+func TestLoad_ExternalUserAgent(t *testing.T) {
+	setBaseEnv(t)
+	cfg, err := Load()
+	if err != nil || cfg.ExternalUserAgent != DefaultExternalUserAgent {
+		t.Fatalf("default: %q, %v", cfg.ExternalUserAgent, err)
+	}
+	t.Setenv("EXTERNAL_USER_AGENT", "MyCollection/2.0 (me@example.org)")
+	if cfg, _ = Load(); cfg.ExternalUserAgent != "MyCollection/2.0 (me@example.org)" {
+		t.Errorf("override: %q", cfg.ExternalUserAgent)
+	}
+}

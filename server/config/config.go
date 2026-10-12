@@ -11,6 +11,9 @@ import (
 // HS256 is only as strong as its key: 32 bytes matches the hash output size.
 const MinJWTSecretLen = 32
 
+// DefaultExternalUserAgent is sent to the external sources when EXTERNAL_USER_AGENT is unset.
+const DefaultExternalUserAgent = "Collectionnard/1.0 (+https://github.com/Shinsaber/collectionnard)"
+
 type Config struct {
 	Port            int
 	DatabaseURL     string
@@ -23,6 +26,9 @@ type Config struct {
 	UploadDir       string
 	MaxUploadSize   int64 // bytes
 	MaxImportSize   int64 // bytes, body of POST /import
+	// ExternalUserAgent identifies the server to the external sources (Wikidata, BnF):
+	// their policies ask for a name and a contact (URL or e-mail).
+	ExternalUserAgent string
 }
 
 // Load reads the configuration from the environment. DATABASE_URL and
@@ -107,18 +113,24 @@ func Load() (*Config, error) {
 		maxImportSize = s
 	}
 
+	externalUA := os.Getenv("EXTERNAL_USER_AGENT")
+	if externalUA == "" {
+		externalUA = DefaultExternalUserAgent
+	}
+
 	return &Config{
-		Port:            port,
-		DatabaseURL:     dbURL,
-		JWTSecret:       jwtSecret,
-		AccessTokenTTL:  accessTTL,
-		RefreshTokenTTL: refreshTTL,
-		LoginRateLimit:  loginRateLimit,
-		TrustedProxy:    trustedProxy,
-		GraphMaxNodes:   graphMaxNodes,
-		UploadDir:       uploadDir,
-		MaxUploadSize:   maxUploadSize,
-		MaxImportSize:   maxImportSize,
+		Port:              port,
+		DatabaseURL:       dbURL,
+		JWTSecret:         jwtSecret,
+		AccessTokenTTL:    accessTTL,
+		RefreshTokenTTL:   refreshTTL,
+		LoginRateLimit:    loginRateLimit,
+		TrustedProxy:      trustedProxy,
+		GraphMaxNodes:     graphMaxNodes,
+		UploadDir:         uploadDir,
+		MaxUploadSize:     maxUploadSize,
+		MaxImportSize:     maxImportSize,
+		ExternalUserAgent: externalUA,
 	}, nil
 }
 

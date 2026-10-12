@@ -3,7 +3,7 @@
 Module : `github.com/shinsaber/colec` · Entrée : `main.go` · Config par variables
 d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 caractères) sont
 **obligatoires** (le serveur refuse de démarrer sinon) ; `PORT`, `ACCESS_TOKEN_TTL` (15m),
-`REFRESH_TOKEN_TTL` (720h), `LOGIN_RATE_LIMIT` (10/min/IP), `UPLOAD_DIR`, `MAX_UPLOAD_SIZE`, `MAX_IMPORT_SIZE` (20 Mio), `TRUSTED_PROXY` (false) ont un défaut.
+`REFRESH_TOKEN_TTL` (720h), `LOGIN_RATE_LIMIT` (10/min/IP), `UPLOAD_DIR`, `MAX_UPLOAD_SIZE`, `MAX_IMPORT_SIZE` (20 Mio), `TRUSTED_PROXY` (false), `EXTERNAL_USER_AGENT` (User-Agent envoyé à Wikidata / BnF) ont un défaut.
 
 ## Couches (`internal/`)
 
@@ -19,6 +19,7 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 | `itemquery`  | Recherche avancée de `GET /items` : filtres `attr.<clé>[.<op>]`, tri `attr.<clé>`, requête plein texte — validés contre le schéma du type (pendant de `web/src/lib/itemSearch.ts`) |
 | `csvexport`  | Mise à plat CSV des attributs (colonnes depuis le schéma, i18n-text → `clé.langue`, BOM, anti-injection de formules) |
 | `dbmigrate`  | Migrations tern (`db/migrations`) + seeds (`SEED_FILE` : liste séparée par des virgules ; défaut `seed.sql` puis `seed_bd_manga.sql`) : sous-commandes `colec-server migrate` / `seed` (`cmd.go`) |
+| `external`   | Sources ouvertes : client HTTP commun (User-Agent, délai, taille max, cache 15 min), `wikidata/` (recherche par classe, entités, `wbgetclaims`), `bnf/` (SRU UNIMARC, ARK + caractère de contrôle, ISBN) ; connecteur `bdmanga/` (types du domaine trouvés par nom technique, rapprochement du catalogue, champs vides seulement, sortie au format de `POST /import`) ; `bdmanga/bdmangatest` = sources simulées (réponses enregistrées dans `testdata/`) + catalogue en mémoire |
 
 ## Erreurs et réponses
 
@@ -39,6 +40,10 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 - Import (`store/export.go`) : une transaction, un savepoint par entité (toutes les erreurs du fichier sont listées),
   upsert `ON CONFLICT (id) … WHERE IS DISTINCT FROM … RETURNING (xmax = 0)` → créé / mis à jour / inchangé ; rollback si
   erreur ou `dry_run`. Toute nouvelle table du catalogue doit être ajoutée à l'export **et** à l'import.
+- Sources externes (`handler/external.go`, routes admin `/external/bd-manga/*`) : un connecteur ne dépend que de
+  l'interface `bdmanga.Catalog` (sous-ensemble du store) ; erreurs → 400 `InputError`, 404 entité externe inconnue,
+  409 `connector_unavailable` (types du domaine absents), 502 `external_unavailable` (source injoignable). L'import
+  repasse par `Store.ImportCatalog` : jamais d'écriture directe. Tests sans réseau : `bdmangatest.NewSources(t)`.
 - Les listes renvoient `model.PaginatedResponse` (`data`, `total`, …).
 - Lire un corps JSON avec `decodeJSON(w, r, &in)` + `respondDecodeError(w, err)` (limite 1 Mio → 413).
 - Logs : `log/slog` (JSON par défaut, `LOG_FORMAT=text` en dev) ; `respondInternal(w, r, err, msg)` et

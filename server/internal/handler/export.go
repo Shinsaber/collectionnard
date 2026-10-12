@@ -69,13 +69,8 @@ func (h *Handler) ImportCollection(w http.ResponseWriter, r *http.Request) {
 // readImport reads `dry_run` and decodes an import file (up to MaxImportSize)
 // into v. It answers 400 / 413 and returns ok=false on failure.
 func (h *Handler) readImport(w http.ResponseWriter, r *http.Request, v any) (dryRun, ok bool) {
-	if raw := r.URL.Query().Get("dry_run"); raw != "" {
-		b, err := strconv.ParseBool(raw)
-		if err != nil {
-			respondError(w, http.StatusBadRequest, "bad_request", "dry_run must be true or false")
-			return false, false
-		}
-		dryRun = b
+	if dryRun, ok = parseDryRun(w, r); !ok {
+		return false, false
 	}
 	// A large file and its transaction may outlast the server-wide timeouts (10 s read, 30 s write).
 	rc := http.NewResponseController(w)
@@ -94,6 +89,20 @@ func (h *Handler) readImport(w http.ResponseWriter, r *http.Request, v any) (dry
 		return false, false
 	}
 	return dryRun, true
+}
+
+// parseDryRun reads the optional `dry_run` boolean (400 when malformed).
+func parseDryRun(w http.ResponseWriter, r *http.Request) (dryRun, ok bool) {
+	raw := r.URL.Query().Get("dry_run")
+	if raw == "" {
+		return false, true
+	}
+	b, err := strconv.ParseBool(raw)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "bad_request", "dry_run must be true or false")
+		return false, false
+	}
+	return b, true
 }
 
 // respondImport answers 200 with the report, 422 when it lists errors.

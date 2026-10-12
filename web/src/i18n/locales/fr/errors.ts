@@ -16,5 +16,9 @@ export default {
     rate_limited: "Trop de tentatives, réessayez dans un instant",
     timeout: "Le serveur a mis trop de temps à répondre",
     internal: "Erreur interne du serveur",
+    connector_unavailable:
+      "Types BD / Manga absents du catalogue (chargez db/seed_bd_manga.sql)",
+    external_unavailable:
+      "Source externe (Wikidata, BnF) injoignable, réessayez plus tard",
   },
 };

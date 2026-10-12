@@ -160,6 +160,11 @@ const adminLinks = computed(() => [
     label: t("layout.nav.importExport"),
     icon: "pi pi-database",
   },
+  {
+    to: "/admin/external-import",
+    label: t("layout.nav.externalImport"),
+    icon: "pi pi-cloud-download",
+  },
 ]);
 
 function handleLogout() {

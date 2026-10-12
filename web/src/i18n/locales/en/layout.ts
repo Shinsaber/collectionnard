@@ -9,6 +9,7 @@ const en: typeof fr = {
     relationTypes: "Relations",
     collectionTypes: "Coll. types",
     importExport: "Import / export",
+    externalImport: "External sources",
   },
   adminSection: "Admin",
   adminBadge: "admin",

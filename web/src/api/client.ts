@@ -39,6 +39,11 @@ import type {
   PaginationParams,
   ItemListParams,
   CsvDelimiter,
+  ExternalEditionHit,
+  ExternalImportReport,
+  ExternalImportRequest,
+  ExternalPlan,
+  ExternalWorkHit,
   ImportReport,
   UploadResponse,
 } from "./types";
@@ -431,4 +436,31 @@ export const importExportApi = {
       { format, ...opts },
       `collection.${format}`,
     ),
+};
+
+// ── Sources externes (connecteur BD / Manga, admin) ───────────────────
+const EXTERNAL = "/external/bd-manga";
+
+export const externalApi = {
+  /** Œuvres (manga, BD) sur Wikidata, par titre. */
+  searchWorks: (q: string) =>
+    http
+      .get<ExternalWorkHit[]>(`${EXTERNAL}/works`, { params: { q } })
+      .then((r) => r.data),
+  /** Éditions françaises à la BnF, par titre (`q`) ou par ISBN d'un tome. */
+  searchEditions: (params: { q: string } | { isbn: string }) =>
+    http
+      .get<ExternalEditionHit[]>(`${EXTERNAL}/editions`, { params })
+      .then((r) => r.data),
+  /** Items et relations proposés pour une sélection, rapprochés du catalogue. */
+  preview: (req: ExternalImportRequest) =>
+    http.post<ExternalPlan>(`${EXTERNAL}/preview`, req).then((r) => r.data),
+  /** Simule ou importe les nœuds de `req.selected` ; renvoie aussi le rapport d'un 422. */
+  importSelection: (req: ExternalImportRequest, dryRun: boolean) =>
+    http
+      .post<ExternalImportReport>(`${EXTERNAL}/import`, req, {
+        params: { dry_run: dryRun },
+        validateStatus: (s) => s === 200 || s === 422,
+      })
+      .then((r) => r.data),
 };

@@ -17,12 +17,14 @@ Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
 | `components/item/`                    | `ItemGallery`, `RelationTree`, dialogues `ItemEditDialog`, `AddToCollectionDialog`, `RelationCreateDialog`, `RelationEditDialog`            |
 | `components/graph/`                   | `GraphNodeDialog`                                                                                                                           |
 | `components/collection/`              | `CollectionImportDialog` (import d'un export de collection : simulation, rapport, application) |
+| `components/external/`                | Import depuis les sources externes : `ExternalWorkSearch` (Wikidata), `ExternalEditionSearch` (BnF, titre ou ISBN), `ExternalPlanView` + `ExternalNodeTable` (aperçu à cocher) + `ExternalNodeEditDialog` (correction d'un nœud via `DynamicForm`, envoyée en `overrides`) ; page `views/admin/ExternalImportView.vue` (étapes recherche → sélection → simulation → import) |
 | `src/stores/metaTypes.ts`             | Cache des ItemTypes / RelationTypes / CollectionTypes (`invalidate()` après toute écriture admin)                                           |
 | `src/composables/`                    | `useTheme`, `useLang`, `useNotify` (ElMessage), `useConfirmDialog` (ElMessageBox → promesse booléenne), `usePagination`                   |
 | `components/common/AppSpinner.vue`    | Indicateur de chargement                                                                                                                    |
 | `views/admin/ImportExportView.vue` | Import / export du catalogue (JSON, simulation puis import, rapport) ; exports CSV/JSON via `components/common/ExportButton.vue` et `lib/csv.ts` (séparateur selon la langue) |
 | `src/lib/schema.ts`                   | Lecture des schémas et extensions x-* (pendant de `server/internal/label`)                                                                  |
 | `src/lib/itemSearch.ts`               | Recherche du catalogue : champs filtrables / triables d'un schéma, état ↔ query (URL = paramètres de `GET /items`) |
+| `src/lib/externalPlan.ts`             | Aperçu d'un import externe : regroupement par édition, sélection par défaut, relation au parent (`role` = vocabulaire du connecteur, jamais un ItemType) |
 | `src/i18n/`                          | vue-i18n : registre des langues (`langs.ts`), instance + locales Element Plus (`index.ts`), catalogues `locales/<lang>/<ns>.ts` (fr = référence typée) |
 
 ## Règles

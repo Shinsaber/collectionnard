@@ -84,6 +84,7 @@ go run .
 | `PORT`              | `8080`     | Port HTTP                                                                                              |
 | `UPLOAD_DIR`        | `uploads`  | Dossier des images uploadées                                                                           |
 | `MAX_UPLOAD_SIZE`   | `10485760` | Taille max d'un upload (octets) ; les corps JSON sont limités à 1 Mio                                  |
+| `EXTERNAL_USER_AGENT` | `Collectionnard/1.0 (+URL du dépôt)` | User-Agent envoyé à Wikidata et à la BnF (leurs règles demandent un nom et un contact) |
 
 **Frontend** :
 
@@ -159,6 +160,7 @@ colec/
 │       ├── handler/        # Handlers HTTP (1 fichier par domaine)
 │       ├── middleware/     # Auth JWT, RequireAdmin, RateLimiter, RequestLogger
 │       ├── dbmigrate/      # Migrations (tern) + seed
+│       ├── external/       # Sources ouvertes : clients Wikidata et BnF (SRU), connecteur bdmanga
 │       ├── model/          # Structs Go (JSON tags)
 │       ├── store/          # Couche d'accès BDD (pgx)
 │       ├── validator/      # Validation JSON Schema
@@ -185,7 +187,9 @@ colec/
         │   └── admin/
         │       ├── ItemTypesView.vue
         │       ├── RelationTypesView.vue
-        │       └── CollectionTypesView.vue
+        │       ├── CollectionTypesView.vue
+        │       ├── ImportExportView.vue
+        │       └── ExternalImportView.vue   # Import depuis Wikidata / BnF (recherche, aperçu, simulation)
         └── components/
             ├── layout/
             │   └── AppLayout.vue
@@ -227,6 +231,7 @@ La spécification complète est dans [api/openapi.yaml](api/openapi.yaml).
 | CollectionTypes | CRUD `/collection-types`                                                      | Admin                             |
 | Items           | CRUD `/items` + recherche plein texte, filtres et tri par attribut, `related_to` | Admin (écriture)                  |
 | Import / export  | `GET /export`, `POST /import` (catalogue JSON, admin), `GET /items/export` (CSV), `GET /collections/{id}/export`, `POST /collections/import` | Admin / Authentifié |
+| Sources externes | `GET /external/bd-manga/works` (Wikidata), `GET /external/bd-manga/editions` (BnF, titre ou ISBN), `POST /external/bd-manga/preview`, `POST /external/bd-manga/import` (simulation `dry_run`) | Admin |
 | Relations       | CRUD `/relations` + `GET /items/{id}/relations`                               | Admin (écriture)                  |
 | Graph           | `GET /items/{id}/graph`                                                       | JWT                               |
 | Collections     | CRUD `/collections` + gestion items                                           | JWT (owner)                       |

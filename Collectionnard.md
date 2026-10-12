@@ -162,10 +162,10 @@ une abstraction de ce schéma ; elle n'existe pas dans l'implémentation.
 | -------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `x-order`            | racine    | Ordre d'affichage des champs (tableau de clés ; les clés absentes suivent)                                                                                                                               |
 | `x-labels`           | racine    | Libellés par langue : `{ "fr": { "title": "Titre" }, "en": { "title": "Title" } }`                                                                                                                       |
-| `x-title`            | racine    | Nom affiché du méta-type par langue : `{ "fr": "Série", "en": "Series" }` ; repli sur la colonne `name` (identifiant technique anglais) |
-| `x-description`      | racine    | Description du méta-type par langue ; repli sur la colonne `description` |
-| `x-enum-labels`      | propriété | Libellés des valeurs d'un `enum` par langue : `{ "fr": { "tv": "Télévision" }, "en": { "tv": "TV" } }` ; repli sur la valeur brute |
-| `x-widget`           | propriété | Widget dédié : `i18n-text` (objet `{fr, en, …}` : une chaîne par langue, codes supplémentaires acceptés), `image-gallery` (objet de catégories)                                                                                                                     |
+| `x-title`            | racine    | Nom affiché du méta-type par langue : `{ "fr": "Série", "en": "Series" }` ; repli sur la colonne `name` (identifiant technique anglais)                                                                  |
+| `x-description`      | racine    | Description du méta-type par langue ; repli sur la colonne `description`                                                                                                                                 |
+| `x-enum-labels`      | propriété | Libellés des valeurs d'un `enum` par langue : `{ "fr": { "tv": "Télévision" }, "en": { "tv": "TV" } }` ; repli sur la valeur brute                                                                       |
+| `x-widget`           | propriété | Widget dédié : `i18n-text` (objet `{fr, en, …}` : une chaîne par langue, codes supplémentaires acceptés), `image-gallery` (objet de catégories)                                                          |
 | `x-image-categories` | propriété | Catégories d'images et ratios : `{ "poster": { "ratio": "2/3" } }` (avec `image-gallery`)                                                                                                                |
 | `x-label`            | racine    | Gabarit du libellé des instances : `"{title}"`, `"{number}. {title}"`, `"{last_name} {first_name}"` ; sans gabarit, repli sur `title`, `name`, `label` (Go `internal/label`, TS `web/src/lib/schema.ts`) |
 
@@ -306,6 +306,7 @@ La table unique d'items avec attributs dynamiques nécessite une attention parti
 
 ### Sources de données externes (long terme)
 
+- BD / manga : Wikidata (œuvres, auteurs) et BnF (éditions françaises, tomes), connecteur livré en Phase 3 (`server/internal/external/bdmanga`, page admin « Sources externes »)
 - Intégration d'APIs tierces : TMDB (films/séries), OpenLibrary (livres), Scryfall (Magic), TCGdex (Pokémon)…
 - Scan de codes-barres / ISBN avec auto-complétion (app mobile)
 
@@ -359,7 +360,15 @@ Lots de `docs/audit/03-feuille-de-route.md`, branche `remise-a-niveau` :
 - [x] Import/Export (lot 12) : export JSON du catalogue et réimportation idempotente (UUID conservés, mise à jour par id, jamais de suppression, tout ou rien, simulation `dry_run` avec rapport par entité) ; exports CSV des items d'un type (filtres de la recherche) ; export d'une collection (JSON ou CSV) et réimportation JSON dans son compte (la collection devient le contenu du fichier, sinon copie), BOM UTF-8, séparateur au choix, protection contre l'injection de formules
 - [x] Domaine BD / Manga (lot 13) : 8 ItemTypes et 7 RelationTypes (`db/seed_bd_manga.sql`), exemples réels Dragon Ball et Astérix tirés de Wikidata (CC0) et de la BnF (Licence Ouverte) avec `external_ids` / `sources` ; rôles multiples (`roles` en tableau d'enum, sélection multiple dans les formulaires) ; seeds chargés en liste (`SEED_FILE`)
 
-### Phase 3 : Social
+### Phase 3 : Récupération automatique externe
+
+- [ ] Recherche et intégration d'APIs externes
+  - [x] Livre/BD/manga (wikidata, BnF) : connecteur `bdmanga` (admin, page « Sources externes ») — recherche d'une œuvre sur Wikidata et d'éditions françaises à la BnF (titre ou ISBN d'un tome), aperçu à cocher (œuvre, univers, auteurs avec rôles, éditeurs, tomes ; réimpressions décochées) et corrigeable avant la simulation (formulaire du type, ex. tome sans numéro), rapprochement du catalogue (QID, ARK, ISBN, nom d'éditeur) où seuls les champs vides sont complétés, simulation puis import par `POST /import` (tout ou rien) ; `sources` porte la date de récupération (attribution BnF)
+  - [ ] Musique
+  - [ ] Série (thetvdb, imdb, …)
+  - [ ] Film (themoviedb)
+
+### Phase 4 : Social
 
 - [ ] Statistiques et visualisation graphiques
 - [ ] Soumission d'items par les users (validation admin)
@@ -367,9 +376,8 @@ Lots de `docs/audit/03-feuille-de-route.md`, branche `remise-a-niveau` :
 - [ ] Partage de collections
 - [ ] Système d'échange
 
-### Phase 4 : Intégrations
+### Phase 5 : Intégrations, …
 
-- [ ] APIs externes (TMDB, OpenLibrary…)
 - [ ] App mobile avec scan de codes-barres
 
 ---

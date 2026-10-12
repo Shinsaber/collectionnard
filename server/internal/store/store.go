@@ -114,4 +114,8 @@ type Store interface {
 	// ImportCollection restores a collection export into the account of userID
 	// (same contract as ImportCatalog: validation errors are in the report).
 	ImportCollection(ctx context.Context, userID uuid.UUID, exp *model.CollectionExport, dryRun bool) (*model.ImportReport, error)
+
+	// External sources (matching of the items proposed by a connector)
+	FindItemsByAttribute(ctx context.Context, itemTypeID uuid.UUID, path, values []string, fold bool) ([]model.Item, error)
+	ListRelationsBetween(ctx context.Context, ids []uuid.UUID) ([]model.ItemRelation, error)
 }

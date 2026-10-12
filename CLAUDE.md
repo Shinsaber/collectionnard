@@ -25,7 +25,7 @@ des messages techniques en anglais. Ajouter une langue : `Collectionnard.md` § 
 | [server/CLAUDE.md](server/CLAUDE.md)   | Conventions backend Go                                           |
 | [web/CLAUDE.md](web/CLAUDE.md)         | Conventions frontend Vue                                         |
 | [docs/audit/](docs/audit/BRIEF.md)     | Brief et résultats de l'audit approfondi (`/audit`)              |
-| [docs/sources-externes.md](docs/sources-externes.md) | Bases ouvertes BD / Manga : licences, accès (Wikidata, BnF retenues) |
+| [docs/sources-externes.md](docs/sources-externes.md) | Bases ouvertes BD / Manga : licences, accès (Wikidata, BnF retenues), constats du connecteur |
 
 ## Modèle en une table
 
@@ -144,4 +144,5 @@ Nouveau compte : `go run . hash-password <mdp>` puis `INSERT INTO users …`.
 Phase 1 (MVP) : terminée. Phase 1.5 (remise à niveau issue de l'audit, branche `remise-a-niveau`,
 lots 0 à 11 livrés, voir `Collectionnard.md` §8 et `docs/audit/03-feuille-de-route.md`) : en cours.
 Phase 2 livrée : multilingue, recherche avancée (lot 14), import/export (lot 12), domaine BD / Manga (lot 13,
-`les.collection.md`, sources Wikidata / BnF). Suite : Phase 3 (statistiques, soumission d'items par les users, social).
+`les.collection.md`, sources Wikidata / BnF). Phase 3 (récupération automatique externe) en cours : connecteur BD / Manga
+livré (`server/internal/external/bdmanga`, page admin « Sources externes ») ; suite : musique, séries, films. Phase 4 : social.

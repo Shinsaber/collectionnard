@@ -187,7 +187,7 @@ tard (GCD, Open Library, AniList…) est dans [`docs/sources-externes.md`](docs/
 | Édition, Tome (+ autorités Personne / Éditeur)     | **BnF**      | Licence Ouverte : citer la source et la date    |
 
 Le schéma reste **le nôtre** : on ne calque pas le modèle d'une source. Chaque item garde simplement de quoi
-retrouver sa fiche d'origine, ce qui prépare les connecteurs de la Phase 4.
+retrouver sa fiche d'origine : c'est la clé de rapprochement du connecteur (Phase 3, ci-dessous).
 
 ### Attributs communs (tous les ItemTypes du domaine)
 
@@ -199,7 +199,7 @@ retrouver sa fiche d'origine, ce qui prépare les connecteurs de la Phase 4.
 - Motifs de validation : `wikidata` → `^Q[1-9][0-9]*$` ; `bnf_ark` → `^ark:/12148/[a-z0-9]+$`.
 - Les identifiants d'autres bases (MangaUpdates `P11149`, MyAnimeList `P4087`, AniList `P8731`, Comic Vine
   `P5905`) ne sont **pas** stockés : ils se retrouvent à la demande via le QID Wikidata.
-- `isbn` reste un attribut propre du Tome (identifiant métier, recherche par code-barres en Phase 4).
+- `isbn` reste un attribut propre du Tome (identifiant métier, recherche par code-barres en Phase 5).
 - Ni les textes Wikipédia (CC BY-SA) ni les images (licences propres, couvertures protégées) ne sont repris :
   `description` / `biography` sont écrites à la main ou reprises des **descriptions** Wikidata (CC0) ; les
   images restent des uploads.
@@ -233,14 +233,42 @@ retrouver sa fiche d'origine, ce qui prépare les connecteurs de la Phase 4.
 (`bib.persistentid` → `bnf_ark`, recherche par `bib.fuzzyIsbn`) ; une Édition = la collection éditoriale ou
 l'ensemble multivolume qui regroupe ces notices (`bib.col2bib`, `bib.ens2bib`). Champs du Tome : `isbn`,
 `title` / `subtitle`, `number` (numéro dans la série), `publication_date`, `page_count`, `retail_price`,
-éditeur (→ relation `edited_by` de l'Édition). Les zones exactes (UNIMARC / INTERMARC) sont à revalider au
-moment du connecteur : la BnF a changé de modèle de catalogage en juin 2026.
+éditeur (→ relation `edited_by` de l'Édition). Zones vérifiées sur des notices réelles pour le connecteur
+(2026-10-11, après le changement de modèle de catalogage de juin 2026) : voir « Import depuis les sources ».
 
 ### Pour le seed (lot 13)
 
 Les exemples (Dragon Ball, une BD franco-belge) sont repris de Wikidata (œuvres, auteurs, éditeurs) et de
 la BnF (une édition française et quelques tomes), avec leurs `external_ids` et `sources` réels : données
-légalement réutilisables et déjà au bon format pour les futurs connecteurs.
+légalement réutilisables et au format du connecteur (section suivante).
+
+### Import depuis les sources (Phase 3)
+
+Connecteur [`server/internal/external/bdmanga`](server/internal/external/bdmanga), page admin « Sources externes »
+(`/admin/external-import`), API `/external/bd-manga/*` (voir `api/openapi.yaml`, tag `External`). Le connecteur
+trouve les types du domaine par **nom technique** (`Manga`, `Comic`, `Universe`, `Edition`, `Volume`, `Person`,
+`Publisher` ; `contains_work`, `created_by`, `published_as`, `edited_by`, `contains_volume`) et répond 409
+`connector_unavailable` s'il en manque un ; les attributs proposés sont ajustés au schéma (clé ou valeur d'enum
+absente du schéma : ignorée).
+
+| Étape      | Ce qui se passe                                                                                                          |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Recherche  | Œuvre par titre sur Wikidata (classes série de manga, série de BD, roman graphique, comic strip, webtoon…) ; éditions BnF par titre (`bib.serialtitle`) ou par ISBN d'un tome (`bib.fuzzyIsbn` → zone 461 ou 410 du tome) |
+| Aperçu     | Œuvre + univers (`P8345`) + auteurs (`P50` → `author`, `P58` → `writer`, `P110` → `artist`, une relation par personne) ; pour chaque édition : notice d'ensemble, éditeurs (210 / 214 `$c`), tomes (`bib.ens2bib` **ou** `bib.col2bib`) |
+| Rapprochement | Item existant du même type par `external_ids.wikidata`, `external_ids.bnf_ark`, `isbn` (tomes) ou `name` sans casse ni accents (éditeurs) : ses valeurs sont gardées, seuls les champs vides (et les langues manquantes d'un texte i18n) sont remplis, `sources` gagne l'entrée de la source ; une relation existante est réutilisée, ses rôles ne changent pas |
+| Correction | Avant la simulation, chaque nœud peut être corrigé avec le formulaire de son type (ex. numéro d'un tome) : `overrides` (clé → attributs complets) remplace la proposition, l'ordre d'un tome dans son édition suit son numéro corrigé ; un nœud corrigé est coché |
+| Import     | Les nœuds cochés passent par `POST /import` (tout ou rien, `dry_run` pour la simulation) ; les tags des items existants sont conservés ; une relation est écrite si chaque extrémité est cochée ou déjà en base |
+
+Limites constatées sur les données réelles (2026-10-11) :
+
+- Les tomes d'une même édition peuvent porter le même numéro (réimpressions, nouvelle édition dans le même ensemble) :
+  le plus ancien est coché, les autres sont marqués « réimpression ».
+- Les albums anciens rattachés à une **collection éditoriale** (zone 410, ex. « Une aventure d'Astérix le Gaulois »)
+  n'ont souvent **pas de numéro** : ils sont proposés décochés avec le numéro 0, à corriger dans l'aperçu.
+- La BnF ne donne que l'année de publication : `publication_date` (date complète) n'est pas rempli. Les prix en francs
+  sont ignorés, seuls les prix en euros alimentent `retail_price`.
+- Non repris pour l'instant : sagas (pas d'équivalent Wikidata), adaptations (`adapted_as`), traducteurs et autres
+  contributeurs BnF (zones 700-702), format et statut des éditions, images.
 
 ---
 
