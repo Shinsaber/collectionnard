@@ -68,6 +68,18 @@ const router = createRouter({
           component: () => import("@/views/admin/CollectionTypesView.vue"),
           meta: { admin: true },
         },
+        {
+          path: "admin/import-export",
+          name: "import-export",
+          component: () => import("@/views/admin/ImportExportView.vue"),
+          meta: { admin: true },
+        },
+        {
+          path: "admin/external-import",
+          name: "external-import",
+          component: () => import("@/views/admin/ExternalImportView.vue"),
+          meta: { admin: true },
+        },
       ],
     },
   ],

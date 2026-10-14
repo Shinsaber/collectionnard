@@ -17,7 +17,7 @@ info:
     |---|---|---|
     | **ItemType** | Définit le schéma d'un item (ex: "Série", "Épisode") | **Item** |
     | **RelationType** | Définit un lien entre items + contraintes source→target | **ItemRelation** |
-    | **CollectionType** | Définit le contexte d'ajout à une collection (ex: "Possession") | **CollectionItem** |
+    | **CollectionType** | Définit le contexte d'ajout à une collection (ex: "Ownership") | **CollectionItem** |
 
     Chaque méta-type contient un champ `attributes_schema` qui est un **JSON Schema standard**
     (draft 2020-12). Les instances portent un champ `attributes` (JSONB) validé contre ce schéma
@@ -31,8 +31,10 @@ info:
 
     ### Authentification
 
-    L'API utilise des **JWT Bearer tokens**. Obtenez un token via `POST /auth/login`,
-    puis envoyez-le dans le header `Authorization: Bearer <token>`.
+    L'API utilise des **JWT Bearer tokens** de courte durée (défaut 15 min) accompagnés d'un
+    **refresh token** à rotation. Obtenez le couple via `POST /auth/login`, envoyez l'access
+    token dans le header `Authorization: Bearer <token>`, renouvelez-le avec `POST /auth/refresh`
+    et révoquez le refresh token avec `POST /auth/logout`.
 
     ### Rôles
 
@@ -53,6 +55,7 @@ info:
     name: Collectionnard
   license:
     name: MIT
+    identifier: MIT
 
 servers:
   - url: /api/v1
@@ -78,9 +81,9 @@ tags:
       **Admin uniquement.** Gestion des types de relations entre items.
       Un RelationType définit :
       - Les **contraintes source→target** : quels ItemTypes peuvent être liés
-        (ex: `diffuse_en` ne peut lier que Série→Diffusion)
+        (ex: `broadcast_on` ne peut lier que Series→Broadcast)
       - Un **JSON Schema** pour les attributs portés par le lien
-        (ex: disque, piste pour un lien DVD→Épisode)
+        (ex: disc, track pour un lien DVD→Épisode)
 
       Ces contraintes permettent au frontend de proposer uniquement les types
       de relation pertinents lors de la création d'un lien.
@@ -91,8 +94,8 @@ tags:
       que l'utilisateur renseigne quand il ajoute un item à sa collection.
 
       Exemples :
-      - **Possession** : état physique, prix d'achat, date d'acquisition
-      - **Visionnage** : date vue, note sur 10, progression en %
+      - **Ownership** : état physique, prix d'achat, date d'acquisition
+      - **Watching** : date vue, rating (0-10), progress en %
       - **Wishlist** : priorité, budget maximum
   - name: Items
     description: |
@@ -149,8 +152,32 @@ tags:
   - name: Uploads
     description: |
       Upload et récupération de fichiers images. Les images sont stockées localement
-      sur le serveur. L'upload est réservé aux admins, la consultation nécessite
-      une authentification.
+      sur le serveur. L'upload est réservé aux admins ; la lecture (`GET /uploads/{filename}`)
+      est publique car les balises `<img>` ne peuvent pas envoyer d'en-tête Authorization.
+  - name: ImportExport
+    description: |
+      Export du catalogue (JSON, admin) et réimportation idempotente (les UUID sont conservés :
+      réimporter un export met à jour, ne duplique pas, ne supprime jamais) ; exports CSV des
+      items d'un type et d'une collection, pour un tableur. Les comptes et les collections des
+      utilisateurs ne font pas partie de l'export du catalogue.
+  - name: External
+    description: |
+      **Admin uniquement.** Récupération depuis des sources ouvertes, connecteur BD / Manga :
+      œuvres, univers et auteurs sur **Wikidata** (CC0), éditions françaises et tomes sur la **BnF**
+      (Licence Ouverte : source et date de récupération écrites dans `sources`). Parcours :
+      recherche (`works`, `editions`) → aperçu (`preview`) → simulation puis import (`import`,
+      même rapport que `POST /import`).
+
+      Le connecteur écrit dans les types du domaine BD / Manga, trouvés par nom technique (`Manga`,
+      `Comic`, `Universe`, `Edition`, `Volume`, `Person`, `Publisher` ; relations `contains_work`,
+      `created_by`, `published_as`, `edited_by`, `contains_volume`) : s'il en manque, 409
+      `connector_unavailable`. Les items déjà présents (même QID Wikidata, ARK BnF, ISBN, ou nom
+      d'éditeur sans casse ni accents) gardent leurs valeurs : la source ne remplit que les champs
+      vides. Source injoignable : 502 `external_unavailable`.
+  - name: Health
+    description: |
+      État de santé de l'API (connexion à la base). Public, utilisé par le healthcheck
+      docker-compose et la supervision.
 
 # =============================================================================
 # Sécurité
@@ -192,14 +219,41 @@ components:
 
     LoginResponse:
       type: object
-      description: Réponse d'authentification contenant le token JWT et le profil utilisateur.
+      description: |
+        Réponse d'authentification : un access token JWT de courte durée, un refresh token
+        opaque pour le renouveler, et le profil utilisateur. Renvoyée par `POST /auth/login`
+        et `POST /auth/refresh`.
+      required: [token, refresh_token, expires_in, user]
       properties:
         token:
           type: string
-          description: "Token JWT à utiliser dans le header `Authorization: Bearer <token>`."
+          description: |
+            Access token JWT (HS256, claims `sub`, `role`, `iss`, `iat`, `exp`) à envoyer dans le
+            header `Authorization: Bearer <token>`. Durée de vie `ACCESS_TOKEN_TTL` (défaut 15 min).
           example: eyJhbGciOiJIUzI1NiIs...
+        refresh_token:
+          type: string
+          description: |
+            Token opaque (256 bits, base64url) permettant d'obtenir un nouveau couple de tokens via
+            `POST /auth/refresh`. **Usage unique** : chaque refresh invalide le token présenté et en
+            renvoie un nouveau (rotation). Durée de vie `REFRESH_TOKEN_TTL` (défaut 30 jours).
+            Révocable via `POST /auth/logout`.
+          example: 3q2-7wAAAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHw
+        expires_in:
+          type: integer
+          description: Durée de validité de `token` en secondes.
+          example: 900
         user:
           $ref: "#/components/schemas/User"
+
+    RefreshRequest:
+      type: object
+      description: Corps de `POST /auth/refresh` et `POST /auth/logout`.
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+          description: Refresh token reçu lors du login ou du dernier refresh.
 
     # -------------------------------------------------------------------------
     # User
@@ -249,8 +303,8 @@ components:
           format: uuid
         name:
           type: string
-          description: 'Nom unique du type (ex: "Serie", "Episode", "DVD").'
-          example: Serie
+          description: 'Nom unique du type (ex: "Series", "Episode", "DVD").'
+          example: Series
         description:
           type: string
           description: Description libre du type, affichée dans l'UI.
@@ -267,12 +321,12 @@ components:
             Le schéma doit avoir `"type": "object"` à la racine.
           example:
             type: object
-            required: [titre]
+            required: [title]
             properties:
-              titre: { type: string, minLength: 1 }
+              title: { type: string, minLength: 1 }
               synopsis: { type: string }
-              annee_debut: { type: integer, minimum: 1900 }
-              annee_fin: { type: integer, minimum: 1900 }
+              start_year: { type: integer, minimum: 1900 }
+              end_year: { type: integer, minimum: 1900 }
               poster: { type: string, format: uri }
             additionalProperties: false
         created_at:
@@ -326,7 +380,7 @@ components:
         name:
           type: string
           description: Nom unique du type de relation.
-          example: diffuse_en
+          example: broadcast_on
         description:
           type: string
           description: Description de la sémantique de cette relation.
@@ -357,13 +411,13 @@ components:
           type: object
           description: |
             JSON Schema pour les attributs portés par la relation.
-            Exemple : pour un lien DVD→Épisode, on peut avoir `{disque: integer, piste: integer}`.
+            Exemple : pour un lien DVD→Épisode, on peut avoir `{disc: integer, track: integer}`.
             Un schéma vide `{}` signifie que la relation ne porte pas de données additionnelles.
           example:
             type: object
             properties:
-              disque: { type: integer, minimum: 1 }
-              piste: { type: integer, minimum: 1 }
+              disc: { type: integer, minimum: 1 }
+              track: { type: integer, minimum: 1 }
             additionalProperties: false
         created_at:
           type: string
@@ -382,7 +436,7 @@ components:
       properties:
         name:
           type: string
-          description: 'Nom unique (ex: "diffuse_en", "contient_episode", "ecrit_par").'
+          description: 'Nom unique (ex: "broadcast_on", "contains_episode", "written_by").'
         description:
           type: string
           description: Description de la sémantique de cette relation.
@@ -434,9 +488,9 @@ components:
         que l'utilisateur remplit quand il ajoute un item à sa collection.
 
         Exemples :
-        - **Possession** : état_physique, prix_achat, date_acquisition
-        - **Visionnage** : date_vue, note (0-10), progression (%)
-        - **Wishlist** : priorité (1-5), budget_max
+        - **Ownership** : état_physique, purchase_price, acquisition_date
+        - **Watching** : watched_at, rating (0-10), progress (%)
+        - **Wishlist** : priority (1-5), max_budget
       properties:
         id:
           type: string
@@ -444,7 +498,7 @@ components:
         name:
           type: string
           description: Nom unique du type de collection.
-          example: Possession
+          example: Ownership
         description:
           type: string
           description: Description de la sémantique de ce type de collection.
@@ -458,13 +512,13 @@ components:
           example:
             type: object
             properties:
-              etat_physique:
+              condition:
                 {
                   type: string,
                   enum: [neuf, très bon, bon, acceptable, mauvais],
                 }
-              prix_achat: { type: number, minimum: 0 }
-              date_acquisition: { type: string, format: date }
+              purchase_price: { type: number, minimum: 0 }
+              acquisition_date: { type: string, format: date }
             additionalProperties: false
         created_at:
           type: string
@@ -480,7 +534,7 @@ components:
       properties:
         name:
           type: string
-          description: 'Nom unique (ex: "Possession", "Visionnage", "Wishlist").'
+          description: 'Nom unique (ex: "Ownership", "Watching", "Wishlist").'
         description:
           type: string
         attributes_schema:
@@ -528,12 +582,12 @@ components:
           type: object
           description: |
             Attributs métier de l'item au format JSONB. La structure dépend du ItemType.
-            Exemple pour une Série : `{"titre": "Breaking Bad", "annee_debut": 2008, "annee_fin": 2013}`
+            Exemple pour une Série : `{"title": "Breaking Bad", "start_year": 2008, "end_year": 2013}`
           example:
-            titre: Breaking Bad
+            title: Breaking Bad
             synopsis: Un professeur de chimie se tourne vers la fabrication de méthamphétamine.
-            annee_debut: 2008
-            annee_fin: 2013
+            start_year: 2008
+            end_year: 2013
         tags:
           type: array
           items:
@@ -573,18 +627,19 @@ components:
     ItemUpdate:
       type: object
       description: |
-        Modification d'un item. Les attributs fournis sont fusionnés avec les existants,
-        puis le résultat est validé contre le JSON Schema du ItemType.
-        Pour supprimer un attribut optionnel, passer sa valeur à `null`.
+        Modification d'un item (sémantique PUT : **remplacement**). `attributes`, s'il est
+        fourni, remplace intégralement l'objet existant et est validé contre le JSON Schema
+        du ItemType ; envoyer l'objet complet (le front le fait toujours). Omis, les attributs
+        sont inchangés.
       properties:
         attributes:
           type: object
-          description: Attributs à modifier. Revalidés contre le JSON Schema.
+          description: Nouvel objet d'attributs complet, validé contre le JSON Schema.
         tags:
           type: array
           items:
             type: string
-          description: Nouvelle liste de tags (remplace l'existante).
+          description: "Nouvelle liste de tags : omis = inchangés, `[]` = supprime tous les tags."
 
     # -------------------------------------------------------------------------
     # ItemRelation
@@ -593,7 +648,7 @@ components:
       type: object
       description: |
         Relation entre deux items (arête orientée du graphe). Porte les attributs
-        définis par le RelationType (ex: numéro de disque/piste pour un lien DVD→Épisode).
+        définis par le RelationType (ex: numéro de disc/track pour un lien DVD→Épisode).
       properties:
         id:
           type: string
@@ -625,11 +680,15 @@ components:
             Attributs du lien, validés contre le `attributes_schema` du RelationType.
             Peut être vide `{}` si le RelationType n'a pas d'attributs.
           example:
-            disque: 1
-            piste: 3
+            disc: 1
+            track: 3
         created_at:
           type: string
           format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          description: Dernière modification des attributs (migration 002).
 
     ItemRelationCreate:
       type: object
@@ -667,6 +726,7 @@ components:
       description: |
         Modification des attributs d'une relation existante. On ne peut pas changer
         les items source/target ni le type — il faut supprimer et recréer la relation.
+      required: [attributes]
       properties:
         attributes:
           type: object
@@ -692,7 +752,7 @@ components:
         collection_type_id:
           type: string
           format: uuid
-          description: ID du CollectionType (Possession, Visionnage, Wishlist…).
+          description: ID du CollectionType (Ownership, Watching, Wishlist…).
         collection_type:
           $ref: "#/components/schemas/CollectionType"
           description: CollectionType complet (inclus dans les réponses GET).
@@ -774,12 +834,12 @@ components:
             Attributs contextuels de l'item dans cette collection, validés contre
             le `attributes_schema` du CollectionType de la collection parente.
 
-            Exemple pour un CollectionType "Possession" :
-            `{"etat_physique": "neuf", "prix_achat": 45.00, "date_acquisition": "2020-12-25"}`
+            Exemple pour un CollectionType "Ownership" :
+            `{"condition": "neuf", "purchase_price": 45.00, "acquisition_date": "2020-12-25"}`
           example:
-            etat_physique: neuf
-            prix_achat: 45.00
-            date_acquisition: "2020-12-25"
+            condition: new
+            purchase_price: 45.00
+            acquisition_date: "2020-12-25"
         created_at:
           type: string
           format: date-time
@@ -813,6 +873,7 @@ components:
       description: |
         Modification des attributs contextuels d'un item dans une collection.
         Les attributs sont revalidés contre le JSON Schema du CollectionType.
+      required: [attributes]
       properties:
         attributes:
           type: object
@@ -851,9 +912,9 @@ components:
             Attributs contextuels de l'item dans cette collection, définis par
             le `attributes_schema` du CollectionType de la collection.
           example:
-            etat_physique: neuf
-            prix_achat: 45.00
-            date_acquisition: "2020-12-25"
+            condition: new
+            purchase_price: 45.00
+            acquisition_date: "2020-12-25"
 
     # -------------------------------------------------------------------------
     # Graph
@@ -869,12 +930,12 @@ components:
         type:
           type: string
           description: Nom du ItemType de cet item.
-          example: Serie
+          example: Series
         label:
           type: string
           description: |
             Label lisible de l'item, dérivé automatiquement des attributs
-            (premier champ texte non-vide parmi titre, nom, numéro…).
+            calculé côté serveur avec le gabarit `x-label` de l'ItemType (repli : `title`, `name`, `label`…).
           example: Breaking Bad
         attributes:
           type: object
@@ -888,11 +949,35 @@ components:
             - Valeurs négatives (-1, -2, -3…) : nœuds ascendants (target → source)
           example: 0
 
+    GraphEdge:
+      type: object
+      description: Arête du sous-graphe (une ItemRelation projetée).
+      required: [source_id, target_id, relation_type, attributes]
+      properties:
+        source_id:
+          type: string
+          format: uuid
+          description: ID de l'item source.
+        target_id:
+          type: string
+          format: uuid
+          description: ID de l'item cible.
+        relation_type:
+          type: string
+          description: Nom du RelationType.
+          example: includes_episode
+        attributes:
+          type: object
+          description: Attributs de la relation.
+
     GraphResponse:
       type: object
       description: |
         Résultat d'une traversée de graphe. Contient tous les nœuds et arêtes
         accessibles depuis l'item racine, jusqu'à la profondeur demandée.
+
+        L'exploration est bornée par `GRAPH_MAX_NODES` nœuds (défaut 500) : au-delà,
+        `truncated` vaut `true` et le sous-graphe est partiel.
 
         Format directement exploitable par les librairies de visualisation de graphe :
         - **D3.js** : `nodes` → nœuds, `edges` → links
@@ -902,6 +987,9 @@ components:
         root:
           $ref: "#/components/schemas/GraphNode"
           description: Nœud racine de la traversée.
+        truncated:
+          type: boolean
+          description: "`true` si la limite de nœuds du serveur a interrompu l'exploration."
         nodes:
           type: array
           items:
@@ -910,24 +998,8 @@ components:
         edges:
           type: array
           items:
-            type: object
-            properties:
-              source_id:
-                type: string
-                format: uuid
-                description: ID de l'item source.
-              target_id:
-                type: string
-                format: uuid
-                description: ID de l'item cible.
-              relation_type:
-                type: string
-                description: Nom du RelationType de cette arête.
-                example: diffuse_en
-              attributes:
-                type: object
-                description: Attributs portés par cette arête.
-          description: Toutes les arêtes (relations) du sous-graphe.
+            $ref: "#/components/schemas/GraphEdge"
+          description: Arêtes entre les nœuds du sous-graphe (racine incluse).
 
     # -------------------------------------------------------------------------
     # Pagination
@@ -962,23 +1034,69 @@ components:
     # -------------------------------------------------------------------------
     # Erreur
     # -------------------------------------------------------------------------
+    ItemsByType:
+      type: object
+      description: Nombre d'items pour un ItemType.
+      required: [type_name, count]
+      properties:
+        type_name:
+          type: string
+          description: Nom du ItemType.
+          example: Episode
+        count:
+          type: integer
+          description: Nombre d'items de ce type.
+          example: 42
+
+    Stats:
+      type: object
+      description: Statistiques globales du catalogue et des collections.
+      required: [items_by_type, total_items, total_collections, total_relations]
+      properties:
+        items_by_type:
+          type: array
+          description: Comptage d'items ventilé par ItemType.
+          items:
+            $ref: "#/components/schemas/ItemsByType"
+        total_items:
+          type: integer
+          description: Nombre total d'items dans le catalogue.
+          example: 156
+        total_collections:
+          type: integer
+          description: Nombre total de collections (tous utilisateurs).
+          example: 12
+        total_relations:
+          type: integer
+          description: Nombre total de relations (arêtes du graphe).
+          example: 340
+
     Error:
       type: object
       description: |
         Format d'erreur standard. Toutes les erreurs API suivent ce format.
+        Le client affiche l'erreur en traduisant le code `error` dans la langue de l'utilisateur ;
+        `message` n'est qu'un repli technique (en anglais, non traduit, susceptible d'évoluer).
         Le champ `details` est optionnel et peut contenir des informations
         spécifiques au type d'erreur (ex: erreurs de validation par champ).
       properties:
         error:
           type: string
           description: |
-            Code d'erreur machine, stable et utilisable par le code client.
-            Exemples : `validation_error`, `not_found`, `conflict`, `unauthorized`, `forbidden`.
+            Code d'erreur machine **stable**, destiné à être traduit côté client (clé i18n).
+            Valeurs émises : `bad_request` (400), `unauthorized` (401), `forbidden` (403),
+            `not_found` (404), `conflict` (409), `payload_too_large` (413),
+            `validation_error` (422), `rate_limited` (429), `internal` (500),
+            `timeout` (503, exploration du graphe trop longue), `connector_unavailable` (409, types d'un
+            connecteur absents du catalogue), `external_unavailable` (502, source externe injoignable).
+            Un client doit prévoir un libellé générique pour un code inconnu.
           example: validation_error
         message:
           type: string
-          description: Message lisible par un humain, localisé si possible.
-          example: Les attributs ne respectent pas le schéma du type
+          description: |
+            Texte technique en anglais, destiné au débogage et aux journaux ; non traduit,
+            son libellé exact n'est pas garanti. L'interface utilisateur s'appuie sur `error`.
+          example: attributes do not match the item type schema
         details:
           type: object
           description: |
@@ -986,12 +1104,289 @@ components:
             invalides et la raison de l'erreur pour chacun.
           example:
             fields:
-              titre: "required — ce champ est obligatoire"
-              annee_debut: "minimum — doit être >= 1900"
+              "/": "missing properties: 'title'"
+              "/start_year": "must be >= 1900 but found 1800"
 
     # -------------------------------------------------------------------------
     # Upload
     # -------------------------------------------------------------------------
+    CatalogExport:
+      type: object
+      description: |
+        Catalogue complet (format `collectionnard.catalog`, version 1) : méta-types, items (avec
+        les noms de leurs tags) et relations, chaque liste triée par `id` pour des diffs stables.
+        Sans horodatage par entité ni données d'utilisateur. Accepté tel quel par `POST /import`.
+      required: [format, version, item_types, relation_types, collection_types, items, relations]
+      properties:
+        format:
+          type: string
+          enum: [collectionnard.catalog]
+        version:
+          type: integer
+          enum: [1]
+        exported_at:
+          type: string
+          format: date-time
+          description: Informatif, ignoré à l'import.
+        item_types:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExportMetaType"
+        collection_types:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExportMetaType"
+        relation_types:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/ExportMetaType"
+              - type: object
+                required: [source_item_type_ids, target_item_type_ids]
+                properties:
+                  source_item_type_ids:
+                    type: array
+                    items: { type: string, format: uuid }
+                  target_item_type_ids:
+                    type: array
+                    items: { type: string, format: uuid }
+        items:
+          type: array
+          items:
+            type: object
+            required: [id, item_type_id, attributes]
+            properties:
+              id: { type: string, format: uuid }
+              item_type_id: { type: string, format: uuid }
+              attributes: { type: object, additionalProperties: true }
+              tags:
+                type: array
+                items: { type: string }
+                description: Noms des tags ; à l'import, remplace l'ensemble des tags de l'item.
+        relations:
+          type: array
+          items:
+            type: object
+            required: [id, relation_type_id, source_item_id, target_item_id]
+            properties:
+              id: { type: string, format: uuid }
+              relation_type_id: { type: string, format: uuid }
+              source_item_id: { type: string, format: uuid }
+              target_item_id: { type: string, format: uuid }
+              attributes: { type: object, additionalProperties: true }
+    ExportMetaType:
+      type: object
+      required: [id, name, attributes_schema]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        attributes_schema: { type: object, additionalProperties: true }
+    ImportReport:
+      type: object
+      description: |
+        Résultat d'un import. `applied` est vrai seulement si l'import a été validé (aucune
+        erreur et pas `dry_run`). Une entité identique à l'existant compte comme `unchanged`.
+      required: [dry_run, applied, counts, errors]
+      properties:
+        dry_run: { type: boolean }
+        applied: { type: boolean }
+        collection_id:
+          type: string
+          format: uuid
+          description: Import de collection seulement — collection créée ou mise à jour.
+        counts:
+          type: object
+          description: |
+            Par liste : `item_types`, `collection_types`, `relation_types`, `items`, `relations` pour le
+            catalogue ; `collection` et `items` pour une collection (`removed` : items retirés).
+          additionalProperties:
+            type: object
+            required: [created, updated, unchanged]
+            properties:
+              created: { type: integer }
+              updated: { type: integer }
+              unchanged: { type: integer }
+              removed: { type: integer }
+        errors:
+          type: array
+          description: Au plus 100 erreurs, dans l'ordre du fichier.
+          items:
+            type: object
+            required: [entity, index, message]
+            properties:
+              entity:
+                type: string
+                enum: [file, item_types, collection_types, relation_types, items, relations, collection]
+              index:
+                type: integer
+                description: Position dans la liste (0-based), -1 pour une erreur de fichier.
+              id: { type: string, format: uuid }
+              message:
+                type: string
+                description: Texte technique en anglais (cause, champ fautif).
+      example:
+        dry_run: true
+        applied: false
+        counts:
+          items: { created: 2, updated: 0, unchanged: 8 }
+        errors:
+          - entity: items
+            index: 3
+            id: e0000000-0000-0000-0000-000000000099
+            message: "attributes: /start_year: must be >= 1900 but found 1800"
+    CollectionExport:
+      type: object
+      description: Collection d'un utilisateur et ses items (format `collectionnard.collection`, version 1).
+      required: [format, version, collection, items]
+      properties:
+        format: { type: string, enum: [collectionnard.collection] }
+        version: { type: integer, enum: [1] }
+        exported_at: { type: string, format: date-time }
+        collection:
+          type: object
+          properties:
+            id: { type: string, format: uuid }
+            name: { type: string }
+            description: { type: string }
+            collection_type: { $ref: "#/components/schemas/ExportMetaType" }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id: { type: string, format: uuid }
+              item_type: { type: string, description: Nom technique de l'ItemType. }
+              label: { type: string, description: Libellé (`x-label`) dans la langue `lang`. }
+              item_attributes: { type: object, additionalProperties: true }
+              attributes:
+                type: object
+                additionalProperties: true
+                description: Attributs contextuels (schéma du CollectionType).
+              added_at: { type: string, format: date-time }
+    ExternalWorkHit:
+      type: object
+      description: Œuvre (manga ou BD) trouvée sur Wikidata.
+      required: [wikidata_id, label, item_type_id, source_url]
+      properties:
+        wikidata_id: { type: string, example: Q15051307 }
+        label: { type: string, description: "Libellé Wikidata (fr, à défaut en)." }
+        description: { type: string }
+        item_type_id:
+          type: string
+          format: uuid
+          description: ItemType proposé (`Manga` ou `Comic`).
+        start_year: { type: integer }
+        existing_item_id:
+          type: string
+          format: uuid
+          description: Item du catalogue portant déjà ce QID.
+        source_url: { type: string, format: uri }
+    ExternalEditionHit:
+      type: object
+      description: |
+        Édition française trouvée à la BnF : ensemble multivolume (zone 461 des tomes) ou collection
+        éditoriale (zone 410).
+      required: [bnf_ark, title, publishers, source_url]
+      properties:
+        bnf_ark: { type: string, example: "ark:/12148/cb343384394" }
+        title: { type: string }
+        publishers: { type: array, items: { type: string } }
+        start_year: { type: integer }
+        existing_item_id: { type: string, format: uuid }
+        source_url: { type: string, format: uri }
+        matched_volume:
+          type: object
+          description: Recherche par ISBN seulement — le tome qui porte cet ISBN.
+          required: [bnf_ark, title]
+          properties:
+            bnf_ark: { type: string }
+            number: { type: integer }
+            title: { type: string }
+            isbn: { type: string }
+    ExternalImportRequest:
+      type: object
+      description: Sélection d'une œuvre Wikidata et / ou d'éditions BnF (au moins l'une des deux).
+      properties:
+        work:
+          type: string
+          pattern: "^Q[1-9][0-9]*$"
+          description: QID Wikidata de l'œuvre.
+        editions:
+          type: array
+          maxItems: 10
+          items: { type: string, pattern: "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$" }
+          description: ARK BnF des éditions (leurs tomes sont proposés).
+        selected:
+          type: array
+          items: { type: string }
+          description: Import seulement — clés (`key`) des nœuds de l'aperçu à écrire.
+        overrides:
+          type: object
+          description: |
+            Import seulement — corrections faites dans l'aperçu : clé de nœud → attributs complets, qui
+            remplacent ceux proposés (validés contre le schéma du type par l'import). Le nœud doit être
+            sélectionné. Pour un tome, l'ordre dans son édition suit le `number` corrigé.
+          additionalProperties: { type: object, additionalProperties: true }
+      example:
+        work: Q15051307
+        editions: ["ark:/12148/cb343384394"]
+    ExternalNode:
+      type: object
+      description: |
+        Item proposé. `attributes` est ce qui serait écrit : les valeurs existantes complétées par la
+        source. Un nœud non sélectionné n'est pas écrit ; une relation est écrite quand chacune de ses
+        extrémités est sélectionnée ou déjà dans le catalogue.
+      required: [key, role, item_type_id, attributes, status, selected, source_url]
+      properties:
+        key:
+          type: string
+          description: Identifiant du nœud (`wikidata:Q…`, `bnf:cb…`, `publisher:<nom>`).
+        role:
+          type: string
+          enum: [work, universe, person, edition, publisher, volume]
+        item_type_id: { type: string, format: uuid }
+        attributes: { type: object, additionalProperties: true }
+        existing_item_id: { type: string, format: uuid }
+        status:
+          type: string
+          enum: [new, update, unchanged]
+          description: "`new` créé, `update` item existant dont des champs vides seront remplis, `unchanged` rien à ajouter."
+        selected:
+          type: boolean
+          description: Sélection par défaut (faux pour une réimpression ou un tome sans numéro).
+        parent: { type: string, description: Clé du nœud dont il dépend (affichage en arbre). }
+        source_url: { type: string, format: uri }
+        note:
+          type: string
+          enum: [reprint, no_number]
+          description: "`reprint` un autre tome de l'édition a le même numéro, `no_number` numéro absent de la notice (0 proposé)."
+    ExternalRelation:
+      type: object
+      required: [relation_type_id, from, to, attributes]
+      properties:
+        relation_type_id: { type: string, format: uuid }
+        from: { type: string, description: Clé du nœud source. }
+        to: { type: string, description: Clé du nœud cible. }
+        attributes: { type: object, additionalProperties: true }
+        existing_id: { type: string, format: uuid, description: Relation déjà présente (réutilisée). }
+    ExternalPlan:
+      type: object
+      required: [retrieved_at, nodes, relations]
+      properties:
+        retrieved_at: { type: string, format: date, description: Date de récupération (écrite dans `sources`). }
+        nodes: { type: array, items: { $ref: "#/components/schemas/ExternalNode" } }
+        relations: { type: array, items: { $ref: "#/components/schemas/ExternalRelation" } }
+    ExternalImportReport:
+      allOf:
+        - $ref: "#/components/schemas/ImportReport"
+        - type: object
+          required: [item_ids]
+          properties:
+            item_ids:
+              type: object
+              description: Clé de nœud → id de l'item écrit (les nouveaux id ne valent qu'une fois l'import appliqué).
+              additionalProperties: { type: string, format: uuid }
     UploadResponse:
       type: object
       description: Réponse après un upload réussi.
@@ -1006,7 +1401,7 @@ components:
           example: 550e8400-e29b-41d4-a716-446655440000.jpg
         size:
           type: integer
-          description: Taille du fichier en octets.
+          description: Taille du fichier écrit sur le disc, en octets.
           example: 245760
 
   # ===========================================================================
@@ -1021,10 +1416,25 @@ components:
         type: integer
         default: 1
         minimum: 1
+    csvDelimiter:
+      name: delimiter
+      in: query
+      description: Séparateur CSV (`semicolon` pour un tableur configuré en français).
+      schema:
+        type: string
+        enum: [comma, semicolon, tab]
+        default: comma
+    lang:
+      name: lang
+      in: query
+      description: Langue des libellés (`x-label`) et des objets i18n affichés ; défaut `fr`.
+      schema:
+        type: string
+        default: fr
     per_page:
       name: per_page
       in: query
-      description: Nombre d'éléments par page. Min 1, max 100, défaut 20.
+      description: Nombre d'éléments par page. Défaut 20 ; une valeur > 100 est ramenée à 100, une valeur < 1 à 20.
       schema:
         type: integer
         default: 20
@@ -1035,7 +1445,8 @@ components:
       in: query
       description: |
         Champ de tri. Préfixer par `-` pour un tri descendant.
-        Exemples : `created_at`, `-created_at`, `attributes.titre`.
+        Valeurs acceptées : `created_at`, `updated_at` (défaut `-created_at`).
+        Toute autre valeur renvoie 400. `GET /items` accepte en plus `relevance` et `attr.<clé>`.
         Les champs de tri disponibles dépendent du type d'objet.
       schema:
         type: string
@@ -1054,18 +1465,19 @@ components:
             $ref: "#/components/schemas/Error"
           example:
             error: not_found
-            message: Ressource non trouvée
+            message: resource not found
     Unauthorized:
       description: |
         Non authentifié. Le token JWT est absent, expiré ou invalide.
-        Utilisez `POST /auth/login` pour obtenir un nouveau token.
+        Utilisez `POST /auth/refresh` (refresh token valide) ou `POST /auth/login`
+        pour obtenir un nouveau token.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
           example:
             error: unauthorized
-            message: Token manquant ou invalide
+            message: invalid or expired token
     Forbidden:
       description: |
         Droits insuffisants. L'utilisateur est authentifié mais son rôle
@@ -1076,7 +1488,7 @@ components:
             $ref: "#/components/schemas/Error"
           example:
             error: forbidden
-            message: Droits administrateur requis
+            message: admin role required
     ValidationError:
       description: |
         Erreur de validation. Les données envoyées ne respectent pas le JSON Schema
@@ -1088,11 +1500,11 @@ components:
             $ref: "#/components/schemas/Error"
           example:
             error: validation_error
-            message: Les attributs ne respectent pas le schéma du type
+            message: attributes do not match the item type schema
             details:
               fields:
-                titre: "required — ce champ est obligatoire"
-                annee_debut: "minimum — doit être >= 1900"
+                "/": "missing properties: 'title'"
+                "/start_year": "must be >= 1900 but found 1800"
     Conflict:
       description: |
         Conflit. L'opération est impossible car elle violerait une contrainte d'unicité
@@ -1103,12 +1515,129 @@ components:
             $ref: "#/components/schemas/Error"
           example:
             error: conflict
-            message: Cet item est déjà dans la collection
+            message: this item is already in the collection
+    TooManyRequests:
+      description: |
+        Trop de requêtes depuis cette adresse IP sur les endpoints `/auth/*`
+        (limite `LOGIN_RATE_LIMIT` par minute, défaut 10). Le header `Retry-After`
+        indique le délai d'attente en secondes.
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Secondes à attendre avant de réessayer.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: rate_limited
+            message: too many attempts, retry in 42 s
+    PayloadTooLarge:
+      description: |
+        Corps de requête JSON supérieur à 1 Mio (les uploads ont leur propre limite,
+        `MAX_UPLOAD_SIZE`).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: payload_too_large
+            message: request body too large (max 1048576 bytes)
+
+    ConnectorUnavailable:
+      description: |
+        Le catalogue ne contient pas tous les types du domaine BD / Manga que le connecteur écrit
+        (`db/seed_bd_manga.sql`) ; `message` les liste.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: connector_unavailable
+            message: "BD / Manga types missing from the catalogue: Volume, contains_volume"
+    ExternalUnavailable:
+      description: Source externe (Wikidata, BnF) injoignable, trop lente ou réponse illisible.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: external_unavailable
+            message: "external source unavailable: catalogue.bnf.fr answered HTTP 503"
+
+    BadRequest:
+      description: |
+        Requête invalide : UUID de chemin ou de filtre mal formé, JSON illisible, paramètre hors
+        bornes (`max_depth`, `sort`…) ou champ obligatoire manquant dans le corps.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: bad_request
+            message: "invalid UUID: id"
+    InternalError:
+      description: |
+        Erreur interne. La cause est journalisée côté serveur avec le `request_id` de la requête ;
+        le message renvoyé est volontairement générique.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: internal
+            message: internal error
 
 # =============================================================================
 # ENDPOINTS
 # =============================================================================
 paths:
+  # ===========================================================================
+  # Health
+  # ===========================================================================
+  /healthz:
+    get:
+      tags: [Health]
+      summary: État de santé
+      description: |
+        Vérifie que l'API répond et que PostgreSQL est joignable (`Ping`).
+        Aucune authentification, aucune limitation de débit.
+      operationId: healthz
+      security: []
+      responses:
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: API et base de données opérationnelles.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+              example:
+                status: ok
+        "503":
+          description: Base de données injoignable.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, error]
+                properties:
+                  status:
+                    type: string
+                    enum: [degraded]
+                  error:
+                    type: string
+              example:
+                status: degraded
+                error: database
+
   # ===========================================================================
   # Auth
   # ===========================================================================
@@ -1117,11 +1646,15 @@ paths:
       tags: [Auth]
       summary: Authentification
       description: |
-        Authentifie un utilisateur et retourne un token JWT.
-        Ce token doit être envoyé dans le header `Authorization: Bearer <token>`
+        Authentifie un utilisateur et retourne un access token JWT et un refresh token.
+        L'access token doit être envoyé dans le header `Authorization: Bearer <token>`
         pour tous les appels authentifiés.
 
-        Le token a une durée de validité configurable côté serveur (défaut : 24h).
+        L'access token expire après `ACCESS_TOKEN_TTL` (défaut 15 min, voir `expires_in`) ;
+        le client le renouvelle avec `POST /auth/refresh`. Le refresh token expire après
+        `REFRESH_TOKEN_TTL` (défaut 30 jours) et est révoqué par `POST /auth/logout`.
+
+        Limité à `LOGIN_RATE_LIMIT` appels par minute et par adresse IP (défaut 10).
       operationId: login
       security: []
       requestBody:
@@ -1131,12 +1664,22 @@ paths:
             schema:
               $ref: "#/components/schemas/LoginRequest"
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Connexion réussie. Le token JWT est dans le champ `token`.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/LoginResponse"
+        "400":
+          description: JSON invalide ou `username` / `password` manquant.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: Identifiants invalides.
           content:
@@ -1145,7 +1688,91 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: unauthorized
-                message: Nom d'utilisateur ou mot de passe incorrect
+                message: invalid username or password
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Renouvellement des tokens
+      description: |
+        Échange un refresh token valide contre un nouvel access token **et** un nouveau
+        refresh token. Le refresh token présenté est invalidé (rotation) : un token déjà
+        consommé, expiré ou révoqué renvoie 401 et le client doit se reconnecter.
+
+        L'utilisateur est relu en base : un compte supprimé ou dont le rôle a changé est
+        pris en compte au plus tard au prochain refresh.
+
+        Soumis à la même limitation de débit que `/auth/login`.
+      operationId: refreshToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Nouveaux tokens.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          description: JSON invalide ou `refresh_token` manquant.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Refresh token inconnu, expiré, déjà utilisé ou utilisateur supprimé.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: unauthorized
+                message: invalid or expired refresh token
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Déconnexion
+      description: |
+        Révoque le refresh token présenté. L'access token courant reste valide jusqu'à
+        son expiration (au plus `ACCESS_TOKEN_TTL`). Révoquer un token inconnu n'est pas
+        une erreur (204 également).
+      operationId: logout
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Refresh token révoqué.
+        "400":
+          description: JSON invalide ou `refresh_token` manquant.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
 
   /auth/me:
     get:
@@ -1154,6 +1781,8 @@ paths:
       description: Retourne le profil complet de l'utilisateur identifié par le token JWT.
       operationId: getCurrentUser
       responses:
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Profil de l'utilisateur authentifié.
           content:
@@ -1179,6 +1808,10 @@ paths:
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/per_page"
       responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Liste paginée des types d'items.
           content:
@@ -1212,19 +1845,27 @@ paths:
             schema:
               $ref: "#/components/schemas/ItemTypeCreate"
             example:
-              name: Serie
+              name: Series
               description: Série télévisée
               attributes_schema:
                 type: object
-                required: [titre]
+                required: [title]
                 properties:
-                  titre: { type: string, minLength: 1 }
+                  title: { type: string, minLength: 1 }
                   synopsis: { type: string }
-                  annee_debut: { type: integer, minimum: 1900 }
-                  annee_fin: { type: integer, minimum: 1900 }
+                  start_year: { type: integer, minimum: 1900 }
+                  end_year: { type: integer, minimum: 1900 }
                   poster: { type: string, format: uri }
                 additionalProperties: false
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "201":
           description: Type d'item créé avec succès.
           content:
@@ -1260,6 +1901,12 @@ paths:
         un formulaire de création/modification d'item.
       operationId: getItemType
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Type d'item trouvé.
           content:
@@ -1288,6 +1935,14 @@ paths:
             schema:
               $ref: "#/components/schemas/ItemTypeUpdate"
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Type modifié avec succès.
           content:
@@ -1309,6 +1964,12 @@ paths:
         Il faut d'abord supprimer tous les items et relations dépendants.
       operationId: deleteItemType
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "204":
           description: Type supprimé avec succès.
         "403":
@@ -1357,6 +2018,10 @@ paths:
             type: string
             format: uuid
       responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Liste paginée des types de relation.
           content:
@@ -1385,8 +2050,8 @@ paths:
             schema:
               $ref: "#/components/schemas/RelationTypeCreate"
             example:
-              name: inclut_episode
-              description: "DVD incluant un épisode. Porte le numéro de disque et de piste."
+              name: includes_episode
+              description: "DVD incluant un épisode. Porte le numéro de disc et de track."
               source_item_type_ids:
                 - b0000000-0000-0000-0000-000000000005
               target_item_type_ids:
@@ -1394,10 +2059,18 @@ paths:
               attributes_schema:
                 type: object
                 properties:
-                  disque: { type: integer, minimum: 1 }
-                  piste: { type: integer, minimum: 1 }
+                  disc: { type: integer, minimum: 1 }
+                  track: { type: integer, minimum: 1 }
                 additionalProperties: false
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "201":
           description: Type de relation créé.
           content:
@@ -1432,6 +2105,12 @@ paths:
         Inclut les ItemTypes source et cible complets.
       operationId: getRelationType
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Type de relation trouvé.
           content:
@@ -1456,6 +2135,14 @@ paths:
             schema:
               $ref: "#/components/schemas/RelationTypeUpdate"
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Type de relation modifié.
           content:
@@ -1475,6 +2162,12 @@ paths:
         Supprime un type de relation. **Échoue avec 409** s'il existe des relations de ce type.
       operationId: deleteRelationType
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "204":
           description: Type de relation supprimé.
         "403":
@@ -1504,6 +2197,10 @@ paths:
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/per_page"
       responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Liste paginée des types de collection.
           content:
@@ -1533,20 +2230,30 @@ paths:
             schema:
               $ref: "#/components/schemas/CollectionTypeCreate"
             example:
-              name: Possession
+              name: Ownership
               description: Items possédés physiquement par l'utilisateur
               attributes_schema:
                 type: object
                 properties:
-                  etat_physique:
+                  condition:
                     {
                       type: string,
                       enum: [neuf, très bon, bon, acceptable, mauvais],
                     }
-                  prix_achat: { type: number, minimum: 0 }
-                  date_acquisition: { type: string, format: date }
+                  purchase_price: { type: number, minimum: 0 }
+                  acquisition_date: { type: string, format: date }
                 additionalProperties: false
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "201":
           description: Type de collection créé.
           content:
@@ -1579,6 +2286,12 @@ paths:
         Utile pour générer dynamiquement le formulaire d'ajout d'item à une collection.
       operationId: getCollectionType
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Type de collection trouvé.
           content:
@@ -1600,6 +2313,14 @@ paths:
             schema:
               $ref: "#/components/schemas/CollectionTypeUpdate"
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Type de collection modifié.
           content:
@@ -1617,6 +2338,12 @@ paths:
         **Admin uniquement.** Échoue avec 409 s'il existe des collections de ce type.
       operationId: deleteCollectionType
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "204":
           description: Type de collection supprimé.
         "403":
@@ -1640,48 +2367,105 @@ paths:
       description: |
         Retourne une liste paginée d'items du catalogue.
 
-        **Recherche et filtres disponibles :**
-        - `item_type_id` : filtrer par type (ex: uniquement les Séries)
-        - `search` : recherche textuelle sur tous les champs texte des attributs (ILIKE)
-        - `tag` : filtrer par tag exact
-        - `attributes[champ]=valeur` : filtre sur un attribut JSONB spécifique
+        **Recherche plein texte** (`search`) : porte sur toutes les chaînes et tous les nombres des
+        attributs (objets i18n-text compris, toutes langues), hors URLs d'images. Chaque mot est
+        cherché en préfixe (`break` trouve « Breaking »), tous les mots sont requis, casse et
+        accents sont ignorés (`integrale` trouve « Intégrale »). La ponctuation sépare les mots.
+        Index : colonne générée `search_tsv` + GIN (migration 003).
 
-        **Tri :** utilisez `sort` avec le nom d'un attribut (ex: `sort=attributes.titre`
-        ou `sort=-created_at` pour les plus récents d'abord).
+        **Filtres par attribut** (`attr.<clé>[.<opérateur>]`) — exigent `item_type_id` : la clé doit
+        exister dans le JSON Schema du type et l'opérateur convenir à son type, sinon 400.
+
+        | Type de la propriété                  | Paramètres acceptés                                        |
+        | ------------------------------------- | ---------------------------------------------------------- |
+        | `string` (avec ou sans `enum`)        | `attr.k=v` (égalité), `attr.k.contains=v` (sous-chaîne)    |
+        | `string` `format: date` / `date-time` | `attr.k=v`, `attr.k.gte=v`, `attr.k.lte=v` (ISO 8601)      |
+        | `integer`, `number`                   | `attr.k=v`, `attr.k.gte=v`, `attr.k.lte=v`                 |
+        | `boolean`                             | `attr.k=true` / `attr.k=false`                             |
+        | `array` de scalaires                  | `attr.k=v` : le tableau contient `v`                       |
+        | `object` `x-widget: i18n-text`        | `attr.k.contains=v` : dans l'une quelconque des langues    |
+
+        Une égalité répétée vaut OU (`attr.type=tv&attr.type=cable`) ; les filtres se combinent en ET.
+        `contains` ignore casse et accents et prend la valeur littéralement (`%`, `_` ne sont pas des
+        jokers). Une valeur vide est ignorée. Au plus 20 valeurs de filtre, 200 caractères chacune.
+        L'égalité utilise l'index GIN sur `attributes` (`@>`).
+
+        **Relations** : `related_to=<uuid>` ne garde que les items liés à cet item (dans un sens ou
+        l'autre), éventuellement via `relation_type_id` seulement.
+
+        **Tri** (`sort`, préfixe `-` pour descendant) : `created_at`, `updated_at`, `relevance`
+        (pertinence de `search`), ou `attr.<clé>` (exige `item_type_id` ; propriétés scalaires
+        uniquement, ordre numérique pour `integer` / `number`, valeurs absentes en dernier).
+        Défaut : `-relevance` si `search` est fourni, sinon `-created_at`.
       operationId: listItems
       parameters:
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/per_page"
-        - $ref: "#/components/parameters/sort"
+        - name: sort
+          in: query
+          description: |
+            `created_at`, `updated_at`, `relevance` ou `attr.<clé>`, préfixe `-` pour descendant.
+            Toute autre valeur renvoie 400.
+          schema:
+            type: string
+          examples:
+            recent: { value: "-created_at" }
+            byYear: { value: "-attr.start_year" }
         - name: item_type_id
           in: query
-          description: Filtrer par type d'item (UUID du ItemType).
+          description: Filtrer par type d'item (UUID du ItemType). Requis par `attr.*` et `sort=attr.*`.
           schema:
             type: string
             format: uuid
         - name: search
           in: query
           description: |
-            Recherche textuelle (ILIKE) sur les attributs texte de l'item.
-            Recherche dans tous les champs de type string.
-            Exemple : `search=breaking` trouvera "Breaking Bad".
+            Recherche plein texte dans les attributs (préfixes, tous les mots requis, sans casse ni
+            accents). Exemple : `search=breaking ba` trouve « Breaking Bad ». 200 caractères au plus.
           schema:
             type: string
+            maxLength: 200
         - name: tag
           in: query
           description: Filtrer par tag (nom exact, insensible à la casse).
           schema:
             type: string
-        - name: attributes
+            maxLength: 200
+        - name: related_to
+          in: query
+          description: Ne garder que les items liés à cet item (source ou cible d'une relation).
+          schema:
+            type: string
+            format: uuid
+        - name: relation_type_id
+          in: query
+          description: Avec `related_to`, ne considérer que les relations de ce type (400 sans `related_to`).
+          schema:
+            type: string
+            format: uuid
+        - name: attr
           in: query
           description: |
-            Filtres sur les attributs JSONB. Passer sous la forme `attributes[champ]=valeur`.
-            Exemples :
-            - `attributes[annee_debut]=2008` → items avec annee_debut = 2008
-            - `attributes[type]=TV` → items avec type = "TV"
+            Filtres par attribut, un paramètre par condition : `attr.<clé>` (égalité, répétable = OU),
+            `attr.<clé>.gte`, `attr.<clé>.lte`, `attr.<clé>.contains`. Voir la description de
+            l'opération pour les opérateurs acceptés selon le type de la propriété.
+            Exemple : `attr.start_year.gte=2008&attr.type=tv&attr.type=cable`.
+          style: form
+          explode: true
           schema:
             type: object
+            additionalProperties:
+              type: string
+            example:
+              attr.start_year.gte: "2008"
+              attr.title.contains: "bad"
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Liste paginée d'items. Chaque item inclut son ItemType et ses tags.
           content:
@@ -1715,12 +2499,20 @@ paths:
             example:
               item_type_id: b0000000-0000-0000-0000-000000000001
               attributes:
-                titre: Breaking Bad
+                title: Breaking Bad
                 synopsis: Un professeur de chimie se tourne vers la fabrication de méthamphétamine.
-                annee_debut: 2008
-                annee_fin: 2013
+                start_year: 2008
+                end_year: 2013
               tags: [drame, thriller, crime]
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "201":
           description: Item créé avec succès. Retourne l'item complet avec son type et ses tags.
           content:
@@ -1749,6 +2541,12 @@ paths:
         Utile pour afficher la fiche détaillée d'un item.
       operationId: getItem
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Item trouvé.
           content:
@@ -1775,6 +2573,14 @@ paths:
             schema:
               $ref: "#/components/schemas/ItemUpdate"
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Item modifié avec succès.
           content:
@@ -1799,6 +2605,12 @@ paths:
         - Les tags orphelins ne sont pas supprimés automatiquement
       operationId: deleteItem
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "204":
           description: Item et dépendances supprimés.
         "403":
@@ -1830,6 +2642,10 @@ paths:
         l'a déjà ajouté, et avec quels attributs.
       operationId: listItemCollections
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Liste des collections contenant cet item pour l'utilisateur courant.
           content:
@@ -1873,11 +2689,17 @@ paths:
           in: query
           description: |
             Filtrer par type de relation (UUID du RelationType).
-            Exemple : ne voir que les relations "contient_episode".
+            Exemple : ne voir que les relations "contains_episode".
           schema:
             type: string
             format: uuid
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Liste des relations (sortantes et entrantes).
           content:
@@ -1900,8 +2722,8 @@ paths:
 
         **Validations effectuées automatiquement :**
         1. Les deux items (`source_item_id`, `target_item_id`) doivent exister
-        2. Le ItemType de la source doit correspondre au `source_item_type_id` du RelationType
-        3. Le ItemType de la cible doit correspondre au `target_item_type_id` du RelationType
+        2. Le ItemType de la source doit être l'un des `source_item_type_ids` du RelationType
+        3. Le ItemType de la cible doit être l'un des `target_item_type_ids` du RelationType
         4. Les `attributes` doivent respecter le JSON Schema du RelationType
         5. Le triplet (relation_type, source, target) doit être unique → 409 si doublon
         6. `source_item_id` ≠ `target_item_id` (pas d'auto-référence) → 422 sinon
@@ -1917,9 +2739,17 @@ paths:
               source_item_id: e0000000-0000-0000-0000-000000000020
               target_item_id: e0000000-0000-0000-0000-000000000010
               attributes:
-                disque: 1
-                piste: 1
+                disc: 1
+                track: 1
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "201":
           description: Relation créée avec succès.
           content:
@@ -1949,6 +2779,12 @@ paths:
         Retourne une relation avec son RelationType, l'item source et l'item cible.
       operationId: getRelation
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Relation trouvée.
           content:
@@ -1975,6 +2811,14 @@ paths:
             schema:
               $ref: "#/components/schemas/ItemRelationUpdate"
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Relation modifiée.
           content:
@@ -1995,6 +2839,12 @@ paths:
         ne sont pas affectés.
       operationId: deleteRelation
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "204":
           description: Relation supprimée.
         "403":
@@ -2030,7 +2880,7 @@ paths:
         visite jamais un nœud deux fois dans un même chemin.
 
         **Filtrage** : utilisez `relation_type_ids` pour limiter la traversée
-        à certains types de relation (ex: ne suivre que "contient_episode").
+        à certains types de relation (ex: ne suivre que "contains_episode").
 
         Le format de réponse sépare le nœud racine des autres nœuds pour
         faciliter le rendu (la racine a souvent un style différent).
@@ -2042,11 +2892,12 @@ paths:
             Profondeur maximale de traversée depuis la racine, dans chaque direction.
             - `1` : uniquement les voisins directs (depth -1 et +1)
             - `3` (défaut) : 3 niveaux dans chaque direction
-            - `10` : maximum autorisé
+            - `5` : maximum pour un utilisateur ; `10` pour un admin
 
-            La traversée explore `max_depth` niveaux en descendant (profondeur positive)
-            et `max_depth` niveaux en remontant (profondeur négative).
-            Augmenter la profondeur augmente le temps de réponse et la taille du résultat.
+            La traversée est un parcours en largeur, niveau par niveau : `max_depth` niveaux en
+            descendant (profondeur positive) puis en remontant (profondeur négative), chaque nœud
+            n'étant visité qu'une fois. Elle s'arrête aussi à `GRAPH_MAX_NODES` nœuds (`truncated`)
+            et après 5 s (503). Une valeur hors bornes ou non entière renvoie 400.
           schema:
             type: integer
             default: 3
@@ -2055,14 +2906,30 @@ paths:
         - name: relation_type_ids
           in: query
           description: |
-            Filtrer la traversée par types de relation. Format : liste d'UUIDs séparés par des virgules.
-            Seules les arêtes de ces types seront suivies.
+            Filtrer la traversée par types de relation. Format : liste d'UUIDs séparés par des virgules
+            (20 maximum ; un UUID invalide renvoie 400). Seules les arêtes de ces types seront suivies.
             Si omis, toutes les relations sont suivies.
 
             Exemple : `relation_type_ids=c0000000-...-001,c0000000-...-003`
           schema:
             type: string
       responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "400":
+          description: "`max_depth` hors bornes ou `relation_type_ids` invalide / trop long."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Exploration interrompue après 5 s (réduire `max_depth` ou filtrer).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: |
             Sous-graphe retourné avec succès. Contient :
@@ -2076,31 +2943,32 @@ paths:
               example:
                 root:
                   id: e0000000-0000-0000-0000-000000000001
-                  type: Serie
+                  type: Series
                   label: Breaking Bad
                   attributes:
-                    { titre: Breaking Bad, annee_debut: 2008, annee_fin: 2013 }
+                    { title: Breaking Bad, start_year: 2008, end_year: 2013 }
                   depth: 0
                 nodes:
                   - id: e0000000-0000-0000-0000-000000000050
                     type: Personne
                     label: Vince Gilligan
-                    attributes: { nom: Vince Gilligan, role: createur }
+                    attributes: { name: Vince Gilligan, role: creator }
                     depth: -1
                   - id: e0000000-0000-0000-0000-000000000002
-                    type: Diffusion
+                    type: Broadcast
                     label: AMC 2008-2013
-                    attributes: { nom: AMC 2008-2013, type: cable, chaine: AMC }
+                    attributes:
+                      { name: AMC 2008-2013, type: cable, channel: AMC }
                     depth: 1
                   - id: e0000000-0000-0000-0000-000000000003
-                    type: Saison
+                    type: Season
                     label: S1
-                    attributes: { numero: 1, annee: 2008 }
+                    attributes: { name: Saison 1, number: 1, year: 2008 }
                     depth: 2
                   - id: e0000000-0000-0000-0000-000000000010
                     type: Episode
                     label: Pilot
-                    attributes: { numero: 1, titre: Pilot, duree: 58 }
+                    attributes: { number: 1, title: Pilot, duration: 58 }
                     depth: 3
                 edges:
                   - source_id: e0000000-0000-0000-0000-000000000050
@@ -2109,16 +2977,16 @@ paths:
                     attributes: {}
                   - source_id: e0000000-0000-0000-0000-000000000001
                     target_id: e0000000-0000-0000-0000-000000000002
-                    relation_type: diffuse_en
-                    attributes: { annee_debut_diff: 2008 }
+                    relation_type: broadcast_on
+                    attributes: { broadcast_start_year: 2008 }
                   - source_id: e0000000-0000-0000-0000-000000000002
                     target_id: e0000000-0000-0000-0000-000000000003
-                    relation_type: contient_saison
+                    relation_type: contains_season
                     attributes: {}
                   - source_id: e0000000-0000-0000-0000-000000000003
                     target_id: e0000000-0000-0000-0000-000000000010
-                    relation_type: contient_episode
-                    attributes: { ordre: 1 }
+                    relation_type: contains_episode
+                    attributes: { order: 1 }
         "404":
           $ref: "#/components/responses/NotFound"
 
@@ -2138,11 +3006,15 @@ paths:
         - $ref: "#/components/parameters/per_page"
         - name: collection_type_id
           in: query
-          description: 'Filtrer par type de collection (ex: uniquement les collections "Possession").'
+          description: 'Filtrer par type de collection (ex: uniquement les collections "Ownership").'
           schema:
             type: string
             format: uuid
       responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Collections de l'utilisateur.
           content:
@@ -2173,6 +3045,22 @@ paths:
               name: Mes DVDs
               description: Ma collection de DVDs et Blu-rays
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "`collection_type_id` inconnu."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "201":
           description: Collection créée.
           content:
@@ -2203,6 +3091,12 @@ paths:
         L'utilisateur ne peut accéder qu'à ses propres collections.
       operationId: getCollection
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Collection trouvée.
           content:
@@ -2225,6 +3119,14 @@ paths:
             schema:
               $ref: "#/components/schemas/CollectionUpdate"
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Collection modifiée.
           content:
@@ -2248,6 +3150,12 @@ paths:
         personnels (état, prix, note…) sont perdus.
       operationId: deleteCollection
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "204":
           description: Collection et liens supprimés.
         "404":
@@ -2285,6 +3193,12 @@ paths:
             type: string
             format: uuid
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Items de la collection avec attributs contextuels.
           content:
@@ -2318,10 +3232,18 @@ paths:
             example:
               item_id: e0000000-0000-0000-0000-000000000020
               attributes:
-                etat_physique: neuf
-                prix_achat: 45.00
-                date_acquisition: "2020-12-25"
+                condition: new
+                purchase_price: 45.00
+                acquisition_date: "2020-12-25"
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "201":
           description: Item ajouté à la collection avec ses attributs contextuels.
           content:
@@ -2367,7 +3289,7 @@ paths:
         dans cette collection. Les attributs sont revalidés contre le JSON Schema
         du CollectionType.
 
-        Ne modifie **pas** les attributs de l'item du catalogue (titre, année…),
+        Ne modifie **pas** les attributs de l'item du catalogue (title, année…),
         uniquement les données personnelles de l'utilisateur.
       operationId: updateCollectionItem
       requestBody:
@@ -2378,10 +3300,18 @@ paths:
               $ref: "#/components/schemas/CollectionItemUpdate"
             example:
               attributes:
-                etat_physique: bon
-                prix_achat: 45.00
-                date_acquisition: "2020-12-25"
+                condition: bon
+                purchase_price: 45.00
+                acquisition_date: "2020-12-25"
       responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Attributs contextuels modifiés.
           content:
@@ -2402,6 +3332,12 @@ paths:
         sont perdues.
       operationId: removeItemFromCollection
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "204":
           description: Item retiré de la collection.
         "404":
@@ -2428,6 +3364,10 @@ paths:
           schema:
             type: string
       responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Liste des tags correspondants.
           content:
@@ -2466,6 +3406,8 @@ paths:
                   format: binary
                   description: Fichier image à uploader.
       responses:
+        "500":
+          $ref: "#/components/responses/InternalError"
         "201":
           description: Fichier uploadé avec succès.
           content:
@@ -2474,7 +3416,7 @@ paths:
                 $ref: "#/components/schemas/UploadResponse"
         "400":
           description: |
-            Requête invalide : fichier manquant, type non autorisé ou taille dépassée.
+            Requête invalide : fichier manquant, formulaire multipart invalide ou type non autorisé.
           content:
             application/json:
               schema:
@@ -2483,6 +3425,15 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+        "413":
+          description: "Fichier plus grand que `MAX_UPLOAD_SIZE` (nginx applique la même limite : `client_max_body_size 10m`)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: payload_too_large
+                message: file too large (max 10 MiB)
 
   /uploads/{filename}:
     parameters:
@@ -2504,6 +3455,10 @@ paths:
       operationId: getUploadedFile
       security: []
       responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Fichier image.
           content:
@@ -2540,36 +3495,346 @@ paths:
         - Total des items, collections et relations
       operationId: getStats
       responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
         "200":
           description: Statistiques globales.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  items_by_type:
-                    type: array
-                    description: Comptage d'items ventilé par ItemType.
-                    items:
-                      type: object
-                      properties:
-                        type_name:
-                          type: string
-                          description: Nom du ItemType.
-                          example: Episode
-                        count:
-                          type: integer
-                          description: Nombre d'items de ce type.
-                          example: 42
-                  total_items:
-                    type: integer
-                    description: Nombre total d'items dans le catalogue.
-                    example: 156
-                  total_collections:
-                    type: integer
-                    description: Nombre total de collections (tous utilisateurs).
-                    example: 12
-                  total_relations:
-                    type: integer
-                    description: Nombre total de relations (arêtes du graphe).
-                    example: 324
+                $ref: "#/components/schemas/Stats"
+  # ===========================================================================
+  # Import / export
+  # ===========================================================================
+  /export:
+    get:
+      tags: [ImportExport]
+      summary: Exporter le catalogue (JSON)
+      description: |
+        Méta-types, items et relations, au format `collectionnard.catalog`. Servi en pièce jointe
+        (`Content-Disposition: attachment; filename="collectionnard-catalog-<date>.json"`).
+        Réservé aux admins.
+      operationId: exportCatalog
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Catalogue.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogExport"
+  /import:
+    post:
+      tags: [ImportExport]
+      summary: Importer un catalogue (JSON)
+      description: |
+        Importe un `CatalogExport` dans une transaction unique : chaque entité est créée si son
+        `id` est inconnu, mise à jour sinon (remplacement complet, comme `PUT`) ; rien n'est jamais
+        supprimé. Ordre : item_types, collection_types, relation_types (jonctions remplacées),
+        items (tags remplacés), relations.
+
+        Validation : schémas des méta-types (comme à l'écriture), attributs de chaque item et de
+        chaque relation contre le schéma de leur type (celui du fichier s'il y figure, sinon celui
+        de la base), types source / cible autorisés des relations, unicité des noms et des triplets
+        (type, source, cible) des relations.
+
+        Au moindre problème, **rien n'est appliqué** : réponse 422 avec le rapport complet.
+        `dry_run=true` valide et compte sans rien écrire. Corps limité à `MAX_IMPORT_SIZE`
+        (défaut 20 Mio). Réservé aux admins.
+      operationId: importCatalog
+      parameters:
+        - name: dry_run
+          in: query
+          description: Simuler l'import (rapport complet, aucune écriture).
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CatalogExport"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Import appliqué (ou simulation sans erreur).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportReport"
+        "422":
+          description: Erreurs de validation ; rien n'a été appliqué.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportReport"
+  /items/export:
+    get:
+      tags: [ImportExport]
+      summary: Exporter des items en CSV
+      description: |
+        Items d'un type (`item_type_id` obligatoire), avec les mêmes filtres et le même tri que
+        `GET /items` (`search`, `tag`, `attr.*`, `related_to`, `sort`…), sans pagination
+        (10 000 lignes au plus). UTF-8 avec BOM (ouverture directe dans un tableur).
+
+        Colonnes : `id`, `label` (libellé `x-label` dans la langue `lang`), `tags` (séparés par
+        `; `), puis une colonne par propriété du schéma dans l'ordre `x-order`, d'en-tête = la clé.
+        Un objet i18n-text donne une colonne par langue (`synopsis.fr`, `synopsis.en`) ; un tableau
+        de scalaires est joint par `; ` ; tout autre objet (galerie d'images) est écrit en JSON.
+      operationId: exportItemsCsv
+      parameters:
+        - name: item_type_id
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+        - $ref: "#/components/parameters/csvDelimiter"
+        - $ref: "#/components/parameters/lang"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Fichier CSV en pièce jointe.
+          content:
+            text/csv:
+              schema:
+                type: string
+  /collections/{id}/export:
+    get:
+      tags: [ImportExport]
+      summary: Exporter une collection (JSON ou CSV)
+      description: |
+        Collection de l'utilisateur connecté (404 pour celle d'un autre) et tous ses items.
+        CSV : `item_id`, `item_type`, `label`, puis une colonne par propriété du schéma du
+        CollectionType (mêmes règles que `GET /items/export`), puis `added_at`.
+      operationId: exportCollection
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+        - $ref: "#/components/parameters/csvDelimiter"
+        - $ref: "#/components/parameters/lang"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Fichier en pièce jointe.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectionExport"
+            text/csv:
+              schema:
+                type: string
+  /collections/import:
+    post:
+      tags: [ImportExport]
+      summary: Importer une collection (JSON)
+      description: |
+        Importe un `CollectionExport` dans le compte de l'utilisateur connecté, en une transaction.
+
+        - **Cible** : si `collection.id` désigne une collection de l'utilisateur, elle est mise à
+          jour et devient exactement le contenu du fichier (nom, description, type, items ; les items
+          absents du fichier sont **retirés**). Sinon une collection est créée (avec cet id s'il est
+          libre, un nouvel id s'il appartient à quelqu'un d'autre). Un nom déjà pris par une autre
+          collection de l'utilisateur reçoit un suffixe (`Mes DVD (2)`).
+        - **Type** : `collection.collection_type.id`, à défaut son `name` ; inconnu → erreur de fichier.
+        - **Items** : chaque `item_id` doit exister dans le catalogue (une seule fois dans le
+          fichier) ; `attributes` est validé contre le schéma du CollectionType ; `added_at` est
+          conservé à la création. `item_type`, `label` et `item_attributes` sont informatifs.
+
+        Au moindre problème rien n'est appliqué (422 + rapport) ; `dry_run=true` simule.
+      operationId: importCollection
+      parameters:
+        - name: dry_run
+          in: query
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CollectionExport"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Import appliqué (ou simulation sans erreur) ; `collection_id` désigne la collection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportReport"
+        "422":
+          description: Erreurs de validation ; rien n'a été appliqué.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportReport"
+  # ===========================================================================
+  # Sources externes (connecteur BD / Manga)
+  # ===========================================================================
+  /external/bd-manga/works:
+    get:
+      tags: [External]
+      summary: Rechercher une œuvre sur Wikidata
+      description: |
+        Recherche par titre parmi les séries de manga, séries de bande dessinée, romans graphiques,
+        comic strips, webtoons… (classes Wikidata), meilleure correspondance d'abord (20 au plus).
+      operationId: searchExternalWorks
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Titre recherché (2 à 200 caractères).
+          schema: { type: string, minLength: 2, maxLength: 200 }
+      responses:
+        "200":
+          description: Œuvres trouvées.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ExternalWorkHit" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/ConnectorUnavailable" }
+        "502": { $ref: "#/components/responses/ExternalUnavailable" }
+  /external/bd-manga/editions:
+    get:
+      tags: [External]
+      summary: Rechercher une édition française à la BnF
+      description: |
+        Par titre (`q`, index `bib.serialtitle`, 50 notices au plus, hors vidéos et sons) ou par ISBN
+        d'un tome (`isbn`, ISBN-10 / 13 ou EAN, tirets acceptés) : l'édition qui contient ce tome.
+        Exactement un des deux paramètres.
+      operationId: searchExternalEditions
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string, minLength: 2, maxLength: 200 }
+        - name: isbn
+          in: query
+          schema: { type: string, example: "978-2-87695-205-8" }
+      responses:
+        "200":
+          description: Éditions trouvées.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ExternalEditionHit" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/ConnectorUnavailable" }
+        "502": { $ref: "#/components/responses/ExternalUnavailable" }
+  /external/bd-manga/preview:
+    post:
+      tags: [External]
+      summary: Aperçu des items proposés
+      description: |
+        Récupère l'œuvre (titre, années, public, nombre de tomes VO…), son univers (`P8345`) et ses
+        auteurs (`P50` auteur, `P58` scénariste, `P110` dessinateur → `roles`) sur Wikidata ; pour
+        chaque édition, ses éditeurs et tous ses tomes (numéro, titre, ISBN, pages, prix en euros) à
+        la BnF. Chaque nœud est rapproché du catalogue (statut `new` / `update` / `unchanged`).
+        Les réimpressions (même numéro) et les tomes sans numéro ne sont pas sélectionnés par défaut.
+      operationId: previewExternal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExternalImportRequest" }
+      responses:
+        "200":
+          description: Items et relations proposés.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExternalPlan" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/ConnectorUnavailable" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "502": { $ref: "#/components/responses/ExternalUnavailable" }
+  /external/bd-manga/import:
+    post:
+      tags: [External]
+      summary: Simuler ou importer la sélection
+      description: |
+        Reconstruit l'aperçu de la même sélection (réponses des sources gardées en cache 15 min), garde
+        les nœuds de `selected` et les passe par l'import du catalogue (`POST /import`) : une transaction,
+        rien n'est appliqué au moindre problème (422 + rapport), `dry_run=true` simule. Les items
+        existants gardent leurs tags et leurs valeurs (seuls les champs vides sont remplis).
+      operationId: importExternal
+      parameters:
+        - name: dry_run
+          in: query
+          description: Simuler l'import (rapport complet, aucune écriture).
+          schema: { type: boolean, default: false }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExternalImportRequest" }
+      responses:
+        "200":
+          description: Import appliqué (ou simulation sans erreur).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExternalImportReport" }
+        "422":
+          description: Erreurs de validation ; rien n'a été appliqué.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ExternalImportReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/ConnectorUnavailable" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "502": { $ref: "#/components/responses/ExternalUnavailable" }

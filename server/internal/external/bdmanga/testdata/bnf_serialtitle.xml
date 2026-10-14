@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?><srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns="http://catalogue.bnf.fr/namespaces/InterXMarc" xmlns:ixm="http://catalogue.bnf.fr/namespaces/InterXMarc" xmlns:mn="http://catalogue.bnf.fr/namespaces/motsnotices" xmlns:sd="http://www.loc.gov/zing/srw/diagnostic/">
+<srw:version>1.2</srw:version>
+<srw:echoedSearchRetrieveRequest>
+<srw:version>1.2</srw:version>
+<srw:query>bib.serialtitle all "dragon ball"</srw:query>
+</srw:echoedSearchRetrieveRequest>
+<srw:numberOfRecords>4</srw:numberOfRecords>
+<srw:records>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb41424508t" type="Bibliographic">
+<mxc:leader>     cas  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF414245080000008</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb41424508t</mxc:controlfield>
+<mxc:datafield tag="011" ind1="1" ind2=" ">
+<mxc:subfield code="a">1968-9918</mxc:subfield>
+<mxc:subfield code="f">1968-9918</mxc:subfield>
+<mxc:subfield code="d">le n° 7,99 EUR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20090209b20082010a  y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="0" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="110" ind1=" " ind2=" ">
+<mxc:subfield code="a">mu|z0||||||</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Dragon Ball</mxc:subfield>
+<mxc:subfield code="b">Texte imprimé</mxc:subfield>
+<mxc:subfield code="e">le manga de légende</mxc:subfield>
+<mxc:subfield code="f">[directrice de la publication Isabelle Magnac]</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="207" ind1=" " ind2="0">
+<mxc:subfield code="a">N° 1 (août 2008)-N° 50(2010, mars)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">Paris</mxc:subfield>
+<mxc:subfield code="b">43 quai de Grenelle ; 75905 Cedex 15</mxc:subfield>
+<mxc:subfield code="c">Hachette collections</mxc:subfield>
+<mxc:subfield code="d">2008-2010</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">n°</mxc:subfield>
+<mxc:subfield code="c">ill. en coul.</mxc:subfield>
+<mxc:subfield code="d">29 cm</mxc:subfield>
+<mxc:subfield code="e">figurines de collection</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="312" ind1=" " ind2=" ">
+<mxc:subfield code="a">Titre d'usage : EY Dragon Ball</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="312" ind1=" " ind2=" ">
+<mxc:subfield code="a">Titre d'usage : Manga Dragon Ball</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="312" ind1=" " ind2=" ">
+<mxc:subfield code="a">Titre d'usage : Dragon Ball</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="530" ind1="1" ind2=" ">
+<mxc:subfield code="a">Dragon Ball</mxc:subfield>
+<mxc:subfield code="b">Paris</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="540" ind1="1" ind2=" ">
+<mxc:subfield code="a">EY Dragon Ball</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="540" ind1="1" ind2=" ">
+<mxc:subfield code="a">Manga Dragon Ball</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="540" ind1="1" ind2=" ">
+<mxc:subfield code="a">Dragon Ball</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="802" ind1=" " ind2=" ">
+<mxc:subfield code="a">07</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb41424508t</srw:recordIdentifier>
+<srw:recordPosition>2</srw:recordPosition>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb38912186j" type="Bibliographic">
+<mxc:leader>     a    22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF389121860000005</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb38912186j</mxc:controlfield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20021114a2002    m  y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="0" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="110" ind1=" " ind2=" ">
+<mxc:subfield code="a">|e|z|||||||</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Dragon Ball GT</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="207" ind1=" " ind2="0">
+<mxc:subfield code="a">1(2002)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">Evreux</mxc:subfield>
+<mxc:subfield code="b">1186 rue de Cocherel, 27000</mxc:subfield>
+<mxc:subfield code="c">Ed. Atlas</mxc:subfield>
+<mxc:subfield code="d">2002-</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="c">ill. en coul.</mxc:subfield>
+<mxc:subfield code="d">29cm</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="e">figurines</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Encyclopédie à fascicules</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Le n° 7,50 EUR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="312" ind1=" " ind2=" ">
+<mxc:subfield code="a">Autre forme de titre : Collection Dragon Ball GT</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="326" ind1=" " ind2=" ">
+<mxc:subfield code="a">Bimensuel</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="517" ind1="1" ind2=" ">
+<mxc:subfield code="a">Collection Dragon Ball GT</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="540" ind1="1" ind2=" ">
+<mxc:subfield code="a">Dragon Ball GT</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb38912186j</srw:recordIdentifier>
+<srw:recordPosition>3</srw:recordPosition>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb39272675f" type="Bibliographic">
+<mxc:leader>     cmm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF392726750000003</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb39272675f</mxc:controlfield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20041108g2002    u  y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="0" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   baho|||||||cb||d</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="116" ind1=" " ind2=" ">
+<mxc:subfield code="a">h||cxx||||xx||||zz</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Dragon Ball GT</mxc:subfield>
+<mxc:subfield code="b">Multimédia multisupport</mxc:subfield>
+<mxc:subfield code="f">[[dir. de réd. Guy Gouëzel]</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="205" ind1=" " ind2=" ">
+<mxc:subfield code="a">Éd. reliée</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">Évreux</mxc:subfield>
+<mxc:subfield code="c">Atlas</mxc:subfield>
+<mxc:subfield code="d">[2002]-</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">Livre</mxc:subfield>
+<mxc:subfield code="c">ill. en coul., couv. ill. en coul.</mxc:subfield>
+<mxc:subfield code="d">29 cm</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">Cass. vidéo (VHS)</mxc:subfield>
+<mxc:subfield code="c">coul. (SECAM), son.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">Impr. photoméc. (autocollant)</mxc:subfield>
+<mxc:subfield code="c">coul.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">Impr. photoméc. (poster)</mxc:subfield>
+<mxc:subfield code="c">coul.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">Objets</mxc:subfield>
+<mxc:subfield code="c">plastique</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="305" ind1=" " ind2=" ">
+<mxc:subfield code="a">Paru précédemment sous forme de fascicules imprimés</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">2002 d'après la déclaration de dépôt légal du volume 1</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="307" ind1=" " ind2=" ">
+<mxc:subfield code="a">Les objets sont des figurines</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="312" ind1=" " ind2=" ">
+<mxc:subfield code="a">Autre forme de titre : Collection Dragon Ball GT</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="517" ind1="1" ind2=" ">
+<mxc:subfield code="a">Collection Dragon Ball GT</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb39272675f</srw:recordIdentifier>
+<srw:recordPosition>9</srw:recordPosition>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb343384394" type="Bibliographic">
+<mxc:leader>     cam  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF343384390000002</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb343384394</mxc:controlfield>
+<mxc:datafield tag="010" ind1=" " ind2=" ">
+<mxc:subfield code="b">Br.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">19931005g1993    m  y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="1" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+<mxc:subfield code="c">jpn</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Dragon Ball</mxc:subfield>
+<mxc:subfield code="b">Texte imprimé</mxc:subfield>
+<mxc:subfield code="f">Akira Toriyama</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">Grenoble</mxc:subfield>
+<mxc:subfield code="c">Glénat</mxc:subfield>
+<mxc:subfield code="d">1993-</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="d">18 cm</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="225" ind1="|" ind2=" ">
+<mxc:subfield code="a">Collection Manga</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="225" ind1="|" ind2=" ">
+<mxc:subfield code="a">Shonen manga</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Dans la collection "Manga" à partir de 1996 et dans la collection "Shonen manga" à partir de 2008</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="410" ind1=" " ind2="0">
+<mxc:subfield code="0">34292888</mxc:subfield>
+<mxc:subfield code="t">Collection Manga (Grenoble)</mxc:subfield>
+<mxc:subfield code="x">1275-7055</mxc:subfield>
+<mxc:subfield code="d">1996-</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="410" ind1=" " ind2="0">
+<mxc:subfield code="0">38992207</mxc:subfield>
+<mxc:subfield code="t">Shonen manga</mxc:subfield>
+<mxc:subfield code="x">1761-2268</mxc:subfield>
+<mxc:subfield code="d">2008-</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="454" ind1=" " ind2="1">
+<mxc:subfield code="t">Doragon Bōru</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="500" ind1="1" ind2="1">
+<mxc:subfield code="3">14534411</mxc:subfield>
+<mxc:subfield code="a">Dragon ball</mxc:subfield>
+<mxc:subfield code="m">français</mxc:subfield>
+<mxc:subfield code="2">lien automatique</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="517" ind1="1" ind2=" ">
+<mxc:subfield code="a">Dragonball</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="700" ind1=" " ind2="|">
+<mxc:subfield code="3">12336978</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000084114806</mxc:subfield>
+<mxc:subfield code="a">Toriyama</mxc:subfield>
+<mxc:subfield code="b">Akira</mxc:subfield>
+<mxc:subfield code="f">1955-2024</mxc:subfield>
+<mxc:subfield code="4">070</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb343384394</srw:recordIdentifier>
+<srw:recordPosition>20</srw:recordPosition>
+</srw:record>
+</srw:records>
+</srw:searchRetrieveResponse>

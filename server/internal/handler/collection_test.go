@@ -1,8 +1,8 @@
 package handler_test
 
 import (
-	"context"
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -17,11 +17,11 @@ import (
 
 func sampleCollection(userID uuid.UUID) *model.Collection {
 	return &model.Collection{
-		ID: uuid.MustParse("f0000000-0000-0000-0000-000000000001"),
-		UserID: userID,
+		ID:               uuid.MustParse("f0000000-0000-0000-0000-000000000001"),
+		UserID:           userID,
 		CollectionTypeID: uuid.MustParse("d0000000-0000-0000-0000-000000000001"),
 		CollectionType: &model.CollectionType{
-			ID: uuid.MustParse("d0000000-0000-0000-0000-000000000001"),
+			ID:   uuid.MustParse("d0000000-0000-0000-0000-000000000001"),
 			Name: "Possession", AttributesSchema: json.RawMessage(`{}`),
 			CreatedAt: time.Now(), UpdatedAt: time.Now(),
 		},
@@ -46,7 +46,9 @@ func TestListCollections_OwnerOnly(t *testing.T) {
 	req, _ := http.NewRequest("GET", srv.URL+"/api/v1/collections", nil)
 	req.Header = testutil.AuthHeader(testutil.UserToken())
 	resp, err := http.DefaultClient.Do(req)
-	if err != nil { t.Fatalf("request: %v", err) }
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -75,7 +77,9 @@ func TestCreateCollection_Success(t *testing.T) {
 	req, _ := http.NewRequest("POST", srv.URL+"/api/v1/collections", bytes.NewReader(body))
 	req.Header = testutil.AuthHeader(testutil.UserToken())
 	resp, err := http.DefaultClient.Do(req)
-	if err != nil { t.Fatalf("request: %v", err) }
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
@@ -89,7 +93,9 @@ func TestGetCollection_OtherUserDenied(t *testing.T) {
 	col := sampleCollection(testutil.AdminID)
 	mock := &testutil.MockStore{
 		GetCollectionFn: func(_ context.Context, id uuid.UUID) (*model.Collection, error) {
-			if id == col.ID { return col, nil }
+			if id == col.ID {
+				return col, nil
+			}
 			return nil, store.ErrNotFound
 		},
 	}
@@ -110,7 +116,9 @@ func TestAddItemToCollection_Conflict(t *testing.T) {
 	col := sampleCollection(testutil.UserID)
 	mock := &testutil.MockStore{
 		GetCollectionFn: func(_ context.Context, id uuid.UUID) (*model.Collection, error) {
-			if id == col.ID { return col, nil }
+			if id == col.ID {
+				return col, nil
+			}
 			return nil, store.ErrNotFound
 		},
 		GetCollectionTypeFn: func(_ context.Context, id uuid.UUID) (*model.CollectionType, error) {
@@ -126,7 +134,10 @@ func TestAddItemToCollection_Conflict(t *testing.T) {
 	body, _ := json.Marshal(model.CollectionItemAdd{ItemID: uuid.New()})
 	req, _ := http.NewRequest("POST", srv.URL+"/api/v1/collections/"+col.ID.String()+"/items", bytes.NewReader(body))
 	req.Header = testutil.AuthHeader(testutil.UserToken())
-	resp, _ := http.DefaultClient.Do(req)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusConflict {
@@ -140,7 +151,9 @@ func TestDeleteCollection_OwnerOnly(t *testing.T) {
 	deleted := false
 	mock := &testutil.MockStore{
 		GetCollectionFn: func(_ context.Context, id uuid.UUID) (*model.Collection, error) {
-			if id == col.ID { return col, nil }
+			if id == col.ID {
+				return col, nil
+			}
 			return nil, store.ErrNotFound
 		},
 		DeleteCollectionFn: func(_ context.Context, id uuid.UUID) error {

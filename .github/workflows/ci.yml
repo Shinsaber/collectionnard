@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  go:
+    name: Backend Go
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - name: gofmt
+        run: nix develop -c sh -c 'cd server && test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }'
+      - name: go vet
+        run: nix develop -c sh -c 'cd server && go vet ./...'
+      - name: golangci-lint
+        run: nix develop -c sh -c 'cd server && golangci-lint run ./...'
+      - name: go test
+        run: nix develop -c sh -c 'cd server && go test ./...'
+      - name: govulncheck
+        run: nix develop -c sh -c 'cd server && govulncheck ./...'
+
+  go-integration:
+    name: Backend Go — intégration PostgreSQL
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: colec
+          POSTGRES_PASSWORD: colec
+          POSTGRES_DB: colec
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U colec"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://colec:colec@localhost:5432/colec?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - name: go test -tags integration (store)
+        run: nix develop -c sh -c 'cd server && go test -tags integration ./internal/store/'
+
+  web:
+    name: Frontend Vue
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - name: npm ci
+        run: nix develop -c sh -c 'cd web && npm ci'
+      - name: lint
+        run: nix develop -c sh -c 'cd web && npm run lint'
+      - name: lint OpenAPI (redocly)
+        run: nix develop -c sh -c 'cd web && npm run lint:openapi'
+      - name: format
+        run: nix develop -c sh -c 'cd web && npm run format:check'
+      - name: type-check
+        run: nix develop -c sh -c 'cd web && npm run type-check'
+      - name: test
+        run: nix develop -c sh -c 'cd web && npm test'
+      - name: build
+        run: nix develop -c sh -c 'cd web && npm run build'
+      - name: npm audit
+        run: nix develop -c sh -c 'cd web && npm audit --audit-level=high'

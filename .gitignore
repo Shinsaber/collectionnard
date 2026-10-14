@@ -11,6 +11,8 @@ Thumbs.db
 # ── Docker ─────────────────────────────────────────────────────────────
 pgdata/
 uploads/
+.env
+.env.local
 
 # ── Go (server) ────────────────────────────────────────────────────────
 server/colec
@@ -25,3 +27,12 @@ web/tsconfig.node.tsbuildinfo
 web/vite.config.js
 web/vite.config.d.ts
 web/vite.config.d.ts.map
+
+# ── Claude Code ───────────────────────────────────────────────────────
+.claude/settings.local.json
+CLAUDE.local.md
+
+# ── Nix / direnv ──────────────────────────────────────────────────────
+.direnv/
+.pgdata/
+result

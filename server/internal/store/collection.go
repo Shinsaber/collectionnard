@@ -11,7 +11,7 @@ import (
 
 func (s *PgStore) ListCollections(ctx context.Context, userID uuid.UUID, pg model.Pagination, collectionTypeID *uuid.UUID) ([]model.Collection, int, error) {
 	where := "c.user_id = $1"
-	args := []interface{}{userID}
+	args := []any{userID}
 	argN := 2
 
 	if collectionTypeID != nil {
@@ -21,7 +21,7 @@ func (s *PgStore) ListCollections(ctx context.Context, userID uuid.UUID, pg mode
 	}
 
 	var total int
-	countArgs := make([]interface{}, len(args))
+	countArgs := make([]any, len(args))
 	copy(countArgs, args)
 	err := s.pool.QueryRow(ctx,
 		fmt.Sprintf(`SELECT count(*) FROM collections c WHERE %s`, where),
@@ -148,7 +148,7 @@ func (s *PgStore) DeleteCollection(ctx context.Context, id uuid.UUID) error {
 
 func (s *PgStore) ListCollectionItems(ctx context.Context, collectionID uuid.UUID, pg model.Pagination, itemTypeID *uuid.UUID, sort string) ([]model.CollectionItem, int, error) {
 	where := "ci.collection_id = $1"
-	args := []interface{}{collectionID}
+	args := []any{collectionID}
 	argN := 2
 
 	if itemTypeID != nil {
@@ -158,7 +158,7 @@ func (s *PgStore) ListCollectionItems(ctx context.Context, collectionID uuid.UUI
 	}
 
 	var total int
-	countArgs := make([]interface{}, len(args))
+	countArgs := make([]any, len(args))
 	copy(countArgs, args)
 	err := s.pool.QueryRow(ctx,
 		fmt.Sprintf(`SELECT count(*) FROM collection_items ci JOIN items i ON i.id = ci.item_id WHERE %s`, where),

@@ -1,0 +1,2222 @@
+[
+  {
+    "id": "b0000000-0000-0000-0000-000000000001",
+    "name": "Series",
+    "schema": {
+      "type": "object",
+      "x-title": {
+        "fr": "Série",
+        "en": "Series"
+      },
+      "x-description": {
+        "fr": "Série télévisée",
+        "en": "TV series"
+      },
+      "required": ["title"],
+      "x-label": "{title}",
+      "x-order": ["title", "synopsis", "start_year", "end_year", "images"],
+      "x-labels": {
+        "fr": {
+          "title": "Titre",
+          "synopsis": "Synopsis",
+          "start_year": "Année de début",
+          "end_year": "Année de fin",
+          "images": "Images"
+        },
+        "en": {
+          "title": "Title",
+          "synopsis": "Synopsis",
+          "start_year": "Start Year",
+          "end_year": "End Year",
+          "images": "Images"
+        }
+      },
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "synopsis": {
+          "type": "object",
+          "x-widget": "i18n-text",
+          "properties": {
+            "fr": {
+              "type": "string"
+            },
+            "en": {
+              "type": "string"
+            }
+          },
+          "propertyNames": {
+            "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "start_year": {
+          "type": "integer",
+          "minimum": 1900
+        },
+        "end_year": {
+          "type": "integer",
+          "minimum": 1900
+        },
+        "images": {
+          "type": "object",
+          "x-widget": "image-gallery",
+          "x-image-categories": {
+            "poster": {
+              "ratio": "2/3"
+            },
+            "screenshot": {
+              "ratio": "16/9"
+            },
+            "banner": {
+              "ratio": "3/1"
+            }
+          },
+          "properties": {
+            "default_image": {
+              "type": "string"
+            },
+            "poster": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "screenshot": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "banner": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "b0000000-0000-0000-0000-000000000002",
+    "name": "Broadcast",
+    "schema": {
+      "type": "object",
+      "x-title": {
+        "fr": "Diffusion",
+        "en": "Broadcast"
+      },
+      "x-description": {
+        "fr": "Mode de diffusion (TV, streaming…)",
+        "en": "Broadcast medium (TV, streaming…)"
+      },
+      "required": ["name"],
+      "x-label": "{name}",
+      "x-order": ["name", "type", "channel"],
+      "x-labels": {
+        "fr": {
+          "name": "Nom",
+          "type": "Type",
+          "channel": "Support"
+        },
+        "en": {
+          "name": "Name",
+          "type": "Type",
+          "channel": "Support"
+        }
+      },
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "enum": ["tv", "streaming", "cable", "web"],
+          "x-enum-labels": {
+            "fr": {
+              "tv": "Télévision",
+              "streaming": "Streaming",
+              "cable": "Câble",
+              "web": "Web"
+            },
+            "en": {
+              "tv": "TV",
+              "streaming": "Streaming",
+              "cable": "Cable",
+              "web": "Web"
+            }
+          }
+        },
+        "channel": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "b0000000-0000-0000-0000-000000000003",
+    "name": "Season",
+    "schema": {
+      "type": "object",
+      "x-title": {
+        "fr": "Saison",
+        "en": "Season"
+      },
+      "x-description": {
+        "fr": "Saison d'une série",
+        "en": "Season of a series"
+      },
+      "required": ["number"],
+      "x-label": "{name}",
+      "x-order": ["name", "number", "year"],
+      "x-labels": {
+        "fr": {
+          "name": "Nom",
+          "number": "Numéro",
+          "year": "Année"
+        },
+        "en": {
+          "name": "Name",
+          "number": "Number",
+          "year": "Year"
+        }
+      },
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 1900
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "b0000000-0000-0000-0000-000000000004",
+    "name": "Episode",
+    "schema": {
+      "type": "object",
+      "x-title": {
+        "fr": "Épisode",
+        "en": "Episode"
+      },
+      "x-description": {
+        "fr": "Épisode d'une série",
+        "en": "Episode of a series"
+      },
+      "required": ["number", "title"],
+      "x-label": "{number}. {title}",
+      "x-order": ["number", "title", "duration", "synopsis"],
+      "x-labels": {
+        "fr": {
+          "number": "Numéro",
+          "title": "Titre",
+          "duration": "Durée (min)",
+          "synopsis": "Synopsis"
+        },
+        "en": {
+          "number": "Number",
+          "title": "Title",
+          "duration": "Duration (min)",
+          "synopsis": "Synopsis"
+        }
+      },
+      "properties": {
+        "number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "duration": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Durée en minutes"
+        },
+        "synopsis": {
+          "type": "object",
+          "x-widget": "i18n-text",
+          "properties": {
+            "fr": {
+              "type": "string"
+            },
+            "en": {
+              "type": "string"
+            }
+          },
+          "propertyNames": {
+            "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "b0000000-0000-0000-0000-000000000005",
+    "name": "DVD",
+    "schema": {
+      "type": "object",
+      "x-title": {
+        "fr": "DVD",
+        "en": "DVD"
+      },
+      "x-description": {
+        "fr": "Édition DVD/Blu-ray",
+        "en": "DVD/Blu-ray edition"
+      },
+      "required": ["title"],
+      "x-label": "{title}",
+      "x-order": ["title", "publisher", "release_year", "disc_count"],
+      "x-labels": {
+        "fr": {
+          "title": "Titre",
+          "publisher": "Éditeur",
+          "release_year": "Année de sortie",
+          "disc_count": "Nombre de disques"
+        },
+        "en": {
+          "title": "Title",
+          "publisher": "Publisher",
+          "release_year": "Release Year",
+          "disc_count": "Number of Discs"
+        }
+      },
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "publisher": {
+          "type": "string"
+        },
+        "release_year": {
+          "type": "integer",
+          "minimum": 1900
+        },
+        "disc_count": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "c0000000-0000-0000-0000-000000000001",
+    "name": "broadcast_on",
+    "schema": {
+      "type": "object",
+      "x-title": {
+        "fr": "Diffusée sur",
+        "en": "Broadcast on"
+      },
+      "x-description": {
+        "fr": "Série diffusée via un mode de diffusion",
+        "en": "Series broadcast through a medium"
+      },
+      "x-order": ["broadcast_start_year"],
+      "x-labels": {
+        "fr": {
+          "broadcast_start_year": "Année de début de diffusion"
+        },
+        "en": {
+          "broadcast_start_year": "Broadcast Start Year"
+        }
+      },
+      "properties": {
+        "broadcast_start_year": {
+          "type": "integer",
+          "minimum": 1900
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "c0000000-0000-0000-0000-000000000002",
+    "name": "contains_season",
+    "schema": {
+      "type": "object",
+      "x-title": {
+        "fr": "Contient la saison",
+        "en": "Contains season"
+      },
+      "x-description": {
+        "fr": "Diffusion contient une saison",
+        "en": "Broadcast contains a season"
+      },
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "c0000000-0000-0000-0000-000000000003",
+    "name": "contains_episode",
+    "schema": {
+      "type": "object",
+      "x-title": {
+        "fr": "Contient l'épisode",
+        "en": "Contains episode"
+      },
+      "x-description": {
+        "fr": "Saison contient un épisode",
+        "en": "Season contains an episode"
+      },
+      "x-order": ["order"],
+      "x-labels": {
+        "fr": {
+          "order": "Ordre"
+        },
+        "en": {
+          "order": "Order"
+        }
+      },
+      "properties": {
+        "order": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "c0000000-0000-0000-0000-000000000004",
+    "name": "released_as",
+    "schema": {
+      "type": "object",
+      "x-title": {
+        "fr": "Éditée en",
+        "en": "Released as"
+      },
+      "x-description": {
+        "fr": "Série éditée en DVD/Blu-ray",
+        "en": "Series released on DVD/Blu-ray"
+      },
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "c0000000-0000-0000-0000-000000000005",
+    "name": "includes_episode",
+    "schema": {
+      "type": "object",
+      "x-title": {
+        "fr": "Inclut l'épisode",
+        "en": "Includes episode"
+      },
+      "x-description": {
+        "fr": "DVD inclut un épisode",
+        "en": "DVD includes an episode"
+      },
+      "x-order": ["disc", "track"],
+      "x-labels": {
+        "fr": {
+          "disc": "Disque",
+          "track": "Piste"
+        },
+        "en": {
+          "disc": "Disc",
+          "track": "Track"
+        }
+      },
+      "properties": {
+        "disc": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "track": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "d0000000-0000-0000-0000-000000000001",
+    "name": "Ownership",
+    "schema": {
+      "type": "object",
+      "x-title": {
+        "fr": "Possession",
+        "en": "Ownership"
+      },
+      "x-description": {
+        "fr": "Items possédés physiquement",
+        "en": "Physically owned items"
+      },
+      "x-order": ["condition", "purchase_price", "acquisition_date"],
+      "x-labels": {
+        "fr": {
+          "condition": "État physique",
+          "purchase_price": "Prix d'achat",
+          "acquisition_date": "Date d'acquisition"
+        },
+        "en": {
+          "condition": "Physical Condition",
+          "purchase_price": "Purchase Price",
+          "acquisition_date": "Acquisition Date"
+        }
+      },
+      "properties": {
+        "condition": {
+          "type": "string",
+          "enum": ["new", "very_good", "good", "fair", "poor"],
+          "x-enum-labels": {
+            "fr": {
+              "new": "Neuf",
+              "very_good": "Très bon",
+              "good": "Bon",
+              "fair": "Correct",
+              "poor": "Mauvais"
+            },
+            "en": {
+              "new": "New",
+              "very_good": "Very good",
+              "good": "Good",
+              "fair": "Fair",
+              "poor": "Poor"
+            }
+          }
+        },
+        "purchase_price": {
+          "type": "number",
+          "minimum": 0
+        },
+        "acquisition_date": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "d0000000-0000-0000-0000-000000000002",
+    "name": "Watching",
+    "schema": {
+      "type": "object",
+      "x-title": {
+        "fr": "Visionnage",
+        "en": "Watching"
+      },
+      "x-description": {
+        "fr": "Séries/films vus",
+        "en": "Watched series/films"
+      },
+      "x-order": ["watched_at", "rating", "progress"],
+      "x-labels": {
+        "fr": {
+          "watched_at": "Date de visionnage",
+          "rating": "Note",
+          "progress": "Progression"
+        },
+        "en": {
+          "watched_at": "Watch Date",
+          "rating": "Rating",
+          "progress": "Progress"
+        }
+      },
+      "properties": {
+        "watched_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "rating": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "progress": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Percentage"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "d0000000-0000-0000-0000-000000000003",
+    "name": "Wishlist",
+    "schema": {
+      "type": "object",
+      "x-title": {
+        "fr": "Liste d'envies",
+        "en": "Wishlist"
+      },
+      "x-description": {
+        "fr": "Items souhaités",
+        "en": "Wished items"
+      },
+      "x-order": ["priority", "max_budget"],
+      "x-labels": {
+        "fr": {
+          "priority": "Priorité",
+          "max_budget": "Budget maximum"
+        },
+        "en": {
+          "priority": "Priority",
+          "max_budget": "Maximum Budget"
+        }
+      },
+      "properties": {
+        "priority": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "max_budget": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "b0000000-0000-0000-0000-000000000010",
+    "name": "Universe",
+    "schema": {
+      "type": "object",
+      "required": ["title"],
+      "x-title": {
+        "fr": "Univers",
+        "en": "Universe"
+      },
+      "x-description": {
+        "fr": "Franchise regroupant des œuvres et des sagas",
+        "en": "Franchise grouping works and sagas"
+      },
+      "x-label": "{title}",
+      "x-order": ["title", "description", "images", "external_ids", "sources"],
+      "x-labels": {
+        "fr": {
+          "title": "Titre",
+          "description": "Description",
+          "images": "Images",
+          "external_ids": "Identifiants externes",
+          "sources": "Sources"
+        },
+        "en": {
+          "title": "Title",
+          "description": "Description",
+          "images": "Images",
+          "external_ids": "External IDs",
+          "sources": "Sources"
+        }
+      },
+      "properties": {
+        "title": {
+          "type": "object",
+          "x-widget": "i18n-text",
+          "properties": {
+            "fr": {
+              "type": "string"
+            },
+            "en": {
+              "type": "string"
+            }
+          },
+          "propertyNames": {
+            "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "type": "object",
+          "x-widget": "i18n-text",
+          "properties": {
+            "fr": {
+              "type": "string"
+            },
+            "en": {
+              "type": "string"
+            }
+          },
+          "propertyNames": {
+            "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "images": {
+          "type": "object",
+          "x-widget": "image-gallery",
+          "x-image-categories": {
+            "poster": {
+              "ratio": "2/3"
+            },
+            "banner": {
+              "ratio": "3/1"
+            },
+            "logo": {
+              "ratio": "1/1"
+            }
+          },
+          "properties": {
+            "default_image": {
+              "type": "string"
+            },
+            "poster": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "banner": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "logo": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "external_ids": {
+          "type": "object",
+          "properties": {
+            "wikidata": {
+              "type": "string",
+              "pattern": "^Q[1-9][0-9]*$"
+            },
+            "bnf_ark": {
+              "type": "string",
+              "pattern": "^ark:/12148/[a-z0-9]+$"
+            }
+          },
+          "additionalProperties": false
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["source"],
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": ["wikidata", "bnf", "manual"]
+              },
+              "retrieved_at": {
+                "type": "string",
+                "format": "date"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "b0000000-0000-0000-0000-000000000011",
+    "name": "Saga",
+    "schema": {
+      "type": "object",
+      "required": ["title"],
+      "x-title": {
+        "fr": "Saga",
+        "en": "Saga"
+      },
+      "x-description": {
+        "fr": "Arc narratif ou sous-ensemble d'un univers",
+        "en": "Story arc or subset of a universe"
+      },
+      "x-label": "{title}",
+      "x-order": [
+        "title",
+        "description",
+        "order",
+        "images",
+        "external_ids",
+        "sources"
+      ],
+      "x-labels": {
+        "fr": {
+          "title": "Titre",
+          "description": "Description",
+          "order": "Ordre",
+          "images": "Images",
+          "external_ids": "Identifiants externes",
+          "sources": "Sources"
+        },
+        "en": {
+          "title": "Title",
+          "description": "Description",
+          "order": "Order",
+          "images": "Images",
+          "external_ids": "External IDs",
+          "sources": "Sources"
+        }
+      },
+      "properties": {
+        "title": {
+          "type": "object",
+          "x-widget": "i18n-text",
+          "properties": {
+            "fr": {
+              "type": "string"
+            },
+            "en": {
+              "type": "string"
+            }
+          },
+          "propertyNames": {
+            "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "type": "object",
+          "x-widget": "i18n-text",
+          "properties": {
+            "fr": {
+              "type": "string"
+            },
+            "en": {
+              "type": "string"
+            }
+          },
+          "propertyNames": {
+            "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "images": {
+          "type": "object",
+          "x-widget": "image-gallery",
+          "x-image-categories": {
+            "illustration": {
+              "ratio": "16/9"
+            }
+          },
+          "properties": {
+            "default_image": {
+              "type": "string"
+            },
+            "illustration": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "external_ids": {
+          "type": "object",
+          "properties": {
+            "wikidata": {
+              "type": "string",
+              "pattern": "^Q[1-9][0-9]*$"
+            },
+            "bnf_ark": {
+              "type": "string",
+              "pattern": "^ark:/12148/[a-z0-9]+$"
+            }
+          },
+          "additionalProperties": false
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["source"],
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": ["wikidata", "bnf", "manual"]
+              },
+              "retrieved_at": {
+                "type": "string",
+                "format": "date"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "b0000000-0000-0000-0000-000000000012",
+    "name": "Manga",
+    "schema": {
+      "type": "object",
+      "required": ["title"],
+      "x-title": {
+        "fr": "Manga",
+        "en": "Manga"
+      },
+      "x-description": {
+        "fr": "Œuvre de type manga (manhwa, manhua, webtoon)",
+        "en": "Manga work (manhwa, manhua, webtoon)"
+      },
+      "x-label": "{title}",
+      "x-order": [
+        "title",
+        "original_title",
+        "description",
+        "sub_type",
+        "demographic",
+        "status",
+        "start_year",
+        "end_year",
+        "volumes_vo",
+        "images",
+        "external_ids",
+        "sources"
+      ],
+      "x-labels": {
+        "fr": {
+          "title": "Titre",
+          "original_title": "Titre original",
+          "description": "Synopsis",
+          "sub_type": "Sous-type",
+          "demographic": "Public",
+          "status": "Statut",
+          "start_year": "Année de début",
+          "end_year": "Année de fin",
+          "volumes_vo": "Tomes (VO)",
+          "images": "Images",
+          "external_ids": "Identifiants externes",
+          "sources": "Sources"
+        },
+        "en": {
+          "title": "Title",
+          "original_title": "Original title",
+          "description": "Synopsis",
+          "sub_type": "Sub-type",
+          "demographic": "Demographic",
+          "status": "Status",
+          "start_year": "Start year",
+          "end_year": "End year",
+          "volumes_vo": "Volumes (original)",
+          "images": "Images",
+          "external_ids": "External IDs",
+          "sources": "Sources"
+        }
+      },
+      "properties": {
+        "title": {
+          "type": "object",
+          "x-widget": "i18n-text",
+          "properties": {
+            "fr": {
+              "type": "string"
+            },
+            "en": {
+              "type": "string"
+            }
+          },
+          "propertyNames": {
+            "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "original_title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "object",
+          "x-widget": "i18n-text",
+          "properties": {
+            "fr": {
+              "type": "string"
+            },
+            "en": {
+              "type": "string"
+            }
+          },
+          "propertyNames": {
+            "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "sub_type": {
+          "type": "string",
+          "enum": ["manga", "manhwa", "manhua", "webtoon"],
+          "x-enum-labels": {
+            "fr": {
+              "manga": "Manga",
+              "manhwa": "Manhwa",
+              "manhua": "Manhua",
+              "webtoon": "Webtoon"
+            },
+            "en": {
+              "manga": "Manga",
+              "manhwa": "Manhwa",
+              "manhua": "Manhua",
+              "webtoon": "Webtoon"
+            }
+          }
+        },
+        "demographic": {
+          "type": "string",
+          "enum": ["shonen", "shojo", "seinen", "josei", "kodomo"],
+          "x-enum-labels": {
+            "fr": {
+              "shonen": "Shōnen",
+              "shojo": "Shōjo",
+              "seinen": "Seinen",
+              "josei": "Josei",
+              "kodomo": "Kodomo"
+            },
+            "en": {
+              "shonen": "Shōnen",
+              "shojo": "Shōjo",
+              "seinen": "Seinen",
+              "josei": "Josei",
+              "kodomo": "Kodomo"
+            }
+          }
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ongoing", "completed", "on_hold", "cancelled"],
+          "x-enum-labels": {
+            "fr": {
+              "ongoing": "En cours",
+              "completed": "Terminée",
+              "on_hold": "En pause",
+              "cancelled": "Abandonnée"
+            },
+            "en": {
+              "ongoing": "Ongoing",
+              "completed": "Completed",
+              "on_hold": "On hold",
+              "cancelled": "Cancelled"
+            }
+          }
+        },
+        "start_year": {
+          "type": "integer",
+          "minimum": 1800
+        },
+        "end_year": {
+          "type": "integer",
+          "minimum": 1800
+        },
+        "volumes_vo": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "images": {
+          "type": "object",
+          "x-widget": "image-gallery",
+          "x-image-categories": {
+            "poster": {
+              "ratio": "2/3"
+            },
+            "cover": {
+              "ratio": "2/3"
+            },
+            "banner": {
+              "ratio": "3/1"
+            }
+          },
+          "properties": {
+            "default_image": {
+              "type": "string"
+            },
+            "poster": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "cover": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "banner": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "external_ids": {
+          "type": "object",
+          "properties": {
+            "wikidata": {
+              "type": "string",
+              "pattern": "^Q[1-9][0-9]*$"
+            },
+            "bnf_ark": {
+              "type": "string",
+              "pattern": "^ark:/12148/[a-z0-9]+$"
+            }
+          },
+          "additionalProperties": false
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["source"],
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": ["wikidata", "bnf", "manual"]
+              },
+              "retrieved_at": {
+                "type": "string",
+                "format": "date"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "b0000000-0000-0000-0000-000000000013",
+    "name": "Comic",
+    "schema": {
+      "type": "object",
+      "required": ["title"],
+      "x-title": {
+        "fr": "BD",
+        "en": "Comic"
+      },
+      "x-description": {
+        "fr": "Bande dessinée (franco-belge, comics, roman graphique)",
+        "en": "Comic (Franco-Belgian, comics, graphic novel)"
+      },
+      "x-label": "{title}",
+      "x-order": [
+        "title",
+        "original_title",
+        "description",
+        "sub_type",
+        "status",
+        "start_year",
+        "end_year",
+        "volumes_vo",
+        "images",
+        "external_ids",
+        "sources"
+      ],
+      "x-labels": {
+        "fr": {
+          "title": "Titre",
+          "original_title": "Titre original",
+          "description": "Synopsis",
+          "sub_type": "Sous-type",
+          "status": "Statut",
+          "start_year": "Année de début",
+          "end_year": "Année de fin",
+          "volumes_vo": "Albums (VO)",
+          "images": "Images",
+          "external_ids": "Identifiants externes",
+          "sources": "Sources"
+        },
+        "en": {
+          "title": "Title",
+          "original_title": "Original title",
+          "description": "Synopsis",
+          "sub_type": "Sub-type",
+          "status": "Status",
+          "start_year": "Start year",
+          "end_year": "End year",
+          "volumes_vo": "Albums (original)",
+          "images": "Images",
+          "external_ids": "External IDs",
+          "sources": "Sources"
+        }
+      },
+      "properties": {
+        "title": {
+          "type": "object",
+          "x-widget": "i18n-text",
+          "properties": {
+            "fr": {
+              "type": "string"
+            },
+            "en": {
+              "type": "string"
+            }
+          },
+          "propertyNames": {
+            "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "original_title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "object",
+          "x-widget": "i18n-text",
+          "properties": {
+            "fr": {
+              "type": "string"
+            },
+            "en": {
+              "type": "string"
+            }
+          },
+          "propertyNames": {
+            "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "sub_type": {
+          "type": "string",
+          "enum": ["franco_belge", "comic", "graphic_novel", "strip"],
+          "x-enum-labels": {
+            "fr": {
+              "franco_belge": "Franco-belge",
+              "comic": "Comics",
+              "graphic_novel": "Roman graphique",
+              "strip": "Strip"
+            },
+            "en": {
+              "franco_belge": "Franco-Belgian",
+              "comic": "Comics",
+              "graphic_novel": "Graphic novel",
+              "strip": "Comic strip"
+            }
+          }
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ongoing", "completed", "on_hold", "cancelled"],
+          "x-enum-labels": {
+            "fr": {
+              "ongoing": "En cours",
+              "completed": "Terminée",
+              "on_hold": "En pause",
+              "cancelled": "Abandonnée"
+            },
+            "en": {
+              "ongoing": "Ongoing",
+              "completed": "Completed",
+              "on_hold": "On hold",
+              "cancelled": "Cancelled"
+            }
+          }
+        },
+        "start_year": {
+          "type": "integer",
+          "minimum": 1800
+        },
+        "end_year": {
+          "type": "integer",
+          "minimum": 1800
+        },
+        "volumes_vo": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "images": {
+          "type": "object",
+          "x-widget": "image-gallery",
+          "x-image-categories": {
+            "poster": {
+              "ratio": "2/3"
+            },
+            "cover": {
+              "ratio": "3/4"
+            },
+            "banner": {
+              "ratio": "3/1"
+            }
+          },
+          "properties": {
+            "default_image": {
+              "type": "string"
+            },
+            "poster": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "cover": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "banner": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "external_ids": {
+          "type": "object",
+          "properties": {
+            "wikidata": {
+              "type": "string",
+              "pattern": "^Q[1-9][0-9]*$"
+            },
+            "bnf_ark": {
+              "type": "string",
+              "pattern": "^ark:/12148/[a-z0-9]+$"
+            }
+          },
+          "additionalProperties": false
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["source"],
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": ["wikidata", "bnf", "manual"]
+              },
+              "retrieved_at": {
+                "type": "string",
+                "format": "date"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "b0000000-0000-0000-0000-000000000014",
+    "name": "Edition",
+    "schema": {
+      "type": "object",
+      "required": ["title", "language"],
+      "x-title": {
+        "fr": "Édition",
+        "en": "Edition"
+      },
+      "x-description": {
+        "fr": "Publication spécifique d'une œuvre (originale, perfect, poche…)",
+        "en": "Specific publication of a work (original, perfect, pocket…)"
+      },
+      "x-label": "{title}",
+      "x-order": [
+        "title",
+        "language",
+        "format",
+        "status",
+        "volume_count",
+        "start_year",
+        "end_year",
+        "images",
+        "external_ids",
+        "sources"
+      ],
+      "x-labels": {
+        "fr": {
+          "title": "Titre",
+          "language": "Langue",
+          "format": "Format",
+          "status": "Statut",
+          "volume_count": "Nombre de tomes",
+          "start_year": "Année de début",
+          "end_year": "Année de fin",
+          "images": "Images",
+          "external_ids": "Identifiants externes",
+          "sources": "Sources"
+        },
+        "en": {
+          "title": "Title",
+          "language": "Language",
+          "format": "Format",
+          "status": "Status",
+          "volume_count": "Number of volumes",
+          "start_year": "Start year",
+          "end_year": "End year",
+          "images": "Images",
+          "external_ids": "External IDs",
+          "sources": "Sources"
+        }
+      },
+      "properties": {
+        "title": {
+          "type": "object",
+          "x-widget": "i18n-text",
+          "properties": {
+            "fr": {
+              "type": "string"
+            },
+            "en": {
+              "type": "string"
+            }
+          },
+          "propertyNames": {
+            "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "language": {
+          "type": "string",
+          "enum": ["fr", "ja", "en", "ko", "zh", "es", "de", "it"],
+          "x-enum-labels": {
+            "fr": {
+              "fr": "Français",
+              "ja": "Japonais",
+              "en": "Anglais",
+              "ko": "Coréen",
+              "zh": "Chinois",
+              "es": "Espagnol",
+              "de": "Allemand",
+              "it": "Italien"
+            },
+            "en": {
+              "fr": "French",
+              "ja": "Japanese",
+              "en": "English",
+              "ko": "Korean",
+              "zh": "Chinese",
+              "es": "Spanish",
+              "de": "German",
+              "it": "Italian"
+            }
+          }
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "tankobon",
+            "grand_format",
+            "poche",
+            "perfect",
+            "deluxe",
+            "collector",
+            "omnibus",
+            "album"
+          ],
+          "x-enum-labels": {
+            "fr": {
+              "tankobon": "Tankōbon",
+              "grand_format": "Grand format",
+              "poche": "Poche",
+              "perfect": "Perfect edition",
+              "deluxe": "Deluxe",
+              "collector": "Collector",
+              "omnibus": "Omnibus",
+              "album": "Album"
+            },
+            "en": {
+              "tankobon": "Tankōbon",
+              "grand_format": "Large format",
+              "poche": "Pocket",
+              "perfect": "Perfect edition",
+              "deluxe": "Deluxe",
+              "collector": "Collector",
+              "omnibus": "Omnibus",
+              "album": "Album"
+            }
+          }
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ongoing", "completed", "on_hold", "out_of_print"],
+          "x-enum-labels": {
+            "fr": {
+              "ongoing": "En cours",
+              "completed": "Terminée",
+              "on_hold": "En pause",
+              "out_of_print": "Épuisée"
+            },
+            "en": {
+              "ongoing": "Ongoing",
+              "completed": "Completed",
+              "on_hold": "On hold",
+              "out_of_print": "Out of print"
+            }
+          }
+        },
+        "volume_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "start_year": {
+          "type": "integer",
+          "minimum": 1800
+        },
+        "end_year": {
+          "type": "integer",
+          "minimum": 1800
+        },
+        "images": {
+          "type": "object",
+          "x-widget": "image-gallery",
+          "x-image-categories": {
+            "cover": {
+              "ratio": "2/3"
+            },
+            "promo": {
+              "ratio": "16/9"
+            }
+          },
+          "properties": {
+            "default_image": {
+              "type": "string"
+            },
+            "cover": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "promo": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "external_ids": {
+          "type": "object",
+          "properties": {
+            "wikidata": {
+              "type": "string",
+              "pattern": "^Q[1-9][0-9]*$"
+            },
+            "bnf_ark": {
+              "type": "string",
+              "pattern": "^ark:/12148/[a-z0-9]+$"
+            }
+          },
+          "additionalProperties": false
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["source"],
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": ["wikidata", "bnf", "manual"]
+              },
+              "retrieved_at": {
+                "type": "string",
+                "format": "date"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "b0000000-0000-0000-0000-000000000015",
+    "name": "Volume",
+    "schema": {
+      "type": "object",
+      "required": ["number", "title"],
+      "x-title": {
+        "fr": "Tome",
+        "en": "Volume"
+      },
+      "x-description": {
+        "fr": "Volume physique individuel (tome, album)",
+        "en": "Individual physical volume"
+      },
+      "x-label": "{number}. {title}",
+      "x-order": [
+        "number",
+        "title",
+        "subtitle",
+        "isbn",
+        "publication_date",
+        "page_count",
+        "retail_price",
+        "images",
+        "external_ids",
+        "sources"
+      ],
+      "x-labels": {
+        "fr": {
+          "number": "Numéro",
+          "title": "Titre",
+          "subtitle": "Sous-titre",
+          "isbn": "ISBN",
+          "publication_date": "Date de publication",
+          "page_count": "Nombre de pages",
+          "retail_price": "Prix catalogue (€)",
+          "images": "Images",
+          "external_ids": "Identifiants externes",
+          "sources": "Sources"
+        },
+        "en": {
+          "number": "Number",
+          "title": "Title",
+          "subtitle": "Subtitle",
+          "isbn": "ISBN",
+          "publication_date": "Publication date",
+          "page_count": "Page count",
+          "retail_price": "Retail price (€)",
+          "images": "Images",
+          "external_ids": "External IDs",
+          "sources": "Sources"
+        }
+      },
+      "properties": {
+        "number": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "title": {
+          "type": "object",
+          "x-widget": "i18n-text",
+          "properties": {
+            "fr": {
+              "type": "string"
+            },
+            "en": {
+              "type": "string"
+            }
+          },
+          "propertyNames": {
+            "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "subtitle": {
+          "type": "string"
+        },
+        "isbn": {
+          "type": "string",
+          "pattern": "^97[89][0-9]{10}$",
+          "description": "ISBN-13, chiffres seuls"
+        },
+        "publication_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "page_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "retail_price": {
+          "type": "number",
+          "minimum": 0
+        },
+        "images": {
+          "type": "object",
+          "x-widget": "image-gallery",
+          "x-image-categories": {
+            "front": {
+              "ratio": "2/3"
+            },
+            "back": {
+              "ratio": "2/3"
+            },
+            "spine": {
+              "ratio": "1/8"
+            }
+          },
+          "properties": {
+            "default_image": {
+              "type": "string"
+            },
+            "front": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "back": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "spine": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "external_ids": {
+          "type": "object",
+          "properties": {
+            "wikidata": {
+              "type": "string",
+              "pattern": "^Q[1-9][0-9]*$"
+            },
+            "bnf_ark": {
+              "type": "string",
+              "pattern": "^ark:/12148/[a-z0-9]+$"
+            }
+          },
+          "additionalProperties": false
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["source"],
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": ["wikidata", "bnf", "manual"]
+              },
+              "retrieved_at": {
+                "type": "string",
+                "format": "date"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "b0000000-0000-0000-0000-000000000016",
+    "name": "Person",
+    "schema": {
+      "type": "object",
+      "required": ["last_name"],
+      "x-title": {
+        "fr": "Personne",
+        "en": "Person"
+      },
+      "x-description": {
+        "fr": "Créateur : auteur, scénariste, dessinateur, coloriste, traducteur…",
+        "en": "Creator: author, writer, artist, colorist, translator…"
+      },
+      "x-label": "{first_name} {last_name}",
+      "x-order": [
+        "last_name",
+        "first_name",
+        "native_name",
+        "nationality",
+        "birth_date",
+        "biography",
+        "images",
+        "external_ids",
+        "sources"
+      ],
+      "x-labels": {
+        "fr": {
+          "last_name": "Nom",
+          "first_name": "Prénom",
+          "native_name": "Nom natif",
+          "nationality": "Nationalité (code pays)",
+          "birth_date": "Date de naissance",
+          "biography": "Biographie",
+          "images": "Images",
+          "external_ids": "Identifiants externes",
+          "sources": "Sources"
+        },
+        "en": {
+          "last_name": "Last name",
+          "first_name": "First name",
+          "native_name": "Native name",
+          "nationality": "Nationality (country code)",
+          "birth_date": "Birth date",
+          "biography": "Biography",
+          "images": "Images",
+          "external_ids": "External IDs",
+          "sources": "Sources"
+        }
+      },
+      "properties": {
+        "last_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "first_name": {
+          "type": "string"
+        },
+        "native_name": {
+          "type": "string"
+        },
+        "nationality": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$",
+          "description": "ISO 3166-1 alpha-2"
+        },
+        "birth_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "biography": {
+          "type": "object",
+          "x-widget": "i18n-text",
+          "properties": {
+            "fr": {
+              "type": "string"
+            },
+            "en": {
+              "type": "string"
+            }
+          },
+          "propertyNames": {
+            "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "images": {
+          "type": "object",
+          "x-widget": "image-gallery",
+          "x-image-categories": {
+            "portrait": {
+              "ratio": "3/4"
+            }
+          },
+          "properties": {
+            "default_image": {
+              "type": "string"
+            },
+            "portrait": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "external_ids": {
+          "type": "object",
+          "properties": {
+            "wikidata": {
+              "type": "string",
+              "pattern": "^Q[1-9][0-9]*$"
+            },
+            "bnf_ark": {
+              "type": "string",
+              "pattern": "^ark:/12148/[a-z0-9]+$"
+            }
+          },
+          "additionalProperties": false
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["source"],
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": ["wikidata", "bnf", "manual"]
+              },
+              "retrieved_at": {
+                "type": "string",
+                "format": "date"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "b0000000-0000-0000-0000-000000000017",
+    "name": "Publisher",
+    "schema": {
+      "type": "object",
+      "required": ["name"],
+      "x-title": {
+        "fr": "Maison d'édition",
+        "en": "Publisher"
+      },
+      "x-description": {
+        "fr": "Éditeur (Glénat, Kana, Dargaud, Dupuis…)",
+        "en": "Publishing house"
+      },
+      "x-label": "{name}",
+      "x-order": [
+        "name",
+        "country",
+        "website",
+        "description",
+        "images",
+        "external_ids",
+        "sources"
+      ],
+      "x-labels": {
+        "fr": {
+          "name": "Nom",
+          "country": "Pays (code)",
+          "website": "Site web",
+          "description": "Description",
+          "images": "Images",
+          "external_ids": "Identifiants externes",
+          "sources": "Sources"
+        },
+        "en": {
+          "name": "Name",
+          "country": "Country (code)",
+          "website": "Website",
+          "description": "Description",
+          "images": "Images",
+          "external_ids": "External IDs",
+          "sources": "Sources"
+        }
+      },
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "country": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$",
+          "description": "ISO 3166-1 alpha-2"
+        },
+        "website": {
+          "type": "string",
+          "format": "uri"
+        },
+        "description": {
+          "type": "object",
+          "x-widget": "i18n-text",
+          "properties": {
+            "fr": {
+              "type": "string"
+            },
+            "en": {
+              "type": "string"
+            }
+          },
+          "propertyNames": {
+            "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "images": {
+          "type": "object",
+          "x-widget": "image-gallery",
+          "x-image-categories": {
+            "logo": {
+              "ratio": "1/1"
+            }
+          },
+          "properties": {
+            "default_image": {
+              "type": "string"
+            },
+            "logo": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "external_ids": {
+          "type": "object",
+          "properties": {
+            "wikidata": {
+              "type": "string",
+              "pattern": "^Q[1-9][0-9]*$"
+            },
+            "bnf_ark": {
+              "type": "string",
+              "pattern": "^ark:/12148/[a-z0-9]+$"
+            }
+          },
+          "additionalProperties": false
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["source"],
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": ["wikidata", "bnf", "manual"]
+              },
+              "retrieved_at": {
+                "type": "string",
+                "format": "date"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "c0000000-0000-0000-0000-000000000010",
+    "name": "contains_saga",
+    "schema": {
+      "type": "object",
+      "x-title": {
+        "fr": "Contient la saga",
+        "en": "Contains saga"
+      },
+      "x-order": ["order"],
+      "x-labels": {
+        "fr": {
+          "order": "Ordre"
+        },
+        "en": {
+          "order": "Order"
+        }
+      },
+      "properties": {
+        "order": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "c0000000-0000-0000-0000-000000000011",
+    "name": "contains_work",
+    "schema": {
+      "type": "object",
+      "x-title": {
+        "fr": "Contient l'œuvre",
+        "en": "Contains work"
+      },
+      "x-order": ["order"],
+      "x-labels": {
+        "fr": {
+          "order": "Ordre"
+        },
+        "en": {
+          "order": "Order"
+        }
+      },
+      "properties": {
+        "order": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "c0000000-0000-0000-0000-000000000012",
+    "name": "created_by",
+    "schema": {
+      "type": "object",
+      "required": ["roles"],
+      "x-title": {
+        "fr": "Créée par",
+        "en": "Created by"
+      },
+      "x-order": ["roles"],
+      "x-labels": {
+        "fr": {
+          "roles": "Rôles"
+        },
+        "en": {
+          "roles": "Roles"
+        }
+      },
+      "properties": {
+        "roles": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["author", "writer", "artist", "colorist", "translator"]
+          },
+          "x-enum-labels": {
+            "fr": {
+              "author": "Auteur",
+              "writer": "Scénariste",
+              "artist": "Dessinateur",
+              "colorist": "Coloriste",
+              "translator": "Traducteur"
+            },
+            "en": {
+              "author": "Author",
+              "writer": "Writer",
+              "artist": "Artist",
+              "colorist": "Colorist",
+              "translator": "Translator"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "c0000000-0000-0000-0000-000000000013",
+    "name": "published_as",
+    "schema": {
+      "type": "object",
+      "x-title": {
+        "fr": "Publiée en",
+        "en": "Published as"
+      },
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "c0000000-0000-0000-0000-000000000014",
+    "name": "edited_by",
+    "schema": {
+      "type": "object",
+      "x-title": {
+        "fr": "Éditée par",
+        "en": "Edited by"
+      },
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "c0000000-0000-0000-0000-000000000015",
+    "name": "contains_volume",
+    "schema": {
+      "type": "object",
+      "x-title": {
+        "fr": "Contient le tome",
+        "en": "Contains volume"
+      },
+      "x-order": ["order"],
+      "x-labels": {
+        "fr": {
+          "order": "Ordre"
+        },
+        "en": {
+          "order": "Order"
+        }
+      },
+      "properties": {
+        "order": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "c0000000-0000-0000-0000-000000000016",
+    "name": "adapted_as",
+    "schema": {
+      "type": "object",
+      "x-title": {
+        "fr": "Adaptée en",
+        "en": "Adapted as"
+      },
+      "x-order": ["adaptation_type"],
+      "x-labels": {
+        "fr": {
+          "adaptation_type": "Type d'adaptation"
+        },
+        "en": {
+          "adaptation_type": "Adaptation type"
+        }
+      },
+      "properties": {
+        "adaptation_type": {
+          "type": "string",
+          "enum": ["anime", "film", "ova", "live_action"],
+          "x-enum-labels": {
+            "fr": {
+              "anime": "Anime",
+              "film": "Film",
+              "ova": "OAV",
+              "live_action": "Prises de vues réelles"
+            },
+            "en": {
+              "anime": "Anime",
+              "film": "Film",
+              "ova": "OVA",
+              "live_action": "Live action"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+]

@@ -10,7 +10,7 @@ func (h *Handler) ListItemTypes(w http.ResponseWriter, r *http.Request) {
 	pg := parsePagination(r)
 	items, total, err := h.Store.ListItemTypes(r.Context(), pg)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusOK, model.NewPaginatedResponse(items, total, pg))
@@ -23,7 +23,7 @@ func (h *Handler) GetItemType(w http.ResponseWriter, r *http.Request) {
 	}
 	it, err := h.Store.GetItemType(r.Context(), id)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusOK, it)
@@ -31,12 +31,15 @@ func (h *Handler) GetItemType(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) CreateItemType(w http.ResponseWriter, r *http.Request) {
 	var in model.ItemTypeCreate
-	if err := decodeJSON(r, &in); err != nil {
-		respondError(w, http.StatusBadRequest, "bad_request", "JSON invalide")
+	if err := decodeJSON(w, r, &in); err != nil {
+		respondDecodeError(w, err)
 		return
 	}
 	if in.Name == "" {
-		respondValidationError(w, "Le nom est obligatoire", nil)
+		respondValidationError(w, "name is required", nil)
+		return
+	}
+	if !checkAttributesSchema(w, in.AttributesSchema) {
 		return
 	}
 	if len(in.AttributesSchema) == 0 {
@@ -45,7 +48,7 @@ func (h *Handler) CreateItemType(w http.ResponseWriter, r *http.Request) {
 
 	it, err := h.Store.CreateItemType(r.Context(), in)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusCreated, it)
@@ -57,13 +60,16 @@ func (h *Handler) UpdateItemType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var in model.ItemTypeUpdate
-	if err := decodeJSON(r, &in); err != nil {
-		respondError(w, http.StatusBadRequest, "bad_request", "JSON invalide")
+	if err := decodeJSON(w, r, &in); err != nil {
+		respondDecodeError(w, err)
+		return
+	}
+	if len(in.AttributesSchema) > 0 && !checkAttributesSchema(w, in.AttributesSchema) {
 		return
 	}
 	it, err := h.Store.UpdateItemType(r.Context(), id, in)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusOK, it)
@@ -75,7 +81,7 @@ func (h *Handler) DeleteItemType(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.Store.DeleteItemType(r.Context(), id); err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

@@ -13,11 +13,14 @@ import (
 func (h *Handler) ListCollections(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	pg := parsePagination(r)
-	collectionTypeID := parseOptionalUUID(r.URL.Query().Get("collection_type_id"))
+	collectionTypeID, ok := parseOptionalUUID(w, r, "collection_type_id")
+	if !ok {
+		return
+	}
 
 	cols, total, err := h.Store.ListCollections(r.Context(), userID, pg, collectionTypeID)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusOK, model.NewPaginatedResponse(cols, total, pg))
@@ -30,12 +33,12 @@ func (h *Handler) GetCollection(w http.ResponseWriter, r *http.Request) {
 	}
 	col, err := h.Store.GetCollection(r.Context(), id)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	// Ensure user can only see their own collections
 	if col.UserID != middleware.GetUserID(r.Context()) {
-		respondError(w, http.StatusNotFound, "not_found", "Ressource non trouvée")
+		respondError(w, http.StatusNotFound, "not_found", "resource not found")
 		return
 	}
 	respondJSON(w, http.StatusOK, col)
@@ -43,19 +46,19 @@ func (h *Handler) GetCollection(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) CreateCollection(w http.ResponseWriter, r *http.Request) {
 	var in model.CollectionCreate
-	if err := decodeJSON(r, &in); err != nil {
-		respondError(w, http.StatusBadRequest, "bad_request", "JSON invalide")
+	if err := decodeJSON(w, r, &in); err != nil {
+		respondDecodeError(w, err)
 		return
 	}
 	if in.Name == "" {
-		respondValidationError(w, "Le nom est obligatoire", nil)
+		respondValidationError(w, "name is required", nil)
 		return
 	}
 
 	userID := middleware.GetUserID(r.Context())
 	col, err := h.Store.CreateCollection(r.Context(), userID, in)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusCreated, col)
@@ -70,22 +73,22 @@ func (h *Handler) UpdateCollection(w http.ResponseWriter, r *http.Request) {
 	// Check ownership
 	col, err := h.Store.GetCollection(r.Context(), id)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	if col.UserID != middleware.GetUserID(r.Context()) {
-		respondError(w, http.StatusNotFound, "not_found", "Ressource non trouvée")
+		respondError(w, http.StatusNotFound, "not_found", "resource not found")
 		return
 	}
 
 	var in model.CollectionUpdate
-	if err := decodeJSON(r, &in); err != nil {
-		respondError(w, http.StatusBadRequest, "bad_request", "JSON invalide")
+	if err := decodeJSON(w, r, &in); err != nil {
+		respondDecodeError(w, err)
 		return
 	}
 	updated, err := h.Store.UpdateCollection(r.Context(), id, in)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusOK, updated)
@@ -98,16 +101,16 @@ func (h *Handler) DeleteCollection(w http.ResponseWriter, r *http.Request) {
 	}
 	col, err := h.Store.GetCollection(r.Context(), id)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	if col.UserID != middleware.GetUserID(r.Context()) {
-		respondError(w, http.StatusNotFound, "not_found", "Ressource non trouvée")
+		respondError(w, http.StatusNotFound, "not_found", "resource not found")
 		return
 	}
 
 	if err := h.Store.DeleteCollection(r.Context(), id); err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -123,22 +126,27 @@ func (h *Handler) ListCollectionItems(w http.ResponseWriter, r *http.Request) {
 
 	col, err := h.Store.GetCollection(r.Context(), colID)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	if col.UserID != middleware.GetUserID(r.Context()) {
-		respondError(w, http.StatusNotFound, "not_found", "Ressource non trouvée")
+		respondError(w, http.StatusNotFound, "not_found", "resource not found")
 		return
 	}
 
 	pg := parsePagination(r)
-	q := r.URL.Query()
-	itemTypeID := parseOptionalUUID(q.Get("item_type_id"))
-	sort := q.Get("sort")
+	itemTypeID, ok := parseOptionalUUID(w, r, "item_type_id")
+	if !ok {
+		return
+	}
+	sort, ok := parseSort(w, r)
+	if !ok {
+		return
+	}
 
 	items, total, err := h.Store.ListCollectionItems(r.Context(), colID, pg, itemTypeID, sort)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusOK, model.NewPaginatedResponse(items, total, pg))
@@ -152,17 +160,17 @@ func (h *Handler) AddItemToCollection(w http.ResponseWriter, r *http.Request) {
 
 	col, err := h.Store.GetCollection(r.Context(), colID)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	if col.UserID != middleware.GetUserID(r.Context()) {
-		respondError(w, http.StatusNotFound, "not_found", "Ressource non trouvée")
+		respondError(w, http.StatusNotFound, "not_found", "resource not found")
 		return
 	}
 
 	var in model.CollectionItemAdd
-	if err := decodeJSON(r, &in); err != nil {
-		respondError(w, http.StatusBadRequest, "bad_request", "JSON invalide")
+	if err := decodeJSON(w, r, &in); err != nil {
+		respondDecodeError(w, err)
 		return
 	}
 	if len(in.Attributes) == 0 {
@@ -172,11 +180,11 @@ func (h *Handler) AddItemToCollection(w http.ResponseWriter, r *http.Request) {
 	// Validate attributes against collection type schema
 	ct, err := h.Store.GetCollectionType(r.Context(), col.CollectionTypeID)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	if vErr := validator.ValidateAttributes(ct.AttributesSchema, in.Attributes); vErr != nil {
-		respondValidationError(w, "Les attributs ne respectent pas le schéma du type de collection", map[string]interface{}{
+		respondValidationError(w, "attributes do not match the collection type schema", map[string]any{
 			"fields": validator.FormatValidationError(vErr),
 		})
 		return
@@ -185,10 +193,10 @@ func (h *Handler) AddItemToCollection(w http.ResponseWriter, r *http.Request) {
 	ci, err := h.Store.AddCollectionItem(r.Context(), colID, in)
 	if err != nil {
 		if err == store.ErrConflict {
-			respondError(w, http.StatusConflict, "conflict", "Cet item est déjà dans la collection")
+			respondError(w, http.StatusConflict, "conflict", "this item is already in the collection")
 			return
 		}
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusCreated, ci)
@@ -206,28 +214,32 @@ func (h *Handler) UpdateCollectionItem(w http.ResponseWriter, r *http.Request) {
 
 	col, err := h.Store.GetCollection(r.Context(), colID)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	if col.UserID != middleware.GetUserID(r.Context()) {
-		respondError(w, http.StatusNotFound, "not_found", "Ressource non trouvée")
+		respondError(w, http.StatusNotFound, "not_found", "resource not found")
 		return
 	}
 
 	var in model.CollectionItemUpdate
-	if err := decodeJSON(r, &in); err != nil {
-		respondError(w, http.StatusBadRequest, "bad_request", "JSON invalide")
+	if err := decodeJSON(w, r, &in); err != nil {
+		respondDecodeError(w, err)
+		return
+	}
+	if !hasAttributes(in.Attributes) {
+		respondMissingAttributes(w)
 		return
 	}
 
 	// Validate attributes
 	ct, err := h.Store.GetCollectionType(r.Context(), col.CollectionTypeID)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	if vErr := validator.ValidateAttributes(ct.AttributesSchema, in.Attributes); vErr != nil {
-		respondValidationError(w, "Les attributs ne respectent pas le schéma du type de collection", map[string]interface{}{
+		respondValidationError(w, "attributes do not match the collection type schema", map[string]any{
 			"fields": validator.FormatValidationError(vErr),
 		})
 		return
@@ -235,7 +247,7 @@ func (h *Handler) UpdateCollectionItem(w http.ResponseWriter, r *http.Request) {
 
 	ci, err := h.Store.UpdateCollectionItem(r.Context(), colID, itemID, in)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusOK, ci)
@@ -253,16 +265,16 @@ func (h *Handler) RemoveItemFromCollection(w http.ResponseWriter, r *http.Reques
 
 	col, err := h.Store.GetCollection(r.Context(), colID)
 	if err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	if col.UserID != middleware.GetUserID(r.Context()) {
-		respondError(w, http.StatusNotFound, "not_found", "Ressource non trouvée")
+		respondError(w, http.StatusNotFound, "not_found", "resource not found")
 		return
 	}
 
 	if err := h.Store.RemoveCollectionItem(r.Context(), colID, itemID); err != nil {
-		handleStoreError(w, err)
+		handleStoreError(w, r, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

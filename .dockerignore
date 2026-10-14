@@ -1,0 +1,8 @@
+# Contexte de build de server/Dockerfile = racine du dépôt : n'embarquer que le nécessaire.
+*
+!server/
+!db/migrations/
+!db/seed*.sql
+server/colec
+server/server
+server/*.exe

@@ -1,34 +1,46 @@
 <template>
   <div>
     <div class="flex items-center gap-3 mb-4">
-      <Button icon="pi pi-arrow-left" text @click="router.back()" />
+      <ElButton text :aria-label="t('common.back')" @click="router.back()">
+        <i class="pi pi-arrow-left" aria-hidden="true"></i>
+      </ElButton>
       <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
-        Graphe de relations
+        {{ t("graph.view.title") }}
       </h1>
       <div class="flex-1"></div>
       <div class="flex items-center gap-2">
-        <label class="text-sm text-gray-600 dark:text-gray-400"
-          >Profondeur :</label
+        <label
+          for="graph-depth"
+          class="text-sm text-gray-600 dark:text-gray-400"
+          >{{ t("graph.view.depth") }}</label
         >
-        <InputNumber
+        <ElInputNumber
+          id="graph-depth"
           v-model="maxDepth"
           :min="1"
-          :max="10"
-          showButtons
+          :max="auth.isAdmin ? 10 : 5"
           :step="1"
-          class="w-24"
-          @update:modelValue="loadGraph"
+          size="small"
+          class="w-28!"
+          @change="loadGraph"
         />
       </div>
     </div>
 
-    <div v-if="loading" class="flex justify-center py-12">
-      <ProgressSpinner />
-    </div>
+    <ElAlert
+      v-if="truncated && !loading"
+      type="warning"
+      :closable="false"
+      show-icon
+      class="mb-3"
+      :title="t('graph.view.truncated')"
+    />
+
+    <AppSpinner v-if="loading" />
 
     <div
       v-else
-      class="bg-white dark:bg-gray-800 rounded-lg shadow"
+      class="bg-white dark:bg-gray-800 rounded-lg shadow-sm"
       style="height: 600px"
     >
       <div ref="cyContainer" class="w-full h-full"></div>
@@ -45,82 +57,46 @@
         class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400"
       >
         <span
-          class="inline-block w-3 h-3 rounded-sm"
+          class="inline-block w-3 h-3 rounded-xs"
           :style="{ backgroundColor: color }"
         ></span>
-        {{ typeName }}
+        {{ typeDisplay(String(typeName)) }}
       </span>
     </div>
 
-    <!-- Node detail modal -->
-    <Dialog
+    <GraphNodeDialog
       v-model:visible="nodeDialogVisible"
-      :header="selectedNodeTitle"
-      modal
-      :style="{ width: '550px' }"
-    >
-      <div v-if="selectedNode" class="flex flex-col gap-4">
-        <!-- Header: type + title -->
-        <div class="flex items-center gap-2">
-          <Tag :value="selectedNode.type" severity="info" />
-          <span
-            v-if="selectedNode.depth === 0"
-            class="text-xs text-gray-400 dark:text-gray-500"
-            >(racine)</span
-          >
-        </div>
-
-        <!-- Poster image -->
-        <div v-if="selectedNodeImage" class="flex justify-center">
-          <img
-            :src="selectedNodeImage"
-            :alt="selectedNodeTitle"
-            class="max-h-48 rounded-lg shadow object-contain"
-          />
-        </div>
-
-        <!-- Attributes -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-          <div
-            v-for="(value, key) in filteredNodeAttributes"
-            :key="key"
-            class="flex flex-col"
-          >
-            <span class="text-gray-400 dark:text-gray-500 text-xs">{{
-              key
-            }}</span>
-            <span class="dark:text-gray-200">{{ formatAttrValue(value) }}</span>
-          </div>
-        </div>
-      </div>
-
-      <template #footer>
-        <Button label="Fermer" text @click="nodeDialogVisible = false" />
-        <Button
-          label="Voir la fiche"
-          icon="pi pi-external-link"
-          @click="
-            router.push(`/items/${selectedNode!.id}`);
-            nodeDialogVisible = false;
-          "
-        />
-      </template>
-    </Dialog>
+      :node="selectedNode"
+      :schema="selectedNode ? itemTypeSchemas[selectedNode.type] : undefined"
+      :title="selectedNodeTitle"
+      :type-label="selectedNode ? typeDisplay(selectedNode.type) : ''"
+      @open="openItem"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { useTheme } from "@/composables/useTheme";
-import Button from "primevue/button";
-import InputNumber from "primevue/inputnumber";
-import Tag from "primevue/tag";
-import Dialog from "primevue/dialog";
-import ProgressSpinner from "primevue/progressspinner";
+import AppSpinner from "@/components/common/AppSpinner.vue";
 import cytoscape from "cytoscape";
 import type { Core } from "cytoscape";
 import { itemApi } from "@/api/client";
+import { useAuthStore } from "@/stores/auth";
+import { useMetaTypes } from "@/stores/metaTypes";
+import { useLang } from "@/composables/useLang";
+import { useNotify } from "@/composables/useNotify";
+import {
+  displayValue,
+  fieldLabel,
+  fieldValue,
+  orderedKeys,
+  renderLabel,
+  typeTitle,
+} from "@/lib/schema";
+import GraphNodeDialog from "@/components/graph/GraphNodeDialog.vue";
 import type { GraphNode, GraphEdge, GraphResponse } from "@/api/types";
 
 const props = defineProps<{ id: string }>();
@@ -129,6 +105,11 @@ const { theme } = useTheme();
 
 const cyContainer = ref<HTMLElement | null>(null);
 const maxDepth = ref(3);
+const truncated = ref(false);
+const auth = useAuthStore();
+const { lang } = useLang();
+const { t } = useI18n();
+const { notifyError } = useNotify();
 const loading = ref(true);
 
 // Node detail modal
@@ -159,23 +140,48 @@ function getColor(type: string): string {
   return typeColors[type]!;
 }
 
-// ── Localized label extraction ──
-function extractTitle(attrs: Record<string, unknown>): string {
-  for (const key of ["titre", "nom", "name", "title", "label"]) {
-    const val = attrs[key];
-    if (val == null) continue;
-    if (typeof val === "object" && !Array.isArray(val)) {
-      const obj = val as Record<string, string>;
-      if (typeof obj["fr"] === "string") return obj["fr"];
-      if (typeof obj["en"] === "string") return obj["en"];
-    }
-    if (typeof val === "string") return val;
-  }
-  return "";
+// ── Schémas des méta-types (par nom), depuis le cache partagé ──
+const metaTypes = useMetaTypes();
+const itemTypeSchemas = computed(() => metaTypes.itemTypeSchemasByName);
+const relationTypeSchemas = computed(() => metaTypes.relationTypeSchemasByName);
+
+// Méta-types par nom (nœuds et arêtes ne portent que le nom) : nom affiché via x-title.
+const itemTypesByName = computed(
+  () => new Map(metaTypes.itemTypes.map((it) => [it.name, it])),
+);
+const relationTypesByName = computed(
+  () => new Map(metaTypes.relationTypes.map((rt) => [rt.name, rt])),
+);
+function typeDisplay(name: string): string {
+  return typeTitle(itemTypesByName.value.get(name), lang.value) || name;
+}
+function relationDisplay(name: string): string {
+  return typeTitle(relationTypesByName.value.get(name), lang.value) || name;
 }
 
+async function loadSchemas() {
+  await Promise.all([metaTypes.loadItemTypes(), metaTypes.loadRelationTypes()]);
+}
+
+// Le serveur calcule `label` en français : on le recalcule dans la langue courante
+// avec le x-label de l'ItemType, repli sur celui du serveur.
 function nodeTitle(n: GraphNode): string {
-  return extractTitle(n.attributes) || n.id.slice(0, 8);
+  return (
+    renderLabel(itemTypeSchemas.value[n.type], n.attributes, lang.value) ||
+    n.label ||
+    n.id.slice(0, 8)
+  );
+}
+
+// Données d'affichage d'un nœud dépendant de la langue (titre, badge du type).
+function nodeVisual(n: GraphNode, isRoot: boolean) {
+  const color = getColor(n.type);
+  const typeLabel = typeDisplay(n.type);
+  return {
+    title: nodeTitle(n),
+    typeSvg: makeTypeSvg(typeLabel, color, isRoot),
+    nodeWidth: Math.max(typeLabel.length * 7.5 + 24, 50),
+  };
 }
 
 // ── SVG badge for type label inside node ──
@@ -207,14 +213,20 @@ function escapeXml(s: string): string {
 }
 
 // ── Edge label formatting ──
+// Nom du type + attributs libellés via les x-labels du RelationType ; `order` en badge #n.
 function edgeLabel(e: GraphEdge): string {
+  const schema = relationTypeSchemas.value[e.relation_type];
   const attrs = e.attributes ?? {};
-  const tags: string[] = [];
-  if (attrs.order != null) tags.push(`#${attrs.order}`);
-  if (attrs.language) tags.push(String(attrs.language));
-  if (attrs.role) tags.push(String(attrs.role));
-  if (tags.length) return `${e.relation_type}\n${tags.join(" · ")}`;
-  return e.relation_type;
+  const parts = orderedKeys(schema, attrs)
+    .filter((k) => attrs[k] != null && attrs[k] !== "")
+    .map((k) =>
+      k === "order"
+        ? `#${displayValue(attrs[k], lang.value)}`
+        : `${fieldLabel(schema, k, lang.value)} ${fieldValue(schema, k, attrs[k], lang.value)}`,
+    );
+  const name = relationDisplay(e.relation_type);
+  if (parts.length) return `${name}\n${parts.join(" · ")}`;
+  return name;
 }
 
 // ── Node detail modal helpers ──
@@ -222,45 +234,9 @@ const selectedNodeTitle = computed(() =>
   selectedNode.value ? nodeTitle(selectedNode.value) : "",
 );
 
-const selectedNodeImage = computed(() => {
-  if (!selectedNode.value) return "";
-  const attrs = selectedNode.value.attributes;
-  for (const key of Object.keys(attrs)) {
-    if (!/image/i.test(key)) continue;
-    const val = attrs[key];
-    if (typeof val === "object" && val && !Array.isArray(val)) {
-      const obj = val as Record<string, unknown>;
-      if (typeof obj.default_image === "string" && obj.default_image)
-        return obj.default_image;
-      for (const v of Object.values(obj)) {
-        if (Array.isArray(v) && typeof v[0] === "string") return v[0];
-      }
-    }
-  }
-  return "";
-});
-
-const filteredNodeAttributes = computed(() => {
-  if (!selectedNode.value) return {};
-  const skip = new Set(["images", "Images"]);
-  const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(selectedNode.value.attributes)) {
-    if (skip.has(k)) continue;
-    out[k] = v;
-  }
-  return out;
-});
-
-function formatAttrValue(value: unknown): string {
-  if (value == null) return "—";
-  if (typeof value === "object" && !Array.isArray(value)) {
-    const obj = value as Record<string, unknown>;
-    if (typeof obj["fr"] === "string") return obj["fr"];
-    if (typeof obj["en"] === "string") return obj["en"];
-    return JSON.stringify(value);
-  }
-  if (Array.isArray(value)) return value.join(", ");
-  return String(value);
+function openItem(id: string) {
+  nodeDialogVisible.value = false;
+  router.push(`/items/${id}`);
 }
 
 // ── Graph loading ──
@@ -270,14 +246,16 @@ async function loadGraph() {
 
   try {
     const graph = await itemApi.graph(props.id, { max_depth: maxDepth.value });
+    truncated.value = graph.truncated;
 
     loading.value = false;
     await nextTick();
     if (!cyContainer.value) return;
 
     renderGraph(graph);
-  } catch {
+  } catch (e) {
     loading.value = false;
+    notifyError(e, t("graph.view.loadFailed"));
   }
 }
 
@@ -294,20 +272,15 @@ function renderGraph(graph: GraphResponse) {
   const elements: cytoscape.ElementDefinition[] = [
     // Nodes
     ...allNodes.map((n) => {
-      const color = getColor(n.type);
       const isRoot = n.id === graph.root.id;
-      const title = nodeTitle(n);
-      const w = Math.max(n.type.length * 7.5 + 24, 50);
       return {
         data: {
           id: n.id,
-          title,
           type: n.type,
-          color,
+          color: getColor(n.type),
           isRoot,
           nodeData: n,
-          typeSvg: makeTypeSvg(n.type, color, isRoot),
-          nodeWidth: w,
+          ...nodeVisual(n, isRoot),
         },
       };
     }),
@@ -408,6 +381,26 @@ function renderGraph(graph: GraphResponse) {
   });
 }
 
-onMounted(() => loadGraph());
+// Changement de langue : libellés des nœuds et arêtes recalculés sans recharger le graphe.
+watch(lang, () => {
+  if (!cy) return;
+  cy.batch(() => {
+    cy!.nodes().forEach((node) => {
+      node.data(
+        nodeVisual(node.data("nodeData") as GraphNode, !!node.data("isRoot")),
+      );
+    });
+    cy!.edges().forEach((edge) => {
+      edge.data("label", edgeLabel(edge.data("edgeData") as GraphEdge));
+    });
+  });
+});
+
+onMounted(async () => {
+  await loadSchemas().catch((e) =>
+    notifyError(e, t("graph.view.schemasFailed")),
+  );
+  await loadGraph();
+});
 onUnmounted(() => cy?.destroy());
 </script>

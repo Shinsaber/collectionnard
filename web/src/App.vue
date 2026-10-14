@@ -1,10 +1,12 @@
 <template>
-  <Toast />
-  <ConfirmDialog />
-  <router-view />
+  <!-- Locale Element Plus (pagination, sélecteurs…) alignée sur la langue de l'app. -->
+  <ElConfigProvider :locale="elementLocale">
+    <router-view />
+  </ElConfigProvider>
 </template>
 
 <script setup lang="ts">
-import Toast from "primevue/toast";
-import ConfirmDialog from "primevue/confirmdialog";
+import { useLang } from "@/composables/useLang";
+
+const { elementLocale } = useLang();
 </script>

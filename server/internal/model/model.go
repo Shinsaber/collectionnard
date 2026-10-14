@@ -18,8 +18,15 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
-	Token string `json:"token"`
-	User  User   `json:"user"`
+	Token        string `json:"token"`         // access token JWT (courte durée)
+	RefreshToken string `json:"refresh_token"` // token opaque, rotation à chaque utilisation
+	ExpiresIn    int    `json:"expires_in"`    // durée de vie de `token` en secondes
+	User         User   `json:"user"`
+}
+
+// RefreshRequest is the body of POST /auth/refresh and POST /auth/logout.
+type RefreshRequest struct {
+	RefreshToken string `json:"refresh_token"`
 }
 
 // ---------------------------------------------------------------------------
@@ -65,16 +72,16 @@ type ItemTypeUpdate struct {
 // ---------------------------------------------------------------------------
 
 type RelationType struct {
-	ID               uuid.UUID       `json:"id"`
-	Name             string          `json:"name"`
-	Description      *string         `json:"description,omitempty"`
-	SourceItemTypeIDs []uuid.UUID    `json:"source_item_type_ids"`
-	TargetItemTypeIDs []uuid.UUID    `json:"target_item_type_ids"`
-	SourceItemTypes  []ItemType      `json:"source_item_types,omitempty"`
-	TargetItemTypes  []ItemType      `json:"target_item_types,omitempty"`
-	AttributesSchema json.RawMessage `json:"attributes_schema"`
-	CreatedAt        time.Time       `json:"created_at"`
-	UpdatedAt        time.Time       `json:"updated_at"`
+	ID                uuid.UUID       `json:"id"`
+	Name              string          `json:"name"`
+	Description       *string         `json:"description,omitempty"`
+	SourceItemTypeIDs []uuid.UUID     `json:"source_item_type_ids"`
+	TargetItemTypeIDs []uuid.UUID     `json:"target_item_type_ids"`
+	SourceItemTypes   []ItemType      `json:"source_item_types,omitempty"`
+	TargetItemTypes   []ItemType      `json:"target_item_types,omitempty"`
+	AttributesSchema  json.RawMessage `json:"attributes_schema"`
+	CreatedAt         time.Time       `json:"created_at"`
+	UpdatedAt         time.Time       `json:"updated_at"`
 }
 
 type RelationTypeCreate struct {
@@ -157,6 +164,7 @@ type ItemRelation struct {
 	TargetItem     *Item           `json:"target_item,omitempty"`
 	Attributes     json.RawMessage `json:"attributes"`
 	CreatedAt      time.Time       `json:"created_at"`
+	UpdatedAt      time.Time       `json:"updated_at"`
 }
 
 type ItemRelationCreate struct {
@@ -256,9 +264,17 @@ type GraphEdge struct {
 }
 
 type GraphResponse struct {
-	Root  GraphNode   `json:"root"`
-	Nodes []GraphNode `json:"nodes"`
-	Edges []GraphEdge `json:"edges"`
+	Root      GraphNode   `json:"root"`
+	Nodes     []GraphNode `json:"nodes"`
+	Edges     []GraphEdge `json:"edges"`
+	Truncated bool        `json:"truncated"` // exploration arrêtée par la limite de nœuds (GRAPH_MAX_NODES)
+}
+
+// UploadResponse is returned by POST /uploads.
+type UploadResponse struct {
+	URL      string `json:"url"`
+	Filename string `json:"filename"`
+	Size     int64  `json:"size"` // octets réellement écrits
 }
 
 // ---------------------------------------------------------------------------

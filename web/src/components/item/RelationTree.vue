@@ -6,10 +6,25 @@
         v-if="isFirstOfType(idx)"
         class="flex items-center gap-2 mt-2 first:mt-0 mb-0.5 px-2"
       >
-        <Tag :value="rel.relation_type?.name ?? '?'" class="text-[10px]" />
+        <ElTag size="small" type="info">{{
+          typeTitle(rel.relation_type, lang) || "?"
+        }}</ElTag>
         <span class="text-xs text-gray-400 dark:text-gray-500"
           >({{ typeCount(rel.relation_type_id) }})</span
         >
+        <router-link
+          :to="{
+            path: '/items',
+            query: {
+              related_to: contextItemId,
+              relation_type_id: rel.relation_type_id,
+            },
+          }"
+          class="text-xs text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+          :title="t('items.search.relatedItems')"
+          :aria-label="t('items.search.relatedItems')"
+          ><i class="pi pi-list" aria-hidden="true"></i
+        ></router-link>
         <div class="flex-1 border-b border-gray-100 dark:border-gray-700"></div>
       </div>
 
@@ -39,17 +54,15 @@
           </svg>
 
           <!-- Linked item type -->
-          <Tag
-            :value="linkedTypeName(rel)"
-            severity="secondary"
-            class="text-[11px]"
-          />
+          <ElTag size="small" type="info" effect="plain">{{
+            linkedTypeName(rel)
+          }}</ElTag>
 
           <!-- Order badge -->
           <span
             v-if="orderVal(rel) != null"
-            class="bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 text-[11px] font-semibold font-mono rounded px-1.5 py-0.5 shrink-0"
-            title="Ordre"
+            class="bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 text-[11px] font-semibold font-mono rounded-sm px-1.5 py-0.5 shrink-0"
+            :title="t('items.relations.order')"
           >
             #{{ orderVal(rel) }}
           </span>
@@ -69,43 +82,60 @@
               :key="String(key)"
               class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[11px] rounded-full px-2 py-0.5"
             >
-              {{ attrLabel(rel, String(key)) }}: {{ displayValue(val) }}
+              {{ attrLabel(rel, String(key)) }}:
+              {{ attrValue(rel, String(key), val) }}
             </span>
           </div>
 
           <!-- Actions -->
           <div class="flex gap-0.5 shrink-0">
-            <Button
-              :icon="
-                expanded.has(rel.id) ? 'pi pi-chevron-up' : 'pi pi-chevron-down'
+            <ElButton
+              text
+              size="small"
+              circle
+              :title="t('items.relations.subRelations')"
+              :aria-label="
+                expanded.has(rel.id)
+                  ? t('items.relations.collapse')
+                  : t('items.relations.expand')
               "
-              text
-              size="small"
-              rounded
-              v-tooltip="'Sous-relations'"
+              :aria-expanded="expanded.has(rel.id)"
               @click.stop="toggle(rel)"
-            />
-            <Button
+            >
+              <i
+                :class="
+                  expanded.has(rel.id)
+                    ? 'pi pi-chevron-up'
+                    : 'pi pi-chevron-down'
+                "
+                aria-hidden="true"
+              ></i>
+            </ElButton>
+            <ElButton
               v-if="showDelete"
-              icon="pi pi-pencil"
               text
               size="small"
-              rounded
-              class="opacity-0 group-hover/rel:opacity-100 transition-opacity"
-              v-tooltip="'Modifier'"
+              circle
+              :title="t('common.edit')"
+              :aria-label="t('items.relations.editRelation')"
+              class="opacity-0 group-hover/rel:opacity-100 focus:opacity-100 transition-opacity"
               @click.stop="$emit('edit', rel)"
-            />
-            <Button
+            >
+              <i class="pi pi-pencil" aria-hidden="true"></i>
+            </ElButton>
+            <ElButton
               v-if="showDelete"
-              icon="pi pi-trash"
               text
               size="small"
-              rounded
-              severity="danger"
-              class="opacity-0 group-hover/rel:opacity-100 transition-opacity"
-              v-tooltip="'Supprimer'"
+              circle
+              type="danger"
+              :title="t('common.delete')"
+              :aria-label="t('items.relations.deleteRelation')"
+              class="opacity-0 group-hover/rel:opacity-100 focus:opacity-100 transition-opacity"
               @click.stop="$emit('delete', rel)"
-            />
+            >
+              <i class="pi pi-trash" aria-hidden="true"></i>
+            </ElButton>
           </div>
         </div>
 
@@ -118,13 +148,14 @@
             v-if="loading.has(rel.id)"
             class="py-2 text-xs text-gray-400 dark:text-gray-500"
           >
-            <i class="pi pi-spin pi-spinner mr-1"></i> Chargement…
+            <i class="pi pi-spin pi-spinner mr-1"></i>
+            {{ t("common.loading") }}
           </div>
           <div
             v-else-if="!children[rel.id]?.length"
             class="py-2 text-xs text-gray-400 dark:text-gray-500 italic"
           >
-            Aucune sous-relation sortante.
+            {{ t("items.relations.noSubRelations") }}
           </div>
           <RelationTree
             v-else
@@ -141,9 +172,18 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import Tag from "primevue/tag";
-import Button from "primevue/button";
+import { useI18n } from "vue-i18n";
 import { itemApi } from "@/api/client";
+import { useLang } from "@/composables/useLang";
+import { useNotify } from "@/composables/useNotify";
+import {
+  fieldLabel,
+  fieldValue,
+  itemLabel as renderItemLabel,
+  orderedKeys,
+  typeTitle,
+  type Schema,
+} from "@/lib/schema";
 import type { Item, ItemRelation } from "@/api/types";
 
 const props = withDefaults(
@@ -161,6 +201,9 @@ defineEmits<{
   edit: [rel: ItemRelation];
 }>();
 
+const { t } = useI18n();
+const { lang } = useLang();
+const { notifyError } = useNotify();
 const expanded = ref(new Set<string>());
 const children = ref<Record<string, ItemRelation[]>>({});
 const loading = ref(new Set<string>());
@@ -175,7 +218,7 @@ function linkedId(rel: ItemRelation): string {
 
 function linkedTypeName(rel: ItemRelation): string {
   const linked = isOutgoing(rel) ? rel.target_item : rel.source_item;
-  return linked?.item_type?.name ?? "?";
+  return typeTitle(linked?.item_type, lang.value) || "?";
 }
 
 function linkedLabel(rel: ItemRelation): string {
@@ -185,52 +228,35 @@ function linkedLabel(rel: ItemRelation): string {
 }
 
 function computeLabel(i: Item): string {
-  const attrs = i.attributes;
-  if (typeof attrs !== "object" || !attrs) return i.id.slice(0, 8);
-  const obj = attrs as Record<string, unknown>;
-  for (const key of ["titre", "nom", "name", "title", "label"]) {
-    const val = obj[key];
-    if (val == null) continue;
-    if (typeof val === "object" && !Array.isArray(val)) {
-      const loc = val as Record<string, unknown>;
-      if (typeof loc["fr"] === "string") return loc["fr"];
-      if (typeof loc["en"] === "string") return loc["en"];
-    }
-    return String(val);
-  }
-  return `${i.item_type?.name ?? "Item"} – ${i.id.slice(0, 8)}`;
+  return renderItemLabel(i, lang.value);
 }
 
-function displayValue(value: unknown): string {
-  if (value != null && typeof value === "object" && !Array.isArray(value)) {
-    const obj = value as Record<string, unknown>;
-    if (typeof obj["fr"] === "string") return obj["fr"];
-    if (typeof obj["en"] === "string") return obj["en"];
-  }
-  return String(value ?? "");
+function relSchema(rel: ItemRelation): Schema | undefined {
+  return rel.relation_type?.attributes_schema as Schema | undefined;
 }
+
+// Convention : l'attribut de relation `order` (entier) sert au tri et s'affiche en badge.
+const ORDER_KEY = "order";
 
 function orderVal(rel: ItemRelation): unknown {
-  return rel.attributes?.order ?? rel.attributes?.ordre ?? null;
+  return rel.attributes?.[ORDER_KEY] ?? null;
 }
 
 function displayAttrs(rel: ItemRelation): Record<string, unknown> {
   const result: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(rel.attributes ?? {})) {
-    if (k === "order" || k === "ordre") continue;
-    result[k] = v;
+  for (const k of orderedKeys(relSchema(rel), rel.attributes)) {
+    if (k === ORDER_KEY || !(k in (rel.attributes ?? {}))) continue;
+    result[k] = rel.attributes[k];
   }
   return result;
 }
 
 function attrLabel(rel: ItemRelation, key: string): string {
-  const schema = rel.relation_type?.attributes_schema as
-    | Record<string, unknown>
-    | undefined;
-  const labels = (
-    schema?.["x-labels"] as Record<string, Record<string, string>> | undefined
-  )?.["fr"];
-  return labels?.[key] ?? key;
+  return fieldLabel(relSchema(rel), key, lang.value);
+}
+
+function attrValue(rel: ItemRelation, key: string, value: unknown): string {
+  return fieldValue(relSchema(rel), key, value, lang.value);
 }
 
 const sortedRelations = computed(() => {
@@ -282,8 +308,9 @@ async function toggle(rel: ItemRelation) {
       (r) =>
         r.source_item_id === lid && r.target_item_id !== props.contextItemId,
     );
-  } catch {
+  } catch (e) {
     children.value[rel.id] = [];
+    notifyError(e, t("items.relations.subRelationsUnavailable"));
   } finally {
     loading.value.delete(rel.id);
     loading.value = new Set(loading.value);

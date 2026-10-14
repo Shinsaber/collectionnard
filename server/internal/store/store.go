@@ -3,8 +3,10 @@ package store
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/shinsaber/colec/internal/itemquery"
 	"github.com/shinsaber/colec/internal/model"
 )
 
@@ -13,18 +15,35 @@ var (
 	ErrConflict = errors.New("conflict")
 )
 
+// ItemFilters are the criteria of ListItems. Attrs and SortAttr come from the
+// itemquery package, already validated against the schema of ItemTypeID.
 type ItemFilters struct {
 	ItemTypeID *uuid.UUID
-	Search     string
+	Search     string // full text (prefix terms, accent- and case-insensitive)
 	Tag        string
-	Sort       string
+	Sort       string // created_at | updated_at | relevance, optional "-" prefix
+	SortAttr   *itemquery.Sort
+	Attrs      []itemquery.Filter
+	// RelatedTo keeps the items linked to this item, in either direction,
+	// optionally through RelationTypeID only.
+	RelatedTo      *uuid.UUID
+	RelationTypeID *uuid.UUID
 }
 
 // Store defines all data operations.
 type Store interface {
+	// Health
+	Ping(ctx context.Context) error
+
 	// User
 	GetUserByUsername(ctx context.Context, username string) (*model.User, string, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (*model.User, error)
+
+	// RefreshToken (hash SHA-256 du token, jamais le token brut)
+	CreateRefreshToken(ctx context.Context, userID uuid.UUID, tokenHash string, expiresAt time.Time) error
+	ConsumeRefreshToken(ctx context.Context, tokenHash string) (uuid.UUID, error)
+	DeleteRefreshToken(ctx context.Context, tokenHash string) error
+	DeleteExpiredRefreshTokens(ctx context.Context) (int64, error)
 
 	// ItemType
 	ListItemTypes(ctx context.Context, pg model.Pagination) ([]model.ItemType, int, error)
@@ -62,7 +81,7 @@ type Store interface {
 	DeleteRelation(ctx context.Context, id uuid.UUID) error
 
 	// Graph
-	GetItemGraph(ctx context.Context, itemID uuid.UUID, maxDepth int, relationTypeIDs []uuid.UUID) (*model.GraphResponse, error)
+	GetItemGraph(ctx context.Context, itemID uuid.UUID, maxDepth, maxNodes int, relationTypeIDs []uuid.UUID) (*model.GraphResponse, error)
 
 	// Collection
 	ListCollections(ctx context.Context, userID uuid.UUID, pg model.Pagination, collectionTypeID *uuid.UUID) ([]model.Collection, int, error)
@@ -85,4 +104,18 @@ type Store interface {
 
 	// Stats
 	GetStats(ctx context.Context) (*model.Stats, error)
+
+	// Import / export (catalogue only: meta-types, items, relations, tags)
+	ExportCatalog(ctx context.Context) (*model.CatalogExport, error)
+	// ImportCatalog upserts the catalogue by id in one transaction, rolled back on
+	// any validation error or when dryRun is set. A returned error is an
+	// infrastructure failure; validation problems are in the report.
+	ImportCatalog(ctx context.Context, cat *model.CatalogExport, dryRun bool) (*model.ImportReport, error)
+	// ImportCollection restores a collection export into the account of userID
+	// (same contract as ImportCatalog: validation errors are in the report).
+	ImportCollection(ctx context.Context, userID uuid.UUID, exp *model.CollectionExport, dryRun bool) (*model.ImportReport, error)
+
+	// External sources (matching of the items proposed by a connector)
+	FindItemsByAttribute(ctx context.Context, itemTypeID uuid.UUID, path, values []string, fold bool) ([]model.Item, error)
+	ListRelationsBetween(ctx context.Context, ids []uuid.UUID) ([]model.ItemRelation, error)
 }

@@ -1,5 +1,9 @@
 -- =============================================================================
--- Collectionnard — Schéma de Base de Données PostgreSQL
+-- Collectionnard — Migration 001 : schéma initial (ancien db/schema.sql)
+-- =============================================================================
+-- Appliquée par `colec-server migrate` (tern, table schema_version).
+-- NE PAS MODIFIER ce fichier une fois appliqué quelque part : toute évolution du
+-- schéma va dans un nouveau fichier db/migrations/NNN_description.sql.
 -- =============================================================================
 -- Ce schéma implémente le modèle conceptuel décrit dans Collectionnard.md
 -- Pattern clé : JSONB + JSON Schema pour les attributs dynamiques
@@ -22,6 +26,19 @@ CREATE TABLE users (
     created_at  TIMESTAMPTZ  NOT NULL DEFAULT now(),
     updated_at  TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
+
+-- 1b. Refresh tokens (rotation : un token est supprimé dès qu'il est consommé)
+-- Seul le hash SHA-256 du token est stocké ; le token brut n'est connu que du client.
+CREATE TABLE refresh_tokens (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash  CHAR(64) NOT NULL UNIQUE,
+    expires_at  TIMESTAMPTZ NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_refresh_tokens_user    ON refresh_tokens (user_id);
+CREATE INDEX idx_refresh_tokens_expires ON refresh_tokens (expires_at);
 
 -- =============================================================================
 -- 2. META-TYPES (schémas dynamiques)
@@ -214,3 +231,10 @@ CREATE TRIGGER trg_collections_updated_at
 
 CREATE TRIGGER trg_collection_items_updated_at
     BEFORE UPDATE ON collection_items FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+---- create above / drop below ----
+
+DROP TABLE IF EXISTS item_tags, tags, collection_items, collections, item_relations, items,
+    collection_types, relation_type_targets, relation_type_sources, relation_types, item_types,
+    refresh_tokens, users CASCADE;
+DROP FUNCTION IF EXISTS update_updated_at();

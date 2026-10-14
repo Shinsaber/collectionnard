@@ -1,0 +1,298 @@
+// Lecture des JSON Schemas des méta-types et de leurs extensions x-* pour
+// l'affichage. Pendant Go de server/internal/label : les deux implémentations
+// de `renderLabel` doivent rester alignées.
+
+import { DEFAULT_LANG, LANGS, type Lang } from "@/i18n/langs";
+
+export { LANGS, type Lang };
+
+export type Schema = Record<string, unknown>;
+export type Attributes = Record<string, unknown>;
+
+/** Clés essayées, dans l'ordre, quand le schéma n'a pas de `x-label`. */
+export const FALLBACK_LABEL_KEYS = [
+  "title",
+  "name",
+  "label",
+  "titre",
+  "nom",
+  "number",
+  "numero",
+];
+
+const PLACEHOLDER = /\{([A-Za-z0-9_.-]+)\}/g;
+
+function properties(schema?: Schema | null): Record<string, Schema> {
+  return (schema?.properties ?? {}) as Record<string, Schema>;
+}
+
+/** Valeur d'affichage d'un attribut : objet i18n → langue demandée puis repli, tableau → liste, etc. */
+export function displayValue(
+  value: unknown,
+  lang: Lang = DEFAULT_LANG,
+): string {
+  if (value == null) return "";
+  if (Array.isArray(value)) {
+    return value
+      .map((v) => displayValue(v, lang))
+      .filter((s) => s !== "")
+      .join(", ");
+  }
+  if (typeof value === "object") {
+    return i18nText(value as Record<string, unknown>, lang);
+  }
+  return String(value);
+}
+
+/** Ordre de repli : langue demandée, langue par défaut, langues connues, puis les autres clés triées. */
+function fallbackOrder(lang: Lang, keys: string[]): string[] {
+  return [lang, DEFAULT_LANG, ...LANGS, ...[...keys].sort()];
+}
+
+/**
+ * Texte d'un objet i18n (`{fr: "…", en: "…"}`) : la langue demandée, puis la langue
+ * par défaut, puis les autres langues connues, puis toute autre clé (langue saisie mais
+ * pas encore supportée par l'interface). "" si rien. Même ordre que `label.Stringify` (Go).
+ */
+export function i18nText(
+  obj: Record<string, unknown> | null | undefined,
+  lang: Lang = DEFAULT_LANG,
+): string {
+  if (!obj || typeof obj !== "object") return "";
+  for (const l of fallbackOrder(lang, Object.keys(obj))) {
+    const v = obj[l];
+    if (typeof v === "string" && v !== "") return v;
+  }
+  return "";
+}
+
+/** Gabarit `x-label` du schéma, ou "" s'il n'en a pas. */
+export function labelTemplate(schema?: Schema | null): string {
+  const tpl = schema?.["x-label"];
+  return typeof tpl === "string" ? tpl.trim() : "";
+}
+
+/**
+ * Libellé d'une instance à partir du schéma de son méta-type et de ses attributs :
+ * gabarit `x-label` (`"{number}. {title}"`) ou première clé de repli trouvée, sinon "".
+ */
+export function renderLabel(
+  schema: Schema | null | undefined,
+  attrs: Attributes | null | undefined,
+  lang: Lang = DEFAULT_LANG,
+): string {
+  if (!attrs || typeof attrs !== "object") return "";
+  const tpl = labelTemplate(schema);
+  if (tpl) {
+    return tpl
+      .replace(PLACEHOLDER, (_m, key: string) => displayValue(attrs[key], lang))
+      .split(/\s+/)
+      .filter(Boolean)
+      .join(" ");
+  }
+  for (const key of FALLBACK_LABEL_KEYS) {
+    if (key in attrs) {
+      const s = displayValue(attrs[key], lang);
+      if (s !== "") return s;
+    }
+  }
+  return "";
+}
+
+/** Libellé d'un item (schéma de son ItemType, repli sur le début de l'id). */
+export function itemLabel(
+  item:
+    | {
+        id: string;
+        attributes: Attributes;
+        item_type?: { attributes_schema?: unknown } | null;
+      }
+    | null
+    | undefined,
+  lang: Lang = DEFAULT_LANG,
+): string {
+  if (!item) return "?";
+  const schema = item.item_type?.attributes_schema as Schema | undefined;
+  return renderLabel(schema, item.attributes, lang) || item.id.slice(0, 8);
+}
+
+/** Libellé d'un champ via `x-labels`, repli sur la clé mise en forme. */
+export function fieldLabel(
+  schema: Schema | null | undefined,
+  key: string,
+  lang: Lang = DEFAULT_LANG,
+  fallback: "key" | "pretty" = "key",
+): string {
+  const own = byLang(schema?.["x-labels"], key, lang);
+  if (own) return own;
+  if (fallback === "pretty") {
+    return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+  return key;
+}
+
+/** Clés d'attributs dans l'ordre `x-order`, puis les clés restantes (schéma puis données). */
+export function orderedKeys(
+  schema: Schema | null | undefined,
+  attrs?: Attributes | null,
+): string[] {
+  const xOrder = (schema?.["x-order"] as string[] | undefined) ?? [];
+  const known = new Set<string>();
+  const out: string[] = [];
+  const push = (k: string) => {
+    if (!known.has(k)) {
+      known.add(k);
+      out.push(k);
+    }
+  };
+  const propKeys = Object.keys(properties(schema));
+  const attrKeys = attrs ? Object.keys(attrs) : [];
+  const universe = new Set([...propKeys, ...attrKeys]);
+  for (const k of xOrder) if (universe.has(k)) push(k);
+  for (const k of propKeys) push(k);
+  for (const k of attrKeys) push(k);
+  return out;
+}
+
+/** Valeur `x-widget` d'une propriété, ou undefined. */
+export function widgetOf(
+  schema: Schema | null | undefined,
+  key: string,
+): string | undefined {
+  const w = properties(schema)[key]?.["x-widget"];
+  return typeof w === "string" ? w : undefined;
+}
+
+export function isImageGallery(
+  schema: Schema | null | undefined,
+  key: string,
+): boolean {
+  return widgetOf(schema, key) === "image-gallery";
+}
+
+/** Catégories d'une galerie (`x-image-categories`), format objet ou tableau historique. */
+export function imageCategories(
+  schema: Schema | null | undefined,
+  key: string,
+): { name: string; ratio: string }[] {
+  const raw = properties(schema)[key]?.["x-image-categories"];
+  if (!raw) return [];
+  if (Array.isArray(raw)) {
+    return (raw as string[]).map((name) => ({ name, ratio: "1/1" }));
+  }
+  if (typeof raw === "object") {
+    return Object.entries(raw as Record<string, { ratio?: string }>).map(
+      ([name, v]) => ({ name, ratio: v?.ratio ?? "1/1" }),
+    );
+  }
+  return [];
+}
+
+/**
+ * Première image d'un item : `default_image` de la première galerie du schéma,
+ * sinon la première image de la première catégorie non vide.
+ */
+export function defaultImage(
+  schema: Schema | null | undefined,
+  attrs: Attributes | null | undefined,
+): string {
+  if (!attrs) return "";
+  for (const key of Object.keys(properties(schema))) {
+    if (!isImageGallery(schema, key)) continue;
+    const gallery = attrs[key];
+    if (!gallery || typeof gallery !== "object" || Array.isArray(gallery))
+      continue;
+    const g = gallery as Record<string, unknown>;
+    if (typeof g.default_image === "string" && g.default_image)
+      return g.default_image;
+    for (const cat of imageCategories(schema, key)) {
+      const list = g[cat.name];
+      if (Array.isArray(list) && typeof list[0] === "string" && list[0])
+        return list[0];
+    }
+  }
+  return "";
+}
+
+/** Lecture d'une table `{<lang>: {<clé>: "texte"}}` (`x-labels`, `x-enum-labels`), même repli que `i18nText`. */
+function byLang(table: unknown, key: string, lang: Lang): string {
+  if (!table || typeof table !== "object") return "";
+  const t = table as Record<string, Record<string, unknown> | undefined>;
+  for (const l of fallbackOrder(lang, Object.keys(t))) {
+    const v = t[l]?.[key];
+    if (typeof v === "string" && v !== "") return v;
+  }
+  return "";
+}
+
+/**
+ * Libellé d'une valeur d'enum via `x-enum-labels` de la propriété
+ * (`{fr: {tv: "Télévision"}, en: {tv: "TV"}}`), repli sur la valeur brute.
+ */
+export function enumLabel(
+  schema: Schema | null | undefined,
+  key: string,
+  value: unknown,
+  lang: Lang = DEFAULT_LANG,
+): string {
+  const raw = value == null ? "" : String(value);
+  if (raw === "") return "";
+  return byLang(properties(schema)[key]?.["x-enum-labels"], raw, lang) || raw;
+}
+
+/**
+ * Valeur d'affichage d'un attribut connaissant son schéma : libellé d'enum
+ * (`x-enum-labels`, y compris pour un tableau de valeurs), sinon `displayValue`.
+ */
+export function fieldValue(
+  schema: Schema | null | undefined,
+  key: string,
+  value: unknown,
+  lang: Lang = DEFAULT_LANG,
+): string {
+  if (properties(schema)[key]?.["x-enum-labels"]) {
+    if (Array.isArray(value)) {
+      return value
+        .map((v) => enumLabel(schema, key, v, lang))
+        .filter((s) => s !== "")
+        .join(", ");
+    }
+    if (typeof value === "string") return enumLabel(schema, key, value, lang);
+  }
+  return displayValue(value, lang);
+}
+
+/** Méta-type (ItemType, RelationType, CollectionType) tel que lu par `typeTitle` / `typeDescription`. */
+export interface MetaTypeLike {
+  name: string;
+  description?: string | null;
+  attributes_schema?: unknown;
+}
+
+/**
+ * Nom affiché d'un méta-type : extension racine `x-title` de son schéma
+ * (`{fr: "Série", en: "Series"}`), repli sur `name` (identifiant technique).
+ */
+export function typeTitle(
+  type: MetaTypeLike | null | undefined,
+  lang: Lang = DEFAULT_LANG,
+): string {
+  if (!type) return "";
+  const schema = type.attributes_schema as Schema | null | undefined;
+  return (
+    i18nText(schema?.["x-title"] as Record<string, unknown>, lang) || type.name
+  );
+}
+
+/** Description affichée d'un méta-type : `x-description` du schéma, repli sur `description`. */
+export function typeDescription(
+  type: MetaTypeLike | null | undefined,
+  lang: Lang = DEFAULT_LANG,
+): string {
+  if (!type) return "";
+  const schema = type.attributes_schema as Schema | null | undefined;
+  return (
+    i18nText(schema?.["x-description"] as Record<string, unknown>, lang) ||
+    (type.description ?? "")
+  );
+}

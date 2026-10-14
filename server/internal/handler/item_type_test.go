@@ -1,8 +1,8 @@
 package handler_test
 
 import (
-	"context"
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -18,12 +18,12 @@ import (
 func sampleItemTypes() []model.ItemType {
 	return []model.ItemType{
 		{
-			ID: uuid.MustParse("b0000000-0000-0000-0000-000000000001"),
+			ID:   uuid.MustParse("b0000000-0000-0000-0000-000000000001"),
 			Name: "Serie", AttributesSchema: json.RawMessage(`{}`),
 			CreatedAt: time.Now(), UpdatedAt: time.Now(),
 		},
 		{
-			ID: uuid.MustParse("b0000000-0000-0000-0000-000000000002"),
+			ID:   uuid.MustParse("b0000000-0000-0000-0000-000000000002"),
 			Name: "Episode", AttributesSchema: json.RawMessage(`{}`),
 			CreatedAt: time.Now(), UpdatedAt: time.Now(),
 		},

@@ -29,10 +29,26 @@ export function usePagination<T>(
     }
   }
 
+  /** Événement de pagination 0-based (ancien DataTable PrimeVue). */
   function onPage(event: { page: number; rows: number }) {
     page.value = event.page + 1;
     perPage.value = event.rows;
   }
 
-  return { data, total, page, perPage, totalPages, loading, load, onPage };
+  /** Page 1-based (ElPagination `@current-change`). */
+  function goToPage(p: number) {
+    page.value = p;
+  }
+
+  return {
+    data,
+    total,
+    page,
+    perPage,
+    totalPages,
+    loading,
+    load,
+    onPage,
+    goToPage,
+  };
 }

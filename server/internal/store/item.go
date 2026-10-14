@@ -12,46 +12,23 @@ import (
 )
 
 func (s *PgStore) ListItems(ctx context.Context, pg model.Pagination, f ItemFilters) ([]model.Item, int, error) {
-	where := []string{"1=1"}
-	args := []interface{}{}
-	argN := 1
-
-	if f.ItemTypeID != nil {
-		where = append(where, fmt.Sprintf("i.item_type_id = $%d", argN))
-		args = append(args, *f.ItemTypeID)
-		argN++
+	q, err := buildItemQuery(f)
+	if err != nil {
+		return nil, 0, err
 	}
-	if f.Search != "" {
-		where = append(where, fmt.Sprintf("i.attributes::text ILIKE $%d", argN))
-		args = append(args, "%"+f.Search+"%")
-		argN++
-	}
-	if f.Tag != "" {
-		where = append(where, fmt.Sprintf(
-			`EXISTS (SELECT 1 FROM item_tags it2 JOIN tags t ON t.id = it2.tag_id WHERE it2.item_id = i.id AND lower(t.name) = lower($%d))`, argN))
-		args = append(args, f.Tag)
-		argN++
-	}
-
-	whereClause := strings.Join(where, " AND ")
+	whereClause := q.whereClause()
 
 	var total int
-	countArgs := make([]interface{}, len(args))
-	copy(countArgs, args)
-	err := s.pool.QueryRow(ctx,
+	err = s.pool.QueryRow(ctx,
 		fmt.Sprintf(`SELECT count(*) FROM items i WHERE %s`, whereClause),
-		countArgs...,
+		q.args...,
 	).Scan(&total)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	sortClause := buildSortClause(f.Sort, "i.created_at DESC", map[string]string{
-		"created_at": "i.created_at",
-		"updated_at": "i.updated_at",
-	})
-
-	args = append(args, pg.PerPage, pg.Offset())
+	sortClause := q.orderBy(f) // may add the sort key to q.args
+	limit, offset := q.arg(pg.PerPage), q.arg(pg.Offset())
 
 	query := fmt.Sprintf(`
 		SELECT i.id, i.item_type_id, i.attributes, i.created_at, i.updated_at,
@@ -60,9 +37,9 @@ func (s *PgStore) ListItems(ctx context.Context, pg model.Pagination, f ItemFilt
 		JOIN item_types it ON it.id = i.item_type_id
 		WHERE %s
 		ORDER BY %s
-		LIMIT $%d OFFSET $%d`, whereClause, sortClause, argN, argN+1)
+		LIMIT %s OFFSET %s`, whereClause, sortClause, limit, offset)
 
-	rows, err := s.pool.Query(ctx, query, args...)
+	rows, err := s.pool.Query(ctx, query, q.args...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -85,13 +62,17 @@ func (s *PgStore) ListItems(ctx context.Context, pg model.Pagination, f ItemFilt
 		return nil, 0, err
 	}
 
-	// Load tags for each item
+	// Tags of the whole page in one query.
+	ids := make([]uuid.UUID, len(items))
 	for i := range items {
-		tags, err := s.getItemTags(ctx, items[i].ID)
-		if err != nil {
-			return nil, 0, err
-		}
-		items[i].Tags = tags
+		ids[i] = items[i].ID
+	}
+	tagsByItem, err := s.getItemsTags(ctx, ids)
+	if err != nil {
+		return nil, 0, err
+	}
+	for i := range items {
+		items[i].Tags = tagsByItem[items[i].ID]
 	}
 
 	return items, total, nil
@@ -132,7 +113,7 @@ func (s *PgStore) CreateItem(ctx context.Context, in model.ItemCreate) (*model.I
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }() // sans effet après Commit
 
 	attrs := in.Attributes
 	if len(attrs) == 0 {
@@ -172,7 +153,7 @@ func (s *PgStore) UpdateItem(ctx context.Context, id uuid.UUID, in model.ItemUpd
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }() // sans effet après Commit
 
 	if len(in.Attributes) > 0 {
 		ct, err := tx.Exec(ctx,
@@ -212,7 +193,7 @@ func (s *PgStore) DeleteItem(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }() // sans effet après Commit
 
 	// Delete relations
 	_, err = tx.Exec(ctx, `DELETE FROM item_relations WHERE source_item_id = $1 OR target_item_id = $1`, id)
@@ -289,4 +270,32 @@ func (s *PgStore) upsertItemTags(ctx context.Context, tx pgx.Tx, itemID uuid.UUI
 		}
 	}
 	return nil
+}
+
+// getItemsTags loads the tags of several items in one query, keyed by item id.
+// Items without tags are absent from the map (nil slice → omitted in JSON).
+func (s *PgStore) getItemsTags(ctx context.Context, itemIDs []uuid.UUID) (map[uuid.UUID][]model.Tag, error) {
+	result := make(map[uuid.UUID][]model.Tag, len(itemIDs))
+	if len(itemIDs) == 0 {
+		return result, nil
+	}
+	rows, err := s.pool.Query(ctx,
+		`SELECT it.item_id, t.id, t.name
+		 FROM item_tags it
+		 JOIN tags t ON t.id = it.tag_id
+		 WHERE it.item_id = ANY($1)
+		 ORDER BY it.item_id, t.name`, itemIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var itemID uuid.UUID
+		var t model.Tag
+		if err := rows.Scan(&itemID, &t.ID, &t.Name); err != nil {
+			return nil, err
+		}
+		result[itemID] = append(result[itemID], t)
+	}
+	return result, rows.Err()
 }

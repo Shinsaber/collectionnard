@@ -11,7 +11,7 @@ import (
 
 func (s *PgStore) ListRelationTypes(ctx context.Context, pg model.Pagination, sourceTypeID, targetTypeID *uuid.UUID) ([]model.RelationType, int, error) {
 	where := "1=1"
-	args := []interface{}{}
+	args := []any{}
 	argN := 1
 
 	if sourceTypeID != nil {
@@ -26,7 +26,7 @@ func (s *PgStore) ListRelationTypes(ctx context.Context, pg model.Pagination, so
 	}
 
 	var total int
-	countArgs := make([]interface{}, len(args))
+	countArgs := make([]any, len(args))
 	copy(countArgs, args)
 	err := s.pool.QueryRow(ctx,
 		fmt.Sprintf(`SELECT count(*) FROM relation_types rt WHERE %s`, where),
@@ -66,11 +66,9 @@ func (s *PgStore) ListRelationTypes(ctx context.Context, pg model.Pagination, so
 		return nil, 0, err
 	}
 
-	// Load junction data for all results
-	for i := range result {
-		if err := s.loadRelationTypeJunctions(ctx, &result[i]); err != nil {
-			return nil, 0, err
-		}
+	// Junction data for the whole page in two queries (sources, targets).
+	if err := s.loadRelationTypesJunctions(ctx, result); err != nil {
+		return nil, 0, err
 	}
 
 	return result, total, nil
@@ -109,7 +107,7 @@ func (s *PgStore) CreateRelationType(ctx context.Context, in model.RelationTypeC
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }() // sans effet après Commit
 
 	var id uuid.UUID
 	err = tx.QueryRow(ctx,
@@ -148,7 +146,7 @@ func (s *PgStore) UpdateRelationType(ctx context.Context, id uuid.UUID, in model
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }() // sans effet après Commit
 
 	ct, err := tx.Exec(ctx,
 		`UPDATE relation_types SET
@@ -274,4 +272,53 @@ func insertJunctions(ctx context.Context, tx pgx.Tx, table string, rtID uuid.UUI
 		}
 	}
 	return nil
+}
+
+// loadRelationTypesJunctions fills SourceItemType(ID)s / TargetItemType(ID)s of
+// several relation types with one query per junction table.
+func (s *PgStore) loadRelationTypesJunctions(ctx context.Context, rts []model.RelationType) error {
+	if len(rts) == 0 {
+		return nil
+	}
+	index := make(map[uuid.UUID]int, len(rts))
+	ids := make([]uuid.UUID, len(rts))
+	for i := range rts {
+		ids[i] = rts[i].ID
+		index[rts[i].ID] = i
+		rts[i].SourceItemTypeIDs, rts[i].SourceItemTypes = []uuid.UUID{}, []model.ItemType{}
+		rts[i].TargetItemTypeIDs, rts[i].TargetItemTypes = []uuid.UUID{}, []model.ItemType{}
+	}
+	load := func(table string, assign func(rt *model.RelationType, it model.ItemType)) error {
+		rows, err := s.pool.Query(ctx, fmt.Sprintf(
+			`SELECT j.relation_type_id, it.id, it.name, it.description, it.attributes_schema, it.created_at, it.updated_at
+			 FROM %s j
+			 JOIN item_types it ON it.id = j.item_type_id
+			 WHERE j.relation_type_id = ANY($1)
+			 ORDER BY j.relation_type_id, it.name`, table), ids)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var rtID uuid.UUID
+			var it model.ItemType
+			if err := rows.Scan(&rtID, &it.ID, &it.Name, &it.Description, &it.AttributesSchema, &it.CreatedAt, &it.UpdatedAt); err != nil {
+				return err
+			}
+			if i, ok := index[rtID]; ok {
+				assign(&rts[i], it)
+			}
+		}
+		return rows.Err()
+	}
+	if err := load("relation_type_sources", func(rt *model.RelationType, it model.ItemType) {
+		rt.SourceItemTypeIDs = append(rt.SourceItemTypeIDs, it.ID)
+		rt.SourceItemTypes = append(rt.SourceItemTypes, it)
+	}); err != nil {
+		return err
+	}
+	return load("relation_type_targets", func(rt *model.RelationType, it model.ItemType) {
+		rt.TargetItemTypeIDs = append(rt.TargetItemTypeIDs, it.ID)
+		rt.TargetItemTypes = append(rt.TargetItemTypes, it)
+	})
 }

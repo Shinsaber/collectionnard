@@ -2,182 +2,364 @@
   <div>
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
-        Catalogue
+        {{ t("items.list.title") }}
       </h1>
-      <Button
-        v-if="auth.isAdmin"
-        label="Nouvel item"
-        icon="pi pi-plus"
-        @click="openCreate"
+      <ElButton v-if="auth.isAdmin" type="primary" @click="openCreate">
+        <i class="pi pi-plus mr-2" aria-hidden="true"></i>
+        {{ t("items.list.newItem") }}
+      </ElButton>
+    </div>
+
+    <!-- Search bar: state lives in the URL query (shareable, back button) -->
+    <div class="flex gap-3 mb-3 flex-wrap items-center">
+      <ElSelect
+        :model-value="state.item_type_id ?? ''"
+        :placeholder="t('items.list.allTypes')"
+        clearable
+        class="w-48!"
+        :aria-label="t('items.list.filterByType')"
+        @update:model-value="onTypeChange"
+      >
+        <ElOption
+          v-for="type in itemTypes"
+          :key="type.id"
+          :label="typeTitle(type, lang)"
+          :value="type.id"
+        />
+      </ElSelect>
+      <ElInput
+        v-model="searchDraft"
+        :placeholder="t('items.list.searchPlaceholder')"
+        clearable
+        class="w-64!"
+        :aria-label="t('common.search')"
+        @keyup.enter="applyText"
+        @clear="applyText"
+      />
+      <ElInput
+        v-model="tagDraft"
+        :placeholder="t('items.list.tagPlaceholder')"
+        clearable
+        class="w-32!"
+        :aria-label="t('items.list.tag')"
+        @keyup.enter="applyText"
+        @clear="applyText"
+      />
+      <ElButton :aria-label="t('common.search')" @click="applyText">
+        <i class="pi pi-search" aria-hidden="true"></i>
+      </ElButton>
+      <ElSelect
+        :model-value="currentSort"
+        class="w-56!"
+        :aria-label="t('items.search.sortBy')"
+        @update:model-value="update({ sort: $event || undefined })"
+      >
+        <ElOption
+          v-for="o in sortOptions"
+          :key="o.value"
+          :label="o.label"
+          :value="o.value"
+        />
+      </ElSelect>
+      <ElButton
+        :disabled="!selectedType"
+        :title="selectedType ? undefined : t('items.search.chooseTypeFirst')"
+        :aria-expanded="showFilters"
+        @click="showFilters = !showFilters"
+      >
+        <i class="pi pi-filter mr-2" aria-hidden="true"></i>
+        {{ t("items.search.filters") }}
+        <ElTag v-if="attrCount > 0" size="small" round class="ml-2">{{
+          attrCount
+        }}</ElTag>
+      </ElButton>
+      <ElButton v-if="hasCriteria" text @click="resetAll">
+        {{ t("items.search.reset") }}
+      </ElButton>
+      <ExportButton
+        :label="t('items.export.csv')"
+        :formats="['csv']"
+        :run="exportCsv"
+        :error-summary="t('items.export.failed')"
+        :disabled="!selectedType"
+        :title="selectedType ? undefined : t('items.export.chooseTypeFirst')"
       />
     </div>
 
-    <!-- Filters -->
-    <div class="flex gap-3 mb-4 flex-wrap">
-      <Select
-        v-model="filters.item_type_id"
-        :options="itemTypes"
-        optionLabel="name"
-        optionValue="id"
-        placeholder="Tous les types"
-        showClear
-        class="w-48"
-        @change="reload"
+    <!-- Related-to filter (from an item page) -->
+    <div v-if="state.related_to" class="mb-3">
+      <RelatedToTag
+        :item-id="state.related_to"
+        :relation-type-id="state.relation_type_id"
+        @close="update({ related_to: undefined, relation_type_id: undefined })"
       />
-      <InputText
-        v-model="filters.search"
-        placeholder="Rechercher..."
-        @keyup.enter="reload"
-        class="w-64"
-      />
-      <InputText
-        v-model="filters.tag"
-        placeholder="Tag..."
-        @keyup.enter="reload"
-        class="w-32"
-      />
-      <Button icon="pi pi-search" @click="reload" />
     </div>
 
-    <DataTable
-      :value="pag.data.value"
-      :loading="pag.loading.value"
-      :lazy="true"
-      :paginator="true"
-      :rows="pag.perPage.value"
-      :totalRecords="pag.total.value"
-      @page="onPageChange"
-      @row-click="goToItem"
-      stripedRows
-      dataKey="id"
-      class="cursor-pointer"
+    <!-- Attribute filters, generated from the selected type's schema -->
+    <div
+      v-if="showFilters && selectedType"
+      class="mb-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
     >
-      <Column header="Type" style="width: 120px">
-        <template #body="{ data: row }">
-          <Tag :value="row.item_type?.name ?? '?'" severity="info" />
+      <ItemSearchFilters
+        :schema="selectedSchema"
+        :model-value="state.attrs"
+        @update:model-value="update({ attrs: $event })"
+      />
+    </div>
+
+    <ElTable
+      v-loading="pag.loading.value"
+      :data="pag.data.value"
+      stripe
+      row-key="id"
+      highlight-current-row
+      class="cursor-pointer"
+      @row-click="goToItem"
+    >
+      <ElTableColumn :label="t('common.type')" width="140">
+        <template #default="{ row }">
+          <ElTag type="info" size="small">{{
+            typeTitle((row as Item).item_type, lang) || "?"
+          }}</ElTag>
         </template>
-      </Column>
-      <Column header="Label">
-        <template #body="{ data: row }">
-          {{ itemLabel(row) }}
+      </ElTableColumn>
+      <ElTableColumn :label="t('items.list.colLabel')">
+        <template #default="{ row }">
+          {{ itemLabel(row as Item) }}
         </template>
-      </Column>
-      <Column header="Tags">
-        <template #body="{ data: row }">
+      </ElTableColumn>
+      <ElTableColumn :label="t('items.list.colTags')">
+        <template #default="{ row }">
           <div class="flex gap-1 flex-wrap">
-            <Tag
-              v-for="t in row.tags ?? []"
-              :key="t.id"
-              :value="t.name"
-              severity="secondary"
-              class="text-xs"
-            />
+            <ElTag
+              v-for="tag in (row as Item).tags ?? []"
+              :key="tag.id"
+              type="info"
+              effect="plain"
+              size="small"
+              >{{ tag.name }}</ElTag
+            >
           </div>
         </template>
-      </Column>
-      <Column header="Actions" style="width: 140px" v-if="auth.isAdmin">
-        <template #body="{ data: row }">
+      </ElTableColumn>
+      <ElTableColumn
+        v-if="auth.isAdmin"
+        :label="t('common.actions')"
+        width="150"
+      >
+        <template #default="{ row }">
           <div class="flex gap-1">
-            <Button
-              icon="pi pi-sitemap"
+            <ElButton
               text
               size="small"
-              @click.stop="router.push(`/items/${row.id}/graph`)"
-              v-tooltip="'Graphe'"
-            />
-            <Button
-              icon="pi pi-pencil"
+              :title="t('items.list.graph')"
+              :aria-label="t('items.list.viewGraph')"
+              @click.stop="router.push(`/items/${(row as Item).id}/graph`)"
+            >
+              <i class="pi pi-sitemap" aria-hidden="true"></i>
+            </ElButton>
+            <ElButton
               text
               size="small"
-              @click.stop="openEdit(row)"
-            />
-            <Button
-              icon="pi pi-trash"
+              :aria-label="t('common.edit')"
+              @click.stop="openEdit(row as Item)"
+            >
+              <i class="pi pi-pencil" aria-hidden="true"></i>
+            </ElButton>
+            <ElButton
               text
-              severity="danger"
               size="small"
-              @click.stop="confirmDelete(row)"
-            />
+              type="danger"
+              :aria-label="t('common.delete')"
+              @click.stop="confirmDelete(row as Item)"
+            >
+              <i class="pi pi-trash" aria-hidden="true"></i>
+            </ElButton>
           </div>
         </template>
-      </Column>
-    </DataTable>
+      </ElTableColumn>
+    </ElTable>
+    <ElPagination
+      class="mt-3 justify-end"
+      layout="total, prev, pager, next"
+      :total="pag.total.value"
+      :page-size="pag.perPage.value"
+      :current-page="pag.page.value"
+      @current-change="onPageChange"
+    />
 
     <!-- Create / Edit Dialog -->
     <ItemEditDialog
       v-model:visible="dialogVisible"
       :item="editing"
       :item-types="itemTypes"
-      @saved="pag.load(filters)"
+      @saved="load"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
-import DataTable from "primevue/datatable";
-import Column from "primevue/column";
-import Button from "primevue/button";
-import InputText from "primevue/inputtext";
-import Select from "primevue/select";
-import Tag from "primevue/tag";
-import { useConfirm } from "primevue/useconfirm";
-import { useToast } from "primevue/usetoast";
-import { itemApi, itemTypeApi } from "@/api/client";
+import { computed, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
+import { importExportApi, itemApi } from "@/api/client";
+import { useMetaTypes } from "@/stores/metaTypes";
+import { useNotify } from "@/composables/useNotify";
+import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import { usePagination } from "@/composables/usePagination";
 import { useAuthStore } from "@/stores/auth";
+import { useLang } from "@/composables/useLang";
+import {
+  fieldLabel,
+  itemLabel as renderItemLabel,
+  typeTitle,
+  type Schema,
+} from "@/lib/schema";
+import {
+  activeAttrCount,
+  fromQuery,
+  sortFields,
+  toQuery,
+  type ItemSearch,
+} from "@/lib/itemSearch";
 import ItemEditDialog from "@/components/item/ItemEditDialog.vue";
-import type { Item, ItemType } from "@/api/types";
+import ItemSearchFilters from "@/components/item/ItemSearchFilters.vue";
+import RelatedToTag from "@/components/item/RelatedToTag.vue";
+import ExportButton from "@/components/common/ExportButton.vue";
+import { defaultDelimiter } from "@/lib/csv";
+import type { Item, ItemListParams } from "@/api/types";
 
 const auth = useAuthStore();
+const route = useRoute();
 const router = useRouter();
-const confirm = useConfirm();
-const toast = useToast();
+const { t } = useI18n();
+const { lang } = useLang();
+const { notifyError, notifySuccess } = useNotify();
+const { confirm } = useConfirmDialog();
 
-const itemTypes = ref<ItemType[]>([]);
-const filters = ref<{ item_type_id?: string; search?: string; tag?: string }>(
-  {},
-);
-const pag = usePagination(itemApi.list);
+const metaTypes = useMetaTypes();
+const itemTypes = computed(() => metaTypes.itemTypes);
+// Les paramètres viennent de toQuery (noms et valeurs déjà conformes à ItemListParams).
+const pag = usePagination((p) => itemApi.list(p as ItemListParams));
 
 const dialogVisible = ref(false);
 const editing = ref<Item | null>(null);
 
-onMounted(async () => {
-  await itemTypeApi
-    .list({ per_page: 100 })
-    .then((r) => (itemTypes.value = r.data));
-  reload();
+// ── Search state = URL query (lib/itemSearch) ───────────────────────
+const state = computed<ItemSearch>(() => fromQuery(route.query));
+
+/** Applique un changement de critères ; toute modification hors page revient à la page 1. */
+function update(patch: Partial<ItemSearch>) {
+  const next: ItemSearch = { ...state.value, page: undefined, ...patch };
+  router.replace({ query: toQuery(next) });
+}
+
+const searchDraft = ref("");
+const tagDraft = ref("");
+watch(
+  state,
+  (s) => {
+    searchDraft.value = s.search ?? "";
+    tagDraft.value = s.tag ?? "";
+  },
+  { immediate: true },
+);
+
+function applyText() {
+  const search = searchDraft.value.trim() || undefined;
+  // Sans recherche, un tri par pertinence n'a plus de sens.
+  const sort =
+    !search && state.value.sort?.endsWith("relevance")
+      ? undefined
+      : state.value.sort;
+  update({ search, tag: tagDraft.value.trim() || undefined, sort });
+}
+
+const selectedType = computed(() =>
+  itemTypes.value.find((it) => it.id === state.value.item_type_id),
+);
+const selectedSchema = computed(
+  () => selectedType.value?.attributes_schema as Schema | undefined,
+);
+
+// Les filtres et le tri par attribut dépendent du schéma : ils tombent avec le type.
+function onTypeChange(id: string | undefined) {
+  const sort = state.value.sort?.replace(/^-/, "").startsWith("attr.")
+    ? undefined
+    : state.value.sort;
+  update({ item_type_id: id || undefined, attrs: {}, sort });
+}
+
+const attrCount = computed(() => activeAttrCount(state.value));
+const showFilters = ref(attrCount.value > 0);
+const hasCriteria = computed(
+  () => Object.keys(toQuery(state.value)).length > 0,
+);
+
+function resetAll() {
+  router.replace({ query: {} });
+}
+
+// ── Sort ────────────────────────────────────────────────────────────
+const currentSort = computed(
+  () => state.value.sort ?? (state.value.search ? "-relevance" : "-created_at"),
+);
+
+const sortOptions = computed(() => {
+  const opts: { value: string; label: string }[] = [];
+  if (state.value.search)
+    opts.push({ value: "-relevance", label: t("items.search.sortRelevance") });
+  opts.push(
+    { value: "-created_at", label: t("items.search.sortNewest") },
+    { value: "created_at", label: t("items.search.sortOldest") },
+    { value: "-updated_at", label: t("items.search.sortUpdated") },
+  );
+  for (const f of sortFields(selectedSchema.value)) {
+    const label = fieldLabel(selectedSchema.value, f.key, lang.value, "pretty");
+    const [asc, desc] = f.numeric
+      ? ["items.search.sortNumAsc", "items.search.sortNumDesc"]
+      : ["items.search.sortTextAsc", "items.search.sortTextDesc"];
+    opts.push(
+      { value: `attr.${f.key}`, label: t(asc, { field: label }) },
+      { value: `-attr.${f.key}`, label: t(desc, { field: label }) },
+    );
+  }
+  return opts;
 });
 
-function reload() {
-  pag.page.value = 1;
-  pag.load(filters.value);
+// ── Loading ─────────────────────────────────────────────────────────
+function load() {
+  pag.page.value = state.value.page ?? 1;
+  const { page: _page, ...params } = toQuery(state.value);
+  pag.load(params).catch((e) => notifyError(e, t("items.list.loadFailed")));
 }
 
-function onPageChange(e: { page: number; rows: number }) {
-  pag.onPage(e);
-  pag.load(filters.value);
+onMounted(async () => {
+  await metaTypes
+    .loadItemTypes()
+    .catch((e) => notifyError(e, t("items.list.typesUnavailable")));
+  load();
+  watch(() => route.query, load);
+});
+
+// Export CSV : recherche courante sans pagination, séparateur selon la langue.
+function exportCsv() {
+  const { page: _page, ...params } = toQuery(state.value);
+  const opts = { delimiter: defaultDelimiter(lang.value), lang: lang.value };
+  return importExportApi.exportItemsCsv({ ...params, ...opts });
 }
 
+function onPageChange(p: number) {
+  router.replace({ query: toQuery({ ...state.value, page: p }) });
+}
+
+// ── Table actions ───────────────────────────────────────────────────
 function itemLabel(item: Item): string {
-  const attrs = item.attributes;
-  for (const key of ["titre", "nom", "name", "title", "label", "numero"]) {
-    const val = attrs[key];
-    if (val == null) continue;
-    if (typeof val === "object" && !Array.isArray(val)) {
-      const obj = val as Record<string, unknown>;
-      if (typeof obj["fr"] === "string") return obj["fr"];
-      if (typeof obj["en"] === "string") return obj["en"];
-    }
-    return String(val);
-  }
-  return item.id.slice(0, 8);
+  return renderItemLabel(item, lang.value);
 }
 
-function goToItem(event: { data: Item }) {
-  router.push(`/items/${event.data.id}`);
+function goToItem(row: Item) {
+  router.push(`/items/${(row as Item).id}`);
 }
 
 function openCreate() {
@@ -190,19 +372,19 @@ function openEdit(row: Item) {
   dialogVisible.value = true;
 }
 
-function confirmDelete(row: Item) {
-  confirm.require({
-    message: `Supprimer cet item ?`,
-    header: "Confirmation",
-    icon: "pi pi-exclamation-triangle",
-    acceptLabel: "Supprimer",
-    rejectLabel: "Annuler",
-    acceptClass: "p-button-danger",
-    accept: async () => {
-      await itemApi.delete(row.id);
-      toast.add({ severity: "success", summary: "Supprimé", life: 3000 });
-      pag.load(filters.value);
-    },
+async function confirmDelete(row: Item) {
+  const ok = await confirm({
+    message: t("items.list.confirmDelete", { label: itemLabel(row as Item) }),
+    confirmText: t("common.delete"),
+    danger: true,
   });
+  if (!ok) return;
+  try {
+    await itemApi.delete(row.id);
+    notifySuccess(t("items.list.deleted"));
+    load();
+  } catch (e) {
+    notifyError(e);
+  }
 }
 </script>

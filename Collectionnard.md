@@ -10,7 +10,7 @@ Il sera maintenu à jour au fil des échanges et itérations.
 >
 > - [README.md](README.md) — Démarrage rapide, stack, structure du projet
 > - [api/openapi.yaml](api/openapi.yaml) — Spécification complète de l'API REST
-> - [db/schema.sql](db/schema.sql) — Schéma de base de données commenté
+> - [db/migrations/001_init.sql](db/migrations/001_init.sql) — Schéma de base de données commenté (migrations tern)
 
 ---
 
@@ -57,18 +57,18 @@ Le système repose sur **un pattern unique appliqué à 3 niveaux**. Chaque nive
 
 ```
                     ┌──────────────────────────────┐
-                    │    AttributeDefinition       │
-                    │ (name, field_type, required, │
-                    │  default, validation_rules)  │
+                    │  attributes_schema (JSONB)   │
+                    │  = JSON Schema draft 2020-12 │
+                    │  + extensions x-* (voir §3)  │
                     └──────────┬───────────────────┘
-                               │ utilisé par
+                               │ porté par chaque méta-type
               ┌────────────────┼────────────────┐
               ▼                ▼                ▼
-        ┌──────────┐    ┌──────────────┐  ┌────────────────┐
-        │ ItemType │    │ RelationType │  │ CollectionType │
-        │          │    │ source_type  │  │                │
-        │          │    │ target_type  │  │                │
-        └────┬─────┘    └──────┬───────┘  └───────┬────────┘
+        ┌──────────┐    ┌────────────────┐ ┌────────────────┐
+        │ ItemType │    │ RelationType   │ │ CollectionType │
+        │          │    │ source_types[] │ │                │
+        │          │    │ target_types[] │ │                │
+        └────┬─────┘    └──────┬─────────┘ └───────┬────────┘
              │                 │                  │
      définit le schéma  définit le schéma   définit le schéma
              │                 │                  │
@@ -121,7 +121,10 @@ Exemples : "Série", "Épisode", "Livre", "Personne", "Studio".
 
 Définit les liens possibles entre items, avec :
 
-- **Contraintes source→target** : quels ItemTypes peuvent être liés (ex: `diffusé_en` ne lie que Série→Diffusion). Permet de proposer les types pertinents lors de la création de liens.
+- **Contraintes source→target** : **listes** d'ItemTypes autorisés de chaque côté (`source_item_type_ids`,
+  `target_item_type_ids`, tables de jonction `relation_type_sources` / `relation_type_targets`). Ex. `diffuse_en`
+  ne lie que Serie→Diffusion ; `contains_work` accepte Univers ou Saga → Manga ou BD. Permet de proposer les
+  types pertinents lors de la création de liens.
 - **Attributs dynamiques** : données portées par le lien (ex: disque, piste, rôle…)
 
 #### ItemRelation
@@ -140,19 +143,50 @@ Instance du lien entre une collection et un item, avec les valeurs des attributs
 
 ## 3. Attributs dynamiques
 
-### Définition des champs
+### Un JSON Schema par méta-type
 
-Chaque méta-type (ItemType, RelationType, CollectionType) définit une liste d'`AttributeDefinition` :
+Chaque méta-type (ItemType, RelationType, CollectionType) porte un **JSON Schema** (draft 2020-12) dans sa
+colonne `attributes_schema` (JSONB). Les instances (Item, ItemRelation, CollectionItem) portent un objet
+`attributes` (JSONB) validé contre ce schéma à chaque écriture, côté serveur
+(`santhosh-tekuri/jsonschema`). Le schéma lui-même est vérifié à l'enregistrement du méta-type : objet JSON
+de racine `"type": "object"`, compilable, sans `$ref` externe.
 
-| Propriété          | Description                                                                                 |
-| ------------------ | ------------------------------------------------------------------------------------------- |
-| `name`             | Nom du champ                                                                                |
-| `field_type`       | Type du champ (texte, nombre, date, booléen, liste déroulante, image, URL, référence item…) |
-| `required`         | Champ obligatoire ou non                                                                    |
-| `default`          | Valeur par défaut                                                                           |
-| `validation_rules` | Règles de validation (format ISBN, prix > 0, regex…)                                        |
+Les mots-clés standards couvrent les besoins du catalogue : `type` (string, integer, number, boolean, object,
+array), `required`, `enum`, `format` (`date`, `uri`…), `minimum` / `maximum`, `minLength`, `pattern`,
+`items`, `description`, `default`. L'« `AttributeDefinition` » des premières versions de ce document était
+une abstraction de ce schéma ; elle n'existe pas dans l'implémentation.
 
-Le système de types de champs est conçu pour être extensible : de nouveaux types de champs pourront être ajoutés au fil du temps.
+### Extensions `x-*` (pilotent le front)
+
+| Extension            | Niveau    | Rôle                                                                                                                                                                                                     |
+| -------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `x-order`            | racine    | Ordre d'affichage des champs (tableau de clés ; les clés absentes suivent)                                                                                                                               |
+| `x-labels`           | racine    | Libellés par langue : `{ "fr": { "title": "Titre" }, "en": { "title": "Title" } }`                                                                                                                       |
+| `x-title`            | racine    | Nom affiché du méta-type par langue : `{ "fr": "Série", "en": "Series" }` ; repli sur la colonne `name` (identifiant technique anglais)                                                                  |
+| `x-description`      | racine    | Description du méta-type par langue ; repli sur la colonne `description`                                                                                                                                 |
+| `x-enum-labels`      | propriété | Libellés des valeurs d'un `enum` par langue : `{ "fr": { "tv": "Télévision" }, "en": { "tv": "TV" } }` ; repli sur la valeur brute                                                                       |
+| `x-widget`           | propriété | Widget dédié : `i18n-text` (objet `{fr, en, …}` : une chaîne par langue, codes supplémentaires acceptés), `image-gallery` (objet de catégories)                                                          |
+| `x-image-categories` | propriété | Catégories d'images et ratios : `{ "poster": { "ratio": "2/3" } }` (avec `image-gallery`)                                                                                                                |
+| `x-label`            | racine    | Gabarit du libellé des instances : `"{title}"`, `"{number}. {title}"`, `"{last_name} {first_name}"` ; sans gabarit, repli sur `title`, `name`, `label` (Go `internal/label`, TS `web/src/lib/schema.ts`) |
+
+Règles d'affichage dérivées du schéma lui-même (pas d'extension) : un `integer` / `number` avec `minimum`
+**et** `maximum` est rendu par un curseur ; un `enum` par une liste déroulante ; `format: date` / `uri` par
+le champ adapté. Toute nouvelle extension doit être gérée par `DynamicForm.vue` **et** `SchemaBuilder.vue`,
+et documentée ici et dans le README.
+
+### Langues (i18n)
+
+L'interface (vue-i18n) et les données suivent la même langue, choisie dans l'en-tête (mémorisée, sinon
+langue du navigateur, sinon `fr`). Toute valeur multilingue (objet `i18n-text`, `x-title`, `x-labels`,
+`x-enum-labels`) se lit avec le même repli : langue demandée → `fr` → autres langues connues → toute autre
+clé (ordre alphabétique) — `i18nText` côté TS, `label.Stringify` côté Go. L'API renvoie des codes d'erreur
+stables (`error`) traduits par le front ; son `message` est un texte technique en anglais.
+
+Ajouter une langue (ex. `de`) : l'ajouter à `LANGS` et `LANG_NAMES` (`web/src/i18n/langs.ts`) et à `Langs`
+(`server/internal/label/label.go`) ; créer `web/src/i18n/locales/de/` (même forme que `fr`, imposée par le
+compilateur et vérifiée par `i18n.test.ts`) ; brancher catalogue et locale Element Plus dans
+`web/src/i18n/index.ts`. Les schémas existants n'ont pas à migrer : les objets `i18n-text` acceptent déjà
+d'autres codes de langue, et les traductions de types / champs / enums se complètent dans le SchemaBuilder.
 
 ---
 
@@ -162,44 +196,44 @@ Le système de types de champs est conçu pour être extensible : de nouveaux ty
 
 **ItemTypes :**
 
-| ItemType  | Attributs                                       |
-| --------- | ----------------------------------------------- |
-| Série     | titre, synopsis, année_début, année_fin, poster |
-| Diffusion | nom, type (TV/streaming/…), chaîne              |
-| Saison    | numéro, année                                   |
-| Épisode   | numéro, titre, durée, synopsis                  |
-| DVD       | titre, éditeur, année_sortie, nb_disques        |
+| ItemType  | Attributs (clés JSON)                                | `x-label`           |
+| --------- | ---------------------------------------------------- | ------------------- |
+| Series    | title, synopsis (i18n), start_year, end_year, images | `{title}`           |
+| Broadcast | name, type (tv/streaming/cable/web), channel         | `{name}`            |
+| Season    | name, number, year                                   | `{name}`            |
+| Episode   | number, title, duration, synopsis (i18n)             | `{number}. {title}` |
+| DVD       | title, publisher, release_year, disc_count           | `{title}`           |
 
 **RelationTypes :**
 
-| RelationType     | Source → Target    | Attributs du lien |
-| ---------------- | ------------------ | ----------------- |
-| diffusé_en       | Série → Diffusion  | année_début_diff  |
-| contient_saison  | Diffusion → Saison | —                 |
-| contient_épisode | Saison → Épisode   | ordre             |
-| édité_en         | Série → DVD        | —                 |
-| inclut_épisode   | DVD → Épisode      | disque, piste     |
+| RelationType     | Source → Target    | Attributs du lien         |
+| ---------------- | ------------------ | ------------------------- |
+| broadcast_on     | Series → Broadcast | broadcast_start_year      |
+| contains_season  | Broadcast → Season | —                         |
+| contains_episode | Season → Episode   | order (tri des relations) |
+| released_as      | Series → DVD       | —                         |
+| includes_episode | DVD → Episode      | disc, track               |
 
 **CollectionTypes :**
 
-| CollectionType | Attributs du lien CollectionItem            |
-| -------------- | ------------------------------------------- |
-| Possession     | état_physique, prix_achat, date_acquisition |
-| Visionnage     | date_vue, note, progression                 |
-| Wishlist       | priorité, budget_max                        |
+| CollectionType | Attributs du lien CollectionItem                                           |
+| -------------- | -------------------------------------------------------------------------- |
+| Ownership      | condition (new/very_good/good/fair/poor), purchase_price, acquisition_date |
+| Watching       | watched_at, rating, progress                                               |
+| Wishlist       | priority, max_budget                                                       |
 
 **Graphe de données :**
 
 ```
-Breaking Bad (Série)
-├──diffusé_en──▶ "AMC 2008-2013" (Diffusion)
-│                 ├──contient_saison──▶ Saison 1
-│                 │                     ├──contient_épisode──▶ Ep1 "Pilot"
-│                 │                     └──contient_épisode──▶ Ep2 "Cat's in the Bag"
-│                 └──contient_saison──▶ Saison 2 ──...
-└──édité_en────▶ "Coffret DVD Intégrale" (DVD)
-                  ├──inclut_épisode {disque:1, piste:1}──▶ Ep1 "Pilot"     ← même item !
-                  └──inclut_épisode {disque:1, piste:2}──▶ Ep2 "Cat's..."  ← même item !
+Breaking Bad (Series)
+├──broadcast_on──▶ "AMC 2008-2013" (Broadcast)
+│                 ├──contains_season──▶ Saison 1
+│                 │                     ├──contains_episode──▶ Ep1 "Pilot"
+│                 │                     └──contains_episode──▶ Ep2 "Cat's in the Bag"
+│                 └──contains_season──▶ Saison 2 ──...
+└──released_as──▶ "Coffret DVD Intégrale" (DVD)
+                  ├──includes_episode {disc:1, track:1}──▶ Ep1 "Pilot"     ← même item !
+                  └──includes_episode {disc:1, track:2}──▶ Ep2 "Cat's..."  ← même item !
 ```
 
 Les épisodes sont les **mêmes nœuds**, accessibles par deux chemins. C'est la force du graphe.
@@ -208,10 +242,10 @@ Les épisodes sont les **mêmes nœuds**, accessibles par deux chemins. C'est la
 
 ```
 User "shinsaber" :
-├── Collection "Mes DVDs" (type: Possession)
-│     └── Coffret DVD Intégrale {état: "neuf", prix: 45€, date: 2020-12-25}
-└── Collection "Séries vues" (type: Visionnage)
-      └── Breaking Bad {date_vue: 2023-03, note: 10, progression: 100%}
+├── Collection "Mes DVDs" (type: Ownership)
+│     └── Coffret DVD Intégrale {condition: "new", purchase_price: 45, acquisition_date: 2020-12-25}
+└── Collection "Séries vues" (type: Watching)
+      └── Breaking Bad {watched_at: 2023-03-15, rating: 10, progress: 100}
 ```
 
 ### Autres cas d'usage (post-MVP)
@@ -238,9 +272,12 @@ User "shinsaber" :
 La table unique d'items avec attributs dynamiques nécessite une attention particulière :
 
 - **Stockage JSONB** (PostgreSQL) pour les attributs dynamiques : performant en lecture, indexable
-- **Vues matérialisées** par ItemType pour les requêtes fréquentes
-- **Index GIN** sur les champs JSONB les plus filtrés (titre, année…)
-- **Index sur les relations** pour les traversées de graphe
+- **Index GIN** sur les colonnes JSONB `attributes` (items, relations, collection items) — exploité par la
+  recherche avancée (Phase 2, opérateur `@>`)
+- **Index sur les relations** (source, cible, type) pour les traversées de graphe, qui se font en parcours en
+  largeur borné (`GRAPH_MAX_NODES`, profondeur max, timeout)
+- `statement_timeout` sur le pool de connexions
+- _Piste_ : vues matérialisées par ItemType si des requêtes fréquentes l'exigent (aucune aujourd'hui)
 
 ---
 
@@ -269,6 +306,7 @@ La table unique d'items avec attributs dynamiques nécessite une attention parti
 
 ### Sources de données externes (long terme)
 
+- BD / manga : Wikidata (œuvres, auteurs) et BnF (éditions françaises, tomes), connecteur livré en Phase 3 (`server/internal/external/bdmanga`, page admin « Sources externes »)
 - Intégration d'APIs tierces : TMDB (films/séries), OpenLibrary (livres), Scryfall (Magic), TCGdex (Pokémon)…
 - Scan de codes-barres / ISBN avec auto-complétion (app mobile)
 
@@ -279,7 +317,8 @@ La table unique d'items avec attributs dynamiques nécessite une attention parti
 ### Phase 1 : MVP — Valider le dynamisme
 
 - [x] Schéma de BDD avec attributs dynamiques (PostgreSQL 16, JSONB, index GIN)
-- [x] Tests des requêtes BDD (CRUD items, relations, collections, traversée de graphe)
+- [x] Tests des requêtes BDD : `db/queries_test.sql` (manuel) puis tests d'intégration Go sur PostgreSQL
+      (`go test -tags integration`, Phase 1.5)
 - [x] API REST (CRUD sur tous les objets) — spécification OpenAPI 3.1 dans `api/openapi.yaml`
 - [x] Authentification utilisateur (admin/user) — JWT Bearer
 - [x] Jeu de données de test : Séries TV (multi-chemin Série→Diffusion→Saison→Épisode + Série→DVD→Épisode)
@@ -289,44 +328,72 @@ La table unique d'items avec attributs dynamiques nécessite une attention parti
 - [x] Gestion des collections utilisateur (CRUD, ajout/retrait d'items, attributs contextuels)
 - [x] Gestion des relations (CRUD, arbre groupé par type, direction source/target)
 - [x] Formulaires dynamiques générés depuis JSON Schema (DynamicForm)
-- [x] Éditeur de JSON Schema visuel (SchemaBuilder) avec `x-order`, `x-labels`, `x-widget`
-- [x] Recherche et filtres (par type, texte libre, tags, tri)
+- [x] Éditeur de JSON Schema visuel (SchemaBuilder) avec `x-order`, `x-labels`, `x-widget`, `x-image-categories`
+- [x] Recherche et filtres (par type, texte libre `ILIKE` sur les attributs, tags, tri `created_at` / `updated_at`)
 - [x] Statistiques (dashboard avec compteurs par type)
 - [x] Tags libres sur les items
-- [x] Déploiement Docker Compose (3 services : postgres, server, web)
+- [x] Déploiement Docker Compose (4 services : postgres, migrate, server, web)
+
+### Phase 1.5 : Remise à niveau (audit du 2026-10-11, `docs/audit/`)
+
+Lots de `docs/audit/03-feuille-de-route.md`, branche `remise-a-niveau` :
+
+- [x] Lot 0 — sécurité : JWT courts + refresh tokens à rotation, secrets obligatoires, limites de corps,
+      rate limit `/auth/*`, 422 sur PUT sans `attributes`
+- [x] Lot 1 — outillage : flake suivi, gofmt/vet/golangci-lint, ESLint/Prettier/Vitest, CI GitHub Actions
+- [x] Lot 2 — migrations tern (`db/migrations`), `/healthz`, conteneurs non-root, nginx durci, logs `slog`
+- [x] Lot 3 — Go 1.27, pgx 5.11, chi 5.3, zéro vulnérabilité `govulncheck`
+- [x] Lot 4 — front : axios, vue, cytoscape, vite, `/themes` ; `npm audit --omit=dev` propre
+- [x] Lot 5 — API : graphe borné (BFS, `GRAPH_MAX_NODES`, `truncated`), schémas validés à l'écriture,
+      `per_page` borné, UUID/tri invalides → 400, jokers échappés, `statement_timeout`
+- [x] Lot 6 — tests : 100 % des handlers, intégration PostgreSQL, Vitest (DynamicForm, SchemaBuilder, LoginView)
+- [x] Lot 7 — cohérence : spec OpenAPI = code (test routes ↔ spec, `redocly lint` en CI), docs à jour
+- [x] Lot 8 — extension `x-label` (Go + TS), seed TV en anglais avec `x-order`, langue d'affichage fr/en, requêtes groupées (tags, jonctions)
+- [x] Lot 9 — découpage d'`ItemDetailView` / `SchemaBuilder` / `DynamicForm` / `GraphView` (< 400 lignes), `notifyError` partout, accessibilité (aria-label, alt, label/for, clavier), cache des méta-types, `baseUrl` retiré
+- [x] Lot 10 — Vite 8, TypeScript 6, vue-tsc 3, Pinia 4, vue-router 5 ; PrimeVue 5 d'abord, puis **remplacé par Element Plus** (lot 10 ter) : PrimeVue 5 et primeicons 8 sont passés sous la « PrimeUI License » (clé requise, usage gratuit sous conditions), incompatible avec un projet open source — primeicons reste en 7.0 (MIT)
+- [x] Lot 11 — Tailwind 4 (@tailwindcss/vite, config en CSS, outil de migration officiel, `npm audit` complet à zéro)
 
 ### Phase 2 : Enrichissement
 
-- [ ] Recherche avancée et filtres
+- [x] Couverture multilingue : interface entière traduite (vue-i18n, fr/en, langues ajoutables via un registre), locale Element Plus, noms de types (`x-title` / `x-description`), valeurs d'enum (`x-enum-labels`), erreurs API traduites par code (messages serveur en anglais), langue du navigateur détectée
+- [x] Recherche avancée (lot 14) : plein texte indexé (`search_tsv`, préfixes, sans accents), filtres par attribut pilotés par le schéma (`attr.<clé>[.gte|lte|contains]`, égalité via l'index GIN `@>`), tri par attribut, filtre `related_to`, critères dans l'URL du catalogue
+- [x] Import/Export (lot 12) : export JSON du catalogue et réimportation idempotente (UUID conservés, mise à jour par id, jamais de suppression, tout ou rien, simulation `dry_run` avec rapport par entité) ; exports CSV des items d'un type (filtres de la recherche) ; export d'une collection (JSON ou CSV) et réimportation JSON dans son compte (la collection devient le contenu du fichier, sinon copie), BOM UTF-8, séparateur au choix, protection contre l'injection de formules
+- [x] Domaine BD / Manga (lot 13) : 8 ItemTypes et 7 RelationTypes (`db/seed_bd_manga.sql`), exemples réels Dragon Ball et Astérix tirés de Wikidata (CC0) et de la BnF (Licence Ouverte) avec `external_ids` / `sources` ; rôles multiples (`roles` en tableau d'enum, sélection multiple dans les formulaires) ; seeds chargés en liste (`SEED_FILE`)
+
+### Phase 3 : Récupération automatique externe
+
+- [ ] Recherche et intégration d'APIs externes
+  - [x] Livre/BD/manga (wikidata, BnF) : connecteur `bdmanga` (admin, page « Sources externes ») — recherche d'une œuvre sur Wikidata et d'éditions françaises à la BnF (titre ou ISBN d'un tome), aperçu à cocher (œuvre, univers, auteurs avec rôles, éditeurs, tomes ; réimpressions décochées) et corrigeable avant la simulation (formulaire du type, ex. tome sans numéro), rapprochement du catalogue (QID, ARK, ISBN, nom d'éditeur) où seuls les champs vides sont complétés, simulation puis import par `POST /import` (tout ou rien) ; `sources` porte la date de récupération (attribution BnF)
+  - [ ] Musique
+  - [ ] Série (thetvdb, imdb, …)
+  - [ ] Film (themoviedb)
+
+### Phase 4 : Social
+
 - [ ] Statistiques et visualisation graphiques
-- [ ] Import/Export CSV/JSON
 - [ ] Soumission d'items par les users (validation admin)
-
-### Phase 3 : Social
-
 - [ ] Profils publics/privés
 - [ ] Partage de collections
 - [ ] Système d'échange
 
-### Phase 4 : Intégrations
+### Phase 5 : Intégrations, …
 
-- [ ] APIs externes (TMDB, OpenLibrary…)
 - [ ] App mobile avec scan de codes-barres
 
 ---
 
 ## 9. Stack technique
 
-| Composant       | Choix                           | Version   |
-| --------------- | ------------------------------- | --------- |
-| Backend         | Go (chi, pgx, JWT, JSON Schema) | 1.22      |
-| Base de données | PostgreSQL                      | 16        |
-| Frontend        | Vue 3 + TypeScript              | 3.5 / 5.6 |
-| UI              | PrimeVue + Tailwind CSS         | 4.3 / 3.4 |
-| Graphes         | Cytoscape.js                    | 3.30      |
-| Build           | Vite                            | 6.0       |
-| Déploiement     | Docker Compose (3 services)     | —         |
-| Packaging       | NixOS flake possible            | À voir    |
+| Composant       | Choix                                                                                   | Version              |
+| --------------- | --------------------------------------------------------------------------------------- | -------------------- |
+| Backend         | Go (chi 5.3, pgx 5.11, JWT 5.3, jsonschema v5 — v6 différé, API incompatible, sans CVE) | 1.27 (go.mod ≥ 1.26) |
+| Base de données | PostgreSQL                                                                              | 16                   |
+| Frontend        | Vue 3 + TypeScript                                                                      | 3.5 / 6.0            |
+| UI              | PrimeVue (@primeuix/themes, aura-compat) + Tailwind CSS                                 | 5.0 / 3.4            |
+| Graphes         | Cytoscape.js                                                                            | 3.34                 |
+| Build           | Vite (Rolldown), vue-tsc 3, Pinia 4, vue-router 5                                       | 8.3                  |
+| Déploiement     | Docker Compose (4 services : postgres, migrate, server, web)                            | —                    |
+| Dev             | Nix flake (Go, Node, PostgreSQL, golangci-lint) + direnv                                | flake.lock           |
 
 ---
 

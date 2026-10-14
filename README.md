@@ -9,15 +9,15 @@ Séries TV, DVD, livres, cartes à collectionner, vinyles… tout type de collec
 
 ## Stack technique
 
-| Composant           | Technologie             | Version    |
-| ------------------- | ----------------------- | ---------- |
-| **Backend**         | Go (chi, pgx, JWT)      | 1.22       |
-| **Base de données** | PostgreSQL              | 16         |
-| **Frontend**        | Vue 3 + TypeScript      | 3.5 / 5.6  |
-| **UI**              | PrimeVue + Tailwind CSS | 4.3 / 3.4  |
-| **Graphes**         | Cytoscape.js            | 3.30       |
-| **Build**           | Vite                    | 6.0        |
-| **Déploiement**     | Docker Compose          | 3 services |
+| Composant           | Technologie                                                    | Version    |
+| ------------------- | -------------------------------------------------------------- | ---------- |
+| **Backend**         | Go (chi 5.3, pgx 5.11, JWT 5.3)                                | 1.27       |
+| **Base de données** | PostgreSQL                                                     | 16         |
+| **Frontend**        | Vue 3 + TypeScript                                             | 3.5 / 6.0  |
+| **UI**              | Element Plus (MIT) + Tailwind CSS (plugin Vite) | 2.14 / 4.3 |
+| **Graphes**         | Cytoscape.js                                                   | 3.34       |
+| **Build**           | Vite (Rolldown) + vue-tsc 3, Pinia 4, vue-router 5             | 8.3        |
+| **Déploiement**     | Docker Compose                                                 | 4 services |
 
 ---
 
@@ -25,28 +25,37 @@ Séries TV, DVD, livres, cartes à collectionner, vinyles… tout type de collec
 
 ### Prérequis
 
-- Docker & Docker Compose
+- Docker & Docker Compose pour la stack complète ;
+- ou **Nix** (avec `direnv` conseillé) pour le développement : `flake.nix` fournit Go, Node 22, PostgreSQL 16,
+  golangci-lint et les commandes `pg-start` / `pg-stop` / `pg-reset`. Sans direnv : `nix develop`, ou préfixer
+  chaque commande par `nix develop -c`. Les variables de dev (`DATABASE_URL`, `JWT_SECRET`, `UPLOAD_DIR`,
+  `LOG_FORMAT=text`) sont exportées par le shell.
 
 ### Lancer le projet
 
 ```bash
+cp .env.example .env      # puis renseigner JWT_SECRET (openssl rand -base64 48) et POSTGRES_PASSWORD
 docker compose up --build
 ```
 
-| Service        | URL                          | Description                        |
-| -------------- | ---------------------------- | ---------------------------------- |
-| **Frontend**   | http://localhost:3000        | SPA Vue 3                          |
-| **API**        | http://localhost:8080/api/v1 | API REST                           |
-| **PostgreSQL** | localhost:5432               | BDD (user: `colec`, pass: `colec`) |
+Sans `.env`, `docker compose` refuse de démarrer : aucun secret n'a de valeur par défaut.
+
+| Service        | URL                          | Description                                    |
+| -------------- | ---------------------------- | ---------------------------------------------- |
+| **Frontend**   | http://localhost:3000        | SPA Vue 3                                      |
+| **API**        | http://localhost:8080/api/v1 | API REST                                       |
+| **PostgreSQL** | localhost:5432               | BDD (user: `colec`, pass: `POSTGRES_PASSWORD`) |
 
 ### Utilisateur par défaut
 
-Le fichier `db/seed.sql` crée un utilisateur admin pour le développement :
+Le fichier `db/seed.sql` crée deux comptes de développement (appliqué si `SEED_ON_EMPTY=true`) :
 
-```
-username: admin
-password: admin
-```
+| Utilisateur | Mot de passe | Rôle  |
+| ----------- | ------------ | ----- |
+| `admin`     | `admin`      | admin |
+| `shinsaber` | `shinsaber`  | user  |
+
+Pour créer un compte : `colec-server hash-password <mdp>` donne le hash bcrypt à insérer dans `users`.
 
 ### Développement local (sans Docker)
 
@@ -55,9 +64,27 @@ password: admin
 ```bash
 cd server
 export DATABASE_URL="postgres://colec:colec@localhost:5432/colec?sslmode=disable"
-export JWT_SECRET="dev-secret"
+export JWT_SECRET="dev-secret-dev-secret-dev-secret-0000"   # 32 caractères minimum
 go run .
 ```
+
+(Le shell Nix du dépôt exporte déjà ces variables.)
+
+### Variables d'environnement du serveur
+
+| Variable            | Défaut     | Rôle                                                                                                   |
+| ------------------- | ---------- | ------------------------------------------------------------------------------------------------------ |
+| `DATABASE_URL`      | **requis** | DSN PostgreSQL                                                                                         |
+| `JWT_SECRET`        | **requis** | Clé HS256 des access tokens, 32 caractères minimum                                                     |
+| `ACCESS_TOKEN_TTL`  | `15m`      | Durée de vie des access tokens JWT (format Go)                                                         |
+| `REFRESH_TOKEN_TTL` | `720h`     | Durée de vie des refresh tokens (rotation à chaque utilisation)                                        |
+| `LOGIN_RATE_LIMIT`  | `10`       | Appels par minute et par IP sur `/auth/login`, `/auth/refresh`, `/auth/logout`                         |
+| `TRUSTED_PROXY`     | `false`    | `true` derrière un reverse-proxy qui pose `X-Real-IP` (nginx du compose) ; sinon l'IP serait usurpable |
+| `GRAPH_MAX_NODES`   | `500`      | Nombre max de nœuds renvoyés par `GET /items/{id}/graph` (au-delà : `truncated: true`)                 |
+| `PORT`              | `8080`     | Port HTTP                                                                                              |
+| `UPLOAD_DIR`        | `uploads`  | Dossier des images uploadées                                                                           |
+| `MAX_UPLOAD_SIZE`   | `10485760` | Taille max d'un upload (octets) ; les corps JSON sont limités à 1 Mio                                  |
+| `EXTERNAL_USER_AGENT` | `Collectionnard/1.0 (+URL du dépôt)` | User-Agent envoyé à Wikidata et à la BnF (leurs règles demandent un nom et un contact) |
 
 **Frontend** :
 
@@ -67,6 +94,41 @@ npm install
 npm run dev
 ```
 
+### Base de données et migrations
+
+Le schéma est géré par des migrations SQL au format [tern](https://github.com/jackc/tern)
+dans `db/migrations/` (`001_init.sql` = schéma complet). Elles sont appliquées par le binaire
+lui-même :
+
+```bash
+cd server
+go run . migrate                      # applique les migrations en attente (table schema_version)
+SEED_ON_EMPTY=true go run . migrate   # idem, puis les seeds si la table users est vide
+go run . seed                         # applique les seeds sans condition (dev)
+# Seeds : db/seed.sql puis db/seed_bd_manga.sql ; SEED_FILE=a.sql,b.sql pour une autre liste
+```
+
+`pg-start` (shell Nix) et le service `migrate` de docker-compose les lancent automatiquement.
+Pour changer le schéma : ajouter `db/migrations/NNN_description.sql`, ne jamais modifier une
+migration déjà appliquée.
+
+### Mise en production
+
+- Seul le service `web` (nginx, non-root, port 3000) est publié ; `server` et `postgres` restent
+  sur le réseau interne de compose. Placer devant un reverse-proxy qui termine TLS (Caddy,
+  Traefik, nginx) : l'API suppose HTTPS pour les mots de passe et les tokens.
+- `.env` : `JWT_SECRET` aléatoire (≥ 32 caractères), `POSTGRES_PASSWORD` fort,
+  `SEED_ON_EMPTY=false` (sinon le compte `admin/admin` est créé sur une base vide).
+- Les conteneurs tournent sans privilèges (uid 10001 pour l'API, 101 pour nginx) ; les images
+  sont épinglées (`golang:1.27-alpine`, `alpine:3.22`, `node:22-alpine`,
+  `nginxinc/nginx-unprivileged:1.28-alpine`, `postgres:16-alpine`).
+- Santé : `GET /api/v1/healthz` (utilisé par le healthcheck compose) ; logs JSON sur stdout
+  (`LOG_FORMAT=text` pour du lisible, `LOG_LEVEL=debug|info|warn|error`).
+- Pour accéder à PostgreSQL depuis l'hôte : `docker compose exec postgres psql -U colec colec`
+  (ou publier le port dans un `docker-compose.override.yml` local, jamais commité).
+- Si le build de `web` échoue sur « Cannot find native binding » (rolldown / Tailwind), une dépendance
+  optionnelle npm n'a pas été téléchargée dans une couche mise en cache : `docker compose build --no-cache web`.
+
 ---
 
 ## Structure du projet
@@ -74,13 +136,21 @@ npm run dev
 ```
 colec/
 ├── Collectionnard.md       # Document de conception (vision, modèle, phases)
+├── les.collection.md       # Modèle de données BD / Manga (prochain domaine)
 ├── README.md               # Ce fichier
-├── docker-compose.yml      # Orchestration des 3 services
+├── CLAUDE.md               # Contexte et règles de travail pour Claude Code (+ server/, web/)
+├── docker-compose.yml      # Orchestration des 4 services (postgres, migrate, server, web)
+├── .env.example            # Variables de déploiement (copier en .env)
+├── flake.nix, flake.lock   # Environnement de développement Nix (+ .envrc pour direnv)
+├── .github/workflows/      # CI : Go (fmt, vet, lint, tests, govulncheck, intégration PG), web, OpenAPI
+├── .claude/                # Commandes Claude Code (/verif, /endpoint, /audit…) et permissions
+├── docs/audit/             # Audit du 2026-10-11 : cohérence, qualité/sécurité, feuille de route
 ├── api/
 │   └── openapi.yaml        # Spécification OpenAPI 3.1 (référence API)
 ├── db/
-│   ├── schema.sql          # Schéma PostgreSQL (tables, index, triggers)
+│   ├── migrations/         # Migrations SQL tern (001_init.sql = schéma complet)
 │   ├── seed.sql            # Données de test (admin, types, items, relations)
+│   ├── seed_bd_manga.sql   # Domaine BD / Manga (Dragon Ball, Astérix ; données Wikidata / BnF)
 │   └── queries_test.sql    # Requêtes SQL de test
 ├── server/                 # Backend Go
 │   ├── main.go
@@ -88,7 +158,9 @@ colec/
 │   ├── config/             # Configuration (env vars)
 │   └── internal/
 │       ├── handler/        # Handlers HTTP (1 fichier par domaine)
-│       ├── middleware/      # Auth JWT, RequireAdmin
+│       ├── middleware/     # Auth JWT, RequireAdmin, RateLimiter, RequestLogger
+│       ├── dbmigrate/      # Migrations (tern) + seed
+│       ├── external/       # Sources ouvertes : clients Wikidata et BnF (SRU), connecteur bdmanga
 │       ├── model/          # Structs Go (JSON tags)
 │       ├── store/          # Couche d'accès BDD (pgx)
 │       ├── validator/      # Validation JSON Schema
@@ -115,7 +187,9 @@ colec/
         │   └── admin/
         │       ├── ItemTypesView.vue
         │       ├── RelationTypesView.vue
-        │       └── CollectionTypesView.vue
+        │       ├── CollectionTypesView.vue
+        │       ├── ImportExportView.vue
+        │       └── ExternalImportView.vue   # Import depuis Wikidata / BnF (recherche, aperçu, simulation)
         └── components/
             ├── layout/
             │   └── AppLayout.vue
@@ -133,11 +207,11 @@ colec/
 
 Le système repose sur un **pattern unique à 3 niveaux** : des méta-types définissent des JSON Schemas, et les instances portent les valeurs validées contre ces schémas.
 
-| Méta-type          | Instances      | Exemple                                     |
-| ------------------ | -------------- | ------------------------------------------- |
-| **ItemType**       | Item           | "Série" → `{titre, synopsis, année_début…}` |
-| **RelationType**   | ItemRelation   | "inclut_épisode" → `{disque, piste}`        |
-| **CollectionType** | CollectionItem | "Possession" → `{état, prix, date}`         |
+| Méta-type          | Instances      | Exemple                                                       |
+| ------------------ | -------------- | ------------------------------------------------------------- |
+| **ItemType**       | Item           | "Series" → `{title, synopsis, start_year…}`                   |
+| **RelationType**   | ItemRelation   | "includes_episode" → `{disc, track}`                          |
+| **CollectionType** | CollectionItem | "Ownership" → `{condition, purchase_price, acquisition_date}` |
 
 Les items forment un **graphe orienté libre** : un même épisode peut être atteint via une diffusion TV et un DVD. Voir l'endpoint `GET /items/{id}/graph`.
 
@@ -149,19 +223,22 @@ La spécification complète est dans [api/openapi.yaml](api/openapi.yaml).
 
 ### Endpoints principaux
 
-| Domaine         | Endpoints                                       | Auth                              |
-| --------------- | ----------------------------------------------- | --------------------------------- |
-| Auth            | `POST /auth/login`, `GET /auth/me`              | Public / JWT                      |
-| ItemTypes       | CRUD `/item-types`                              | Admin                             |
-| RelationTypes   | CRUD `/relation-types`                          | Admin                             |
-| CollectionTypes | CRUD `/collection-types`                        | Admin                             |
-| Items           | CRUD `/items` + recherche, filtres, tri         | Admin (écriture)                  |
-| Relations       | CRUD `/relations` + `GET /items/{id}/relations` | Admin (écriture)                  |
-| Graph           | `GET /items/{id}/graph`                         | JWT                               |
-| Collections     | CRUD `/collections` + gestion items             | JWT (owner)                       |
-| Tags            | `GET /tags`                                     | JWT                               |
-| Stats           | `GET /stats`                                    | JWT                               |
-| Uploads         | `POST /uploads`, `GET /uploads/{filename}`      | Admin (upload) / Public (lecture) |
+| Domaine         | Endpoints                                                                     | Auth                              |
+| --------------- | ----------------------------------------------------------------------------- | --------------------------------- |
+| Auth            | `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me` | Public (rate-limited) / JWT       |
+| ItemTypes       | CRUD `/item-types`                                                            | Admin                             |
+| RelationTypes   | CRUD `/relation-types`                                                        | Admin                             |
+| CollectionTypes | CRUD `/collection-types`                                                      | Admin                             |
+| Items           | CRUD `/items` + recherche plein texte, filtres et tri par attribut, `related_to` | Admin (écriture)                  |
+| Import / export  | `GET /export`, `POST /import` (catalogue JSON, admin), `GET /items/export` (CSV), `GET /collections/{id}/export`, `POST /collections/import` | Admin / Authentifié |
+| Sources externes | `GET /external/bd-manga/works` (Wikidata), `GET /external/bd-manga/editions` (BnF, titre ou ISBN), `POST /external/bd-manga/preview`, `POST /external/bd-manga/import` (simulation `dry_run`) | Admin |
+| Relations       | CRUD `/relations` + `GET /items/{id}/relations`                               | Admin (écriture)                  |
+| Graph           | `GET /items/{id}/graph`                                                       | JWT                               |
+| Collections     | CRUD `/collections` + gestion items                                           | JWT (owner)                       |
+| Tags            | `GET /tags`                                                                   | JWT                               |
+| Stats           | `GET /stats`                                                                  | JWT                               |
+| Santé           | `GET /healthz`                                                                | Public                            |
+| Uploads         | `POST /uploads`, `GET /uploads/{filename}`                                    | Admin (upload) / Public (lecture) |
 
 ---
 
@@ -169,12 +246,19 @@ La spécification complète est dans [api/openapi.yaml](api/openapi.yaml).
 
 Le projet utilise des extensions custom dans les JSON Schemas pour piloter le frontend :
 
-| Extension            | Rôle                                                         |
-| -------------------- | ------------------------------------------------------------ |
-| `x-order`            | Ordre d'affichage des champs (array de clés)                 |
-| `x-labels`           | Labels i18n par langue (`{fr: {champ: "Label"}, en: {…}}`)   |
-| `x-widget`           | Widget spécifique (`image-gallery`, `slider`, `i18n-text`)   |
-| `x-image-categories` | Catégories d'images avec ratios (`{poster: {ratio: "2/3"}}`) |
+| Extension            | Rôle                                                                                                     |
+| -------------------- | -------------------------------------------------------------------------------------------------------- |
+| `x-label`            | Gabarit du libellé des instances (`"{title}"`, `"{number}. {title}"`) ; repli `title` / `name` / `label` |
+| `x-order`            | Ordre d'affichage des champs (array de clés)                                                             |
+| `x-labels`           | Libellés des champs par langue (`{fr: {champ: "Libellé"}, en: {…}}`) ; langue choisie dans l'en-tête  |
+| `x-title`            | Nom affiché du type par langue (`{fr: "Série", en: "Series"}`) ; repli sur `name`                         |
+| `x-description`      | Description du type par langue ; repli sur `description`                                                 |
+| `x-enum-labels`      | (propriété) Libellés des valeurs d'enum par langue (`{fr: {tv: "Télévision"}, en: {tv: "TV"}}`)          |
+| `x-widget`           | Widget spécifique : `image-gallery`, `i18n-text` (une chaîne par langue)                                                         |
+| `x-image-categories` | Catégories d'images avec ratios (`{poster: {ratio: "2/3"}}`)                                             |
+
+Sans extension, le widget découle du schéma : `enum` → liste déroulante, `integer`/`number` avec `minimum`
+**et** `maximum` → curseur, `format: date` / `uri` → champ dédié. Référence complète : `Collectionnard.md` § 3.
 
 ---
 
