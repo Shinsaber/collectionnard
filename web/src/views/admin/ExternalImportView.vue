@@ -34,8 +34,12 @@
       <ElStep :title="t('admin.external.steps.done')" />
     </ElSteps>
 
-    <!-- 1. Recherche -->
-    <div v-if="step === 0" class="space-y-4">
+    <!--
+      1. Recherche : masquée (v-show) et non détruite aux étapes suivantes, pour que « Retour »
+      retrouve les résultats et la saisie sans relancer Wikidata / la BnF. « Nouvel import »
+      la remonte à neuf (clé).
+    -->
+    <div v-show="step === 0" :key="searchKey" class="space-y-4">
       <ExternalWorkSearch v-model="work" />
       <ExternalEditionSearch v-model="editions" :suggestion="work?.label" />
       <div class="flex items-center gap-3">
@@ -55,7 +59,7 @@
     </div>
 
     <!-- 2. Sélection -->
-    <div v-else-if="step === 1 && plan">
+    <div v-if="step === 1 && plan">
       <ExternalPlanView
         v-model="selected"
         v-model:overrides="overrides"
@@ -76,7 +80,7 @@
     </div>
 
     <!-- 3. Simulation / 4. Terminé -->
-    <div v-else-if="report">
+    <div v-else-if="step >= 2 && report">
       <ImportReportView :report="report" :entities="ENTITIES" />
       <div class="mt-4 flex flex-wrap gap-2">
         <template v-if="step === 2">
@@ -147,6 +151,8 @@ const isMobile = useMediaQuery(MOBILE_QUERY);
 const STEP_KEYS = ["search", "selection", "simulation", "done"] as const;
 
 const step = ref(0);
+/** Change à chaque « Nouvel import » : remonte la recherche (résultats et saisie vidés). */
+const searchKey = ref(0);
 const work = ref<ExternalWorkHit | null>(null);
 const editions = ref<ExternalEditionHit[]>([]);
 const plan = ref<ExternalPlan | null>(null);
@@ -235,6 +241,7 @@ const workItemId = computed(() => {
 });
 
 function restart() {
+  searchKey.value++;
   step.value = 0;
   work.value = null;
   editions.value = [];

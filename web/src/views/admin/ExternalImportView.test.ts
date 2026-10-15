@@ -182,6 +182,35 @@ describe("ExternalImportView", () => {
     ).toHaveLength(4);
   });
 
+  it("« Retour » depuis la sélection retrouve les résultats, sans relancer la recherche", async () => {
+    api.searchWorks.mockResolvedValue([work]);
+    api.searchEditions.mockResolvedValue([edition]);
+    api.preview.mockResolvedValue(dragonBallPlan);
+    const w = mount(ExternalImportView, {
+      global: { plugins: [ElementPlus], stubs: { RouterLink: true } },
+    });
+    await flushPromises();
+    await w.findAll("input")[0]!.setValue("dragon ball");
+    await w.findAll("form")[0]!.trigger("submit");
+    await flushPromises();
+    await w.find('[data-test="work-hits"] tbody tr').trigger("click");
+    await flushPromises();
+    await button(w, "Aperçu").trigger("click");
+    await flushPromises();
+    expect(w.find('[data-test="external-plan"]').exists()).toBe(true);
+
+    await button(w, "Retour").trigger("click");
+    await flushPromises();
+    expect(w.find('[data-test="external-plan"]').exists()).toBe(false);
+    expect(w.findAll('[data-test="work-hits"] tbody tr')).toHaveLength(1);
+    expect(w.findAll('[data-test="edition-hits"] tbody tr')).toHaveLength(1);
+    expect((w.findAll("input")[0]!.element as HTMLInputElement).value).toBe(
+      "dragon ball",
+    );
+    expect(api.searchWorks).toHaveBeenCalledTimes(1);
+    expect(api.searchEditions).toHaveBeenCalledTimes(1);
+  });
+
   it("par ISBN : affiche le tome trouvé dans son édition", async () => {
     api.searchEditions.mockResolvedValue([
       {
