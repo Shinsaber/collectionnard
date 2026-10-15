@@ -288,6 +288,11 @@ html.dark .el-button--primary {
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+/* Vignettes (ItemCover) dans un tableau : la cellule d'Element Plus coupe ce qui
+   dépasse, on lui laisse la place de l'ombre. */
+.el-table td.cover-cell > .cell {
+  padding-block: 6px 10px;
+}
 .el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
   background: var(--c-bar);
 }

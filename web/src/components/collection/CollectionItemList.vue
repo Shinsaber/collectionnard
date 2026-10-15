@@ -10,7 +10,7 @@
         row-key="id"
         :empty-text="t('collections.detail.empty')"
       >
-        <ElTableColumn width="68">
+        <ElTableColumn width="68" class-name="cover-cell">
           <template #default="{ row }">
             <ItemCover
               v-if="(row as CollectionItem).item"

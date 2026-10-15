@@ -13,7 +13,7 @@
         :empty-text="emptyText"
         @row-click="(row: Item) => router.push(`/items/${row.id}`)"
       >
-        <ElTableColumn width="76">
+        <ElTableColumn width="76" class-name="cover-cell">
           <template #default="{ row }">
             <ItemCover :item="row as Item" :label="labelOf(row as Item)" />
           </template>
