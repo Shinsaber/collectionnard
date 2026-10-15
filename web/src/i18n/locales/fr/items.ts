@@ -68,6 +68,8 @@ export default {
     createRelation: "Créer une relation",
     noRelations: "Aucune relation trouvée.",
     inYourCollections: "Dans vos collections",
+    notInCollection: "Pas encore dans une de vos collections : l'ajouter",
+    breadcrumb: "Fil d'Ariane",
     confirmDeleteRelation: "Supprimer la relation avec « {label} » ?",
     relationDeleted: "Relation supprimée",
     relationsUnavailable: "Relations indisponibles",

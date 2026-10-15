@@ -65,6 +65,8 @@ const en: typeof fr = {
     createRelation: "Create a relation",
     noRelations: "No relations found.",
     inYourCollections: "In your collections",
+    notInCollection: "Not in any of your collections yet: add it",
+    breadcrumb: "Breadcrumb",
     confirmDeleteRelation: "Delete the relation with “{label}”?",
     relationDeleted: "Relation deleted",
     relationsUnavailable: "Relations unavailable",

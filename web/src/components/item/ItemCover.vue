@@ -1,7 +1,8 @@
 <template>
   <!-- Vignette d'un item : image par défaut du schéma, sinon initiales sur fond doux. -->
   <div
-    class="relative shrink-0 overflow-hidden rounded-md bg-soft shadow-cover"
+    class="relative shrink-0 overflow-hidden bg-soft shadow-cover"
+    :class="width >= 96 ? 'rounded-[10px]' : 'rounded-md'"
     :style="{ width: `${width}px`, aspectRatio: ratio }"
   >
     <img
@@ -13,7 +14,11 @@
     />
     <span
       v-else
-      class="absolute inset-0 flex items-end p-1.5 font-mono text-[10px] font-medium uppercase leading-none text-muted"
+      class="absolute inset-0 flex items-end font-mono font-medium uppercase leading-none text-muted"
+      :style="{
+        fontSize: `${Math.max(10, Math.round(width / 7))}px`,
+        padding: `${Math.max(6, Math.round(width / 14))}px`,
+      }"
       aria-hidden="true"
       >{{ initials }}</span
     >
