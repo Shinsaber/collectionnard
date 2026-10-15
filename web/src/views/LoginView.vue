@@ -5,10 +5,8 @@
     <div
       class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 w-full max-w-sm"
     >
-      <h1
-        class="text-2xl font-bold text-center text-indigo-600 dark:text-indigo-400 mb-6"
-      >
-        📦 Collectionnard
+      <h1 class="flex justify-center mb-6">
+        <AppLogo :size="40" />
       </h1>
 
       <!-- Sélecteur de langue (l'en-tête de l'application n'est pas visible ici) -->
@@ -87,6 +85,7 @@ import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { useLang } from "@/composables/useLang";
+import AppLogo from "@/components/layout/AppLogo.vue";
 
 const auth = useAuthStore();
 const router = useRouter();

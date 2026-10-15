@@ -4,11 +4,8 @@
       class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-3 flex items-center justify-between shadow-xs"
     >
       <div class="flex items-center gap-4">
-        <router-link
-          to="/"
-          class="text-xl font-bold text-indigo-600 dark:text-indigo-400"
-        >
-          📦 Collectionnard
+        <router-link to="/" class="rounded-md">
+          <AppLogo :size="28" />
         </router-link>
         <nav class="flex items-center gap-1 ml-6">
           <router-link
@@ -118,6 +115,7 @@ import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { useTheme } from "@/composables/useTheme";
 import { useLang } from "@/composables/useLang";
+import AppLogo from "@/components/layout/AppLogo.vue";
 
 const auth = useAuthStore();
 const router = useRouter();

@@ -1,45 +1,247 @@
 @import "tailwindcss";
 
+/* Polices de l'identité « Étiquette » (OFL), servies par le bundle : aucune requête externe. */
+@import "@fontsource-variable/schibsted-grotesk";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
+  Identité graphique « Étiquette » — maquettes de référence :
+  https://claude.ai/artifact/3aPVR73iewR8dpyCkT8A1C (page « Maquettes Étiquette »).
 
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
+  Les couleurs et ombres sémantiques sont des variables d'exécution (--c-*, --s-*)
+  redéfinies sous `html.dark` ; `@theme inline` les expose en utilitaires Tailwind :
+  bg-canvas, bg-surface, bg-bar, bg-soft, text-ink, text-muted, bg-primary, text-primary,
+  bg-tint, text-tint-ink, bg-accent, border-line, shadow-card, shadow-bar…
+  Le relief passe par les ombres, pas par des bordures grises.
 */
+@theme inline {
+  --font-sans:
+    "Schibsted Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --color-canvas: var(--c-canvas);
+  --color-surface: var(--c-surface);
+  --color-bar: var(--c-bar);
+  --color-soft: var(--c-soft);
+  --color-ink: var(--c-ink);
+  --color-muted: var(--c-muted);
+  --color-line: var(--c-line);
+  --color-dash: var(--c-dash);
+  --color-primary: var(--c-primary);
+  --color-primary-hover: var(--c-primary-hover);
+  --color-primary-ink: var(--c-primary-ink);
+  --color-link: var(--c-link);
+  --color-tint: var(--c-tint);
+  --color-tint-ink: var(--c-tint-ink);
+  --color-accent: var(--c-accent);
+  --color-accent-ink: var(--c-accent-ink);
+  --color-danger: var(--c-danger);
+
+  --shadow-card: var(--s-card);
+  --shadow-raised: var(--s-raised);
+  --shadow-control: var(--s-control);
+  --shadow-bar: var(--s-bar);
+  --shadow-bar-up: var(--s-bar-up);
+  --shadow-cover: var(--s-cover);
+  --shadow-primary: var(--s-primary);
+  --shadow-tint: var(--s-tint);
+  --shadow-accent: var(--s-accent);
+}
+
+/*
+  TRANSITOIRE (refonte, lots R0 → R8) : les gammes `gray`, `indigo` et `blue` encore utilisées
+  par les vues sont réalignées sur la palette, pour que l'appli prenne les bonnes teintes avant
+  d'être réécrite écran par écran avec les utilitaires sémantiques. À supprimer au lot R8.
+*/
+@theme {
+  --color-gray-50: #f7f8f5;
+  --color-gray-100: #eef0eb;
+  --color-gray-200: #e3e6e0;
+  --color-gray-300: #c9cec6;
+  --color-gray-400: #8a949d;
+  --color-gray-500: #586270;
+  --color-gray-600: #3b4552;
+  --color-gray-700: #24343e;
+  --color-gray-800: #17232c;
+  --color-gray-900: #0f161c;
+  --color-gray-950: #0a0f13;
+
+  --color-indigo-50: #e8efef;
+  --color-indigo-100: #d4e6e5;
+  --color-indigo-200: #bbced0;
+  --color-indigo-300: #a9dde0;
+  --color-indigo-400: #7cc8cc;
+  --color-indigo-500: #2e7a80;
+  --color-indigo-600: #1d5c63;
+  --color-indigo-700: #174a4f;
+  --color-indigo-800: #123e43;
+  --color-indigo-900: #0d2e32;
+
+  --color-blue-500: #1d5c63;
+}
+
+:root {
+  color-scheme: light;
+
+  --c-canvas: #eef0eb;
+  --c-surface: #ffffff;
+  --c-bar: #f7f8f5;
+  --c-soft: #eef0eb;
+  --c-ink: #17202b;
+  --c-muted: #586270;
+  --c-line: #e3e6e0;
+  --c-dash: #c9cec6;
+  --c-primary: #1d5c63;
+  --c-primary-hover: #174a4f;
+  --c-primary-ink: #ffffff;
+  --c-link: #1d5c63;
+  --c-tint: #d4e6e5;
+  --c-tint-ink: #123e43;
+  --c-accent: #e09a2c;
+  --c-accent-ink: #17202b;
+  --c-danger: #a2342b;
+
+  --s-card:
+    0 1px 2px rgb(23 32 43 / 0.06), 0 6px 18px -6px rgb(23 32 43 / 0.12);
+  --s-raised:
+    0 2px 4px rgb(23 32 43 / 0.08), 0 12px 28px -10px rgb(23 32 43 / 0.2);
+  --s-control: 0 1px 3px rgb(23 32 43 / 0.12);
+  --s-bar: 0 1px 0 rgb(23 32 43 / 0.05), 0 6px 16px -8px rgb(23 32 43 / 0.18);
+  --s-bar-up:
+    0 -1px 0 rgb(23 32 43 / 0.05), 0 -8px 20px -10px rgb(23 32 43 / 0.2);
+  --s-cover:
+    0 2px 4px rgb(23 32 43 / 0.2), 3px 4px 10px -2px rgb(23 32 43 / 0.25);
+  --s-primary: 0 2px 6px rgb(29 92 99 / 0.35);
+  --s-tint: 0 1px 3px rgb(29 92 99 / 0.25);
+  --s-accent: 0 1px 3px rgb(150 90 10 / 0.35);
+
+  /* Element Plus : primaire pétrole (nuances mêlées de blanc), neutres de la palette. */
+  --el-color-primary: #1d5c63;
+  --el-color-primary-light-3: #618d92;
+  --el-color-primary-light-5: #8eaeb1;
+  --el-color-primary-light-7: #bbced0;
+  --el-color-primary-light-8: #d2dee0;
+  --el-color-primary-light-9: #e8efef;
+  --el-color-primary-dark-2: #174a4f;
+
+  --el-font-family:
+    "Schibsted Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  --el-border-radius-base: 8px;
+  --el-border-radius-small: 6px;
+  --el-border-radius-round: 999px;
+
+  --el-bg-color: #ffffff;
+  --el-bg-color-page: #eef0eb;
+  --el-bg-color-overlay: #ffffff;
+  --el-text-color-primary: #17202b;
+  --el-text-color-regular: #3b4552;
+  --el-text-color-secondary: #586270;
+  --el-text-color-placeholder: #8a949d;
+  --el-border-color: #d5d9d2;
+  --el-border-color-light: #e3e6e0;
+  --el-border-color-lighter: #eef0eb;
+  --el-border-color-extra-light: #f3f4f1;
+  --el-fill-color: #eef0eb;
+  --el-fill-color-light: #f7f8f5;
+  --el-fill-color-lighter: #f7f8f5;
+  --el-fill-color-blank: #ffffff;
+  --el-box-shadow-light: var(--s-card);
+  --el-box-shadow: var(--s-raised);
+}
+
+html.dark {
+  color-scheme: dark;
+
+  --c-canvas: #0f161c;
+  --c-surface: #17232c;
+  --c-bar: #16212a;
+  --c-soft: #22323c;
+  --c-ink: #e8ecea;
+  --c-muted: #9aa7b0;
+  --c-line: #24343e;
+  --c-dash: #3a4d58;
+  --c-primary: #7cc8cc;
+  --c-primary-hover: #a9dde0;
+  --c-primary-ink: #0f161c;
+  --c-link: #7cc8cc;
+  --c-tint: #1f4a50;
+  --c-tint-ink: #e8f6f6;
+  --c-accent: #e09a2c;
+  --c-accent-ink: #17202b;
+  --c-danger: #f08a80;
+
+  /* Halos clairs teintés pétrole, flou réduit (retour du mainteneur). */
+  --s-card:
+    0 0 0 1px rgb(124 200 204 / 0.08), 0 4px 10px -5px rgb(79 163 168 / 0.24);
+  --s-raised:
+    0 0 0 1px rgb(124 200 204 / 0.12), 0 6px 14px -6px rgb(79 163 168 / 0.3);
+  --s-control: 0 0 0 1px rgb(124 200 204 / 0.12);
+  --s-bar:
+    0 1px 0 rgb(124 200 204 / 0.1), 0 4px 10px -6px rgb(79 163 168 / 0.24);
+  --s-bar-up:
+    0 -1px 0 rgb(124 200 204 / 0.1), 0 -4px 10px -6px rgb(79 163 168 / 0.26);
+  --s-cover:
+    0 0 0 1px rgb(232 236 234 / 0.08), 2px 3px 6px -2px rgb(124 200 204 / 0.22);
+  --s-primary: 0 0 7px rgb(124 200 204 / 0.3);
+  --s-tint: 0 0 7px rgb(124 200 204 / 0.3);
+  --s-accent: 0 0 5px rgb(224 154 44 / 0.28);
+
+  /* Element Plus sombre : primaire pétrole clair, nuances mêlées du fond nuit. */
+  --el-color-primary: #7cc8cc;
+  --el-color-primary-light-3: #5b9397;
+  --el-color-primary-light-5: #466f74;
+  --el-color-primary-light-7: #304b51;
+  --el-color-primary-light-8: #253a3f;
+  --el-color-primary-light-9: #1a282e;
+  --el-color-primary-dark-2: #a9dde0;
+
+  --el-bg-color: #17232c;
+  --el-bg-color-page: #0f161c;
+  --el-bg-color-overlay: #1a2730;
+  --el-text-color-primary: #e8ecea;
+  --el-text-color-regular: #c9d1d5;
+  --el-text-color-secondary: #9aa7b0;
+  --el-text-color-placeholder: #6f7c86;
+  --el-border-color: #2f414c;
+  --el-border-color-light: #24343e;
+  --el-border-color-lighter: #1d2b34;
+  --el-border-color-extra-light: #1a2730;
+  --el-fill-color: #22323c;
+  --el-fill-color-light: #1a2730;
+  --el-fill-color-lighter: #1a2730;
+  --el-fill-color-blank: #17232c;
+  --el-mask-color: rgb(15 22 28 / 0.8);
+}
+
+/* Sur le primaire clair du thème sombre, le texte des boutons Element Plus passe en encre nuit. */
+html.dark .el-button--primary {
+  --el-button-text-color: var(--c-primary-ink);
+  --el-button-hover-text-color: var(--c-primary-ink);
+  --el-button-active-text-color: var(--c-primary-ink);
+}
+
 @layer base {
+  /* Tailwind 4 : bordure par défaut en `currentcolor` ; on garde un trait discret de la palette. */
   *,
   ::after,
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+    border-color: var(--c-line, currentcolor);
   }
-}
 
-:root {
-  --color-primary: #4f46e5;
-  /* Element Plus : couleur primaire alignée sur l'indigo du projet */
-  --el-color-primary: #4f46e5;
-  --el-color-primary-light-3: #818cf8;
-  --el-color-primary-light-5: #a5b4fc;
-  --el-color-primary-light-7: #c7d2fe;
-  --el-color-primary-light-8: #e0e7ff;
-  --el-color-primary-light-9: #eef2ff;
-  --el-color-primary-dark-2: #4338ca;
-}
+  body {
+    background-color: var(--c-canvas);
+    color: var(--c-ink);
+    font-family:
+      "Schibsted Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
 
-html.dark {
-  color-scheme: dark;
-  --el-bg-color: #1f2937; /* gray-800, comme les cartes Tailwind */
-  --el-fill-color-blank: #1f2937;
-}
-
-/* Tailwind 4 : les boutons repassent en `cursor: default` dans le preflight ; on garde la main. */
-@layer base {
+  /* Tailwind 4 : les boutons repassent en `cursor: default` dans le preflight ; on garde la main. */
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
