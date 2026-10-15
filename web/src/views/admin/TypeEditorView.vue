@@ -26,6 +26,7 @@
           type="primary"
           class="max-md:hidden!"
           :loading="saving"
+          :disabled="!!id && !dirty"
           @click="save"
         >
           {{ id ? t("common.save") : t("common.create") }}
@@ -119,6 +120,7 @@
         type="primary"
         class="flex-[1.6]"
         :loading="saving"
+        :disabled="!!id && !dirty"
         @click="save"
       >
         {{ id ? t("common.save") : t("common.create") }}

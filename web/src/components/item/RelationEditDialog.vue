@@ -33,7 +33,12 @@
       <ElButton text @click="$emit('update:visible', false)">{{
         t("common.cancel")
       }}</ElButton>
-      <ElButton type="primary" :loading="saving" @click="submit">
+      <ElButton
+        type="primary"
+        :loading="saving"
+        :disabled="!dirty"
+        @click="submit"
+      >
         <i class="pi pi-check mr-2" aria-hidden="true"></i>
         {{ t("common.save") }}
       </ElButton>
@@ -46,6 +51,7 @@ import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { relationApi } from "@/api/client";
 import { useLang } from "@/composables/useLang";
+import { useDirty } from "@/composables/useDirty";
 import { useNotify } from "@/composables/useNotify";
 import { itemLabel, typeTitle } from "@/lib/schema";
 import DynamicForm from "@/components/common/DynamicForm.vue";
@@ -70,6 +76,8 @@ const { notifyError, notifySuccess } = useNotify();
 const attrs = ref<Record<string, unknown>>({});
 const saving = ref(false);
 const formRef = ref<InstanceType<typeof DynamicForm> | null>(null);
+// « Enregistrer » reste grisé tant que rien n'a changé.
+const { dirty, markClean } = useDirty(() => attrs.value);
 
 const schema = computed(
   () =>
@@ -93,7 +101,9 @@ const linkedLabel = computed(() => {
 watch(
   () => props.visible,
   (open) => {
-    if (open) attrs.value = { ...(props.relation?.attributes ?? {}) };
+    if (!open) return;
+    attrs.value = { ...(props.relation?.attributes ?? {}) };
+    markClean();
   },
 );
 

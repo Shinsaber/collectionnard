@@ -93,7 +93,12 @@
         <ElButton text @click="editDialogVisible = false">{{
           t("common.cancel")
         }}</ElButton>
-        <ElButton type="primary" :loading="saving" @click="updateItem">
+        <ElButton
+          type="primary"
+          :loading="saving"
+          :disabled="!editDirty"
+          @click="updateItem"
+        >
           <i class="pi pi-check mr-2" aria-hidden="true"></i>
           {{ t("common.save") }}
         </ElButton>
@@ -108,6 +113,7 @@ import { useI18n } from "vue-i18n";
 import { collectionApi, importExportApi } from "@/api/client";
 import { usePagination } from "@/composables/usePagination";
 import { useLang } from "@/composables/useLang";
+import { useDirty } from "@/composables/useDirty";
 import { useNotify } from "@/composables/useNotify";
 import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import { MOBILE_QUERY, useMediaQuery } from "@/composables/useMediaQuery";
@@ -156,6 +162,10 @@ const editDialogVisible = ref(false);
 const editingItemId = ref("");
 const editAttributes = ref<Record<string, unknown>>({});
 const editFormRef = ref<InstanceType<typeof DynamicForm> | null>(null);
+// « Enregistrer » reste grisé tant que rien n'a changé.
+const { dirty: editDirty, markClean: markEditClean } = useDirty(
+  () => editAttributes.value,
+);
 
 onMounted(async () => {
   try {
@@ -194,6 +204,7 @@ function ciLabel(ci: CollectionItem): string {
 function openEditItem(ci: CollectionItem) {
   editingItemId.value = ci.item_id;
   editAttributes.value = { ...(ci.attributes ?? {}) };
+  markEditClean();
   editDialogVisible.value = true;
 }
 

@@ -265,6 +265,10 @@ html.dark .el-button--primary {
 .el-button--primary:not(.is-text, .is-link, .is-plain) {
   box-shadow: var(--s-primary);
 }
+/* Bouton grisé (ex. « Enregistrer » sans modification) : plus d'ombre, il ne semble pas cliquable. */
+.el-button.is-disabled {
+  box-shadow: none;
+}
 .el-button--small:not(.is-text, .is-link, .is-circle) {
   height: 32px;
   padding: 0 12px;

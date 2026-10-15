@@ -159,7 +159,12 @@
         <ElButton text @click="dialogVisible = false">{{
           t("common.cancel")
         }}</ElButton>
-        <ElButton type="primary" :loading="saving" @click="save">
+        <ElButton
+          type="primary"
+          :loading="saving"
+          :disabled="!!editing && !dirty"
+          @click="save"
+        >
           <i class="pi pi-check mr-2" aria-hidden="true"></i>
           {{ editing ? t("common.save") : t("common.create") }}
         </ElButton>
@@ -180,6 +185,7 @@ import { useRouter } from "vue-router";
 import { collectionApi } from "@/api/client";
 import { usePagination } from "@/composables/usePagination";
 import { useLang } from "@/composables/useLang";
+import { useDirty } from "@/composables/useDirty";
 import { useNotify } from "@/composables/useNotify";
 import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import { useMetaTypes } from "@/stores/metaTypes";
@@ -205,6 +211,8 @@ const dialogVisible = ref(false);
 const editing = ref<Collection | null>(null);
 const saving = ref(false);
 const form = ref({ collection_type_id: "", name: "", description: "" });
+// En modification, « Enregistrer » reste grisé tant que rien n'a changé.
+const { dirty, markClean } = useDirty(() => form.value);
 
 onMounted(async () => {
   await metaTypes
@@ -233,6 +241,7 @@ function openEdit(col: Collection) {
     name: col.name,
     description: col.description ?? "",
   };
+  markClean();
   dialogVisible.value = true;
 }
 

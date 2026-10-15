@@ -21,7 +21,7 @@
       <ElButton text @click="emit('update:visible', false)">{{
         t("common.cancel")
       }}</ElButton>
-      <ElButton type="primary" @click="save">
+      <ElButton type="primary" :disabled="!dirty" @click="save">
         <i class="pi pi-check mr-2" aria-hidden="true"></i>
         {{ t("admin.external.edit.apply") }}
       </ElButton>
@@ -34,6 +34,7 @@
 // du type (DynamicForm), rien n'est écrit ici — la correction part avec la simulation.
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { useDirty } from "@/composables/useDirty";
 import { useLang } from "@/composables/useLang";
 import { useMetaTypes } from "@/stores/metaTypes";
 import { itemLabel } from "@/lib/schema";
@@ -59,6 +60,8 @@ const { lang } = useLang();
 const metaTypes = useMetaTypes();
 const formRef = ref<InstanceType<typeof DynamicForm> | null>(null);
 const attributes = ref<Record<string, unknown>>({});
+// « Appliquer » reste grisé tant que rien n'a changé.
+const { dirty, markClean } = useDirty(() => attributes.value);
 
 const itemType = computed(() =>
   metaTypes.itemTypes.find((it) => it.id === props.node?.item_type_id),
@@ -84,7 +87,9 @@ watch(
   () => props.visible,
   (open) => {
     // Copie profonde : le formulaire ne doit pas modifier l'aperçu tant qu'on n'applique pas.
-    if (open) attributes.value = JSON.parse(JSON.stringify(props.current));
+    if (!open) return;
+    attributes.value = JSON.parse(JSON.stringify(props.current));
+    markClean();
   },
 );
 
