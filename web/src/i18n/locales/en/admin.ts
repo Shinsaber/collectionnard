@@ -3,20 +3,30 @@ import type fr from "../fr/admin";
 const en: typeof fr = {
   shared: {
     newType: "New type",
-    editType: "Edit type",
     technicalName: "Technical identifier (English)",
     technicalNameHelp:
-      "Used by the API and the data (English, no accents). The displayed name in French and English is set in the attribute editor.",
+      "Used by the API and the data (English, no accents). The displayed name in French and English is set under “Display”.",
     loadFailed: "Loading failed",
     created: "Type created",
     updated: "Type updated",
     deleted: "Type deleted",
     confirmDelete: "Delete the type “{name}”?",
+    notFound: "Type not found",
+    identity: "Type identity",
+    unsaved: "Unsaved changes",
+    leaveConfirm: "Leave without saving your changes?",
+    leave: "Leave",
+    fieldCount: "no fields | {n} field | {n} fields",
+    typeCount: "no types | {n} type | {n} types",
+    kinds: {
+      item: "Item type",
+      relation: "Relation type",
+      collection: "Collection type",
+    },
   },
   itemTypes: {
     title: "Item types",
     schemaFields: "Schema fields",
-    attributes: "Attributes",
     namePlaceholder: "e.g. Series, Episode, DVD…",
   },
   relationTypes: {
@@ -25,7 +35,6 @@ const en: typeof fr = {
     sourceTypes: "Source types",
     targetTypes: "Target types",
     choose: "Choose…",
-    linkAttributes: "Link attributes",
     namePlaceholder: "e.g. contains_episode",
     itemTypesFailed: "Item types unavailable",
     created: "Relation type created",
@@ -36,7 +45,6 @@ const en: typeof fr = {
   collectionTypes: {
     title: "Collection types",
     contextFields: "Contextual fields",
-    contextAttributes: "Contextual attributes",
     namePlaceholder: "e.g. Ownership, Watching, Wishlist…",
   },
   importExport: {

@@ -10,6 +10,7 @@ const en: typeof fr = {
     array: "Array",
     i18nText: "Multilingual text",
     imageGallery: "Image gallery",
+    object: "Object",
   },
   formats: {
     uri: "URI / URL",
@@ -31,12 +32,14 @@ const en: typeof fr = {
   },
   builder: {
     empty: "No field defined. Click “Add a field” to start.",
+    fields: "Fields",
     addField: "Add a field",
     showJson: "Show JSON",
     hideJson: "Hide JSON",
     generatedJson: "Generated JSON Schema",
   },
   root: {
+    heading: "Display",
     title: "Display name ({lang})",
     titlePlaceholder: "e.g. Series",
     description: "Description ({lang})",
