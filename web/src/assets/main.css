@@ -52,38 +52,6 @@
   --shadow-accent: var(--s-accent);
 }
 
-/*
-  TRANSITOIRE (refonte, lots R0 → R8) : les gammes `gray`, `indigo` et `blue` encore utilisées
-  par les vues sont réalignées sur la palette, pour que l'appli prenne les bonnes teintes avant
-  d'être réécrite écran par écran avec les utilitaires sémantiques. À supprimer au lot R8.
-*/
-@theme {
-  --color-gray-50: #f7f8f5;
-  --color-gray-100: #eef0eb;
-  --color-gray-200: #e3e6e0;
-  --color-gray-300: #c9cec6;
-  --color-gray-400: #8a949d;
-  --color-gray-500: #586270;
-  --color-gray-600: #3b4552;
-  --color-gray-700: #24343e;
-  --color-gray-800: #17232c;
-  --color-gray-900: #0f161c;
-  --color-gray-950: #0a0f13;
-
-  --color-indigo-50: #e8efef;
-  --color-indigo-100: #d4e6e5;
-  --color-indigo-200: #bbced0;
-  --color-indigo-300: #a9dde0;
-  --color-indigo-400: #7cc8cc;
-  --color-indigo-500: #2e7a80;
-  --color-indigo-600: #1d5c63;
-  --color-indigo-700: #174a4f;
-  --color-indigo-800: #123e43;
-  --color-indigo-900: #0d2e32;
-
-  --color-blue-500: #1d5c63;
-}
-
 :root {
   color-scheme: light;
 

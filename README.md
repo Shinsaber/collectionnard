@@ -14,7 +14,7 @@ Séries TV, DVD, livres, cartes à collectionner, vinyles… tout type de collec
 | **Backend**         | Go (chi 5.3, pgx 5.11, JWT 5.3)                                | 1.27       |
 | **Base de données** | PostgreSQL                                                     | 16         |
 | **Frontend**        | Vue 3 + TypeScript                                             | 3.5 / 6.0  |
-| **UI**              | Element Plus (MIT) + Tailwind CSS (plugin Vite) | 2.14 / 4.3 |
+| **UI**              | Element Plus (MIT) + Tailwind CSS (plugin Vite) ; identité « Étiquette », responsive (mobile → bureau) | 2.14 / 4.3 |
 | **Graphes**         | Cytoscape.js                                                   | 3.34       |
 | **Build**           | Vite (Rolldown) + vue-tsc 3, Pinia 4, vue-router 5             | 8.3        |
 | **Déploiement**     | Docker Compose                                                 | 4 services |

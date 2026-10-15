@@ -27,7 +27,7 @@
           />
         </ElSelect>
       </div>
-      <div v-else class="text-sm text-gray-500 dark:text-gray-400">
+      <div v-else class="text-sm text-muted">
         {{ t("items.editDialog.typeLabel") }}
         <strong>{{ typeTitle(item.item_type, lang) }}</strong>
       </div>

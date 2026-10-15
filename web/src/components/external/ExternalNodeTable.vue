@@ -16,7 +16,7 @@
         <span class="font-medium">{{ label(row as ExternalNode) }}</span>
         <span
           v-if="relationText(row as ExternalNode)"
-          class="ml-2 text-xs text-gray-500 dark:text-gray-400"
+          class="ml-2 text-xs text-muted"
           >{{ relationText(row as ExternalNode) }}</span
         >
       </template>

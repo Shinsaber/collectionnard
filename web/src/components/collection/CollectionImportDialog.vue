@@ -6,20 +6,18 @@
     @update:model-value="emit('update:visible', $event)"
     @closed="reset"
   >
-    <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+    <p class="text-sm text-muted mb-3">
       {{ t("collections.import.help") }}
     </p>
-    <label
-      :for="fileId"
-      class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-      >{{ t("collections.import.file") }}</label
-    >
+    <label :for="fileId" class="block text-sm font-medium text-ink mb-1">{{
+      t("collections.import.file")
+    }}</label>
     <input
       :id="fileId"
       :key="inputKey"
       type="file"
       accept=".json,application/json"
-      class="block mb-3 text-sm text-gray-700 dark:text-gray-300"
+      class="mb-3 block w-full text-sm text-muted file:mr-3 file:h-10 file:rounded-[10px] file:border-0 file:bg-soft file:px-4 file:font-semibold file:text-ink"
       @change="onFileChange"
     />
 

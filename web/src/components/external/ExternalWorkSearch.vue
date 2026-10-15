@@ -1,8 +1,6 @@
 <template>
-  <section
-    class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-  >
-    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3">
+  <section class="p-4 rounded-lg border border-line bg-surface">
+    <h2 class="text-lg font-semibold text-ink mb-3">
       {{ t("admin.external.work.title") }}
     </h2>
     <form class="flex gap-2 mb-3" @submit.prevent="search">
@@ -31,7 +29,7 @@
       class="flex items-center gap-2 mb-3 text-sm"
       data-test="chosen-work"
     >
-      <span class="font-medium text-gray-800 dark:text-gray-100">{{
+      <span class="font-medium text-ink">{{
         t("admin.external.work.chosen", { name: modelValue.label })
       }}</span>
       <ElButton

@@ -1,21 +1,21 @@
 <template>
   <!-- Libellés des valeurs d'enum par langue (x-enum-labels) -->
   <table class="mt-2 text-xs w-full">
-    <caption class="text-left text-gray-500 pb-1">
+    <caption class="text-left text-muted pb-1">
       {{
         t("schema.enumLabels.caption")
       }}
     </caption>
     <thead>
       <tr>
-        <th scope="col" class="text-left font-medium text-gray-500 pr-2">
+        <th scope="col" class="text-left font-medium text-muted pr-2">
           {{ t("schema.enumLabels.value") }}
         </th>
         <th
           v-for="l in LANGS"
           :key="l"
           scope="col"
-          class="text-left font-medium text-gray-500 uppercase"
+          class="text-left font-medium text-muted uppercase"
         >
           {{ l }}
         </th>

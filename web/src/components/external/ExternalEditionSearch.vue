@@ -1,8 +1,6 @@
 <template>
-  <section
-    class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-  >
-    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3">
+  <section class="p-4 rounded-lg border border-line bg-surface">
+    <h2 class="text-lg font-semibold text-ink mb-3">
       {{ t("admin.external.edition.title") }}
     </h2>
     <form class="flex flex-wrap gap-2 mb-3" @submit.prevent="search">
@@ -40,7 +38,7 @@
     </form>
 
     <div v-if="modelValue.length > 0" class="mb-3" data-test="chosen-editions">
-      <p class="text-sm font-medium text-gray-800 dark:text-gray-100 mb-1">
+      <p class="text-sm font-medium text-ink mb-1">
         {{ t("admin.external.edition.chosen") }}
       </p>
       <div class="flex flex-wrap gap-2">
@@ -93,7 +91,7 @@
           >
           <div
             v-if="(row as ExternalEditionHit).matched_volume"
-            class="text-xs text-gray-500 dark:text-gray-400"
+            class="text-xs text-muted"
           >
             {{ matchedLabel(row as ExternalEditionHit) }}
           </div>
@@ -124,10 +122,7 @@
         </template>
       </ElTableColumn>
     </ElTable>
-    <p
-      v-if="modelValue.length >= MAX"
-      class="text-xs text-gray-500 dark:text-gray-400 mt-2"
-    >
+    <p v-if="modelValue.length >= MAX" class="text-xs text-muted mt-2">
       {{ t("admin.external.edition.max") }}
     </p>
   </section>

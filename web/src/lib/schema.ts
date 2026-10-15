@@ -259,7 +259,42 @@ export function fieldValue(
     }
     if (typeof value === "string") return enumLabel(schema, key, value, lang);
   }
+  const prop = properties(schema)[key];
+  // Décimaux et dates mis en forme selon la langue (affichage seulement : les libellés
+  // x-label gardent displayValue, aligné sur Go). Les entiers restent bruts (années, numéros).
+  if (prop?.type === "number" && typeof value === "number") {
+    return value.toLocaleString(lang, {
+      maximumFractionDigits: 2,
+      useGrouping: false,
+    });
+  }
+  if (typeof value === "string") {
+    if (prop?.format === "date") return formatDate(value, lang, false);
+    if (prop?.format === "date-time") return formatDate(value, lang, true);
+  }
   return displayValue(value, lang);
+}
+
+/** Date ISO (`2021-03-10`, ou date-heure) en forme locale ; valeur brute si illisible. */
+function formatDate(value: string, lang: Lang, withTime: boolean): string {
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  // Date seule : lue en UTC et affichée en UTC, pour ne jamais glisser d'un jour.
+  const date = dateOnly
+    ? new Date(
+        Date.UTC(
+          Number(dateOnly[1]),
+          Number(dateOnly[2]) - 1,
+          Number(dateOnly[3]),
+        ),
+      )
+    : new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return withTime && !dateOnly
+    ? date.toLocaleString(lang, { dateStyle: "medium", timeStyle: "short" })
+    : date.toLocaleDateString(lang, {
+        dateStyle: "medium",
+        ...(dateOnly ? { timeZone: "UTC" } : {}),
+      });
 }
 
 /** Méta-type (ItemType, RelationType, CollectionType) tel que lu par `typeTitle` / `typeDescription`. */

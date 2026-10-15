@@ -6,9 +6,7 @@
     @update:model-value="$emit('update:visible', $event)"
   >
     <div v-if="relation" class="flex flex-col gap-4">
-      <div
-        class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
-      >
+      <div class="flex items-center gap-2 text-sm text-muted">
         <ElTag size="small" type="info">{{
           typeTitle(relation.relation_type, lang) || "?"
         }}</ElTag>
@@ -16,10 +14,9 @@
       </div>
 
       <div v-if="hasFields">
-        <span
-          class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block"
-          >{{ t("items.relationEdit.attributes") }}</span
-        >
+        <span class="text-sm font-medium text-ink mb-2 block">{{
+          t("items.relationEdit.attributes")
+        }}</span>
         <DynamicForm
           ref="formRef"
           :schema="schema!"
@@ -27,7 +24,7 @@
           @update:model-value="attrs = $event"
         />
       </div>
-      <div v-else class="text-sm text-gray-400 dark:text-gray-500 italic">
+      <div v-else class="text-sm text-muted italic">
         {{ t("items.relationEdit.noFields") }}
       </div>
     </div>

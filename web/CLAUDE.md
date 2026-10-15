@@ -49,14 +49,14 @@ Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
 - Composants UI : Element Plus uniquement (MIT). Lignes d'`ElTable` : le slot `#default="{ row }"` n'est
   pas générique, caster `(row as Item)`. Pagination serveur : `ElPagination` + `pag.goToPage(p)`.
   Jamais de dépendance UI sous licence non libre (PrimeVue ≥ 5 est sous PrimeUI License : exclu).
-- Identité graphique « Étiquette » (refonte en cours, branche `refonte-graphique`) : couleurs et ombres
+- Identité graphique « Étiquette » : couleurs et ombres
   **sémantiques** définies dans `main.css` (`bg-canvas`, `bg-surface`, `bg-bar`, `bg-soft`, `text-ink`, `text-muted`,
   `bg-primary` / `text-primary-ink`, `text-link`, `bg-tint` / `text-tint-ink`, `bg-accent`, `shadow-card`, `shadow-bar`,
   `shadow-cover`…), redéfinies sous `html.dark` : pas de variante `dark:` pour ces utilitaires. Le relief passe par les
   ombres, pas par des bordures grises. Polices : `font-sans` (Schibsted Grotesk) et `font-mono` (IBM Plex Mono, pour les
   numéros, références et libellés en capitales), servies par `@fontsource` (aucune requête externe). Logo :
-  `components/layout/AppLogo.vue` (même tracé que `public/favicon.svg`). Les gammes `gray` / `indigo` / `blue` sont
-  réalignées sur la palette **à titre transitoire** : ne plus les utiliser dans du code neuf.
+  `components/layout/AppLogo.vue` (même tracé que `public/favicon.svg`). Pas de couleur Tailwind brute (`gray-*`, `indigo-*`…) ni de variante
+  `dark:` dans les vues : uniquement les utilitaires sémantiques.
 - Dialogues (`ElDialog`) et confirmations (`ElMessageBox`) : mise en forme globale dans `main.css` (corps qui défile,
   en-tête et pied fixes ; feuille du bas sous 768 px). Ne pas leur donner de hauteur ni de marges propres ; une `width`
   reste permise (ignorée sur mobile). Actions dans `#footer` : bouton texte « Annuler » puis bouton principal.

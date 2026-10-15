@@ -5,7 +5,7 @@
     width="36rem"
     @update:model-value="emit('update:visible', $event)"
   >
-    <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+    <p class="text-sm text-muted mb-3">
       {{ t("admin.external.edit.help") }}
     </p>
     <DynamicForm
