@@ -45,6 +45,7 @@
   --shadow-control: var(--s-control);
   --shadow-bar: var(--s-bar);
   --shadow-bar-up: var(--s-bar-up);
+  --shadow-side: var(--s-side);
   --shadow-cover: var(--s-cover);
   --shadow-primary: var(--s-primary);
   --shadow-tint: var(--s-tint);
@@ -112,6 +113,7 @@
   --s-bar: 0 1px 0 rgb(23 32 43 / 0.05), 0 6px 16px -8px rgb(23 32 43 / 0.18);
   --s-bar-up:
     0 -1px 0 rgb(23 32 43 / 0.05), 0 -8px 20px -10px rgb(23 32 43 / 0.2);
+  --s-side: 1px 0 0 rgb(23 32 43 / 0.05), 6px 0 16px -8px rgb(23 32 43 / 0.16);
   --s-cover:
     0 2px 4px rgb(23 32 43 / 0.2), 3px 4px 10px -2px rgb(23 32 43 / 0.25);
   --s-primary: 0 2px 6px rgb(29 92 99 / 0.35);
@@ -183,6 +185,8 @@ html.dark {
     0 1px 0 rgb(124 200 204 / 0.1), 0 4px 10px -6px rgb(79 163 168 / 0.24);
   --s-bar-up:
     0 -1px 0 rgb(124 200 204 / 0.1), 0 -4px 10px -6px rgb(79 163 168 / 0.26);
+  --s-side:
+    1px 0 0 rgb(124 200 204 / 0.1), 4px 0 10px -6px rgb(79 163 168 / 0.24);
   --s-cover:
     0 0 0 1px rgb(232 236 234 / 0.08), 2px 3px 6px -2px rgb(124 200 204 / 0.22);
   --s-primary: 0 0 7px rgb(124 200 204 / 0.3);
@@ -239,6 +243,15 @@ html.dark .el-button--primary {
     font-family:
       "Schibsted Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* Focus clavier visible sur les liens et boutons maison (Element Plus gère ses propres champs). */
+  a:focus-visible,
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  [role="switch"]:focus-visible {
+    outline: 2px solid var(--c-primary);
+    outline-offset: 2px;
   }
 
   /* Tailwind 4 : les boutons repassent en `cursor: default` dans le preflight ; on garde la main. */
