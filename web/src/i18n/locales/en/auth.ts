@@ -7,6 +7,7 @@ const en: typeof fr = {
   login: "Log in",
   invalidCredentials: "Invalid credentials",
   language: "Language",
+  tagline: "The catalog of your collections",
 };
 
 export default en;

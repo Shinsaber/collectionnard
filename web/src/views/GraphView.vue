@@ -1,31 +1,31 @@
 <template>
   <div>
-    <div class="flex items-center gap-3 mb-4">
-      <ElButton text :aria-label="t('common.back')" @click="router.back()">
-        <i class="pi pi-arrow-left" aria-hidden="true"></i>
-      </ElButton>
-      <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
-        {{ t("graph.view.title") }}
-      </h1>
-      <div class="flex-1"></div>
-      <div class="flex items-center gap-2">
-        <label
-          for="graph-depth"
-          class="text-sm text-gray-600 dark:text-gray-400"
-          >{{ t("graph.view.depth") }}</label
-        >
-        <ElInputNumber
-          id="graph-depth"
-          v-model="maxDepth"
-          :min="1"
-          :max="auth.isAdmin ? 10 : 5"
-          :step="1"
-          size="small"
-          class="w-28!"
-          @change="loadGraph"
-        />
-      </div>
-    </div>
+    <RouterLink
+      :to="`/items/${id}`"
+      class="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-link"
+    >
+      <i class="pi pi-arrow-left text-xs" aria-hidden="true"></i>
+      {{ t("common.back") }}
+    </RouterLink>
+
+    <PageHeader :title="t('graph.view.title')">
+      <template #actions>
+        <div class="flex items-center gap-2.5">
+          <label for="graph-depth" class="text-sm text-muted">{{
+            t("graph.view.depth")
+          }}</label>
+          <ElInputNumber
+            id="graph-depth"
+            v-model="maxDepth"
+            :min="1"
+            :max="auth.isAdmin ? 10 : 5"
+            :step="1"
+            class="w-32!"
+            @change="loadGraph"
+          />
+        </div>
+      </template>
+    </PageHeader>
 
     <ElAlert
       v-if="truncated && !loading"
@@ -38,31 +38,32 @@
 
     <AppSpinner v-if="loading" />
 
+    <!-- Hauteur : l'écran moins l'en-tête (et la barre d'onglets sous `lg`). -->
     <div
       v-else
-      class="bg-white dark:bg-gray-800 rounded-lg shadow-sm"
-      style="height: 600px"
+      class="h-[calc(100dvh-18rem)] min-h-105 overflow-hidden rounded-2xl bg-surface shadow-card lg:h-[calc(100dvh-13rem)]"
     >
-      <div ref="cyContainer" class="w-full h-full"></div>
+      <div ref="cyContainer" class="size-full"></div>
     </div>
 
-    <!-- Legend -->
-    <div
+    <!-- Légende des types -->
+    <ul
       v-if="!loading && Object.keys(typeColors).length"
-      class="mt-2 flex flex-wrap gap-3 px-2"
+      class="mt-3 flex flex-wrap gap-x-4 gap-y-2 px-1"
     >
-      <span
+      <li
         v-for="(color, typeName) in typeColors"
         :key="typeName"
-        class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400"
+        class="flex items-center gap-1.5 text-[13px] text-muted"
       >
         <span
-          class="inline-block w-3 h-3 rounded-xs"
+          class="inline-block size-3 rounded-[3px]"
           :style="{ backgroundColor: color }"
+          aria-hidden="true"
         ></span>
         {{ typeDisplay(String(typeName)) }}
-      </span>
-    </div>
+      </li>
+    </ul>
 
     <GraphNodeDialog
       v-model:visible="nodeDialogVisible"
@@ -81,6 +82,7 @@ import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { useTheme } from "@/composables/useTheme";
 import AppSpinner from "@/components/common/AppSpinner.vue";
+import PageHeader from "@/components/common/PageHeader.vue";
 import cytoscape from "cytoscape";
 import type { Core } from "cytoscape";
 import { itemApi } from "@/api/client";
@@ -118,18 +120,22 @@ const nodeDialogVisible = ref(false);
 
 let cy: Core | null = null;
 
-// ── Color palette ──
+// ── Couleurs des types (identité « Étiquette ») ──
+// Tons sourds et distincts, tous lisibles sous un texte blanc gras (contraste ≥ 4,5:1),
+// sur fond clair comme sombre ; le pétrole de l'identité en premier.
 const typeColors: Record<string, string> = {};
 const palette = [
-  "#4f46e5",
-  "#059669",
-  "#d97706",
-  "#dc2626",
-  "#7c3aed",
-  "#0891b2",
-  "#be185d",
-  "#65a30d",
+  "#1d5c63", // pétrole
+  "#a2342b", // brique
+  "#2b5aa8", // bleu
+  "#8a5300", // ambre brûlé
+  "#6b3f7a", // prune
+  "#4f6420", // olive
+  "#8a3b5c", // framboise
+  "#3b4552", // graphite
 ];
+/** Contour du nœud racine : l'ambre de l'identité. */
+const ROOT_BORDER = "#e09a2c";
 let colorIdx = 0;
 
 function getColor(type: string): string {
@@ -192,7 +198,7 @@ function makeTypeSvg(type: string, color: string, isRoot: boolean): string {
   const h = 30;
   const rx = 8;
   const borderWidth = isRoot ? 3 : 0;
-  const borderColor = "#1e1b4b";
+  const borderColor = ROOT_BORDER;
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
     <rect rx="${rx}" ry="${rx}" width="${w}" height="${h}" fill="${color}"
@@ -259,14 +265,70 @@ async function loadGraph() {
   }
 }
 
+/** Styles Cytoscape aux couleurs du thème courant (réappliqués au changement de thème). */
+function graphStyle(): cytoscape.StylesheetJson {
+  const isDark = theme.value === "dark";
+  const font = '"Schibsted Grotesk Variable", system-ui, sans-serif';
+  const ink = isDark ? "#e8ecea" : "#17202b";
+  const muted = isDark ? "#9aa7b0" : "#586270";
+  const line = isDark ? "#3a4d58" : "#c9cec6";
+  const surface = isDark ? "#17232c" : "#ffffff";
+  return [
+    {
+      selector: "node",
+      style: {
+        shape: "roundrectangle",
+        "background-image": "data(typeSvg)",
+        "background-fit": "cover",
+        "background-opacity": 0,
+        "border-width": 0,
+        width: "data(nodeWidth)",
+        height: 30,
+        // Titre sous le badge du type
+        label: "data(title)",
+        "text-valign": "bottom",
+        "text-halign": "center",
+        "text-margin-y": 6,
+        "font-family": font,
+        "font-size": "11px",
+        "font-weight": 600,
+        color: ink,
+        "text-wrap": "wrap",
+        "text-max-width": "140px",
+      },
+    },
+    {
+      selector: "node[?isRoot]",
+      style: { "font-weight": 800, "font-size": "12px" },
+    },
+    {
+      selector: "edge",
+      style: {
+        width: 1.5,
+        "line-color": line,
+        "target-arrow-color": line,
+        "target-arrow-shape": "triangle",
+        "arrow-scale": 1.1,
+        "curve-style": "bezier",
+        label: "data(label)",
+        "font-family": font,
+        "font-size": "9px",
+        color: muted,
+        "text-wrap": "wrap",
+        "text-max-width": "120px",
+        "text-rotation": "autorotate",
+        "text-margin-y": -10,
+        "text-background-color": surface,
+        "text-background-opacity": 0.9,
+        "text-background-padding": "3px",
+        "text-background-shape": "roundrectangle",
+      },
+    },
+  ];
+}
+
 function renderGraph(graph: GraphResponse) {
   if (!cyContainer.value) return;
-
-  const isDark = theme.value === "dark";
-  const textColor = isDark ? "#d1d5db" : "#374151";
-  const edgeLineColor = isDark ? "#4b5563" : "#d1d5db";
-  const edgeArrowColor = isDark ? "#9ca3af" : "#6b7280";
-  const edgeLabelColor = isDark ? "#9ca3af" : "#6b7280";
 
   const allNodes = [graph.root, ...(graph.nodes ?? [])];
   const elements: cytoscape.ElementDefinition[] = [
@@ -301,58 +363,7 @@ function renderGraph(graph: GraphResponse) {
   cy = cytoscape({
     container: cyContainer.value,
     elements,
-    style: [
-      {
-        selector: "node",
-        style: {
-          shape: "roundrectangle",
-          "background-image": "data(typeSvg)",
-          "background-fit": "cover",
-          "background-opacity": 0,
-          "border-width": 0,
-          width: "data(nodeWidth)",
-          height: 30,
-          // Title below the type badge
-          label: "data(title)",
-          "text-valign": "bottom",
-          "text-halign": "center",
-          "text-margin-y": 6,
-          "font-size": "10px",
-          color: textColor,
-          "text-wrap": "wrap",
-          "text-max-width": "140px",
-        },
-      },
-      {
-        selector: "node[?isRoot]",
-        style: {
-          "font-weight": "bold",
-          "font-size": "11px",
-        },
-      },
-      {
-        selector: "edge",
-        style: {
-          width: 2,
-          "line-color": edgeLineColor,
-          "target-arrow-color": edgeArrowColor,
-          "target-arrow-shape": "triangle",
-          "arrow-scale": 1.2,
-          "curve-style": "bezier",
-          label: "data(label)",
-          "font-size": "9px",
-          color: edgeLabelColor,
-          "text-wrap": "wrap",
-          "text-max-width": "120px",
-          "text-rotation": "autorotate",
-          "text-margin-y": -10,
-          "text-background-color": isDark ? "#1f2937" : "#ffffff",
-          "text-background-opacity": 0.85,
-          "text-background-padding": "3px",
-          "text-background-shape": "roundrectangle",
-        },
-      },
-    ],
+    style: graphStyle(),
     layout: {
       name: "cose",
       animate: true,
@@ -380,6 +391,9 @@ function renderGraph(graph: GraphResponse) {
     }
   });
 }
+
+// Changement de thème : styles réappliqués sans recharger le graphe.
+watch(theme, () => cy?.style(graphStyle()));
 
 // Changement de langue : libellés des nœuds et arêtes recalculés sans recharger le graphe.
 watch(lang, () => {

@@ -1,17 +1,13 @@
 <template>
   <div class="max-w-4xl">
-    <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">
-      {{ t("admin.importExport.title") }}
-    </h1>
+    <PageHeader :title="t('admin.importExport.title')" />
 
     <!-- Export -->
-    <section
-      class="mb-6 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-    >
-      <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
+    <section class="mb-5 rounded-2xl bg-surface p-5 shadow-card sm:p-6">
+      <h2 class="mb-1.5 text-lg font-extrabold tracking-tight">
         {{ t("admin.importExport.exportTitle") }}
       </h2>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+      <p class="mb-4 text-sm text-muted">
         {{ t("admin.importExport.exportHelp") }}
       </p>
       <ElButton :loading="exporting" @click="doExport">
@@ -21,28 +17,26 @@
     </section>
 
     <!-- Import -->
-    <section
-      class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-    >
-      <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
+    <section class="rounded-2xl bg-surface p-5 shadow-card sm:p-6">
+      <h2 class="mb-1.5 text-lg font-extrabold tracking-tight">
         {{ t("admin.importExport.importTitle") }}
       </h2>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+      <p class="mb-4 text-sm text-muted">
         {{ t("admin.importExport.importHelp") }}
       </p>
       <label
         :for="fileId"
-        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+        class="mb-1.5 block font-mono text-[11px] uppercase tracking-wider text-muted"
         >{{ t("admin.importExport.file") }}</label
       >
       <input
         :id="fileId"
         type="file"
         accept=".json,application/json"
-        class="block mb-3 text-sm text-gray-700 dark:text-gray-300"
+        class="mb-4 block w-full text-sm text-muted file:mr-3 file:h-10 file:rounded-[10px] file:border-0 file:bg-soft file:px-4 file:font-semibold file:text-ink"
         @change="onFileChange"
       />
-      <div class="flex gap-2">
+      <div class="flex flex-wrap gap-2">
         <ElButton :disabled="!file" :loading="busy === 'dry'" @click="simulate">
           <i class="pi pi-search mr-2" aria-hidden="true"></i>
           {{ t("admin.importExport.simulate") }}
@@ -79,6 +73,7 @@ import { useNotify } from "@/composables/useNotify";
 import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import { useMetaTypes } from "@/stores/metaTypes";
 import ImportReportView from "@/components/common/ImportReportView.vue";
+import PageHeader from "@/components/common/PageHeader.vue";
 import type { ImportEntity, ImportReport } from "@/api/types";
 
 /** Ordre d'application de l'import (pendant du serveur). */

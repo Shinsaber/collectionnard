@@ -86,6 +86,7 @@ export default {
     title: "Sources externes — BD / Manga",
     intro:
       "Recherchez une œuvre sur Wikidata et ses éditions françaises à la BnF, choisissez les éléments à importer (auteurs, éditeurs, tomes…), simulez puis validez. Les éléments déjà présents gardent leurs valeurs : seuls leurs champs vides sont complétés.",
+    stepOf: "Étape {n} / {total} · {title}",
     steps: {
       search: "Recherche",
       selection: "Sélection",

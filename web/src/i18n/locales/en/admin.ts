@@ -86,6 +86,7 @@ const en: typeof fr = {
     title: "External sources — Comics / Manga",
     intro:
       "Search a work on Wikidata and its French editions at the BnF, choose what to import (creators, publishers, volumes…), simulate, then confirm. Items already in the catalogue keep their values: only their empty fields are filled in.",
+    stepOf: "Step {n} / {total} · {title}",
     steps: {
       search: "Search",
       selection: "Selection",
