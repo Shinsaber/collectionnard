@@ -1,10 +1,14 @@
 <template>
   <div>
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
-        {{ t("collections.list.title") }}
-      </h1>
-      <div class="flex gap-2">
+    <PageHeader
+      :title="t('collections.list.title')"
+      :meta="
+        pag.loading.value
+          ? undefined
+          : t('collections.list.count', pag.total.value)
+      "
+    >
+      <template #actions>
         <ElButton @click="importVisible = true">
           <i class="pi pi-upload mr-2" aria-hidden="true"></i>
           {{ t("collections.import.button") }}
@@ -13,86 +17,93 @@
           <i class="pi pi-plus mr-2" aria-hidden="true"></i>
           {{ t("collections.list.new") }}
         </ElButton>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
-    <!-- Filter -->
-    <div class="flex gap-3 mb-4">
-      <ElSelect
-        v-model="filterTypeId"
-        :placeholder="t('collections.list.allTypes')"
-        clearable
-        class="w-48!"
-        :aria-label="t('collections.list.filterByType')"
-        @change="reload"
-      >
-        <ElOption
-          v-for="ct in collectionTypes"
-          :key="ct.id"
-          :label="typeTitle(ct, lang)"
-          :value="ct.id"
-        />
-      </ElSelect>
-    </div>
+    <ElSelect
+      v-model="filterTypeId"
+      :placeholder="t('collections.list.allTypes')"
+      clearable
+      size="large"
+      class="mb-5 w-full! sm:w-64!"
+      :aria-label="t('collections.list.filterByType')"
+      @change="reload"
+    >
+      <ElOption
+        v-for="ct in collectionTypes"
+        :key="ct.id"
+        :label="typeTitle(ct, lang)"
+        :value="ct.id"
+      />
+    </ElSelect>
 
     <AppSpinner v-if="pag.loading.value" />
 
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div
+    <!-- Cartes : le titre est un lien étendu à toute la carte ; les actions restent cliquables. -->
+    <ul
+      v-else-if="pag.data.value.length"
+      class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+    >
+      <li
         v-for="col in pag.data.value"
         :key="col.id"
-        class="bg-white dark:bg-gray-800 rounded-lg shadow-xs hover:shadow-md transition-shadow cursor-pointer p-5"
-        role="link"
-        tabindex="0"
-        @click="router.push(`/collections/${col.id}`)"
-        @keyup.enter="router.push(`/collections/${col.id}`)"
+        class="relative flex flex-col gap-3 rounded-2xl bg-surface p-4.5 shadow-card transition-shadow hover:shadow-raised"
       >
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="font-semibold text-gray-800 dark:text-gray-100">
-            {{ col.name }}
-          </h3>
-          <ElTag type="info" size="small">{{
-            col.collection_type ? typeTitle(col.collection_type, lang) : "?"
-          }}</ElTag>
+        <div class="flex items-start gap-3.5">
+          <span
+            class="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-tint text-tint-ink"
+          >
+            <NavIcon name="collections" />
+          </span>
+          <div class="flex min-w-0 flex-1 flex-col">
+            <RouterLink
+              :to="`/collections/${col.id}`"
+              class="truncate text-base font-bold text-ink after:absolute after:inset-0 after:rounded-2xl"
+              >{{ col.name }}</RouterLink
+            >
+            <span class="text-[13px] text-muted">{{
+              col.collection_type ? typeTitle(col.collection_type, lang) : "?"
+            }}</span>
+          </div>
+          <span class="shrink-0 font-mono text-[13px]">{{
+            col.item_count
+          }}</span>
         </div>
-        <p
-          v-if="col.description"
-          class="text-sm text-gray-500 dark:text-gray-400 mb-3"
-        >
+        <p v-if="col.description" class="line-clamp-2 text-sm text-muted">
           {{ col.description }}
         </p>
-        <div class="text-sm text-gray-400 dark:text-gray-500">
-          <i class="pi pi-box mr-1" aria-hidden="true"></i>
-          {{ t("collections.itemCount", col.item_count) }}
-        </div>
-        <div class="flex gap-1 mt-3 justify-end" @click.stop @keyup.stop>
+        <div class="relative z-10 mt-auto flex justify-end gap-1">
           <ElButton
             text
-            size="small"
-            :aria-label="t('common.edit')"
+            circle
+            :aria-label="`${t('common.edit')} : ${col.name}`"
             @click="openEdit(col)"
           >
             <i class="pi pi-pencil" aria-hidden="true"></i>
           </ElButton>
           <ElButton
             text
-            size="small"
+            circle
             type="danger"
-            :aria-label="t('common.delete')"
+            :aria-label="`${t('common.delete')} : ${col.name}`"
             @click="confirmDelete(col)"
           >
             <i class="pi pi-trash" aria-hidden="true"></i>
           </ElButton>
         </div>
-      </div>
-    </div>
+      </li>
+    </ul>
 
     <div
-      v-if="!pag.loading.value && pag.data.value.length === 0"
-      class="text-center text-gray-400 dark:text-gray-500 py-12"
+      v-else
+      class="flex flex-col items-center gap-3 rounded-2xl bg-surface px-6 py-12 text-center text-muted shadow-card"
     >
-      <i class="pi pi-bookmark text-4xl mb-2"></i>
+      <NavIcon name="collections" :size="32" />
       <p>{{ t("collections.list.empty") }}</p>
+      <ElButton type="primary" @click="openCreate">
+        <i class="pi pi-plus mr-2" aria-hidden="true"></i>
+        {{ t("collections.list.new") }}
+      </ElButton>
     </div>
 
     <!-- Create / Edit Dialog -->
@@ -174,6 +185,8 @@ import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import { useMetaTypes } from "@/stores/metaTypes";
 import { typeTitle } from "@/lib/schema";
 import AppSpinner from "@/components/common/AppSpinner.vue";
+import PageHeader from "@/components/common/PageHeader.vue";
+import NavIcon from "@/components/layout/NavIcon.vue";
 import CollectionImportDialog from "@/components/collection/CollectionImportDialog.vue";
 import type { Collection } from "@/api/types";
 
