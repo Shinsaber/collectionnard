@@ -17,6 +17,9 @@ export default {
     loadFailed: "Chargement impossible",
     confirmDelete: "Supprimer « {label} » ?",
     deleted: "Item supprimé",
+    count: "aucun résultat | {n} résultat | {n} résultats",
+    empty: "Aucun item ne correspond à ces critères.",
+    emptyCatalog: "Le catalogue est vide.",
   },
   // Export CSV du catalogue (ItemsView)
   export: {
@@ -48,6 +51,12 @@ export default {
     relatedVia: "Liés à « {label} » via « {relation} »",
     relatedUnavailable: "Item lié introuvable",
     relatedItems: "Items liés",
+    typeChip: "Type : {type}",
+    tagChip: "Tag : {tag}",
+    attrChip: "{n} filtre d'attribut | {n} filtres d'attributs",
+    removeFilter: "Retirer le filtre « {label} »",
+    showFilters: "Afficher les filtres",
+    showResults: "Voir les résultats",
   },
   // Vue détail (ItemDetailView)
   detail: {

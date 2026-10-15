@@ -260,3 +260,74 @@ html.dark .el-button--primary {
     cursor: pointer;
   }
 }
+
+/*
+  Element Plus aux couleurs de l'identité : boutons sans bordure à ombre douce, tableaux
+  posés sur une fiche (en-têtes mono en capitales), dialogues et menus arrondis.
+  Hors `@layer` : la feuille d'Element Plus n'est dans aucune couche et l'emporterait.
+*/
+.el-button:not(.is-text, .is-link, .is-circle) {
+  --el-button-border-color: transparent;
+  --el-button-hover-border-color: transparent;
+  --el-button-active-border-color: transparent;
+  --el-button-disabled-border-color: transparent;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  box-shadow: var(--s-control);
+}
+.el-button--primary:not(.is-text, .is-link, .is-plain) {
+  box-shadow: var(--s-primary);
+}
+.el-button--small:not(.is-text, .is-link, .is-circle) {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+}
+
+.el-table {
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-bg-color: transparent;
+  --el-table-border-color: var(--c-line);
+  --el-table-row-hover-bg-color: var(--c-bar);
+  --el-table-current-row-bg-color: var(--el-color-primary-light-9);
+  --el-table-text-color: var(--c-ink);
+  --el-table-header-text-color: var(--c-muted);
+}
+.el-table th.el-table__cell > .cell {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
+  background: var(--c-bar);
+}
+
+.el-dialog {
+  --el-dialog-border-radius: 16px;
+  box-shadow: var(--s-raised);
+}
+.el-dropdown-menu,
+.el-select-dropdown,
+.el-popper.is-light {
+  border-radius: 12px;
+}
+
+/* Feuilles (ElDrawer `app-sheet`) : fond des barres ; du bas, coins arrondis et hauteur bornée. */
+.el-drawer.app-sheet {
+  background: var(--c-bar);
+}
+.el-drawer.app-sheet.btt {
+  max-height: 85dvh;
+  border-radius: 22px 22px 0 0;
+}
+.el-drawer.app-sheet .el-drawer__header {
+  margin-bottom: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--c-ink);
+}

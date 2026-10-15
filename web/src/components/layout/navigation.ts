@@ -13,6 +13,9 @@ export const NAV_ICONS = {
   importExport: "M12 3v12M7 10l5 5 5-5M4 21h16",
   external:
     "M7 18a5 5 0 0 1-.6-9.96A6 6 0 0 1 18 9a4 4 0 0 1 0 9zM12 11v6M9 14l3 3 3-3",
+  /** Graphe d'un item (hors navigation, même jeu de tracés). */
+  graph:
+    "M4 6a2 2 0 1 0 4 0a2 2 0 1 0-4 0M16 6a2 2 0 1 0 4 0a2 2 0 1 0-4 0M10 19a2 2 0 1 0 4 0a2 2 0 1 0-4 0M7 7.8l4 9.4M17 7.8l-4 9.4",
 } as const;
 
 export type NavIconName = keyof typeof NAV_ICONS;

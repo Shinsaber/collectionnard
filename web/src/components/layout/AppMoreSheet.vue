@@ -5,7 +5,7 @@
     direction="btt"
     size="auto"
     :title="t('layout.account')"
-    class="more-sheet"
+    class="app-sheet"
   >
     <div class="flex flex-col gap-5 pb-[env(safe-area-inset-bottom)]">
       <AppUserCard />
@@ -67,18 +67,3 @@ watch(
   },
 );
 </script>
-
-<style>
-/* ElDrawer « btt » : coins arrondis, fond des barres, hauteur bornée (défilement interne). */
-.el-drawer.more-sheet {
-  max-height: 85dvh;
-  border-radius: 22px 22px 0 0;
-  background: var(--c-bar);
-}
-.el-drawer.more-sheet .el-drawer__header {
-  margin-bottom: 0;
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--c-ink);
-}
-</style>

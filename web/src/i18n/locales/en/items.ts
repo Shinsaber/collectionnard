@@ -17,6 +17,9 @@ const en: typeof fr = {
     loadFailed: "Loading failed",
     confirmDelete: "Delete “{label}”?",
     deleted: "Item deleted",
+    count: "no results | {n} result | {n} results",
+    empty: "No item matches these criteria.",
+    emptyCatalog: "The catalog is empty.",
   },
   export: {
     csv: "Export as CSV",
@@ -46,6 +49,12 @@ const en: typeof fr = {
     relatedVia: "Related to “{label}” via “{relation}”",
     relatedUnavailable: "Related item not found",
     relatedItems: "Related items",
+    typeChip: "Type: {type}",
+    tagChip: "Tag: {tag}",
+    attrChip: "{n} attribute filter | {n} attribute filters",
+    removeFilter: "Remove the “{label}” filter",
+    showFilters: "Show filters",
+    showResults: "Show results",
   },
   detail: {
     addToCollection: "Add to a collection",

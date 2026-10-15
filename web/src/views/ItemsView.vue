@@ -1,56 +1,45 @@
 <template>
   <div>
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
-        {{ t("items.list.title") }}
-      </h1>
-      <ElButton v-if="auth.isAdmin" type="primary" @click="openCreate">
-        <i class="pi pi-plus mr-2" aria-hidden="true"></i>
-        {{ t("items.list.newItem") }}
-      </ElButton>
-    </div>
-
-    <!-- Search bar: state lives in the URL query (shareable, back button) -->
-    <div class="flex gap-3 mb-3 flex-wrap items-center">
-      <ElSelect
-        :model-value="state.item_type_id ?? ''"
-        :placeholder="t('items.list.allTypes')"
-        clearable
-        class="w-48!"
-        :aria-label="t('items.list.filterByType')"
-        @update:model-value="onTypeChange"
-      >
-        <ElOption
-          v-for="type in itemTypes"
-          :key="type.id"
-          :label="typeTitle(type, lang)"
-          :value="type.id"
+    <PageHeader
+      :title="t('items.list.title')"
+      :meta="pag.loading.value ? undefined : t('items.list.count', total)"
+    >
+      <template #actions>
+        <ExportButton
+          :label="t('items.export.csv')"
+          :formats="['csv']"
+          :run="exportCsv"
+          :error-summary="t('items.export.failed')"
+          :disabled="!selectedType"
+          :title="selectedType ? undefined : t('items.export.chooseTypeFirst')"
         />
-      </ElSelect>
+        <ElButton v-if="auth.isAdmin" type="primary" @click="openCreate">
+          <i class="pi pi-plus mr-2" aria-hidden="true"></i>
+          {{ t("items.list.newItem") }}
+        </ElButton>
+      </template>
+    </PageHeader>
+
+    <!-- Recherche et tri : l'état vit dans l'URL (partageable, bouton retour). -->
+    <div class="mb-4 flex flex-wrap items-center gap-2.5">
       <ElInput
         v-model="searchDraft"
         :placeholder="t('items.list.searchPlaceholder')"
         clearable
-        class="w-64!"
+        size="large"
+        class="min-w-0 flex-[1_1_280px]"
         :aria-label="t('common.search')"
         @keyup.enter="applyText"
         @clear="applyText"
-      />
-      <ElInput
-        v-model="tagDraft"
-        :placeholder="t('items.list.tagPlaceholder')"
-        clearable
-        class="w-32!"
-        :aria-label="t('items.list.tag')"
-        @keyup.enter="applyText"
-        @clear="applyText"
-      />
-      <ElButton :aria-label="t('common.search')" @click="applyText">
-        <i class="pi pi-search" aria-hidden="true"></i>
-      </ElButton>
+      >
+        <template #prefix>
+          <i class="pi pi-search" aria-hidden="true"></i>
+        </template>
+      </ElInput>
       <ElSelect
         :model-value="currentSort"
-        class="w-56!"
+        size="large"
+        class="w-full! sm:w-64!"
         :aria-label="t('items.search.sortBy')"
         @update:model-value="update({ sort: $event || undefined })"
       >
@@ -61,132 +50,136 @@
           :value="o.value"
         />
       </ElSelect>
-      <ElButton
-        :disabled="!selectedType"
-        :title="selectedType ? undefined : t('items.search.chooseTypeFirst')"
-        :aria-expanded="showFilters"
-        @click="showFilters = !showFilters"
-      >
-        <i class="pi pi-filter mr-2" aria-hidden="true"></i>
-        {{ t("items.search.filters") }}
-        <ElTag v-if="attrCount > 0" size="small" round class="ml-2">{{
-          attrCount
-        }}</ElTag>
-      </ElButton>
-      <ElButton v-if="hasCriteria" text @click="resetAll">
-        {{ t("items.search.reset") }}
-      </ElButton>
-      <ExportButton
-        :label="t('items.export.csv')"
-        :formats="['csv']"
-        :run="exportCsv"
-        :error-summary="t('items.export.failed')"
-        :disabled="!selectedType"
-        :title="selectedType ? undefined : t('items.export.chooseTypeFirst')"
-      />
     </div>
 
-    <!-- Related-to filter (from an item page) -->
-    <div v-if="state.related_to" class="mb-3">
-      <RelatedToTag
-        :item-id="state.related_to"
-        :relation-type-id="state.relation_type_id"
-        @close="update({ related_to: undefined, relation_type_id: undefined })"
-      />
-    </div>
-
-    <!-- Attribute filters, generated from the selected type's schema -->
+    <!-- Filtres actifs + interrupteur du panneau (à droite) -->
     <div
-      v-if="showFilters && selectedType"
-      class="mb-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+      class="mb-4 flex min-h-10 flex-wrap items-center justify-between gap-3"
     >
-      <ItemSearchFilters
-        :schema="selectedSchema"
-        :model-value="state.attrs"
-        @update:model-value="update({ attrs: $event })"
-      />
+      <div class="flex flex-wrap items-center gap-2">
+        <FilterChip
+          v-if="selectedType"
+          :label="
+            t('items.search.typeChip', { type: typeTitle(selectedType, lang) })
+          "
+          @remove="onTypeChange(undefined)"
+        />
+        <FilterChip
+          v-if="state.tag"
+          :label="t('items.search.tagChip', { tag: state.tag })"
+          @remove="update({ tag: undefined })"
+        />
+        <FilterChip
+          v-if="attrCount > 0"
+          :label="t('items.search.attrChip', attrCount)"
+          @remove="update({ attrs: {} })"
+        />
+        <RelatedToTag
+          v-if="state.related_to"
+          :item-id="state.related_to"
+          :relation-type-id="state.relation_type_id"
+          @close="
+            update({ related_to: undefined, relation_type_id: undefined })
+          "
+        />
+      </div>
+      <button
+        type="button"
+        class="ml-auto flex h-10 items-center gap-2.5 rounded-full bg-surface pr-2 pl-3.5 text-sm font-semibold text-ink shadow-control"
+        v-bind="filterToggleAttrs"
+        @click="toggleFilters"
+      >
+        <i class="pi pi-sliders-h text-sm" aria-hidden="true"></i>
+        {{ t("items.search.filters") }}
+        <span
+          v-if="activeCount > 0"
+          class="rounded-full bg-accent px-1.5 font-mono text-[11px] text-accent-ink"
+          >{{ activeCount }}</span
+        >
+        <span
+          v-if="isWide"
+          aria-hidden="true"
+          class="relative block h-5.5 w-9.5 rounded-full transition-colors"
+          :class="panelOpen ? 'bg-primary' : 'bg-dash'"
+        >
+          <span
+            class="absolute top-0.75 size-4 rounded-full bg-surface shadow-control transition-[left]"
+            :class="panelOpen ? 'left-4.75' : 'left-0.75'"
+          ></span>
+        </span>
+        <span v-else class="w-1.5"></span>
+      </button>
     </div>
 
-    <ElTable
-      v-loading="pag.loading.value"
-      :data="pag.data.value"
-      stripe
-      row-key="id"
-      highlight-current-row
-      class="cursor-pointer"
-      @row-click="goToItem"
-    >
-      <ElTableColumn :label="t('common.type')" width="140">
-        <template #default="{ row }">
-          <ElTag type="info" size="small">{{
-            typeTitle((row as Item).item_type, lang) || "?"
-          }}</ElTag>
-        </template>
-      </ElTableColumn>
-      <ElTableColumn :label="t('items.list.colLabel')">
-        <template #default="{ row }">
-          {{ itemLabel(row as Item) }}
-        </template>
-      </ElTableColumn>
-      <ElTableColumn :label="t('items.list.colTags')">
-        <template #default="{ row }">
-          <div class="flex gap-1 flex-wrap">
-            <ElTag
-              v-for="tag in (row as Item).tags ?? []"
-              :key="tag.id"
-              type="info"
-              effect="plain"
-              size="small"
-              >{{ tag.name }}</ElTag
-            >
-          </div>
-        </template>
-      </ElTableColumn>
-      <ElTableColumn
-        v-if="auth.isAdmin"
-        :label="t('common.actions')"
-        width="150"
+    <div class="flex items-start gap-5">
+      <section class="min-w-0 flex-1">
+        <ItemList
+          :items="pag.data.value"
+          :loading="pag.loading.value"
+          :can-edit="auth.isAdmin"
+          :empty-text="
+            hasCriteria ? t('items.list.empty') : t('items.list.emptyCatalog')
+          "
+          @edit="openEdit"
+          @remove="confirmDelete"
+        />
+        <ElPagination
+          class="mt-4 justify-end"
+          hide-on-single-page
+          :layout="isMobile ? 'prev, pager, next' : 'total, prev, pager, next'"
+          :pager-count="isMobile ? 5 : 7"
+          :total="total"
+          :page-size="pag.perPage.value"
+          :current-page="pag.page.value"
+          @current-change="onPageChange"
+        />
+      </section>
+
+      <!-- Grand écran : panneau de filtres à droite, masquable (choix mémorisé). -->
+      <aside
+        v-if="isWide && panelOpen"
+        id="panneau-filtres"
+        :aria-label="t('items.search.filters')"
+        class="sticky top-6 w-75 shrink-0 rounded-2xl bg-surface p-4.5 shadow-card"
       >
-        <template #default="{ row }">
-          <div class="flex gap-1">
-            <ElButton
-              text
-              size="small"
-              :title="t('items.list.graph')"
-              :aria-label="t('items.list.viewGraph')"
-              @click.stop="router.push(`/items/${(row as Item).id}/graph`)"
-            >
-              <i class="pi pi-sitemap" aria-hidden="true"></i>
-            </ElButton>
-            <ElButton
-              text
-              size="small"
-              :aria-label="t('common.edit')"
-              @click.stop="openEdit(row as Item)"
-            >
-              <i class="pi pi-pencil" aria-hidden="true"></i>
-            </ElButton>
-            <ElButton
-              text
-              size="small"
-              type="danger"
-              :aria-label="t('common.delete')"
-              @click.stop="confirmDelete(row as Item)"
-            >
-              <i class="pi pi-trash" aria-hidden="true"></i>
-            </ElButton>
-          </div>
-        </template>
-      </ElTableColumn>
-    </ElTable>
-    <ElPagination
-      class="mt-3 justify-end"
-      layout="total, prev, pager, next"
-      :total="pag.total.value"
-      :page-size="pag.perPage.value"
-      :current-page="pag.page.value"
-      @current-change="onPageChange"
-    />
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="text-base font-extrabold">
+            {{ t("items.search.filters") }}
+          </h2>
+          <ElButton v-if="hasCriteria" link type="primary" @click="resetAll">
+            {{ t("items.search.reset") }}
+          </ElButton>
+        </div>
+        <CatalogFilters v-bind="filterProps" v-on="filterHandlers" />
+      </aside>
+    </div>
+
+    <!-- Plus étroit : les mêmes filtres dans une feuille (du bas sur mobile, de droite sur tablette). -->
+    <ElDrawer
+      v-if="!isWide"
+      v-model="sheetOpen"
+      :direction="isMobile ? 'btt' : 'rtl'"
+      :size="isMobile ? 'auto' : '380px'"
+      :title="t('items.search.filters')"
+      class="app-sheet"
+    >
+      <CatalogFilters v-bind="filterProps" v-on="filterHandlers" />
+      <template #footer>
+        <div class="flex gap-2.5">
+          <ElButton class="flex-1" :disabled="!hasCriteria" @click="resetAll">
+            {{ t("items.search.reset") }}
+          </ElButton>
+          <ElButton
+            class="flex-[1.6]"
+            type="primary"
+            @click="sheetOpen = false"
+          >
+            {{ t("items.search.showResults") }}
+            <span class="ml-1.5 font-mono text-xs">({{ total }})</span>
+          </ElButton>
+        </div>
+      </template>
+    </ElDrawer>
 
     <!-- Create / Edit Dialog -->
     <ItemEditDialog
@@ -207,6 +200,11 @@ import { useMetaTypes } from "@/stores/metaTypes";
 import { useNotify } from "@/composables/useNotify";
 import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import { usePagination } from "@/composables/usePagination";
+import {
+  MOBILE_QUERY,
+  WIDE_QUERY,
+  useMediaQuery,
+} from "@/composables/useMediaQuery";
 import { useAuthStore } from "@/stores/auth";
 import { useLang } from "@/composables/useLang";
 import {
@@ -223,9 +221,12 @@ import {
   type ItemSearch,
 } from "@/lib/itemSearch";
 import ItemEditDialog from "@/components/item/ItemEditDialog.vue";
-import ItemSearchFilters from "@/components/item/ItemSearchFilters.vue";
+import ItemList from "@/components/item/ItemList.vue";
+import CatalogFilters from "@/components/item/CatalogFilters.vue";
 import RelatedToTag from "@/components/item/RelatedToTag.vue";
 import ExportButton from "@/components/common/ExportButton.vue";
+import FilterChip from "@/components/common/FilterChip.vue";
+import PageHeader from "@/components/common/PageHeader.vue";
 import { defaultDelimiter } from "@/lib/csv";
 import type { Item, ItemListParams } from "@/api/types";
 
@@ -236,11 +237,14 @@ const { t } = useI18n();
 const { lang } = useLang();
 const { notifyError, notifySuccess } = useNotify();
 const { confirm } = useConfirmDialog();
+const isWide = useMediaQuery(WIDE_QUERY);
+const isMobile = useMediaQuery(MOBILE_QUERY);
 
 const metaTypes = useMetaTypes();
 const itemTypes = computed(() => metaTypes.itemTypes);
 // Les paramètres viennent de toQuery (noms et valeurs déjà conformes à ItemListParams).
 const pag = usePagination((p) => itemApi.list(p as ItemListParams));
+const total = computed(() => pag.total.value);
 
 const dialogVisible = ref(false);
 const editing = ref<Item | null>(null);
@@ -255,12 +259,10 @@ function update(patch: Partial<ItemSearch>) {
 }
 
 const searchDraft = ref("");
-const tagDraft = ref("");
 watch(
   state,
   (s) => {
     searchDraft.value = s.search ?? "";
-    tagDraft.value = s.tag ?? "";
   },
   { immediate: true },
 );
@@ -272,7 +274,7 @@ function applyText() {
     !search && state.value.sort?.endsWith("relevance")
       ? undefined
       : state.value.sort;
-  update({ search, tag: tagDraft.value.trim() || undefined, sort });
+  update({ search, sort });
 }
 
 const selectedType = computed(() =>
@@ -291,7 +293,14 @@ function onTypeChange(id: string | undefined) {
 }
 
 const attrCount = computed(() => activeAttrCount(state.value));
-const showFilters = ref(attrCount.value > 0);
+/** Filtres du panneau en vigueur (type, tag, attributs, lien) : pastille de l'interrupteur. */
+const activeCount = computed(
+  () =>
+    (state.value.item_type_id ? 1 : 0) +
+    (state.value.tag ? 1 : 0) +
+    (state.value.related_to ? 1 : 0) +
+    attrCount.value,
+);
 const hasCriteria = computed(
   () => Object.keys(toQuery(state.value)).length > 0,
 );
@@ -299,6 +308,58 @@ const hasCriteria = computed(
 function resetAll() {
   router.replace({ query: {} });
 }
+
+// ── Panneau de filtres ──────────────────────────────────────────────
+const PANEL_KEY = "colec-catalog-filters";
+function readPanel(): boolean {
+  try {
+    return localStorage.getItem(PANEL_KEY) !== "0";
+  } catch {
+    return true;
+  }
+}
+const panelOpen = ref(readPanel());
+watch(panelOpen, (open) => {
+  try {
+    localStorage.setItem(PANEL_KEY, open ? "1" : "0");
+  } catch {
+    /* stockage indisponible : le choix vaut pour la session */
+  }
+});
+const sheetOpen = ref(false);
+
+function toggleFilters() {
+  if (isWide.value) panelOpen.value = !panelOpen.value;
+  else sheetOpen.value = true;
+}
+
+/** Interrupteur sur grand écran (panneau), ouverture d'une feuille sinon. */
+const filterToggleAttrs = computed(() =>
+  isWide.value
+    ? {
+        role: "switch",
+        "aria-checked": panelOpen.value,
+        "aria-controls": "panneau-filtres",
+      }
+    : {
+        "aria-haspopup": "dialog" as const,
+        "aria-expanded": sheetOpen.value,
+        "aria-label": t("items.search.showFilters"),
+      },
+);
+
+const filterProps = computed(() => ({
+  itemTypes: itemTypes.value,
+  itemTypeId: state.value.item_type_id,
+  tag: state.value.tag,
+  attrs: state.value.attrs,
+  schema: selectedSchema.value,
+}));
+const filterHandlers = {
+  "update:type": onTypeChange,
+  "update:tag": (tag: string | undefined) => update({ tag }),
+  "update:attrs": (attrs: Record<string, string[]>) => update({ attrs }),
+};
 
 // ── Sort ────────────────────────────────────────────────────────────
 const currentSort = computed(
@@ -353,15 +414,7 @@ function onPageChange(p: number) {
   router.replace({ query: toQuery({ ...state.value, page: p }) });
 }
 
-// ── Table actions ───────────────────────────────────────────────────
-function itemLabel(item: Item): string {
-  return renderItemLabel(item, lang.value);
-}
-
-function goToItem(row: Item) {
-  router.push(`/items/${(row as Item).id}`);
-}
-
+// ── Actions ─────────────────────────────────────────────────────────
 function openCreate() {
   editing.value = null;
   dialogVisible.value = true;
@@ -374,7 +427,9 @@ function openEdit(row: Item) {
 
 async function confirmDelete(row: Item) {
   const ok = await confirm({
-    message: t("items.list.confirmDelete", { label: itemLabel(row as Item) }),
+    message: t("items.list.confirmDelete", {
+      label: renderItemLabel(row, lang.value),
+    }),
     confirmText: t("common.delete"),
     danger: true,
   });
