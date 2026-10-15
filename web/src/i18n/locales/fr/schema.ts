@@ -19,13 +19,13 @@ export default {
   form: {
     choose: "Choisir…",
     noAttributes: "Aucun attribut défini pour ce type.",
+    languages: "Langue de saisie",
   },
   gallery: {
     setDefault: "Définir comme image par défaut",
     setDefaultN: "Définir l'image {n} de {category} comme image par défaut",
     removeN: "Supprimer l'image {n} de {category}",
     file: "Fichier image pour {category}",
-    default: "Image par défaut :",
     uploadFailed: "Envoi de l'image impossible",
   },
   builder: {

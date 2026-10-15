@@ -110,7 +110,6 @@ export default {
     empty:
       "Aucune collection disponible (toutes contiennent déjà cet item, ou vous n'avez pas de collection).",
     collection: "Collection",
-    chooseCollection: "Choisir une collection…",
     contextAttributes: "Attributs contextuels",
     added: "Item ajouté à la collection",
     collectionsUnavailable: "Collections indisponibles",

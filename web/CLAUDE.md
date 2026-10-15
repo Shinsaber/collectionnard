@@ -57,6 +57,10 @@ Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
   numéros, références et libellés en capitales), servies par `@fontsource` (aucune requête externe). Logo :
   `components/layout/AppLogo.vue` (même tracé que `public/favicon.svg`). Les gammes `gray` / `indigo` / `blue` sont
   réalignées sur la palette **à titre transitoire** : ne plus les utiliser dans du code neuf.
+- Dialogues (`ElDialog`) et confirmations (`ElMessageBox`) : mise en forme globale dans `main.css` (corps qui défile,
+  en-tête et pied fixes ; feuille du bas sous 768 px). Ne pas leur donner de hauteur ni de marges propres ; une `width`
+  reste permise (ignorée sur mobile). Actions dans `#footer` : bouton texte « Annuler » puis bouton principal.
+  `DynamicForm` passe en deux colonnes (container query) dès que son conteneur le permet.
 - Taille : un fichier `.vue` ne dépasse pas ~400 lignes ; extraire un composant au-delà.
 - Après modification : `npm run lint && npm run format:check && npm run type-check && npm test`
   (`npm run lint:fix` et `npm run format` corrigent automatiquement). Tests unitaires : `vitest`,

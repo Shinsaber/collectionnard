@@ -129,6 +129,15 @@
   --el-color-primary-light-9: #e8efef;
   --el-color-primary-dark-2: #174a4f;
 
+  /* Danger : la brique de l'identité (texte blanc lisible). */
+  --el-color-danger: #a2342b;
+  --el-color-danger-light-3: #be716b;
+  --el-color-danger-light-5: #d09995;
+  --el-color-danger-light-7: #e3c2bf;
+  --el-color-danger-light-8: #ecd6d5;
+  --el-color-danger-light-9: #f6ebea;
+  --el-color-danger-dark-2: #82291f;
+
   --el-font-family:
     "Schibsted Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
   --el-border-radius-base: 8px;
@@ -201,6 +210,14 @@ html.dark {
   --el-color-primary-light-8: #253a3f;
   --el-color-primary-light-9: #1a282e;
   --el-color-primary-dark-2: #a9dde0;
+
+  --el-color-danger: #c4473c;
+  --el-color-danger-light-3: #8e3830;
+  --el-color-danger-light-5: #6a2e2c;
+  --el-color-danger-light-7: #452324;
+  --el-color-danger-light-8: #331f20;
+  --el-color-danger-light-9: #211b1d;
+  --el-color-danger-dark-2: #d9675c;
 
   --el-bg-color: #17232c;
   --el-bg-color-page: #0f161c;
@@ -307,10 +324,6 @@ html.dark .el-button--primary {
   background: var(--c-bar);
 }
 
-.el-dialog {
-  --el-dialog-border-radius: 16px;
-  box-shadow: var(--s-raised);
-}
 .el-dropdown-menu,
 .el-select-dropdown,
 .el-popper.is-light {
@@ -330,4 +343,159 @@ html.dark .el-button--primary {
   font-size: 20px;
   font-weight: 800;
   color: var(--c-ink);
+}
+
+/*
+  Champs : 40 px de haut sur grand écran, 44 px (et texte à 16 px, sans zoom iOS) sur mobile.
+*/
+:root {
+  --el-component-size: 40px;
+  --el-component-size-large: 44px;
+}
+
+/*
+  Dialogues : en-tête, corps et pied de page séparés (pied sur fond de barre) ; sur mobile,
+  plein écran avec en-tête et pied collants (actions à portée du pouce).
+*/
+.el-dialog {
+  --el-dialog-border-radius: 16px;
+  --el-dialog-padding-primary: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 15vh - 32px);
+  box-shadow: var(--s-raised);
+  overflow: hidden;
+}
+.el-dialog__header {
+  padding: 20px 56px 16px 24px;
+  border-bottom: 1px solid var(--c-line);
+}
+.el-dialog__title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--c-ink);
+}
+.el-dialog__headerbtn {
+  top: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+}
+.el-dialog__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-dash) transparent;
+  padding: 20px 24px;
+}
+.el-dialog__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 24px;
+  border-top: 1px solid var(--c-line);
+  background: var(--c-bar);
+}
+.el-dialog__footer .el-button + .el-button {
+  margin-left: 0;
+}
+
+/* Confirmations (ElMessageBox) */
+.el-message-box {
+  --el-messagebox-border-radius: 16px;
+  --el-messagebox-padding-primary: 20px;
+  box-shadow: var(--s-raised);
+}
+.el-message-box__title {
+  font-weight: 800;
+}
+
+@media (max-width: 767.98px) {
+  :root {
+    --el-component-size: 44px;
+    --el-component-size-large: 48px;
+  }
+  .el-input__inner,
+  .el-textarea__inner,
+  .el-select__placeholder,
+  .el-select__selected-item {
+    font-size: 16px;
+  }
+
+  /* Feuille du bas à hauteur du contenu (94 % de l'écran au plus, défilement interne). */
+  .el-overlay-dialog {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .el-dialog:not(.is-fullscreen) {
+    width: 100% !important;
+    max-width: none;
+    max-height: 94dvh;
+    margin: 0 !important;
+    border-radius: 22px 22px 0 0;
+  }
+  .el-dialog__header {
+    position: relative;
+    z-index: 1;
+    padding: 18px 56px 14px 16px;
+    border-bottom: 0;
+    background: var(--c-bar);
+    box-shadow: var(--s-bar);
+  }
+  .el-dialog__headerbtn {
+    top: 10px;
+    right: 8px;
+    width: 44px;
+    height: 44px;
+  }
+  .el-dialog__body {
+    padding: 20px 16px;
+    overscroll-behavior: contain;
+  }
+  .el-dialog__footer {
+    position: relative;
+    z-index: 1;
+    padding: 12px 16px calc(env(safe-area-inset-bottom) + 16px);
+    border-top: 0;
+    background: var(--c-surface);
+    box-shadow: var(--s-bar-up);
+  }
+  .el-dialog__footer .el-button {
+    flex: 1;
+    height: 50px;
+  }
+  .el-dialog__footer .el-button--primary {
+    flex: 1.6;
+  }
+
+  /* Confirmations : feuille du bas, boutons empilés pleine largeur (action en premier). */
+  .el-overlay-message-box {
+    padding: 0 !important;
+  }
+  .el-message-box {
+    width: 100% !important;
+    max-width: none;
+    vertical-align: bottom;
+    border-radius: 22px 22px 0 0;
+    padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+  }
+  .el-message-box__btns {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+  .el-message-box__btns .el-button {
+    width: 100%;
+    height: 50px;
+    margin: 0 !important;
+  }
+}
+
+/* Nombres : alignés à gauche comme les autres champs (Element Plus les centre). */
+.el-input-number .el-input .el-input__inner {
+  text-align: left;
 }

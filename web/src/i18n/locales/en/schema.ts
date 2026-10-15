@@ -20,13 +20,13 @@ const en: typeof fr = {
   form: {
     choose: "Choose…",
     noAttributes: "No attribute defined for this type.",
+    languages: "Input language",
   },
   gallery: {
     setDefault: "Set as default image",
     setDefaultN: "Set image {n} of {category} as default image",
     removeN: "Remove image {n} of {category}",
     file: "Image file for {category}",
-    default: "Default image:",
     uploadFailed: "Image upload failed",
   },
   builder: {

@@ -16,7 +16,7 @@ function mountForm(schema: Schema, modelValue: Record<string, unknown> = {}) {
 }
 
 function labels(wrapper: ReturnType<typeof mountForm>): string[] {
-  return wrapper.findAll("label.text-sm").map((l) =>
+  return wrapper.findAll('label[id$="-label"]').map((l) =>
     l
       .text()
       .replace(/\s*\*$/, "")
@@ -36,13 +36,36 @@ describe("DynamicForm", () => {
       "Images",
     ]);
     // titre est requis → astérisque
-    const titre = w.findAll("label.text-sm")[0]!;
-    expect(titre.find("span.text-red-500").exists()).toBe(true);
+    const titre = w.findAll('label[id$="-label"]')[0]!;
+    expect(titre.find('span[aria-hidden="true"]').text()).toBe("*");
     // synopsis : widget i18n-text → deux zones de texte FR / EN
     expect(w.findAll("textarea")).toHaveLength(2);
     // images : galerie avec les 3 catégories déclarées dans x-image-categories
-    const cats = w.findAll(".capitalize").map((l) => l.text());
-    expect(cats).toEqual(["poster", "screenshot", "banner"]);
+    const cats = w
+      .findAll('input[type="file"]')
+      .map((i) => i.attributes("aria-label"));
+    expect(cats).toEqual([
+      "Fichier image pour poster",
+      "Fichier image pour screenshot",
+      "Fichier image pour banner",
+    ]);
+  });
+
+  it("texte multilingue : un onglet par langue, ● si renseignée, une seule zone visible", async () => {
+    const w = mountForm(serieSchema, {
+      synopsis: { fr: "Un professeur de chimie…" },
+    });
+    const tabs = w.findAll('[role="tab"]');
+    expect(tabs.map((b) => b.text())).toEqual(["● fr", "○ en"]);
+    expect(tabs[0]!.attributes("aria-selected")).toBe("true");
+    const panels = w.findAll('[role="tabpanel"]');
+    expect(panels[0]!.attributes("style") ?? "").not.toContain("display: none");
+    expect(panels[1]!.attributes("style")).toContain("display: none");
+
+    await tabs[1]!.trigger("click");
+    expect(tabs[1]!.attributes("aria-selected")).toBe("true");
+    expect(panels[1]!.attributes("style") ?? "").not.toContain("display: none");
+    expect(panels[0]!.attributes("style")).toContain("display: none");
   });
 
   it("respecte x-order puis ajoute les clés restantes", () => {

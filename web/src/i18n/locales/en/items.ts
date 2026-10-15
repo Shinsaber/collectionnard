@@ -103,7 +103,6 @@ const en: typeof fr = {
     empty:
       "No collection available (they all already contain this item, or you have no collection).",
     collection: "Collection",
-    chooseCollection: "Choose a collection…",
     contextAttributes: "Contextual attributes",
     added: "Item added to the collection",
     collectionsUnavailable: "Collections unavailable",
