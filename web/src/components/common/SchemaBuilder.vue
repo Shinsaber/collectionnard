@@ -302,8 +302,20 @@ function buildProperty(f: SchemaField): Record<string, unknown> {
     ).filter((c) => c.name);
     prop.type = "object";
     prop["x-widget"] = "image-gallery";
+    // Contrôles à l'envoi : seulement les valeurs renseignées (tolerance, strict, min_width…).
     prop["x-image-categories"] = Object.fromEntries(
-      cats.map((c) => [c.name, { ratio: c.ratio || "1/1" }]),
+      cats.map(({ name, ratio, ...checks }) => [
+        name,
+        {
+          ratio: ratio || "1/1",
+          ...Object.fromEntries(
+            Object.entries(checks).filter(
+              ([k, v]) =>
+                v !== undefined && v !== null && (k !== "strict" || v),
+            ),
+          ),
+        },
+      ]),
     );
     const catProperties: Record<string, unknown> = {
       default_image: { type: "string" },

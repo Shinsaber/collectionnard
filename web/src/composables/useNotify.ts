@@ -19,6 +19,10 @@ export function useNotify() {
     });
   }
 
+  function notifyWarning(message: string) {
+    ElMessage({ type: "warning", message, duration: 6000, showClose: true });
+  }
+
   function notifySuccess(summary: string, detail?: string) {
     ElMessage({
       type: "success",
@@ -27,5 +31,5 @@ export function useNotify() {
     });
   }
 
-  return { notifyError, notifySuccess };
+  return { notifyError, notifySuccess, notifyWarning };
 }

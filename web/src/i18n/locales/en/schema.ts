@@ -29,6 +29,11 @@ const en: typeof fr = {
     removeN: "Remove image {n} of {category}",
     file: "Image file for {category}",
     uploadFailed: "Image upload failed",
+    refused: "Image refused",
+    warned: "Image added, but: {details}",
+    ratioOff:
+      "ratio {actual} instead of {expected} ({deviation} % off, {tolerance} % allowed)",
+    tooSmall: "{width} × {height} px, minimum {min} px",
   },
   builder: {
     empty: "No field defined. Click “Add a field” to start.",
@@ -86,6 +91,13 @@ const en: typeof fr = {
     categoryRatioN: "Ratio of category {n}",
     categoryRemoveN: "Remove category {n}",
     addCategory: "Add a category",
+    categoryChecks: "Upload checks of category {n}",
+    tolerance: "Allowed ratio deviation (%)",
+    minWidth: "Min. width (px)",
+    minHeight: "Min. height (px)",
+    strict: "Refuse images failing the checks",
+    checksHelp:
+      "Optional. Without an allowed deviation the ratio is not checked. Without “Refuse”, an image failing the checks is added with a warning.",
     imageGalleryHelp:
       "Generates an object with an array of URLs per category and a default image selector. The ratio uses the CSS format (e.g. 2/3, 16/9, 3/1).",
     itemsType: "Item type",

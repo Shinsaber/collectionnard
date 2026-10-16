@@ -51,7 +51,7 @@ des messages techniques en anglais. Ajouter une langue : `Collectionnard.md` § 
 
 `x-label` (gabarit du libellé d'une instance : `"{number}. {title}"` — Go `internal/label`, TS
 `web/src/lib/schema.ts`, à garder alignés), `x-order` (ordre des champs), `x-labels` (`{fr:{…}, en:{…}}`),
-`x-widget` (`image-gallery`, `i18n-text`), `x-image-categories` (`{poster:{ratio:"2/3"}}`), `x-title` / `x-description`
+`x-widget` (`image-gallery`, `i18n-text`), `x-image-categories` (`{poster:{ratio:"2/3", tolerance?, min_width?, min_height?, strict?}}`, contrôles à l'envoi dans `ImageGalleryField` via `checkImage`), `x-title` / `x-description`
 (nom et description affichés du méta-type par langue, repli sur `name` / `description`), `x-enum-labels` (propriété :
 `{fr:{tv:"Télévision"}}`). Pas de widget
 `slider` : le curseur est automatique quand `minimum` **et** `maximum` sont définis.

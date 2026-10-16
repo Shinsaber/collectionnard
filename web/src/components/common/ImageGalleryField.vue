@@ -58,7 +58,7 @@
           accept="image/jpeg,image/png,image/gif,image/webp"
           class="hidden"
           :aria-label="t('schema.gallery.file', { category: cat.name })"
-          @change="handleUpload(cat.name, $event)"
+          @change="handleUpload(cat, $event)"
         />
         <button
           type="button"
@@ -84,12 +84,14 @@ import { computed, reactive, ref } from "vue";
 import { uploadApi } from "@/api/client";
 import { useI18n } from "vue-i18n";
 import { useNotify } from "@/composables/useNotify";
+import { useLang } from "@/composables/useLang";
+import { checkImage, type ImageCategory, type ImageIssue } from "@/lib/schema";
 
 // Widget `x-widget: image-gallery` : un tableau d'URLs par catégorie
 // (`x-image-categories`) et une `default_image`. Les erreurs d'upload (type refusé,
 // 413 au-delà de MAX_UPLOAD_SIZE…) sont notifiées.
 const props = defineProps<{
-  categories: { name: string; ratio: string }[];
+  categories: ImageCategory[];
   modelValue: Record<string, unknown> | null | undefined;
 }>();
 
@@ -97,7 +99,8 @@ const emit = defineEmits<{
   "update:modelValue": [value: Record<string, unknown>];
 }>();
 
-const { notifyError } = useNotify();
+const { notifyError, notifyWarning } = useNotify();
+const { lang } = useLang();
 const { t } = useI18n();
 
 const data = computed(() => props.modelValue ?? {});
@@ -126,21 +129,72 @@ function removeImage(cat: string, imgIdx: number) {
   emit("update:modelValue", next);
 }
 
-async function handleUpload(cat: string, event: Event) {
+async function handleUpload(cat: ImageCategory, event: Event) {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
   if (!file) return;
-  uploading[cat] = true;
+  uploading[cat.name] = true;
   try {
+    // Contrôles de la catégorie (ratio, taille minimale) avant l'envoi.
+    const size = await imageSize(file);
+    if (size) {
+      const { issues, block } = checkImage(cat, size.width, size.height);
+      if (issues.length) {
+        const details = issues.map((i) => describe(i, size)).join(" ; ");
+        if (block) {
+          notifyError(new Error(details), t("schema.gallery.refused"));
+          return;
+        }
+        notifyWarning(t("schema.gallery.warned", { details }));
+      }
+    }
     const resp = await uploadApi.upload(file);
-    const next = { ...data.value, [cat]: [...urlsOf(cat), resp.url] };
+    const next = {
+      ...data.value,
+      [cat.name]: [...urlsOf(cat.name), resp.url],
+    };
     if (!next.default_image) next.default_image = resp.url;
     emit("update:modelValue", next);
   } catch (e) {
     notifyError(e, t("schema.gallery.uploadFailed"));
   } finally {
-    uploading[cat] = false;
+    uploading[cat.name] = false;
     input.value = "";
   }
+}
+
+/** Dimensions de l'image ; null si le navigateur ne sait pas la décoder (le serveur contrôle le type). */
+async function imageSize(
+  file: File,
+): Promise<{ width: number; height: number } | null> {
+  if (typeof createImageBitmap !== "function") return null;
+  try {
+    const bmp = await createImageBitmap(file);
+    const size = { width: bmp.width, height: bmp.height };
+    bmp.close();
+    return size;
+  } catch {
+    return null; // format non décodable ici : pas de contrôle, l'envoi décide
+  }
+}
+
+function describe(
+  issue: ImageIssue,
+  size: { width: number; height: number },
+): string {
+  const n = (v: number, digits = 0) =>
+    v.toLocaleString(lang.value, { maximumFractionDigits: digits });
+  return issue.kind === "ratio"
+    ? t("schema.gallery.ratioOff", {
+        actual: n(issue.actual, 2),
+        expected: issue.expected,
+        deviation: n(issue.deviation),
+        tolerance: n(issue.tolerance),
+      })
+    : t("schema.gallery.tooSmall", {
+        width: size.width,
+        height: size.height,
+        min: `${issue.minWidth || "–"} × ${issue.minHeight || "–"}`,
+      });
 }
 </script>

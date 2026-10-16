@@ -66,8 +66,8 @@ Un commit par lot ; contrat d'API d'abord (`api/openapi.yaml` → model → stor
 - [x] **E4b — Purge** (admin, page « Images », `POST /uploads/purge?dry_run=`) : recherche des fichiers de `UPLOAD_DIR` qu'aucun attribut (items,
       items de collection) ne référence plus ; délai de grâce de 24 h ; simulation (liste, taille)
       puis confirmation, comme l'import.
-- [ ] **E4c — Contrôle à l'envoi**, par catégorie de `x-image-categories` :
+- [x] **E4c — Contrôle à l'envoi**, par catégorie de `x-image-categories` :
       `tolerance` (écart de ratio permis, en %), `strict` (bloquer ou seulement avertir),
       `min_width` / `min_height` (pixels). Contrôle dans le formulaire (ImageGalleryField) ;
       extension gérée par `DynamicForm`, `SchemaBuilder`, `lib/schema.ts`, documentée (README,
-      `Collectionnard.md` § 3).
+      `Collectionnard.md` § 3). Éditeur extrait dans `SchemaImageCategories.vue`, contrôle pur `checkImage` (`lib/schema.ts`).

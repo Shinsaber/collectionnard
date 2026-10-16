@@ -225,54 +225,11 @@
 
     <!-- ── Image gallery config ── -->
     <template v-if="field.type === 'image-gallery'">
-      <div class="flex flex-col gap-2 md:col-span-2">
-        <span class="text-xs text-muted">{{
-          t("schema.constraints.imageCategories")
-        }}</span>
-        <div
-          v-for="(cat, catIdx) in field.imageCategories ?? []"
-          :key="catIdx"
-          class="flex items-center gap-2"
-        >
-          <ElInput
-            :model-value="cat.name"
-            :placeholder="t('schema.constraints.categoryName')"
-            :aria-label="
-              t('schema.constraints.categoryNameN', { n: catIdx + 1 })
-            "
-            class="min-w-0 flex-1 text-sm"
-            @update:model-value="
-              updateCategory(catIdx, 'name', String($event ?? ''))
-            "
-          />
-          <ElInput
-            :model-value="cat.ratio"
-            :placeholder="t('schema.constraints.categoryRatio')"
-            :aria-label="
-              t('schema.constraints.categoryRatioN', { n: catIdx + 1 })
-            "
-            class="w-24! shrink-0 text-sm"
-            @update:model-value="
-              updateCategory(catIdx, 'ratio', String($event ?? ''))
-            "
-          />
-          <ElButton
-            text
-            size="small"
-            type="danger"
-            :aria-label="
-              t('schema.constraints.categoryRemoveN', { n: catIdx + 1 })
-            "
-            @click="removeCategory(catIdx)"
-          >
-            <i class="pi pi-times" aria-hidden="true"></i>
-          </ElButton>
-        </div>
-        <ElButton text size="small" class="self-start" @click="addCategory">
-          <i class="pi pi-plus mr-1" aria-hidden="true"></i>
-          {{ t("schema.constraints.addCategory") }}
-        </ElButton>
-      </div>
+      <SchemaImageCategories
+        class="md:col-span-2"
+        :model-value="field.imageCategories ?? []"
+        @update:model-value="set('imageCategories', $event)"
+      />
       <div class="md:col-span-2 text-xs text-muted italic">
         {{ t("schema.constraints.imageGalleryHelp") }}
       </div>
@@ -338,6 +295,7 @@ import { computed, useId } from "vue";
 import { useI18n } from "vue-i18n";
 import { LANGS } from "@/i18n/langs";
 import SchemaEnumLabels from "./SchemaEnumLabels.vue";
+import SchemaImageCategories from "./SchemaImageCategories.vue";
 import {
   arrayItemTypeOptions,
   boolDefaultOptions,
@@ -377,24 +335,5 @@ function setLabel(l: string, value: string) {
   const labels = { ...(props.field.labels ?? {}), [l]: value };
   if (!value) delete labels[l];
   set("labels", labels);
-}
-
-function updateCategory(catIdx: number, key: "name" | "ratio", value: string) {
-  const cats = [...(props.field.imageCategories ?? [])];
-  cats[catIdx] = { ...cats[catIdx]!, [key]: value };
-  set("imageCategories", cats);
-}
-
-function removeCategory(catIdx: number) {
-  const cats = [...(props.field.imageCategories ?? [])];
-  cats.splice(catIdx, 1);
-  set("imageCategories", cats);
-}
-
-function addCategory() {
-  set("imageCategories", [
-    ...(props.field.imageCategories ?? []),
-    { name: "", ratio: "1/1" },
-  ]);
 }
 </script>
