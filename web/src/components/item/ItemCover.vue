@@ -1,7 +1,8 @@
 <template>
-  <!-- Vignette d'un item : image par défaut du schéma, sinon initiales sur fond doux. -->
+  <!-- Vignette d'un item : image par défaut du schéma, sinon initiales sur fond doux.
+       self-start : dans une rangée flex, l'étirement en hauteur écraserait le ratio. -->
   <div
-    class="relative shrink-0 overflow-hidden bg-soft shadow-cover"
+    class="relative shrink-0 self-start overflow-hidden bg-soft shadow-cover"
     :class="width >= 96 ? 'rounded-[10px]' : 'rounded-md'"
     :style="{ width: `${width}px`, aspectRatio: ratio }"
   >
