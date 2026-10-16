@@ -55,7 +55,9 @@ Le fichier `db/seed.sql` crée deux comptes de développement (appliqué si `SEE
 | `admin`     | `admin`      | admin |
 | `shinsaber` | `shinsaber`  | user  |
 
-Pour créer un compte : `colec-server hash-password <mdp>` donne le hash bcrypt à insérer dans `users`.
+Pour créer un compte : `colec-server create-user <nom> <email> [--admin]` (mot de passe demandé sans
+écho, ou lu sur l'entrée standard ; 8 caractères minimum). Avec Docker :
+`docker compose run --rm server colec-server create-user <nom> <email> --admin`.
 
 ### Développement local (sans Docker)
 
@@ -114,11 +116,35 @@ migration déjà appliquée.
 
 ### Mise en production
 
+La CI publie les images sur GitHub Container Registry (publiques, `linux/amd64` et `linux/arm64`),
+après les vérifications : `ghcr.io/shinsaber/collectionnard-server` et `ghcr.io/shinsaber/collectionnard-web`.
+
+| Déclencheur | Étiquettes |
+| --- | --- |
+| tag `v1.2.0` poussé | `1.2.0`, `1.2`, `latest` |
+| fusion dans `main` | `main` (version de test) |
+| tout push publié | `sha-<commit>` |
+
+Sur le serveur, `docker-compose.prod.yml` utilise ces images (aucun build, aucun jeu de démonstration) :
+
+```bash
+cp .env.example .env              # JWT_SECRET, POSTGRES_PASSWORD ; COLEC_VERSION (latest), WEB_PORT (3000)
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+# premier compte (la base démarre vide) :
+docker compose -f docker-compose.prod.yml run --rm server colec-server create-user <nom> <email> --admin
+```
+
+Publier une version : `git tag v1.0.0 && git push origin v1.0.0`. Mettre à jour le serveur : `pull` puis `up -d`
+(les migrations s'appliquent au démarrage).
+
 - Seul le service `web` (nginx, non-root, port 3000) est publié ; `server` et `postgres` restent
   sur le réseau interne de compose. Placer devant un reverse-proxy qui termine TLS (Caddy,
-  Traefik, nginx) : l'API suppose HTTPS pour les mots de passe et les tokens.
+  Traefik, nginx) : l'API suppose HTTPS pour les mots de passe et les tokens, et l'application
+  installable (mode hors ligne) l'exige.
 - `.env` : `JWT_SECRET` aléatoire (≥ 32 caractères), `POSTGRES_PASSWORD` fort,
-  `SEED_ON_EMPTY=false` (sinon le compte `admin/admin` est créé sur une base vide).
+  `SEED_ON_EMPTY=false` avec `docker-compose.yml` (sinon le compte `admin/admin` est créé sur une base
+  vide) ; `docker-compose.prod.yml` l'impose.
 - Les conteneurs tournent sans privilèges (uid 10001 pour l'API, 101 pour nginx) ; les images
   sont épinglées (`golang:1.27-alpine`, `alpine:3.22`, `node:22-alpine`,
   `nginxinc/nginx-unprivileged:1.28-alpine`, `postgres:16-alpine`).

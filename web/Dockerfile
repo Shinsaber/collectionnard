@@ -1,4 +1,6 @@
-FROM node:22-alpine AS builder
+# Multi-architecture (CI : linux/amd64 et linux/arm64) : le build Vite produit des fichiers
+# statiques, identiques pour toutes les cibles : il tourne sur la plateforme de build (sans émulation).
+FROM --platform=$BUILDPLATFORM node:22-alpine AS builder
 
 WORKDIR /app
 COPY package.json package-lock.json ./

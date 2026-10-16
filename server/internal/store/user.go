@@ -39,3 +39,21 @@ func (s *PgStore) GetUserByID(ctx context.Context, id uuid.UUID) (*model.User, e
 	}
 	return &u, nil
 }
+
+// CreateUser adds an account (command `colec-server create-user`). A username
+// already taken, whatever its case (migration 004), or an email in use gives ErrConflict.
+func (s *PgStore) CreateUser(ctx context.Context, username, email, passwordHash, role string) (*model.User, error) {
+	var u model.User
+	err := s.pool.QueryRow(ctx,
+		`INSERT INTO users (username, email, password, role) VALUES ($1, $2, $3, $4)
+		 RETURNING id, username, email, role, created_at, updated_at`,
+		username, email, passwordHash, role,
+	).Scan(&u.ID, &u.Username, &u.Email, &u.Role, &u.CreatedAt, &u.UpdatedAt)
+	if err != nil {
+		if isUniqueViolation(err) {
+			return nil, ErrConflict
+		}
+		return nil, err
+	}
+	return &u, nil
+}

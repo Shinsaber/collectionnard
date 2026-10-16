@@ -116,7 +116,9 @@ docker compose down -v && docker compose up --build   # repart d'une base vide (
 ```
 
 Comptes de dev (seed) : `admin` / `admin` (rôle admin), `shinsaber` / `shinsaber` (rôle user).
-Nouveau compte : `go run . hash-password <mdp>` puis `INSERT INTO users …`.
+Nouveau compte : `go run . create-user <nom> <email> [--admin]` (mot de passe demandé).
+Production : images publiées par la CI sur ghcr.io (job `images`, tags `v*` et `main`), `docker-compose.prod.yml`
+(sans seed) — voir README « Mise en production ».
 
 ## Règles de travail
 

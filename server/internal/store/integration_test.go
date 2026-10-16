@@ -720,3 +720,20 @@ func TestListItems_AttributeSort(t *testing.T) {
 		t.Fatalf("text sort desc: %v %v", ids(page), err)
 	}
 }
+
+func TestCreateUser(t *testing.T) {
+	u, err := s.CreateUser(ctx, "Newcomer", "newcomer@example.org", "hash", "admin")
+	if err != nil || u.Username != "Newcomer" || u.Role != "admin" {
+		t.Fatalf("create: %+v, %v", u, err)
+	}
+	if got, _, err := s.GetUserByUsername(ctx, "newcomer"); err != nil || got.ID != u.ID {
+		t.Errorf("lookup: %+v, %v", got, err)
+	}
+	// Same name in another case, or same email: conflict (migration 004).
+	if _, err := s.CreateUser(ctx, "NEWCOMER", "other@example.org", "hash", "user"); !errors.Is(err, store.ErrConflict) {
+		t.Errorf("case duplicate: %v", err)
+	}
+	if _, err := s.CreateUser(ctx, "other", "newcomer@example.org", "hash", "user"); !errors.Is(err, store.ErrConflict) {
+		t.Errorf("email duplicate: %v", err)
+	}
+}
