@@ -77,6 +77,10 @@ func (h *Handler) Router() chi.Router {
 			http.NotFound(w, r)
 			return
 		}
+		if width := r.URL.Query().Get("w"); width != "" {
+			h.serveThumbnail(w, r, name, width)
+			return
+		}
 		http.ServeFile(w, r, filepath.Join(string(uploadsDir), name)) //nolint:gosec // name sans "/" ni "..", extension en liste blanche (ci-dessus)
 	})
 

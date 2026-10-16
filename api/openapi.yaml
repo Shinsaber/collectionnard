@@ -3703,8 +3703,20 @@ paths:
         **Accès public** (pas d'authentification requise) car les balises `<img>`
         ne peuvent pas envoyer de header `Authorization`.
         Seuls les fichiers avec extensions autorisées (.jpg, .jpeg, .png, .gif, .webp) sont servis.
+
+        Avec `w`, une **vignette** JPEG de cette largeur (sans agrandissement, fond blanc), générée
+        à la première demande puis gardée sur disque (couvertures hors ligne de l'application mobile).
+        Un original que le serveur ne sait pas décoder est servi tel quel.
       operationId: getUploadedFile
       security: []
+      parameters:
+        - name: w
+          in: query
+          required: false
+          description: Largeur de la vignette, en pixels (valeurs acceptées ci-dessous ; 400 sinon).
+          schema:
+            type: integer
+            enum: [240]
       responses:
         "400":
           $ref: "#/components/responses/BadRequest"

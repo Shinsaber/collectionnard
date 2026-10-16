@@ -3,6 +3,7 @@ import { ref, shallowRef } from "vue";
 import axios from "axios";
 import { offlineApi } from "@/api/client";
 import { clearOfflineData, idbGet, idbSet } from "@/lib/offlineDb";
+import { syncCovers } from "@/lib/offlineCovers";
 import type { OfflineSnapshot } from "@/api/types";
 
 /** Délai minimal entre deux synchronisations automatiques (ouverture, retour du réseau). */
@@ -39,9 +40,11 @@ export const useOfflineStore = defineStore("offline", () => {
       lastSync = Date.now();
       snapshot.value = snap;
       await idbSet("snapshot", snap).catch(() => undefined);
-      // Safari efface sinon les données d'un site peu visité au bout de quelques semaines.
-      await navigator.storage?.persist?.().catch(() => false);
-      for (const step of afterSync) await step(snap).catch(() => undefined);
+      // Safari efface sinon les données d'un site peu visité au bout de quelques semaines. Pas
+      // d'attente : Firefox peut demander la permission à l'utilisateur et ne répondre qu'ensuite.
+      void navigator.storage?.persist?.().catch(() => false);
+      // Étapes longues (téléchargement des couvertures) : en arrière-plan, sans bloquer la synchro.
+      for (const step of afterSync) void step(snap).catch(() => undefined);
     } catch (e) {
       if (axios.isAxiosError(e) && !e.response) reachable.value = false;
       else throw e;
@@ -54,6 +57,7 @@ export const useOfflineStore = defineStore("offline", () => {
   function start() {
     if (started) return;
     started = true;
+    afterSync.push(syncCovers);
     void load().then(() => sync().catch(() => undefined));
     window.addEventListener("online", () => {
       reachable.value = true;

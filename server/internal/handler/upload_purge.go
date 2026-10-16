@@ -65,6 +65,7 @@ func (h *Handler) PurgeUploads(w http.ResponseWriter, r *http.Request) {
 				respondInternal(w, r, err, "cannot delete "+f.Filename)
 				return
 			}
+			h.removeThumbnails(f.Filename)
 		}
 		rep.Applied = true
 	}

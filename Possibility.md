@@ -90,7 +90,7 @@ Lecture seule ; l'instance est servie en HTTPS (le service worker l'exige).
 - [x] **E5c — Mode hors ligne** : détection réseau ; « Mes collections », le détail d'une collection
       et une recherche (titre, numéro, ISBN…) servis par la copie locale ; bandeau
       « Hors ligne — données du … » ; actions d'écriture masquées.
-- [ ] **E5d — Couvertures, espace borné** :
+- [x] **E5d — Couvertures, espace borné** :
       - vignettes côté serveur (`/api/v1/uploads/<nom>?w=240`, JPEG redimensionné, mis en cache sur
         disque) : ~10–20 Ko au lieu de 100–300 Ko pour l'original ;
       - seules les vignettes des items de mes collections sont gardées hors ligne ;

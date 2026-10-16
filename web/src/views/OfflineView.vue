@@ -78,7 +78,15 @@
           :key="row.item.id"
           :row="row"
           :linkable="offline.reachable"
-        />
+        >
+          <template #cover>
+            <OfflineCover
+              :url="coverOf(row)"
+              :label="row.label"
+              :online="offline.reachable"
+            />
+          </template>
+        </OfflineItemRow>
       </ul>
       <p v-else class="px-1 text-sm text-muted">{{ t("offline.empty") }}</p>
       <p
@@ -88,6 +96,8 @@
         {{ t("offline.more", { n: results.length - shown.length }) }}
       </p>
     </template>
+
+    <OfflineCoversSettings />
   </div>
 </template>
 
@@ -102,6 +112,11 @@ import { useOfflineStore } from "@/stores/offline";
 import { buildRows, searchRows } from "@/lib/offlineSearch";
 import PageHeader from "@/components/common/PageHeader.vue";
 import OfflineItemRow from "@/components/offline/OfflineItemRow.vue";
+import OfflineCover from "@/components/offline/OfflineCover.vue";
+import OfflineCoversSettings from "@/components/offline/OfflineCoversSettings.vue";
+import { thumbUrl } from "@/lib/offlineCovers";
+import type { Schema } from "@/lib/schema";
+import type { OfflineRow } from "@/lib/offlineSearch";
 
 /** Au-delà, la liste demande d'affiner la recherche (rendu fluide sur mobile). */
 const MAX_SHOWN = 100;
@@ -148,6 +163,13 @@ const generatedAt = computed(() =>
 const state = computed(() =>
   offline.reachable ? t("offline.onlineNow") : t("offline.offlineNow"),
 );
+
+function coverOf(row: OfflineRow): string {
+  return thumbUrl(
+    row.item.item_type?.attributes_schema as Schema | undefined,
+    row.item.attributes,
+  );
+}
 
 function syncNow() {
   offline.sync(true).catch((e) => notifyError(e));
