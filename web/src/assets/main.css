@@ -1,47 +1,478 @@
 @import "tailwindcss";
 
+/* Polices de l'identité « Étiquette » (OFL), servies par le bundle : aucune requête externe. */
+@import "@fontsource-variable/schibsted-grotesk";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
+  Identité graphique « Étiquette » — maquettes de référence :
+  https://claude.ai/artifact/3aPVR73iewR8dpyCkT8A1C (page « Maquettes Étiquette »).
 
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
+  Les couleurs et ombres sémantiques sont des variables d'exécution (--c-*, --s-*)
+  redéfinies sous `html.dark` ; `@theme inline` les expose en utilitaires Tailwind :
+  bg-canvas, bg-surface, bg-bar, bg-soft, text-ink, text-muted, bg-primary, text-primary,
+  bg-tint, text-tint-ink, bg-accent, border-line, shadow-card, shadow-bar…
+  Le relief passe par les ombres, pas par des bordures grises.
 */
+@theme inline {
+  --font-sans:
+    "Schibsted Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --color-canvas: var(--c-canvas);
+  --color-surface: var(--c-surface);
+  --color-bar: var(--c-bar);
+  --color-soft: var(--c-soft);
+  --color-ink: var(--c-ink);
+  --color-muted: var(--c-muted);
+  --color-line: var(--c-line);
+  --color-dash: var(--c-dash);
+  --color-primary: var(--c-primary);
+  --color-primary-hover: var(--c-primary-hover);
+  --color-primary-ink: var(--c-primary-ink);
+  --color-link: var(--c-link);
+  --color-tint: var(--c-tint);
+  --color-tint-ink: var(--c-tint-ink);
+  --color-accent: var(--c-accent);
+  --color-accent-ink: var(--c-accent-ink);
+  --color-danger: var(--c-danger);
+
+  --shadow-card: var(--s-card);
+  --shadow-raised: var(--s-raised);
+  --shadow-control: var(--s-control);
+  --shadow-bar: var(--s-bar);
+  --shadow-bar-up: var(--s-bar-up);
+  --shadow-side: var(--s-side);
+  --shadow-cover: var(--s-cover);
+  --shadow-primary: var(--s-primary);
+  --shadow-tint: var(--s-tint);
+  --shadow-accent: var(--s-accent);
+}
+
+:root {
+  color-scheme: light;
+
+  --c-canvas: #eef0eb;
+  --c-surface: #ffffff;
+  --c-bar: #f7f8f5;
+  --c-soft: #eef0eb;
+  --c-ink: #17202b;
+  --c-muted: #586270;
+  --c-line: #e3e6e0;
+  --c-dash: #c9cec6;
+  --c-primary: #1d5c63;
+  --c-primary-hover: #174a4f;
+  --c-primary-ink: #ffffff;
+  --c-link: #1d5c63;
+  --c-tint: #d4e6e5;
+  --c-tint-ink: #123e43;
+  --c-accent: #e09a2c;
+  --c-accent-ink: #17202b;
+  --c-danger: #a2342b;
+
+  --s-card:
+    0 1px 2px rgb(23 32 43 / 0.06), 0 6px 18px -6px rgb(23 32 43 / 0.12);
+  --s-raised:
+    0 2px 4px rgb(23 32 43 / 0.08), 0 12px 28px -10px rgb(23 32 43 / 0.2);
+  --s-control: 0 1px 3px rgb(23 32 43 / 0.12);
+  --s-bar: 0 1px 0 rgb(23 32 43 / 0.05), 0 6px 16px -8px rgb(23 32 43 / 0.18);
+  --s-bar-up:
+    0 -1px 0 rgb(23 32 43 / 0.05), 0 -8px 20px -10px rgb(23 32 43 / 0.2);
+  --s-side: 1px 0 0 rgb(23 32 43 / 0.05), 6px 0 16px -8px rgb(23 32 43 / 0.16);
+  --s-cover:
+    0 2px 4px rgb(23 32 43 / 0.2), 3px 4px 10px -2px rgb(23 32 43 / 0.25);
+  --s-primary: 0 2px 6px rgb(29 92 99 / 0.35);
+  --s-tint: 0 1px 3px rgb(29 92 99 / 0.25);
+  --s-accent: 0 1px 3px rgb(150 90 10 / 0.35);
+
+  /* Element Plus : primaire pétrole (nuances mêlées de blanc), neutres de la palette. */
+  --el-color-primary: #1d5c63;
+  --el-color-primary-light-3: #618d92;
+  --el-color-primary-light-5: #8eaeb1;
+  --el-color-primary-light-7: #bbced0;
+  --el-color-primary-light-8: #d2dee0;
+  --el-color-primary-light-9: #e8efef;
+  --el-color-primary-dark-2: #174a4f;
+
+  /* Danger : la brique de l'identité (texte blanc lisible). */
+  --el-color-danger: #a2342b;
+  --el-color-danger-light-3: #be716b;
+  --el-color-danger-light-5: #d09995;
+  --el-color-danger-light-7: #e3c2bf;
+  --el-color-danger-light-8: #ecd6d5;
+  --el-color-danger-light-9: #f6ebea;
+  --el-color-danger-dark-2: #82291f;
+
+  --el-font-family:
+    "Schibsted Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  --el-border-radius-base: 8px;
+  --el-border-radius-small: 6px;
+  --el-border-radius-round: 999px;
+
+  --el-bg-color: #ffffff;
+  --el-bg-color-page: #eef0eb;
+  --el-bg-color-overlay: #ffffff;
+  --el-text-color-primary: #17202b;
+  --el-text-color-regular: #3b4552;
+  --el-text-color-secondary: #586270;
+  --el-text-color-placeholder: #8a949d;
+  --el-border-color: #d5d9d2;
+  --el-border-color-light: #e3e6e0;
+  --el-border-color-lighter: #eef0eb;
+  --el-border-color-extra-light: #f3f4f1;
+  --el-fill-color: #eef0eb;
+  --el-fill-color-light: #f7f8f5;
+  --el-fill-color-lighter: #f7f8f5;
+  --el-fill-color-blank: #ffffff;
+  --el-box-shadow-light: var(--s-card);
+  --el-box-shadow: var(--s-raised);
+}
+
+html.dark {
+  color-scheme: dark;
+
+  --c-canvas: #0f161c;
+  --c-surface: #17232c;
+  --c-bar: #16212a;
+  --c-soft: #22323c;
+  --c-ink: #e8ecea;
+  --c-muted: #9aa7b0;
+  --c-line: #24343e;
+  --c-dash: #3a4d58;
+  --c-primary: #7cc8cc;
+  --c-primary-hover: #a9dde0;
+  --c-primary-ink: #0f161c;
+  --c-link: #7cc8cc;
+  --c-tint: #1f4a50;
+  --c-tint-ink: #e8f6f6;
+  --c-accent: #e09a2c;
+  --c-accent-ink: #17202b;
+  --c-danger: #f08a80;
+
+  /* Halos clairs teintés pétrole, flou réduit (retour du mainteneur). */
+  --s-card:
+    0 0 0 1px rgb(124 200 204 / 0.08), 0 4px 10px -5px rgb(79 163 168 / 0.24);
+  --s-raised:
+    0 0 0 1px rgb(124 200 204 / 0.12), 0 6px 14px -6px rgb(79 163 168 / 0.3);
+  --s-control: 0 0 0 1px rgb(124 200 204 / 0.12);
+  --s-bar:
+    0 1px 0 rgb(124 200 204 / 0.1), 0 4px 10px -6px rgb(79 163 168 / 0.24);
+  --s-bar-up:
+    0 -1px 0 rgb(124 200 204 / 0.1), 0 -4px 10px -6px rgb(79 163 168 / 0.26);
+  --s-side:
+    1px 0 0 rgb(124 200 204 / 0.1), 4px 0 10px -6px rgb(79 163 168 / 0.24);
+  --s-cover:
+    0 0 0 1px rgb(232 236 234 / 0.08), 2px 3px 6px -2px rgb(124 200 204 / 0.22);
+  --s-primary: 0 0 7px rgb(124 200 204 / 0.3);
+  --s-tint: 0 0 7px rgb(124 200 204 / 0.3);
+  --s-accent: 0 0 5px rgb(224 154 44 / 0.28);
+
+  /* Element Plus sombre : primaire pétrole clair, nuances mêlées du fond nuit. */
+  --el-color-primary: #7cc8cc;
+  --el-color-primary-light-3: #5b9397;
+  --el-color-primary-light-5: #466f74;
+  --el-color-primary-light-7: #304b51;
+  --el-color-primary-light-8: #253a3f;
+  --el-color-primary-light-9: #1a282e;
+  --el-color-primary-dark-2: #a9dde0;
+
+  --el-color-danger: #c4473c;
+  --el-color-danger-light-3: #8e3830;
+  --el-color-danger-light-5: #6a2e2c;
+  --el-color-danger-light-7: #452324;
+  --el-color-danger-light-8: #331f20;
+  --el-color-danger-light-9: #211b1d;
+  --el-color-danger-dark-2: #d9675c;
+
+  --el-bg-color: #17232c;
+  --el-bg-color-page: #0f161c;
+  --el-bg-color-overlay: #1a2730;
+  --el-text-color-primary: #e8ecea;
+  --el-text-color-regular: #c9d1d5;
+  --el-text-color-secondary: #9aa7b0;
+  --el-text-color-placeholder: #6f7c86;
+  --el-border-color: #2f414c;
+  --el-border-color-light: #24343e;
+  --el-border-color-lighter: #1d2b34;
+  --el-border-color-extra-light: #1a2730;
+  --el-fill-color: #22323c;
+  --el-fill-color-light: #1a2730;
+  --el-fill-color-lighter: #1a2730;
+  --el-fill-color-blank: #17232c;
+  --el-mask-color: rgb(15 22 28 / 0.8);
+}
+
+/* Sur le primaire clair du thème sombre, le texte des boutons Element Plus passe en encre nuit. */
+html.dark .el-button--primary {
+  --el-button-text-color: var(--c-primary-ink);
+  --el-button-hover-text-color: var(--c-primary-ink);
+  --el-button-active-text-color: var(--c-primary-ink);
+}
+
 @layer base {
+  /* Tailwind 4 : bordure par défaut en `currentcolor` ; on garde un trait discret de la palette. */
   *,
   ::after,
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+    border-color: var(--c-line, currentcolor);
   }
-}
 
-:root {
-  --color-primary: #4f46e5;
-  /* Element Plus : couleur primaire alignée sur l'indigo du projet */
-  --el-color-primary: #4f46e5;
-  --el-color-primary-light-3: #818cf8;
-  --el-color-primary-light-5: #a5b4fc;
-  --el-color-primary-light-7: #c7d2fe;
-  --el-color-primary-light-8: #e0e7ff;
-  --el-color-primary-light-9: #eef2ff;
-  --el-color-primary-dark-2: #4338ca;
-}
+  body {
+    background-color: var(--c-canvas);
+    color: var(--c-ink);
+    font-family:
+      "Schibsted Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
 
-html.dark {
-  color-scheme: dark;
-  --el-bg-color: #1f2937; /* gray-800, comme les cartes Tailwind */
-  --el-fill-color-blank: #1f2937;
-}
+  /* Focus clavier visible sur les liens et boutons maison (Element Plus gère ses propres champs). */
+  a:focus-visible,
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  [role="switch"]:focus-visible {
+    outline: 2px solid var(--c-primary);
+    outline-offset: 2px;
+  }
 
-/* Tailwind 4 : les boutons repassent en `cursor: default` dans le preflight ; on garde la main. */
-@layer base {
+  /* Tailwind 4 : les boutons repassent en `cursor: default` dans le preflight ; on garde la main. */
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+}
+
+/*
+  Element Plus aux couleurs de l'identité : boutons sans bordure à ombre douce, tableaux
+  posés sur une fiche (en-têtes mono en capitales), dialogues et menus arrondis.
+  Hors `@layer` : la feuille d'Element Plus n'est dans aucune couche et l'emporterait.
+*/
+.el-button:not(.is-text, .is-link, .is-circle) {
+  --el-button-border-color: transparent;
+  --el-button-hover-border-color: transparent;
+  --el-button-active-border-color: transparent;
+  --el-button-disabled-border-color: transparent;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  box-shadow: var(--s-control);
+}
+.el-button--primary:not(.is-text, .is-link, .is-plain) {
+  box-shadow: var(--s-primary);
+}
+/* Bouton grisé (ex. « Enregistrer » sans modification) : plus d'ombre, il ne semble pas cliquable. */
+.el-button.is-disabled {
+  box-shadow: none;
+}
+.el-button--small:not(.is-text, .is-link, .is-circle) {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+}
+
+.el-table {
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-bg-color: transparent;
+  --el-table-border-color: var(--c-line);
+  --el-table-row-hover-bg-color: var(--c-bar);
+  --el-table-current-row-bg-color: var(--el-color-primary-light-9);
+  --el-table-text-color: var(--c-ink);
+  --el-table-header-text-color: var(--c-muted);
+}
+.el-table th.el-table__cell > .cell {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+/* Vignettes (ItemCover) dans un tableau : la cellule d'Element Plus coupe ce qui
+   dépasse, on lui laisse la place de l'ombre. */
+.el-table td.cover-cell > .cell {
+  padding-block: 6px 10px;
+}
+.el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
+  background: var(--c-bar);
+}
+
+.el-dropdown-menu,
+.el-select-dropdown,
+.el-popper.is-light {
+  border-radius: 12px;
+}
+
+/* Feuilles (ElDrawer `app-sheet`) : fond des barres ; du bas, coins arrondis et hauteur bornée. */
+.el-drawer.app-sheet {
+  background: var(--c-bar);
+}
+.el-drawer.app-sheet.btt {
+  max-height: 85dvh;
+  border-radius: 22px 22px 0 0;
+}
+.el-drawer.app-sheet .el-drawer__header {
+  margin-bottom: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--c-ink);
+}
+
+/*
+  Champs : 40 px de haut sur grand écran, 44 px (et texte à 16 px, sans zoom iOS) sur mobile.
+*/
+:root {
+  --el-component-size: 40px;
+  --el-component-size-large: 44px;
+}
+
+/*
+  Dialogues : en-tête, corps et pied de page séparés (pied sur fond de barre) ; sur mobile,
+  plein écran avec en-tête et pied collants (actions à portée du pouce).
+*/
+.el-dialog {
+  --el-dialog-border-radius: 16px;
+  --el-dialog-padding-primary: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 15vh - 32px);
+  box-shadow: var(--s-raised);
+  overflow: hidden;
+}
+.el-dialog__header {
+  padding: 20px 56px 16px 24px;
+  border-bottom: 1px solid var(--c-line);
+}
+.el-dialog__title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--c-ink);
+}
+.el-dialog__headerbtn {
+  top: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+}
+.el-dialog__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-dash) transparent;
+  padding: 20px 24px;
+}
+.el-dialog__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 24px;
+  border-top: 1px solid var(--c-line);
+  background: var(--c-bar);
+}
+.el-dialog__footer .el-button + .el-button {
+  margin-left: 0;
+}
+
+/* Confirmations (ElMessageBox) */
+.el-message-box {
+  --el-messagebox-border-radius: 16px;
+  --el-messagebox-padding-primary: 20px;
+  box-shadow: var(--s-raised);
+}
+.el-message-box__title {
+  font-weight: 800;
+}
+
+@media (max-width: 767.98px) {
+  :root {
+    --el-component-size: 44px;
+    --el-component-size-large: 48px;
+  }
+  .el-input__inner,
+  .el-textarea__inner,
+  .el-select__placeholder,
+  .el-select__selected-item {
+    font-size: 16px;
+  }
+
+  /* Feuille du bas à hauteur du contenu (94 % de l'écran au plus, défilement interne). */
+  .el-overlay-dialog {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .el-dialog:not(.is-fullscreen) {
+    width: 100% !important;
+    max-width: none;
+    max-height: 94dvh;
+    margin: 0 !important;
+    border-radius: 22px 22px 0 0;
+  }
+  .el-dialog__header {
+    position: relative;
+    z-index: 1;
+    padding: 18px 56px 14px 16px;
+    border-bottom: 0;
+    background: var(--c-bar);
+    box-shadow: var(--s-bar);
+  }
+  .el-dialog__headerbtn {
+    top: 10px;
+    right: 8px;
+    width: 44px;
+    height: 44px;
+  }
+  .el-dialog__body {
+    padding: 20px 16px;
+    overscroll-behavior: contain;
+  }
+  .el-dialog__footer {
+    position: relative;
+    z-index: 1;
+    padding: 12px 16px calc(env(safe-area-inset-bottom) + 16px);
+    border-top: 0;
+    background: var(--c-surface);
+    box-shadow: var(--s-bar-up);
+  }
+  .el-dialog__footer .el-button {
+    flex: 1;
+    height: 50px;
+  }
+  .el-dialog__footer .el-button--primary {
+    flex: 1.6;
+  }
+
+  /* Confirmations : feuille du bas, boutons empilés pleine largeur (action en premier). */
+  .el-overlay-message-box {
+    padding: 0 !important;
+  }
+  .el-message-box {
+    width: 100% !important;
+    max-width: none;
+    vertical-align: bottom;
+    border-radius: 22px 22px 0 0;
+    padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+  }
+  .el-message-box__btns {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+  .el-message-box__btns .el-button {
+    width: 100%;
+    height: 50px;
+    margin: 0 !important;
+  }
+}
+
+/* Nombres : alignés à gauche comme les autres champs (Element Plus les centre). */
+.el-input-number .el-input .el-input__inner {
+  text-align: left;
 }

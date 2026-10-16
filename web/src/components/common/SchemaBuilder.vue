@@ -1,71 +1,94 @@
 <template>
-  <div class="flex flex-col gap-4">
-    <!-- Root: displayed type name/description per language, item label template -->
-    <SchemaRootCard
-      v-model:x-label="xLabel"
-      v-model:title="xTitle"
-      v-model:description="xDescription"
-      :labels="ft.labels"
-    />
+  <!-- Champs à gauche ; identité du type (slot `aside`), libellé et JSON à droite. -->
+  <div class="flex flex-wrap items-start gap-6">
+    <section class="flex min-w-0 flex-[999_1_560px] flex-col gap-3">
+      <h2 class="text-lg font-extrabold tracking-tight sm:text-xl">
+        {{ t("schema.builder.fields") }}
+        <span class="font-mono text-[13px] font-medium text-muted"
+          >· {{ fields.length }}</span
+        >
+      </h2>
 
-    <!-- Field list -->
-    <SchemaFieldCard
-      v-for="(field, idx) in fields"
-      :key="idx"
-      :field="field"
-      :index="idx"
-      :count="fields.length"
-      :features="ft"
-      :type-options="availableTypeOptions"
-      @update:field="patchField(idx, $event)"
-      @move="move(idx, $event)"
-      @remove="fields.splice(idx, 1)"
-      @add-after="fields.splice(idx + 1, 0, emptyField())"
-    />
-
-    <!-- Empty state -->
-    <div
-      v-if="fields.length === 0"
-      class="text-sm text-gray-400 italic text-center py-4 border border-dashed border-gray-300 rounded-lg"
-    >
-      {{ t("schema.builder.empty") }}
-    </div>
-
-    <!-- Actions -->
-    <div class="flex items-center gap-2">
-      <ElButton size="small" plain @click="fields.push(emptyField())">
-        <i class="pi pi-plus mr-2" aria-hidden="true"></i>
-        {{ t("schema.builder.addField") }}
-      </ElButton>
-      <div class="flex-1"></div>
-      <ElButton
-        size="small"
-        text
-        :aria-expanded="showRaw"
-        @click="showRaw = !showRaw"
+      <ul
+        v-if="fields.length"
+        class="overflow-hidden rounded-2xl bg-surface shadow-card"
       >
-        <i
-          :class="showRaw ? 'pi pi-eye-slash' : 'pi pi-eye'"
-          class="mr-2"
-          aria-hidden="true"
-        ></i>
-        {{
-          showRaw ? t("schema.builder.hideJson") : t("schema.builder.showJson")
-        }}
-      </ElButton>
-    </div>
+        <SchemaFieldCard
+          v-for="(field, idx) in fields"
+          :key="ids[idx]"
+          :field="field"
+          :index="idx"
+          :count="fields.length"
+          :features="ft"
+          :type-options="availableTypeOptions"
+          :open="expanded.has(ids[idx]!)"
+          @toggle="toggle(ids[idx]!)"
+          @update:field="patchField(idx, $event)"
+          @move="move(idx, $event)"
+          @remove="removeField(idx)"
+          @add-after="addField(idx + 1)"
+        />
+      </ul>
+      <p
+        v-else
+        class="rounded-2xl bg-surface px-5 py-6 text-center text-sm italic text-muted shadow-card"
+      >
+        {{ t("schema.builder.empty") }}
+      </p>
 
-    <!-- Raw JSON preview -->
-    <div v-if="showRaw" class="flex flex-col gap-1">
-      <ElInput
-        :model-value="JSON.stringify(schema, null, 2)"
-        type="textarea"
-        readonly
-        :rows="12"
-        :aria-label="t('schema.builder.generatedJson')"
-        class="font-mono text-xs"
+      <button
+        type="button"
+        class="flex h-13 items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-dashed border-dash text-[15px] font-semibold text-link hover:border-primary"
+        @click="addField(fields.length)"
+      >
+        <i class="pi pi-plus text-sm" aria-hidden="true"></i>
+        {{ t("schema.builder.addField") }}
+      </button>
+    </section>
+
+    <aside
+      class="flex min-w-0 flex-[1_1_320px] flex-col gap-4 lg:sticky lg:top-6"
+    >
+      <slot name="aside" />
+
+      <!-- Nom affiché, description (x-title / x-description) et libellé des instances (x-label) -->
+      <SchemaRootCard
+        v-model:x-label="xLabel"
+        v-model:title="xTitle"
+        v-model:description="xDescription"
+        :labels="ft.labels"
       />
-    </div>
+
+      <!-- JSON Schema généré (lecture seule) -->
+      <div class="flex flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
+        <ElButton
+          text
+          class="self-start"
+          :aria-expanded="showRaw"
+          @click="showRaw = !showRaw"
+        >
+          <i
+            :class="showRaw ? 'pi pi-eye-slash' : 'pi pi-code'"
+            class="mr-2"
+            aria-hidden="true"
+          ></i>
+          {{
+            showRaw
+              ? t("schema.builder.hideJson")
+              : t("schema.builder.showJson")
+          }}
+        </ElButton>
+        <ElInput
+          v-if="showRaw"
+          :model-value="JSON.stringify(schema, null, 2)"
+          type="textarea"
+          readonly
+          :rows="14"
+          :aria-label="t('schema.builder.generatedJson')"
+          class="font-mono text-xs"
+        />
+      </div>
+    </aside>
   </div>
 </template>
 
@@ -127,6 +150,10 @@ const availableTypeOptions = computed(() => {
 });
 
 const fields = ref<SchemaField[]>([]);
+// Identifiant stable de chaque champ (clé de rendu, état déplié), aligné sur `fields`.
+const ids = ref<number[]>([]);
+let nextId = 1;
+const expanded = ref(new Set<number>());
 const showRaw = ref(false);
 // Gabarit du libellé des instances (extension racine x-label), ex. "{number}. {title}".
 const xLabel = ref("");
@@ -350,6 +377,8 @@ let initialized = false;
 
 function loadFrom(value: Record<string, unknown>) {
   fields.value = parseSchema(value);
+  ids.value = fields.value.map(() => nextId++);
+  expanded.value = new Set();
   xLabel.value = typeof value["x-label"] === "string" ? value["x-label"] : "";
   xTitle.value = stringMap(value["x-title"]);
   xDescription.value = stringMap(value["x-description"]);
@@ -386,5 +415,27 @@ function move(idx: number, dir: -1 | 1) {
   if (target < 0 || target >= fields.value.length) return;
   const arr = fields.value;
   [arr[idx], arr[target]] = [arr[target]!, arr[idx]!];
+  const id = ids.value;
+  [id[idx], id[target]] = [id[target]!, id[idx]!];
+}
+
+/** Nouveau champ vide à la position donnée, déplié pour être saisi. */
+function addField(at: number) {
+  const id = nextId++;
+  fields.value.splice(at, 0, emptyField());
+  ids.value.splice(at, 0, id);
+  expanded.value = new Set(expanded.value).add(id);
+}
+
+function removeField(idx: number) {
+  fields.value.splice(idx, 1);
+  ids.value.splice(idx, 1);
+}
+
+function toggle(id: number) {
+  const next = new Set(expanded.value);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  expanded.value = next;
 }
 </script>

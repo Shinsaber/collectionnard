@@ -149,10 +149,14 @@ export function extractApiError(e: unknown): {
     const data = e.response.data as Record<string, unknown>;
     const code = typeof data.error === "string" ? data.error : undefined;
     const key = `errors.api.${code}`;
-    const message =
-      code && te(key) ? t(key) : ((data.message as string) ?? e.message);
     const details = data.details as
-      { fields?: Record<string, string> } | undefined;
+      { fields?: Record<string, string>; missing?: string[] } | undefined;
+    // `missing` (connector_unavailable) : noms introuvables, insérés dans le message traduit.
+    const params = { missing: details?.missing?.join(", ") ?? "?" };
+    const message =
+      code && te(key)
+        ? t(key, params)
+        : ((data.message as string) ?? e.message);
     return {
       code,
       message,

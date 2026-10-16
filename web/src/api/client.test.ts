@@ -48,6 +48,17 @@ describe("extractApiError", () => {
     expect(res.fieldErrors).toBeUndefined();
   });
 
+  it("insère les types introuvables d'un connecteur dans le message", () => {
+    const e = axiosError(409, {
+      error: "connector_unavailable",
+      message: "BD / Manga types missing from the catalogue: Comic, Volume",
+      details: { missing: ["Comic", "Volume"] },
+    });
+    expect(extractApiError(e).message).toBe(
+      "Types BD / Manga introuvables dans le catalogue : Comic, Volume (type renommé ou db/seed_bd_manga.sql non chargé)",
+    );
+  });
+
   it("garde le message du serveur pour un code inconnu", () => {
     const e = axiosError(418, { error: "teapot", message: "I'm a teapot" });
     expect(extractApiError(e).message).toBe("I'm a teapot");

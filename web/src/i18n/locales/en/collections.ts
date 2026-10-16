@@ -16,6 +16,7 @@ const en: typeof fr = {
   typesUnavailable: "Collection types unavailable",
   list: {
     title: "My collections",
+    count: "no collections | {n} collection | {n} collections",
     new: "New collection",
     allTypes: "All types",
     filterByType: "Filter by collection type",
@@ -50,6 +51,8 @@ const en: typeof fr = {
     itemRemoved: "Item removed",
     export: "Export",
     exportFailed: "Export failed",
+    empty: "This collection is empty.",
+    itemActions: "Actions on “{label}”",
   },
 };
 

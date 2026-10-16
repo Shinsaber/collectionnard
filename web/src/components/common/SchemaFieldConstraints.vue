@@ -7,7 +7,7 @@
     >
       <label
         :for="`${uid}-label-${l}`"
-        class="text-xs font-medium text-gray-500"
+        class="text-xs font-medium text-muted"
         >{{ t("schema.constraints.label", { lang: l.toUpperCase() }) }}</label
       >
       <ElInput
@@ -20,7 +20,7 @@
     </div>
 
     <div v-if="features.description" class="flex flex-col gap-1 md:col-span-2">
-      <label :for="`${uid}-desc`" class="text-xs font-medium text-gray-500">{{
+      <label :for="`${uid}-desc`" class="text-xs font-medium text-muted">{{
         t("common.description")
       }}</label>
       <ElInput
@@ -35,7 +35,7 @@
     <!-- ── String constraints ── -->
     <template v-if="field.type === 'string'">
       <div v-if="features.minLength" class="flex flex-col gap-1">
-        <label :for="`${uid}-minlen`" class="text-xs text-gray-500">{{
+        <label :for="`${uid}-minlen`" class="text-xs text-muted">{{
           t("schema.constraints.minLength")
         }}</label>
         <ElInputNumber
@@ -46,7 +46,7 @@
         />
       </div>
       <div v-if="features.maxLength" class="flex flex-col gap-1">
-        <label :for="`${uid}-maxlen`" class="text-xs text-gray-500">{{
+        <label :for="`${uid}-maxlen`" class="text-xs text-muted">{{
           t("schema.constraints.maxLength")
         }}</label>
         <ElInputNumber
@@ -57,7 +57,7 @@
         />
       </div>
       <div v-if="features.pattern" class="flex flex-col gap-1">
-        <label :for="`${uid}-pattern`" class="text-xs text-gray-500">{{
+        <label :for="`${uid}-pattern`" class="text-xs text-muted">{{
           t("schema.constraints.pattern")
         }}</label>
         <ElInput
@@ -69,7 +69,7 @@
         />
       </div>
       <div v-if="features.format" class="flex flex-col gap-1">
-        <label :for="`${uid}-format`" class="text-xs text-gray-500">{{
+        <label :for="`${uid}-format`" class="text-xs text-muted">{{
           t("schema.constraints.format")
         }}</label>
         <ElSelect
@@ -88,7 +88,7 @@
         </ElSelect>
       </div>
       <div v-if="features.default" class="flex flex-col gap-1">
-        <label :for="`${uid}-default`" class="text-xs text-gray-500">{{
+        <label :for="`${uid}-default`" class="text-xs text-muted">{{
           t("schema.constraints.default")
         }}</label>
         <ElInput
@@ -105,7 +105,7 @@
       v-if="features.enum && acceptsEnum"
       class="flex flex-col gap-1 md:col-span-2"
     >
-      <label :for="`${uid}-enum`" class="text-xs text-gray-500">{{
+      <label :for="`${uid}-enum`" class="text-xs text-muted">{{
         t("schema.constraints.enum")
       }}</label>
       <ElInput
@@ -125,7 +125,7 @@
     <!-- ── Number / Integer constraints ── -->
     <template v-if="field.type === 'integer' || field.type === 'number'">
       <div v-if="features.minimum" class="flex flex-col gap-1">
-        <label :for="`${uid}-min`" class="text-xs text-gray-500">{{
+        <label :for="`${uid}-min`" class="text-xs text-muted">{{
           t("schema.constraints.minimum")
         }}</label>
         <ElInputNumber
@@ -135,7 +135,7 @@
         />
       </div>
       <div v-if="features.maximum" class="flex flex-col gap-1">
-        <label :for="`${uid}-max`" class="text-xs text-gray-500">{{
+        <label :for="`${uid}-max`" class="text-xs text-muted">{{
           t("schema.constraints.maximum")
         }}</label>
         <ElInputNumber
@@ -145,7 +145,7 @@
         />
       </div>
       <div v-if="features.exclusiveMinimum" class="flex flex-col gap-1">
-        <label :for="`${uid}-xmin`" class="text-xs text-gray-500">{{
+        <label :for="`${uid}-xmin`" class="text-xs text-muted">{{
           t("schema.constraints.exclusiveMinimum")
         }}</label>
         <ElInputNumber
@@ -155,7 +155,7 @@
         />
       </div>
       <div v-if="features.exclusiveMaximum" class="flex flex-col gap-1">
-        <label :for="`${uid}-xmax`" class="text-xs text-gray-500">{{
+        <label :for="`${uid}-xmax`" class="text-xs text-muted">{{
           t("schema.constraints.exclusiveMaximum")
         }}</label>
         <ElInputNumber
@@ -165,7 +165,7 @@
         />
       </div>
       <div v-if="features.multipleOf" class="flex flex-col gap-1">
-        <label :for="`${uid}-mult`" class="text-xs text-gray-500">{{
+        <label :for="`${uid}-mult`" class="text-xs text-muted">{{
           t("schema.constraints.multipleOf")
         }}</label>
         <ElInputNumber
@@ -177,7 +177,7 @@
         />
       </div>
       <div v-if="features.default" class="flex flex-col gap-1">
-        <label :for="`${uid}-ndefault`" class="text-xs text-gray-500">{{
+        <label :for="`${uid}-ndefault`" class="text-xs text-muted">{{
           t("schema.constraints.default")
         }}</label>
         <ElInputNumber
@@ -191,7 +191,7 @@
     <!-- ── Boolean constraints ── -->
     <template v-if="field.type === 'boolean' && features.default">
       <div class="flex flex-col gap-1">
-        <label :for="`${uid}-bdefault`" class="text-xs text-gray-500">{{
+        <label :for="`${uid}-bdefault`" class="text-xs text-muted">{{
           t("schema.constraints.default")
         }}</label>
         <ElSelect
@@ -218,7 +218,7 @@
     <!-- ── i18n-text info ── -->
     <div
       v-if="field.type === 'i18n-text'"
-      class="md:col-span-2 text-xs text-gray-400 italic"
+      class="md:col-span-2 text-xs text-muted italic"
     >
       {{ t("schema.constraints.i18nTextHelp", { langs: LANGS.join(", ") }) }}
     </div>
@@ -226,7 +226,7 @@
     <!-- ── Image gallery config ── -->
     <template v-if="field.type === 'image-gallery'">
       <div class="flex flex-col gap-2 md:col-span-2">
-        <span class="text-xs text-gray-500">{{
+        <span class="text-xs text-muted">{{
           t("schema.constraints.imageCategories")
         }}</span>
         <div
@@ -240,7 +240,7 @@
             :aria-label="
               t('schema.constraints.categoryNameN', { n: catIdx + 1 })
             "
-            class="text-sm flex-1"
+            class="min-w-0 flex-1 text-sm"
             @update:model-value="
               updateCategory(catIdx, 'name', String($event ?? ''))
             "
@@ -251,7 +251,7 @@
             :aria-label="
               t('schema.constraints.categoryRatioN', { n: catIdx + 1 })
             "
-            class="text-sm w-24"
+            class="w-24! shrink-0 text-sm"
             @update:model-value="
               updateCategory(catIdx, 'ratio', String($event ?? ''))
             "
@@ -273,7 +273,7 @@
           {{ t("schema.constraints.addCategory") }}
         </ElButton>
       </div>
-      <div class="md:col-span-2 text-xs text-gray-400 italic">
+      <div class="md:col-span-2 text-xs text-muted italic">
         {{ t("schema.constraints.imageGalleryHelp") }}
       </div>
     </template>
@@ -281,7 +281,7 @@
     <!-- ── Array constraints ── -->
     <template v-if="field.type === 'array'">
       <div class="flex flex-col gap-1">
-        <label :for="`${uid}-items`" class="text-xs text-gray-500">{{
+        <label :for="`${uid}-items`" class="text-xs text-muted">{{
           t("schema.constraints.itemsType")
         }}</label>
         <ElSelect
@@ -303,12 +303,12 @@
           :model-value="field.uniqueItems ?? false"
           @update:model-value="set('uniqueItems', $event)"
         />
-        <label :for="`${uid}-unique`" class="text-xs text-gray-500">{{
+        <label :for="`${uid}-unique`" class="text-xs text-muted">{{
           t("schema.constraints.uniqueItems")
         }}</label>
       </div>
       <div v-if="features.minItems" class="flex flex-col gap-1">
-        <label :for="`${uid}-minitems`" class="text-xs text-gray-500">{{
+        <label :for="`${uid}-minitems`" class="text-xs text-muted">{{
           t("schema.constraints.minItems")
         }}</label>
         <ElInputNumber
@@ -319,7 +319,7 @@
         />
       </div>
       <div v-if="features.maxItems" class="flex flex-col gap-1">
-        <label :for="`${uid}-maxitems`" class="text-xs text-gray-500">{{
+        <label :for="`${uid}-maxitems`" class="text-xs text-muted">{{
           t("schema.constraints.maxItems")
         }}</label>
         <ElInputNumber

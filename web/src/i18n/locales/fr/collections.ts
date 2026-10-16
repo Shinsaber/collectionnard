@@ -16,6 +16,7 @@ export default {
   typesUnavailable: "Types de collection indisponibles",
   list: {
     title: "Mes collections",
+    count: "aucune collection | {n} collection | {n} collections",
     new: "Nouvelle collection",
     allTypes: "Tous les types",
     filterByType: "Filtrer par type de collection",
@@ -50,5 +51,7 @@ export default {
     itemRemoved: "Item retiré",
     export: "Exporter",
     exportFailed: "Export impossible",
+    empty: "Cette collection est vide.",
+    itemActions: "Actions sur « {label} »",
   },
 };

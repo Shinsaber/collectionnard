@@ -9,6 +9,7 @@ export default {
     array: "Tableau",
     i18nText: "Texte multilingue",
     imageGallery: "Galerie d'images",
+    object: "Objet",
   },
   formats: {
     uri: "URI / URL",
@@ -19,24 +20,26 @@ export default {
   form: {
     choose: "Choisir…",
     noAttributes: "Aucun attribut défini pour ce type.",
+    languages: "Langue de saisie",
   },
   gallery: {
     setDefault: "Définir comme image par défaut",
     setDefaultN: "Définir l'image {n} de {category} comme image par défaut",
     removeN: "Supprimer l'image {n} de {category}",
     file: "Fichier image pour {category}",
-    default: "Image par défaut :",
     uploadFailed: "Envoi de l'image impossible",
   },
   builder: {
     empty:
       "Aucun champ défini. Cliquez sur « Ajouter un champ » pour commencer.",
+    fields: "Champs",
     addField: "Ajouter un champ",
     showJson: "Voir le JSON",
     hideJson: "Masquer le JSON",
     generatedJson: "JSON Schema généré",
   },
   root: {
+    heading: "Affichage",
     title: "Nom affiché ({lang})",
     titlePlaceholder: "ex. Série",
     description: "Description ({lang})",

@@ -8,11 +8,9 @@
     <div v-if="node" class="flex flex-col gap-4">
       <div class="flex items-center gap-2">
         <ElTag type="info" size="small">{{ typeLabel || node.type }}</ElTag>
-        <span
-          v-if="node.depth === 0"
-          class="text-xs text-gray-400 dark:text-gray-500"
-          >{{ t("graph.nodeDialog.root") }}</span
-        >
+        <span v-if="node.depth === 0" class="text-xs text-muted">{{
+          t("graph.nodeDialog.root")
+        }}</span>
       </div>
 
       <div v-if="image" class="flex justify-center">
@@ -25,10 +23,10 @@
 
       <dl class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
         <div v-for="attr in attributes" :key="attr.key" class="flex flex-col">
-          <dt class="text-gray-400 dark:text-gray-500 text-xs">
+          <dt class="text-muted text-xs">
             {{ attr.label }}
           </dt>
-          <dd class="dark:text-gray-200">{{ attr.text }}</dd>
+          <dd>{{ attr.text }}</dd>
         </div>
       </dl>
     </div>

@@ -10,6 +10,7 @@ const en: typeof fr = {
     array: "Array",
     i18nText: "Multilingual text",
     imageGallery: "Image gallery",
+    object: "Object",
   },
   formats: {
     uri: "URI / URL",
@@ -20,23 +21,25 @@ const en: typeof fr = {
   form: {
     choose: "Choose…",
     noAttributes: "No attribute defined for this type.",
+    languages: "Input language",
   },
   gallery: {
     setDefault: "Set as default image",
     setDefaultN: "Set image {n} of {category} as default image",
     removeN: "Remove image {n} of {category}",
     file: "Image file for {category}",
-    default: "Default image:",
     uploadFailed: "Image upload failed",
   },
   builder: {
     empty: "No field defined. Click “Add a field” to start.",
+    fields: "Fields",
     addField: "Add a field",
     showJson: "Show JSON",
     hideJson: "Hide JSON",
     generatedJson: "Generated JSON Schema",
   },
   root: {
+    heading: "Display",
     title: "Display name ({lang})",
     titlePlaceholder: "e.g. Series",
     description: "Description ({lang})",

@@ -1,4 +1,8 @@
-import { createRouter, createWebHistory } from "vue-router";
+import {
+  createRouter,
+  createWebHistory,
+  type RouteLocationNormalized,
+} from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 
 const router = createRouter({
@@ -68,6 +72,17 @@ const router = createRouter({
           component: () => import("@/views/admin/CollectionTypesView.vue"),
           meta: { admin: true },
         },
+        // Édition d'un méta-type (page dédiée, commune aux trois sortes) : `new` ou un id.
+        ...(["item", "relation", "collection"] as const).map((kind) => ({
+          path: `admin/${kind}-types/:id`,
+          name: `${kind}-type-editor`,
+          component: () => import("@/views/admin/TypeEditorView.vue"),
+          props: (route: RouteLocationNormalized) => ({
+            kind,
+            id: route.params.id === "new" ? undefined : route.params.id,
+          }),
+          meta: { admin: true },
+        })),
         {
           path: "admin/import-export",
           name: "import-export",

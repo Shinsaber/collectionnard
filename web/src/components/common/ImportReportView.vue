@@ -1,6 +1,6 @@
 <template>
   <div data-test="import-report">
-    <h3 class="font-semibold text-gray-800 dark:text-gray-100 mb-2">
+    <h3 class="font-semibold text-ink mb-2">
       {{
         report.dry_run
           ? t("admin.importExport.reportSimulation")

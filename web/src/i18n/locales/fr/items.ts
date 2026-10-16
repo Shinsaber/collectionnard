@@ -17,6 +17,9 @@ export default {
     loadFailed: "Chargement impossible",
     confirmDelete: "Supprimer « {label} » ?",
     deleted: "Item supprimé",
+    count: "aucun résultat | {n} résultat | {n} résultats",
+    empty: "Aucun item ne correspond à ces critères.",
+    emptyCatalog: "Le catalogue est vide.",
   },
   // Export CSV du catalogue (ItemsView)
   export: {
@@ -48,6 +51,12 @@ export default {
     relatedVia: "Liés à « {label} » via « {relation} »",
     relatedUnavailable: "Item lié introuvable",
     relatedItems: "Items liés",
+    typeChip: "Type : {type}",
+    tagChip: "Tag : {tag}",
+    attrChip: "{n} filtre d'attribut | {n} filtres d'attributs",
+    removeFilter: "Retirer le filtre « {label} »",
+    showFilters: "Afficher les filtres",
+    showResults: "Voir les résultats",
   },
   // Vue détail (ItemDetailView)
   detail: {
@@ -59,6 +68,8 @@ export default {
     createRelation: "Créer une relation",
     noRelations: "Aucune relation trouvée.",
     inYourCollections: "Dans vos collections",
+    notInCollection: "Pas encore dans une de vos collections : l'ajouter",
+    breadcrumb: "Fil d'Ariane",
     confirmDeleteRelation: "Supprimer la relation avec « {label} » ?",
     relationDeleted: "Relation supprimée",
     relationsUnavailable: "Relations indisponibles",
@@ -99,7 +110,6 @@ export default {
     empty:
       "Aucune collection disponible (toutes contiennent déjà cet item, ou vous n'avez pas de collection).",
     collection: "Collection",
-    chooseCollection: "Choisir une collection…",
     contextAttributes: "Attributs contextuels",
     added: "Item ajouté à la collection",
     collectionsUnavailable: "Collections indisponibles",

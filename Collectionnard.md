@@ -359,6 +359,7 @@ Lots de `docs/audit/03-feuille-de-route.md`, branche `remise-a-niveau` :
 - [x] Recherche avancée (lot 14) : plein texte indexé (`search_tsv`, préfixes, sans accents), filtres par attribut pilotés par le schéma (`attr.<clé>[.gte|lte|contains]`, égalité via l'index GIN `@>`), tri par attribut, filtre `related_to`, critères dans l'URL du catalogue
 - [x] Import/Export (lot 12) : export JSON du catalogue et réimportation idempotente (UUID conservés, mise à jour par id, jamais de suppression, tout ou rien, simulation `dry_run` avec rapport par entité) ; exports CSV des items d'un type (filtres de la recherche) ; export d'une collection (JSON ou CSV) et réimportation JSON dans son compte (la collection devient le contenu du fichier, sinon copie), BOM UTF-8, séparateur au choix, protection contre l'injection de formules
 - [x] Domaine BD / Manga (lot 13) : 8 ItemTypes et 7 RelationTypes (`db/seed_bd_manga.sql`), exemples réels Dragon Ball et Astérix tirés de Wikidata (CC0) et de la BnF (Licence Ouverte) avec `external_ids` / `sources` ; rôles multiples (`roles` en tableau d'enum, sélection multiple dans les formulaires) ; seeds chargés en liste (`SEED_FILE`)
+- [x] Refonte graphique et responsive (branche `refonte-graphique`, lots R0 à R8) : identité « Étiquette » (pétrole, ambre, ombres légères ; thème sombre à halos pétrole), menu latéral sur bureau et barre d'onglets sur mobile, catalogue à filtres latéraux ou en feuille, tableaux en cartes sur mobile, dialogues en feuille du bas, éditeur de schéma en page dédiée, nombres et dates mis en forme selon la langue
 
 ### Phase 3 : Récupération automatique externe
 
@@ -371,7 +372,7 @@ Lots de `docs/audit/03-feuille-de-route.md`, branche `remise-a-niveau` :
 ### Phase 4 : Social
 
 - [ ] Statistiques et visualisation graphiques
-- [ ] Soumission d'items par les users (validation admin)
+- [ ] Soumission/modification d'items par les users (validation admin)
 - [ ] Profils publics/privés
 - [ ] Partage de collections
 - [ ] Système d'échange
@@ -384,16 +385,16 @@ Lots de `docs/audit/03-feuille-de-route.md`, branche `remise-a-niveau` :
 
 ## 9. Stack technique
 
-| Composant       | Choix                                                                                   | Version              |
-| --------------- | --------------------------------------------------------------------------------------- | -------------------- |
-| Backend         | Go (chi 5.3, pgx 5.11, JWT 5.3, jsonschema v5 — v6 différé, API incompatible, sans CVE) | 1.27 (go.mod ≥ 1.26) |
-| Base de données | PostgreSQL                                                                              | 16                   |
-| Frontend        | Vue 3 + TypeScript                                                                      | 3.5 / 6.0            |
-| UI              | PrimeVue (@primeuix/themes, aura-compat) + Tailwind CSS                                 | 5.0 / 3.4            |
-| Graphes         | Cytoscape.js                                                                            | 3.34                 |
-| Build           | Vite (Rolldown), vue-tsc 3, Pinia 4, vue-router 5                                       | 8.3                  |
-| Déploiement     | Docker Compose (4 services : postgres, migrate, server, web)                            | —                    |
-| Dev             | Nix flake (Go, Node, PostgreSQL, golangci-lint) + direnv                                | flake.lock           |
+| Composant       | Choix                                                                                         | Version              |
+| --------------- | --------------------------------------------------------------------------------------------- | -------------------- |
+| Backend         | Go (chi 5.3, pgx 5.11, JWT 5.3, jsonschema v5 — v6 différé, API incompatible, sans CVE)       | 1.27 (go.mod ≥ 1.26) |
+| Base de données | PostgreSQL                                                                                    | 16                   |
+| Frontend        | Vue 3 + TypeScript                                                                            | 3.5 / 6.0            |
+| UI              | Element Plus (MIT) + Tailwind CSS ; identité « Étiquette » (Schibsted Grotesk, IBM Plex Mono) | 2.14 / 4.3           |
+| Graphes         | Cytoscape.js                                                                                  | 3.34                 |
+| Build           | Vite (Rolldown), vue-tsc 3, Pinia 4, vue-router 5                                             | 8.3                  |
+| Déploiement     | Docker Compose (4 services : postgres, migrate, server, web)                                  | —                    |
+| Dev             | Nix flake (Go, Node, PostgreSQL, golangci-lint) + direnv                                      | flake.lock           |
 
 ---
 

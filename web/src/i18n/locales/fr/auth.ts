@@ -6,4 +6,5 @@ export default {
   login: "Se connecter",
   invalidCredentials: "Identifiants invalides",
   language: "Langue",
+  tagline: "Le catalogue de vos collections",
 };

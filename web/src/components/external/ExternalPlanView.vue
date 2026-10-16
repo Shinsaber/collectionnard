@@ -1,11 +1,11 @@
 <template>
   <div data-test="external-plan">
-    <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+    <p class="text-xs text-muted mb-3">
       {{ t("admin.external.attribution", { date: retrievedAt }) }}
     </p>
 
     <section v-if="groups.main.length > 0" class="mb-6">
-      <h3 class="font-semibold text-gray-800 dark:text-gray-100 mb-2">
+      <h3 class="font-semibold text-ink mb-2">
         {{ t("admin.external.groups.main") }}
       </h3>
       <ExternalNodeTable
@@ -25,7 +25,7 @@
       class="mb-6"
       data-test="plan-edition"
     >
-      <h3 class="font-semibold text-gray-800 dark:text-gray-100 mb-2">
+      <h3 class="font-semibold text-ink mb-2">
         {{ heading(g.edition) }}
       </h3>
       <ExternalNodeTable
@@ -37,7 +37,7 @@
         @edit="openEdit"
       />
       <div class="flex items-center gap-2 mt-3 mb-2">
-        <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+        <h4 class="text-sm font-semibold text-ink">
           {{ t("admin.external.groups.volumes") }} ({{ g.volumes.length }})
         </h4>
         <ElButton size="small" text @click="setAll(g.volumes, true)">{{
@@ -57,7 +57,7 @@
       />
     </section>
 
-    <p class="text-sm text-gray-700 dark:text-gray-300" data-test="plan-count">
+    <p class="text-sm text-ink" data-test="plan-count">
       {{
         t("admin.external.selectedCount", {
           n: modelValue.length,

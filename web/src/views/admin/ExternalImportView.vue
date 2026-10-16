@@ -1,13 +1,28 @@
 <template>
   <div class="max-w-5xl">
-    <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-      {{ t("admin.external.title") }}
-    </h1>
-    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-      {{ t("admin.external.intro") }}
-    </p>
+    <PageHeader :title="t('admin.external.title')">
+      <template #subtitle>
+        <p class="max-w-3xl text-[15px] text-muted">
+          {{ t("admin.external.intro") }}
+        </p>
+      </template>
+    </PageHeader>
     <!-- Import appliqué : active = 4 pour que la dernière étape passe elle aussi au vert. -->
+    <!-- Mobile : étape courante en une ligne (les étapes horizontales n'y tiennent pas). -->
+    <p
+      v-if="isMobile"
+      class="mb-5 font-mono text-xs uppercase tracking-wider text-muted"
+    >
+      {{
+        t("admin.external.stepOf", {
+          n: step + 1,
+          total: 4,
+          title: t(`admin.external.steps.${STEP_KEYS[step]}`),
+        })
+      }}
+    </p>
     <ElSteps
+      v-else
       :active="step === 3 ? 4 : step"
       finish-status="success"
       class="mb-6"
@@ -19,8 +34,12 @@
       <ElStep :title="t('admin.external.steps.done')" />
     </ElSteps>
 
-    <!-- 1. Recherche -->
-    <div v-if="step === 0" class="space-y-4">
+    <!--
+      1. Recherche : masquée (v-show) et non détruite aux étapes suivantes, pour que « Retour »
+      retrouve les résultats et la saisie sans relancer Wikidata / la BnF. « Nouvel import »
+      la remonte à neuf (clé).
+    -->
+    <div v-show="step === 0" :key="searchKey" class="space-y-4">
       <ExternalWorkSearch v-model="work" />
       <ExternalEditionSearch v-model="editions" :suggestion="work?.label" />
       <div class="flex items-center gap-3">
@@ -33,22 +52,20 @@
           <i v-if="!busy" class="pi pi-eye mr-2" aria-hidden="true"></i>
           {{ t("admin.external.preview") }}
         </ElButton>
-        <span
-          v-if="!hasSelection"
-          class="text-sm text-gray-500 dark:text-gray-400"
-          >{{ t("admin.external.needSelection") }}</span
-        >
+        <span v-if="!hasSelection" class="text-sm text-muted">{{
+          t("admin.external.needSelection")
+        }}</span>
       </div>
     </div>
 
     <!-- 2. Sélection -->
-    <div v-else-if="step === 1 && plan">
+    <div v-if="step === 1 && plan">
       <ExternalPlanView
         v-model="selected"
         v-model:overrides="overrides"
         :plan="plan"
       />
-      <div class="flex gap-2 mt-4">
+      <div class="mt-4 flex flex-wrap gap-2">
         <ElButton @click="step = 0">{{ t("admin.external.back") }}</ElButton>
         <ElButton
           type="primary"
@@ -63,9 +80,9 @@
     </div>
 
     <!-- 3. Simulation / 4. Terminé -->
-    <div v-else-if="report">
+    <div v-else-if="step >= 2 && report">
       <ImportReportView :report="report" :entities="ENTITIES" />
-      <div class="flex gap-2 mt-4">
+      <div class="mt-4 flex flex-wrap gap-2">
         <template v-if="step === 2">
           <ElButton @click="step = 1">{{ t("admin.external.back") }}</ElButton>
           <ElButton
@@ -112,6 +129,8 @@ import ExternalWorkSearch from "@/components/external/ExternalWorkSearch.vue";
 import ExternalEditionSearch from "@/components/external/ExternalEditionSearch.vue";
 import ExternalPlanView from "@/components/external/ExternalPlanView.vue";
 import ImportReportView from "@/components/common/ImportReportView.vue";
+import PageHeader from "@/components/common/PageHeader.vue";
+import { MOBILE_QUERY, useMediaQuery } from "@/composables/useMediaQuery";
 import type {
   ExternalEditionHit,
   ExternalImportReport,
@@ -128,8 +147,12 @@ const { t } = useI18n();
 const { notifyError, notifySuccess } = useNotify();
 const { confirm } = useConfirmDialog();
 const metaTypes = useMetaTypes();
+const isMobile = useMediaQuery(MOBILE_QUERY);
+const STEP_KEYS = ["search", "selection", "simulation", "done"] as const;
 
 const step = ref(0);
+/** Change à chaque « Nouvel import » : remonte la recherche (résultats et saisie vidés). */
+const searchKey = ref(0);
 const work = ref<ExternalWorkHit | null>(null);
 const editions = ref<ExternalEditionHit[]>([]);
 const plan = ref<ExternalPlan | null>(null);
@@ -218,6 +241,7 @@ const workItemId = computed(() => {
 });
 
 function restart() {
+  searchKey.value++;
   step.value = 0;
   work.value = null;
   editions.value = [];

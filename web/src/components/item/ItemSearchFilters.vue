@@ -1,109 +1,109 @@
 <template>
-  <div
-    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
-    role="group"
-    :aria-label="t('items.search.filters')"
-  >
-    <div v-for="f in fields" :key="f.key" class="flex flex-col gap-1">
-      <label
-        :id="`${uid}-${f.key}-label`"
-        :for="`${uid}-${f.key}`"
-        class="text-xs font-medium text-gray-500 dark:text-gray-400"
-        >{{ fieldLabel(schema, f.key, lang, "pretty") }}</label
-      >
+  <!-- Colonnes selon la largeur du conteneur (panneau étroit ou pleine largeur), pas de l'écran. -->
+  <div class="@container">
+    <div
+      class="grid grid-cols-1 @md:grid-cols-2 @3xl:grid-cols-3 gap-3"
+      role="group"
+      :aria-label="t('items.search.filters')"
+    >
+      <div v-for="f in fields" :key="f.key" class="flex flex-col gap-1">
+        <label
+          :id="`${uid}-${f.key}-label`"
+          :for="`${uid}-${f.key}`"
+          class="text-xs font-medium text-muted"
+          >{{ fieldLabel(schema, f.key, lang, "pretty") }}</label
+        >
 
-      <!-- Valeurs d'enum : plusieurs = OU -->
-      <ElSelect
-        v-if="f.control === 'enum'"
-        :id="`${uid}-${f.key}`"
-        :model-value="draft[attrParam(f.key)] ?? []"
-        multiple
-        collapse-tags
-        clearable
-        :placeholder="t('items.search.any')"
-        @update:model-value="commit(attrParam(f.key), $event)"
-      >
-        <ElOption
-          v-for="opt in f.options"
-          :key="opt"
-          :label="enumLabel(schema, f.key, opt, lang)"
-          :value="opt"
+        <!-- Valeurs d'enum : plusieurs = OU -->
+        <ElSelect
+          v-if="f.control === 'enum'"
+          :id="`${uid}-${f.key}`"
+          :model-value="draft[attrParam(f.key)] ?? []"
+          multiple
+          collapse-tags
+          clearable
+          :placeholder="t('items.search.any')"
+          @update:model-value="commit(attrParam(f.key), $event)"
+        >
+          <ElOption
+            v-for="opt in f.options"
+            :key="opt"
+            :label="enumLabel(schema, f.key, opt, lang)"
+            :value="opt"
+          />
+        </ElSelect>
+
+        <ElSelect
+          v-else-if="f.control === 'boolean'"
+          :id="`${uid}-${f.key}`"
+          :model-value="draft[attrParam(f.key)]?.[0] ?? ''"
+          clearable
+          :placeholder="t('items.search.any')"
+          @update:model-value="commit(attrParam(f.key), [$event ?? ''])"
+        >
+          <ElOption :label="t('common.yes')" value="true" />
+          <ElOption :label="t('common.no')" value="false" />
+        </ElSelect>
+
+        <!-- Intervalles : bornes incluses -->
+        <div
+          v-else-if="f.control === 'numberRange' || f.control === 'dateRange'"
+          :id="`${uid}-${f.key}`"
+          class="flex flex-wrap items-center gap-2"
+          role="group"
+          :aria-labelledby="`${uid}-${f.key}-label`"
+        >
+          <template v-for="op in RANGE_OPS" :key="op">
+            <ElInputNumber
+              v-if="f.control === 'numberRange'"
+              :model-value="numberOf(attrParam(f.key, op))"
+              :min="f.minimum"
+              :max="f.maximum"
+              :precision="f.integer ? 0 : undefined"
+              controls-position="right"
+              class="min-w-0 flex-1"
+              :placeholder="t(`items.search.${op}`)"
+              :aria-label="t(`items.search.${op}`)"
+              @update:model-value="
+                commit(attrParam(f.key, op), [
+                  $event == null ? '' : String($event),
+                ])
+              "
+            />
+            <ElInput
+              v-else
+              type="date"
+              :model-value="draft[attrParam(f.key, op)]?.[0] ?? ''"
+              class="min-w-36 flex-1"
+              :aria-label="t(`items.search.${op}`)"
+              @update:model-value="
+                commit(attrParam(f.key, op), [String($event ?? '')])
+              "
+            />
+          </template>
+        </div>
+
+        <!-- Texte libre / multilingue : sous-chaîne, appliquée à la validation -->
+        <ElInput
+          v-else
+          :id="`${uid}-${f.key}`"
+          :model-value="draft[attrParam(f.key, 'contains')]?.[0] ?? ''"
+          clearable
+          :placeholder="
+            f.control === 'i18nText'
+              ? t('items.search.containsAnyLang')
+              : t('items.search.contains')
+          "
+          @update:model-value="setText(attrParam(f.key, 'contains'), $event)"
+          @change="emitDraft"
+          @clear="emitDraft"
         />
-      </ElSelect>
-
-      <ElSelect
-        v-else-if="f.control === 'boolean'"
-        :id="`${uid}-${f.key}`"
-        :model-value="draft[attrParam(f.key)]?.[0] ?? ''"
-        clearable
-        :placeholder="t('items.search.any')"
-        @update:model-value="commit(attrParam(f.key), [$event ?? ''])"
-      >
-        <ElOption :label="t('common.yes')" value="true" />
-        <ElOption :label="t('common.no')" value="false" />
-      </ElSelect>
-
-      <!-- Intervalles : bornes incluses -->
-      <div
-        v-else-if="f.control === 'numberRange' || f.control === 'dateRange'"
-        :id="`${uid}-${f.key}`"
-        class="flex items-center gap-2"
-        role="group"
-        :aria-labelledby="`${uid}-${f.key}-label`"
-      >
-        <template v-for="op in RANGE_OPS" :key="op">
-          <ElInputNumber
-            v-if="f.control === 'numberRange'"
-            :model-value="numberOf(attrParam(f.key, op))"
-            :min="f.minimum"
-            :max="f.maximum"
-            :precision="f.integer ? 0 : undefined"
-            controls-position="right"
-            class="flex-1"
-            :placeholder="t(`items.search.${op}`)"
-            :aria-label="t(`items.search.${op}`)"
-            @update:model-value="
-              commit(attrParam(f.key, op), [
-                $event == null ? '' : String($event),
-              ])
-            "
-          />
-          <ElInput
-            v-else
-            type="date"
-            :model-value="draft[attrParam(f.key, op)]?.[0] ?? ''"
-            class="flex-1"
-            :aria-label="t(`items.search.${op}`)"
-            @update:model-value="
-              commit(attrParam(f.key, op), [String($event ?? '')])
-            "
-          />
-        </template>
       </div>
 
-      <!-- Texte libre / multilingue : sous-chaîne, appliquée à la validation -->
-      <ElInput
-        v-else
-        :id="`${uid}-${f.key}`"
-        :model-value="draft[attrParam(f.key, 'contains')]?.[0] ?? ''"
-        clearable
-        :placeholder="
-          f.control === 'i18nText'
-            ? t('items.search.containsAnyLang')
-            : t('items.search.contains')
-        "
-        @update:model-value="setText(attrParam(f.key, 'contains'), $event)"
-        @change="emitDraft"
-        @clear="emitDraft"
-      />
+      <p v-if="fields.length === 0" class="text-sm text-muted italic">
+        {{ t("items.search.noFilterableField") }}
+      </p>
     </div>
-
-    <p
-      v-if="fields.length === 0"
-      class="text-sm text-gray-400 dark:text-gray-500 italic"
-    >
-      {{ t("items.search.noFilterableField") }}
-    </p>
   </div>
 </template>
 

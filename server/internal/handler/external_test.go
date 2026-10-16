@@ -124,7 +124,7 @@ func TestExternal_Errors(t *testing.T) {
 		return []model.ItemType{*testutil.SampleItemType()}, 1, nil
 	}
 	resp, body = callExternal(t, mock, src, "GET", "/api/v1/external/bd-manga/works?q=naruto", admin, "")
-	if resp.StatusCode != http.StatusConflict || !strings.Contains(body, `"connector_unavailable"`) || !strings.Contains(body, "Manga") {
+	if resp.StatusCode != http.StatusConflict || !strings.Contains(body, `"connector_unavailable"`) || !strings.Contains(body, `"missing":["Manga",`) {
 		t.Errorf("types missing: %d %s", resp.StatusCode, body)
 	}
 }

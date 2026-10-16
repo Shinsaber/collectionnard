@@ -1,188 +1,81 @@
 <template>
   <AppSpinner v-if="loading" />
-
   <div v-else-if="collection">
-    <div class="flex items-center gap-3 mb-6">
-      <ElButton
-        text
-        :aria-label="t('collections.detail.backToList')"
-        @click="router.push('/collections')"
-      >
-        <i class="pi pi-arrow-left" aria-hidden="true"></i>
-      </ElButton>
-      <div>
-        <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
-          {{ collection.name }}
-        </h1>
-        <div class="flex items-center gap-2 mt-1">
-          <ElTag type="info" size="small">{{
-            typeTitle(collection.collection_type, lang) || "?"
-          }}</ElTag>
-          <span class="text-sm text-gray-400 dark:text-gray-500">{{
-            t("collections.itemCount", collection.item_count)
-          }}</span>
-        </div>
-      </div>
-      <div class="flex-1"></div>
-      <ExportButton
-        :label="t('collections.detail.export')"
-        :formats="['json', 'csv']"
-        :run="exportCollection"
-        :error-summary="t('collections.detail.exportFailed')"
-      />
-      <ElButton type="primary" @click="openAddItem">
-        <i class="pi pi-plus mr-2" aria-hidden="true"></i>
-        {{ t("collections.detail.addItem") }}
-      </ElButton>
-    </div>
-
-    <p
-      v-if="collection.description"
-      class="text-gray-500 dark:text-gray-400 mb-4"
+    <RouterLink
+      to="/collections"
+      class="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-link"
     >
-      {{ collection.description }}
-    </p>
+      <i class="pi pi-arrow-left text-xs" aria-hidden="true"></i>
+      {{ t("layout.nav.collections") }}
+    </RouterLink>
 
-    <ElTable
-      v-loading="items.loading.value"
-      :data="items.data.value"
-      stripe
-      row-key="id"
+    <PageHeader
+      :title="collection.name"
+      :meta="t('collections.itemCount', collection.item_count)"
     >
-      <ElTableColumn :label="t('common.type')" width="120">
-        <template #default="{ row: ci }">
-          <ElTag type="info" effect="plain" size="small">{{
-            typeTitle((ci as CollectionItem).item?.item_type, lang) || "?"
-          }}</ElTag>
-        </template>
-      </ElTableColumn>
-      <ElTableColumn :label="t('collections.detail.item')">
-        <template #default="{ row: ci }">
-          <router-link
-            :to="`/items/${(ci as CollectionItem).item_id}`"
-            class="text-indigo-600 dark:text-indigo-400 hover:underline"
+      <template #subtitle>
+        <div class="flex flex-wrap items-center gap-2">
+          <span
+            class="rounded-full bg-tint px-2.5 py-0.5 font-mono text-[11px] uppercase text-tint-ink"
+            >{{ typeTitle(collection.collection_type, lang) || "?" }}</span
           >
-            {{ ciLabel(ci as CollectionItem) }}
-          </router-link>
-        </template>
-      </ElTableColumn>
-      <ElTableColumn :label="t('collections.detail.contextAttributes')">
-        <template #default="{ row: ci }">
-          <div class="flex gap-2 flex-wrap text-xs">
-            <span
-              v-for="(val, key) in (ci as CollectionItem).attributes"
-              :key="key"
-              class="bg-gray-100 dark:bg-gray-700 dark:text-gray-300 rounded-xs px-2 py-0.5"
-            >
-              {{ ctxAttrLabel(String(key)) }}:
-              {{ ctxAttrValue(String(key), val) }}
-            </span>
-          </div>
-        </template>
-      </ElTableColumn>
-      <ElTableColumn :label="t('common.actions')" width="110">
-        <template #default="{ row: ci }">
-          <div class="flex gap-1">
-            <ElButton
-              text
-              size="small"
-              :aria-label="t('collections.detail.editAttributes')"
-              @click="openEditItem(ci as CollectionItem)"
-            >
-              <i class="pi pi-pencil" aria-hidden="true"></i>
-            </ElButton>
-            <ElButton
-              text
-              size="small"
-              type="danger"
-              :aria-label="t('collections.detail.removeFromCollection')"
-              @click="confirmRemove(ci as CollectionItem)"
-            >
-              <i class="pi pi-trash" aria-hidden="true"></i>
-            </ElButton>
-          </div>
-        </template>
-      </ElTableColumn>
-    </ElTable>
+          <p v-if="collection.description" class="text-[15px] text-muted">
+            {{ collection.description }}
+          </p>
+        </div>
+      </template>
+      <template #actions>
+        <ExportButton
+          :label="t('collections.detail.export')"
+          :formats="['json', 'csv']"
+          :run="exportCollection"
+          :error-summary="t('collections.detail.exportFailed')"
+        />
+        <ElButton
+          type="primary"
+          class="max-md:hidden!"
+          @click="addVisible = true"
+        >
+          <i class="pi pi-plus mr-2" aria-hidden="true"></i>
+          {{ t("collections.detail.addItem") }}
+        </ElButton>
+      </template>
+    </PageHeader>
+
+    <CollectionItemList
+      :items="items.data.value"
+      :schema="schema"
+      :loading="items.loading.value"
+      @edit="openEditItem"
+      @remove="confirmRemove"
+    />
     <ElPagination
-      class="mt-3 justify-end"
-      layout="total, prev, pager, next"
+      class="mt-4 justify-end"
+      hide-on-single-page
+      :layout="isMobile ? 'prev, pager, next' : 'total, prev, pager, next'"
+      :pager-count="isMobile ? 5 : 7"
       :total="items.total.value"
       :page-size="items.perPage.value"
       :current-page="items.page.value"
       @current-change="onPageChange"
     />
 
-    <!-- Add item dialog -->
-    <ElDialog
-      v-model="addDialogVisible"
-      :title="t('collections.detail.addItem')"
-      width="34rem"
+    <!-- Mobile : ajout en bouton flottant, au-dessus de la barre d'onglets. -->
+    <button
+      type="button"
+      class="fixed right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-10 flex h-14 items-center gap-2 rounded-2xl bg-primary px-5 font-semibold text-primary-ink shadow-primary md:hidden"
+      @click="addVisible = true"
     >
-      <div class="flex flex-col gap-4">
-        <div class="flex flex-col gap-1">
-          <label for="ci-search" class="text-sm font-medium">{{
-            t("collections.detail.searchItem")
-          }}</label>
-          <div class="flex gap-2">
-            <ElInput
-              id="ci-search"
-              v-model="searchText"
-              :placeholder="t('collections.detail.searchPlaceholder')"
-              clearable
-              @keyup.enter="searchItems"
-            />
-            <ElButton :aria-label="t('common.search')" @click="searchItems">
-              <i class="pi pi-search" aria-hidden="true"></i>
-            </ElButton>
-          </div>
-        </div>
+      <i class="pi pi-plus" aria-hidden="true"></i>
+      {{ t("collections.detail.addItem") }}
+    </button>
 
-        <ElTable
-          v-if="searchResults.length"
-          :data="searchResults"
-          highlight-current-row
-          row-key="id"
-          size="small"
-          class="cursor-pointer"
-          @current-change="selectedItem = $event"
-        >
-          <ElTableColumn :label="t('common.type')" width="110">
-            <template #default="{ row }">{{
-              typeTitle((row as Item).item_type, lang) || "?"
-            }}</template>
-          </ElTableColumn>
-          <ElTableColumn :label="t('collections.detail.label')">
-            <template #default="{ row }">{{ itemLabel(row as Item) }}</template>
-          </ElTableColumn>
-        </ElTable>
-
-        <div v-if="selectedItem && collectionTypeSchema">
-          <h4 class="text-sm font-medium mb-2">
-            {{ t("collections.detail.contextAttributes") }}
-          </h4>
-          <DynamicForm
-            ref="addFormRef"
-            v-model="addAttributes"
-            :schema="collectionTypeSchema"
-          />
-        </div>
-      </div>
-      <template #footer>
-        <ElButton text @click="addDialogVisible = false">{{
-          t("common.cancel")
-        }}</ElButton>
-        <ElButton
-          type="primary"
-          :disabled="!selectedItem"
-          :loading="saving"
-          @click="addItem"
-        >
-          <i class="pi pi-plus mr-2" aria-hidden="true"></i>
-          {{ t("common.add") }}
-        </ElButton>
-      </template>
-    </ElDialog>
+    <CollectionAddItemDialog
+      v-model:visible="addVisible"
+      :collection-id="id"
+      :schema="schema"
+      @added="afterChange"
+    />
 
     <!-- Edit item attributes dialog -->
     <ElDialog
@@ -191,16 +84,21 @@
       width="34rem"
     >
       <DynamicForm
-        v-if="collectionTypeSchema"
+        v-if="schema"
         ref="editFormRef"
         v-model="editAttributes"
-        :schema="collectionTypeSchema"
+        :schema="schema"
       />
       <template #footer>
         <ElButton text @click="editDialogVisible = false">{{
           t("common.cancel")
         }}</ElButton>
-        <ElButton type="primary" :loading="saving" @click="updateItem">
+        <ElButton
+          type="primary"
+          :loading="saving"
+          :disabled="!editDirty"
+          @click="updateItem"
+        >
           <i class="pi pi-check mr-2" aria-hidden="true"></i>
           {{ t("common.save") }}
         </ElButton>
@@ -212,32 +110,31 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRouter } from "vue-router";
-import { collectionApi, importExportApi, itemApi } from "@/api/client";
+import { collectionApi, importExportApi } from "@/api/client";
 import { usePagination } from "@/composables/usePagination";
 import { useLang } from "@/composables/useLang";
+import { useDirty } from "@/composables/useDirty";
 import { useNotify } from "@/composables/useNotify";
 import { useConfirmDialog } from "@/composables/useConfirmDialog";
-import {
-  fieldValue,
-  fieldLabel,
-  itemLabel as renderItemLabel,
-  typeTitle,
-} from "@/lib/schema";
+import { MOBILE_QUERY, useMediaQuery } from "@/composables/useMediaQuery";
+import { itemLabel, typeTitle, type Schema } from "@/lib/schema";
 import AppSpinner from "@/components/common/AppSpinner.vue";
 import DynamicForm from "@/components/common/DynamicForm.vue";
+import PageHeader from "@/components/common/PageHeader.vue";
 import ExportButton, {
   type ExportFormat,
 } from "@/components/common/ExportButton.vue";
+import CollectionAddItemDialog from "@/components/collection/CollectionAddItemDialog.vue";
+import CollectionItemList from "@/components/collection/CollectionItemList.vue";
 import { defaultDelimiter } from "@/lib/csv";
-import type { Collection, CollectionItem, Item } from "@/api/types";
+import type { Collection, CollectionItem } from "@/api/types";
 
 const props = defineProps<{ id: string }>();
-const router = useRouter();
 const { t } = useI18n();
 const { lang } = useLang();
 const { notifyError, notifySuccess } = useNotify();
 const { confirm } = useConfirmDialog();
+const isMobile = useMediaQuery(MOBILE_QUERY);
 
 const collection = ref<Collection | null>(null);
 const loading = ref(true);
@@ -246,8 +143,9 @@ const items = usePagination((params: Record<string, unknown>) =>
   collectionApi.listItems(props.id, params),
 );
 
-const collectionTypeSchema = computed(
-  () => collection.value?.collection_type?.attributes_schema ?? null,
+const schema = computed(
+  () =>
+    collection.value?.collection_type?.attributes_schema as Schema | undefined,
 );
 
 const exportCollection = (format: ExportFormat) =>
@@ -256,13 +154,7 @@ const exportCollection = (format: ExportFormat) =>
     lang: lang.value,
   });
 
-// Add item
-const addDialogVisible = ref(false);
-const searchText = ref("");
-const searchResults = ref<Item[]>([]);
-const selectedItem = ref<Item | null>(null);
-const addAttributes = ref<Record<string, unknown>>({});
-const addFormRef = ref<InstanceType<typeof DynamicForm> | null>(null);
+const addVisible = ref(false);
 const saving = ref(false);
 
 // Edit item
@@ -270,6 +162,10 @@ const editDialogVisible = ref(false);
 const editingItemId = ref("");
 const editAttributes = ref<Record<string, unknown>>({});
 const editFormRef = ref<InstanceType<typeof DynamicForm> | null>(null);
+// « Enregistrer » reste grisé tant que rien n'a changé.
+const { dirty: editDirty, markClean: markEditClean } = useDirty(
+  () => editAttributes.value,
+);
 
 onMounted(async () => {
   try {
@@ -295,68 +191,20 @@ async function refreshCollection() {
   }
 }
 
+/** Après un ajout ou un retrait : liste et compteur de la collection. */
+async function afterChange() {
+  await items.load().catch((e) => notifyError(e, t("collections.loadFailed")));
+  await refreshCollection();
+}
+
 function ciLabel(ci: CollectionItem): string {
-  return itemLabel(ci.item);
-}
-
-function itemLabel(item?: Item | null): string {
-  return renderItemLabel(item, lang.value);
-}
-
-function ctxAttrLabel(key: string): string {
-  return fieldLabel(ctxSchema(), key, lang.value);
-}
-
-/** Valeur d'un attribut contextuel (libellés d'enum du schéma du CollectionType). */
-function ctxAttrValue(key: string, value: unknown): string {
-  return fieldValue(ctxSchema(), key, value, lang.value);
-}
-
-function ctxSchema(): Record<string, unknown> | undefined {
-  return collection.value?.collection_type?.attributes_schema as
-    Record<string, unknown> | undefined;
-}
-
-function openAddItem() {
-  searchText.value = "";
-  searchResults.value = [];
-  selectedItem.value = null;
-  addAttributes.value = {};
-  addDialogVisible.value = true;
-}
-
-async function searchItems() {
-  try {
-    const res = await itemApi.list({ search: searchText.value, per_page: 10 });
-    searchResults.value = res.data;
-  } catch (e) {
-    notifyError(e, t("collections.detail.searchFailed"));
-  }
-}
-
-async function addItem() {
-  if (!selectedItem.value) return;
-  if (addFormRef.value && !addFormRef.value.validate()) return;
-  saving.value = true;
-  try {
-    await collectionApi.addItem(props.id, {
-      item_id: selectedItem.value.id,
-      attributes: addAttributes.value,
-    });
-    notifySuccess(t("collections.detail.itemAdded"));
-    addDialogVisible.value = false;
-    await items.load();
-    await refreshCollection();
-  } catch (e) {
-    notifyError(e);
-  } finally {
-    saving.value = false;
-  }
+  return itemLabel(ci.item, lang.value);
 }
 
 function openEditItem(ci: CollectionItem) {
   editingItemId.value = ci.item_id;
   editAttributes.value = { ...(ci.attributes ?? {}) };
+  markEditClean();
   editDialogVisible.value = true;
 }
 
@@ -387,8 +235,7 @@ async function confirmRemove(ci: CollectionItem) {
   try {
     await collectionApi.removeItem(props.id, ci.item_id);
     notifySuccess(t("collections.detail.itemRemoved"));
-    await items.load();
-    await refreshCollection();
+    await afterChange();
   } catch (e) {
     notifyError(e);
   }

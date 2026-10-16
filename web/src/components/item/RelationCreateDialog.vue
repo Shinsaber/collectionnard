@@ -9,7 +9,7 @@
       <div class="flex flex-col gap-1">
         <label
           for="relation-type-select"
-          class="text-sm font-medium text-gray-700 dark:text-gray-300"
+          class="text-sm font-medium text-ink"
           >{{ t("items.relationCreate.relationType") }}</label
         >
         <ElSelect
@@ -30,7 +30,7 @@
       <div v-if="relationTypeId" class="flex flex-col gap-1">
         <label
           for="relation-direction-select"
-          class="text-sm font-medium text-gray-700 dark:text-gray-300"
+          class="text-sm font-medium text-ink"
           >{{ t("items.relationCreate.direction") }}</label
         >
         <ElSelect
@@ -50,7 +50,7 @@
       <div v-if="relationTypeId" class="flex flex-col gap-1">
         <label
           for="relation-item-select"
-          class="text-sm font-medium text-gray-700 dark:text-gray-300"
+          class="text-sm font-medium text-ink"
           >{{ t("items.relationCreate.linkedItem") }}</label
         >
         <ElSelect
@@ -79,10 +79,9 @@
       </div>
 
       <div v-if="hasFields">
-        <span
-          class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block"
-          >{{ t("items.relationCreate.attributes") }}</span
-        >
+        <span class="text-sm font-medium text-ink mb-2 block">{{
+          t("items.relationCreate.attributes")
+        }}</span>
         <DynamicForm
           ref="formRef"
           :schema="schema!"

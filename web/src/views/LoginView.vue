@@ -1,63 +1,42 @@
 <template>
-  <div
-    class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900"
+  <main
+    class="flex min-h-dvh flex-col items-center justify-center gap-6 bg-canvas px-4 py-10 text-ink"
   >
     <div
-      class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 w-full max-w-sm"
+      class="flex w-full max-w-sm flex-col gap-7 rounded-2xl bg-surface p-7 shadow-raised sm:p-9"
     >
-      <h1
-        class="text-2xl font-bold text-center text-indigo-600 dark:text-indigo-400 mb-6"
-      >
-        📦 Collectionnard
-      </h1>
-
-      <!-- Sélecteur de langue (l'en-tête de l'application n'est pas visible ici) -->
-      <div
-        class="flex justify-center gap-1 mb-4"
-        role="group"
-        :aria-label="t('auth.language')"
-      >
-        <ElButton
-          v-for="l in langs"
-          :key="l"
-          text
-          size="small"
-          class="font-mono"
-          :type="l === lang ? 'primary' : undefined"
-          :title="langNames[l]"
-          :aria-label="langNames[l]"
-          :aria-pressed="l === lang"
-          :lang="l"
-          @click="setLang(l)"
-          >{{ l.toUpperCase() }}</ElButton
-        >
+      <div class="flex flex-col items-center gap-2.5 text-center">
+        <h1><AppLogo :size="40" /></h1>
+        <p class="text-sm text-muted">{{ t("auth.tagline") }}</p>
       </div>
 
       <form class="flex flex-col gap-4" @submit.prevent="handleLogin">
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-1.5">
           <label
             for="username"
-            class="text-sm font-medium text-gray-700 dark:text-gray-300"
+            class="font-mono text-[11px] uppercase tracking-wider text-muted"
             >{{ t("auth.username") }}</label
           >
           <ElInput
             id="username"
             v-model="username"
+            size="large"
             :placeholder="t('auth.usernamePlaceholder')"
             autocomplete="username"
             autofocus
           />
         </div>
 
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-1.5">
           <label
             for="password"
-            class="text-sm font-medium text-gray-700 dark:text-gray-300"
+            class="font-mono text-[11px] uppercase tracking-wider text-muted"
             >{{ t("auth.password") }}</label
           >
           <ElInput
             id="password"
             v-model="password"
+            size="large"
             type="password"
             show-password
             autocomplete="current-password"
@@ -72,13 +51,40 @@
           :title="error"
         />
 
-        <ElButton type="primary" native-type="submit" :loading="loading">
-          <i class="pi pi-sign-in mr-2" aria-hidden="true"></i>
+        <ElButton
+          type="primary"
+          size="large"
+          native-type="submit"
+          class="mt-1"
+          :loading="loading"
+        >
           {{ t("auth.login") }}
         </ElButton>
       </form>
     </div>
-  </div>
+
+    <!-- Sélecteur de langue (la coquille de l'application n'est pas visible ici) -->
+    <div class="flex gap-1.5" role="group" :aria-label="t('auth.language')">
+      <button
+        v-for="l in langs"
+        :key="l"
+        type="button"
+        class="h-9 rounded-full px-3.5 font-mono text-xs font-medium"
+        :class="
+          l === lang
+            ? 'bg-tint text-tint-ink shadow-tint'
+            : 'text-muted hover:bg-surface'
+        "
+        :title="langNames[l]"
+        :aria-label="langNames[l]"
+        :aria-pressed="l === lang"
+        :lang="l"
+        @click="setLang(l)"
+      >
+        {{ l.toUpperCase() }}
+      </button>
+    </div>
+  </main>
 </template>
 
 <script setup lang="ts">
@@ -87,6 +93,7 @@ import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { useLang } from "@/composables/useLang";
+import AppLogo from "@/components/layout/AppLogo.vue";
 
 const auth = useAuthStore();
 const router = useRouter();

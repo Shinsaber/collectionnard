@@ -3,20 +3,30 @@ export default {
   // Commun aux trois vues de gestion des méta-types.
   shared: {
     newType: "Nouveau type",
-    editType: "Modifier le type",
     technicalName: "Identifiant technique (anglais)",
     technicalNameHelp:
-      "Utilisé par l'API et les données (anglais, sans accents). Le nom affiché en français et en anglais se règle dans l'éditeur d'attributs.",
+      "Utilisé par l'API et les données (anglais, sans accents). Le nom affiché en français et en anglais se règle dans « Affichage ».",
     loadFailed: "Chargement impossible",
     created: "Type créé",
     updated: "Type modifié",
     deleted: "Type supprimé",
     confirmDelete: "Supprimer le type « {name} » ?",
+    notFound: "Type introuvable",
+    identity: "Identité du type",
+    unsaved: "Modifications non enregistrées",
+    leaveConfirm: "Quitter sans enregistrer les modifications ?",
+    leave: "Quitter",
+    fieldCount: "aucun champ | {n} champ | {n} champs",
+    typeCount: "aucun type | {n} type | {n} types",
+    kinds: {
+      item: "Type d'item",
+      relation: "Type de relation",
+      collection: "Type de collection",
+    },
   },
   itemTypes: {
     title: "Types d'items",
     schemaFields: "Champs du schéma",
-    attributes: "Attributs",
     namePlaceholder: "Ex. : Series, Episode, DVD…",
   },
   relationTypes: {
@@ -25,7 +35,6 @@ export default {
     sourceTypes: "Types source",
     targetTypes: "Types cible",
     choose: "Choisir…",
-    linkAttributes: "Attributs du lien",
     namePlaceholder: "Ex. : contains_episode",
     itemTypesFailed: "Types d'items indisponibles",
     created: "Type de relation créé",
@@ -36,7 +45,6 @@ export default {
   collectionTypes: {
     title: "Types de collections",
     contextFields: "Champs contextuels",
-    contextAttributes: "Attributs contextuels",
     namePlaceholder: "Ex. : Ownership, Watching, Wishlist…",
   },
   importExport: {
@@ -86,6 +94,7 @@ export default {
     title: "Sources externes — BD / Manga",
     intro:
       "Recherchez une œuvre sur Wikidata et ses éditions françaises à la BnF, choisissez les éléments à importer (auteurs, éditeurs, tomes…), simulez puis validez. Les éléments déjà présents gardent leurs valeurs : seuls leurs champs vides sont complétés.",
+    stepOf: "Étape {n} / {total} · {title}",
     steps: {
       search: "Recherche",
       selection: "Sélection",

@@ -155,6 +155,26 @@ describe("i18n : objets multilingues, enums, noms de types", () => {
     expect(fieldValue(schema, "other", { fr: "x" }, "en")).toBe("x");
   });
 
+  it("fieldValue met en forme décimaux et dates selon la langue, pas les entiers", () => {
+    const s: Schema = {
+      type: "object",
+      properties: {
+        price: { type: "number" },
+        year: { type: "integer" },
+        bought: { type: "string", format: "date" },
+        note: { type: "string" },
+      },
+    };
+    expect(fieldValue(s, "price", 6.5, "fr")).toBe("6,5");
+    expect(fieldValue(s, "price", 6.5, "en")).toBe("6.5");
+    expect(fieldValue(s, "price", 1234.567, "fr")).toBe("1234,57");
+    expect(fieldValue(s, "year", 2008, "fr")).toBe("2008");
+    expect(fieldValue(s, "bought", "2021-03-10", "fr")).toBe("10 mars 2021");
+    expect(fieldValue(s, "bought", "2021-03-10", "en")).toBe("Mar 10, 2021");
+    expect(fieldValue(s, "bought", "pas une date", "fr")).toBe("pas une date");
+    expect(fieldValue(s, "note", "2021-03-10", "fr")).toBe("2021-03-10");
+  });
+
   it("typeTitle / typeDescription lisent x-title / x-description avec repli", () => {
     const t = {
       name: "Series",

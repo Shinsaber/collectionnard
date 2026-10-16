@@ -2,45 +2,59 @@
   <ElDialog
     :model-value="visible"
     :title="t('items.addToCollection.title')"
-    width="32rem"
+    width="34rem"
     @update:model-value="$emit('update:visible', $event)"
   >
-    <div class="flex flex-col gap-4">
-      <div
+    <div class="flex flex-col gap-5">
+      <p
         v-if="availableCollections.length === 0"
-        class="text-sm text-gray-400 dark:text-gray-500 italic"
+        class="text-sm italic text-muted"
       >
         {{ t("items.addToCollection.empty") }}
-      </div>
+      </p>
       <template v-else>
-        <div class="flex flex-col gap-1">
+        <!-- Choix de la collection : cartes radio (cible tactile pleine largeur). -->
+        <fieldset class="flex flex-col gap-2">
+          <legend
+            class="mb-2 font-mono text-[11px] uppercase tracking-wider text-muted"
+          >
+            {{ t("items.addToCollection.collection") }}
+          </legend>
           <label
-            for="add-to-collection-select"
-            class="text-sm font-medium text-gray-700 dark:text-gray-300"
-            >{{ t("items.addToCollection.collection") }}</label
+            v-for="c in availableCollections"
+            :key="c.id"
+            class="flex min-h-14 cursor-pointer items-center gap-3 rounded-[14px] bg-surface px-3.5 transition-shadow"
+            :class="
+              selectedCollectionId === c.id
+                ? 'shadow-[0_0_0_2px_var(--c-primary)]'
+                : 'shadow-card'
+            "
           >
-          <ElSelect
-            id="add-to-collection-select"
-            v-model="selectedCollectionId"
-            :placeholder="t('items.addToCollection.chooseCollection')"
-          >
-            <ElOption
-              v-for="c in availableCollections"
-              :key="c.id"
-              :label="c.name"
+            <input
+              v-model="selectedCollectionId"
+              type="radio"
+              name="add-to-collection"
               :value="c.id"
+              class="size-5 accent-primary"
             />
-          </ElSelect>
-        </div>
+            <span class="flex min-w-0 flex-col">
+              <span class="truncate text-[15px] font-bold">{{ c.name }}</span>
+              <span class="text-xs text-muted">{{
+                typeTitle(c.collection_type, lang) || "?"
+              }}</span>
+            </span>
+          </label>
+        </fieldset>
 
         <div
           v-if="
             selectedSchema &&
             Object.keys(selectedSchema.properties ?? {}).length > 0
           "
+          class="flex flex-col gap-3"
         >
           <span
-            class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block"
+            class="font-mono text-[11px] uppercase tracking-wider text-muted"
             >{{ t("items.addToCollection.contextAttributes") }}</span
           >
           <DynamicForm
@@ -75,6 +89,8 @@ import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { collectionApi } from "@/api/client";
 import { useNotify } from "@/composables/useNotify";
+import { useLang } from "@/composables/useLang";
+import { typeTitle } from "@/lib/schema";
 import DynamicForm from "@/components/common/DynamicForm.vue";
 import type { Collection, Item } from "@/api/types";
 
@@ -92,6 +108,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const { notifyError, notifySuccess } = useNotify();
+const { lang } = useLang();
 
 const collections = ref<Collection[]>([]);
 const selectedCollectionId = ref<string | null>(null);

@@ -1,20 +1,22 @@
 <template>
-  <div class="flex flex-col gap-3">
-    <div v-for="cat in categories" :key="cat.name" class="flex flex-col gap-1">
-      <span
-        class="text-xs font-medium text-gray-500 dark:text-gray-400 capitalize"
-        >{{ cat.name }}</span
+  <div class="flex flex-col gap-4">
+    <div v-for="cat in categories" :key="cat.name" class="flex flex-col gap-2">
+      <span class="font-mono text-[11px] uppercase tracking-wider text-muted"
+        >{{ cat.name }} · {{ urlsOf(cat.name).length }}</span
       >
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap gap-3">
         <div
           v-for="(url, imgIdx) in urlsOf(cat.name)"
           :key="imgIdx"
-          class="relative group"
+          class="group relative"
         >
           <button
             type="button"
-            class="block rounded-sm border focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-            :class="{ 'ring-2 ring-blue-500': defaultUrl === url }"
+            class="block overflow-hidden rounded-lg shadow-cover"
+            :class="{
+              'ring-2 ring-primary ring-offset-2 ring-offset-surface':
+                defaultUrl === url,
+            }"
             :title="t('schema.gallery.setDefault')"
             :aria-label="
               t('schema.gallery.setDefaultN', {
@@ -28,23 +30,28 @@
             <img
               :src="url"
               :alt="`${cat.name} ${imgIdx + 1}`"
-              class="w-20 object-cover rounded-sm"
+              class="w-20 object-cover"
               :style="{ aspectRatio: cat.ratio || '1/1' }"
             />
           </button>
+          <span
+            v-if="defaultUrl === url"
+            class="pointer-events-none absolute top-1.5 left-1.5 rounded-sm bg-primary px-1 font-mono text-[9px] uppercase text-primary-ink"
+            >{{ t("items.gallery.default") }}</span
+          >
           <button
             type="button"
-            class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+            class="absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full bg-danger text-xs text-surface shadow-control transition-opacity lg:opacity-0 lg:group-hover:opacity-100 lg:focus:opacity-100"
             :aria-label="
               t('schema.gallery.removeN', { n: imgIdx + 1, category: cat.name })
             "
             @click="removeImage(cat.name, imgIdx)"
           >
-            ×
+            <i class="pi pi-times text-[10px]" aria-hidden="true"></i>
           </button>
         </div>
-      </div>
-      <div class="flex items-center gap-2">
+
+        <!-- Ajout : tuile au format de la catégorie (appareil photo ou galerie sur mobile). -->
         <input
           :ref="(el) => setFileRef(cat.name, el)"
           type="file"
@@ -53,22 +60,21 @@
           :aria-label="t('schema.gallery.file', { category: cat.name })"
           @change="handleUpload(cat.name, $event)"
         />
-        <ElButton
-          size="small"
-          plain
-          :loading="uploading[cat.name] ?? false"
+        <button
+          type="button"
+          class="flex w-20 flex-col items-center justify-center gap-1 rounded-lg border-[1.5px] border-dashed border-dash text-xs font-semibold text-link disabled:opacity-60"
+          :style="{ aspectRatio: cat.ratio || '1/1' }"
+          :disabled="uploading[cat.name] ?? false"
           @click="fileInputs[cat.name]?.click()"
         >
-          <i class="pi pi-upload mr-2" aria-hidden="true"></i>
+          <i
+            class="pi text-base"
+            :class="uploading[cat.name] ? 'pi-spin pi-spinner' : 'pi-plus'"
+            aria-hidden="true"
+          ></i>
           {{ t("common.add") }}
-        </ElButton>
+        </button>
       </div>
-    </div>
-    <div v-if="defaultUrl" class="text-xs text-gray-400 dark:text-gray-500">
-      {{ t("schema.gallery.default") }}
-      <span class="font-medium text-gray-600 dark:text-gray-300">{{
-        defaultUrl
-      }}</span>
     </div>
   </div>
 </template>

@@ -27,7 +27,7 @@
           />
         </ElSelect>
       </div>
-      <div v-else class="text-sm text-gray-500 dark:text-gray-400">
+      <div v-else class="text-sm text-muted">
         {{ t("items.editDialog.typeLabel") }}
         <strong>{{ typeTitle(item.item_type, lang) }}</strong>
       </div>
@@ -54,7 +54,12 @@
       <ElButton text @click="$emit('update:visible', false)">{{
         t("common.cancel")
       }}</ElButton>
-      <ElButton type="primary" :loading="saving" @click="save">
+      <ElButton
+        type="primary"
+        :loading="saving"
+        :disabled="!!item && !dirty"
+        @click="save"
+      >
         <i class="pi pi-check mr-2" aria-hidden="true"></i>
         {{ item ? t("common.save") : t("common.create") }}
       </ElButton>
@@ -67,6 +72,7 @@ import { reactive, computed, watch, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { itemApi, extractApiError } from "@/api/client";
 import { useLang } from "@/composables/useLang";
+import { useDirty } from "@/composables/useDirty";
 import { useNotify } from "@/composables/useNotify";
 import { typeTitle } from "@/lib/schema";
 import DynamicForm from "@/components/common/DynamicForm.vue";
@@ -95,6 +101,19 @@ const form = reactive({
   tagsText: "",
 });
 
+function tagList(text: string): string[] {
+  return text
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+}
+
+// En modification, « Enregistrer » reste grisé tant que rien n'a changé.
+const { dirty, markClean } = useDirty(() => ({
+  attributes: form.attributes,
+  tags: tagList(form.tagsText),
+}));
+
 const currentSchema = computed(() => {
   if (props.item?.item_type?.attributes_schema) {
     return props.item.item_type.attributes_schema;
@@ -117,6 +136,7 @@ watch(
       form.attributes = {};
       form.tagsText = "";
     }
+    markClean();
   },
 );
 
@@ -124,10 +144,7 @@ async function save() {
   if (dynamicFormRef.value && !dynamicFormRef.value.validate()) return;
   saving.value = true;
   try {
-    const tags = form.tagsText
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter(Boolean);
+    const tags = tagList(form.tagsText);
 
     if (props.item) {
       await itemApi.update(props.item.id, {

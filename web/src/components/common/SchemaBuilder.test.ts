@@ -171,3 +171,50 @@ itTop(
     }
   },
 );
+
+describe("SchemaBuilder — liste repliable des champs", () => {
+  const schema: Schema = {
+    type: "object",
+    properties: { number: { type: "integer" }, title: { type: "string" } },
+    "x-order": ["number", "title"],
+  };
+
+  function rows(w: ReturnType<typeof mount>) {
+    return w.findAll("li > button[aria-expanded]");
+  }
+
+  it("un champ déplié le reste quand on le déplace", async () => {
+    const w = mount(SchemaBuilder, {
+      props: { modelValue: schema },
+      global: { plugins: [ElementPlus] },
+    });
+    expect(rows(w).map((r) => r.attributes("aria-expanded"))).toEqual([
+      "false",
+      "false",
+    ]);
+
+    await rows(w)[0]!.trigger("click");
+    expect(rows(w)[0]!.attributes("aria-expanded")).toBe("true");
+
+    await w.find('button[aria-label="Descendre le champ"]').trigger("click");
+    const [first, second] = rows(w);
+    expect(first!.text()).toContain("title");
+    expect(first!.attributes("aria-expanded")).toBe("false");
+    expect(second!.text()).toContain("number");
+    expect(second!.attributes("aria-expanded")).toBe("true");
+  });
+
+  it("un champ ajouté s'ouvre pour être saisi", async () => {
+    const w = mount(SchemaBuilder, {
+      props: { modelValue: schema },
+      global: { plugins: [ElementPlus] },
+    });
+    const add = w
+      .findAll("button")
+      .find((b) => b.text().includes("Ajouter un champ"))!;
+    await add.trigger("click");
+    const all = rows(w);
+    expect(all).toHaveLength(3);
+    expect(all[2]!.attributes("aria-expanded")).toBe("true");
+  });
+});

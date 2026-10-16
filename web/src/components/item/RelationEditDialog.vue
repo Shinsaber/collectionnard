@@ -6,9 +6,7 @@
     @update:model-value="$emit('update:visible', $event)"
   >
     <div v-if="relation" class="flex flex-col gap-4">
-      <div
-        class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
-      >
+      <div class="flex items-center gap-2 text-sm text-muted">
         <ElTag size="small" type="info">{{
           typeTitle(relation.relation_type, lang) || "?"
         }}</ElTag>
@@ -16,10 +14,9 @@
       </div>
 
       <div v-if="hasFields">
-        <span
-          class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block"
-          >{{ t("items.relationEdit.attributes") }}</span
-        >
+        <span class="text-sm font-medium text-ink mb-2 block">{{
+          t("items.relationEdit.attributes")
+        }}</span>
         <DynamicForm
           ref="formRef"
           :schema="schema!"
@@ -27,7 +24,7 @@
           @update:model-value="attrs = $event"
         />
       </div>
-      <div v-else class="text-sm text-gray-400 dark:text-gray-500 italic">
+      <div v-else class="text-sm text-muted italic">
         {{ t("items.relationEdit.noFields") }}
       </div>
     </div>
@@ -36,7 +33,12 @@
       <ElButton text @click="$emit('update:visible', false)">{{
         t("common.cancel")
       }}</ElButton>
-      <ElButton type="primary" :loading="saving" @click="submit">
+      <ElButton
+        type="primary"
+        :loading="saving"
+        :disabled="!dirty"
+        @click="submit"
+      >
         <i class="pi pi-check mr-2" aria-hidden="true"></i>
         {{ t("common.save") }}
       </ElButton>
@@ -49,6 +51,7 @@ import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { relationApi } from "@/api/client";
 import { useLang } from "@/composables/useLang";
+import { useDirty } from "@/composables/useDirty";
 import { useNotify } from "@/composables/useNotify";
 import { itemLabel, typeTitle } from "@/lib/schema";
 import DynamicForm from "@/components/common/DynamicForm.vue";
@@ -73,6 +76,8 @@ const { notifyError, notifySuccess } = useNotify();
 const attrs = ref<Record<string, unknown>>({});
 const saving = ref(false);
 const formRef = ref<InstanceType<typeof DynamicForm> | null>(null);
+// « Enregistrer » reste grisé tant que rien n'a changé.
+const { dirty, markClean } = useDirty(() => attrs.value);
 
 const schema = computed(
   () =>
@@ -96,7 +101,9 @@ const linkedLabel = computed(() => {
 watch(
   () => props.visible,
   (open) => {
-    if (open) attrs.value = { ...(props.relation?.attributes ?? {}) };
+    if (!open) return;
+    attrs.value = { ...(props.relation?.attributes ?? {}) };
+    markClean();
   },
 );
 
