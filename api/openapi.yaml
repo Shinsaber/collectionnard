@@ -210,7 +210,7 @@ components:
       properties:
         username:
           type: string
-          description: Nom d'utilisateur unique.
+          description: Nom d'utilisateur unique, insensible à la casse (« Admin » = « admin »).
           example: shinsaber
         password:
           type: string

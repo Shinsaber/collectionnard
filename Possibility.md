@@ -32,10 +32,11 @@ Un commit par lot ; contrat d'API d'abord (`api/openapi.yaml` → model → stor
 
 ## Lot E1 — Identifiants insensibles à la casse
 
-- [ ] Migration `004` : contrôle préalable (échec explicite si deux comptes ne diffèrent que par la
+- [x] Migration `004` : contrôle préalable (échec explicite si deux comptes ne diffèrent que par la
       casse), remplacement de la contrainte `UNIQUE (username)` par un index unique sur `lower(username)`.
-- [ ] Connexion : recherche par `lower(username) = lower($1)` ; le nom reste affiché tel que saisi.
-- [ ] Tests : store (intégration) et handler (`Admin` / `ADMIN` se connectent au même compte).
+- [x] Connexion : recherche par `lower(username) = lower($1)` ; le nom reste affiché tel que saisi.
+- [x] Tests d'intégration du store : `Admin` / `ADMIN` trouvent le même compte, un doublon de casse est refusé
+      (le handler, testé sur MockStore, ne voit pas la casse).
 
 ## Lot E2 — Ordre d'affichage des types d'item + lien vers le catalogue
 

@@ -442,6 +442,31 @@ func TestRefreshTokens(t *testing.T) {
 	}
 }
 
+// --- Users ---
+
+func TestUserByUsername_CaseInsensitive(t *testing.T) {
+	for _, name := range []string{"admin", "Admin", "ADMIN"} {
+		u, _, err := s.GetUserByUsername(ctx, name)
+		if err != nil || u.ID != adminUser || u.Username != "admin" {
+			t.Errorf("%s: %+v, %v", name, u, err)
+		}
+	}
+
+	// Migration 004: two accounts differing only by case are refused.
+	u, _ := url.Parse(baseURL)
+	u.Path = "/" + testDBName
+	conn, err := pgx.Connect(ctx, u.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = conn.Close(ctx) }()
+	_, err = conn.Exec(ctx,
+		`INSERT INTO users (username, email, password, role) VALUES ('Shinsaber', 'dup@example.org', 'x', 'user')`)
+	if err == nil || !strings.Contains(err.Error(), "users_username_lower_key") {
+		t.Errorf("expected a unique violation on lower(username), got %v", err)
+	}
+}
+
 // --- Stats & tags ---
 
 func TestStatsAndTags(t *testing.T) {
