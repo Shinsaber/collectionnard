@@ -74,11 +74,11 @@ func TestInstallDomain(t *testing.T) {
 	if err != nil || !rep.Applied || len(rep.Errors) != 0 {
 		t.Fatalf("install: %v %+v", err, rep)
 	}
-	if o := outcomes(rep); o[model.DomainCreated] != 14 || o[model.DomainSkipped] != 1 {
+	if o := outcomes(rep); o[model.DomainCreated] != 15 || o[model.DomainSkipped] != 1 {
 		t.Errorf("first install: %v", o)
 	}
 	// Réinstallation : rien à changer.
-	if rep, _ = st.InstallDomain(ctx, books, false); outcomes(rep)[model.DomainUnchanged] != 14 {
+	if rep, _ = st.InstallDomain(ctx, books, false); outcomes(rep)[model.DomainUnchanged] != 15 {
 		t.Errorf("reinstall: %v", outcomes(rep))
 	}
 	// tv installé ensuite : adapted_as est ajoutée au domaine books.
@@ -111,7 +111,7 @@ func TestInstallDomain(t *testing.T) {
 
 	// Version 2 du paquet : un champ ajouté à Comic, le nom changé aussi.
 	v2 := *books
-	v2.PackageVersion = 2
+	v2.PackageVersion = books.PackageVersion + 1
 	v2.ItemTypes = slices.Clone(books.ItemTypes)
 	for i, it := range v2.ItemTypes {
 		if it.ID != comic {
@@ -139,7 +139,7 @@ func TestInstallDomain(t *testing.T) {
 	if got.Name != "bd" || props["shelf"] == nil || props["isbn"] == nil || props["title"] == nil {
 		t.Errorf("merged Comic: name %q, properties %v", got.Name, props)
 	}
-	if rep.FromVersion == nil || *rep.FromVersion != 1 || rep.ToVersion != 2 {
+	if rep.FromVersion == nil || *rep.FromVersion != books.PackageVersion || rep.ToVersion != books.PackageVersion+1 {
 		t.Errorf("versions: %v → %d", rep.FromVersion, rep.ToVersion)
 	}
 }

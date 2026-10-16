@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "books",
-  "package_version": 1,
+  "package_version": 2,
   "title": {
     "fr": "Livres",
     "en": "Books"
@@ -840,6 +840,12 @@
           "title",
           "language",
           "format",
+          "collection",
+          "collection_number",
+          "isbn",
+          "publication_date",
+          "page_count",
+          "retail_price",
           "status",
           "volume_count",
           "start_year",
@@ -867,7 +873,13 @@
             "language": "Language",
             "start_year": "Start year",
             "external_ids": "External IDs",
-            "volume_count": "Number of volumes"
+            "volume_count": "Number of volumes",
+            "isbn": "ISBN",
+            "publication_date": "Publication date",
+            "page_count": "Pages",
+            "retail_price": "List price (€)",
+            "collection": "Series (imprint)",
+            "collection_number": "Number in series"
           },
           "fr": {
             "title": "Titre",
@@ -879,7 +891,13 @@
             "language": "Langue",
             "start_year": "Année de début",
             "external_ids": "Identifiants externes",
-            "volume_count": "Nombre de tomes"
+            "volume_count": "Nombre de tomes",
+            "isbn": "ISBN",
+            "publication_date": "Date de publication",
+            "page_count": "Pages",
+            "retail_price": "Prix catalogue (€)",
+            "collection": "Collection",
+            "collection_number": "N° dans la collection"
           }
         },
         "properties": {
@@ -910,7 +928,9 @@
               "deluxe",
               "collector",
               "omnibus",
-              "album"
+              "album",
+              "hardcover",
+              "paperback"
             ],
             "type": "string",
             "x-enum-labels": {
@@ -922,7 +942,9 @@
                 "perfect": "Perfect edition",
                 "tankobon": "Tankōbon",
                 "collector": "Collector",
-                "grand_format": "Large format"
+                "grand_format": "Large format",
+                "hardcover": "Hardcover",
+                "paperback": "Paperback"
               },
               "fr": {
                 "album": "Album",
@@ -932,7 +954,9 @@
                 "perfect": "Perfect edition",
                 "tankobon": "Tankōbon",
                 "collector": "Collector",
-                "grand_format": "Grand format"
+                "grand_format": "Grand format",
+                "hardcover": "Relié",
+                "paperback": "Broché"
               }
             }
           },
@@ -1073,11 +1097,35 @@
           "volume_count": {
             "type": "integer",
             "minimum": 1
+          },
+          "isbn": {
+            "type": "string",
+            "pattern": "^97[89][0-9]{10}$",
+            "description": "ISBN-13, chiffres seuls"
+          },
+          "publication_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "page_count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "retail_price": {
+            "type": "number",
+            "minimum": 0
+          },
+          "collection": {
+            "type": "string",
+            "description": "Collection éditoriale (Folio, Le Livre de Poche…)"
+          },
+          "collection_number": {
+            "type": "string"
           }
         },
         "x-description": {
-          "en": "Specific publication of a work (original, perfect, pocket…)",
-          "fr": "Publication spécifique d'une œuvre (originale, perfect, poche…)"
+          "fr": "Publication d'une œuvre ; pour un roman en un seul volume, c'est le livre lui-même (ISBN, collection…)",
+          "en": "Publication of a work; for a single-volume novel, the book itself (ISBN, imprint series…)"
         },
         "additionalProperties": false
       }
@@ -1561,6 +1609,251 @@
         },
         "additionalProperties": false
       }
+    },
+    {
+      "id": "b0000000-0000-0000-0000-000000000018",
+      "name": "Novel",
+      "description": "Œuvre littéraire : roman, nouvelle, recueil…",
+      "display_order": 35,
+      "attributes_schema": {
+        "type": "object",
+        "x-title": {
+          "fr": "Roman",
+          "en": "Novel"
+        },
+        "x-description": {
+          "fr": "Œuvre littéraire : roman, novella, recueil de nouvelles, essai…",
+          "en": "Literary work: novel, novella, short stories, essay…"
+        },
+        "x-label": "{title}",
+        "x-order": [
+          "title",
+          "original_title",
+          "original_language",
+          "form",
+          "genres",
+          "first_publication_year",
+          "description",
+          "images",
+          "external_ids",
+          "sources"
+        ],
+        "x-labels": {
+          "fr": {
+            "title": "Titre",
+            "original_title": "Titre original",
+            "original_language": "Langue d'origine",
+            "form": "Forme",
+            "genres": "Genres",
+            "first_publication_year": "Première publication",
+            "description": "Résumé",
+            "images": "Images",
+            "external_ids": "Identifiants externes",
+            "sources": "Sources"
+          },
+          "en": {
+            "title": "Title",
+            "original_title": "Original title",
+            "original_language": "Original language",
+            "form": "Form",
+            "genres": "Genres",
+            "first_publication_year": "First published",
+            "description": "Summary",
+            "images": "Images",
+            "external_ids": "External IDs",
+            "sources": "Sources"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "type": "object",
+            "x-widget": "i18n-text",
+            "properties": {
+              "en": {
+                "type": "string"
+              },
+              "fr": {
+                "type": "string"
+              }
+            },
+            "propertyNames": {
+              "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+            },
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "original_title": {
+            "type": "string"
+          },
+          "original_language": {
+            "type": "string",
+            "pattern": "^[a-z]{2,3}$",
+            "description": "Code ISO 639-1 (fr, en, ja…)"
+          },
+          "form": {
+            "type": "string",
+            "enum": [
+              "novel",
+              "novella",
+              "short_stories",
+              "essay",
+              "play",
+              "poetry"
+            ],
+            "x-enum-labels": {
+              "fr": {
+                "novel": "Roman",
+                "novella": "Novella",
+                "short_stories": "Recueil de nouvelles",
+                "essay": "Essai",
+                "play": "Théâtre",
+                "poetry": "Poésie"
+              },
+              "en": {
+                "novel": "Novel",
+                "novella": "Novella",
+                "short_stories": "Short stories",
+                "essay": "Essay",
+                "play": "Play",
+                "poetry": "Poetry"
+              }
+            }
+          },
+          "genres": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": [
+                "fantasy",
+                "science_fiction",
+                "crime",
+                "thriller",
+                "romance",
+                "historical",
+                "horror",
+                "literary",
+                "young_adult",
+                "children",
+                "classic"
+              ]
+            },
+            "x-enum-labels": {
+              "fr": {
+                "fantasy": "Fantasy",
+                "science_fiction": "Science-fiction",
+                "crime": "Policier",
+                "thriller": "Thriller",
+                "romance": "Romance",
+                "historical": "Historique",
+                "horror": "Horreur",
+                "literary": "Littérature générale",
+                "young_adult": "Jeunes adultes",
+                "children": "Jeunesse",
+                "classic": "Classique"
+              },
+              "en": {
+                "fantasy": "Fantasy",
+                "science_fiction": "Science fiction",
+                "crime": "Crime",
+                "thriller": "Thriller",
+                "romance": "Romance",
+                "historical": "Historical",
+                "horror": "Horror",
+                "literary": "Literary fiction",
+                "young_adult": "Young adult",
+                "children": "Children",
+                "classic": "Classic"
+              }
+            }
+          },
+          "first_publication_year": {
+            "type": "integer"
+          },
+          "description": {
+            "type": "object",
+            "x-widget": "i18n-text",
+            "properties": {
+              "en": {
+                "type": "string"
+              },
+              "fr": {
+                "type": "string"
+              }
+            },
+            "propertyNames": {
+              "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+            },
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "images": {
+            "type": "object",
+            "x-widget": "image-gallery",
+            "additionalProperties": false,
+            "x-image-categories": {
+              "cover": {
+                "ratio": "2/3"
+              }
+            },
+            "properties": {
+              "default_image": {
+                "type": "string"
+              },
+              "cover": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "external_ids": {
+            "type": "object",
+            "properties": {
+              "bnf_ark": {
+                "type": "string",
+                "pattern": "^ark:/12148/[a-z0-9]+$"
+              },
+              "wikidata": {
+                "type": "string",
+                "pattern": "^Q[1-9][0-9]*$"
+              }
+            },
+            "additionalProperties": false
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "source"
+              ],
+              "properties": {
+                "source": {
+                  "enum": [
+                    "wikidata",
+                    "bnf",
+                    "manual"
+                  ],
+                  "type": "string"
+                },
+                "retrieved_at": {
+                  "type": "string",
+                  "format": "date"
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      }
     }
   ],
   "relation_types": [
@@ -1635,7 +1928,8 @@
       ],
       "target_item_type_ids": [
         "b0000000-0000-0000-0000-000000000012",
-        "b0000000-0000-0000-0000-000000000013"
+        "b0000000-0000-0000-0000-000000000013",
+        "b0000000-0000-0000-0000-000000000018"
       ]
     },
     {
@@ -1671,7 +1965,9 @@
                 "writer",
                 "artist",
                 "colorist",
-                "translator"
+                "translator",
+                "illustrator",
+                "preface"
               ],
               "type": "string"
             },
@@ -1683,14 +1979,18 @@
                 "author": "Author",
                 "writer": "Writer",
                 "colorist": "Colorist",
-                "translator": "Translator"
+                "translator": "Translator",
+                "illustrator": "Illustrator",
+                "preface": "Preface"
               },
               "fr": {
                 "artist": "Dessinateur",
                 "author": "Auteur",
                 "writer": "Scénariste",
                 "colorist": "Coloriste",
-                "translator": "Traducteur"
+                "translator": "Traducteur",
+                "illustrator": "Illustrateur",
+                "preface": "Préfacier"
               }
             }
           }
@@ -1699,7 +1999,9 @@
       },
       "source_item_type_ids": [
         "b0000000-0000-0000-0000-000000000012",
-        "b0000000-0000-0000-0000-000000000013"
+        "b0000000-0000-0000-0000-000000000013",
+        "b0000000-0000-0000-0000-000000000014",
+        "b0000000-0000-0000-0000-000000000018"
       ],
       "target_item_type_ids": [
         "b0000000-0000-0000-0000-000000000016"
@@ -1720,7 +2022,8 @@
       },
       "source_item_type_ids": [
         "b0000000-0000-0000-0000-000000000012",
-        "b0000000-0000-0000-0000-000000000013"
+        "b0000000-0000-0000-0000-000000000013",
+        "b0000000-0000-0000-0000-000000000018"
       ],
       "target_item_type_ids": [
         "b0000000-0000-0000-0000-000000000014"

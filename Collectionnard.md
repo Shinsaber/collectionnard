@@ -376,8 +376,11 @@ ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries 
       sont appliqués, les conflits sont signalés ; une relation dont un domaine lié manque est ajoutée plus tard. Les
       connecteurs trouvent leurs types par identifiant de paquet (un type renommé reste reconnu). Les seeds ne gardent
       que les données de démonstration.
-- [ ] **P3-1 — Modèle Romans** : type `Novel`, évolutions de l'Édition, de `created_by`, `contains_work`,
-      `published_as` (voir `les.collection.md` § « Romans ») dans le paquet du domaine livres ; un exemple dans le seed.
+- [x] **P3-1 — Modèle Romans** : paquet `books` v2 — type `Novel` (b…18), Édition = le livre quand il n'y a qu'un
+      volume (ISBN, date, pages, prix, collection, n°, formats relié / broché), `created_by` ouvert aux romans et aux
+      éditions (rôles `illustrator`, `preface`), `contains_work` et `published_as` ouverts aux romans (voir
+      `les.collection.md` § « Romans »). Mise à jour v1 → v2 vérifiée : 1 type créé, 4 mis à jour. L'exemple du seed
+      viendra du connecteur (P3-3), avec des données réelles.
 - [ ] **P3-2 — Connecteurs génériques** : interface commune (recherche, aperçu, import), registre des connecteurs,
       page « Sources externes » où l'on choisit d'abord le domaine ; le connecteur BD / Manga passe dessus sans
       changer de comportement.

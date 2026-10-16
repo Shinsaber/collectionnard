@@ -276,6 +276,8 @@ Limites constatées sur les données réelles (2026-10-11) :
 
 ## Romans (Phase 3)
 
+Implémenté dans le paquet de domaine `books` **v2** (P3-1) : ItemType `Novel` `b0000000-…-000000000018`.
+
 Décision du 2026-10-16 : les romans **réutilisent le domaine livre** (Univers, Saga, Personne, Maison d'édition,
 Édition, Tome) avec un ItemType d'œuvre dédié, `Novel` (« Roman »). La différence avec la BD tient au rapport
 entre l'Édition et le Tome :
