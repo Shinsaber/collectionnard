@@ -363,11 +363,29 @@ Lots de `docs/audit/03-feuille-de-route.md`, branche `remise-a-niveau` :
 
 ### Phase 3 : Récupération automatique externe
 
-- [ ] Recherche et intégration d'APIs externes
-  - [x] Livre/BD/manga (wikidata, BnF) : connecteur `bdmanga` (admin, page « Sources externes ») — recherche d'une œuvre sur Wikidata et d'éditions françaises à la BnF (titre ou ISBN d'un tome), aperçu à cocher (œuvre, univers, auteurs avec rôles, éditeurs, tomes ; réimpressions décochées) et corrigeable avant la simulation (formulaire du type, ex. tome sans numéro), rapprochement du catalogue (QID, ARK, ISBN, nom d'éditeur) où seuls les champs vides sont complétés, simulation puis import par `POST /import` (tout ou rien) ; `sources` porte la date de récupération (attribution BnF)
-  - [ ] Musique
-  - [ ] Série (thetvdb, imdb, …)
-  - [ ] Film (themoviedb)
+Décisions du 2026-10-16 : sources **ouvertes uniquement** (une clé d'API est acceptable si elle est gratuite) ;
+ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries en DVD / Blu-ray. Branche
+`phase3-sources`, un commit par lot.
+
+- [x] Livre/BD/manga (wikidata, BnF) : connecteur `bdmanga` (admin, page « Sources externes ») — recherche d'une œuvre sur Wikidata et d'éditions françaises à la BnF (titre ou ISBN d'un tome), aperçu à cocher (œuvre, univers, auteurs avec rôles, éditeurs, tomes ; réimpressions décochées) et corrigeable avant la simulation (formulaire du type, ex. tome sans numéro), rapprochement du catalogue (QID, ARK, ISBN, nom d'éditeur) où seuls les champs vides sont complétés, simulation puis import par `POST /import` (tout ou rien) ; `sources` porte la date de récupération (attribution BnF)
+- [ ] **P3-0 — Domaines installables** : en production (`docker-compose.prod.yml`, sans seed), aucun type n'existe,
+      et les connecteurs exigent leurs types par nom. Chaque domaine (TV, livres, puis musique, vidéo…) devient un
+      paquet de méta-types au format de l'import (`db/domains/<domaine>.json`, UUID fixes), embarqué dans le serveur
+      et installable (idempotent, par `ImportCatalog`) depuis une page d'administration « Domaines » ou
+      `colec-server install-domain <domaine>`. Les seeds ne gardent que les données de démonstration.
+- [ ] **P3-1 — Modèle Romans** : type `Novel`, évolutions de l'Édition, de `created_by`, `contains_work`,
+      `published_as` (voir `les.collection.md` § « Romans ») dans le paquet du domaine livres ; un exemple dans le seed.
+- [ ] **P3-2 — Connecteurs génériques** : interface commune (recherche, aperçu, import), registre des connecteurs,
+      page « Sources externes » où l'on choisit d'abord le domaine ; le connecteur BD / Manga passe dessus sans
+      changer de comportement.
+- [ ] **P3-3 — Connecteur Romans** (Wikidata + BnF) : roman par titre ou ISBN, auteurs, cycle (Saga), éditions
+      à un volume (Édition = livre) ou multivolumes (Édition + Tomes), traducteurs de l'édition.
+- [ ] **P3-4 — Musique (CD / vinyles)** : étude des sources (MusicBrainz, Cover Art Archive, BnF pour les
+      phonogrammes ; licences à vérifier), modèle de données (nouveau document), paquet de domaine, connecteur.
+- [ ] **P3-5 — Films (DVD / Blu-ray)** : étude des sources (Wikidata pour l'œuvre, BnF pour les vidéogrammes
+      français par EAN ; TMDB écarté sauf licence ouverte), modèle, paquet, connecteur.
+- [ ] **P3-6 — Séries (DVD / Blu-ray)** : étude (Wikidata, TVmaze pour saisons et épisodes, BnF pour les coffrets),
+      en réutilisant le modèle TV existant (Series, Season, Episode, DVD), paquet, connecteur.
 
 ### Phase 4 : Social
 

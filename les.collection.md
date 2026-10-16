@@ -1,4 +1,4 @@
-# Collections BD / Manga — Modèle de données
+# Collections livres (BD, manga, romans) — Modèle de données
 
 ## Décisions de conception
 
@@ -269,6 +269,66 @@ Limites constatées sur les données réelles (2026-10-11) :
   sont ignorés, seuls les prix en euros alimentent `retail_price`.
 - Non repris pour l'instant : sagas (pas d'équivalent Wikidata), adaptations (`adapted_as`), traducteurs et autres
   contributeurs BnF (zones 700-702), format et statut des éditions, images.
+
+---
+
+## Romans (Phase 3)
+
+Décision du 2026-10-16 : les romans **réutilisent le domaine livre** (Univers, Saga, Personne, Maison d'édition,
+Édition, Tome) avec un ItemType d'œuvre dédié, `Novel` (« Roman »). La différence avec la BD tient au rapport
+entre l'Édition et le Tome :
+
+- **Un seul volume** (cas courant : « L'Étranger, Folio, 2005 ») : l'**Édition est le livre**. Elle porte l'ISBN,
+  la date, la pagination, le prix, la collection éditoriale ; **aucun Tome**. C'est l'Édition qu'on met en collection.
+- **Plusieurs volumes** (« Les Misérables » en 3 tomes, une intégrale en 2 volumes) : l'Édition regroupe des **Tomes**
+  rattachés par `contains_volume`, comme en BD ; ISBN et prix sont sur chaque Tome.
+
+```
+Univers (optionnel) ── contains_work ──▶ Roman
+Saga / cycle (optionnel, ex. « La Tour sombre ») ── contains_work {order} ──▶ Roman
+Roman
+├── created_by {roles: author} ──▶ Personne
+└── published_as ──▶ Édition (le livre, si un seul volume)
+                     ├── edited_by ──▶ Maison d'édition
+                     ├── created_by {roles: translator | illustrator | preface} ──▶ Personne
+                     └── contains_volume {order} ──▶ Tome   (seulement si plusieurs volumes)
+```
+
+### Roman (`Novel`)
+
+| Attribut                 | Type          | Requis | Description                                                    |
+| ------------------------ | ------------- | ------ | -------------------------------------------------------------- |
+| `title`                  | i18n-text     | ✅     | Titre (par langue)                                             |
+| `original_title`         | string        |        | Titre en VO                                                    |
+| `original_language`      | string        |        | Code ISO 639-1 de la langue d'écriture                         |
+| `form`                   | enum          |        | `novel`, `novella`, `short_stories`, `essay`, `play`, `poetry` |
+| `genres`                 | array d'enum  |        | `fantasy`, `science_fiction`, `crime`, `thriller`, `romance`, `historical`, `horror`, `literary`, `young_adult`, `children`, `classic` |
+| `first_publication_year` | integer       |        | Année de première publication                                 |
+| `description`            | i18n-text     |        | Résumé (écrit à la main ou description Wikidata, CC0)          |
+| `images`                 | image-gallery |        | couverture de référence                                        |
+| `external_ids`, `sources` |              |        | Attributs communs du domaine (Wikidata, BnF)                   |
+
+### Évolutions des types partagés
+
+- **Édition** : nouveaux attributs pour le cas « un seul volume » — `isbn`, `publication_date`, `page_count`,
+  `retail_price`, `collection` (collection éditoriale : « Folio »), `collection_number` (« n° 2 ») ;
+  `format` gagne `hardcover` (relié) et `paperback` (broché) ; la langue d'une traduction est `language`.
+- **`created_by`** : sources étendues à `Novel` et à `Edition` (traducteur, illustrateur, préfacier d'une édition) ;
+  rôles ajoutés : `illustrator`, `preface`.
+- **`contains_work`** et **`published_as`** : `Novel` ajouté aux sources / cibles.
+
+### Sources
+
+Les mêmes que pour la BD, licences vérifiées le 2026-10-11 (`docs/sources-externes.md`) :
+
+| Niveau                                 | Source       | Correspondance                                                                 |
+| -------------------------------------- | ------------ | ------------------------------------------------------------------------------ |
+| Roman, Saga (cycle), Personne, Éditeur | **Wikidata** | Classes `Q7725634` œuvre littéraire, `Q8261` roman, `Q1667921` série de romans (→ Saga) ; `P50` auteur, `P577` date, `P407` langue, `P136` genre, `P179` partie de la série (→ Saga, ordre `P1545`) |
+| Édition, Tome, traducteur              | **BnF**      | Notice bibliographique d'une monographie (une Édition) ; ensemble multivolume (zone 461) → Édition + Tomes ; zones 700-702 `$4` (code de fonction : traducteur 730…) → `created_by` de l'Édition ; 225 → `collection` / `collection_number` |
+
+À valider en codant le connecteur, comme pour la BD : les classes Wikidata utiles (les romans sont souvent
+déclarés `Q7725634` + `P7937` forme littéraire), et les zones UNIMARC des notices de romans depuis le
+changement de modèle de la BnF (juin 2026).
 
 ---
 
