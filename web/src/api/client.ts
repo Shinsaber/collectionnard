@@ -22,6 +22,7 @@ import type {
   Item,
   ItemCreate,
   ItemUpdate,
+  OfflineSnapshot,
   ItemRelation,
   RelatedItemCollections,
   ItemRelationCreate,
@@ -345,6 +346,12 @@ export const tagApi = {
 // ── Stats ─────────────────────────────────────────────────────────────
 export const statsApi = {
   get: () => http.get<Stats>("/stats").then((r) => r.data),
+};
+
+// ── Copie hors ligne ───────────────────────────────────────────────────
+export const offlineApi = {
+  /** Mes collections, leurs items et les méta-types, pour la consultation sans réseau. */
+  snapshot: () => http.get<OfflineSnapshot>("/me/offline").then((r) => r.data),
 };
 
 // ── Uploads ───────────────────────────────────────────────────────────

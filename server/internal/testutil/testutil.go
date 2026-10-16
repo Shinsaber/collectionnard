@@ -77,6 +77,7 @@ type MockStore struct {
 	ListRelationsBetweenFn       func(ctx context.Context, ids []uuid.UUID) ([]model.ItemRelation, error)
 	ReferencedUploadsFn          func(ctx context.Context) ([]string, error)
 	ListRelatedItemCollectionsFn func(ctx context.Context, userID, itemID uuid.UUID) ([]model.RelatedItemCollections, error)
+	GetOfflineSnapshotFn         func(ctx context.Context, userID uuid.UUID) (*model.OfflineSnapshot, error)
 }
 
 func (m *MockStore) Ping(ctx context.Context) error {
@@ -383,6 +384,13 @@ func (m *MockStore) ListRelatedItemCollections(ctx context.Context, userID, item
 		return m.ListRelatedItemCollectionsFn(ctx, userID, itemID)
 	}
 	return []model.RelatedItemCollections{}, nil
+}
+
+func (m *MockStore) GetOfflineSnapshot(ctx context.Context, userID uuid.UUID) (*model.OfflineSnapshot, error) {
+	if m.GetOfflineSnapshotFn != nil {
+		return m.GetOfflineSnapshotFn(ctx, userID)
+	}
+	return nil, store.ErrNotFound
 }
 
 // --- Test helpers ---

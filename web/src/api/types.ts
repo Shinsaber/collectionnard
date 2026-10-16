@@ -441,3 +441,23 @@ export interface ExternalPlan {
 export interface ExternalImportReport extends ImportReport {
   item_ids: Record<string, string>;
 }
+
+// ---------- Copie hors ligne (GET /me/offline, lot E5) ----------
+export interface OfflineEntry {
+  collection_id: string;
+  item_id: string;
+  attributes: Record<string, unknown>;
+  added_at: string;
+}
+
+export interface OfflineSnapshot {
+  generated_at: string;
+  user: User;
+  item_types: ItemType[];
+  collection_types: CollectionType[];
+  /** Sans `collection_type` joint (voir `collection_types`). */
+  collections: Collection[];
+  /** Une fois chacun, sans `item_type` joint (voir `item_types`). */
+  items: Item[];
+  entries: OfflineEntry[];
+}

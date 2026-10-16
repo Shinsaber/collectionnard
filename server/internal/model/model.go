@@ -236,6 +236,27 @@ type CollectionItemUpdate struct {
 	Attributes json.RawMessage `json:"attributes"`
 }
 
+// OfflineEntry: an item of one of the user's collections, with its contextual attributes.
+type OfflineEntry struct {
+	CollectionID uuid.UUID       `json:"collection_id"`
+	ItemID       uuid.UUID       `json:"item_id"`
+	Attributes   json.RawMessage `json:"attributes"`
+	AddedAt      time.Time       `json:"added_at"`
+}
+
+// OfflineSnapshot (GET /me/offline): everything the mobile app keeps to show the
+// user's collections without network. Items are listed once, even when they are in
+// several collections; the meta-types carry the schemas used for display.
+type OfflineSnapshot struct {
+	GeneratedAt     time.Time        `json:"generated_at"`
+	User            User             `json:"user"`
+	ItemTypes       []ItemType       `json:"item_types"`
+	CollectionTypes []CollectionType `json:"collection_types"`
+	Collections     []Collection     `json:"collections"`
+	Items           []Item           `json:"items"`
+	Entries         []OfflineEntry   `json:"entries"`
+}
+
 // RelatedCollection: a collection holding a linked item, with the item's
 // contextual attributes there (read with the CollectionType schema).
 type RelatedCollection struct {

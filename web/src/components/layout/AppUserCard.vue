@@ -80,6 +80,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import { useOfflineStore } from "@/stores/offline";
 import { useTheme } from "@/composables/useTheme";
 import { useLang } from "@/composables/useLang";
 
@@ -96,8 +97,9 @@ const themeLabel = computed(() =>
   theme.value === "dark" ? t("layout.lightMode") : t("layout.darkMode"),
 );
 
-function handleLogout() {
-  auth.logout();
+async function handleLogout() {
+  await auth.logout();
+  useOfflineStore().clear();
   router.push("/login");
 }
 </script>

@@ -1165,6 +1165,43 @@ components:
                 additionalProperties: true
                 description: Attributs contextuels de l'item dans cette collection (état, prix…).
 
+    OfflineSnapshot:
+      type: object
+      description: Copie hors ligne des collections de l'utilisateur (`GET /me/offline`).
+      required: [generated_at, user, item_types, collection_types, collections, items, entries]
+      properties:
+        generated_at: { type: string, format: date-time }
+        user:
+          $ref: "#/components/schemas/User"
+        item_types:
+          type: array
+          items:
+            $ref: "#/components/schemas/ItemType"
+        collection_types:
+          type: array
+          items:
+            $ref: "#/components/schemas/CollectionType"
+        collections:
+          type: array
+          description: Collections de l'utilisateur (sans `collection_type` joint).
+          items:
+            $ref: "#/components/schemas/Collection"
+        items:
+          type: array
+          description: Items de ses collections, une fois chacun (sans `item_type` joint).
+          items:
+            $ref: "#/components/schemas/Item"
+        entries:
+          type: array
+          items:
+            type: object
+            required: [collection_id, item_id, attributes, added_at]
+            properties:
+              collection_id: { type: string, format: uuid }
+              item_id: { type: string, format: uuid }
+              attributes: { type: object, additionalProperties: true }
+              added_at: { type: string, format: date-time }
+
     # -------------------------------------------------------------------------
     # Upload
     # -------------------------------------------------------------------------
@@ -1907,6 +1944,29 @@ paths:
   # ===========================================================================
   # Item Types (admin)
   # ===========================================================================
+  /me/offline:
+    get:
+      tags: [Collections]
+      summary: Copie hors ligne de mes collections
+      description: |
+        Tout ce que l'application mobile garde pour consulter les collections de l'utilisateur
+        authentifié sans réseau (lecture seule) : ses collections, leurs items (une fois chacun,
+        même présents dans plusieurs collections) et entrées (attributs contextuels), ainsi que
+        tous les types d'item et de collection (schémas d'affichage). Réponse `Cache-Control:
+        private, no-store` (données personnelles).
+      operationId: getOfflineSnapshot
+      responses:
+        "200":
+          description: Copie hors ligne.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OfflineSnapshot"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   /item-types:
     get:
       tags: [ItemTypes]

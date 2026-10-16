@@ -468,6 +468,45 @@ func TestUserByUsername_CaseInsensitive(t *testing.T) {
 	}
 }
 
+// --- Offline snapshot ---
+
+func TestGetOfflineSnapshot(t *testing.T) {
+	snap, err := s.GetOfflineSnapshot(ctx, shinsaberUser)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if snap.User.Username != "shinsaber" || len(snap.ItemTypes) == 0 || len(snap.CollectionTypes) == 0 {
+		t.Fatalf("snapshot head: %+v", snap.User)
+	}
+	cols := map[uuid.UUID]bool{}
+	for _, c := range snap.Collections {
+		if c.UserID != shinsaberUser || c.CollectionType != nil {
+			t.Errorf("collection %+v", c)
+		}
+		cols[c.ID] = true
+	}
+	items := map[uuid.UUID]bool{}
+	for _, it := range snap.Items {
+		if items[it.ID] {
+			t.Errorf("item %s listed twice", it.ID)
+		}
+		items[it.ID] = true
+	}
+	if !cols[colMesDVDs] || !items[itemDVD] || !items[itemSerie] {
+		t.Errorf("expected Mes DVDs, the DVD and the series: %d collections, %d items", len(cols), len(items))
+	}
+	for _, e := range snap.Entries {
+		if !cols[e.CollectionID] || !items[e.ItemID] {
+			t.Errorf("entry outside the snapshot: %+v", e)
+		}
+	}
+	// Admin has no collection in the seed: empty lists, not null.
+	empty, err := s.GetOfflineSnapshot(ctx, adminUser)
+	if err != nil || empty.Collections == nil || empty.Items == nil || empty.Entries == nil || len(empty.Items) != 0 {
+		t.Errorf("admin: %+v, %v", empty, err)
+	}
+}
+
 // --- Relation list badge ---
 
 func TestListRelatedItemCollections(t *testing.T) {

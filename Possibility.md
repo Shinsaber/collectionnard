@@ -81,7 +81,7 @@ Lecture seule ; l'instance est servie en HTTPS (le service worker l'exige).
       dérivées de `favicon.svg`, couleurs « Étiquette »), service worker qui garde l'application
       (JS, CSS, polices) : la PWA s'ouvre sans réseau. Mise à jour proposée quand une nouvelle
       version est publiée. Rien de l'API n'est mis en cache par le service worker à ce stade.
-- [ ] **E5b — Copie locale des collections** : IndexedDB, par utilisateur. Contenu : collections,
+- [x] **E5b — Copie locale des collections** : IndexedDB, par utilisateur. Contenu : collections,
       items (libellé, type, attributs), attributs contextuels, schémas utiles à l'affichage (types
       d'item et de collection). Source : l'export JSON des collections (déjà existant) ou un endpoint
       dédié `GET /me/offline` si l'export ne suffit pas. Rafraîchie à l'ouverture et au retour du

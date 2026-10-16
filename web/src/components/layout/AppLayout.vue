@@ -33,8 +33,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { useOfflineStore } from "@/stores/offline";
 import AppMoreSheet from "./AppMoreSheet.vue";
 import AppSidebar from "./AppSidebar.vue";
 import AppTabBar from "./AppTabBar.vue";
@@ -42,4 +43,6 @@ import AppTopBar from "./AppTopBar.vue";
 
 const { t } = useI18n();
 const moreOpen = ref(false);
+// Copie hors ligne des collections (lot E5) : chargée puis rafraîchie dès l'entrée dans l'application.
+onMounted(() => useOfflineStore().start());
 </script>

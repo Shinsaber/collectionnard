@@ -101,6 +101,9 @@ type Store interface {
 	// ListRelatedItemCollections: items linked to itemID (either direction) that are in
 	// collections of userID, with those collections.
 	ListRelatedItemCollections(ctx context.Context, userID, itemID uuid.UUID) ([]model.RelatedItemCollections, error)
+	// GetOfflineSnapshot: the user's collections, items and entries plus every meta-type
+	// (offline copy of the mobile app).
+	GetOfflineSnapshot(ctx context.Context, userID uuid.UUID) (*model.OfflineSnapshot, error)
 
 	// Tag
 	ListTags(ctx context.Context, search string) ([]model.Tag, error)

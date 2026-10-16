@@ -8,6 +8,7 @@ import {
   setTokens,
 } from "@/api/tokens";
 import type { User, LoginRequest } from "@/api/types";
+import { clearOfflineData } from "@/lib/offlineDb";
 
 export const useAuthStore = defineStore("auth", () => {
   const user = ref<User | null>(null);
@@ -44,6 +45,8 @@ export const useAuthStore = defineStore("auth", () => {
   async function logout() {
     const refreshToken = getRefreshToken();
     clearSession();
+    // La copie hors ligne (lot E5) appartient à l'utilisateur : effacée de l'appareil.
+    await clearOfflineData();
     if (refreshToken) {
       try {
         await authApi.logout(refreshToken);

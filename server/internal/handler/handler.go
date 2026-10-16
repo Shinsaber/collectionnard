@@ -85,6 +85,7 @@ func (h *Handler) Router() chi.Router {
 		r.Use(h.Auth.Authenticate)
 
 		r.Get("/api/v1/auth/me", h.GetCurrentUser)
+		r.Get("/api/v1/me/offline", h.GetOfflineSnapshot)
 
 		// Read endpoints (all authenticated users)
 		r.Get("/api/v1/item-types", h.ListItemTypes)
