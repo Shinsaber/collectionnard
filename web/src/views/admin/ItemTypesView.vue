@@ -69,6 +69,7 @@ const rows = computed<AdminTypeRow[]>(() =>
     title: typeTitle(it, lang.value),
     name: it.name,
     description: typeDescription(it, lang.value),
+    order: it.display_order,
     ...schemaSummary(it.attributes_schema, lang.value, t),
   })),
 );

@@ -29,6 +29,7 @@ export default {
     schemaFields: "Champs du schéma",
     namePlaceholder: "Ex. : Series, Episode, DVD…",
     displayOrder: "Ordre d'affichage",
+    order: "Ordre",
     displayOrderHelp:
       "Petit = en premier (listes, sélecteurs, répartition par type) ; à égalité, ordre alphabétique. Défaut : 100.",
   },

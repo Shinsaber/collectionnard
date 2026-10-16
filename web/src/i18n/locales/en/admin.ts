@@ -29,6 +29,7 @@ const en: typeof fr = {
     schemaFields: "Schema fields",
     namePlaceholder: "e.g. Series, Episode, DVD…",
     displayOrder: "Display order",
+    order: "Order",
     displayOrderHelp:
       "Lower comes first (lists, selectors, breakdown by type); ties are sorted by name. Default: 100.",
   },
