@@ -9,6 +9,19 @@
   >
     <div class="flex flex-col gap-5 pb-[env(safe-area-inset-bottom)]">
       <AppUserCard />
+      <RouterLink
+        to="/offline"
+        class="flex min-h-13 items-center gap-3 rounded-xl bg-surface px-4 text-[15px] shadow-card"
+        :class="
+          isNavActive('/offline', route.path)
+            ? 'bg-tint font-bold text-tint-ink'
+            : 'font-medium text-ink'
+        "
+      >
+        <NavIcon name="offline" />
+        <span class="flex-1">{{ t("layout.nav.offline") }}</span>
+        <i class="pi pi-angle-right text-muted" aria-hidden="true"></i>
+      </RouterLink>
       <nav
         v-if="auth.isAdmin"
         :aria-labelledby="adminTitleId"

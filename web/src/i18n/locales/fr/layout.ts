@@ -12,6 +12,7 @@ export default {
     importExport: "Import / export",
     externalImport: "Sources externes",
     images: "Images",
+    offline: "Hors ligne",
   },
   mainNav: "Navigation principale",
   skipToContent: "Aller au contenu",

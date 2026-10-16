@@ -87,7 +87,7 @@ Lecture seule ; l'instance est servie en HTTPS (le service worker l'exige).
       dédié `GET /me/offline` si l'export ne suffit pas. Rafraîchie à l'ouverture et au retour du
       réseau ; `navigator.storage.persist()` demandé (Safari efface sinon après quelques semaines) ;
       effacée à la déconnexion.
-- [ ] **E5c — Mode hors ligne** : détection réseau ; « Mes collections », le détail d'une collection
+- [x] **E5c — Mode hors ligne** : détection réseau ; « Mes collections », le détail d'une collection
       et une recherche (titre, numéro, ISBN…) servis par la copie locale ; bandeau
       « Hors ligne — données du … » ; actions d'écriture masquées.
 - [ ] **E5d — Couvertures, espace borné** :
