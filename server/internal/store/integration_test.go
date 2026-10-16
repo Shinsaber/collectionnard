@@ -468,6 +468,29 @@ func TestUserByUsername_CaseInsensitive(t *testing.T) {
 	}
 }
 
+// --- Relation list badge ---
+
+func TestListRelatedItemCollections(t *testing.T) {
+	// Series → DVD (released_as) ; the DVD is in shinsaber's « Mes DVDs ».
+	got, err := s.ListRelatedItemCollections(ctx, shinsaberUser, itemSerie)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var dvd *model.RelatedItemCollections
+	for i := range got {
+		if got[i].ItemID == itemDVD {
+			dvd = &got[i]
+		}
+	}
+	if dvd == nil || len(dvd.Collections) != 1 || dvd.Collections[0].ID != colMesDVDs {
+		t.Errorf("shinsaber: %+v", got)
+	}
+	// Another user's collections are not reported.
+	if got, err := s.ListRelatedItemCollections(ctx, adminUser, itemSerie); err != nil || len(got) != 0 {
+		t.Errorf("admin: %+v, %v", got, err)
+	}
+}
+
 // --- Uploads ---
 
 func TestReferencedUploads(t *testing.T) {

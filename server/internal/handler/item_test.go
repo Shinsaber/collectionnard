@@ -163,3 +163,47 @@ func TestGetItem_NotFound(t *testing.T) {
 		t.Fatalf("expected 404, got %d", resp.StatusCode)
 	}
 }
+
+func TestListRelatedItemCollections(t *testing.T) {
+	item := testutil.SampleItem()
+	linked, col := uuid.New(), uuid.New()
+	var gotUser uuid.UUID
+	mock := &testutil.MockStore{
+		GetItemFn: func(_ context.Context, id uuid.UUID) (*model.Item, error) {
+			if id == item.ID {
+				return item, nil
+			}
+			return nil, store.ErrNotFound
+		},
+		ListRelatedItemCollectionsFn: func(_ context.Context, userID, itemID uuid.UUID) ([]model.RelatedItemCollections, error) {
+			gotUser = userID
+			return []model.RelatedItemCollections{{ItemID: linked, Collections: []model.CollectionRef{{ID: col, Name: "Mes DVDs"}}}}, nil
+		},
+	}
+	srv := testutil.NewTestServer(mock)
+	defer srv.Close()
+
+	get := func(id uuid.UUID) (*http.Response, []byte) {
+		req, _ := http.NewRequest("GET", srv.URL+"/api/v1/items/"+id.String()+"/relations/collections", nil)
+		req.Header = testutil.AuthHeader(testutil.UserToken())
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatalf("request failed: %v", err)
+		}
+		defer resp.Body.Close()
+		b, _ := io.ReadAll(resp.Body)
+		return resp, b
+	}
+	resp, body := get(item.ID)
+	var out []model.RelatedItemCollections
+	if resp.StatusCode != http.StatusOK || json.Unmarshal(body, &out) != nil ||
+		len(out) != 1 || out[0].ItemID != linked || out[0].Collections[0].Name != "Mes DVDs" {
+		t.Fatalf("got %d %s", resp.StatusCode, body)
+	}
+	if gotUser != testutil.UserID {
+		t.Errorf("store called for user %s, want the authenticated user", gotUser)
+	}
+	if resp, _ := get(uuid.New()); resp.StatusCode != http.StatusNotFound {
+		t.Errorf("unknown item: %d", resp.StatusCode)
+	}
+}

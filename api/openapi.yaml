@@ -1142,6 +1142,21 @@ components:
               "/": "missing properties: 'title'"
               "/start_year": "must be >= 1900 but found 1800"
 
+    RelatedItemCollections:
+      type: object
+      description: Un item lié et les collections de l'utilisateur qui le contiennent.
+      required: [item_id, collections]
+      properties:
+        item_id: { type: string, format: uuid }
+        collections:
+          type: array
+          items:
+            type: object
+            required: [id, name]
+            properties:
+              id: { type: string, format: uuid }
+              name: { type: string }
+
     # -------------------------------------------------------------------------
     # Upload
     # -------------------------------------------------------------------------
@@ -2748,6 +2763,42 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+
+  /items/{id}/relations/collections:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: UUID de l'item dont on affiche les relations.
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Items, Collections]
+      summary: Items liés présents dans mes collections
+      description: |
+        Pour chaque item lié à cet item (dans un sens ou dans l'autre) et présent dans au moins une
+        collection de l'utilisateur authentifié : ces collections. Les items liés absents de ses
+        collections ne figurent pas dans la réponse. Sert d'indicateur dans la liste des relations
+        de la fiche d'un item ; une requête indexée (`collection_items.item_id`).
+      operationId: listRelatedItemCollections
+      responses:
+        "200":
+          description: Items liés présents dans les collections de l'utilisateur.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RelatedItemCollections"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
   # ===========================================================================
   # Item Relations

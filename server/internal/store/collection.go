@@ -303,3 +303,36 @@ func (s *PgStore) ListItemCollections(ctx context.Context, userID, itemID uuid.U
 	}
 	return result, rows.Err()
 }
+
+func (s *PgStore) ListRelatedItemCollections(ctx context.Context, userID, itemID uuid.UUID) ([]model.RelatedItemCollections, error) {
+	// One indexed lookup per linked item (idx_relations_source / _target, idx_collection_items_item).
+	rows, err := s.pool.Query(ctx, `
+		WITH linked AS (
+			SELECT target_item_id AS item_id FROM item_relations WHERE source_item_id = $1
+			UNION
+			SELECT source_item_id FROM item_relations WHERE target_item_id = $1
+		)
+		SELECT ci.item_id, c.id, c.name
+		FROM linked l
+		JOIN collection_items ci ON ci.item_id = l.item_id
+		JOIN collections c ON c.id = ci.collection_id AND c.user_id = $2
+		ORDER BY ci.item_id, c.name`, itemID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	result := []model.RelatedItemCollections{}
+	for rows.Next() {
+		var itemID uuid.UUID
+		var col model.CollectionRef
+		if err := rows.Scan(&itemID, &col.ID, &col.Name); err != nil {
+			return nil, err
+		}
+		if n := len(result); n > 0 && result[n-1].ItemID == itemID {
+			result[n-1].Collections = append(result[n-1].Collections, col)
+		} else {
+			result = append(result, model.RelatedItemCollections{ItemID: itemID, Collections: []model.CollectionRef{col}})
+		}
+	}
+	return result, rows.Err()
+}

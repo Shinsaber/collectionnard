@@ -236,6 +236,19 @@ type CollectionItemUpdate struct {
 	Attributes json.RawMessage `json:"attributes"`
 }
 
+// CollectionRef names a collection (id and name only).
+type CollectionRef struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+}
+
+// RelatedItemCollections: an item linked to a given item, and the collections
+// of the current user that contain it (GET /items/{id}/relations/collections).
+type RelatedItemCollections struct {
+	ItemID      uuid.UUID       `json:"item_id"`
+	Collections []CollectionRef `json:"collections"`
+}
+
 // ItemCollectionMembership represents a collection that contains a given item,
 // along with the contextual attributes of the membership.
 type ItemCollectionMembership struct {

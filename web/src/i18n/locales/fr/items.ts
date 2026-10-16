@@ -92,6 +92,10 @@ export default {
     deleteRelation: "Supprimer la relation",
     noSubRelations: "Aucune sous-relation sortante.",
     subRelationsUnavailable: "Sous-relations indisponibles",
+    inCollections: "Dans {n} collection | Dans {n} collections",
+    inCollectionsTitle: "Dans vos collections",
+    inCollectionsLabel: "Dans vos collections : {names}",
+    collectionsUnavailable: "Appartenance aux collections indisponible",
   },
   // Création / modification d'un item (ItemEditDialog)
   editDialog: {

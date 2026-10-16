@@ -98,6 +98,9 @@ type Store interface {
 
 	// Item collection membership
 	ListItemCollections(ctx context.Context, userID, itemID uuid.UUID) ([]model.ItemCollectionMembership, error)
+	// ListRelatedItemCollections: items linked to itemID (either direction) that are in
+	// collections of userID, with those collections.
+	ListRelatedItemCollections(ctx context.Context, userID, itemID uuid.UUID) ([]model.RelatedItemCollections, error)
 
 	// Tag
 	ListTags(ctx context.Context, search string) ([]model.Tag, error)

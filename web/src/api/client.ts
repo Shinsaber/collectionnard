@@ -23,6 +23,7 @@ import type {
   ItemCreate,
   ItemUpdate,
   ItemRelation,
+  RelatedItemCollections,
   ItemRelationCreate,
   ItemRelationUpdate,
   ItemCollectionMembership,
@@ -266,6 +267,11 @@ export const itemApi = {
   relations: (id: string, params?: { relation_type_id?: string }) =>
     http
       .get<ItemRelation[]>(`/items/${id}/relations`, { params })
+      .then((r) => r.data),
+  /** Items liés présents dans mes collections (indicateur de la liste des relations). */
+  relatedCollections: (id: string) =>
+    http
+      .get<RelatedItemCollections[]>(`/items/${id}/relations/collections`)
       .then((r) => r.data),
   graph: (
     id: string,

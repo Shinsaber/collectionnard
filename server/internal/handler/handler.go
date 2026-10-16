@@ -99,6 +99,7 @@ func (h *Handler) Router() chi.Router {
 		r.Get("/api/v1/items/{id}/relations", h.ListItemRelations)
 		r.Get("/api/v1/items/{id}/graph", h.GetItemGraph)
 		r.Get("/api/v1/items/{id}/collections", h.ListItemCollections)
+		r.Get("/api/v1/items/{id}/relations/collections", h.ListRelatedItemCollections)
 		r.Get("/api/v1/relations/{id}", h.GetRelation)
 		r.Get("/api/v1/tags", h.ListTags)
 		r.Get("/api/v1/stats", h.GetStats)

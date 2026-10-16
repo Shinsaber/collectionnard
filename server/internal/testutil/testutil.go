@@ -76,6 +76,7 @@ type MockStore struct {
 	FindItemsByAttributeFn       func(ctx context.Context, itemTypeID uuid.UUID, path, values []string, fold bool) ([]model.Item, error)
 	ListRelationsBetweenFn       func(ctx context.Context, ids []uuid.UUID) ([]model.ItemRelation, error)
 	ReferencedUploadsFn          func(ctx context.Context) ([]string, error)
+	ListRelatedItemCollectionsFn func(ctx context.Context, userID, itemID uuid.UUID) ([]model.RelatedItemCollections, error)
 }
 
 func (m *MockStore) Ping(ctx context.Context) error {
@@ -375,6 +376,13 @@ func (m *MockStore) ReferencedUploads(ctx context.Context) ([]string, error) {
 		return m.ReferencedUploadsFn(ctx)
 	}
 	return nil, nil
+}
+
+func (m *MockStore) ListRelatedItemCollections(ctx context.Context, userID, itemID uuid.UUID) ([]model.RelatedItemCollections, error) {
+	if m.ListRelatedItemCollectionsFn != nil {
+		return m.ListRelatedItemCollectionsFn(ctx, userID, itemID)
+	}
+	return []model.RelatedItemCollections{}, nil
 }
 
 // --- Test helpers ---
