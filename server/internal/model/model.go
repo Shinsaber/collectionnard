@@ -282,7 +282,8 @@ type GraphResponse struct {
 type UploadResponse struct {
 	URL      string `json:"url"`
 	Filename string `json:"filename"`
-	Size     int64  `json:"size"` // octets réellement écrits
+	Size     int64  `json:"size"`   // octets réellement écrits
+	Reused   bool   `json:"reused"` // fichier identique déjà présent : même URL, rien de réécrit
 }
 
 // ---------------------------------------------------------------------------

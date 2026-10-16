@@ -288,6 +288,8 @@ export interface UploadResponse {
   url: string;
   filename: string;
   size: number;
+  /** Fichier identique déjà présent : même URL, rien de réécrit. */
+  reused: boolean;
 }
 
 // ---------- Import / export ----------

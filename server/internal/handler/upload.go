@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -8,8 +10,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
-	"github.com/google/uuid"
 	"github.com/shinsaber/colec/internal/model"
 )
 
@@ -74,30 +76,16 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate unique filename
-	filename := uuid.New().String() + ext
-	destPath := filepath.Join(h.Config.UploadDir, filename)
-
-	// destPath = UPLOAD_DIR + UUID + extension issue de allowedMimeTypes : aucune donnée client.
-	dst, err := os.Create(destPath) //nolint:gosec // nom généré (UUID), extension issue d'une liste blanche
+	filename, written, reused, err := h.storeUpload(file, ext)
 	if err != nil {
 		respondInternal(w, r, err, "cannot save file")
 		return
 	}
-	defer func() { _ = dst.Close() }()
-
-	written, err := io.Copy(dst, file)
-	if err != nil {
-		_ = os.Remove(destPath) // cleanup on failure
-		respondInternal(w, r, err, "cannot write file")
-		return
-	}
-
-	url := "/api/v1/uploads/" + filename
 	respondJSON(w, http.StatusCreated, model.UploadResponse{
-		URL:      url,
+		URL:      "/api/v1/uploads/" + filename,
 		Filename: filename,
 		Size:     written, // octets réellement écrits (header.Size est déclaré par le client)
+		Reused:   reused,
 	})
 }
 
@@ -107,4 +95,38 @@ func allowedExtensions() []string {
 		exts = append(exts, mime)
 	}
 	return exts
+}
+
+// storeUpload writes the file under its content hash: <sha256 hex><ext>. An
+// identical file already stored is reused (reused = true) and not rewritten.
+// The content goes to a temporary file first (no whitelisted extension: never
+// served nor purged), renamed once its hash is known.
+func (h *Handler) storeUpload(src io.Reader, ext string) (filename string, written int64, reused bool, err error) {
+	tmp, err := os.CreateTemp(h.Config.UploadDir, ".upload-*")
+	if err != nil {
+		return "", 0, false, err
+	}
+	defer func() {
+		_ = tmp.Close()
+		_ = os.Remove(tmp.Name()) // sans effet après le renommage
+	}()
+	hash := sha256.New()
+	if written, err = io.Copy(io.MultiWriter(tmp, hash), src); err != nil {
+		return "", 0, false, err
+	}
+	if err = tmp.Close(); err != nil {
+		return "", 0, false, err
+	}
+	filename = hex.EncodeToString(hash.Sum(nil)) + ext
+	dest := filepath.Join(h.Config.UploadDir, filename)
+	if _, statErr := os.Stat(dest); statErr == nil {
+		// Date rafraîchie : le délai de grâce de la purge repart (l'image va être référencée).
+		now := time.Now()
+		return filename, written, true, os.Chtimes(dest, now, now)
+	}
+	// Lecture publique (comme les fichiers créés par os.Create auparavant) : images servies à tous.
+	if err = os.Chmod(tmp.Name(), 0o644); err != nil { //nolint:gosec // images publiques
+		return "", 0, false, err
+	}
+	return filename, written, false, os.Rename(tmp.Name(), dest)
 }

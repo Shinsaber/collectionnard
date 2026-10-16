@@ -1442,15 +1442,21 @@ components:
         url:
           type: string
           description: Chemin relatif pour accéder au fichier uploadé.
-          example: /api/v1/uploads/550e8400-e29b-41d4-a716-446655440000.jpg
+          example: /api/v1/uploads/9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08.jpg
         filename:
           type: string
-          description: Nom du fichier généré (UUID + extension).
-          example: 550e8400-e29b-41d4-a716-446655440000.jpg
+          description: |
+            Nom du fichier : SHA-256 du contenu + extension (les fichiers envoyés avant cette règle
+            gardent leur nom UUID).
+          example: 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08.jpg
         size:
           type: integer
           description: Taille du fichier écrit sur le disc, en octets.
           example: 245760
+        reused:
+          type: boolean
+          description: "Un fichier identique existait déjà : même URL, rien n'a été réécrit."
+          example: false
 
   # ===========================================================================
   # Paramètres réutilisables
@@ -3447,6 +3453,8 @@ paths:
 
         Accepte un fichier image via multipart/form-data et le sauvegarde sur le serveur.
         Retourne l'URL d'accès au fichier, le nom généré et la taille.
+        Le fichier est nommé d'après le SHA-256 de son contenu : un envoi identique renvoie la même
+        URL (`reused: true`) sans dupliquer le fichier.
 
         **Formats acceptés** : JPEG, PNG, GIF, WebP.
         **Taille maximale** : configurable via `MAX_UPLOAD_SIZE` (défaut 10 Mo).
