@@ -1,30 +1,3 @@
-Idée :
-
-1. Upload image :
-   - Name each file after the SHA-256 hash of its content (<hash>.jpg). If the same image is sent twice, the file already exists and the server returns the same URL. No new table is needed, and existing files keep their names.
-   - Purgé les images plus utilisées
-     - safeguards :
-       - A grace period of about 24 h.
-       - A simulation then confirmation in the admin page, the same flow as import.
-   - Validation du forma :
-     - ratio : A tolerance configurable (say ±10 %) with a message such as "ratio éloigné de 2/3" with selector for bloking or not.
-     - A minimum size check.
-2. Username case insensitive :
-   - A unique index on lower(username), added by a migration that first checks that no two existing accounts differ only by case.
-   - A case-insensitive lookup at login.
-   - The name is displayed exactly as entered.
-3. Type de collection limité à des items type :
-   - A link table between collection types and item types.
-   - Empty list = everything allowed.
-   - The server rejects adding a disallowed item, and the "Ajouter un item" dialog only offers allowed types.
-   - Existing collection already holds items that become disallowed, keep them. Only blocking new additions.
-4. Gestion du volume des items type
-   - A weight / display order on each item type, so the important ones (Series, Manga…) come before the bulky ones (Episode, Volume) in "Répartition par type" and in lists
-   - Revoir items par type
-   - Ajouté lien vers catalogues avec filtre type
-
----
-
 # Lots — branche `evolutions-socle`
 
 Un commit par lot ; contrat d'API d'abord (`api/openapi.yaml` → model → store → handler + test →
