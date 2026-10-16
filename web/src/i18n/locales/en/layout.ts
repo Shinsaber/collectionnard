@@ -12,6 +12,8 @@ const en: typeof fr = {
     collectionTypes: "Collection types",
     importExport: "Import / export",
     externalImport: "External sources",
+    images: "Images",
+    offline: "Offline",
   },
   mainNav: "Main navigation",
   skipToContent: "Skip to content",

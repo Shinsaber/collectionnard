@@ -98,6 +98,12 @@ type Store interface {
 
 	// Item collection membership
 	ListItemCollections(ctx context.Context, userID, itemID uuid.UUID) ([]model.ItemCollectionMembership, error)
+	// ListRelatedItemCollections: items linked to itemID (either direction) that are in
+	// collections of userID, with those collections.
+	ListRelatedItemCollections(ctx context.Context, userID, itemID uuid.UUID) ([]model.RelatedItemCollections, error)
+	// GetOfflineSnapshot: the user's collections, items and entries plus every meta-type
+	// (offline copy of the mobile app).
+	GetOfflineSnapshot(ctx context.Context, userID uuid.UUID) (*model.OfflineSnapshot, error)
 
 	// Tag
 	ListTags(ctx context.Context, search string) ([]model.Tag, error)
@@ -118,4 +124,8 @@ type Store interface {
 	// External sources (matching of the items proposed by a connector)
 	FindItemsByAttribute(ctx context.Context, itemTypeID uuid.UUID, path, values []string, fold bool) ([]model.Item, error)
 	ListRelationsBetween(ctx context.Context, ids []uuid.UUID) ([]model.ItemRelation, error)
+
+	// Uploads: file names (without path) referenced by any attribute (items,
+	// relations, collection items), for the purge of unused images.
+	ReferencedUploads(ctx context.Context) ([]string, error)
 }

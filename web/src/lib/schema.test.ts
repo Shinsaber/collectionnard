@@ -1,15 +1,18 @@
 import { describe, expect, it } from "vitest";
 import fixtures from "../../tests/fixtures/seed-schemas.json";
 import {
+  checkImage,
   defaultImage,
   displayValue,
   enumLabel,
   fieldLabel,
   fieldValue,
   i18nText,
+  imageCategories,
   isImageGallery,
   itemLabel,
   orderedKeys,
+  parseRatio,
   renderLabel,
   typeDescription,
   typeTitle,
@@ -105,6 +108,62 @@ describe("fieldLabel / displayValue / orderedKeys", () => {
 });
 
 describe("galeries", () => {
+  it("lit les contrôles d'une catégorie et ignore les valeurs mal typées", () => {
+    const schema = {
+      properties: {
+        g: {
+          "x-image-categories": {
+            cover: {
+              ratio: "2/3",
+              tolerance: 10,
+              strict: true,
+              min_width: 300,
+            },
+            back: { ratio: "2/3", tolerance: "10", strict: "yes" },
+          },
+        },
+      },
+    } as Schema;
+    expect(imageCategories(schema, "g")).toEqual([
+      {
+        name: "cover",
+        ratio: "2/3",
+        tolerance: 10,
+        strict: true,
+        min_width: 300,
+      },
+      { name: "back", ratio: "2/3" },
+    ]);
+  });
+
+  it("contrôle ratio et taille minimale d'une image", () => {
+    expect(parseRatio("2/3")).toBeCloseTo(0.667, 3);
+    expect(parseRatio("16 / 9")).toBeCloseTo(1.778, 3);
+    expect(parseRatio("1.5")).toBe(1.5);
+    expect(parseRatio("abc")).toBeNaN();
+
+    const cover = { name: "cover", ratio: "2/3", tolerance: 10 };
+    // 700 × 963 : ratio 0,727, écart 9 % → toléré à 10 %, refusé à 5 %.
+    expect(checkImage(cover, 700, 963)).toEqual({ issues: [], block: false });
+    const off = checkImage({ ...cover, tolerance: 5 }, 700, 963);
+    expect(off.block).toBe(false);
+    expect(off.issues).toMatchObject([{ kind: "ratio", expected: "2/3" }]);
+    // Sans tolérance, le ratio n'est pas contrôlé.
+    expect(checkImage({ name: "c", ratio: "2/3" }, 1000, 100).issues).toEqual(
+      [],
+    );
+    // Taille minimale, et refus quand la catégorie est stricte.
+    const small = checkImage(
+      { name: "c", ratio: "1/1", min_width: 500, strict: true },
+      400,
+      400,
+    );
+    expect(small).toEqual({
+      issues: [{ kind: "size", minWidth: 500, minHeight: 0 }],
+      block: true,
+    });
+  });
+
   it("détecte le widget image-gallery et l'image par défaut", () => {
     expect(isImageGallery(series, "images")).toBe(true);
     expect(isImageGallery(series, "title")).toBe(false);

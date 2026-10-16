@@ -22,7 +22,9 @@ import type {
   Item,
   ItemCreate,
   ItemUpdate,
+  OfflineSnapshot,
   ItemRelation,
+  RelatedItemCollections,
   ItemRelationCreate,
   ItemRelationUpdate,
   ItemCollectionMembership,
@@ -45,6 +47,7 @@ import type {
   ExternalPlan,
   ExternalWorkHit,
   ImportReport,
+  UploadPurgeReport,
   UploadResponse,
 } from "./types";
 import { i18n } from "@/i18n";
@@ -266,6 +269,11 @@ export const itemApi = {
     http
       .get<ItemRelation[]>(`/items/${id}/relations`, { params })
       .then((r) => r.data),
+  /** Items liés présents dans mes collections (indicateur de la liste des relations). */
+  relatedCollections: (id: string) =>
+    http
+      .get<RelatedItemCollections[]>(`/items/${id}/relations/collections`)
+      .then((r) => r.data),
   graph: (
     id: string,
     params?: { max_depth?: number; relation_type_ids?: string },
@@ -340,6 +348,12 @@ export const statsApi = {
   get: () => http.get<Stats>("/stats").then((r) => r.data),
 };
 
+// ── Copie hors ligne ───────────────────────────────────────────────────
+export const offlineApi = {
+  /** Mes collections, leurs items et les méta-types, pour la consultation sans réseau. */
+  snapshot: () => http.get<OfflineSnapshot>("/me/offline").then((r) => r.data),
+};
+
 // ── Uploads ───────────────────────────────────────────────────────────
 export const uploadApi = {
   upload: (file: File) => {
@@ -351,6 +365,13 @@ export const uploadApi = {
       })
       .then((r) => r.data);
   },
+  /** Images qu'aucun attribut ne référence (admin) ; `dryRun` liste sans supprimer. */
+  purge: (dryRun: boolean) =>
+    http
+      .post<UploadPurgeReport>("/uploads/purge", null, {
+        params: { dry_run: dryRun },
+      })
+      .then((r) => r.data),
 };
 
 // ── Import / export ───────────────────────────────────────────────────

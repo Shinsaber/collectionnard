@@ -11,11 +11,11 @@ func (s *PgStore) GetStats(ctx context.Context) (*model.Stats, error) {
 
 	// Items by type
 	rows, err := s.pool.Query(ctx,
-		`SELECT it.name, count(i.id)
+		`SELECT it.id, it.name, count(i.id)
 		 FROM item_types it
 		 LEFT JOIN items i ON i.item_type_id = it.id
-		 GROUP BY it.name
-		 ORDER BY it.name`)
+		 GROUP BY it.id
+		 ORDER BY it.display_order, it.name`)
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +23,7 @@ func (s *PgStore) GetStats(ctx context.Context) (*model.Stats, error) {
 
 	for rows.Next() {
 		var ibt model.ItemsByType
-		if err := rows.Scan(&ibt.TypeName, &ibt.Count); err != nil {
+		if err := rows.Scan(&ibt.TypeID, &ibt.TypeName, &ibt.Count); err != nil {
 			return nil, err
 		}
 		stats.ItemsByType = append(stats.ItemsByType, ibt)

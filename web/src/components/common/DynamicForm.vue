@@ -198,6 +198,7 @@ import {
   enumLabel,
   fieldLabel,
   imageCategories,
+  type ImageCategory,
   orderedKeys,
   widgetOf,
 } from "@/lib/schema";
@@ -215,7 +216,7 @@ interface SchemaField {
   minimum?: number;
   maximum?: number;
   widget?: string;
-  imageCategories?: { name: string; ratio: string }[];
+  imageCategories?: ImageCategory[];
 }
 
 const props = defineProps<{

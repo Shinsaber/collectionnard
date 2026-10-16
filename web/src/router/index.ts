@@ -4,6 +4,7 @@ import {
   type RouteLocationNormalized,
 } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import { useOfflineStore } from "@/stores/offline";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -90,6 +91,17 @@ const router = createRouter({
           meta: { admin: true },
         },
         {
+          path: "offline",
+          name: "offline",
+          component: () => import("@/views/OfflineView.vue"),
+        },
+        {
+          path: "admin/images",
+          name: "images",
+          component: () => import("@/views/admin/ImagesView.vue"),
+          meta: { admin: true },
+        },
+        {
           path: "admin/external-import",
           name: "external-import",
           component: () => import("@/views/admin/ExternalImportView.vue"),
@@ -113,6 +125,11 @@ router.beforeEach(async (to) => {
   if (!auth.user) {
     await auth.fetchMe();
     if (!auth.isAuthenticated) return { name: "login" };
+  }
+
+  // Serveur injoignable : seule la copie hors ligne des collections est consultable (lot E5c).
+  if (!useOfflineStore().reachable && to.name !== "offline") {
+    return { name: "offline" };
   }
 
   if (to.meta.admin && !auth.isAdmin) {

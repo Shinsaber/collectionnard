@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -442,6 +443,160 @@ func TestRefreshTokens(t *testing.T) {
 	}
 }
 
+// --- Users ---
+
+func TestUserByUsername_CaseInsensitive(t *testing.T) {
+	for _, name := range []string{"admin", "Admin", "ADMIN"} {
+		u, _, err := s.GetUserByUsername(ctx, name)
+		if err != nil || u.ID != adminUser || u.Username != "admin" {
+			t.Errorf("%s: %+v, %v", name, u, err)
+		}
+	}
+
+	// Migration 004: two accounts differing only by case are refused.
+	u, _ := url.Parse(baseURL)
+	u.Path = "/" + testDBName
+	conn, err := pgx.Connect(ctx, u.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = conn.Close(ctx) }()
+	_, err = conn.Exec(ctx,
+		`INSERT INTO users (username, email, password, role) VALUES ('Shinsaber', 'dup@example.org', 'x', 'user')`)
+	if err == nil || !strings.Contains(err.Error(), "users_username_lower_key") {
+		t.Errorf("expected a unique violation on lower(username), got %v", err)
+	}
+}
+
+// --- Offline snapshot ---
+
+func TestGetOfflineSnapshot(t *testing.T) {
+	snap, err := s.GetOfflineSnapshot(ctx, shinsaberUser)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if snap.User.Username != "shinsaber" || len(snap.ItemTypes) == 0 || len(snap.CollectionTypes) == 0 {
+		t.Fatalf("snapshot head: %+v", snap.User)
+	}
+	cols := map[uuid.UUID]bool{}
+	for _, c := range snap.Collections {
+		if c.UserID != shinsaberUser || c.CollectionType != nil {
+			t.Errorf("collection %+v", c)
+		}
+		cols[c.ID] = true
+	}
+	items := map[uuid.UUID]bool{}
+	for _, it := range snap.Items {
+		if items[it.ID] {
+			t.Errorf("item %s listed twice", it.ID)
+		}
+		items[it.ID] = true
+	}
+	if !cols[colMesDVDs] || !items[itemDVD] || !items[itemSerie] {
+		t.Errorf("expected Mes DVDs, the DVD and the series: %d collections, %d items", len(cols), len(items))
+	}
+	for _, e := range snap.Entries {
+		if !cols[e.CollectionID] || !items[e.ItemID] {
+			t.Errorf("entry outside the snapshot: %+v", e)
+		}
+	}
+	// Admin has no collection in the seed: empty lists, not null.
+	empty, err := s.GetOfflineSnapshot(ctx, adminUser)
+	if err != nil || empty.Collections == nil || empty.Items == nil || empty.Entries == nil || len(empty.Items) != 0 {
+		t.Errorf("admin: %+v, %v", empty, err)
+	}
+}
+
+// --- Relation list badge ---
+
+func TestListRelatedItemCollections(t *testing.T) {
+	// Series → DVD (released_as) ; the DVD is in shinsaber's « Mes DVDs ».
+	got, err := s.ListRelatedItemCollections(ctx, shinsaberUser, itemSerie)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var dvd *model.RelatedItemCollections
+	for i := range got {
+		if got[i].ItemID == itemDVD {
+			dvd = &got[i]
+		}
+	}
+	if dvd == nil || len(dvd.Collections) != 1 || dvd.Collections[0].ID != colMesDVDs ||
+		!strings.Contains(string(dvd.Collections[0].Attributes), `"condition"`) {
+		t.Errorf("shinsaber: %+v", got)
+	}
+	// Another user's collections are not reported.
+	if got, err := s.ListRelatedItemCollections(ctx, adminUser, itemSerie); err != nil || len(got) != 0 {
+		t.Errorf("admin: %+v, %v", got, err)
+	}
+}
+
+// --- Uploads ---
+
+func TestReferencedUploads(t *testing.T) {
+	item, err := s.CreateItem(ctx, model.ItemCreate{ItemTypeID: typeSerie, Attributes: json.RawMessage(`{
+		"title": "Uploads",
+		"images": {"default_image": "/api/v1/uploads/a.jpg", "poster": ["/api/v1/uploads/a.jpg", "http://host/api/v1/uploads/b.png"]}
+	}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = s.DeleteItem(ctx, item.ID) }()
+	names, err := s.ReferencedUploads(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Contains(names, "a.jpg") || !slices.Contains(names, "b.png") || slices.Contains(names, "Uploads") {
+		t.Errorf("referenced uploads: %v", names)
+	}
+	if n := len(slices.Compact(slices.Sorted(slices.Values(names)))); n != len(names) {
+		t.Errorf("duplicates in %v", names)
+	}
+}
+
+// --- Item types: display order ---
+
+func TestItemTypes_DisplayOrder(t *testing.T) {
+	names := func() []string {
+		its, _, err := s.ListItemTypes(ctx, model.Pagination{Page: 1, PerPage: 100})
+		if err != nil {
+			t.Fatal(err)
+		}
+		out := make([]string, len(its))
+		for i, it := range its {
+			out[i] = it.Name
+		}
+		return out
+	}
+	// Seed values (migration 005 / seed.sql): main types first, bulky ones last.
+	want := []string{"Series", "DVD", "Season", "Broadcast", "Episode"}
+	seedOnly := slices.DeleteFunc(names(), func(n string) bool { return !slices.Contains(want, n) })
+	if got := seedOnly; !slices.Equal(got, want) {
+		t.Errorf("list order = %v, want %v", got, want)
+	}
+	stats, err := s.GetStats(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(stats.ItemsByType) == 0 || stats.ItemsByType[0].TypeName != "Series" || stats.ItemsByType[0].TypeID != typeSerie {
+		t.Errorf("stats order: %+v", stats.ItemsByType)
+	}
+
+	created, err := s.CreateItemType(ctx, model.ItemTypeCreate{Name: "Zine", AttributesSchema: []byte(`{"type":"object"}`)})
+	if err != nil || created.DisplayOrder != 100 {
+		t.Fatalf("default display_order: %+v, %v", created, err)
+	}
+	defer func() { _ = s.DeleteItemType(ctx, created.ID) }()
+	first := 1
+	updated, err := s.UpdateItemType(ctx, created.ID, model.ItemTypeUpdate{DisplayOrder: &first})
+	if err != nil || updated.DisplayOrder != 1 || updated.Name != "Zine" {
+		t.Fatalf("update display_order: %+v, %v", updated, err)
+	}
+	if got := names(); got[0] != "Zine" { // other tests may add types (default 100)
+		t.Errorf("after update, list starts with %v", got)
+	}
+}
+
 // --- Stats & tags ---
 
 func TestStatsAndTags(t *testing.T) {
@@ -563,5 +718,22 @@ func TestListItems_AttributeSort(t *testing.T) {
 		SortAttr: &itemquery.Sort{Key: "name", Desc: true}})
 	if err != nil || len(page) != 2 || page[1].ID != itemSaison1 {
 		t.Fatalf("text sort desc: %v %v", ids(page), err)
+	}
+}
+
+func TestCreateUser(t *testing.T) {
+	u, err := s.CreateUser(ctx, "Newcomer", "newcomer@example.org", "hash", "admin")
+	if err != nil || u.Username != "Newcomer" || u.Role != "admin" {
+		t.Fatalf("create: %+v, %v", u, err)
+	}
+	if got, _, err := s.GetUserByUsername(ctx, "newcomer"); err != nil || got.ID != u.ID {
+		t.Errorf("lookup: %+v, %v", got, err)
+	}
+	// Same name in another case, or same email: conflict (migration 004).
+	if _, err := s.CreateUser(ctx, "NEWCOMER", "other@example.org", "hash", "user"); !errors.Is(err, store.ErrConflict) {
+		t.Errorf("case duplicate: %v", err)
+	}
+	if _, err := s.CreateUser(ctx, "other", "newcomer@example.org", "hash", "user"); !errors.Is(err, store.ErrConflict) {
+		t.Errorf("email duplicate: %v", err)
 	}
 }

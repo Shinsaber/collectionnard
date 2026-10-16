@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -143,6 +144,63 @@ func TestAddItemToCollection_Conflict(t *testing.T) {
 	if resp.StatusCode != http.StatusConflict {
 		b, _ := io.ReadAll(resp.Body)
 		t.Fatalf("expected 409, got %d: %s", resp.StatusCode, string(b))
+	}
+}
+
+func TestAddItemToCollection_ItemTypeAllowed(t *testing.T) {
+	col := sampleCollection(testutil.UserID)
+	allowedType, otherType := uuid.New(), uuid.New()
+	ct := *col.CollectionType
+	ct.ItemTypeIDs = []uuid.UUID{allowedType}
+	items := map[uuid.UUID]uuid.UUID{uuid.New(): allowedType, uuid.New(): otherType}
+	added := 0
+	mock := &testutil.MockStore{
+		GetCollectionFn: func(_ context.Context, id uuid.UUID) (*model.Collection, error) {
+			return col, nil
+		},
+		GetCollectionTypeFn: func(_ context.Context, id uuid.UUID) (*model.CollectionType, error) {
+			return &ct, nil
+		},
+		GetItemFn: func(_ context.Context, id uuid.UUID) (*model.Item, error) {
+			if typ, ok := items[id]; ok {
+				return &model.Item{ID: id, ItemTypeID: typ}, nil
+			}
+			return nil, store.ErrNotFound
+		},
+		AddCollectionItemFn: func(_ context.Context, colID uuid.UUID, in model.CollectionItemAdd) (*model.CollectionItem, error) {
+			added++
+			return &model.CollectionItem{CollectionID: colID, ItemID: in.ItemID}, nil
+		},
+	}
+	srv := testutil.NewTestServer(mock)
+	defer srv.Close()
+
+	post := func(itemID uuid.UUID) (int, string) {
+		body, _ := json.Marshal(model.CollectionItemAdd{ItemID: itemID})
+		req, _ := http.NewRequest("POST", srv.URL+"/api/v1/collections/"+col.ID.String()+"/items", bytes.NewReader(body))
+		req.Header = testutil.AuthHeader(testutil.UserToken())
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatalf("request failed: %v", err)
+		}
+		defer resp.Body.Close()
+		b, _ := io.ReadAll(resp.Body)
+		return resp.StatusCode, string(b)
+	}
+	for id, typ := range items {
+		status, body := post(id)
+		switch {
+		case typ == allowedType && status != http.StatusCreated:
+			t.Errorf("allowed type: %d %s", status, body)
+		case typ == otherType && (status != http.StatusUnprocessableEntity || !strings.Contains(body, `"item_type_not_allowed"`)):
+			t.Errorf("other type: %d %s", status, body)
+		}
+	}
+	if status, _ := post(uuid.New()); status != http.StatusNotFound {
+		t.Errorf("unknown item: %d", status)
+	}
+	if added != 1 {
+		t.Errorf("added %d items, want 1", added)
 	}
 }
 

@@ -87,6 +87,10 @@ const en: typeof fr = {
     deleteRelation: "Delete relation",
     noSubRelations: "No outgoing sub-relations.",
     subRelationsUnavailable: "Sub-relations unavailable",
+    inCollections: "In {n} collection | In {n} collections",
+    inCollectionsTitle: "In your collections",
+    inCollectionsLabel: "In your collections: {names}",
+    collectionsUnavailable: "Collection membership unavailable",
   },
   editDialog: {
     editTitle: "Edit item",

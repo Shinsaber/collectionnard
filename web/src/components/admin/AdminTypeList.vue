@@ -12,6 +12,18 @@
         class="cursor-pointer"
         @row-click="(row: AdminTypeRow) => router.push(`${basePath}/${row.id}`)"
       >
+        <ElTableColumn
+          v-if="hasOrder"
+          :label="t('admin.itemTypes.order')"
+          width="90"
+          align="right"
+        >
+          <template #default="{ row }">
+            <span class="font-mono text-[13px] text-muted">{{
+              (row as AdminTypeRow).order
+            }}</span>
+          </template>
+        </ElTableColumn>
         <ElTableColumn :label="t('common.type')" min-width="190">
           <template #default="{ row }">
             <div class="flex flex-col gap-0.5 py-1">
@@ -81,6 +93,12 @@
         >
           <div class="flex min-w-0 flex-1 flex-col gap-0.5">
             <div class="flex items-baseline gap-2">
+              <span
+                v-if="row.order !== undefined"
+                class="font-mono text-xs text-muted"
+                :title="t('admin.itemTypes.displayOrder')"
+                >#{{ row.order }}</span
+              >
               <span class="text-base font-bold">{{ row.title }}</span>
               <span class="truncate font-mono text-xs text-muted">{{
                 row.name
@@ -101,6 +119,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 
@@ -114,9 +133,11 @@ export interface AdminTypeRow {
   /** « 10 champs » ; `summary` détaille (libellés, types source → cible…). */
   countLabel: string;
   summary: string;
+  /** Ordre d'affichage (types d'item seulement). */
+  order?: number;
 }
 
-defineProps<{
+const props = defineProps<{
   rows: AdminTypeRow[];
   loading: boolean;
   /** Liste des types : l'éditeur est `${basePath}/:id`. */
@@ -127,4 +148,6 @@ const emit = defineEmits<{ remove: [row: AdminTypeRow] }>();
 
 const { t } = useI18n();
 const router = useRouter();
+// Colonne « Ordre » pour les seules sortes qui en ont un (types d'item).
+const hasOrder = computed(() => props.rows.some((r) => r.order !== undefined));
 </script>

@@ -4,8 +4,10 @@ package store_test
 
 import (
 	"encoding/json"
+	"errors"
 	"net/url"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -151,7 +153,7 @@ func TestImportCatalog_ValidationErrors(t *testing.T) {
 		model.ExportItem{ID: uuid.New(), ItemTypeID: uuid.New(), Attributes: json.RawMessage(`{}`)},
 	)
 	// a new item type reusing an existing name
-	cat.ItemTypes = append(cat.ItemTypes, model.ExportMetaType{ID: uuid.New(), Name: "Series", AttributesSchema: json.RawMessage(`{"type":"object"}`)})
+	cat.ItemTypes = append(cat.ItemTypes, model.ExportItemType{ExportMetaType: model.ExportMetaType{ID: uuid.New(), Name: "Series", AttributesSchema: json.RawMessage(`{"type":"object"}`)}})
 	// released_as (Series → DVD) used from an episode
 	cat.Relations = append(cat.Relations, model.ExportRelation{
 		ID: uuid.New(), RelationTypeID: rtEditeEn, SourceItemID: itemPilot, TargetItemID: itemDVD,
@@ -307,6 +309,60 @@ func TestImportCollection_Errors(t *testing.T) {
 	file.Collection.CollectionType = model.ExportMetaType{ID: uuid.New(), Name: "Ownership"}
 	if rep, _ = s.ImportCollection(ctx, shinsaberUser, file, true); len(rep.Errors) != 0 {
 		t.Errorf("type by name: %+v", rep)
+	}
+}
+
+// Migration 006: a collection type limited to some item types refuses new items
+// of other types, keeps those already in the collection, and round-trips its list.
+func TestCollectionType_AllowedItemTypes(t *testing.T) {
+	col, err := s.GetCollection(ctx, colMesDVDs) // Ownership, holds the DVD only
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctID := col.CollectionTypeID
+	only := []uuid.UUID{typeSerie}
+	ct, err := s.UpdateCollectionType(ctx, ctID, model.CollectionTypeUpdate{ItemTypeIDs: &only})
+	if err != nil || !slices.Equal(ct.ItemTypeIDs, only) {
+		t.Fatalf("update: %+v, %v", ct, err)
+	}
+	defer func() {
+		none := []uuid.UUID{}
+		if ct, err := s.UpdateCollectionType(ctx, ctID, model.CollectionTypeUpdate{ItemTypeIDs: &none}); err != nil || len(ct.ItemTypeIDs) != 0 {
+			t.Errorf("reset: %+v, %v", ct, err)
+		}
+	}()
+	if got, _ := s.GetCollection(ctx, colMesDVDs); !slices.Equal(got.CollectionType.ItemTypeIDs, only) {
+		t.Errorf("embedded collection type: %+v", got.CollectionType)
+	}
+	unknown := []uuid.UUID{uuid.New()}
+	if _, err := s.UpdateCollectionType(ctx, ctID, model.CollectionTypeUpdate{ItemTypeIDs: &unknown}); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("unknown item type: %v", err)
+	}
+
+	// The DVD already there is kept; the episode is a new entry of a disallowed type.
+	file := collectionFile(t, colMesDVDs)
+	if rep, _ := s.ImportCollection(ctx, shinsaberUser, file, true); len(rep.Errors) != 0 {
+		t.Errorf("existing DVD must be kept: %+v", rep.Errors)
+	}
+	file.Items = append(file.Items, model.CollectionExportItem{ItemID: itemPilot})
+	rep, _ := s.ImportCollection(ctx, shinsaberUser, file, true)
+	if len(rep.Errors) != 1 || !strings.Contains(rep.Errors[0].Message, "not allowed") {
+		t.Errorf("episode must be refused: %+v", rep.Errors)
+	}
+
+	// Catalogue export → import: the list round-trips unchanged.
+	cat, err := s.ExportCatalog(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range cat.CollectionTypes {
+		if c.ID == ctID && !slices.Equal(c.ItemTypeIDs, only) {
+			t.Errorf("export: %+v", c)
+		}
+	}
+	rep, err = s.ImportCatalog(ctx, cat, true)
+	if err != nil || len(rep.Errors) != 0 || rep.Counts[model.EntityCollectionTypes].Updated != 0 {
+		t.Errorf("re-import: %v %+v", err, rep)
 	}
 }
 

@@ -1,15 +1,21 @@
 package main
 
 import (
+	"bufio"
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/shinsaber/colec/internal/dbmigrate"
+	"github.com/shinsaber/colec/internal/store"
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/term"
 )
 
 const dbCommandTimeout = 5 * time.Minute
@@ -94,4 +100,97 @@ func runHashPassword(args []string) int {
 	}
 	fmt.Println(string(hash))
 	return 0
+}
+
+// minPasswordLength is the minimum length accepted by create-user.
+const minPasswordLength = 8
+
+// runCreateUser implements `colec-server create-user <username> <email> [--admin]`:
+// the first account of a production instance (seed disabled), or any later one.
+// The password is typed twice without echo on a terminal, otherwise read from the
+// first line of standard input (scripts: `echo … | colec-server create-user …`).
+func runCreateUser(args []string) int {
+	role := "user"
+	var pos []string
+	for _, a := range args {
+		if a == "--admin" {
+			role = "admin"
+		} else {
+			pos = append(pos, a)
+		}
+	}
+	if len(pos) != 2 || pos[0] == "" || !strings.Contains(pos[1], "@") {
+		fmt.Fprintln(os.Stderr, "usage: colec-server create-user <username> <email> [--admin]")
+		return 2
+	}
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		slog.Error("DATABASE_URL is required")
+		return 1
+	}
+	password, err := readNewPassword()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		slog.Error("bcrypt", "err", err)
+		return 1
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), dbCommandTimeout)
+	defer cancel()
+	pg, err := store.NewPgStore(ctx, databaseURL)
+	if err != nil {
+		slog.Error("database", "err", err)
+		return 1
+	}
+	defer pg.Close()
+	u, err := pg.CreateUser(ctx, pos[0], pos[1], string(hash), role)
+	if errors.Is(err, store.ErrConflict) {
+		fmt.Fprintf(os.Stderr, "username %q or email %q already in use\n", pos[0], pos[1])
+		return 1
+	}
+	if err != nil {
+		slog.Error("create user", "err", err)
+		return 1
+	}
+	fmt.Printf("created %s %q (%s)\n", u.Role, u.Username, u.ID)
+	return 0
+}
+
+func readNewPassword() (string, error) {
+	fd := int(os.Stdin.Fd())
+	var password string
+	if term.IsTerminal(fd) {
+		ask := func(prompt string) (string, error) {
+			fmt.Fprint(os.Stderr, prompt)
+			b, err := term.ReadPassword(fd)
+			fmt.Fprintln(os.Stderr)
+			return string(b), err
+		}
+		p1, err := ask("Password: ")
+		if err != nil {
+			return "", err
+		}
+		p2, err := ask("Confirm password: ")
+		if err != nil {
+			return "", err
+		}
+		if p1 != p2 {
+			return "", errors.New("passwords do not match")
+		}
+		password = p1
+	} else {
+		line, err := bufio.NewReader(os.Stdin).ReadString('\n')
+		if err != nil && !errors.Is(err, io.EOF) {
+			return "", err
+		}
+		password = strings.TrimRight(line, "\r\n")
+	}
+	if len([]rune(password)) < minPasswordLength {
+		return "", fmt.Errorf("password too short (%d characters minimum)", minPasswordLength)
+	}
+	return password, nil
 }

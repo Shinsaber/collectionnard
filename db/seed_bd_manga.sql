@@ -614,3 +614,17 @@ INSERT INTO collection_items (collection_id, item_id, attributes) VALUES
  '{"condition": "very_good", "purchase_price": 6.50, "acquisition_date": "2021-03-10"}'),
 ('f0000000-0000-0000-0000-000000000010', 'e0000000-0000-0000-0000-000000000110',
  '{"condition": "new", "purchase_price": 6.50, "acquisition_date": "2021-03-10"}');
+
+-- Ordre d'affichage des types (migration 005) : principaux d'abord, volumineux ensuite.
+UPDATE item_types t SET display_order = v.o
+FROM (VALUES
+    ('b0000000-0000-0000-0000-000000000012'::uuid, 20),  -- Manga
+    ('b0000000-0000-0000-0000-000000000013'::uuid, 30),  -- Comic
+    ('b0000000-0000-0000-0000-000000000010'::uuid, 40),  -- Universe
+    ('b0000000-0000-0000-0000-000000000011'::uuid, 50),  -- Saga
+    ('b0000000-0000-0000-0000-000000000014'::uuid, 70),  -- Edition
+    ('b0000000-0000-0000-0000-000000000015'::uuid, 110), -- Volume
+    ('b0000000-0000-0000-0000-000000000016'::uuid, 130), -- Person
+    ('b0000000-0000-0000-0000-000000000017'::uuid, 140)  -- Publisher
+) AS v(id, o)
+WHERE t.id = v.id;

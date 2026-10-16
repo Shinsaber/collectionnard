@@ -31,11 +31,30 @@ func (s *PgStore) ExportCatalog(ctx context.Context) (*model.CatalogExport, erro
 	now := time.Now().UTC().Truncate(time.Second)
 	out := &model.CatalogExport{Format: model.CatalogFormat, Version: model.ExportVersion, ExportedAt: &now}
 
-	if out.ItemTypes, err = exportMetaTypes(ctx, tx, "item_types"); err != nil {
+	metas, err := exportMetaTypes(ctx, tx, "item_types")
+	if err != nil {
 		return nil, err
 	}
-	if out.CollectionTypes, err = exportMetaTypes(ctx, tx, "collection_types"); err != nil {
+	orders, err := exportDisplayOrders(ctx, tx)
+	if err != nil {
 		return nil, err
+	}
+	out.ItemTypes = make([]model.ExportItemType, len(metas))
+	for i, m := range metas {
+		o := orders[m.ID]
+		out.ItemTypes[i] = model.ExportItemType{ExportMetaType: m, DisplayOrder: &o}
+	}
+	cts, err := exportMetaTypes(ctx, tx, "collection_types")
+	if err != nil {
+		return nil, err
+	}
+	allowed, err := exportJunction(ctx, tx, "collection_type_item_types")
+	if err != nil {
+		return nil, err
+	}
+	out.CollectionTypes = make([]model.ExportCollectionType, len(cts))
+	for i, ct := range cts {
+		out.CollectionTypes[i] = model.ExportCollectionType{ExportMetaType: ct, ItemTypeIDs: nonNil(allowed[ct.ID])}
 	}
 	rts, err := exportMetaTypes(ctx, tx, "relation_types")
 	if err != nil {
@@ -111,12 +130,39 @@ func exportMetaTypes(ctx context.Context, tx pgx.Tx, table string) ([]model.Expo
 	})
 }
 
-// exportJunction reads relation_type_sources / relation_type_targets.
+// exportDisplayOrders reads item_types.display_order by type.
+func exportDisplayOrders(ctx context.Context, tx pgx.Tx) (map[uuid.UUID]int, error) {
+	rows, err := tx.Query(ctx, `SELECT id, display_order FROM item_types`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := map[uuid.UUID]int{}
+	for rows.Next() {
+		var id uuid.UUID
+		var o int
+		if err := rows.Scan(&id, &o); err != nil {
+			return nil, err
+		}
+		out[id] = o
+	}
+	return out, rows.Err()
+}
+
+// junctionOwners whitelists the meta-type → item type junction tables and their owner column.
+var junctionOwners = map[string]string{
+	"relation_type_sources":      "relation_type_id",
+	"relation_type_targets":      "relation_type_id",
+	"collection_type_item_types": "collection_type_id",
+}
+
+// exportJunction reads a junction table of junctionOwners, by owner.
 func exportJunction(ctx context.Context, tx pgx.Tx, table string) (map[uuid.UUID][]uuid.UUID, error) {
-	if table != "relation_type_sources" && table != "relation_type_targets" {
+	owner, ok := junctionOwners[table]
+	if !ok {
 		return nil, fmt.Errorf("unknown junction table %q", table)
 	}
-	rows, err := tx.Query(ctx, `SELECT relation_type_id, item_type_id FROM `+table+` ORDER BY relation_type_id, item_type_id`)
+	rows, err := tx.Query(ctx, `SELECT `+owner+`, item_type_id FROM `+table+` ORDER BY `+owner+`, item_type_id`)
 	if err != nil {
 		return nil, err
 	}
@@ -209,10 +255,10 @@ func (s *PgStore) ImportCatalog(ctx context.Context, cat *model.CatalogExport, d
 	im := &importer{s: s, tx: tx, rep: rep}
 	steps := []func(context.Context) error{
 		func(ctx context.Context) error {
-			return im.metaTypes(ctx, model.EntityItemTypes, "item_types", cat.ItemTypes)
+			return im.itemTypes(ctx, cat.ItemTypes)
 		},
 		func(ctx context.Context) error {
-			return im.metaTypes(ctx, model.EntityCollectionTypes, "collection_types", cat.CollectionTypes)
+			return im.collectionTypes(ctx, cat.CollectionTypes)
 		},
 		func(ctx context.Context) error { return im.relationTypes(ctx, cat.RelationTypes) },
 		func(ctx context.Context) error { return im.items(ctx, cat.Items) },
@@ -308,30 +354,77 @@ func emptyObject(raw json.RawMessage) json.RawMessage {
 	return raw
 }
 
-func (im *importer) metaTypes(ctx context.Context, entity, table string, list []model.ExportMetaType) error {
-	if !metaTables[table] {
-		return fmt.Errorf("unknown meta-type table %q", table)
-	}
-	sql := fmt.Sprintf(`
-		INSERT INTO %[1]s (id, name, description, attributes_schema) VALUES ($1, $2, $3, $4)
+// collectionTypes upserts the collection types; item_type_ids absent keeps the stored
+// list, an empty array allows every item type.
+func (im *importer) collectionTypes(ctx context.Context, list []model.ExportCollectionType) error {
+	const sql = `
+		INSERT INTO collection_types (id, name, description, attributes_schema) VALUES ($1, $2, $3, $4)
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name, description = EXCLUDED.description,
 			attributes_schema = EXCLUDED.attributes_schema
-		WHERE (%[1]s.name, %[1]s.description, %[1]s.attributes_schema)
+		WHERE (collection_types.name, collection_types.description, collection_types.attributes_schema)
 			IS DISTINCT FROM (EXCLUDED.name, EXCLUDED.description, EXCLUDED.attributes_schema)
-		RETURNING (xmax = 0)`, table)
-	for i, m := range list {
-		o, ok, err := im.row(ctx, entity, i, m.ID, func(tx pgx.Tx) (outcome, error) {
-			if err := checkMeta(m); err != nil {
+		RETURNING (xmax = 0)`
+	for i, ct := range list {
+		o, ok, err := im.row(ctx, model.EntityCollectionTypes, i, ct.ID, func(tx pgx.Tx) (outcome, error) {
+			if err := checkMeta(ct.ExportMetaType); err != nil {
 				return 0, err
 			}
-			return upsert(ctx, tx, sql, m.ID, m.Name, m.Description, emptyObject(m.AttributesSchema))
+			o, err := upsert(ctx, tx, sql, ct.ID, ct.Name, ct.Description, emptyObject(ct.AttributesSchema))
+			if err != nil || ct.ItemTypeIDs == nil {
+				return o, err
+			}
+			current, err := uuidColumn(ctx, tx,
+				`SELECT item_type_id FROM collection_type_item_types WHERE collection_type_id = $1`, ct.ID)
+			if err != nil || sameUUIDs(current, ct.ItemTypeIDs) {
+				return o, err
+			}
+			if err := setCollectionTypeItemTypes(ctx, tx, ct.ID, ct.ItemTypeIDs); err != nil {
+				if errors.Is(err, ErrNotFound) {
+					return 0, rowError("item_type_ids: unknown item type")
+				}
+				return 0, err
+			}
+			if o == unchanged {
+				o = updated
+			}
+			return o, nil
 		})
 		if err != nil {
 			return err
 		}
 		if ok {
-			o.count(im.rep.Counts[entity])
+			o.count(im.rep.Counts[model.EntityCollectionTypes])
+		}
+	}
+	return nil
+}
+
+// itemTypes upserts the item types; an absent display_order keeps the stored one (100 if new).
+func (im *importer) itemTypes(ctx context.Context, list []model.ExportItemType) error {
+	const sql = `
+		INSERT INTO item_types (id, name, description, attributes_schema, display_order)
+		VALUES ($1, $2, $3, $4, COALESCE($5, 100))
+		ON CONFLICT (id) DO UPDATE SET
+			name = EXCLUDED.name, description = EXCLUDED.description,
+			attributes_schema = EXCLUDED.attributes_schema,
+			display_order = COALESCE($5, item_types.display_order)
+		WHERE (item_types.name, item_types.description, item_types.attributes_schema, item_types.display_order)
+			IS DISTINCT FROM (EXCLUDED.name, EXCLUDED.description, EXCLUDED.attributes_schema,
+				COALESCE($5, item_types.display_order))
+		RETURNING (xmax = 0)`
+	for i, it := range list {
+		o, ok, err := im.row(ctx, model.EntityItemTypes, i, it.ID, func(tx pgx.Tx) (outcome, error) {
+			if err := checkMeta(it.ExportMetaType); err != nil {
+				return 0, err
+			}
+			return upsert(ctx, tx, sql, it.ID, it.Name, it.Description, emptyObject(it.AttributesSchema), it.DisplayOrder)
+		})
+		if err != nil {
+			return err
+		}
+		if ok {
+			o.count(im.rep.Counts[model.EntityItemTypes])
 		}
 	}
 	return nil

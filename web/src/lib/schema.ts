@@ -170,22 +170,103 @@ export function isImageGallery(
   return widgetOf(schema, key) === "image-gallery";
 }
 
+/**
+ * Catégorie d'une galerie (`x-image-categories`). Contrôles facultatifs à l'envoi :
+ * `tolerance` (écart de ratio permis, en %), `min_width` / `min_height` (pixels) ;
+ * `strict` refuse l'image en défaut, sinon l'envoi se fait avec un avertissement.
+ */
+export interface ImageCategory {
+  name: string;
+  ratio: string;
+  tolerance?: number;
+  strict?: boolean;
+  min_width?: number;
+  min_height?: number;
+}
+
+/** Lecture d'une entrée de `x-image-categories` (champs inconnus ou mal typés ignorés). */
+export function parseImageCategory(name: string, raw: unknown): ImageCategory {
+  const v = (raw && typeof raw === "object" ? raw : {}) as Record<
+    string,
+    unknown
+  >;
+  const cat: ImageCategory = {
+    name,
+    ratio: typeof v.ratio === "string" && v.ratio ? v.ratio : "1/1",
+  };
+  for (const k of ["tolerance", "min_width", "min_height"] as const) {
+    if (typeof v[k] === "number" && v[k] >= 0) cat[k] = v[k];
+  }
+  if (v.strict === true) cat.strict = true;
+  return cat;
+}
+
 /** Catégories d'une galerie (`x-image-categories`), format objet ou tableau historique. */
 export function imageCategories(
   schema: Schema | null | undefined,
   key: string,
-): { name: string; ratio: string }[] {
+): ImageCategory[] {
   const raw = properties(schema)[key]?.["x-image-categories"];
   if (!raw) return [];
   if (Array.isArray(raw)) {
     return (raw as string[]).map((name) => ({ name, ratio: "1/1" }));
   }
   if (typeof raw === "object") {
-    return Object.entries(raw as Record<string, { ratio?: string }>).map(
-      ([name, v]) => ({ name, ratio: v?.ratio ?? "1/1" }),
+    return Object.entries(raw as Record<string, unknown>).map(([name, v]) =>
+      parseImageCategory(name, v),
     );
   }
   return [];
+}
+
+/** Ratio CSS (« 2/3 », « 16 / 9 », « 1.5 ») en nombre largeur / hauteur ; NaN si illisible. */
+export function parseRatio(ratio: string): number {
+  const [w, h = "1"] = ratio.split("/").map((s) => s.trim());
+  const r = Number(w) / Number(h);
+  return Number.isFinite(r) && r > 0 ? r : NaN;
+}
+
+export type ImageIssue =
+  | {
+      kind: "ratio";
+      expected: string;
+      actual: number;
+      deviation: number;
+      tolerance: number;
+    }
+  | { kind: "size"; minWidth: number; minHeight: number };
+
+/**
+ * Contrôle d'une image de `width` × `height` px pour sa catégorie : écart de ratio au-delà de
+ * `tolerance` (pas de contrôle sans `tolerance`), taille sous `min_width` / `min_height`.
+ * `block` : la catégorie est `strict` et l'image a au moins un défaut.
+ */
+export function checkImage(
+  cat: ImageCategory,
+  width: number,
+  height: number,
+): { issues: ImageIssue[]; block: boolean } {
+  const issues: ImageIssue[] = [];
+  const expected = parseRatio(cat.ratio);
+  if (cat.tolerance !== undefined && !Number.isNaN(expected) && height > 0) {
+    const actual = width / height;
+    const deviation = Math.abs(actual / expected - 1) * 100;
+    if (deviation > cat.tolerance) {
+      issues.push({
+        kind: "ratio",
+        expected: cat.ratio,
+        actual,
+        deviation,
+        tolerance: cat.tolerance,
+      });
+    }
+  }
+  const minWidth = cat.min_width ?? 0;
+  const minHeight = cat.min_height ?? 0;
+  if (width < minWidth || height < minHeight) {
+    issues.push({ kind: "size", minWidth, minHeight });
+  }
+  return { issues, block: !!cat.strict && issues.length > 0 };
 }
 
 /**

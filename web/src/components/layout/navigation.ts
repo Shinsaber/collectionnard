@@ -10,7 +10,10 @@ export const NAV_ICONS = {
   itemTypes: "M12 2l9 5v10l-9 5-9-5V7zM12 12l9-5M12 12v10M12 12L3 7",
   relationTypes: "M4 12h16M14 6l6 6-6 6M10 6l-6 6 6 6",
   collectionTypes: "M3 12V4h8l10 10-8 8zM7.5 7.5h.01",
+  offline:
+    "M3 3l18 18M8.6 8.6A5 5 0 0 0 7 18h10.6M20.4 16.4A4 4 0 0 0 18 9a6 6 0 0 0-7.7-3.8",
   importExport: "M12 3v12M7 10l5 5 5-5M4 21h16",
+  images: "M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15.5 9a1.5 1.5 0 1 0 0 .01",
   external:
     "M7 18a5 5 0 0 1-.6-9.96A6 6 0 0 1 18 9a4 4 0 0 1 0 9zM12 11v6M9 14l3 3 3-3",
   /** Graphe d'un item (hors navigation, même jeu de tracés). */
@@ -48,6 +51,7 @@ export function useNavigation() {
       label: t("layout.nav.collections"),
       icon: "collections",
     },
+    { to: "/offline", label: t("layout.nav.offline"), icon: "offline" },
   ]);
 
   /** Onglets mobiles : libellés courts (le 4ᵉ onglet, « Plus », ouvre une feuille). */
@@ -87,6 +91,7 @@ export function useNavigation() {
       label: t("layout.nav.externalImport"),
       icon: "external",
     },
+    { to: "/admin/images", label: t("layout.nav.images"), icon: "images" },
   ]);
 
   return { mainLinks, tabLinks, adminLinks };

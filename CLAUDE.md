@@ -37,6 +37,8 @@ des messages techniques en anglais. Ajouter une langue : `Collectionnard.md` § 
 
 - Les items forment un **graphe orienté libre** : un même nœud peut être atteint par plusieurs
   chemins (ex. Épisode via Saison _et_ via DVD). Ne jamais modéliser en arbre strict.
+- Un `CollectionType` peut limiter les types d'item de ses collections (`item_type_ids`, table
+  `collection_type_item_types` ; vide = tous). Seuls les nouveaux ajouts sont contrôlés.
 - Un `RelationType` a **plusieurs** types source et cible possibles (tables de jonction
   `relation_type_sources` / `relation_type_targets`, champs `source_item_type_ids` /
   `target_item_type_ids`). Le TODO « arrays » de `les.collection.md` est donc déjà traité.
@@ -49,7 +51,7 @@ des messages techniques en anglais. Ajouter une langue : `Collectionnard.md` § 
 
 `x-label` (gabarit du libellé d'une instance : `"{number}. {title}"` — Go `internal/label`, TS
 `web/src/lib/schema.ts`, à garder alignés), `x-order` (ordre des champs), `x-labels` (`{fr:{…}, en:{…}}`),
-`x-widget` (`image-gallery`, `i18n-text`), `x-image-categories` (`{poster:{ratio:"2/3"}}`), `x-title` / `x-description`
+`x-widget` (`image-gallery`, `i18n-text`), `x-image-categories` (`{poster:{ratio:"2/3", tolerance?, min_width?, min_height?, strict?}}`, contrôles à l'envoi dans `ImageGalleryField` via `checkImage`), `x-title` / `x-description`
 (nom et description affichés du méta-type par langue, repli sur `name` / `description`), `x-enum-labels` (propriété :
 `{fr:{tv:"Télévision"}}`). Pas de widget
 `slider` : le curseur est automatique quand `minimum` **et** `maximum` sont définis.
@@ -114,7 +116,9 @@ docker compose down -v && docker compose up --build   # repart d'une base vide (
 ```
 
 Comptes de dev (seed) : `admin` / `admin` (rôle admin), `shinsaber` / `shinsaber` (rôle user).
-Nouveau compte : `go run . hash-password <mdp>` puis `INSERT INTO users …`.
+Nouveau compte : `go run . create-user <nom> <email> [--admin]` (mot de passe demandé).
+Production : images publiées par la CI sur ghcr.io (job `images`, tags `v*` et `main`), `docker-compose.prod.yml`
+(sans seed) — voir README « Mise en production ».
 
 ## Règles de travail
 

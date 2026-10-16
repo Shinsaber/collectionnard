@@ -74,6 +74,7 @@
       v-model:visible="addVisible"
       :collection-id="id"
       :schema="schema"
+      :allowed-type-ids="collection.collection_type?.item_type_ids"
       @added="afterChange"
     />
 

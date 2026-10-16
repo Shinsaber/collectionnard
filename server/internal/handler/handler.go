@@ -73,12 +73,12 @@ func (h *Handler) Router() chi.Router {
 			return
 		}
 		// Only serve files with allowed extensions
-		ext := strings.ToLower(filepath.Ext(name))
-		switch ext {
-		case ".jpg", ".jpeg", ".png", ".gif", ".webp":
-			// ok
-		default:
+		if !servedImageExt(name) {
 			http.NotFound(w, r)
+			return
+		}
+		if width := r.URL.Query().Get("w"); width != "" {
+			h.serveThumbnail(w, r, name, width)
 			return
 		}
 		http.ServeFile(w, r, filepath.Join(string(uploadsDir), name)) //nolint:gosec // name sans "/" ni "..", extension en liste blanche (ci-dessus)
@@ -89,6 +89,7 @@ func (h *Handler) Router() chi.Router {
 		r.Use(h.Auth.Authenticate)
 
 		r.Get("/api/v1/auth/me", h.GetCurrentUser)
+		r.Get("/api/v1/me/offline", h.GetOfflineSnapshot)
 
 		// Read endpoints (all authenticated users)
 		r.Get("/api/v1/item-types", h.ListItemTypes)
@@ -103,6 +104,7 @@ func (h *Handler) Router() chi.Router {
 		r.Get("/api/v1/items/{id}/relations", h.ListItemRelations)
 		r.Get("/api/v1/items/{id}/graph", h.GetItemGraph)
 		r.Get("/api/v1/items/{id}/collections", h.ListItemCollections)
+		r.Get("/api/v1/items/{id}/relations/collections", h.ListRelatedItemCollections)
 		r.Get("/api/v1/relations/{id}", h.GetRelation)
 		r.Get("/api/v1/tags", h.ListTags)
 		r.Get("/api/v1/stats", h.GetStats)
@@ -154,6 +156,7 @@ func (h *Handler) Router() chi.Router {
 			r.Delete("/api/v1/relations/{id}", h.DeleteRelation)
 
 			r.Post("/api/v1/uploads", h.UploadFile)
+			r.Post("/api/v1/uploads/purge", h.PurgeUploads)
 		})
 	})
 

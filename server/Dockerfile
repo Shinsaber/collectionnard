@@ -1,11 +1,14 @@
 # Contexte de build : la racine du dépôt (voir docker-compose.yml), pour embarquer db/.
-FROM golang:1.27-alpine AS builder
+# Multi-architecture (CI : linux/amd64 et linux/arm64) : le binaire est compilé sur la plateforme
+# de build pour la cible (GOOS/GOARCH), sans émulation ; seule l'image finale est par architecture.
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine AS builder
+ARG TARGETOS TARGETARCH
 
 WORKDIR /src
 COPY server/go.mod server/go.sum ./
 RUN go mod download
 COPY server/ ./
-RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /colec-server .
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w" -o /colec-server .
 
 FROM alpine:3.22
 RUN apk add --no-cache ca-certificates tzdata \

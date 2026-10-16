@@ -28,6 +28,11 @@ export default {
     removeN: "Supprimer l'image {n} de {category}",
     file: "Fichier image pour {category}",
     uploadFailed: "Envoi de l'image impossible",
+    refused: "Image refusée",
+    warned: "Image ajoutée, mais : {details}",
+    ratioOff:
+      "ratio {actual} au lieu de {expected} (écart {deviation} %, toléré {tolerance} %)",
+    tooSmall: "{width} × {height} px, minimum {min} px",
   },
   builder: {
     empty:
@@ -86,6 +91,13 @@ export default {
     categoryRatioN: "Ratio de la catégorie {n}",
     categoryRemoveN: "Supprimer la catégorie {n}",
     addCategory: "Ajouter une catégorie",
+    categoryChecks: "Contrôles à l'envoi de la catégorie {n}",
+    tolerance: "Écart de ratio toléré (%)",
+    minWidth: "Largeur min. (px)",
+    minHeight: "Hauteur min. (px)",
+    strict: "Refuser l'image hors contrôles",
+    checksHelp:
+      "Facultatif. Sans écart toléré, le ratio n'est pas contrôlé. Sans « Refuser », une image hors contrôles est ajoutée avec un avertissement.",
     imageGalleryHelp:
       "Génère un objet avec un tableau d'URLs par catégorie et un sélecteur d'image par défaut. Le ratio est au format CSS (ex. 2/3, 16/9, 3/1).",
     itemsType: "Type des éléments",

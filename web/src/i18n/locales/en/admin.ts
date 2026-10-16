@@ -28,6 +28,10 @@ const en: typeof fr = {
     title: "Item types",
     schemaFields: "Schema fields",
     namePlaceholder: "e.g. Series, Episode, DVD…",
+    displayOrder: "Display order",
+    order: "Order",
+    displayOrderHelp:
+      "Lower comes first (lists, selectors, breakdown by type); ties are sorted by name. Default: 100.",
   },
   relationTypes: {
     title: "Relation types",
@@ -46,6 +50,10 @@ const en: typeof fr = {
     title: "Collection types",
     contextFields: "Contextual fields",
     namePlaceholder: "e.g. Ownership, Watching, Wishlist…",
+    allowedItemTypes: "Allowed item types",
+    allowedItemTypesPlaceholder: "All types",
+    allowedItemTypesHelp:
+      "Empty: every type is allowed. Items already in a collection stay when the list changes; only new additions are checked.",
   },
   importExport: {
     title: "Catalog import / export",
@@ -89,6 +97,22 @@ const en: typeof fr = {
       relations: "Relations",
       collection: "Collection",
     },
+  },
+  images: {
+    title: "Images",
+    unusedTitle: "Unused images",
+    unusedHelp:
+      "Uploaded images that no item, relation or collection item uses any more. Those younger than {hours} h are kept: an image is uploaded as soon as it is chosen, before the form is saved.",
+    search: "Search",
+    none: "No unused image.",
+    found: "{n} unused image ({size}) | {n} unused images ({size})",
+    kept: "Kept: {referenced} in use, {recent} recent.",
+    delete: "Delete {n} image | Delete {n} images",
+    confirm:
+      "Permanently delete {n} unused image ({size})? | Permanently delete {n} unused images ({size})?",
+    deleted: "{n} image deleted | {n} images deleted",
+    modified: "Modified on {date}",
+    failed: "Cannot look for images",
   },
   external: {
     title: "External sources — Comics / Manga",

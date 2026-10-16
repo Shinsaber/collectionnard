@@ -51,6 +51,7 @@ type ItemType struct {
 	Name             string          `json:"name"`
 	Description      *string         `json:"description,omitempty"`
 	AttributesSchema json.RawMessage `json:"attributes_schema"`
+	DisplayOrder     int             `json:"display_order"`
 	CreatedAt        time.Time       `json:"created_at"`
 	UpdatedAt        time.Time       `json:"updated_at"`
 }
@@ -59,12 +60,14 @@ type ItemTypeCreate struct {
 	Name             string          `json:"name"`
 	Description      *string         `json:"description,omitempty"`
 	AttributesSchema json.RawMessage `json:"attributes_schema"`
+	DisplayOrder     *int            `json:"display_order,omitempty"`
 }
 
 type ItemTypeUpdate struct {
 	Name             *string         `json:"name,omitempty"`
 	Description      *string         `json:"description,omitempty"`
 	AttributesSchema json.RawMessage `json:"attributes_schema,omitempty"`
+	DisplayOrder     *int            `json:"display_order,omitempty"`
 }
 
 // ---------------------------------------------------------------------------
@@ -109,20 +112,25 @@ type CollectionType struct {
 	Name             string          `json:"name"`
 	Description      *string         `json:"description,omitempty"`
 	AttributesSchema json.RawMessage `json:"attributes_schema"`
-	CreatedAt        time.Time       `json:"created_at"`
-	UpdatedAt        time.Time       `json:"updated_at"`
+	// ItemTypeIDs: item types allowed in its collections (empty = every type).
+	ItemTypeIDs []uuid.UUID `json:"item_type_ids"`
+	CreatedAt   time.Time   `json:"created_at"`
+	UpdatedAt   time.Time   `json:"updated_at"`
 }
 
 type CollectionTypeCreate struct {
 	Name             string          `json:"name"`
 	Description      *string         `json:"description,omitempty"`
 	AttributesSchema json.RawMessage `json:"attributes_schema,omitempty"`
+	ItemTypeIDs      []uuid.UUID     `json:"item_type_ids,omitempty"`
 }
 
 type CollectionTypeUpdate struct {
 	Name             *string         `json:"name,omitempty"`
 	Description      *string         `json:"description,omitempty"`
 	AttributesSchema json.RawMessage `json:"attributes_schema,omitempty"`
+	// ItemTypeIDs: nil keeps the list, an empty array allows every type.
+	ItemTypeIDs *[]uuid.UUID `json:"item_type_ids,omitempty"`
 }
 
 // ---------------------------------------------------------------------------
@@ -228,6 +236,43 @@ type CollectionItemUpdate struct {
 	Attributes json.RawMessage `json:"attributes"`
 }
 
+// OfflineEntry: an item of one of the user's collections, with its contextual attributes.
+type OfflineEntry struct {
+	CollectionID uuid.UUID       `json:"collection_id"`
+	ItemID       uuid.UUID       `json:"item_id"`
+	Attributes   json.RawMessage `json:"attributes"`
+	AddedAt      time.Time       `json:"added_at"`
+}
+
+// OfflineSnapshot (GET /me/offline): everything the mobile app keeps to show the
+// user's collections without network. Items are listed once, even when they are in
+// several collections; the meta-types carry the schemas used for display.
+type OfflineSnapshot struct {
+	GeneratedAt     time.Time        `json:"generated_at"`
+	User            User             `json:"user"`
+	ItemTypes       []ItemType       `json:"item_types"`
+	CollectionTypes []CollectionType `json:"collection_types"`
+	Collections     []Collection     `json:"collections"`
+	Items           []Item           `json:"items"`
+	Entries         []OfflineEntry   `json:"entries"`
+}
+
+// RelatedCollection: a collection holding a linked item, with the item's
+// contextual attributes there (read with the CollectionType schema).
+type RelatedCollection struct {
+	ID               uuid.UUID       `json:"id"`
+	Name             string          `json:"name"`
+	CollectionTypeID uuid.UUID       `json:"collection_type_id"`
+	Attributes       json.RawMessage `json:"attributes"`
+}
+
+// RelatedItemCollections: an item linked to a given item, and the collections
+// of the current user that contain it (GET /items/{id}/relations/collections).
+type RelatedItemCollections struct {
+	ItemID      uuid.UUID           `json:"item_id"`
+	Collections []RelatedCollection `json:"collections"`
+}
+
 // ItemCollectionMembership represents a collection that contains a given item,
 // along with the contextual attributes of the membership.
 type ItemCollectionMembership struct {
@@ -274,7 +319,27 @@ type GraphResponse struct {
 type UploadResponse struct {
 	URL      string `json:"url"`
 	Filename string `json:"filename"`
-	Size     int64  `json:"size"` // octets réellement écrits
+	Size     int64  `json:"size"`   // octets réellement écrits
+	Reused   bool   `json:"reused"` // fichier identique déjà présent : même URL, rien de réécrit
+}
+
+// UploadFileInfo describes a stored upload (purge report).
+type UploadFileInfo struct {
+	Filename   string    `json:"filename"`
+	Size       int64     `json:"size"`
+	ModifiedAt time.Time `json:"modified_at"`
+}
+
+// UploadPurgeReport is returned by POST /uploads/purge: the unused files
+// (deleted unless dry_run), and what was kept.
+type UploadPurgeReport struct {
+	DryRun     bool             `json:"dry_run"`
+	Applied    bool             `json:"applied"`
+	Files      []UploadFileInfo `json:"files"`
+	TotalSize  int64            `json:"total_size"`
+	Referenced int              `json:"referenced"` // fichiers encore utilisés
+	Recent     int              `json:"recent"`     // inutilisés mais dans le délai de grâce
+	GraceHours int              `json:"grace_hours"`
 }
 
 // ---------------------------------------------------------------------------
@@ -282,8 +347,9 @@ type UploadResponse struct {
 // ---------------------------------------------------------------------------
 
 type ItemsByType struct {
-	TypeName string `json:"type_name"`
-	Count    int    `json:"count"`
+	TypeID   uuid.UUID `json:"type_id"`
+	TypeName string    `json:"type_name"`
+	Count    int       `json:"count"`
 }
 
 type Stats struct {

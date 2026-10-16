@@ -1,4 +1,5 @@
 // Types et constantes partagés par SchemaBuilder.vue (coquille) et SchemaFieldCard.vue (un champ).
+import { parseImageCategory, type ImageCategory } from "@/lib/schema";
 
 /** Options d'affichage du builder : chaque drapeau montre ou cache une contrainte. */
 export interface SchemaBuilderFeatures {
@@ -78,7 +79,7 @@ export interface SchemaField {
   maxItems?: number | null;
   uniqueItems?: boolean | null;
   // image-gallery
-  imageCategories?: { name: string; ratio: string }[] | null;
+  imageCategories?: ImageCategory[] | null;
   /** Mots-clés de `items` hors `type` / `enum` (tableau d'objets…), restitués tels quels. */
   itemsExtra?: Record<string, unknown> | null;
   /** Mots-clés non gérés par le builder (futurs x-*, default sur un objet…), restitués tels quels. */
@@ -206,14 +207,12 @@ export function parseEnum(value: string): string[] | null {
   return items.length > 0 ? items : null;
 }
 
-/** `x-image-categories` : format objet `{poster: {ratio}}` ou tableau historique de noms. */
-export function parseImageCategories(
-  raw: unknown,
-): { name: string; ratio: string }[] | null {
+/** `x-image-categories` : format objet `{poster: {ratio, tolerance…}}` ou tableau historique de noms. */
+export function parseImageCategories(raw: unknown): ImageCategory[] | null {
   if (!raw) return null;
   if (typeof raw === "object" && !Array.isArray(raw)) {
-    return Object.entries(raw as Record<string, { ratio?: string }>).map(
-      ([name, v]) => ({ name, ratio: v?.ratio ?? "1/1" }),
+    return Object.entries(raw as Record<string, unknown>).map(([name, v]) =>
+      parseImageCategory(name, v),
     );
   }
   if (Array.isArray(raw)) {

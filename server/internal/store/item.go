@@ -32,7 +32,7 @@ func (s *PgStore) ListItems(ctx context.Context, pg model.Pagination, f ItemFilt
 
 	query := fmt.Sprintf(`
 		SELECT i.id, i.item_type_id, i.attributes, i.created_at, i.updated_at,
-		       it.id, it.name, it.description, it.attributes_schema, it.created_at, it.updated_at
+		       it.id, it.name, it.description, it.attributes_schema, it.display_order, it.created_at, it.updated_at
 		FROM items i
 		JOIN item_types it ON it.id = i.item_type_id
 		WHERE %s
@@ -51,7 +51,7 @@ func (s *PgStore) ListItems(ctx context.Context, pg model.Pagination, f ItemFilt
 		var it model.ItemType
 		if err := rows.Scan(
 			&item.ID, &item.ItemTypeID, &item.Attributes, &item.CreatedAt, &item.UpdatedAt,
-			&it.ID, &it.Name, &it.Description, &it.AttributesSchema, &it.CreatedAt, &it.UpdatedAt,
+			&it.ID, &it.Name, &it.Description, &it.AttributesSchema, &it.DisplayOrder, &it.CreatedAt, &it.UpdatedAt,
 		); err != nil {
 			return nil, 0, err
 		}
@@ -83,13 +83,13 @@ func (s *PgStore) GetItem(ctx context.Context, id uuid.UUID) (*model.Item, error
 	var it model.ItemType
 	err := s.pool.QueryRow(ctx,
 		`SELECT i.id, i.item_type_id, i.attributes, i.created_at, i.updated_at,
-		        it.id, it.name, it.description, it.attributes_schema, it.created_at, it.updated_at
+		        it.id, it.name, it.description, it.attributes_schema, it.display_order, it.created_at, it.updated_at
 		 FROM items i
 		 JOIN item_types it ON it.id = i.item_type_id
 		 WHERE i.id = $1`, id,
 	).Scan(
 		&item.ID, &item.ItemTypeID, &item.Attributes, &item.CreatedAt, &item.UpdatedAt,
-		&it.ID, &it.Name, &it.Description, &it.AttributesSchema, &it.CreatedAt, &it.UpdatedAt,
+		&it.ID, &it.Name, &it.Description, &it.AttributesSchema, &it.DisplayOrder, &it.CreatedAt, &it.UpdatedAt,
 	)
 	if err != nil {
 		if err == pgx.ErrNoRows {

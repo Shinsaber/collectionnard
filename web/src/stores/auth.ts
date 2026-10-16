@@ -8,6 +8,9 @@ import {
   setTokens,
 } from "@/api/tokens";
 import type { User, LoginRequest } from "@/api/types";
+import { clearOfflineData } from "@/lib/offlineDb";
+import { useOfflineStore } from "@/stores/offline";
+import axios from "axios";
 
 export const useAuthStore = defineStore("auth", () => {
   const user = ref<User | null>(null);
@@ -30,7 +33,16 @@ export const useAuthStore = defineStore("auth", () => {
     try {
       user.value = await authApi.me();
       token.value = getAccessToken();
-    } catch {
+    } catch (e) {
+      // Pas de réseau : la session reste ouverte, l'utilisateur vient de la copie hors ligne
+      // (lot E5c). Seul un refus du serveur (session expirée, compte supprimé) déconnecte.
+      if (axios.isAxiosError(e) && !e.response) {
+        const offline = useOfflineStore();
+        offline.reachable = false;
+        await offline.load();
+        user.value = offline.snapshot?.user ?? null;
+        return;
+      }
       clearSession();
     }
   }
@@ -44,6 +56,8 @@ export const useAuthStore = defineStore("auth", () => {
   async function logout() {
     const refreshToken = getRefreshToken();
     clearSession();
+    // La copie hors ligne (lot E5) appartient à l'utilisateur : effacée de l'appareil.
+    await clearOfflineData();
     if (refreshToken) {
       try {
         await authApi.logout(refreshToken);

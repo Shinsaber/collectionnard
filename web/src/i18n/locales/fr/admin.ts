@@ -28,6 +28,10 @@ export default {
     title: "Types d'items",
     schemaFields: "Champs du schéma",
     namePlaceholder: "Ex. : Series, Episode, DVD…",
+    displayOrder: "Ordre d'affichage",
+    order: "Ordre",
+    displayOrderHelp:
+      "Petit = en premier (listes, sélecteurs, répartition par type) ; à égalité, ordre alphabétique. Défaut : 100.",
   },
   relationTypes: {
     title: "Types de relations",
@@ -46,6 +50,10 @@ export default {
     title: "Types de collections",
     contextFields: "Champs contextuels",
     namePlaceholder: "Ex. : Ownership, Watching, Wishlist…",
+    allowedItemTypes: "Types d'item permis",
+    allowedItemTypesPlaceholder: "Tous les types",
+    allowedItemTypesHelp:
+      "Vide : tous les types sont permis. Les items déjà présents dans une collection restent en place si la liste change ; seuls les nouveaux ajouts sont contrôlés.",
   },
   importExport: {
     title: "Import / export du catalogue",
@@ -89,6 +97,22 @@ export default {
       relations: "Relations",
       collection: "Collection",
     },
+  },
+  images: {
+    title: "Images",
+    unusedTitle: "Images inutilisées",
+    unusedHelp:
+      "Images envoyées qu'aucun item, relation ou item de collection n'utilise plus. Celles de moins de {hours} h sont conservées : une image est envoyée dès qu'on la choisit, avant l'enregistrement du formulaire.",
+    search: "Rechercher",
+    none: "Aucune image inutilisée.",
+    found: "{n} image inutilisée ({size}) | {n} images inutilisées ({size})",
+    kept: "Conservées : {referenced} utilisée(s), {recent} récente(s).",
+    delete: "Supprimer {n} image | Supprimer {n} images",
+    confirm:
+      "Supprimer définitivement {n} image inutilisée ({size}) ? | Supprimer définitivement {n} images inutilisées ({size}) ?",
+    deleted: "{n} image supprimée | {n} images supprimées",
+    modified: "Modifiée le {date}",
+    failed: "Recherche des images impossible",
   },
   external: {
     title: "Sources externes — BD / Manga",

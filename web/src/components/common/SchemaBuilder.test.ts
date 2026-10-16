@@ -218,3 +218,32 @@ describe("SchemaBuilder — liste repliable des champs", () => {
     expect(all[2]!.attributes("aria-expanded")).toBe("true");
   });
 });
+
+itTop("conserve les contrôles d'envoi des catégories d'images", async () => {
+  const cats = {
+    cover: {
+      ratio: "2/3",
+      tolerance: 10,
+      strict: true,
+      min_width: 300,
+      min_height: 450,
+    },
+    back: { ratio: "2/3" },
+  };
+  const out = await roundTrip({
+    type: "object",
+    properties: {
+      images: {
+        type: "object",
+        "x-widget": "image-gallery",
+        "x-image-categories": cats,
+        properties: {
+          default_image: { type: "string" },
+          cover: { type: "array", items: { type: "string" } },
+          back: { type: "array", items: { type: "string" } },
+        },
+      },
+    },
+  });
+  expect((out.properties as Props).images!["x-image-categories"]).toEqual(cats);
+});

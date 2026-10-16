@@ -237,3 +237,22 @@ func (h *Handler) ListItemCollections(w http.ResponseWriter, r *http.Request) {
 	}
 	respondJSON(w, http.StatusOK, memberships)
 }
+
+// ListRelatedItemCollections answers GET /items/{id}/relations/collections: the
+// linked items that are in collections of the current user (relation list badge).
+func (h *Handler) ListRelatedItemCollections(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseUUID(w, r, "id")
+	if !ok {
+		return
+	}
+	if _, err := h.Store.GetItem(r.Context(), id); err != nil {
+		handleStoreError(w, r, err)
+		return
+	}
+	related, err := h.Store.ListRelatedItemCollections(r.Context(), middleware.GetUserID(r.Context()), id)
+	if err != nil {
+		handleStoreError(w, r, err)
+		return
+	}
+	respondJSON(w, http.StatusOK, related)
+}

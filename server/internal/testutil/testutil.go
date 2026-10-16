@@ -75,6 +75,9 @@ type MockStore struct {
 	ImportCollectionFn           func(ctx context.Context, userID uuid.UUID, exp *model.CollectionExport, dryRun bool) (*model.ImportReport, error)
 	FindItemsByAttributeFn       func(ctx context.Context, itemTypeID uuid.UUID, path, values []string, fold bool) ([]model.Item, error)
 	ListRelationsBetweenFn       func(ctx context.Context, ids []uuid.UUID) ([]model.ItemRelation, error)
+	ReferencedUploadsFn          func(ctx context.Context) ([]string, error)
+	ListRelatedItemCollectionsFn func(ctx context.Context, userID, itemID uuid.UUID) ([]model.RelatedItemCollections, error)
+	GetOfflineSnapshotFn         func(ctx context.Context, userID uuid.UUID) (*model.OfflineSnapshot, error)
 }
 
 func (m *MockStore) Ping(ctx context.Context) error {
@@ -367,6 +370,27 @@ func (m *MockStore) ImportCollection(ctx context.Context, userID uuid.UUID, exp 
 		return m.ImportCollectionFn(ctx, userID, exp, dryRun)
 	}
 	return model.NewCollectionImportReport(dryRun), nil
+}
+
+func (m *MockStore) ReferencedUploads(ctx context.Context) ([]string, error) {
+	if m.ReferencedUploadsFn != nil {
+		return m.ReferencedUploadsFn(ctx)
+	}
+	return nil, nil
+}
+
+func (m *MockStore) ListRelatedItemCollections(ctx context.Context, userID, itemID uuid.UUID) ([]model.RelatedItemCollections, error) {
+	if m.ListRelatedItemCollectionsFn != nil {
+		return m.ListRelatedItemCollectionsFn(ctx, userID, itemID)
+	}
+	return []model.RelatedItemCollections{}, nil
+}
+
+func (m *MockStore) GetOfflineSnapshot(ctx context.Context, userID uuid.UUID) (*model.OfflineSnapshot, error) {
+	if m.GetOfflineSnapshotFn != nil {
+		return m.GetOfflineSnapshotFn(ctx, userID)
+	}
+	return nil, store.ErrNotFound
 }
 
 // --- Test helpers ---

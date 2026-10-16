@@ -8,6 +8,7 @@ import errors from "./errors";
 import graph from "./graph";
 import items from "./items";
 import layout from "./layout";
+import offline from "./offline";
 import schema from "./schema";
 
 const en: Messages = {
@@ -20,6 +21,7 @@ const en: Messages = {
   graph,
   items,
   layout,
+  offline,
   schema,
 };
 

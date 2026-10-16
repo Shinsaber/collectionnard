@@ -16,9 +16,9 @@ func (s *PgStore) ListItemRelations(ctx context.Context, itemID uuid.UUID, relat
 		       rt.id, rt.name, rt.description,
 		       rt.attributes_schema, rt.created_at, rt.updated_at,
 		       si.id, si.item_type_id, si.attributes, si.created_at, si.updated_at,
-		       sit.id, sit.name, sit.description, sit.attributes_schema, sit.created_at, sit.updated_at,
+		       sit.id, sit.name, sit.description, sit.attributes_schema, sit.display_order, sit.created_at, sit.updated_at,
 		       ti.id, ti.item_type_id, ti.attributes, ti.created_at, ti.updated_at,
-		       tit.id, tit.name, tit.description, tit.attributes_schema, tit.created_at, tit.updated_at
+		       tit.id, tit.name, tit.description, tit.attributes_schema, tit.display_order, tit.created_at, tit.updated_at
 		FROM item_relations ir
 		JOIN relation_types rt ON rt.id = ir.relation_type_id
 		JOIN items si ON si.id = ir.source_item_id
@@ -52,9 +52,9 @@ func (s *PgStore) ListItemRelations(ctx context.Context, itemID uuid.UUID, relat
 			&rt.ID, &rt.Name, &rt.Description,
 			&rt.AttributesSchema, &rt.CreatedAt, &rt.UpdatedAt,
 			&si.ID, &si.ItemTypeID, &si.Attributes, &si.CreatedAt, &si.UpdatedAt,
-			&sit.ID, &sit.Name, &sit.Description, &sit.AttributesSchema, &sit.CreatedAt, &sit.UpdatedAt,
+			&sit.ID, &sit.Name, &sit.Description, &sit.AttributesSchema, &sit.DisplayOrder, &sit.CreatedAt, &sit.UpdatedAt,
 			&ti.ID, &ti.ItemTypeID, &ti.Attributes, &ti.CreatedAt, &ti.UpdatedAt,
-			&tit.ID, &tit.Name, &tit.Description, &tit.AttributesSchema, &tit.CreatedAt, &tit.UpdatedAt,
+			&tit.ID, &tit.Name, &tit.Description, &tit.AttributesSchema, &tit.DisplayOrder, &tit.CreatedAt, &tit.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}

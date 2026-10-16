@@ -20,5 +20,7 @@ export default {
       "Types BD / Manga introuvables dans le catalogue : {missing} (type renommé ou db/seed_bd_manga.sql non chargé)",
     external_unavailable:
       "Source externe (Wikidata, BnF) injoignable, réessayez plus tard",
+    item_type_not_allowed:
+      "Ce type d'item n'est pas permis dans ce type de collection",
   },
 };

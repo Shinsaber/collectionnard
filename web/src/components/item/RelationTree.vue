@@ -74,6 +74,16 @@
               }}</span>
             </div>
 
+            <!-- Mobile : sous le titre (comme les attributs) pour ne pas le tronquer. -->
+            <div
+              v-if="collectedIn.get(linkedId(rel))"
+              class="order-last flex w-full pl-7 sm:order-none sm:w-auto sm:pl-0"
+            >
+              <RelationCollectionsBadge
+                :collections="collectedIn.get(linkedId(rel))!"
+              />
+            </div>
+
             <div
               v-if="Object.keys(displayAttrs(rel)).length"
               class="order-last flex w-full flex-wrap gap-1.5 pl-7 sm:order-none sm:w-auto sm:justify-end sm:pl-0"
@@ -167,7 +177,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { itemApi } from "@/api/client";
 import { useLang } from "@/composables/useLang";
@@ -180,7 +190,8 @@ import {
   typeTitle,
   type Schema,
 } from "@/lib/schema";
-import type { Item, ItemRelation } from "@/api/types";
+import RelationCollectionsBadge from "./RelationCollectionsBadge.vue";
+import type { RelatedCollection, Item, ItemRelation } from "@/api/types";
 
 const props = withDefaults(
   defineProps<{
@@ -205,6 +216,22 @@ const { notifyError } = useNotify();
 const expanded = ref(new Set<string>());
 const children = ref<Record<string, ItemRelation[]>>({});
 const loading = ref(new Set<string>());
+
+// Items liés présents dans mes collections (pastille) : une requête par niveau affiché, relancée
+// quand la liste change (relation ajoutée ou supprimée).
+const collectedIn = ref(new Map<string, RelatedCollection[]>());
+watch(
+  () => [props.contextItemId, props.relations] as const,
+  async ([id]) => {
+    try {
+      const rows = await itemApi.relatedCollections(id);
+      collectedIn.value = new Map(rows.map((r) => [r.item_id, r.collections]));
+    } catch (e) {
+      notifyError(e, t("items.relations.collectionsUnavailable"));
+    }
+  },
+  { immediate: true },
+);
 
 function isOutgoing(rel: ItemRelation): boolean {
   return rel.source_item_id === props.contextItemId;

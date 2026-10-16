@@ -210,7 +210,7 @@ components:
       properties:
         username:
           type: string
-          description: Nom d'utilisateur unique.
+          description: Nom d'utilisateur unique, insensible à la casse (« Admin » = « admin »).
           example: shinsaber
         password:
           type: string
@@ -309,6 +309,12 @@ components:
           type: string
           description: Description libre du type, affichée dans l'UI.
           example: Série télévisée
+        display_order:
+          type: integer
+          description: |
+            Ordre d'affichage (petit = en premier, puis par nom) : listes, sélecteurs, « Répartition
+            par type ». Défaut 100.
+          example: 10
         attributes_schema:
           type: object
           description: |
@@ -347,6 +353,9 @@ components:
         description:
           type: string
           description: Description libre.
+        display_order:
+          type: integer
+          description: Ordre d'affichage (défaut 100).
         attributes_schema:
           type: object
           description: 'JSON Schema définissant les attributs. Doit être un JSON Schema valide avec `"type": "object"` à la racine.'
@@ -362,6 +371,8 @@ components:
           type: string
         description:
           type: string
+        display_order:
+          type: integer
         attributes_schema:
           type: object
 
@@ -503,6 +514,14 @@ components:
           type: string
           description: Description de la sémantique de ce type de collection.
           example: Items possédés physiquement par l'utilisateur
+        item_type_ids:
+          type: array
+          items: { type: string, format: uuid }
+          description: |
+            Types d'item permis dans les collections de ce type ; vide = tous. Contrôlé à l'ajout
+            (`POST /collections/{id}/items`, import de collection) : les items déjà présents et
+            devenus non permis sont conservés.
+          example: []
         attributes_schema:
           type: object
           description: |
@@ -541,6 +560,10 @@ components:
           type: object
           description: JSON Schema pour les attributs du lien collection↔item. Défaut `{}`.
           default: {}
+        item_type_ids:
+          type: array
+          items: { type: string, format: uuid }
+          description: Types d'item permis (absent ou vide = tous).
 
     CollectionTypeUpdate:
       type: object
@@ -552,6 +575,10 @@ components:
           type: string
         attributes_schema:
           type: object
+        item_type_ids:
+          type: array
+          items: { type: string, format: uuid }
+          description: Remplace la liste des types d'item permis ; absent = inchangée, `[]` = tous.
 
     # -------------------------------------------------------------------------
     # Item
@@ -854,6 +881,8 @@ components:
         contre le JSON Schema du CollectionType de la collection.
 
         Un item ne peut apparaître qu'une seule fois dans une collection donnée.
+        Si le CollectionType limite les types d'item (`item_type_ids`), un item d'un autre type
+        est refusé (422 `item_type_not_allowed`).
         S'il est déjà présent, une erreur 409 est retournée.
       required: [item_id]
       properties:
@@ -1037,8 +1066,12 @@ components:
     ItemsByType:
       type: object
       description: Nombre d'items pour un ItemType.
-      required: [type_name, count]
+      required: [type_id, type_name, count]
       properties:
+        type_id:
+          type: string
+          format: uuid
+          description: Identifiant du ItemType (lien vers le catalogue filtré).
         type_name:
           type: string
           description: Nom du ItemType.
@@ -1055,7 +1088,7 @@ components:
       properties:
         items_by_type:
           type: array
-          description: Comptage d'items ventilé par ItemType.
+          description: Comptage d'items ventilé par ItemType, dans l'ordre d'affichage des types (`display_order`, puis nom).
           items:
             $ref: "#/components/schemas/ItemsByType"
         total_items:
@@ -1088,7 +1121,8 @@ components:
             `not_found` (404), `conflict` (409), `payload_too_large` (413),
             `validation_error` (422), `rate_limited` (429), `internal` (500),
             `timeout` (503, exploration du graphe trop longue), `connector_unavailable` (409, types d'un
-            connecteur absents du catalogue), `external_unavailable` (502, source externe injoignable).
+            connecteur absents du catalogue), `external_unavailable` (502, source externe injoignable),
+            `item_type_not_allowed` (422, type d'item non permis par le type de collection).
             Un client doit prévoir un libellé générique pour un code inconnu.
           example: validation_error
         message:
@@ -1107,6 +1141,66 @@ components:
             fields:
               "/": "missing properties: 'title'"
               "/start_year": "must be >= 1900 but found 1800"
+
+    RelatedItemCollections:
+      type: object
+      description: Un item lié et les collections de l'utilisateur qui le contiennent.
+      required: [item_id, collections]
+      properties:
+        item_id: { type: string, format: uuid }
+        collections:
+          type: array
+          items:
+            type: object
+            required: [id, name, collection_type_id, attributes]
+            properties:
+              id: { type: string, format: uuid }
+              name: { type: string }
+              collection_type_id:
+                type: string
+                format: uuid
+                description: Pour lire `attributes` avec le schéma du CollectionType.
+              attributes:
+                type: object
+                additionalProperties: true
+                description: Attributs contextuels de l'item dans cette collection (état, prix…).
+
+    OfflineSnapshot:
+      type: object
+      description: Copie hors ligne des collections de l'utilisateur (`GET /me/offline`).
+      required: [generated_at, user, item_types, collection_types, collections, items, entries]
+      properties:
+        generated_at: { type: string, format: date-time }
+        user:
+          $ref: "#/components/schemas/User"
+        item_types:
+          type: array
+          items:
+            $ref: "#/components/schemas/ItemType"
+        collection_types:
+          type: array
+          items:
+            $ref: "#/components/schemas/CollectionType"
+        collections:
+          type: array
+          description: Collections de l'utilisateur (sans `collection_type` joint).
+          items:
+            $ref: "#/components/schemas/Collection"
+        items:
+          type: array
+          description: Items de ses collections, une fois chacun (sans `item_type` joint).
+          items:
+            $ref: "#/components/schemas/Item"
+        entries:
+          type: array
+          items:
+            type: object
+            required: [collection_id, item_id, attributes, added_at]
+            properties:
+              collection_id: { type: string, format: uuid }
+              item_id: { type: string, format: uuid }
+              attributes: { type: object, additionalProperties: true }
+              added_at: { type: string, format: date-time }
 
     # -------------------------------------------------------------------------
     # Upload
@@ -1132,11 +1226,24 @@ components:
         item_types:
           type: array
           items:
-            $ref: "#/components/schemas/ExportMetaType"
+            allOf:
+              - $ref: "#/components/schemas/ExportMetaType"
+              - type: object
+                properties:
+                  display_order:
+                    type: integer
+                    description: Absent à l'import → 100 pour un nouveau type, valeur conservée sinon.
         collection_types:
           type: array
           items:
-            $ref: "#/components/schemas/ExportMetaType"
+            allOf:
+              - $ref: "#/components/schemas/ExportMetaType"
+              - type: object
+                properties:
+                  item_type_ids:
+                    type: array
+                    items: { type: string, format: uuid }
+                    description: Types d'item permis (vide = tous) ; absent à l'import → liste conservée.
         relation_types:
           type: array
           items:
@@ -1395,15 +1502,53 @@ components:
         url:
           type: string
           description: Chemin relatif pour accéder au fichier uploadé.
-          example: /api/v1/uploads/550e8400-e29b-41d4-a716-446655440000.jpg
+          example: /api/v1/uploads/9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08.jpg
         filename:
           type: string
-          description: Nom du fichier généré (UUID + extension).
-          example: 550e8400-e29b-41d4-a716-446655440000.jpg
+          description: |
+            Nom du fichier : SHA-256 du contenu + extension (les fichiers envoyés avant cette règle
+            gardent leur nom UUID).
+          example: 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08.jpg
         size:
           type: integer
           description: Taille du fichier écrit sur le disc, en octets.
           example: 245760
+        reused:
+          type: boolean
+          description: "Un fichier identique existait déjà : même URL, rien n'a été réécrit."
+          example: false
+
+    UploadPurgeReport:
+      type: object
+      description: Résultat de `POST /uploads/purge`.
+      required: [dry_run, applied, files, total_size, referenced, recent, grace_hours]
+      properties:
+        dry_run: { type: boolean }
+        applied:
+          type: boolean
+          description: Vrai si les fichiers listés ont été supprimés.
+        files:
+          type: array
+          description: Images inutilisées et plus anciennes que le délai de grâce.
+          items:
+            type: object
+            required: [filename, size, modified_at]
+            properties:
+              filename: { type: string }
+              size: { type: integer, description: Octets. }
+              modified_at: { type: string, format: date-time }
+        total_size:
+          type: integer
+          description: Taille cumulée de `files`, en octets.
+        referenced:
+          type: integer
+          description: Images encore utilisées (conservées).
+        recent:
+          type: integer
+          description: Images inutilisées mais dans le délai de grâce (conservées).
+        grace_hours:
+          type: integer
+          example: 24
 
   # ===========================================================================
   # Paramètres réutilisables
@@ -1799,12 +1944,36 @@ paths:
   # ===========================================================================
   # Item Types (admin)
   # ===========================================================================
+  /me/offline:
+    get:
+      tags: [Collections]
+      summary: Copie hors ligne de mes collections
+      description: |
+        Tout ce que l'application mobile garde pour consulter les collections de l'utilisateur
+        authentifié sans réseau (lecture seule) : ses collections, leurs items (une fois chacun,
+        même présents dans plusieurs collections) et entrées (attributs contextuels), ainsi que
+        tous les types d'item et de collection (schémas d'affichage). Réponse `Cache-Control:
+        private, no-store` (données personnelles).
+      operationId: getOfflineSnapshot
+      responses:
+        "200":
+          description: Copie hors ligne.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OfflineSnapshot"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   /item-types:
     get:
       tags: [ItemTypes]
       summary: Lister les types d'items
       description: |
         Retourne la liste paginée de tous les types d'items disponibles.
+        Triée par `display_order` puis par `name`.
         Utile pour le frontend : permet de peupler un sélecteur de type
         lors de la création d'un item.
       operationId: listItemTypes
@@ -2663,6 +2832,42 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /items/{id}/relations/collections:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: UUID de l'item dont on affiche les relations.
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Items, Collections]
+      summary: Items liés présents dans mes collections
+      description: |
+        Pour chaque item lié à cet item (dans un sens ou dans l'autre) et présent dans au moins une
+        collection de l'utilisateur authentifié : ces collections. Les items liés absents de ses
+        collections ne figurent pas dans la réponse. Sert d'indicateur dans la liste des relations
+        de la fiche d'un item ; une requête indexée (`collection_items.item_id`).
+      operationId: listRelatedItemCollections
+      responses:
+        "200":
+          description: Items liés présents dans les collections de l'utilisateur.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RelatedItemCollections"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   # ===========================================================================
   # Item Relations
   # ===========================================================================
@@ -3267,7 +3472,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "422":
-          $ref: "#/components/responses/ValidationError"
+          description: |
+            Attributs invalides (`validation_error`), ou type d'item non permis par le
+            CollectionType (`item_type_not_allowed`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
   /collections/{collectionId}/items/{itemId}:
     parameters:
@@ -3393,6 +3604,8 @@ paths:
 
         Accepte un fichier image via multipart/form-data et le sauvegarde sur le serveur.
         Retourne l'URL d'accès au fichier, le nom généré et la taille.
+        Le fichier est nommé d'après le SHA-256 de son contenu : un envoi identique renvoie la même
+        URL (`reused: true`) sans dupliquer le fichier.
 
         **Formats acceptés** : JPEG, PNG, GIF, WebP.
         **Taille maximale** : configurable via `MAX_UPLOAD_SIZE` (défaut 10 Mo).
@@ -3439,6 +3652,40 @@ paths:
                 error: payload_too_large
                 message: file too large (max 10 MiB)
 
+  /uploads/purge:
+    post:
+      tags: [Uploads]
+      summary: Purger les images inutilisées
+      description: |
+        **Admin uniquement.**
+
+        Cherche dans `UPLOAD_DIR` les images qu'aucun attribut (items, relations, items de
+        collection) ne référence plus, et les supprime. Les fichiers modifiés depuis moins de
+        `grace_hours` (24 h) sont conservés : une image est envoyée dès qu'on la choisit, avant
+        l'enregistrement du formulaire qui la référence. Seules les images (extensions servies)
+        sont concernées. `dry_run=true` liste sans rien supprimer.
+      operationId: purgeUploads
+      parameters:
+        - name: dry_run
+          in: query
+          description: Simuler la purge (liste des fichiers, aucune suppression).
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Fichiers inutilisés (supprimés sauf en simulation).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadPurgeReport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   /uploads/{filename}:
     parameters:
       - name: filename
@@ -3456,8 +3703,20 @@ paths:
         **Accès public** (pas d'authentification requise) car les balises `<img>`
         ne peuvent pas envoyer de header `Authorization`.
         Seuls les fichiers avec extensions autorisées (.jpg, .jpeg, .png, .gif, .webp) sont servis.
+
+        Avec `w`, une **vignette** JPEG de cette largeur (sans agrandissement, fond blanc), générée
+        à la première demande puis gardée sur disque (couvertures hors ligne de l'application mobile).
+        Un original que le serveur ne sait pas décoder est servi tel quel.
       operationId: getUploadedFile
       security: []
+      parameters:
+        - name: w
+          in: query
+          required: false
+          description: Largeur de la vignette, en pixels (valeurs acceptées ci-dessous ; 400 sinon).
+          schema:
+            type: integer
+            enum: [240]
       responses:
         "400":
           $ref: "#/components/responses/BadRequest"

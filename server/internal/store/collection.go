@@ -35,7 +35,7 @@ func (s *PgStore) ListCollections(ctx context.Context, userID uuid.UUID, pg mode
 	query := fmt.Sprintf(`
 		SELECT c.id, c.user_id, c.collection_type_id, c.name, c.description,
 		       c.created_at, c.updated_at,
-		       ct.id, ct.name, ct.description, ct.attributes_schema, ct.created_at, ct.updated_at,
+		       ct.id, ct.name, ct.description, ct.attributes_schema, `+ctItemTypeIDs("ct")+`, ct.created_at, ct.updated_at,
 		       (SELECT count(*) FROM collection_items ci WHERE ci.collection_id = c.id) AS item_count
 		FROM collections c
 		JOIN collection_types ct ON ct.id = c.collection_type_id
@@ -56,7 +56,7 @@ func (s *PgStore) ListCollections(ctx context.Context, userID uuid.UUID, pg mode
 		if err := rows.Scan(
 			&col.ID, &col.UserID, &col.CollectionTypeID, &col.Name, &col.Description,
 			&col.CreatedAt, &col.UpdatedAt,
-			&ct.ID, &ct.Name, &ct.Description, &ct.AttributesSchema, &ct.CreatedAt, &ct.UpdatedAt,
+			&ct.ID, &ct.Name, &ct.Description, &ct.AttributesSchema, &ct.ItemTypeIDs, &ct.CreatedAt, &ct.UpdatedAt,
 			&col.ItemCount,
 		); err != nil {
 			return nil, 0, err
@@ -73,7 +73,7 @@ func (s *PgStore) GetCollection(ctx context.Context, id uuid.UUID) (*model.Colle
 	err := s.pool.QueryRow(ctx,
 		`SELECT c.id, c.user_id, c.collection_type_id, c.name, c.description,
 		        c.created_at, c.updated_at,
-		        ct.id, ct.name, ct.description, ct.attributes_schema, ct.created_at, ct.updated_at,
+		        ct.id, ct.name, ct.description, ct.attributes_schema, `+ctItemTypeIDs("ct")+`, ct.created_at, ct.updated_at,
 		        (SELECT count(*) FROM collection_items ci WHERE ci.collection_id = c.id)
 		 FROM collections c
 		 JOIN collection_types ct ON ct.id = c.collection_type_id
@@ -81,7 +81,7 @@ func (s *PgStore) GetCollection(ctx context.Context, id uuid.UUID) (*model.Colle
 	).Scan(
 		&col.ID, &col.UserID, &col.CollectionTypeID, &col.Name, &col.Description,
 		&col.CreatedAt, &col.UpdatedAt,
-		&ct.ID, &ct.Name, &ct.Description, &ct.AttributesSchema, &ct.CreatedAt, &ct.UpdatedAt,
+		&ct.ID, &ct.Name, &ct.Description, &ct.AttributesSchema, &ct.ItemTypeIDs, &ct.CreatedAt, &ct.UpdatedAt,
 		&col.ItemCount,
 	)
 	if err != nil {
@@ -177,7 +177,7 @@ func (s *PgStore) ListCollectionItems(ctx context.Context, collectionID uuid.UUI
 	query := fmt.Sprintf(`
 		SELECT ci.id, ci.collection_id, ci.item_id, ci.attributes, ci.created_at, ci.updated_at,
 		       i.id, i.item_type_id, i.attributes, i.created_at, i.updated_at,
-		       it.id, it.name, it.description, it.attributes_schema, it.created_at, it.updated_at
+		       it.id, it.name, it.description, it.attributes_schema, it.display_order, it.created_at, it.updated_at
 		FROM collection_items ci
 		JOIN items i ON i.id = ci.item_id
 		JOIN item_types it ON it.id = i.item_type_id
@@ -199,7 +199,7 @@ func (s *PgStore) ListCollectionItems(ctx context.Context, collectionID uuid.UUI
 		if err := rows.Scan(
 			&ci.ID, &ci.CollectionID, &ci.ItemID, &ci.Attributes, &ci.CreatedAt, &ci.UpdatedAt,
 			&item.ID, &item.ItemTypeID, &item.Attributes, &item.CreatedAt, &item.UpdatedAt,
-			&it.ID, &it.Name, &it.Description, &it.AttributesSchema, &it.CreatedAt, &it.UpdatedAt,
+			&it.ID, &it.Name, &it.Description, &it.AttributesSchema, &it.DisplayOrder, &it.CreatedAt, &it.UpdatedAt,
 		); err != nil {
 			return nil, 0, err
 		}
@@ -269,7 +269,7 @@ func (s *PgStore) ListItemCollections(ctx context.Context, userID, itemID uuid.U
 	rows, err := s.pool.Query(ctx, `
 		SELECT c.id, c.user_id, c.collection_type_id, c.name, c.description,
 		       c.created_at, c.updated_at,
-		       ct.id, ct.name, ct.description, ct.attributes_schema, ct.created_at, ct.updated_at,
+		       ct.id, ct.name, ct.description, ct.attributes_schema, `+ctItemTypeIDs("ct")+`, ct.created_at, ct.updated_at,
 		       (SELECT count(*) FROM collection_items ci2 WHERE ci2.collection_id = c.id) AS item_count,
 		       ci.attributes
 		FROM collection_items ci
@@ -290,7 +290,7 @@ func (s *PgStore) ListItemCollections(ctx context.Context, userID, itemID uuid.U
 		if err := rows.Scan(
 			&col.ID, &col.UserID, &col.CollectionTypeID, &col.Name, &col.Description,
 			&col.CreatedAt, &col.UpdatedAt,
-			&colType.ID, &colType.Name, &colType.Description, &colType.AttributesSchema, &colType.CreatedAt, &colType.UpdatedAt,
+			&colType.ID, &colType.Name, &colType.Description, &colType.AttributesSchema, &colType.ItemTypeIDs, &colType.CreatedAt, &colType.UpdatedAt,
 			&col.ItemCount, &attrs,
 		); err != nil {
 			return nil, err
@@ -300,6 +300,39 @@ func (s *PgStore) ListItemCollections(ctx context.Context, userID, itemID uuid.U
 			Collection: col,
 			Attributes: attrs,
 		})
+	}
+	return result, rows.Err()
+}
+
+func (s *PgStore) ListRelatedItemCollections(ctx context.Context, userID, itemID uuid.UUID) ([]model.RelatedItemCollections, error) {
+	// One indexed lookup per linked item (idx_relations_source / _target, idx_collection_items_item).
+	rows, err := s.pool.Query(ctx, `
+		WITH linked AS (
+			SELECT target_item_id AS item_id FROM item_relations WHERE source_item_id = $1
+			UNION
+			SELECT source_item_id FROM item_relations WHERE target_item_id = $1
+		)
+		SELECT ci.item_id, c.id, c.name, c.collection_type_id, ci.attributes
+		FROM linked l
+		JOIN collection_items ci ON ci.item_id = l.item_id
+		JOIN collections c ON c.id = ci.collection_id AND c.user_id = $2
+		ORDER BY ci.item_id, c.name`, itemID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	result := []model.RelatedItemCollections{}
+	for rows.Next() {
+		var itemID uuid.UUID
+		var col model.RelatedCollection
+		if err := rows.Scan(&itemID, &col.ID, &col.Name, &col.CollectionTypeID, &col.Attributes); err != nil {
+			return nil, err
+		}
+		if n := len(result); n > 0 && result[n-1].ItemID == itemID {
+			result[n-1].Collections = append(result[n-1].Collections, col)
+		} else {
+			result = append(result, model.RelatedItemCollections{ItemID: itemID, Collections: []model.RelatedCollection{col}})
+		}
 	}
 	return result, rows.Err()
 }

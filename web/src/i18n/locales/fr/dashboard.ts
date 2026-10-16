@@ -7,6 +7,7 @@ export default {
   totalCollections: "Collections",
   itemTypes: "Types d'item",
   itemsByType: "Items par type",
+  seeType: "{type} ({n}) : voir dans le catalogue",
   recent: "Ajoutés récemment",
   seeCatalog: "Tout le catalogue",
   noItems: "Aucun item pour l'instant.",
