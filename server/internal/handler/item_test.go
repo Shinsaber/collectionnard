@@ -177,7 +177,7 @@ func TestListRelatedItemCollections(t *testing.T) {
 		},
 		ListRelatedItemCollectionsFn: func(_ context.Context, userID, itemID uuid.UUID) ([]model.RelatedItemCollections, error) {
 			gotUser = userID
-			return []model.RelatedItemCollections{{ItemID: linked, Collections: []model.CollectionRef{{ID: col, Name: "Mes DVDs"}}}}, nil
+			return []model.RelatedItemCollections{{ItemID: linked, Collections: []model.RelatedCollection{{ID: col, Name: "Mes DVDs"}}}}, nil
 		},
 	}
 	srv := testutil.NewTestServer(mock)

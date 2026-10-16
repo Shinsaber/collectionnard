@@ -191,7 +191,7 @@ import {
   type Schema,
 } from "@/lib/schema";
 import RelationCollectionsBadge from "./RelationCollectionsBadge.vue";
-import type { CollectionRef, Item, ItemRelation } from "@/api/types";
+import type { RelatedCollection, Item, ItemRelation } from "@/api/types";
 
 const props = withDefaults(
   defineProps<{
@@ -219,7 +219,7 @@ const loading = ref(new Set<string>());
 
 // Items liés présents dans mes collections (pastille) : une requête par niveau affiché, relancée
 // quand la liste change (relation ajoutée ou supprimée).
-const collectedIn = ref(new Map<string, CollectionRef[]>());
+const collectedIn = ref(new Map<string, RelatedCollection[]>());
 watch(
   () => [props.contextItemId, props.relations] as const,
   async ([id]) => {

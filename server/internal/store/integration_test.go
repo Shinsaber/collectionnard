@@ -482,7 +482,8 @@ func TestListRelatedItemCollections(t *testing.T) {
 			dvd = &got[i]
 		}
 	}
-	if dvd == nil || len(dvd.Collections) != 1 || dvd.Collections[0].ID != colMesDVDs {
+	if dvd == nil || len(dvd.Collections) != 1 || dvd.Collections[0].ID != colMesDVDs ||
+		!strings.Contains(string(dvd.Collections[0].Attributes), `"condition"`) {
 		t.Errorf("shinsaber: %+v", got)
 	}
 	// Another user's collections are not reported.

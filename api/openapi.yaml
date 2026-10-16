@@ -1152,10 +1152,18 @@ components:
           type: array
           items:
             type: object
-            required: [id, name]
+            required: [id, name, collection_type_id, attributes]
             properties:
               id: { type: string, format: uuid }
               name: { type: string }
+              collection_type_id:
+                type: string
+                format: uuid
+                description: Pour lire `attributes` avec le schéma du CollectionType.
+              attributes:
+                type: object
+                additionalProperties: true
+                description: Attributs contextuels de l'item dans cette collection (état, prix…).
 
     # -------------------------------------------------------------------------
     # Upload

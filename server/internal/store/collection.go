@@ -312,7 +312,7 @@ func (s *PgStore) ListRelatedItemCollections(ctx context.Context, userID, itemID
 			UNION
 			SELECT source_item_id FROM item_relations WHERE target_item_id = $1
 		)
-		SELECT ci.item_id, c.id, c.name
+		SELECT ci.item_id, c.id, c.name, c.collection_type_id, ci.attributes
 		FROM linked l
 		JOIN collection_items ci ON ci.item_id = l.item_id
 		JOIN collections c ON c.id = ci.collection_id AND c.user_id = $2
@@ -324,14 +324,14 @@ func (s *PgStore) ListRelatedItemCollections(ctx context.Context, userID, itemID
 	result := []model.RelatedItemCollections{}
 	for rows.Next() {
 		var itemID uuid.UUID
-		var col model.CollectionRef
-		if err := rows.Scan(&itemID, &col.ID, &col.Name); err != nil {
+		var col model.RelatedCollection
+		if err := rows.Scan(&itemID, &col.ID, &col.Name, &col.CollectionTypeID, &col.Attributes); err != nil {
 			return nil, err
 		}
 		if n := len(result); n > 0 && result[n-1].ItemID == itemID {
 			result[n-1].Collections = append(result[n-1].Collections, col)
 		} else {
-			result = append(result, model.RelatedItemCollections{ItemID: itemID, Collections: []model.CollectionRef{col}})
+			result = append(result, model.RelatedItemCollections{ItemID: itemID, Collections: []model.RelatedCollection{col}})
 		}
 	}
 	return result, rows.Err()

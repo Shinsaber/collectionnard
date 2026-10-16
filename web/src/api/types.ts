@@ -208,16 +208,18 @@ export interface CollectionItemUpdate {
 }
 
 // ---------- Item Collection Membership ----------
-/** Collection désignée par son seul nom. */
-export interface CollectionRef {
+/** Collection qui contient un item lié, avec les attributs contextuels de l'item. */
+export interface RelatedCollection {
   id: string;
   name: string;
+  collection_type_id: string;
+  attributes: Record<string, unknown>;
 }
 
 /** Item lié présent dans des collections de l'utilisateur (GET /items/{id}/relations/collections). */
 export interface RelatedItemCollections {
   item_id: string;
-  collections: CollectionRef[];
+  collections: RelatedCollection[];
 }
 
 export interface ItemCollectionMembership {
