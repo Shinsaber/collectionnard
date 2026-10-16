@@ -12,6 +12,8 @@ export interface TypeForm {
   description: string;
   source_item_type_ids: string[];
   target_item_type_ids: string[];
+  /** Types d'item seulement. */
+  display_order: number;
   attributes_schema: Record<string, unknown>;
 }
 
@@ -43,7 +45,9 @@ export const TYPE_KINDS: Record<TypeKind, TypeKindConfig> = {
     updatedKey: "admin.shared.updated",
     get: (id) => itemTypeApi.get(id),
     save: (f, id) =>
-      id ? itemTypeApi.update(id, base(f)) : itemTypeApi.create(base(f)),
+      id
+        ? itemTypeApi.update(id, { ...base(f), display_order: f.display_order })
+        : itemTypeApi.create({ ...base(f), display_order: f.display_order }),
   },
   relation: {
     listPath: "/admin/relation-types",
@@ -89,6 +93,7 @@ export function formOf(type?: AnyType | null): TypeForm {
     description: type?.description ?? "",
     source_item_type_ids: rel?.source_item_type_ids ?? [],
     target_item_type_ids: rel?.target_item_type_ids ?? [],
+    display_order: (type as ItemType | undefined)?.display_order ?? 100,
     attributes_schema: type?.attributes_schema ?? emptySchema(),
   };
 }

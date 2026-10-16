@@ -344,7 +344,7 @@ func (p *planner) catalog(selected []string, overrides map[string]json.RawMessag
 	}
 	cat := &model.CatalogExport{
 		Format: model.CatalogFormat, Version: model.ExportVersion,
-		ItemTypes: []model.ExportMetaType{}, CollectionTypes: []model.ExportMetaType{},
+		ItemTypes: []model.ExportItemType{}, CollectionTypes: []model.ExportMetaType{},
 		RelationTypes: []model.ExportRelationType{}, Items: []model.ExportItem{}, Relations: []model.ExportRelation{},
 	}
 	ids := map[string]uuid.UUID{}

@@ -177,7 +177,7 @@ func (s *PgStore) ListCollectionItems(ctx context.Context, collectionID uuid.UUI
 	query := fmt.Sprintf(`
 		SELECT ci.id, ci.collection_id, ci.item_id, ci.attributes, ci.created_at, ci.updated_at,
 		       i.id, i.item_type_id, i.attributes, i.created_at, i.updated_at,
-		       it.id, it.name, it.description, it.attributes_schema, it.created_at, it.updated_at
+		       it.id, it.name, it.description, it.attributes_schema, it.display_order, it.created_at, it.updated_at
 		FROM collection_items ci
 		JOIN items i ON i.id = ci.item_id
 		JOIN item_types it ON it.id = i.item_type_id
@@ -199,7 +199,7 @@ func (s *PgStore) ListCollectionItems(ctx context.Context, collectionID uuid.UUI
 		if err := rows.Scan(
 			&ci.ID, &ci.CollectionID, &ci.ItemID, &ci.Attributes, &ci.CreatedAt, &ci.UpdatedAt,
 			&item.ID, &item.ItemTypeID, &item.Attributes, &item.CreatedAt, &item.UpdatedAt,
-			&it.ID, &it.Name, &it.Description, &it.AttributesSchema, &it.CreatedAt, &it.UpdatedAt,
+			&it.ID, &it.Name, &it.Description, &it.AttributesSchema, &it.DisplayOrder, &it.CreatedAt, &it.UpdatedAt,
 		); err != nil {
 			return nil, 0, err
 		}

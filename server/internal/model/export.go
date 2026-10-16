@@ -20,14 +20,21 @@ type CatalogExport struct {
 	Format          string               `json:"format"`
 	Version         int                  `json:"version"`
 	ExportedAt      *time.Time           `json:"exported_at,omitempty"`
-	ItemTypes       []ExportMetaType     `json:"item_types"`
+	ItemTypes       []ExportItemType     `json:"item_types"`
 	CollectionTypes []ExportMetaType     `json:"collection_types"`
 	RelationTypes   []ExportRelationType `json:"relation_types"`
 	Items           []ExportItem         `json:"items"`
 	Relations       []ExportRelation     `json:"relations"`
 }
 
-// ExportMetaType is an ItemType or a CollectionType in an export.
+// ExportItemType is an ItemType in an export. DisplayOrder absent on import: 100
+// for a new type, the stored value is kept otherwise.
+type ExportItemType struct {
+	ExportMetaType
+	DisplayOrder *int `json:"display_order,omitempty"`
+}
+
+// ExportMetaType is a CollectionType in an export, and the common part of the other meta-types.
 type ExportMetaType struct {
 	ID               uuid.UUID       `json:"id"`
 	Name             string          `json:"name"`

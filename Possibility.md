@@ -40,14 +40,14 @@ Un commit par lot ; contrat d'API d'abord (`api/openapi.yaml` → model → stor
 
 ## Lot E2 — Ordre d'affichage des types d'item + lien vers le catalogue
 
-- [ ] Migration `005` : colonne `item_types.display_order INT NOT NULL DEFAULT 100` (petit = en premier) ;
+- [x] Migration `005` : colonne `item_types.display_order INT NOT NULL DEFAULT 100` (petit = en premier) ;
       valeurs pour les types des seeds (Series, Manga, Comic… avant Episode, Volume…).
-- [ ] API : champ `display_order` (lecture / écriture) ; listes d'ItemTypes triées par
-      `display_order` puis `name` ; `items_by_type` des statistiques dans le même ordre.
-- [ ] Éditeur de type : champ « Ordre d'affichage » dans l'identité.
-- [ ] Accueil, « Répartition par type » : ordre des types, chaque ligne mène au catalogue filtré
+- [x] API : champ `display_order` (lecture / écriture, export / import du catalogue) ; listes d'ItemTypes triées par
+      `display_order` puis `name` ; `items_by_type` des statistiques dans le même ordre, avec `type_id`.
+- [x] Éditeur de type : champ « Ordre d'affichage » dans l'identité.
+- [x] Accueil, « Répartition par type » : ordre des types, chaque ligne mène au catalogue filtré
       (`/items?item_type_id=…`).
-- [ ] Sélecteurs de type (catalogue, dialogues) : même ordre (tri déjà fait par l'API).
+- [x] Sélecteurs de type (catalogue, dialogues) : même ordre (tri déjà fait par l'API).
 
 ## Lot E3 — Type de collection limité à des types d'item
 

@@ -8,6 +8,7 @@ const en: typeof fr = {
   totalCollections: "Collections",
   itemTypes: "Item types",
   itemsByType: "Items by type",
+  seeType: "{type} ({n}): show in the catalog",
   recent: "Recently added",
   seeCatalog: "Whole catalog",
   noItems: "No items yet.",

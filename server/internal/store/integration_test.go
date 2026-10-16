@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -464,6 +465,49 @@ func TestUserByUsername_CaseInsensitive(t *testing.T) {
 		`INSERT INTO users (username, email, password, role) VALUES ('Shinsaber', 'dup@example.org', 'x', 'user')`)
 	if err == nil || !strings.Contains(err.Error(), "users_username_lower_key") {
 		t.Errorf("expected a unique violation on lower(username), got %v", err)
+	}
+}
+
+// --- Item types: display order ---
+
+func TestItemTypes_DisplayOrder(t *testing.T) {
+	names := func() []string {
+		its, _, err := s.ListItemTypes(ctx, model.Pagination{Page: 1, PerPage: 100})
+		if err != nil {
+			t.Fatal(err)
+		}
+		out := make([]string, len(its))
+		for i, it := range its {
+			out[i] = it.Name
+		}
+		return out
+	}
+	// Seed values (migration 005 / seed.sql): main types first, bulky ones last.
+	want := []string{"Series", "DVD", "Season", "Broadcast", "Episode"}
+	seedOnly := slices.DeleteFunc(names(), func(n string) bool { return !slices.Contains(want, n) })
+	if got := seedOnly; !slices.Equal(got, want) {
+		t.Errorf("list order = %v, want %v", got, want)
+	}
+	stats, err := s.GetStats(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(stats.ItemsByType) == 0 || stats.ItemsByType[0].TypeName != "Series" || stats.ItemsByType[0].TypeID != typeSerie {
+		t.Errorf("stats order: %+v", stats.ItemsByType)
+	}
+
+	created, err := s.CreateItemType(ctx, model.ItemTypeCreate{Name: "Zine", AttributesSchema: []byte(`{"type":"object"}`)})
+	if err != nil || created.DisplayOrder != 100 {
+		t.Fatalf("default display_order: %+v, %v", created, err)
+	}
+	defer func() { _ = s.DeleteItemType(ctx, created.ID) }()
+	first := 1
+	updated, err := s.UpdateItemType(ctx, created.ID, model.ItemTypeUpdate{DisplayOrder: &first})
+	if err != nil || updated.DisplayOrder != 1 || updated.Name != "Zine" {
+		t.Fatalf("update display_order: %+v, %v", updated, err)
+	}
+	if got := names(); got[0] != "Zine" { // other tests may add types (default 100)
+		t.Errorf("after update, list starts with %v", got)
 	}
 }
 

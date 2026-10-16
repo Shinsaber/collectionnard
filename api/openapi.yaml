@@ -309,6 +309,12 @@ components:
           type: string
           description: Description libre du type, affichée dans l'UI.
           example: Série télévisée
+        display_order:
+          type: integer
+          description: |
+            Ordre d'affichage (petit = en premier, puis par nom) : listes, sélecteurs, « Répartition
+            par type ». Défaut 100.
+          example: 10
         attributes_schema:
           type: object
           description: |
@@ -347,6 +353,9 @@ components:
         description:
           type: string
           description: Description libre.
+        display_order:
+          type: integer
+          description: Ordre d'affichage (défaut 100).
         attributes_schema:
           type: object
           description: 'JSON Schema définissant les attributs. Doit être un JSON Schema valide avec `"type": "object"` à la racine.'
@@ -362,6 +371,8 @@ components:
           type: string
         description:
           type: string
+        display_order:
+          type: integer
         attributes_schema:
           type: object
 
@@ -1037,8 +1048,12 @@ components:
     ItemsByType:
       type: object
       description: Nombre d'items pour un ItemType.
-      required: [type_name, count]
+      required: [type_id, type_name, count]
       properties:
+        type_id:
+          type: string
+          format: uuid
+          description: Identifiant du ItemType (lien vers le catalogue filtré).
         type_name:
           type: string
           description: Nom du ItemType.
@@ -1055,7 +1070,7 @@ components:
       properties:
         items_by_type:
           type: array
-          description: Comptage d'items ventilé par ItemType.
+          description: Comptage d'items ventilé par ItemType, dans l'ordre d'affichage des types (`display_order`, puis nom).
           items:
             $ref: "#/components/schemas/ItemsByType"
         total_items:
@@ -1132,7 +1147,13 @@ components:
         item_types:
           type: array
           items:
-            $ref: "#/components/schemas/ExportMetaType"
+            allOf:
+              - $ref: "#/components/schemas/ExportMetaType"
+              - type: object
+                properties:
+                  display_order:
+                    type: integer
+                    description: Absent à l'import → 100 pour un nouveau type, valeur conservée sinon.
         collection_types:
           type: array
           items:
@@ -1805,6 +1826,7 @@ paths:
       summary: Lister les types d'items
       description: |
         Retourne la liste paginée de tous les types d'items disponibles.
+        Triée par `display_order` puis par `name`.
         Utile pour le frontend : permet de peupler un sélecteur de type
         lors de la création d'un item.
       operationId: listItemTypes

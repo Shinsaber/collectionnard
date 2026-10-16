@@ -69,6 +69,23 @@
               :autosize="{ minRows: 2, maxRows: 6 }"
             />
           </div>
+          <div v-if="kind === 'item'" class="flex flex-col gap-1.5">
+            <label :for="`${uid}-order`" class="text-[13px] font-bold">{{
+              t("admin.itemTypes.displayOrder")
+            }}</label>
+            <ElInputNumber
+              :id="`${uid}-order`"
+              v-model="form.display_order"
+              :min="0"
+              :step="10"
+              controls-position="right"
+              class="w-40!"
+              :aria-describedby="`${uid}-order-help`"
+            />
+            <small :id="`${uid}-order-help`" class="text-xs text-muted">{{
+              t("admin.itemTypes.displayOrderHelp")
+            }}</small>
+          </div>
           <template v-if="kind === 'relation'">
             <div
               v-for="side in sides"

@@ -51,6 +51,7 @@ type ItemType struct {
 	Name             string          `json:"name"`
 	Description      *string         `json:"description,omitempty"`
 	AttributesSchema json.RawMessage `json:"attributes_schema"`
+	DisplayOrder     int             `json:"display_order"`
 	CreatedAt        time.Time       `json:"created_at"`
 	UpdatedAt        time.Time       `json:"updated_at"`
 }
@@ -59,12 +60,14 @@ type ItemTypeCreate struct {
 	Name             string          `json:"name"`
 	Description      *string         `json:"description,omitempty"`
 	AttributesSchema json.RawMessage `json:"attributes_schema"`
+	DisplayOrder     *int            `json:"display_order,omitempty"`
 }
 
 type ItemTypeUpdate struct {
 	Name             *string         `json:"name,omitempty"`
 	Description      *string         `json:"description,omitempty"`
 	AttributesSchema json.RawMessage `json:"attributes_schema,omitempty"`
+	DisplayOrder     *int            `json:"display_order,omitempty"`
 }
 
 // ---------------------------------------------------------------------------
@@ -282,8 +285,9 @@ type UploadResponse struct {
 // ---------------------------------------------------------------------------
 
 type ItemsByType struct {
-	TypeName string `json:"type_name"`
-	Count    int    `json:"count"`
+	TypeID   uuid.UUID `json:"type_id"`
+	TypeName string    `json:"type_name"`
+	Count    int       `json:"count"`
 }
 
 type Stats struct {

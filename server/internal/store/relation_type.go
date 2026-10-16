@@ -214,7 +214,7 @@ func (s *PgStore) DeleteRelationType(ctx context.Context, id uuid.UUID) error {
 func (s *PgStore) loadRelationTypeJunctions(ctx context.Context, rt *model.RelationType) error {
 	// Sources
 	rows, err := s.pool.Query(ctx,
-		`SELECT it.id, it.name, it.description, it.attributes_schema, it.created_at, it.updated_at
+		`SELECT it.id, it.name, it.description, it.attributes_schema, it.display_order, it.created_at, it.updated_at
 		 FROM relation_type_sources rts
 		 JOIN item_types it ON it.id = rts.item_type_id
 		 WHERE rts.relation_type_id = $1
@@ -227,7 +227,7 @@ func (s *PgStore) loadRelationTypeJunctions(ctx context.Context, rt *model.Relat
 	rt.SourceItemTypes = []model.ItemType{}
 	for rows.Next() {
 		var it model.ItemType
-		if err := rows.Scan(&it.ID, &it.Name, &it.Description, &it.AttributesSchema, &it.CreatedAt, &it.UpdatedAt); err != nil {
+		if err := rows.Scan(&it.ID, &it.Name, &it.Description, &it.AttributesSchema, &it.DisplayOrder, &it.CreatedAt, &it.UpdatedAt); err != nil {
 			return err
 		}
 		rt.SourceItemTypeIDs = append(rt.SourceItemTypeIDs, it.ID)
@@ -239,7 +239,7 @@ func (s *PgStore) loadRelationTypeJunctions(ctx context.Context, rt *model.Relat
 
 	// Targets
 	rows2, err := s.pool.Query(ctx,
-		`SELECT it.id, it.name, it.description, it.attributes_schema, it.created_at, it.updated_at
+		`SELECT it.id, it.name, it.description, it.attributes_schema, it.display_order, it.created_at, it.updated_at
 		 FROM relation_type_targets rtt
 		 JOIN item_types it ON it.id = rtt.item_type_id
 		 WHERE rtt.relation_type_id = $1
@@ -252,7 +252,7 @@ func (s *PgStore) loadRelationTypeJunctions(ctx context.Context, rt *model.Relat
 	rt.TargetItemTypes = []model.ItemType{}
 	for rows2.Next() {
 		var it model.ItemType
-		if err := rows2.Scan(&it.ID, &it.Name, &it.Description, &it.AttributesSchema, &it.CreatedAt, &it.UpdatedAt); err != nil {
+		if err := rows2.Scan(&it.ID, &it.Name, &it.Description, &it.AttributesSchema, &it.DisplayOrder, &it.CreatedAt, &it.UpdatedAt); err != nil {
 			return err
 		}
 		rt.TargetItemTypeIDs = append(rt.TargetItemTypeIDs, it.ID)
@@ -290,7 +290,7 @@ func (s *PgStore) loadRelationTypesJunctions(ctx context.Context, rts []model.Re
 	}
 	load := func(table string, assign func(rt *model.RelationType, it model.ItemType)) error {
 		rows, err := s.pool.Query(ctx, fmt.Sprintf(
-			`SELECT j.relation_type_id, it.id, it.name, it.description, it.attributes_schema, it.created_at, it.updated_at
+			`SELECT j.relation_type_id, it.id, it.name, it.description, it.attributes_schema, it.display_order, it.created_at, it.updated_at
 			 FROM %s j
 			 JOIN item_types it ON it.id = j.item_type_id
 			 WHERE j.relation_type_id = ANY($1)
@@ -302,7 +302,7 @@ func (s *PgStore) loadRelationTypesJunctions(ctx context.Context, rts []model.Re
 		for rows.Next() {
 			var rtID uuid.UUID
 			var it model.ItemType
-			if err := rows.Scan(&rtID, &it.ID, &it.Name, &it.Description, &it.AttributesSchema, &it.CreatedAt, &it.UpdatedAt); err != nil {
+			if err := rows.Scan(&rtID, &it.ID, &it.Name, &it.Description, &it.AttributesSchema, &it.DisplayOrder, &it.CreatedAt, &it.UpdatedAt); err != nil {
 				return err
 			}
 			if i, ok := index[rtID]; ok {

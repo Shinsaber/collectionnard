@@ -28,6 +28,9 @@ export default {
     title: "Types d'items",
     schemaFields: "Champs du schéma",
     namePlaceholder: "Ex. : Series, Episode, DVD…",
+    displayOrder: "Ordre d'affichage",
+    displayOrderHelp:
+      "Petit = en premier (listes, sélecteurs, répartition par type) ; à égalité, ordre alphabétique. Défaut : 100.",
   },
   relationTypes: {
     title: "Types de relations",

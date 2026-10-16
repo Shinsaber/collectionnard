@@ -151,7 +151,7 @@ func TestImportCatalog_ValidationErrors(t *testing.T) {
 		model.ExportItem{ID: uuid.New(), ItemTypeID: uuid.New(), Attributes: json.RawMessage(`{}`)},
 	)
 	// a new item type reusing an existing name
-	cat.ItemTypes = append(cat.ItemTypes, model.ExportMetaType{ID: uuid.New(), Name: "Series", AttributesSchema: json.RawMessage(`{"type":"object"}`)})
+	cat.ItemTypes = append(cat.ItemTypes, model.ExportItemType{ExportMetaType: model.ExportMetaType{ID: uuid.New(), Name: "Series", AttributesSchema: json.RawMessage(`{"type":"object"}`)}})
 	// released_as (Series → DVD) used from an episode
 	cat.Relations = append(cat.Relations, model.ExportRelation{
 		ID: uuid.New(), RelationTypeID: rtEditeEn, SourceItemID: itemPilot, TargetItemID: itemDVD,

@@ -33,6 +33,8 @@ export interface ItemType {
   name: string;
   description?: string;
   attributes_schema: Record<string, unknown>;
+  /** Ordre d'affichage (petit = en premier, puis par nom) ; défaut 100. */
+  display_order: number;
   created_at: string;
   updated_at: string;
 }
@@ -41,12 +43,14 @@ export interface ItemTypeCreate {
   name: string;
   description?: string;
   attributes_schema: Record<string, unknown>;
+  display_order?: number;
 }
 
 export interface ItemTypeUpdate {
   name?: string;
   description?: string;
   attributes_schema?: Record<string, unknown>;
+  display_order?: number;
 }
 
 // ---------- RelationType ----------
@@ -229,6 +233,7 @@ export interface GraphResponse {
 
 // ---------- Stats ----------
 export interface ItemsByType {
+  type_id: string;
   type_name: string;
   count: number;
 }

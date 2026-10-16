@@ -150,7 +150,15 @@
             >
               {{ t("dashboard.itemsByType") }}
             </h2>
-            <div v-for="b in byType" :key="b.name" class="flex flex-col gap-1">
+            <RouterLink
+              v-for="b in byType"
+              :key="b.id"
+              :to="{ path: '/items', query: { item_type_id: b.id } }"
+              class="-mx-2 flex flex-col gap-1 rounded-lg px-2 py-1 transition-colors hover:bg-canvas"
+              :aria-label="
+                t('dashboard.seeType', { type: b.label, n: b.count })
+              "
+            >
               <div class="flex justify-between gap-3 text-sm">
                 <span>{{ b.label }}</span>
                 <span class="font-mono text-[13px]">{{
@@ -163,7 +171,7 @@
                   :style="{ width: `${b.pct}%` }"
                 ></div>
               </div>
-            </div>
+            </RouterLink>
           </div>
         </section>
       </div>
@@ -219,23 +227,21 @@ const statTiles = computed(() => {
   ];
 });
 
-/** Répartition par type, du plus fourni au moins fourni ; barres relatives au maximum. */
+/** Répartition par type, dans l'ordre d'affichage des types (API) ; barres relatives au maximum. */
 const byType = computed(() => {
-  const rows = [...(stats.value?.items_by_type ?? [])].sort(
-    (a, b) => b.count - a.count,
-  );
-  const max = rows[0]?.count || 1;
+  const rows = stats.value?.items_by_type ?? [];
+  const max = Math.max(1, ...rows.map((r) => r.count));
   return rows.map((r) => ({
-    name: r.type_name,
-    label: typeName(r.type_name),
+    id: r.type_id,
+    label: typeName(r.type_id, r.type_name),
     count: r.count,
     pct: Math.max(2, Math.round((r.count / max) * 100)),
   }));
 });
 
-/** Nom affiché d'un ItemType connu par son seul nom (stats) ; repli sur le nom brut. */
-function typeName(name: string): string {
-  const type = metaTypes.itemTypes.find((it) => it.name === name);
+/** Nom affiché d'un ItemType des stats ; repli sur le nom brut tant que les types manquent. */
+function typeName(id: string, name: string): string {
+  const type = metaTypes.itemTypes.find((it) => it.id === id);
   return type ? typeTitle(type, lang.value) : name;
 }
 

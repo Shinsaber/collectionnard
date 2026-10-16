@@ -28,6 +28,9 @@ const en: typeof fr = {
     title: "Item types",
     schemaFields: "Schema fields",
     namePlaceholder: "e.g. Series, Episode, DVD…",
+    displayOrder: "Display order",
+    displayOrderHelp:
+      "Lower comes first (lists, selectors, breakdown by type); ties are sorted by name. Default: 100.",
   },
   relationTypes: {
     title: "Relation types",
