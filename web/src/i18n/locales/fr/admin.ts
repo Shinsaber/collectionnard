@@ -97,6 +97,22 @@ export default {
       collection: "Collection",
     },
   },
+  images: {
+    title: "Images",
+    unusedTitle: "Images inutilisées",
+    unusedHelp:
+      "Images envoyées qu'aucun item, relation ou item de collection n'utilise plus. Celles de moins de {hours} h sont conservées : une image est envoyée dès qu'on la choisit, avant l'enregistrement du formulaire.",
+    search: "Rechercher",
+    none: "Aucune image inutilisée.",
+    found: "{n} image inutilisée ({size}) | {n} images inutilisées ({size})",
+    kept: "Conservées : {referenced} utilisée(s), {recent} récente(s).",
+    delete: "Supprimer {n} image | Supprimer {n} images",
+    confirm:
+      "Supprimer définitivement {n} image inutilisée ({size}) ? | Supprimer définitivement {n} images inutilisées ({size}) ?",
+    deleted: "{n} image supprimée | {n} images supprimées",
+    modified: "Modifiée le {date}",
+    failed: "Recherche des images impossible",
+  },
   external: {
     title: "Sources externes — BD / Manga",
     intro:

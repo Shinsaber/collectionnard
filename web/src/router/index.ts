@@ -90,6 +90,12 @@ const router = createRouter({
           meta: { admin: true },
         },
         {
+          path: "admin/images",
+          name: "images",
+          component: () => import("@/views/admin/ImagesView.vue"),
+          meta: { admin: true },
+        },
+        {
           path: "admin/external-import",
           name: "external-import",
           component: () => import("@/views/admin/ExternalImportView.vue"),

@@ -11,6 +11,7 @@ export const NAV_ICONS = {
   relationTypes: "M4 12h16M14 6l6 6-6 6M10 6l-6 6 6 6",
   collectionTypes: "M3 12V4h8l10 10-8 8zM7.5 7.5h.01",
   importExport: "M12 3v12M7 10l5 5 5-5M4 21h16",
+  images: "M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15.5 9a1.5 1.5 0 1 0 0 .01",
   external:
     "M7 18a5 5 0 0 1-.6-9.96A6 6 0 0 1 18 9a4 4 0 0 1 0 9zM12 11v6M9 14l3 3 3-3",
   /** Graphe d'un item (hors navigation, même jeu de tracés). */
@@ -87,6 +88,7 @@ export function useNavigation() {
       label: t("layout.nav.externalImport"),
       icon: "external",
     },
+    { to: "/admin/images", label: t("layout.nav.images"), icon: "images" },
   ]);
 
   return { mainLinks, tabLinks, adminLinks };

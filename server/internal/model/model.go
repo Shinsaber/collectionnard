@@ -286,6 +286,25 @@ type UploadResponse struct {
 	Reused   bool   `json:"reused"` // fichier identique déjà présent : même URL, rien de réécrit
 }
 
+// UploadFileInfo describes a stored upload (purge report).
+type UploadFileInfo struct {
+	Filename   string    `json:"filename"`
+	Size       int64     `json:"size"`
+	ModifiedAt time.Time `json:"modified_at"`
+}
+
+// UploadPurgeReport is returned by POST /uploads/purge: the unused files
+// (deleted unless dry_run), and what was kept.
+type UploadPurgeReport struct {
+	DryRun     bool             `json:"dry_run"`
+	Applied    bool             `json:"applied"`
+	Files      []UploadFileInfo `json:"files"`
+	TotalSize  int64            `json:"total_size"`
+	Referenced int              `json:"referenced"` // fichiers encore utilisés
+	Recent     int              `json:"recent"`     // inutilisés mais dans le délai de grâce
+	GraceHours int              `json:"grace_hours"`
+}
+
 // ---------------------------------------------------------------------------
 // Stats
 // ---------------------------------------------------------------------------

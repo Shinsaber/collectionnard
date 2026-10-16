@@ -97,6 +97,22 @@ const en: typeof fr = {
       collection: "Collection",
     },
   },
+  images: {
+    title: "Images",
+    unusedTitle: "Unused images",
+    unusedHelp:
+      "Uploaded images that no item, relation or collection item uses any more. Those younger than {hours} h are kept: an image is uploaded as soon as it is chosen, before the form is saved.",
+    search: "Search",
+    none: "No unused image.",
+    found: "{n} unused image ({size}) | {n} unused images ({size})",
+    kept: "Kept: {referenced} in use, {recent} recent.",
+    delete: "Delete {n} image | Delete {n} images",
+    confirm:
+      "Permanently delete {n} unused image ({size})? | Permanently delete {n} unused images ({size})?",
+    deleted: "{n} image deleted | {n} images deleted",
+    modified: "Modified on {date}",
+    failed: "Cannot look for images",
+  },
   external: {
     title: "External sources — Comics / Manga",
     intro:

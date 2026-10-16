@@ -468,6 +468,29 @@ func TestUserByUsername_CaseInsensitive(t *testing.T) {
 	}
 }
 
+// --- Uploads ---
+
+func TestReferencedUploads(t *testing.T) {
+	item, err := s.CreateItem(ctx, model.ItemCreate{ItemTypeID: typeSerie, Attributes: json.RawMessage(`{
+		"title": "Uploads",
+		"images": {"default_image": "/api/v1/uploads/a.jpg", "poster": ["/api/v1/uploads/a.jpg", "http://host/api/v1/uploads/b.png"]}
+	}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = s.DeleteItem(ctx, item.ID) }()
+	names, err := s.ReferencedUploads(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Contains(names, "a.jpg") || !slices.Contains(names, "b.png") || slices.Contains(names, "Uploads") {
+		t.Errorf("referenced uploads: %v", names)
+	}
+	if n := len(slices.Compact(slices.Sorted(slices.Values(names)))); n != len(names) {
+		t.Errorf("duplicates in %v", names)
+	}
+}
+
 // --- Item types: display order ---
 
 func TestItemTypes_DisplayOrder(t *testing.T) {

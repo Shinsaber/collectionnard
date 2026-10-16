@@ -22,7 +22,7 @@ Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
 | `src/stores/metaTypes.ts`             | Cache des ItemTypes / RelationTypes / CollectionTypes (`invalidate()` après toute écriture admin)                                           |
 | `src/composables/`                    | `useTheme`, `useLang`, `useNotify` (ElMessage), `useConfirmDialog` (ElMessageBox → promesse booléenne), `usePagination`, `useDirty` (bouton « Enregistrer » grisé sans modification)                   |
 | `components/common/AppSpinner.vue`    | Indicateur de chargement                                                                                                                    |
-| `views/admin/ImportExportView.vue` | Import / export du catalogue (JSON, simulation puis import, rapport) ; exports CSV/JSON via `components/common/ExportButton.vue` et `lib/csv.ts` (séparateur selon la langue) |
+| `views/admin/ImportExportView.vue` | Import / export du catalogue (JSON, simulation puis import, rapport) ; exports CSV/JSON via `components/common/ExportButton.vue` et `lib/csv.ts` (séparateur selon la langue) ; `ImagesView.vue` : purge des images inutilisées (simulation puis suppression) |
 | `src/lib/schema.ts`                   | Lecture des schémas et extensions x-* (pendant de `server/internal/label`)                                                                  |
 | `src/lib/itemSearch.ts`               | Recherche du catalogue : champs filtrables / triables d'un schéma, état ↔ query (URL = paramètres de `GET /items`) |
 | `src/lib/externalPlan.ts`             | Aperçu d'un import externe : regroupement par édition, sélection par défaut, relation au parent (`role` = vocabulaire du connecteur, jamais un ItemType) |

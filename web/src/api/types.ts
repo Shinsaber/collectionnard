@@ -292,6 +292,24 @@ export interface UploadResponse {
   reused: boolean;
 }
 
+// ---------- Purge des images (POST /uploads/purge) ----------
+export interface UploadFileInfo {
+  filename: string;
+  size: number;
+  modified_at: string;
+}
+
+export interface UploadPurgeReport {
+  dry_run: boolean;
+  applied: boolean;
+  /** Images inutilisées plus anciennes que le délai de grâce (supprimées si `applied`). */
+  files: UploadFileInfo[];
+  total_size: number;
+  referenced: number;
+  recent: number;
+  grace_hours: number;
+}
+
 // ---------- Import / export ----------
 export type CsvDelimiter = "comma" | "semicolon" | "tab";
 

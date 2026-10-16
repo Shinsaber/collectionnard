@@ -1458,6 +1458,38 @@ components:
           description: "Un fichier identique existait déjà : même URL, rien n'a été réécrit."
           example: false
 
+    UploadPurgeReport:
+      type: object
+      description: Résultat de `POST /uploads/purge`.
+      required: [dry_run, applied, files, total_size, referenced, recent, grace_hours]
+      properties:
+        dry_run: { type: boolean }
+        applied:
+          type: boolean
+          description: Vrai si les fichiers listés ont été supprimés.
+        files:
+          type: array
+          description: Images inutilisées et plus anciennes que le délai de grâce.
+          items:
+            type: object
+            required: [filename, size, modified_at]
+            properties:
+              filename: { type: string }
+              size: { type: integer, description: Octets. }
+              modified_at: { type: string, format: date-time }
+        total_size:
+          type: integer
+          description: Taille cumulée de `files`, en octets.
+        referenced:
+          type: integer
+          description: Images encore utilisées (conservées).
+        recent:
+          type: integer
+          description: Images inutilisées mais dans le délai de grâce (conservées).
+        grace_hours:
+          type: integer
+          example: 24
+
   # ===========================================================================
   # Paramètres réutilisables
   # ===========================================================================
@@ -3500,6 +3532,40 @@ paths:
               example:
                 error: payload_too_large
                 message: file too large (max 10 MiB)
+
+  /uploads/purge:
+    post:
+      tags: [Uploads]
+      summary: Purger les images inutilisées
+      description: |
+        **Admin uniquement.**
+
+        Cherche dans `UPLOAD_DIR` les images qu'aucun attribut (items, relations, items de
+        collection) ne référence plus, et les supprime. Les fichiers modifiés depuis moins de
+        `grace_hours` (24 h) sont conservés : une image est envoyée dès qu'on la choisit, avant
+        l'enregistrement du formulaire qui la référence. Seules les images (extensions servies)
+        sont concernées. `dry_run=true` liste sans rien supprimer.
+      operationId: purgeUploads
+      parameters:
+        - name: dry_run
+          in: query
+          description: Simuler la purge (liste des fichiers, aucune suppression).
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Fichiers inutilisés (supprimés sauf en simulation).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadPurgeReport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
   /uploads/{filename}:
     parameters:

@@ -45,6 +45,7 @@ import type {
   ExternalPlan,
   ExternalWorkHit,
   ImportReport,
+  UploadPurgeReport,
   UploadResponse,
 } from "./types";
 import { i18n } from "@/i18n";
@@ -351,6 +352,13 @@ export const uploadApi = {
       })
       .then((r) => r.data);
   },
+  /** Images qu'aucun attribut ne référence (admin) ; `dryRun` liste sans supprimer. */
+  purge: (dryRun: boolean) =>
+    http
+      .post<UploadPurgeReport>("/uploads/purge", null, {
+        params: { dry_run: dryRun },
+      })
+      .then((r) => r.data),
 };
 
 // ── Import / export ───────────────────────────────────────────────────

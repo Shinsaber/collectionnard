@@ -11,6 +11,7 @@ export default {
     collectionTypes: "Types de collection",
     importExport: "Import / export",
     externalImport: "Sources externes",
+    images: "Images",
   },
   mainNav: "Navigation principale",
   skipToContent: "Aller au contenu",

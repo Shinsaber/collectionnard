@@ -118,4 +118,8 @@ type Store interface {
 	// External sources (matching of the items proposed by a connector)
 	FindItemsByAttribute(ctx context.Context, itemTypeID uuid.UUID, path, values []string, fold bool) ([]model.Item, error)
 	ListRelationsBetween(ctx context.Context, ids []uuid.UUID) ([]model.ItemRelation, error)
+
+	// Uploads: file names (without path) referenced by any attribute (items,
+	// relations, collection items), for the purge of unused images.
+	ReferencedUploads(ctx context.Context) ([]string, error)
 }

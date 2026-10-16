@@ -61,9 +61,9 @@ Un commit par lot ; contrat d'API d'abord (`api/openapi.yaml` → model → stor
 
 ## Lot E4 — Images
 
-- [ ] **E4a — Doublons** : fichier nommé d'après le SHA-256 de son contenu (`<hash>.jpg`) ; un envoi
+- [x] **E4a — Doublons** : fichier nommé d'après le SHA-256 de son contenu (`<hash>.jpg`) ; un envoi
       identique renvoie la même URL sans réécrire. Les fichiers existants gardent leur nom.
-- [ ] **E4b — Purge** (admin) : recherche des fichiers de `UPLOAD_DIR` qu'aucun attribut (items,
+- [x] **E4b — Purge** (admin, page « Images », `POST /uploads/purge?dry_run=`) : recherche des fichiers de `UPLOAD_DIR` qu'aucun attribut (items,
       items de collection) ne référence plus ; délai de grâce de 24 h ; simulation (liste, taille)
       puis confirmation, comme l'import.
 - [ ] **E4c — Contrôle à l'envoi**, par catégorie de `x-image-categories` :

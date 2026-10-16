@@ -73,11 +73,7 @@ func (h *Handler) Router() chi.Router {
 			return
 		}
 		// Only serve files with allowed extensions
-		ext := strings.ToLower(filepath.Ext(name))
-		switch ext {
-		case ".jpg", ".jpeg", ".png", ".gif", ".webp":
-			// ok
-		default:
+		if !servedImageExt(name) {
 			http.NotFound(w, r)
 			return
 		}
@@ -154,6 +150,7 @@ func (h *Handler) Router() chi.Router {
 			r.Delete("/api/v1/relations/{id}", h.DeleteRelation)
 
 			r.Post("/api/v1/uploads", h.UploadFile)
+			r.Post("/api/v1/uploads/purge", h.PurgeUploads)
 		})
 	})
 
