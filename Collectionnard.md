@@ -372,7 +372,7 @@ Lots de `docs/audit/03-feuille-de-route.md`, branche `remise-a-niveau` :
 ### Phase 4 : Social
 
 - [ ] Statistiques et visualisation graphiques
-- [ ] Soumission d'items par les users (validation admin)
+- [ ] Soumission/modification d'items par les users (validation admin)
 - [ ] Profils publics/privés
 - [ ] Partage de collections
 - [ ] Système d'échange
@@ -385,16 +385,16 @@ Lots de `docs/audit/03-feuille-de-route.md`, branche `remise-a-niveau` :
 
 ## 9. Stack technique
 
-| Composant       | Choix                                                                                   | Version              |
-| --------------- | --------------------------------------------------------------------------------------- | -------------------- |
-| Backend         | Go (chi 5.3, pgx 5.11, JWT 5.3, jsonschema v5 — v6 différé, API incompatible, sans CVE) | 1.27 (go.mod ≥ 1.26) |
-| Base de données | PostgreSQL                                                                              | 16                   |
-| Frontend        | Vue 3 + TypeScript                                                                      | 3.5 / 6.0            |
-| UI              | Element Plus (MIT) + Tailwind CSS ; identité « Étiquette » (Schibsted Grotesk, IBM Plex Mono) | 2.14 / 4.3          |
-| Graphes         | Cytoscape.js                                                                            | 3.34                 |
-| Build           | Vite (Rolldown), vue-tsc 3, Pinia 4, vue-router 5                                       | 8.3                  |
-| Déploiement     | Docker Compose (4 services : postgres, migrate, server, web)                            | —                    |
-| Dev             | Nix flake (Go, Node, PostgreSQL, golangci-lint) + direnv                                | flake.lock           |
+| Composant       | Choix                                                                                         | Version              |
+| --------------- | --------------------------------------------------------------------------------------------- | -------------------- |
+| Backend         | Go (chi 5.3, pgx 5.11, JWT 5.3, jsonschema v5 — v6 différé, API incompatible, sans CVE)       | 1.27 (go.mod ≥ 1.26) |
+| Base de données | PostgreSQL                                                                                    | 16                   |
+| Frontend        | Vue 3 + TypeScript                                                                            | 3.5 / 6.0            |
+| UI              | Element Plus (MIT) + Tailwind CSS ; identité « Étiquette » (Schibsted Grotesk, IBM Plex Mono) | 2.14 / 4.3           |
+| Graphes         | Cytoscape.js                                                                                  | 3.34                 |
+| Build           | Vite (Rolldown), vue-tsc 3, Pinia 4, vue-router 5                                             | 8.3                  |
+| Déploiement     | Docker Compose (4 services : postgres, migrate, server, web)                                  | —                    |
+| Dev             | Nix flake (Go, Node, PostgreSQL, golangci-lint) + direnv                                      | flake.lock           |
 
 ---
 
