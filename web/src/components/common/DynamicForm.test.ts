@@ -40,14 +40,15 @@ describe("DynamicForm", () => {
     expect(titre.find('span[aria-hidden="true"]').text()).toBe("*");
     // synopsis : widget i18n-text → deux zones de texte FR / EN
     expect(w.findAll("textarea")).toHaveLength(2);
-    // images : galerie avec les 3 catégories déclarées dans x-image-categories
+    // images : galerie avec les 3 catégories déclarées dans x-image-categories (dans l'ordre de
+    // l'objet, celui que PostgreSQL rend : les clés d'un JSONB sont triées)
     const cats = w
       .findAll('input[type="file"]')
       .map((i) => i.attributes("aria-label"));
-    expect(cats).toEqual([
+    expect([...cats].sort()).toEqual([
+      "Fichier image pour banner",
       "Fichier image pour poster",
       "Fichier image pour screenshot",
-      "Fichier image pour banner",
     ]);
   });
 

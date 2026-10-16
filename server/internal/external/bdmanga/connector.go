@@ -42,7 +42,7 @@ func New(cat Catalog, fetch *external.Client) *Connector {
 	return &Connector{Catalog: cat, WD: wikidata.New(fetch), BnF: bnf.New(fetch), Now: time.Now}
 }
 
-// Technical names of the domain (db/seed_bd_manga.sql).
+// Technical names of the domain (package « books », server/internal/domains/packages).
 const (
 	typeManga     = "Manga"
 	typeComic     = "Comic"
@@ -62,6 +62,24 @@ const (
 var (
 	itemTypeNames     = []string{typeManga, typeComic, typeUniverse, typeEdition, typeVolume, typePerson, typePublisher}
 	relationTypeNames = []string{relContainsWork, relCreatedBy, relPublishedAs, relEditedBy, relContainsVolume}
+
+	// packageIDs: fixed ids of the types in the « books » package. A type is found by this id
+	// first (it may have been renamed on the instance), then by its technical name (type
+	// created by hand, outside the package).
+	packageIDs = map[string]uuid.UUID{
+		typeUniverse:      uuid.MustParse("b0000000-0000-0000-0000-000000000010"),
+		typeManga:         uuid.MustParse("b0000000-0000-0000-0000-000000000012"),
+		typeComic:         uuid.MustParse("b0000000-0000-0000-0000-000000000013"),
+		typeEdition:       uuid.MustParse("b0000000-0000-0000-0000-000000000014"),
+		typeVolume:        uuid.MustParse("b0000000-0000-0000-0000-000000000015"),
+		typePerson:        uuid.MustParse("b0000000-0000-0000-0000-000000000016"),
+		typePublisher:     uuid.MustParse("b0000000-0000-0000-0000-000000000017"),
+		relContainsWork:   uuid.MustParse("c0000000-0000-0000-0000-000000000011"),
+		relCreatedBy:      uuid.MustParse("c0000000-0000-0000-0000-000000000012"),
+		relPublishedAs:    uuid.MustParse("c0000000-0000-0000-0000-000000000013"),
+		relEditedBy:       uuid.MustParse("c0000000-0000-0000-0000-000000000014"),
+		relContainsVolume: uuid.MustParse("c0000000-0000-0000-0000-000000000015"),
+	}
 )
 
 // Limits of one request.
@@ -105,21 +123,35 @@ func (c *Connector) domain(ctx context.Context) (*domain, error) {
 		return nil, err
 	}
 	d := &domain{types: map[string]*model.ItemType{}, schemas: map[uuid.UUID]map[string]any{}, relations: map[string]uuid.UUID{}}
+	typeByName, typeByID := map[string]*model.ItemType{}, map[uuid.UUID]*model.ItemType{}
 	for i := range its {
-		d.types[its[i].Name] = &its[i]
+		typeByName[its[i].Name] = &its[i]
+		typeByID[its[i].ID] = &its[i]
 		d.schemas[its[i].ID] = parseObject(its[i].AttributesSchema)
 	}
+	relByName, relByID := map[string]uuid.UUID{}, map[uuid.UUID]bool{}
 	for _, rt := range rts {
-		d.relations[rt.Name] = rt.ID
+		relByName[rt.Name] = rt.ID
+		relByID[rt.ID] = true
 	}
 	var missing []string
 	for _, n := range itemTypeNames {
-		if d.types[n] == nil {
-			missing = append(missing, n)
+		t := typeByID[packageIDs[n]]
+		if t == nil {
+			t = typeByName[n]
 		}
+		if t == nil {
+			missing = append(missing, n)
+			continue
+		}
+		d.types[n] = t
 	}
 	for _, n := range relationTypeNames {
-		if _, ok := d.relations[n]; !ok {
+		if relByID[packageIDs[n]] {
+			d.relations[n] = packageIDs[n]
+		} else if id, ok := relByName[n]; ok {
+			d.relations[n] = id
+		} else {
 			missing = append(missing, n)
 		}
 	}

@@ -157,6 +157,8 @@ func (h *Handler) Router() chi.Router {
 
 			r.Post("/api/v1/uploads", h.UploadFile)
 			r.Post("/api/v1/uploads/purge", h.PurgeUploads)
+			r.Get("/api/v1/domains", h.ListDomains)
+			r.Post("/api/v1/domains/{id}/install", h.InstallDomain)
 		})
 	})
 

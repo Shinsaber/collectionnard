@@ -105,6 +105,11 @@ type Store interface {
 	// (offline copy of the mobile app).
 	GetOfflineSnapshot(ctx context.Context, userID uuid.UUID) (*model.OfflineSnapshot, error)
 
+	// Domain packages (P3-0): state on the instance, install / update by merge.
+	ListDomains(ctx context.Context) ([]model.DomainInfo, error)
+	InstallDomain(ctx context.Context, pkg *model.DomainPackage, dryRun bool) (*model.DomainInstallReport, error)
+	RefreshInstalledDomains(ctx context.Context, except string) error
+
 	// Tag
 	ListTags(ctx context.Context, search string) ([]model.Tag, error)
 

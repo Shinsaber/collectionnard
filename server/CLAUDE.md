@@ -18,7 +18,8 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 | `label`      | `Render(schema, attrs, lang)` : libellé d'un item via `x-label` (pendant de `web/src/lib/schema.ts`) |
 | `itemquery`  | Recherche avancée de `GET /items` : filtres `attr.<clé>[.<op>]`, tri `attr.<clé>`, requête plein texte — validés contre le schéma du type (pendant de `web/src/lib/itemSearch.ts`) |
 | `csvexport`  | Mise à plat CSV des attributs (colonnes depuis le schéma, i18n-text → `clé.langue`, BOM, anti-injection de formules) |
-| `dbmigrate`  | Migrations tern (`db/migrations`) + seeds (`SEED_FILE` : liste séparée par des virgules ; défaut `seed.sql` puis `seed_bd_manga.sql`) : sous-commandes `colec-server migrate` / `seed` (`cmd.go`) |
+| `dbmigrate`  | Migrations tern (`db/migrations`) + seeds de démonstration (`SEED_FILE` : liste séparée par des virgules ; défaut `seed.sql` puis `seed_bd_manga.sql`), précédés de l'installation des paquets de domaine : sous-commandes `colec-server migrate` / `seed` / `install-domain` (`cmd.go`) |
+| `domains`    | Paquets de domaine embarqués (`packages/*.json`, types au format de l'import) et plan d'installation : `Merge3` (référence / local / paquet ; les modifications locales sont gardées, seuls les ajouts du paquet sont fusionnés). Le store écrit par l'import et garde les copies de référence (`meta_type_origins`, migration 007) |
 | `external`   | Sources ouvertes : client HTTP commun (User-Agent, délai, taille max, cache 15 min), `wikidata/` (recherche par classe, entités, `wbgetclaims`), `bnf/` (SRU UNIMARC, ARK + caractère de contrôle, ISBN) ; connecteur `bdmanga/` (types du domaine trouvés par nom technique, rapprochement du catalogue, champs vides seulement, sortie au format de `POST /import`) ; `bdmanga/bdmangatest` = sources simulées (réponses enregistrées dans `testdata/`) + catalogue en mémoire |
 
 ## Erreurs et réponses

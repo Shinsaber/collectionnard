@@ -19,7 +19,9 @@
 
 ## Implémentation (lot 13)
 
-Seed : [`db/seed_bd_manga.sql`](db/seed_bd_manga.sql) (chargé après `db/seed.sql`). Noms techniques des ItemTypes :
+Types : paquet de domaine « books » ([`server/internal/domains/packages/books.json`](server/internal/domains/packages/books.json),
+page « Domaines » ou `colec-server install-domain books`) ; données de démonstration : [`db/seed_bd_manga.sql`](db/seed_bd_manga.sql)
+(chargé après `db/seed.sql`). Noms techniques des ItemTypes :
 `Universe`, `Saga`, `Manga`, `Comic` (BD), `Edition`, `Volume` (Tome), `Person`, `Publisher` ; noms affichés via `x-title`.
 Valeurs d'enum en ASCII (`shonen`, `tankobon`, `ova`…) affichées avec leurs accents via `x-enum-labels`.
 Exemples réels : Dragon Ball (univers, sagas, deux mangas, Toriyama / Toyotarō, édition Glénat 1993, tomes 1-2,

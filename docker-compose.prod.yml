@@ -4,8 +4,10 @@
 #   docker compose -f docker-compose.prod.yml pull
 #   docker compose -f docker-compose.prod.yml up -d
 #   docker compose -f docker-compose.prod.yml run --rm server colec-server create-user <nom> <email> --admin
+#   docker compose -f docker-compose.prod.yml run --rm server colec-server install-domain --all
 #
-# Pas de jeu de démonstration : la base démarre vide, le premier compte se crée avec create-user.
+# Pas de jeu de démonstration : la base démarre vide ; le premier compte se crée avec create-user, les
+# types (séries TV, livres…) s'installent avec install-domain ou la page Administration → Domaines.
 # Seul le service web est publié (WEB_PORT, 3000 par défaut, en HTTP) : placer devant un reverse-proxy
 # HTTPS (Caddy, Traefik, nginx…), indispensable à l'application installable et au mode hors ligne.
 services:

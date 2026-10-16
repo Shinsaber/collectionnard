@@ -13,6 +13,7 @@ const en: typeof fr = {
     importExport: "Import / export",
     externalImport: "External sources",
     images: "Images",
+    domains: "Domains",
     offline: "Offline",
   },
   mainNav: "Main navigation",

@@ -96,6 +96,12 @@ const router = createRouter({
           component: () => import("@/views/OfflineView.vue"),
         },
         {
+          path: "admin/domains",
+          name: "domains",
+          component: () => import("@/views/admin/DomainsView.vue"),
+          meta: { admin: true },
+        },
+        {
           path: "admin/images",
           name: "images",
           component: () => import("@/views/admin/ImagesView.vue"),

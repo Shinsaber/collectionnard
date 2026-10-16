@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shinsaber/colec/internal/domains"
 	"github.com/shinsaber/colec/internal/external"
 	"github.com/shinsaber/colec/internal/external/bdmanga"
 	"github.com/shinsaber/colec/internal/model"
@@ -129,31 +130,22 @@ func (s *Sources) Connector(cat bdmanga.Catalog) *bdmanga.Connector {
 	return c
 }
 
-// Domain returns the item types and relation types of the seeds
-// (web/tests/fixtures/seed-schemas.json: ids b… item types, c… relation types).
+// Domain returns the item types and relation types of the domain packages
+// (server/internal/domains/packages).
 func Domain(t testing.TB) ([]model.ItemType, []model.RelationType) {
 	t.Helper()
-	_, file, _, _ := runtime.Caller(0)
-	b, err := os.ReadFile(filepath.Join(filepath.Dir(file), "..", "..", "..", "..", "..", "web", "tests", "fixtures", "seed-schemas.json"))
+	pkgs, err := domains.All()
 	if err != nil {
-		t.Fatal(err)
-	}
-	var list []struct {
-		ID     uuid.UUID       `json:"id"`
-		Name   string          `json:"name"`
-		Schema json.RawMessage `json:"schema"`
-	}
-	if err := json.Unmarshal(b, &list); err != nil {
 		t.Fatal(err)
 	}
 	var its []model.ItemType
 	var rts []model.RelationType
-	for _, s := range list {
-		switch s.ID.String()[0] {
-		case 'b':
-			its = append(its, model.ItemType{ID: s.ID, Name: s.Name, AttributesSchema: s.Schema})
-		case 'c':
-			rts = append(rts, model.RelationType{ID: s.ID, Name: s.Name, AttributesSchema: s.Schema})
+	for _, p := range pkgs {
+		for _, it := range p.ItemTypes {
+			its = append(its, model.ItemType{ID: it.ID, Name: it.Name, AttributesSchema: it.AttributesSchema})
+		}
+		for _, rt := range p.RelationTypes {
+			rts = append(rts, model.RelationType{ID: rt.ID, Name: rt.Name, AttributesSchema: rt.AttributesSchema})
 		}
 	}
 	return its, rts

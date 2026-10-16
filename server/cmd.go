@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/shinsaber/colec/internal/dbmigrate"
+	"github.com/shinsaber/colec/internal/domains"
 	"github.com/shinsaber/colec/internal/store"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/term"
@@ -70,8 +71,13 @@ func runSeed() int {
 	return applySeed(ctx, databaseURL)
 }
 
-// applySeed applies SEED_FILE (comma-separated list) or the default seeds, in order.
+// applySeed installs every domain package (the seeds only hold demonstration data, the
+// types come from the packages), then applies SEED_FILE (comma-separated list) or the
+// default seeds, in order.
 func applySeed(ctx context.Context, databaseURL string) int {
+	if code := installDomains(ctx, databaseURL, nil, false); code != 0 {
+		return code
+	}
 	files, err := dbmigrate.ResolveSeedFiles(os.Getenv("SEED_FILE"))
 	if err != nil {
 		slog.Error("seed", "err", err)
@@ -193,4 +199,114 @@ func readNewPassword() (string, error) {
 		return "", fmt.Errorf("password too short (%d characters minimum)", minPasswordLength)
 	}
 	return password, nil
+}
+
+// runInstallDomain implements `colec-server install-domain [--dry-run] [<domaine>…|--all]`:
+// without argument, lists the packages and their state; otherwise installs or
+// updates them (merge: the types changed on the instance keep their changes).
+func runInstallDomain(args []string) int {
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		slog.Error("DATABASE_URL is required")
+		return 1
+	}
+	dryRun := false
+	var ids []string
+	all := false
+	for _, a := range args {
+		switch a {
+		case "--dry-run":
+			dryRun = true
+		case "--all":
+			all = true
+		default:
+			ids = append(ids, a)
+		}
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), dbCommandTimeout)
+	defer cancel()
+	if !all && len(ids) == 0 {
+		pg, err := store.NewPgStore(ctx, databaseURL)
+		if err != nil {
+			slog.Error("database", "err", err)
+			return 1
+		}
+		defer pg.Close()
+		list, err := pg.ListDomains(ctx)
+		if err != nil {
+			slog.Error("domains", "err", err)
+			return 1
+		}
+		for _, d := range list {
+			installed := "-"
+			if d.InstalledVersion != nil {
+				installed = strconv.Itoa(*d.InstalledVersion)
+			}
+			local := ""
+			if d.ModifiedLocally {
+				local = " (modified locally)"
+			}
+			fmt.Printf("%-12s package v%d, installed v%s: %s%s\n", d.ID, d.PackageVersion, installed, d.Status, local)
+		}
+		fmt.Println("\nusage: colec-server install-domain [--dry-run] <domain>… | --all")
+		return 0
+	}
+	return installDomains(ctx, databaseURL, ids, dryRun)
+}
+
+// installDomains installs the given packages (all when ids is nil) and prints their report.
+func installDomains(ctx context.Context, databaseURL string, ids []string, dryRun bool) int {
+	pg, err := store.NewPgStore(ctx, databaseURL)
+	if err != nil {
+		slog.Error("database", "err", err)
+		return 1
+	}
+	defer pg.Close()
+	pkgs, err := domains.All()
+	if err != nil {
+		slog.Error("domains", "err", err)
+		return 1
+	}
+	wanted := map[string]bool{}
+	for _, id := range ids {
+		wanted[id] = true
+	}
+	for _, p := range pkgs {
+		if ids != nil && !wanted[p.ID] {
+			continue
+		}
+		delete(wanted, p.ID)
+		rep, err := pg.InstallDomain(ctx, p, dryRun)
+		if err != nil {
+			slog.Error("install domain", "domain", p.ID, "err", err)
+			return 1
+		}
+		counts := map[string]int{}
+		for _, e := range rep.Entries {
+			counts[e.Outcome]++
+			if len(e.Conflicts) > 0 {
+				slog.Warn("local value kept", "domain", p.ID, "type", e.Name, "paths", e.Conflicts)
+			}
+		}
+		for _, e := range rep.Errors {
+			slog.Error("install domain", "domain", p.ID, "entity", e.Entity, "err", e.Message)
+		}
+		slog.Info("domain", "domain", p.ID, "version", p.PackageVersion, "dry_run", dryRun,
+			"applied", rep.Applied, "outcomes", counts)
+		if len(rep.Errors) > 0 {
+			return 1
+		}
+	}
+	for id := range wanted {
+		slog.Error("unknown domain", "domain", id)
+		return 2
+	}
+	if !dryRun {
+		// Relations d'autres domaines laissées de côté faute de types : ajoutées maintenant.
+		if err := pg.RefreshInstalledDomains(ctx, ""); err != nil {
+			slog.Error("refresh domains", "err", err)
+			return 1
+		}
+	}
+	return 0
 }

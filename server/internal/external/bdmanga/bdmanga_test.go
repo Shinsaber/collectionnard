@@ -290,6 +290,25 @@ func TestDomainMissing(t *testing.T) {
 	}
 }
 
+// Types renamed on the instance (Comic → bd, created_by → par) are still found by their package id.
+func TestDomainRenamedTypes(t *testing.T) {
+	src := bdmangatest.NewSources(t)
+	cat := bdmangatest.NewCatalog(t)
+	for i := range cat.ItemTypes {
+		if cat.ItemTypes[i].Name == "Comic" {
+			cat.ItemTypes[i].Name = "bd"
+		}
+	}
+	for i := range cat.RelationTypes {
+		if cat.RelationTypes[i].Name == "created_by" {
+			cat.RelationTypes[i].Name = "par"
+		}
+	}
+	if _, err := src.Connector(cat).SearchWorks(context.Background(), "dragon ball"); err != nil {
+		t.Errorf("renamed types: %v", err)
+	}
+}
+
 func TestSearchWorks(t *testing.T) {
 	src := bdmangatest.NewSources(t)
 	cat := bdmangatest.NewCatalog(t)

@@ -385,16 +385,19 @@ func TestSeedBDManga_Valid(t *testing.T) {
 	if err := dbmigrate.Migrate(ctx, u.String(), migrationsDir); err != nil {
 		t.Fatal(err)
 	}
-	for _, f := range []string{seedFile, "../../../db/seed_bd_manga.sql"} {
-		if err := dbmigrate.Seed(ctx, u.String(), f); err != nil {
-			t.Fatalf("%s: %v", f, err)
-		}
-	}
 	bd, err := store.NewPgStore(ctx, u.String())
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer bd.Close()
+	if _, err := bd.InstallDomains(ctx); err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range []string{seedFile, "../../../db/seed_bd_manga.sql"} {
+		if err := dbmigrate.Seed(ctx, u.String(), f); err != nil {
+			t.Fatalf("%s: %v", f, err)
+		}
+	}
 
 	rep, err := bd.ImportCatalog(ctx, exportNow(t, bd), true)
 	if err != nil || len(rep.Errors) != 0 {

@@ -91,16 +91,21 @@ func TestMain(m *testing.M) {
 			fmt.Fprintln(os.Stderr, "migrate:", err)
 			return 1
 		}
-		if err := dbmigrate.Seed(ctx, testURL, seedFile); err != nil {
-			fmt.Fprintln(os.Stderr, "seed:", err)
-			return 1
-		}
 		s, err = store.NewPgStore(ctx, testURL)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "store:", err)
 			return 1
 		}
 		defer s.Close()
+		// Types : paquets de domaine (P3-0) utilisés par seed.sql, puis les données de démonstration.
+		if _, err := s.InstallDomains(ctx, "collections", "tv"); err != nil {
+			fmt.Fprintln(os.Stderr, "domains:", err)
+			return 1
+		}
+		if err := dbmigrate.Seed(ctx, testURL, seedFile); err != nil {
+			fmt.Fprintln(os.Stderr, "seed:", err)
+			return 1
+		}
 		return m.Run()
 	}()
 

@@ -174,6 +174,12 @@ tags:
       `connector_unavailable`. Les items déjà présents (même QID Wikidata, ARK BnF, ISBN, ou nom
       d'éditeur sans casse ni accents) gardent leurs valeurs : la source ne remplit que les champs
       vides. Source injoignable : 502 `external_unavailable`.
+  - name: Domains
+    description: |
+      **Admin uniquement.** Paquets de domaine (types d'une sorte de collection : séries TV, livres…)
+      embarqués dans le serveur, à installer ou mettre à jour sur l'instance. La mise à jour fusionne :
+      les modifications faites sur l'instance sont gardées. Aussi en ligne de commande :
+      `colec-server install-domain`.
   - name: Health
     description: |
       État de santé de l'API (connexion à la base). Public, utilisé par le healthcheck
@@ -1201,6 +1207,73 @@ components:
               item_id: { type: string, format: uuid }
               attributes: { type: object, additionalProperties: true }
               added_at: { type: string, format: date-time }
+
+    DomainInfo:
+      type: object
+      required: [id, title, description, package_version, status, modified_locally, item_types, relation_types, collection_types]
+      properties:
+        id: { type: string, example: books }
+        title:
+          type: object
+          additionalProperties: { type: string }
+          example: { fr: Livres, en: Books }
+        description:
+          type: object
+          additionalProperties: { type: string }
+        package_version: { type: integer, description: Version du paquet embarqué. }
+        installed_version: { type: integer, description: Version installée (absente si jamais installé). }
+        status:
+          type: string
+          enum: [not_installed, up_to_date, update_available]
+        modified_locally: { type: boolean }
+        item_types: { type: integer }
+        relation_types: { type: integer }
+        collection_types: { type: integer }
+    DomainInstallReport:
+      type: object
+      required: [dry_run, applied, domain, to_version, entries, errors]
+      properties:
+        dry_run: { type: boolean }
+        applied: { type: boolean }
+        domain: { type: string }
+        from_version: { type: integer, description: Version installée avant (absente à la première installation). }
+        to_version: { type: integer }
+        entries:
+          type: array
+          items:
+            type: object
+            required: [entity, id, name, outcome]
+            properties:
+              entity:
+                type: string
+                enum: [item_types, collection_types, relation_types]
+              id: { type: string, format: uuid }
+              name: { type: string }
+              outcome:
+                type: string
+                enum: [created, updated, merged, unchanged, skipped]
+                description: |
+                  `merged` : modifié localement, ajouts du paquet fusionnés ; `skipped` : supprimé
+                  localement, ou relation dont une extrémité manque.
+              conflicts:
+                type: array
+                items: { type: string }
+                description: Chemins modifiés des deux côtés (valeur locale gardée).
+              missing_types:
+                type: array
+                items: { type: string, format: uuid }
+                description: Types d'item référencés par le paquet mais absents de l'instance.
+        errors:
+          type: array
+          description: Erreurs d'écriture (mêmes entrées que celles du rapport d'import).
+          items:
+            type: object
+            required: [entity, index, message]
+            properties:
+              entity: { type: string }
+              index: { type: integer }
+              id: { type: string, format: uuid }
+              message: { type: string }
 
     # -------------------------------------------------------------------------
     # Upload
@@ -3651,6 +3724,79 @@ paths:
               example:
                 error: payload_too_large
                 message: file too large (max 10 MiB)
+
+  /domains:
+    get:
+      tags: [Domains]
+      summary: Domaines installables
+      description: |
+        **Admin uniquement.** Paquets de domaine embarqués dans le serveur (types d'une sorte de
+        collection : séries TV, livres…) et leur état sur l'instance : non installé, à jour, mise à jour
+        disponible ; `modified_locally` si au moins un type installé a été modifié sur l'instance.
+      operationId: listDomains
+      responses:
+        "200":
+          description: Paquets et état.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DomainInfo"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /domains/{id}/install:
+    post:
+      tags: [Domains]
+      summary: Installer ou mettre à jour un domaine
+      description: |
+        **Admin uniquement.** Installe le paquet, ou le met à jour **par fusion** : pour chaque type, la
+        copie de référence (version du paquet installée), la version locale et la nouvelle version sont
+        comparées. Un type non modifié localement est remplacé ; un type modifié garde ses
+        modifications et ne reçoit que les ajouts du paquet (champs, valeurs d'enum, libellés, types
+        permis) ; une valeur modifiée des deux côtés garde la version locale (`conflicts`). Un type
+        supprimé localement n'est pas recréé ; une relation dont les types d'une extrémité manquent
+        (domaine lié non installé) est laissée de côté et ajoutée quand ils existent. Tout ou rien, via
+        l'import du catalogue ; `dry_run=true` simule. Après une installation, les autres domaines
+        installés sont fusionnés à nouveau.
+      operationId: installDomain
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, example: books }
+        - name: dry_run
+          in: query
+          description: Simuler (rapport complet, aucune écriture).
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Rapport (appliqué sauf en simulation).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DomainInstallReport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          description: Erreurs d'écriture (ex. nom de type déjà pris par un autre type) ; rien n'est écrit.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DomainInstallReport"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
   /uploads/purge:
     post:

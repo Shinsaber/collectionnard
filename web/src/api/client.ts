@@ -23,6 +23,8 @@ import type {
   ItemCreate,
   ItemUpdate,
   OfflineSnapshot,
+  DomainInfo,
+  DomainInstallReport,
   ItemRelation,
   RelatedItemCollections,
   ItemRelationCreate,
@@ -346,6 +348,19 @@ export const tagApi = {
 // ── Stats ─────────────────────────────────────────────────────────────
 export const statsApi = {
   get: () => http.get<Stats>("/stats").then((r) => r.data),
+};
+
+// ── Domaines installables ───────────────────────────────────────────────
+export const domainApi = {
+  list: () => http.get<DomainInfo[]>("/domains").then((r) => r.data),
+  /** Installe ou met à jour par fusion ; `dryRun` simule. Le rapport revient aussi en 422. */
+  install: (id: string, dryRun: boolean) =>
+    http
+      .post<DomainInstallReport>(`/domains/${id}/install`, null, {
+        params: { dry_run: dryRun },
+        validateStatus: (s) => s === 200 || s === 422,
+      })
+      .then((r) => r.data),
 };
 
 // ── Copie hors ligne ───────────────────────────────────────────────────

@@ -368,11 +368,14 @@ ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries 
 `phase3-sources`, un commit par lot.
 
 - [x] Livre/BD/manga (wikidata, BnF) : connecteur `bdmanga` (admin, page « Sources externes ») — recherche d'une œuvre sur Wikidata et d'éditions françaises à la BnF (titre ou ISBN d'un tome), aperçu à cocher (œuvre, univers, auteurs avec rôles, éditeurs, tomes ; réimpressions décochées) et corrigeable avant la simulation (formulaire du type, ex. tome sans numéro), rapprochement du catalogue (QID, ARK, ISBN, nom d'éditeur) où seuls les champs vides sont complétés, simulation puis import par `POST /import` (tout ou rien) ; `sources` porte la date de récupération (attribution BnF)
-- [ ] **P3-0 — Domaines installables** : en production (`docker-compose.prod.yml`, sans seed), aucun type n'existe,
-      et les connecteurs exigent leurs types par nom. Chaque domaine (TV, livres, puis musique, vidéo…) devient un
-      paquet de méta-types au format de l'import (`db/domains/<domaine>.json`, UUID fixes), embarqué dans le serveur
-      et installable (idempotent, par `ImportCatalog`) depuis une page d'administration « Domaines » ou
-      `colec-server install-domain <domaine>`. Les seeds ne gardent que les données de démonstration.
+- [x] **P3-0 — Domaines installables** : en production (`docker-compose.prod.yml`, sans seed), aucun type n'existait.
+      Chaque domaine (`collections`, `tv`, `books`, puis musique, vidéo…) est un paquet de méta-types au format de
+      l'import (`server/internal/domains/packages/*.json`, UUID fixes) embarqué dans le serveur, installable depuis la
+      page d'administration « Domaines » ou `colec-server install-domain`. Mise à jour **par fusion à trois versions**
+      (copie de référence en base, migration 007) : les modifications locales sont gardées, seuls les ajouts du paquet
+      sont appliqués, les conflits sont signalés ; une relation dont un domaine lié manque est ajoutée plus tard. Les
+      connecteurs trouvent leurs types par identifiant de paquet (un type renommé reste reconnu). Les seeds ne gardent
+      que les données de démonstration.
 - [ ] **P3-1 — Modèle Romans** : type `Novel`, évolutions de l'Édition, de `created_by`, `contains_work`,
       `published_as` (voir `les.collection.md` § « Romans ») dans le paquet du domaine livres ; un exemple dans le seed.
 - [ ] **P3-2 — Connecteurs génériques** : interface commune (recherche, aperçu, import), registre des connecteurs,

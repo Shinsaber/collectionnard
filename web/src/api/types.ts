@@ -461,3 +461,41 @@ export interface OfflineSnapshot {
   items: Item[];
   entries: OfflineEntry[];
 }
+
+// ---------- Domaines installables (lot P3-0) ----------
+export interface DomainInfo {
+  id: string;
+  title: Record<string, string>;
+  description: Record<string, string>;
+  package_version: number;
+  installed_version?: number;
+  status: "not_installed" | "up_to_date" | "update_available";
+  /** Au moins un type installé diffère de la version du paquet. */
+  modified_locally: boolean;
+  item_types: number;
+  relation_types: number;
+  collection_types: number;
+}
+
+export type DomainOutcome =
+  "created" | "updated" | "merged" | "unchanged" | "skipped";
+
+export interface DomainInstallEntry {
+  entity: "item_types" | "collection_types" | "relation_types";
+  id: string;
+  name: string;
+  outcome: DomainOutcome;
+  /** Chemins modifiés des deux côtés : valeur locale gardée. */
+  conflicts?: string[];
+  missing_types?: string[];
+}
+
+export interface DomainInstallReport {
+  dry_run: boolean;
+  applied: boolean;
+  domain: string;
+  from_version?: number;
+  to_version: number;
+  entries: DomainInstallEntry[];
+  errors: ImportReport["errors"];
+}

@@ -133,10 +133,14 @@ docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d
 # premier compte (la base démarre vide) :
 docker compose -f docker-compose.prod.yml run --rm server colec-server create-user <nom> <email> --admin
+# types de collection (séries TV, livres…) : page Administration → Domaines, ou :
+docker compose -f docker-compose.prod.yml run --rm server colec-server install-domain --all
 ```
 
 Publier une version : `git tag v1.0.0 && git push origin v1.0.0`. Mettre à jour le serveur : `pull` puis `up -d`
-(les migrations s'appliquent au démarrage).
+(les migrations s'appliquent au démarrage). Après une mise à jour, la page « Domaines » signale les paquets
+à mettre à jour ; la mise à jour **fusionne** : les types modifiés sur l'instance gardent leurs modifications, seuls
+les ajouts du paquet (champs, valeurs, libellés) sont appliqués.
 
 - Seul le service `web` (nginx, non-root, port 3000) est publié ; `server` et `postgres` restent
   sur le réseau interne de compose. Placer devant un reverse-proxy qui termine TLS (Caddy,
