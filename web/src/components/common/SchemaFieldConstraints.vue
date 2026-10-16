@@ -240,7 +240,7 @@
             :aria-label="
               t('schema.constraints.categoryNameN', { n: catIdx + 1 })
             "
-            class="text-sm flex-1"
+            class="min-w-0 flex-1 text-sm"
             @update:model-value="
               updateCategory(catIdx, 'name', String($event ?? ''))
             "
@@ -251,7 +251,7 @@
             :aria-label="
               t('schema.constraints.categoryRatioN', { n: catIdx + 1 })
             "
-            class="text-sm w-24"
+            class="w-24! shrink-0 text-sm"
             @update:model-value="
               updateCategory(catIdx, 'ratio', String($event ?? ''))
             "
