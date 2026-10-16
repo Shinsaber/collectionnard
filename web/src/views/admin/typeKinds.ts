@@ -14,6 +14,8 @@ export interface TypeForm {
   target_item_type_ids: string[];
   /** Types d'item seulement. */
   display_order: number;
+  /** Types de collection seulement : types d'item permis (vide = tous). */
+  item_type_ids: string[];
   attributes_schema: Record<string, unknown>;
 }
 
@@ -74,10 +76,12 @@ export const TYPE_KINDS: Record<TypeKind, TypeKindConfig> = {
     createdKey: "admin.shared.created",
     updatedKey: "admin.shared.updated",
     get: (id) => collectionTypeApi.get(id),
-    save: (f, id) =>
-      id
-        ? collectionTypeApi.update(id, base(f))
-        : collectionTypeApi.create(base(f)),
+    save: (f, id) => {
+      const payload = { ...base(f), item_type_ids: f.item_type_ids };
+      return id
+        ? collectionTypeApi.update(id, payload)
+        : collectionTypeApi.create(payload);
+    },
   },
 };
 
@@ -94,6 +98,7 @@ export function formOf(type?: AnyType | null): TypeForm {
     source_item_type_ids: rel?.source_item_type_ids ?? [],
     target_item_type_ids: rel?.target_item_type_ids ?? [],
     display_order: (type as ItemType | undefined)?.display_order ?? 100,
+    item_type_ids: (type as CollectionType | undefined)?.item_type_ids ?? [],
     attributes_schema: type?.attributes_schema ?? emptySchema(),
   };
 }

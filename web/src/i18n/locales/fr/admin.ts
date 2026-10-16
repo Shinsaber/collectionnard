@@ -49,6 +49,10 @@ export default {
     title: "Types de collections",
     contextFields: "Champs contextuels",
     namePlaceholder: "Ex. : Ownership, Watching, Wishlist…",
+    allowedItemTypes: "Types d'item permis",
+    allowedItemTypesPlaceholder: "Tous les types",
+    allowedItemTypesHelp:
+      "Vide : tous les types sont permis. Les items déjà présents dans une collection restent en place si la liste change ; seuls les nouveaux ajouts sont contrôlés.",
   },
   importExport: {
     title: "Import / export du catalogue",

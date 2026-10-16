@@ -112,20 +112,25 @@ type CollectionType struct {
 	Name             string          `json:"name"`
 	Description      *string         `json:"description,omitempty"`
 	AttributesSchema json.RawMessage `json:"attributes_schema"`
-	CreatedAt        time.Time       `json:"created_at"`
-	UpdatedAt        time.Time       `json:"updated_at"`
+	// ItemTypeIDs: item types allowed in its collections (empty = every type).
+	ItemTypeIDs []uuid.UUID `json:"item_type_ids"`
+	CreatedAt   time.Time   `json:"created_at"`
+	UpdatedAt   time.Time   `json:"updated_at"`
 }
 
 type CollectionTypeCreate struct {
 	Name             string          `json:"name"`
 	Description      *string         `json:"description,omitempty"`
 	AttributesSchema json.RawMessage `json:"attributes_schema,omitempty"`
+	ItemTypeIDs      []uuid.UUID     `json:"item_type_ids,omitempty"`
 }
 
 type CollectionTypeUpdate struct {
 	Name             *string         `json:"name,omitempty"`
 	Description      *string         `json:"description,omitempty"`
 	AttributesSchema json.RawMessage `json:"attributes_schema,omitempty"`
+	// ItemTypeIDs: nil keeps the list, an empty array allows every type.
+	ItemTypeIDs *[]uuid.UUID `json:"item_type_ids,omitempty"`
 }
 
 // ---------------------------------------------------------------------------

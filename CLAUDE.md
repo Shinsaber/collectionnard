@@ -37,6 +37,8 @@ des messages techniques en anglais. Ajouter une langue : `Collectionnard.md` § 
 
 - Les items forment un **graphe orienté libre** : un même nœud peut être atteint par plusieurs
   chemins (ex. Épisode via Saison _et_ via DVD). Ne jamais modéliser en arbre strict.
+- Un `CollectionType` peut limiter les types d'item de ses collections (`item_type_ids`, table
+  `collection_type_item_types` ; vide = tous). Seuls les nouveaux ajouts sont contrôlés.
 - Un `RelationType` a **plusieurs** types source et cible possibles (tables de jonction
   `relation_type_sources` / `relation_type_targets`, champs `source_item_type_ids` /
   `target_item_type_ids`). Le TODO « arrays » de `les.collection.md` est donc déjà traité.

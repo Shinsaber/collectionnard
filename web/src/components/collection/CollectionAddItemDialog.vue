@@ -7,6 +7,20 @@
     @open="reset"
   >
     <div class="flex flex-col gap-4">
+      <!-- Type de collection limité : la recherche ne porte que sur les types permis. -->
+      <div v-if="allowedTypes.length" class="flex flex-col gap-1">
+        <label :for="typeId" class="text-sm font-medium">{{
+          t("common.type")
+        }}</label>
+        <ElSelect :id="typeId" v-model="typeFilter" @change="searchItems">
+          <ElOption
+            v-for="it in allowedTypes"
+            :key="it.id"
+            :label="typeTitle(it, lang)"
+            :value="it.id"
+          />
+        </ElSelect>
+      </div>
       <div class="flex flex-col gap-1">
         <label :for="searchId" class="text-sm font-medium">{{
           t("collections.detail.searchItem")
@@ -71,11 +85,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, useId } from "vue";
+import { computed, ref, useId } from "vue";
 import { useI18n } from "vue-i18n";
 import { collectionApi, itemApi } from "@/api/client";
 import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";
+import { useMetaTypes } from "@/stores/metaTypes";
 import { itemLabel, typeTitle, type Schema } from "@/lib/schema";
 import DynamicForm from "@/components/common/DynamicForm.vue";
 import type { Item } from "@/api/types";
@@ -84,6 +99,8 @@ const props = defineProps<{
   collectionId: string;
   /** Schéma du CollectionType : attributs contextuels saisis à l'ajout. */
   schema: Schema | undefined;
+  /** Types d'item permis par le CollectionType (vide = tous). */
+  allowedTypeIds?: string[];
 }>();
 const emit = defineEmits<{ added: [] }>();
 const visible = defineModel<boolean>("visible", { required: true });
@@ -92,6 +109,14 @@ const { t } = useI18n();
 const { lang } = useLang();
 const { notifyError, notifySuccess } = useNotify();
 const searchId = useId();
+const typeId = useId();
+const metaTypes = useMetaTypes();
+
+// Types permis, dans l'ordre d'affichage (celui de la liste des types).
+const allowedTypes = computed(() =>
+  metaTypes.itemTypes.filter((it) => props.allowedTypeIds?.includes(it.id)),
+);
+const typeFilter = ref<string>();
 
 const searchText = ref("");
 const searchResults = ref<Item[]>([]);
@@ -100,16 +125,24 @@ const attributes = ref<Record<string, unknown>>({});
 const formRef = ref<InstanceType<typeof DynamicForm> | null>(null);
 const saving = ref(false);
 
-function reset() {
+async function reset() {
   searchText.value = "";
   searchResults.value = [];
   selectedItem.value = null;
   attributes.value = {};
+  typeFilter.value = undefined;
+  if (!props.allowedTypeIds?.length) return;
+  await metaTypes.loadItemTypes().catch((e) => notifyError(e));
+  typeFilter.value = allowedTypes.value[0]?.id;
 }
 
 async function searchItems() {
   try {
-    const res = await itemApi.list({ search: searchText.value, per_page: 10 });
+    const res = await itemApi.list({
+      search: searchText.value,
+      per_page: 10,
+      ...(typeFilter.value ? { item_type_id: typeFilter.value } : {}),
+    });
     searchResults.value = res.data;
   } catch (e) {
     notifyError(e, t("collections.detail.searchFailed"));

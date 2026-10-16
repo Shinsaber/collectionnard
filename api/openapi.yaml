@@ -514,6 +514,14 @@ components:
           type: string
           description: Description de la sémantique de ce type de collection.
           example: Items possédés physiquement par l'utilisateur
+        item_type_ids:
+          type: array
+          items: { type: string, format: uuid }
+          description: |
+            Types d'item permis dans les collections de ce type ; vide = tous. Contrôlé à l'ajout
+            (`POST /collections/{id}/items`, import de collection) : les items déjà présents et
+            devenus non permis sont conservés.
+          example: []
         attributes_schema:
           type: object
           description: |
@@ -552,6 +560,10 @@ components:
           type: object
           description: JSON Schema pour les attributs du lien collection↔item. Défaut `{}`.
           default: {}
+        item_type_ids:
+          type: array
+          items: { type: string, format: uuid }
+          description: Types d'item permis (absent ou vide = tous).
 
     CollectionTypeUpdate:
       type: object
@@ -563,6 +575,10 @@ components:
           type: string
         attributes_schema:
           type: object
+        item_type_ids:
+          type: array
+          items: { type: string, format: uuid }
+          description: Remplace la liste des types d'item permis ; absent = inchangée, `[]` = tous.
 
     # -------------------------------------------------------------------------
     # Item
@@ -865,6 +881,8 @@ components:
         contre le JSON Schema du CollectionType de la collection.
 
         Un item ne peut apparaître qu'une seule fois dans une collection donnée.
+        Si le CollectionType limite les types d'item (`item_type_ids`), un item d'un autre type
+        est refusé (422 `item_type_not_allowed`).
         S'il est déjà présent, une erreur 409 est retournée.
       required: [item_id]
       properties:
@@ -1103,7 +1121,8 @@ components:
             `not_found` (404), `conflict` (409), `payload_too_large` (413),
             `validation_error` (422), `rate_limited` (429), `internal` (500),
             `timeout` (503, exploration du graphe trop longue), `connector_unavailable` (409, types d'un
-            connecteur absents du catalogue), `external_unavailable` (502, source externe injoignable).
+            connecteur absents du catalogue), `external_unavailable` (502, source externe injoignable),
+            `item_type_not_allowed` (422, type d'item non permis par le type de collection).
             Un client doit prévoir un libellé générique pour un code inconnu.
           example: validation_error
         message:
@@ -1157,7 +1176,14 @@ components:
         collection_types:
           type: array
           items:
-            $ref: "#/components/schemas/ExportMetaType"
+            allOf:
+              - $ref: "#/components/schemas/ExportMetaType"
+              - type: object
+                properties:
+                  item_type_ids:
+                    type: array
+                    items: { type: string, format: uuid }
+                    description: Types d'item permis (vide = tous) ; absent à l'import → liste conservée.
         relation_types:
           type: array
           items:
@@ -3289,7 +3315,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "422":
-          $ref: "#/components/responses/ValidationError"
+          description: |
+            Attributs invalides (`validation_error`), ou type d'item non permis par le
+            CollectionType (`item_type_not_allowed`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
   /collections/{collectionId}/items/{itemId}:
     parameters:

@@ -49,6 +49,10 @@ const en: typeof fr = {
     title: "Collection types",
     contextFields: "Contextual fields",
     namePlaceholder: "e.g. Ownership, Watching, Wishlist…",
+    allowedItemTypes: "Allowed item types",
+    allowedItemTypesPlaceholder: "All types",
+    allowedItemTypesHelp:
+      "Empty: every type is allowed. Items already in a collection stay when the list changes; only new additions are checked.",
   },
   importExport: {
     title: "Catalog import / export",

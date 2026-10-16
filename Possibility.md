@@ -51,12 +51,13 @@ Un commit par lot ; contrat d'API d'abord (`api/openapi.yaml` → model → stor
 
 ## Lot E3 — Type de collection limité à des types d'item
 
-- [ ] Migration `006` : table de jonction `collection_type_item_types` (liste vide = tout est permis).
-- [ ] API : champ `item_type_ids` sur `CollectionType` (lecture / écriture) ; ajout d'un item non
+- [x] Migration `006` : table de jonction `collection_type_item_types` (liste vide = tout est permis).
+- [x] API : champ `item_type_ids` sur `CollectionType` (lecture / écriture) ; ajout d'un item non
       permis à une collection → 422 avec un code d'erreur dédié (traduit côté front).
-- [ ] Les items déjà présents et devenus non permis sont conservés (seuls les nouveaux ajouts sont refusés).
-- [ ] Éditeur de type de collection : choix des types d'item permis.
-- [ ] Dialogue « Ajouter un item » : ne propose que les types permis.
+- [x] Les items déjà présents et devenus non permis sont conservés (seuls les nouveaux ajouts sont refusés).
+- [x] Éditeur de type de collection : choix des types d'item permis.
+- [x] Dialogue « Ajouter un item » : ne propose que les types permis. Dialogue « Ajouter à une collection »
+      (fiche d'item) : seules les collections dont le type permet l'item. Import de collection : même règle.
 
 ## Lot E4 — Images
 

@@ -89,6 +89,8 @@ export interface CollectionType {
   name: string;
   description?: string;
   attributes_schema: Record<string, unknown>;
+  /** Types d'item permis dans ses collections ; vide = tous. */
+  item_type_ids: string[];
   created_at: string;
   updated_at: string;
 }
@@ -97,12 +99,15 @@ export interface CollectionTypeCreate {
   name: string;
   description?: string;
   attributes_schema?: Record<string, unknown>;
+  item_type_ids?: string[];
 }
 
 export interface CollectionTypeUpdate {
   name?: string;
   description?: string;
   attributes_schema?: Record<string, unknown>;
+  /** Remplace la liste ; `[]` = tous les types. */
+  item_type_ids?: string[];
 }
 
 // ---------- Tag ----------

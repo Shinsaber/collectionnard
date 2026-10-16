@@ -20,6 +20,8 @@ const en: typeof fr = {
       "Comics / Manga types not found in the catalogue: {missing} (type renamed or db/seed_bd_manga.sql not loaded)",
     external_unavailable:
       "External source (Wikidata, BnF) unreachable, try again later",
+    item_type_not_allowed:
+      "This item type is not allowed in this collection type",
   },
 };
 

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/google/uuid"
@@ -92,7 +93,7 @@ func (s *PgStore) ImportCollection(ctx context.Context, userID uuid.UUID, exp *m
 	}
 	rep.CollectionID = &target
 
-	if err := s.importCollectionItems(ctx, tx, rep, target, ctSchema, exp.Items); err != nil {
+	if err := s.importCollectionItems(ctx, tx, rep, target, ctID, ctSchema, exp.Items); err != nil {
 		return nil, err
 	}
 
@@ -128,7 +129,7 @@ func freeCollectionName(ctx context.Context, tx pgx.Tx, userID, target uuid.UUID
 }
 
 func (s *PgStore) importCollectionItems(ctx context.Context, tx pgx.Tx, rep *model.ImportReport,
-	collectionID uuid.UUID, schema json.RawMessage, entries []model.CollectionExportItem) error {
+	collectionID, ctID uuid.UUID, schema json.RawMessage, entries []model.CollectionExportItem) error {
 	im := &importer{s: s, tx: tx, rep: rep}
 	counts := rep.Counts[model.EntityItems]
 
@@ -136,13 +137,32 @@ func (s *PgStore) importCollectionItems(ctx context.Context, tx pgx.Tx, rep *mod
 	for _, e := range entries {
 		ids = append(ids, e.ItemID)
 	}
-	known, err := uuidColumn(ctx, tx, `SELECT id FROM items WHERE id = ANY($1)`, ids)
+	// Item type of each known item (absent = not in the catalogue).
+	itemType := make(map[uuid.UUID]uuid.UUID, len(ids))
+	rows, err := tx.Query(ctx, `SELECT id, item_type_id FROM items WHERE id = ANY($1)`, ids)
 	if err != nil {
 		return err
 	}
-	existing := make(map[uuid.UUID]bool, len(known))
-	for _, id := range known {
-		existing[id] = true
+	defer rows.Close()
+	for rows.Next() {
+		var id, typ uuid.UUID
+		if err := rows.Scan(&id, &typ); err != nil {
+			return err
+		}
+		itemType[id] = typ
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	// Allowed item types (empty = all) ; items already in the collection are kept as they are.
+	allowed, err := uuidColumn(ctx, tx,
+		`SELECT item_type_id FROM collection_type_item_types WHERE collection_type_id = $1`, ctID)
+	if err != nil {
+		return err
+	}
+	present, err := uuidColumn(ctx, tx, `SELECT item_id FROM collection_items WHERE collection_id = $1`, collectionID)
+	if err != nil {
+		return err
 	}
 
 	const sql = `
@@ -159,8 +179,10 @@ func (s *PgStore) importCollectionItems(ctx context.Context, tx pgx.Tx, rep *mod
 				return 0, rowError("item_id is required")
 			case seen[e.ItemID]:
 				return 0, rowError("item listed twice in the file")
-			case !existing[e.ItemID]:
+			case itemType[e.ItemID] == uuid.Nil:
 				return 0, rowError("unknown item_id (not in the catalogue)")
+			case len(allowed) > 0 && !slices.Contains(allowed, itemType[e.ItemID]) && !slices.Contains(present, e.ItemID):
+				return 0, rowError("item type not allowed by the collection type")
 			}
 			seen[e.ItemID] = true
 			attrs := emptyObject(e.Attributes)

@@ -17,14 +17,14 @@ const (
 // CatalogExport is the whole catalogue: meta-types, items (with tag names) and
 // relations, each list sorted by id. It is also the body of POST /import.
 type CatalogExport struct {
-	Format          string               `json:"format"`
-	Version         int                  `json:"version"`
-	ExportedAt      *time.Time           `json:"exported_at,omitempty"`
-	ItemTypes       []ExportItemType     `json:"item_types"`
-	CollectionTypes []ExportMetaType     `json:"collection_types"`
-	RelationTypes   []ExportRelationType `json:"relation_types"`
-	Items           []ExportItem         `json:"items"`
-	Relations       []ExportRelation     `json:"relations"`
+	Format          string                 `json:"format"`
+	Version         int                    `json:"version"`
+	ExportedAt      *time.Time             `json:"exported_at,omitempty"`
+	ItemTypes       []ExportItemType       `json:"item_types"`
+	CollectionTypes []ExportCollectionType `json:"collection_types"`
+	RelationTypes   []ExportRelationType   `json:"relation_types"`
+	Items           []ExportItem           `json:"items"`
+	Relations       []ExportRelation       `json:"relations"`
 }
 
 // ExportItemType is an ItemType in an export. DisplayOrder absent on import: 100
@@ -34,7 +34,14 @@ type ExportItemType struct {
 	DisplayOrder *int `json:"display_order,omitempty"`
 }
 
-// ExportMetaType is a CollectionType in an export, and the common part of the other meta-types.
+// ExportCollectionType is a CollectionType in an export. ItemTypeIDs absent on
+// import keeps the stored list; an empty array allows every item type.
+type ExportCollectionType struct {
+	ExportMetaType
+	ItemTypeIDs []uuid.UUID `json:"item_type_ids"`
+}
+
+// ExportMetaType is the common part of the meta-types in an export.
 type ExportMetaType struct {
 	ID               uuid.UUID       `json:"id"`
 	Name             string          `json:"name"`

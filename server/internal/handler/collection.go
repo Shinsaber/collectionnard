@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"slices"
 
 	"github.com/shinsaber/colec/internal/middleware"
 	"github.com/shinsaber/colec/internal/model"
@@ -188,6 +189,19 @@ func (h *Handler) AddItemToCollection(w http.ResponseWriter, r *http.Request) {
 			"fields": validator.FormatValidationError(vErr),
 		})
 		return
+	}
+	// Allowed item types (empty = all); items already in the collection are not rechecked.
+	if len(ct.ItemTypeIDs) > 0 {
+		item, err := h.Store.GetItem(r.Context(), in.ItemID)
+		if err != nil {
+			handleStoreError(w, r, err)
+			return
+		}
+		if !slices.Contains(ct.ItemTypeIDs, item.ItemTypeID) {
+			respondError(w, http.StatusUnprocessableEntity, "item_type_not_allowed",
+				"the collection type does not allow items of type "+item.ItemTypeID.String())
+			return
+		}
 	}
 
 	ci, err := h.Store.AddCollectionItem(r.Context(), colID, in)

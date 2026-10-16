@@ -86,6 +86,33 @@
               t("admin.itemTypes.displayOrderHelp")
             }}</small>
           </div>
+          <div v-if="kind === 'collection'" class="flex flex-col gap-1.5">
+            <label :for="`${uid}-allowed`" class="text-[13px] font-bold">{{
+              t("admin.collectionTypes.allowedItemTypes")
+            }}</label>
+            <ElSelect
+              :id="`${uid}-allowed`"
+              v-model="form.item_type_ids"
+              multiple
+              collapse-tags
+              collapse-tags-tooltip
+              filterable
+              :placeholder="
+                t('admin.collectionTypes.allowedItemTypesPlaceholder')
+              "
+              :aria-describedby="`${uid}-allowed-help`"
+            >
+              <ElOption
+                v-for="it in metaTypes.itemTypes"
+                :key="it.id"
+                :label="typeTitle(it, lang)"
+                :value="it.id"
+              />
+            </ElSelect>
+            <small :id="`${uid}-allowed-help`" class="text-xs text-muted">{{
+              t("admin.collectionTypes.allowedItemTypesHelp")
+            }}</small>
+          </div>
           <template v-if="kind === 'relation'">
             <div
               v-for="side in sides"
@@ -251,7 +278,7 @@ onBeforeRouteLeave(async () => {
 });
 
 onMounted(() => {
-  if (props.kind === "relation")
+  if (props.kind !== "item")
     metaTypes
       .loadItemTypes()
       .catch((e) => notifyError(e, t("admin.relationTypes.itemTypesFailed")));

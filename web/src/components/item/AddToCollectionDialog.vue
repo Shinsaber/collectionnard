@@ -116,9 +116,16 @@ const attrs = ref<Record<string, unknown>>({});
 const saving = ref(false);
 const formRef = ref<InstanceType<typeof DynamicForm> | null>(null);
 
+// Collections qui ne contiennent pas déjà l'item et dont le type permet son type d'item.
 const availableCollections = computed(() => {
   const exclude = new Set(props.excludeIds);
-  return collections.value.filter((c) => !exclude.has(c.id));
+  return collections.value.filter((c) => {
+    const allowed = c.collection_type?.item_type_ids ?? [];
+    return (
+      !exclude.has(c.id) &&
+      (allowed.length === 0 || allowed.includes(props.item.item_type_id))
+    );
+  });
 });
 
 const selectedSchema = computed(() => {
