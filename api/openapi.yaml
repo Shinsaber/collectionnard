@@ -1102,6 +1102,7 @@ components:
           description: |
             Détails additionnels. Pour les erreurs de validation, contient les champs
             invalides et la raison de l'erreur pour chacun.
+            Pour `connector_unavailable`, `missing` liste les noms de types introuvables.
           example:
             fields:
               "/": "missing properties: 'title'"
@@ -1548,7 +1549,8 @@ components:
     ConnectorUnavailable:
       description: |
         Le catalogue ne contient pas tous les types du domaine BD / Manga que le connecteur écrit
-        (`db/seed_bd_manga.sql`) ; `message` les liste.
+        (`db/seed_bd_manga.sql`), reconnus par leur nom technique exact : `details.missing` liste
+        les noms introuvables (seed non chargé ou type renommé).
       content:
         application/json:
           schema:
@@ -1556,6 +1558,8 @@ components:
           example:
             error: connector_unavailable
             message: "BD / Manga types missing from the catalogue: Volume, contains_volume"
+            details:
+              missing: [Volume, contains_volume]
     ExternalUnavailable:
       description: Source externe (Wikidata, BnF) injoignable, trop lente ou réponse illisible.
       content:

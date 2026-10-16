@@ -17,7 +17,7 @@ const en: typeof fr = {
     timeout: "The server took too long to respond",
     internal: "Internal server error",
     connector_unavailable:
-      "Comics / Manga types missing from the catalogue (load db/seed_bd_manga.sql)",
+      "Comics / Manga types not found in the catalogue: {missing} (type renamed or db/seed_bd_manga.sql not loaded)",
     external_unavailable:
       "External source (Wikidata, BnF) unreachable, try again later",
   },

@@ -131,7 +131,7 @@ func searchText(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 // respondExternalError maps the errors of a connector: 400 invalid request,
-// 404 unknown external entity, 409 domain types missing, 502 source unreachable.
+// 404 unknown external entity, 409 domain types missing (details.missing), 502 source unreachable.
 func respondExternalError(w http.ResponseWriter, r *http.Request, err error) {
 	var input bdmanga.InputError
 	var unavailable *bdmanga.UnavailableError
@@ -139,7 +139,11 @@ func respondExternalError(w http.ResponseWriter, r *http.Request, err error) {
 	case errors.As(err, &input):
 		respondError(w, http.StatusBadRequest, "bad_request", input.Error())
 	case errors.As(err, &unavailable):
-		respondError(w, http.StatusConflict, "connector_unavailable", unavailable.Error())
+		respondJSON(w, http.StatusConflict, model.APIError{
+			Error:   "connector_unavailable",
+			Message: unavailable.Error(),
+			Details: map[string]any{"missing": unavailable.Missing},
+		})
 	case errors.Is(err, external.ErrNotFound):
 		respondError(w, http.StatusNotFound, "not_found", err.Error())
 	case errors.Is(err, external.ErrUnavailable), errors.Is(err, context.DeadlineExceeded):
