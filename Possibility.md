@@ -77,7 +77,7 @@ Un commit par lot ; contrat d'API d'abord (`api/openapi.yaml` → model → stor
 Besoin : en magasin sans réseau, vérifier si l'on possède déjà un item (titre, numéro, ISBN).
 Lecture seule ; l'instance est servie en HTTPS (le service worker l'exige).
 
-- [ ] **E5a — Application installable** : `vite-plugin-pwa` (MIT, Workbox) ; manifeste (nom, icônes
+- [x] **E5a — Application installable** : `vite-plugin-pwa` (MIT, Workbox) ; manifeste (nom, icônes
       dérivées de `favicon.svg`, couleurs « Étiquette »), service worker qui garde l'application
       (JS, CSS, polices) : la PWA s'ouvre sans réseau. Mise à jour proposée quand une nouvelle
       version est publiée. Rien de l'API n'est mis en cache par le service worker à ce stade.

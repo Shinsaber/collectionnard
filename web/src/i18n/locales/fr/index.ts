@@ -9,6 +9,7 @@ import errors from "./errors";
 import graph from "./graph";
 import items from "./items";
 import layout from "./layout";
+import offline from "./offline";
 import schema from "./schema";
 
 const fr = {
@@ -21,6 +22,7 @@ const fr = {
   graph,
   items,
   layout,
+  offline,
   schema,
 };
 
