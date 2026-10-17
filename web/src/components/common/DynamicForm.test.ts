@@ -15,6 +15,12 @@ function mountForm(schema: Schema, modelValue: Record<string, unknown> = {}) {
   });
 }
 
+/** Dernière valeur émise par `update:modelValue`. */
+function lastEmitted(w: ReturnType<typeof mountForm>): unknown {
+  const events = w.emitted("update:modelValue")!;
+  return events[events.length - 1]![0];
+}
+
 function labels(wrapper: ReturnType<typeof mountForm>): string[] {
   return wrapper.findAll('label[id$="-label"]').map((l) =>
     l
@@ -188,6 +194,40 @@ describe("DynamicForm", () => {
     await w.setProps({ modelValue: { code: "123", ids: { wd: "Q1" } } });
     await json.setValue('{"wd": "Q1"}');
     expect(vm.validate()).toBe(true);
+  });
+
+  it("champ liens : ajoute, vérifie l'adresse et retire une ligne", async () => {
+    const publisher = fixtures.find((f) => f.name === "Publisher")!
+      .schema as Schema;
+    const w = mountForm(publisher, {
+      name: "Nintendo",
+      links: [
+        { label: "Wikipédia", url: "https://fr.wikipedia.org/wiki/Nintendo" },
+      ],
+    });
+    expect(w.findAll('[data-test="link-row"]')).toHaveLength(1);
+    const add = w
+      .findAll("button")
+      .find((b) => b.text() === "Ajouter un lien")!;
+    await add.trigger("click");
+    const added = lastEmitted(w) as Record<string, unknown>;
+    expect(added.links).toEqual([
+      { label: "Wikipédia", url: "https://fr.wikipedia.org/wiki/Nintendo" },
+      { url: "" },
+    ]);
+
+    // Adresse invalide : signalée avant l'envoi, avec la ligne concernée.
+    await w.setProps({
+      modelValue: { name: "Nintendo", links: [{ url: "nintendo.com" }] },
+    });
+    const vm = w.vm as unknown as { validate: () => boolean };
+    expect(vm.validate()).toBe(false);
+    await w.vm.$nextTick();
+    expect(w.text()).toContain("1.url : URL invalide");
+
+    // Retirer le dernier lien : champ absent (pas de tableau vide).
+    await w.find('[aria-label="Retirer le lien 1"]').trigger("click");
+    expect((lastEmitted(w) as Record<string, unknown>).links).toBe(undefined);
   });
 
   it("affiche un message quand le schéma n'a aucun attribut", () => {

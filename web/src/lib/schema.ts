@@ -170,6 +170,69 @@ export function isImageGallery(
   return widgetOf(schema, key) === "image-gallery";
 }
 
+/** Un lien d'un champ `x-widget: links` : adresse et libellé facultatif. */
+export interface Link {
+  label?: string;
+  url: string;
+}
+
+/** Schéma d'un champ « liens » (tableau de `{label, url}`), écrit par le SchemaBuilder. */
+export function linksProperty(): Schema {
+  return {
+    type: "array",
+    "x-widget": "links",
+    items: {
+      type: "object",
+      required: ["url"],
+      additionalProperties: false,
+      properties: {
+        label: { type: "string" },
+        url: { type: "string", format: "uri" },
+      },
+    },
+  };
+}
+
+export function isLinks(
+  schema: Schema | null | undefined,
+  key: string,
+): boolean {
+  return widgetOf(schema, key) === "links";
+}
+
+/** URL affichable comme lien : http(s) seulement (jamais `javascript:` ni `data:`). */
+export function safeURL(url: unknown): string {
+  if (typeof url !== "string") return "";
+  try {
+    const u = new URL(url);
+    return u.protocol === "http:" || u.protocol === "https:" ? u.href : "";
+  } catch {
+    return "";
+  }
+}
+
+/** Liens valides d'une valeur (entrées sans URL http(s) écartées). */
+export function linksOf(value: unknown): Link[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((v) => {
+    const o = v as Record<string, unknown> | null;
+    const url = safeURL(o?.url);
+    if (!url) return [];
+    const label = typeof o?.label === "string" ? o.label.trim() : "";
+    return [label ? { label, url } : { url }];
+  });
+}
+
+/** Texte d'un lien : son libellé, sinon le nom du site (`www.nintendo.com`). */
+export function linkText(link: Link): string {
+  if (link.label) return link.label;
+  try {
+    return new URL(link.url).hostname;
+  } catch {
+    return link.url;
+  }
+}
+
 /**
  * Catégorie d'une galerie (`x-image-categories`). Contrôles facultatifs à l'envoi :
  * `tolerance` (écart de ratio permis, en %), `min_width` / `min_height` (pixels) ;
@@ -331,6 +394,7 @@ export function fieldValue(
   value: unknown,
   lang: Lang = DEFAULT_LANG,
 ): string {
+  if (isLinks(schema, key)) return linksOf(value).map(linkText).join(", ");
   if (properties(schema)[key]?.["x-enum-labels"]) {
     if (Array.isArray(value)) {
       return value

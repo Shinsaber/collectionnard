@@ -100,62 +100,15 @@
           @update:model-value="update(field.name, $event)"
         />
 
-        <!-- Texte multilingue : onglets par langue (● renseignée, ○ vide), une zone visible. -->
-        <div
+        <!-- Texte multilingue : onglets par langue -->
+        <I18nTextField
           v-else-if="field.widget === 'i18n-text'"
           :id="`${uid}-${field.name}`"
-          class="flex flex-col gap-2"
-          role="group"
-          :aria-labelledby="`${uid}-${field.name}-label`"
-        >
-          <div
-            role="tablist"
-            :aria-label="t('schema.form.languages')"
-            class="flex gap-0.5 self-start rounded-lg bg-soft p-0.75"
-          >
-            <button
-              v-for="l in LANGS"
-              :id="`${uid}-${field.name}-tab-${l}`"
-              :key="l"
-              type="button"
-              role="tab"
-              :aria-selected="shownLang(field.name) === l"
-              :aria-controls="`${uid}-${field.name}-panel-${l}`"
-              class="h-7 rounded-md px-2.5 font-mono text-[11px] font-medium uppercase"
-              :class="
-                shownLang(field.name) === l
-                  ? 'bg-surface text-ink shadow-control'
-                  : 'text-muted'
-              "
-              @click="activeLang[field.name] = l"
-            >
-              {{ getI18n(field.name, l) ? "●" : "○" }} {{ l }}
-            </button>
-          </div>
-          <div
-            v-for="l in LANGS"
-            v-show="shownLang(field.name) === l"
-            :id="`${uid}-${field.name}-panel-${l}`"
-            :key="l"
-            role="tabpanel"
-            :aria-labelledby="`${uid}-${field.name}-tab-${l}`"
-          >
-            <label :for="`${uid}-${field.name}-${l}`" class="sr-only">{{
-              `${field.label} (${l.toUpperCase()})`
-            }}</label>
-            <ElInput
-              :id="`${uid}-${field.name}-${l}`"
-              type="textarea"
-              :model-value="getI18n(field.name, l)"
-              :autosize="{ minRows: 2, maxRows: 8 }"
-              :placeholder="`${field.label} (${l.toUpperCase()})`"
-              @update:model-value="
-                updateI18n(field.name, l, String($event ?? ''))
-              "
-              @blur="touch(field.name)"
-            />
-          </div>
-        </div>
+          :label="field.label"
+          :model-value="model[field.name]"
+          @update:model-value="update(field.name, $event)"
+          @blur="touch(field.name)"
+        />
 
         <!-- Image gallery widget -->
         <ImageGalleryField
@@ -164,6 +117,16 @@
           :categories="field.imageCategories ?? []"
           :model-value="galleryValue(field.name)"
           @update:model-value="update(field.name, $event)"
+        />
+
+        <!-- Liens (x-widget: links) : libellé + adresse par ligne -->
+        <LinksField
+          v-else-if="field.widget === 'links'"
+          :id="`${uid}-${field.name}`"
+          :labelledby="`${uid}-${field.name}-label`"
+          :model-value="model[field.name]"
+          @update:model-value="update(field.name, $event)"
+          @blur="touch(field.name)"
         />
 
         <!-- Fallback: raw JSON for other objects/arrays -->
@@ -196,12 +159,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, useId } from "vue";
+import { computed, useId } from "vue";
 import { useSchemaValidation } from "@/composables/useSchemaValidation";
 import { useI18n } from "vue-i18n";
 import { useLang } from "@/composables/useLang";
 import {
-  LANGS,
   enumLabel,
   fieldLabel,
   imageCategories,
@@ -210,6 +172,8 @@ import {
   widgetOf,
 } from "@/lib/schema";
 import ImageGalleryField from "./ImageGalleryField.vue";
+import LinksField from "./LinksField.vue";
+import I18nTextField from "./I18nTextField.vue";
 
 interface SchemaField {
   name: string;
@@ -278,7 +242,7 @@ const fields = computed<SchemaField[]>(() => {
  * sur une demi-ligne.
  */
 function isWide(field: SchemaField): boolean {
-  if (field.widget === "i18n-text" || field.widget === "image-gallery")
+  if (["i18n-text", "image-gallery", "links"].includes(field.widget ?? ""))
     return true;
   if (field.enum) return !!field.multiple;
   if (field.type === "integer" || field.type === "number")
@@ -287,15 +251,6 @@ function isWide(field: SchemaField): boolean {
   if (field.type === "string")
     return !["date", "date-time", "email"].includes(field.format ?? "");
   return true;
-}
-
-// Texte multilingue : une langue affichée à la fois (onglets), la langue courante d'abord.
-const activeLang = reactive<Record<string, string>>({});
-function shownLang(name: string): string {
-  return (
-    activeLang[name] ??
-    ((LANGS as readonly string[]).includes(lang.value) ? lang.value : LANGS[0])
-  );
 }
 
 function enumValue(field: SchemaField): string | string[] | undefined {
@@ -364,16 +319,6 @@ function blurJson(name: string) {
   } catch {
     // invalide : la saisie reste affichée avec son erreur
   }
-}
-
-function getI18n(name: string, l: string): string {
-  const obj = model.value[name] as Record<string, string> | undefined;
-  return obj?.[l] ?? "";
-}
-
-function updateI18n(name: string, l: string, value: string) {
-  const current = (model.value[name] as Record<string, string>) ?? {};
-  update(name, { ...current, [l]: value });
 }
 
 // ── Validation (useSchemaValidation) ────────────────────────────────

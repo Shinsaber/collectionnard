@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "people",
-  "package_version": 2,
+  "package_version": 3,
   "title": {
     "fr": "Personnes et éditeurs",
     "en": "People and publishers"
@@ -28,6 +28,7 @@
           "birth_date",
           "biography",
           "images",
+          "links",
           "external_ids",
           "sources"
         ],
@@ -48,7 +49,8 @@
             "first_name": "First name",
             "nationality": "Nationality (country code)",
             "native_name": "Native name",
-            "external_ids": "External IDs"
+            "external_ids": "External IDs",
+            "links": "Links"
           },
           "fr": {
             "images": "Images",
@@ -59,7 +61,8 @@
             "first_name": "Prénom",
             "nationality": "Nationalité (code pays)",
             "native_name": "Nom natif",
-            "external_ids": "Identifiants externes"
+            "external_ids": "Identifiants externes",
+            "links": "Liens"
           }
         },
         "properties": {
@@ -158,6 +161,26 @@
               }
             },
             "additionalProperties": false
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
           }
         },
         "x-description": {
@@ -181,6 +204,7 @@
           "website",
           "description",
           "images",
+          "links",
           "external_ids",
           "sources"
         ],
@@ -199,7 +223,8 @@
             "sources": "Sources",
             "website": "Website",
             "description": "Description",
-            "external_ids": "External IDs"
+            "external_ids": "External IDs",
+            "links": "Links"
           },
           "fr": {
             "name": "Nom",
@@ -208,7 +233,8 @@
             "sources": "Sources",
             "website": "Site web",
             "description": "Description",
-            "external_ids": "Identifiants externes"
+            "external_ids": "Identifiants externes",
+            "links": "Liens"
           }
         },
         "properties": {
@@ -301,6 +327,26 @@
               }
             },
             "additionalProperties": false
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
           }
         },
         "x-description": {

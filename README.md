@@ -287,7 +287,7 @@ Le projet utilise des extensions custom dans les JSON Schemas pour piloter le fr
 | `x-title`            | Nom affiché du type par langue (`{fr: "Série", en: "Series"}`) ; repli sur `name`                         |
 | `x-description`      | Description du type par langue ; repli sur `description`                                                 |
 | `x-enum-labels`      | (propriété) Libellés des valeurs d'enum par langue (`{fr: {tv: "Télévision"}, en: {tv: "TV"}}`)          |
-| `x-widget`           | Widget spécifique : `image-gallery`, `i18n-text` (une chaîne par langue)                                                         |
+| `x-widget`           | Widget spécifique : `image-gallery`, `i18n-text` (une chaîne par langue), `links` (liste de liens libellé + URL)                                                         |
 | `x-image-categories` | Catégories d'images avec ratios (`{poster: {ratio: "2/3"}}`) et contrôles facultatifs à l'envoi : `tolerance` (écart de ratio en %), `min_width` / `min_height` (px), `strict` (refuser plutôt qu'avertir) |
 
 Sans extension, le widget découle du schéma : `enum` → liste déroulante, `integer`/`number` avec `minimum`

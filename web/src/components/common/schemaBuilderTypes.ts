@@ -26,6 +26,7 @@ export interface SchemaBuilderFeatures {
   // widgets
   i18nText: boolean;
   imageGallery: boolean;
+  links: boolean;
 }
 
 export const defaultFeatures: SchemaBuilderFeatures = {
@@ -48,6 +49,7 @@ export const defaultFeatures: SchemaBuilderFeatures = {
   uniqueItems: true,
   i18nText: true,
   imageGallery: true,
+  links: true,
 };
 
 /** Un champ du schéma tel qu'édité dans le builder. */
@@ -137,6 +139,10 @@ export const i18nTypeOption: Option = {
 export const imageGalleryTypeOption: Option = {
   labelKey: "schema.types.imageGallery",
   value: "image-gallery",
+};
+export const linksTypeOption: Option = {
+  labelKey: "schema.types.links",
+  value: "links",
 };
 
 export const formatOptions: Option[] = [
