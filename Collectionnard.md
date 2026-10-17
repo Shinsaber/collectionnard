@@ -399,6 +399,11 @@ ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries 
       (Discovery, double vinyle Virgin 2001).
 - [ ] **P3-5 — Films (DVD / Blu-ray)** : étude des sources (Wikidata pour l'œuvre, BnF pour les vidéogrammes
       français par EAN ; TMDB écarté sauf licence ouverte), modèle, paquet, connecteur.
+  - [x] **P3-5a — Paquet commun « people »** : `Person` et `Publisher` sortis de `books` (v3) vers « people » (mêmes
+        UUID, choix du mainteneur : une même personne relie livres et films) ; dépendances entre paquets (`requires`) :
+        un paquet installe d'abord ceux qu'il requiert, dans la même transaction (simulation comprise, rapport
+        `required`) ; sur une instance existante, la mise à jour de `books` transfère les deux types à « people » en
+        gardant leurs modifications locales. Page « Domaines » : paquets requis affichés.
 - [ ] **P3-6 — Séries (DVD / Blu-ray)** : étude (Wikidata, TVmaze pour saisons et épisodes, BnF pour les coffrets),
       en réutilisant le modèle TV existant (Series, Season, Episode, DVD), paquet, connecteur.
 

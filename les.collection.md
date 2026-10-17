@@ -23,6 +23,8 @@ Types : paquet de domaine « books » ([`server/internal/domains/packages/books.
 page « Domaines » ou `colec-server install-domain books`) ; données de démonstration : [`db/seed_bd_manga.sql`](db/seed_bd_manga.sql)
 (chargé après `db/seed.sql`). Noms techniques des ItemTypes :
 `Universe`, `Saga`, `Manga`, `Comic` (BD), `Edition`, `Volume` (Tome), `Person`, `Publisher` ; noms affichés via `x-title`.
+Depuis la v3 du paquet (P3-5), `Person` et `Publisher` vivent dans le paquet commun « people » (mêmes UUID), requis par
+« books » et la vidéo et installé avec eux : une même personne relie livres et films.
 Valeurs d'enum en ASCII (`shonen`, `tankobon`, `ova`…) affichées avec leurs accents via `x-enum-labels`.
 Exemples réels : Dragon Ball (univers, sagas, deux mangas, Toriyama / Toyotarō, édition Glénat 1993, tomes 1-2,
 anime) et Astérix (BD franco-belge sans saga ; Uderzo `roles: [writer, artist]` ; Dargaud puis Albert René).

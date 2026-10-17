@@ -19,6 +19,17 @@
               {{ text(d.title) || d.id }}
             </h2>
             <p class="text-sm text-muted">{{ text(d.description) }}</p>
+            <p
+              v-if="d.requires.length"
+              class="text-sm text-muted"
+              data-test="requires"
+            >
+              {{
+                t("admin.domains.requires", {
+                  names: d.requires.map(domainName).join(", "),
+                })
+              }}
+            </p>
             <p class="font-mono text-[11px] uppercase text-muted">
               {{ t("admin.domains.version", { v: d.package_version }) }}
               <template v-if="d.installed_version">
@@ -72,7 +83,11 @@
             {{ actionLabel(d) }}
           </ElButton>
         </div>
-        <DomainReport v-if="reports[d.id]" :report="reports[d.id]!" />
+        <DomainReport
+          v-if="reports[d.id]"
+          :report="reports[d.id]!"
+          :name-of="domainName"
+        />
       </section>
     </div>
   </div>
@@ -107,6 +122,12 @@ const reports = reactive<Record<string, DomainInstallReport>>({});
 /** Texte du paquet dans la langue courante (repli : français, anglais). */
 function text(map: Record<string, string>): string {
   return map[lang.value] || map.fr || map.en || "";
+}
+
+/** Titre d'un paquet d'après son identifiant (paquets requis). */
+function domainName(id: string): string {
+  const d = list.value.find((x) => x.id === id);
+  return (d && text(d.title)) || id;
 }
 
 function actionLabel(d: DomainInfo): string {

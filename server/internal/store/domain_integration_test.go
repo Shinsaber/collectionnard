@@ -69,16 +69,19 @@ func TestInstallDomain(t *testing.T) {
 		t.Fatal("dry run wrote the types")
 	}
 
-	// Première installation (tv absent : adapted_as laissée de côté).
+	// Première installation, précédée du paquet requis « people » (tv absent : adapted_as laissée de côté).
 	rep, err = st.InstallDomain(ctx, books, false)
 	if err != nil || !rep.Applied || len(rep.Errors) != 0 {
 		t.Fatalf("install: %v %+v", err, rep)
 	}
-	if o := outcomes(rep); o[model.DomainCreated] != 15 || o[model.DomainSkipped] != 1 {
+	if o := outcomes(rep); o[model.DomainCreated] != 13 || o[model.DomainSkipped] != 1 {
 		t.Errorf("first install: %v", o)
 	}
-	// Réinstallation : rien à changer.
-	if rep, _ = st.InstallDomain(ctx, books, false); outcomes(rep)[model.DomainUnchanged] != 15 {
+	if len(rep.Required) != 1 || rep.Required[0].Domain != "people" || !rep.Required[0].Applied || outcomes(rep.Required[0])[model.DomainCreated] != 2 {
+		t.Errorf("required: %+v", rep.Required)
+	}
+	// Réinstallation : rien à changer, people déjà là.
+	if rep, _ = st.InstallDomain(ctx, books, false); outcomes(rep)[model.DomainUnchanged] != 13 || len(rep.Required) != 0 {
 		t.Errorf("reinstall: %v", outcomes(rep))
 	}
 	// tv installé ensuite : adapted_as est ajoutée au domaine books.
@@ -141,5 +144,53 @@ func TestInstallDomain(t *testing.T) {
 	}
 	if rep.FromVersion == nil || *rep.FromVersion != books.PackageVersion || rep.ToVersion != books.PackageVersion+1 {
 		t.Errorf("versions: %v → %d", rep.FromVersion, rep.ToVersion)
+	}
+}
+
+// An instance installed with books v2 (Person and Publisher inside) updates to
+// v3: people is installed first and takes over the two types, unchanged.
+func TestInstallDomain_TypesMovedToPeople(t *testing.T) {
+	st := freshStore(t, "colec_test_domains_people")
+	books, _ := domains.Get("books")
+	people, _ := domains.Get("people")
+	person := uuid.MustParse("b0000000-0000-0000-0000-000000000016")
+
+	v2 := *books
+	v2.PackageVersion, v2.Requires = 2, nil
+	v2.ItemTypes = append(slices.Clone(books.ItemTypes), people.ItemTypes...)
+	if rep, err := st.InstallDomain(ctx, &v2, false); err != nil || !rep.Applied || len(rep.Required) != 0 {
+		t.Fatalf("v2: %v %+v", err, rep)
+	}
+	// Change made on the instance to Person: kept by the move.
+	pt, _ := st.GetItemType(ctx, person)
+	name := "Personne"
+	if _, err := st.UpdateItemType(ctx, pt.ID, model.ItemTypeUpdate{Name: &name}); err != nil {
+		t.Fatal(err)
+	}
+
+	rep, err := st.InstallDomain(ctx, books, false)
+	if err != nil || !rep.Applied || len(rep.Required) != 1 {
+		t.Fatalf("v3: %v %+v", err, rep)
+	}
+	for _, e := range rep.Required[0].Entries {
+		if e.ID == person && e.Outcome != model.DomainMerged && e.Outcome != model.DomainUnchanged {
+			t.Errorf("Person moved: %+v", e)
+		}
+	}
+	if got, _ := st.GetItemType(ctx, person); got.Name != "Personne" {
+		t.Errorf("local name lost: %q", got.Name)
+	}
+	list, _ := st.ListDomains(ctx)
+	for _, d := range list {
+		switch d.ID {
+		case "people":
+			if d.Status != model.DomainUpToDate || !d.ModifiedLocally {
+				t.Errorf("people: %+v", d)
+			}
+		case "books":
+			if d.Status != model.DomainUpToDate || d.InstalledVersion == nil || *d.InstalledVersion != 3 || !slices.Equal(d.Requires, []string{"people"}) {
+				t.Errorf("books: %+v", d)
+			}
+		}
 	}
 }

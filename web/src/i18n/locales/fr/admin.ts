@@ -109,6 +109,8 @@ export default {
       update_available: "Mise à jour disponible",
     },
     modifiedLocally: "Modifié localement",
+    requires: "Requiert : {names} (installé avec)",
+    requiredFirst: "Paquet requis, installé d'abord : {name}",
     counts:
       "{items} types d'item, {relations} types de relation, {collections} types de collection",
     simulate: "Simuler",

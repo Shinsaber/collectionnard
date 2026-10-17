@@ -8,12 +8,14 @@ const DomainFormat = "collectionnard.domain"
 // DomainPackage is a set of meta-types (types of a collection domain: TV, books…)
 // installable on an instance. Types keep fixed UUIDs across instances.
 type DomainPackage struct {
-	Format          string                 `json:"format"`
-	Version         int                    `json:"version"`
-	ID              string                 `json:"id"`
-	PackageVersion  int                    `json:"package_version"`
-	Title           map[string]string      `json:"title"`
-	Description     map[string]string      `json:"description"`
+	Format         string            `json:"format"`
+	Version        int               `json:"version"`
+	ID             string            `json:"id"`
+	PackageVersion int               `json:"package_version"`
+	Title          map[string]string `json:"title"`
+	Description    map[string]string `json:"description"`
+	// Requires: packages whose types this one uses (relation ends: Person, Publisher…), installed first.
+	Requires        []string               `json:"requires,omitempty"`
 	ItemTypes       []ExportItemType       `json:"item_types"`
 	CollectionTypes []ExportCollectionType `json:"collection_types"`
 	RelationTypes   []ExportRelationType   `json:"relation_types"`
@@ -33,7 +35,9 @@ type DomainInfo struct {
 	Description      map[string]string `json:"description"`
 	PackageVersion   int               `json:"package_version"`
 	InstalledVersion *int              `json:"installed_version,omitempty"`
-	Status           string            `json:"status"`
+	// Requires: packages installed first with this one (ids).
+	Requires []string `json:"requires"`
+	Status   string   `json:"status"`
 	// ModifiedLocally: at least one installed type differs from the package version it came from.
 	ModifiedLocally bool `json:"modified_locally"`
 	ItemTypes       int  `json:"item_types"`
@@ -65,11 +69,14 @@ type DomainInstallEntry struct {
 
 // DomainInstallReport answers POST /domains/{id}/install.
 type DomainInstallReport struct {
-	DryRun      bool                 `json:"dry_run"`
-	Applied     bool                 `json:"applied"`
-	Domain      string               `json:"domain"`
-	FromVersion *int                 `json:"from_version,omitempty"`
-	ToVersion   int                  `json:"to_version"`
-	Entries     []DomainInstallEntry `json:"entries"`
-	Errors      []ImportError        `json:"errors"`
+	DryRun      bool   `json:"dry_run"`
+	Applied     bool   `json:"applied"`
+	Domain      string `json:"domain"`
+	FromVersion *int   `json:"from_version,omitempty"`
+	ToVersion   int    `json:"to_version"`
+	// Required: packages this one requires that were not installed, installed first in
+	// the same transaction (one report each).
+	Required []*DomainInstallReport `json:"required,omitempty"`
+	Entries  []DomainInstallEntry   `json:"entries"`
+	Errors   []ImportError          `json:"errors"`
 }

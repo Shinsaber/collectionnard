@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
+	"slices"
 	"sort"
 	"strings"
 
@@ -242,4 +243,41 @@ func Title(p *model.DomainPackage, lang string) string {
 		}
 	}
 	return p.ID
+}
+
+// Requirements returns the packages pkg requires, directly or not, each one
+// after its own requirements (pkg itself excluded).
+func Requirements(pkg *model.DomainPackage) ([]*model.DomainPackage, error) {
+	all, err := All()
+	if err != nil {
+		return nil, err
+	}
+	byID := map[string]*model.DomainPackage{}
+	for _, p := range all {
+		byID[p.ID] = p
+	}
+	var out []*model.DomainPackage
+	done := map[string]bool{}
+	var visit func(p *model.DomainPackage, path []string) error
+	visit = func(p *model.DomainPackage, path []string) error {
+		for _, id := range p.Requires {
+			if slices.Contains(path, id) {
+				return fmt.Errorf("domain %s: circular requirement %s", pkg.ID, strings.Join(append(path, id), " → "))
+			}
+			r := byID[id]
+			if r == nil {
+				return fmt.Errorf("domain %s requires unknown domain %s", p.ID, id)
+			}
+			if done[id] {
+				continue
+			}
+			if err := visit(r, append(slices.Clone(path), id)); err != nil {
+				return err
+			}
+			done[id] = true
+			out = append(out, r)
+		}
+		return nil
+	}
+	return out, visit(pkg, []string{pkg.ID})
 }

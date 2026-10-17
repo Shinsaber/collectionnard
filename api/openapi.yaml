@@ -183,7 +183,8 @@ tags:
     description: |
       **Admin uniquement.** Paquets de domaine (types d'une sorte de collection : séries TV, livres…)
       embarqués dans le serveur, à installer ou mettre à jour sur l'instance. La mise à jour fusionne :
-      les modifications faites sur l'instance sont gardées. Aussi en ligne de commande :
+      les modifications faites sur l'instance sont gardées. Un paquet peut en requérir d'autres (`requires` : `books` →
+      `people`, qui porte `Person` et `Publisher`), installés avec lui. Aussi en ligne de commande :
       `colec-server install-domain`.
   - name: Health
     description: |
@@ -1215,7 +1216,7 @@ components:
 
     DomainInfo:
       type: object
-      required: [id, title, description, package_version, status, modified_locally, item_types, relation_types, collection_types]
+      required: [id, title, description, package_version, requires, status, modified_locally, item_types, relation_types, collection_types]
       properties:
         id: { type: string, example: books }
         title:
@@ -1226,6 +1227,10 @@ components:
           type: object
           additionalProperties: { type: string }
         package_version: { type: integer, description: Version du paquet embarqué. }
+        requires:
+          type: array
+          items: { type: string }
+          description: Paquets requis (types utilisés par ses relations, ex. `people` pour `books`), installés avant lui.
         installed_version: { type: integer, description: Version installée (absente si jamais installé). }
         status:
           type: string
@@ -1243,6 +1248,12 @@ components:
         domain: { type: string }
         from_version: { type: integer, description: Version installée avant (absente à la première installation). }
         to_version: { type: integer }
+        required:
+          type: array
+          description: |
+            Paquets requis qui n'étaient pas installés : installés d'abord, dans la même transaction (un rapport
+            chacun ; la simulation les inclut).
+          items: { $ref: "#/components/schemas/DomainInstallReport" }
         entries:
           type: array
           items:
@@ -3796,7 +3807,9 @@ paths:
         modifications et ne reçoit que les ajouts du paquet (champs, valeurs d'enum, libellés, types
         permis) ; une valeur modifiée des deux côtés garde la version locale (`conflicts`). Un type
         supprimé localement n'est pas recréé ; une relation dont les types d'une extrémité manquent
-        (domaine lié non installé) est laissée de côté et ajoutée quand ils existent. Tout ou rien, via
+        (domaine lié non installé) est laissée de côté et ajoutée quand ils existent. Les paquets requis (`requires`,
+        ex. `people` pour `books`) non installés sont installés d'abord, dans la même transaction (rapports dans
+        `required`). Tout ou rien, via
         l'import du catalogue ; `dry_run=true` simule. Après une installation, les autres domaines
         installés sont fusionnés à nouveau.
       operationId: installDomain

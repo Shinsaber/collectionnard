@@ -14,6 +14,7 @@ import (
 
 	"github.com/shinsaber/colec/internal/dbmigrate"
 	"github.com/shinsaber/colec/internal/domains"
+	"github.com/shinsaber/colec/internal/model"
 	"github.com/shinsaber/colec/internal/store"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/term"
@@ -246,6 +247,9 @@ func runInstallDomain(args []string) int {
 			if d.ModifiedLocally {
 				local = " (modified locally)"
 			}
+			if len(d.Requires) > 0 {
+				local += " — requires " + strings.Join(d.Requires, ", ")
+			}
 			fmt.Printf("%-12s package v%d, installed v%s: %s%s\n", d.ID, d.PackageVersion, installed, d.Status, local)
 		}
 		fmt.Println("\nusage: colec-server install-domain [--dry-run] <domain>… | --all")
@@ -281,19 +285,7 @@ func installDomains(ctx context.Context, databaseURL string, ids []string, dryRu
 			slog.Error("install domain", "domain", p.ID, "err", err)
 			return 1
 		}
-		counts := map[string]int{}
-		for _, e := range rep.Entries {
-			counts[e.Outcome]++
-			if len(e.Conflicts) > 0 {
-				slog.Warn("local value kept", "domain", p.ID, "type", e.Name, "paths", e.Conflicts)
-			}
-		}
-		for _, e := range rep.Errors {
-			slog.Error("install domain", "domain", p.ID, "entity", e.Entity, "err", e.Message)
-		}
-		slog.Info("domain", "domain", p.ID, "version", p.PackageVersion, "dry_run", dryRun,
-			"applied", rep.Applied, "outcomes", counts)
-		if len(rep.Errors) > 0 {
+		if !logDomainReport(rep) {
 			return 1
 		}
 	}
@@ -309,4 +301,26 @@ func installDomains(ctx context.Context, databaseURL string, ids []string, dryRu
 		}
 	}
 	return 0
+}
+
+// logDomainReport logs an install report, after those of the packages it
+// required; false when one of them reports an error.
+func logDomainReport(rep *model.DomainInstallReport) bool {
+	ok := true
+	for _, r := range rep.Required {
+		ok = logDomainReport(r) && ok
+	}
+	counts := map[string]int{}
+	for _, e := range rep.Entries {
+		counts[e.Outcome]++
+		if len(e.Conflicts) > 0 {
+			slog.Warn("local value kept", "domain", rep.Domain, "type", e.Name, "paths", e.Conflicts)
+		}
+	}
+	for _, e := range rep.Errors {
+		slog.Error("install domain", "domain", rep.Domain, "entity", e.Entity, "err", e.Message)
+	}
+	slog.Info("domain", "domain", rep.Domain, "version", rep.ToVersion, "dry_run", rep.DryRun,
+		"applied", rep.Applied, "outcomes", counts)
+	return ok && len(rep.Errors) == 0
 }

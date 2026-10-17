@@ -3,6 +3,7 @@ package domains
 import (
 	"encoding/json"
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/google/uuid"
@@ -110,7 +111,7 @@ func TestPackages(t *testing.T) {
 			}
 		}
 	}
-	for _, id := range []string{"books", "collections", "music", "tv"} {
+	for _, id := range []string{"books", "collections", "music", "people", "tv"} {
 		if !ids[id] {
 			t.Errorf("package %s missing", id)
 		}
@@ -124,8 +125,11 @@ func TestPlanInstall(t *testing.T) {
 	}
 	series := uuid.MustParse("b0000000-0000-0000-0000-000000000001") // tv
 
-	// Instance vide : tout est créé, sauf adapted_as dont la seule cible, Series (tv), manque.
-	plan, err := PlanInstall(books, State{Local: map[uuid.UUID]Snapshot{}, Base: map[uuid.UUID]Snapshot{}, ItemTypes: map[uuid.UUID]bool{}})
+	// Personnes et éditeurs : paquet « people », installé avant books (Requires).
+	person, publisher := uuid.MustParse("b0000000-0000-0000-0000-000000000016"), uuid.MustParse("b0000000-0000-0000-0000-000000000017")
+
+	// Instance sans livres : tout est créé, sauf adapted_as dont la seule cible, Series (tv), manque.
+	plan, err := PlanInstall(books, State{Local: map[uuid.UUID]Snapshot{}, Base: map[uuid.UUID]Snapshot{}, ItemTypes: map[uuid.UUID]bool{person: true, publisher: true}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -149,7 +153,7 @@ func TestPlanInstall(t *testing.T) {
 	for id, s := range plan.Bases {
 		local[id] = s
 	}
-	again, err := PlanInstall(books, State{Local: local, Base: plan.Bases, ItemTypes: map[uuid.UUID]bool{series: true}})
+	again, err := PlanInstall(books, State{Local: local, Base: plan.Bases, ItemTypes: map[uuid.UUID]bool{series: true, person: true, publisher: true}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -168,10 +172,59 @@ func TestPlanInstall(t *testing.T) {
 	// Type supprimé localement depuis l'installation : pas recréé.
 	comic := uuid.MustParse("b0000000-0000-0000-0000-000000000013")
 	delete(local, comic)
-	skipped, _ := PlanInstall(books, State{Local: local, Base: plan.Bases, ItemTypes: map[uuid.UUID]bool{series: true}})
+	skipped, _ := PlanInstall(books, State{Local: local, Base: plan.Bases, ItemTypes: map[uuid.UUID]bool{series: true, person: true, publisher: true}})
 	for _, e := range skipped.Entries {
 		if e.ID == comic && e.Outcome != model.DomainSkipped {
 			t.Errorf("deleted Comic: %s", e.Outcome)
 		}
+	}
+}
+
+// Every relation has a source within its package and the packages it requires;
+// a target outside them must belong to another package (optional cross-domain
+// end, such as adapted_as → Series).
+func TestRequirements(t *testing.T) {
+	all, err := All()
+	if err != nil {
+		t.Fatal(err)
+	}
+	anywhere := map[uuid.UUID]bool{}
+	for _, p := range all {
+		for _, it := range p.ItemTypes {
+			anywhere[it.ID] = true
+		}
+	}
+	for _, p := range all {
+		reqs, err := Requirements(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		own := map[uuid.UUID]bool{}
+		for _, q := range append(reqs, p) {
+			for _, it := range q.ItemTypes {
+				own[it.ID] = true
+			}
+		}
+		for _, rt := range p.RelationTypes {
+			if !slices.ContainsFunc(rt.SourceItemTypeIDs, func(id uuid.UUID) bool { return own[id] }) {
+				t.Errorf("%s/%s: no source within the package and its requirements %v", p.ID, rt.Name, p.Requires)
+			}
+			for _, id := range append(slices.Clone(rt.SourceItemTypeIDs), rt.TargetItemTypeIDs...) {
+				if !anywhere[id] {
+					t.Errorf("%s/%s: item type %s in no package", p.ID, rt.Name, id)
+				}
+			}
+			if !slices.ContainsFunc(rt.TargetItemTypeIDs, func(id uuid.UUID) bool { return own[id] }) && rt.Name != "adapted_as" {
+				t.Errorf("%s/%s: no target within the package and its requirements %v", p.ID, rt.Name, p.Requires)
+			}
+		}
+	}
+	books, _ := Get("books")
+	if reqs, _ := Requirements(books); len(reqs) != 1 || reqs[0].ID != "people" {
+		t.Errorf("books requires %v", reqs)
+	}
+	loop := &model.DomainPackage{ID: "x", Requires: []string{"nope"}}
+	if _, err := Requirements(loop); err == nil {
+		t.Error("unknown requirement accepted")
 	}
 }

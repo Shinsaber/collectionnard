@@ -113,20 +113,81 @@ func packageIDs(pkg *model.DomainPackage) []uuid.UUID {
 	return ids
 }
 
-// InstallDomain installs or updates a domain package in one transaction: the
+// InstallDomain installs or updates a domain package in one transaction, after
+// the packages it requires that are not installed yet (report.Required): the
 // types the instance changed are merged (domains.PlanInstall), then written
 // through the catalogue import; the reference copies are recorded. Nothing is
-// written on dryRun or when the import reports an error.
+// written on dryRun or when an import reports an error.
 func (s *PgStore) InstallDomain(ctx context.Context, pkg *model.DomainPackage, dryRun bool) (*model.DomainInstallReport, error) {
-	rep := &model.DomainInstallReport{DryRun: dryRun, Domain: pkg.ID, ToVersion: pkg.PackageVersion,
-		Entries: []model.DomainInstallEntry{}, Errors: []model.ImportError{}}
-
+	reqs, err := domains.Requirements(pkg)
+	if err != nil {
+		return nil, err
+	}
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
+	installed, err := installedDomains(ctx, tx)
+	if err != nil {
+		return nil, err
+	}
+	var required []*model.DomainInstallReport
+	failed := false
+	for _, r := range reqs {
+		if installed[r.ID] {
+			continue
+		}
+		rr, err := s.installTx(ctx, tx, r, dryRun)
+		if err != nil {
+			return nil, err
+		}
+		required = append(required, rr)
+		failed = failed || len(rr.Errors) > 0
+	}
+	rep := newDomainReport(pkg, dryRun)
+	if !failed {
+		if rep, err = s.installTx(ctx, tx, pkg, dryRun); err != nil {
+			return nil, err
+		}
+	}
+	rep.Required = required
+	if failed || len(rep.Errors) > 0 || dryRun {
+		return rep, nil
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+	rep.Applied = true
+	for _, rr := range required {
+		rr.Applied = true
+	}
+	return rep, nil
+}
+
+func newDomainReport(pkg *model.DomainPackage, dryRun bool) *model.DomainInstallReport {
+	return &model.DomainInstallReport{DryRun: dryRun, Domain: pkg.ID, ToVersion: pkg.PackageVersion,
+		Entries: []model.DomainInstallEntry{}, Errors: []model.ImportError{}}
+}
+
+// installedDomains: ids of the domains with at least one installed type.
+func installedDomains(ctx context.Context, q querier) (map[string]bool, error) {
+	origins, err := loadOrigins(ctx, q, nil)
+	if err != nil {
+		return nil, err
+	}
+	out := map[string]bool{}
+	for _, o := range origins {
+		out[o.domain] = true
+	}
+	return out, nil
+}
+
+// installTx plans and writes one package in tx, with its reference copies
+// (unless the import reports an error; the caller commits or rolls back).
+func (s *PgStore) installTx(ctx context.Context, tx pgx.Tx, pkg *model.DomainPackage, dryRun bool) (*model.DomainInstallReport, error) {
+	rep := newDomainReport(pkg, dryRun)
 	ids := packageIDs(pkg)
 	local, err := localSnapshots(ctx, tx, ids)
 	if err != nil {
@@ -170,7 +231,7 @@ func (s *PgStore) InstallDomain(ctx context.Context, pkg *model.DomainPackage, d
 		return nil, err
 	}
 	rep.Errors = imp.Errors
-	if len(rep.Errors) > 0 || dryRun {
+	if len(rep.Errors) > 0 {
 		return rep, nil
 	}
 
@@ -189,10 +250,6 @@ func (s *PgStore) InstallDomain(ctx context.Context, pkg *model.DomainPackage, d
 			return nil, err
 		}
 	}
-	if err := tx.Commit(ctx); err != nil {
-		return nil, err
-	}
-	rep.Applied = true
 	return rep, nil
 }
 
@@ -217,6 +274,7 @@ func (s *PgStore) ListDomains(ctx context.Context) ([]model.DomainInfo, error) {
 	out := make([]model.DomainInfo, 0, len(pkgs))
 	for _, p := range pkgs {
 		info := model.DomainInfo{ID: p.ID, Title: p.Title, Description: p.Description,
+			Requires:       append([]string{}, p.Requires...),
 			PackageVersion: p.PackageVersion, Status: model.DomainNotInstalled,
 			ItemTypes: len(p.ItemTypes), RelationTypes: len(p.RelationTypes), CollectionTypes: len(p.CollectionTypes)}
 		for id, o := range origins {

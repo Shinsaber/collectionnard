@@ -109,6 +109,8 @@ const en: typeof fr = {
       update_available: "Update available",
     },
     modifiedLocally: "Modified locally",
+    requires: "Requires: {names} (installed with it)",
+    requiredFirst: "Required package, installed first: {name}",
     counts:
       "{items} item types, {relations} relation types, {collections} collection types",
     simulate: "Simulate",

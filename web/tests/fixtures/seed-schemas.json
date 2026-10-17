@@ -1655,8 +1655,8 @@
         }
       },
       "x-description": {
-        "en": "Creator: author, writer, artist, colorist, translator…",
-        "fr": "Créateur : auteur, scénariste, dessinateur, coloriste, traducteur…"
+        "en": "Person: author, writer, artist, translator, director, actor, composer…",
+        "fr": "Personne : auteur, scénariste, dessinateur, traducteur, réalisateur, acteur, compositeur…"
       },
       "additionalProperties": false
     }
@@ -1678,7 +1678,7 @@
       ],
       "x-title": {
         "en": "Publisher",
-        "fr": "Maison d'édition"
+        "fr": "Éditeur"
       },
       "required": ["name"],
       "x-labels": {
@@ -1788,8 +1788,8 @@
         }
       },
       "x-description": {
-        "en": "Publishing house",
-        "fr": "Éditeur (Glénat, Kana, Dargaud, Dupuis…)"
+        "en": "Publishing house or video publisher",
+        "fr": "Maison d'édition ou éditeur vidéo (Glénat, Gallimard, TF1 Vidéo…)"
       },
       "additionalProperties": false
     }

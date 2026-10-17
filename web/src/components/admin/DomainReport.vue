@@ -1,6 +1,17 @@
 <template>
   <!-- Rapport d'installation d'un domaine : un type par ligne, avec ce qui lui arrive. -->
   <div class="mt-4 flex flex-col gap-3">
+    <!-- Paquets requis non installés : installés d'abord, chacun avec son rapport. -->
+    <div
+      v-for="r in report.required ?? []"
+      :key="r.domain"
+      data-test="required-report"
+    >
+      <p class="text-sm font-semibold">
+        {{ t("admin.domains.requiredFirst", { name: nameOf(r.domain) }) }}
+      </p>
+      <DomainReport :report="r" :name-of="nameOf" />
+    </div>
     <p class="text-sm font-semibold" role="status">
       {{
         report.from_version
@@ -55,7 +66,16 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type { DomainInstallReport, DomainOutcome } from "@/api/types";
 
-const props = defineProps<{ report: DomainInstallReport }>();
+defineOptions({ name: "DomainReport" });
+
+const props = withDefaults(
+  defineProps<{
+    report: DomainInstallReport;
+    /** Titre affiché d'un paquet (paquets requis). */
+    nameOf?: (id: string) => string;
+  }>(),
+  { nameOf: (id: string) => id },
+);
 const { t } = useI18n();
 
 const counts = computed(() => {

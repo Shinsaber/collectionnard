@@ -21,7 +21,7 @@ des messages techniques en anglais. Ajouter une langue : `Collectionnard.md` § 
 | [musique.md](musique.md)               | Modèle de données musique : albums, éditions (CD, vinyles), pistes |
 | [api/openapi.yaml](api/openapi.yaml)   | Spécification OpenAPI 3.1 — **source de vérité de l'API**        |
 | [db/migrations/](db/migrations/)       | Migrations SQL (tern) ; `001_init.sql` = schéma complet commenté |
-| [server/internal/domains/packages/](server/internal/domains/packages/) | **Paquets de domaine** (types : `collections`, `tv`, `books`) — installés par la page « Domaines » ou `install-domain`, mis à jour par fusion |
+| [server/internal/domains/packages/](server/internal/domains/packages/) | **Paquets de domaine** (types : `collections`, `tv`, `people`, `books`, `music` ; `requires` : paquets installés avant) — installés par la page « Domaines » ou `install-domain`, mis à jour par fusion |
 | [db/seed.sql](db/seed.sql)             | Données de démo « Breaking Bad » (multi-chemin Diffusion + DVD) ; les types viennent des paquets |
 | [db/seed_bd_manga.sql](db/seed_bd_manga.sql) | Données de démo BD / Manga (lot 13), chargé après `seed.sql` |
 | [db/seed_music.sql](db/seed_music.sql) | Données de démo Musique (P3-4, Discovery), chargé après `seed_bd_manga.sql` |

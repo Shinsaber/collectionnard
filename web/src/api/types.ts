@@ -486,6 +486,8 @@ export interface DomainInfo {
   description: Record<string, string>;
   package_version: number;
   installed_version?: number;
+  /** Paquets requis, installés avant celui-ci. */
+  requires: string[];
   status: "not_installed" | "up_to_date" | "update_available";
   /** Au moins un type installé diffère de la version du paquet. */
   modified_locally: boolean;
@@ -515,6 +517,8 @@ export interface DomainInstallReport {
   to_version: number;
   entries: DomainInstallEntry[];
   errors: ImportReport["errors"];
+  /** Paquets requis non installés : installés d'abord, dans la même transaction. */
+  required?: DomainInstallReport[];
 }
 
 /** Connecteur de sources externes (GET /external/connectors). */
