@@ -20,12 +20,15 @@ import (
 // refreshTokenPurgeInterval is how often expired refresh tokens are deleted.
 const refreshTokenPurgeInterval = time.Hour
 
-const usage = `usage: colec-server [serve|migrate|seed|create-user|hash-password]
+const usage = `usage: colec-server [serve|migrate|seed|install-domain|create-user|hash-password]
 
   serve    (default) start the HTTP API
   migrate  apply pending SQL migrations (MIGRATIONS_DIR), then the seed if
            SEED_ON_EMPTY=true and the users table is empty (SEED_FILE)
-  seed     apply the seed file unconditionally (development only)
+  seed     install every domain package, then apply the seed files
+           unconditionally (development only)
+  install-domain [--dry-run] <domain>… | --all
+           install or update domain packages (types); no argument: list them
   create-user <username> <email> [--admin]
            create an account; the password is prompted (or read from stdin)
   hash-password <pw>  print a bcrypt hash (to create a user by SQL)
@@ -45,6 +48,8 @@ func main() {
 		os.Exit(runMigrate())
 	case "seed":
 		os.Exit(runSeed())
+	case "install-domain":
+		os.Exit(runInstallDomain(os.Args[2:]))
 	case "create-user":
 		os.Exit(runCreateUser(os.Args[2:]))
 	case "hash-password":

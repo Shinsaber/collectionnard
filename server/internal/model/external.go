@@ -6,9 +6,11 @@ import (
 	"github.com/google/uuid"
 )
 
-// ExternalWorkHit is a work found on Wikidata (GET /external/bd-manga/works).
+// ExternalWorkHit is a work found by a connector (GET /external/{connector}/works):
+// a Wikidata work (books) or a MusicBrainz release group (music).
 type ExternalWorkHit struct {
-	WikidataID     string     `json:"wikidata_id"`
+	ID             string     `json:"id"` // identifier at the source: the `work` of a selection
+	WikidataID     string     `json:"wikidata_id,omitempty"`
 	Label          string     `json:"label"`
 	Description    string     `json:"description,omitempty"`
 	ItemTypeID     uuid.UUID  `json:"item_type_id"`
@@ -17,17 +19,35 @@ type ExternalWorkHit struct {
 	SourceURL      string     `json:"source_url"`
 }
 
-// ExternalEditionHit is a multi-volume set of the BnF catalogue
-// (GET /external/bd-manga/editions).
+// ExternalEditionHit is an edition found by a connector (GET /external/{connector}/editions):
+// a BnF record (multi-volume set, or for a single-volume novel the book itself)
+// or a MusicBrainz release.
 type ExternalEditionHit struct {
-	BnfArk         string     `json:"bnf_ark"`
-	Title          string     `json:"title"`
-	Publishers     []string   `json:"publishers"`
-	StartYear      *int       `json:"start_year,omitempty"`
+	ID         string   `json:"id"` // identifier at the source: one of the `editions` of a selection
+	BnfArk     string   `json:"bnf_ark,omitempty"`
+	Title      string   `json:"title"`
+	Publishers []string `json:"publishers"`
+	StartYear  *int     `json:"start_year,omitempty"`
+	Language   string   `json:"language,omitempty"`   // ISO 639-1 (translations)
+	Collection string   `json:"collection,omitempty"` // editorial collection and number: « Folio 2 »
+	ISBN       string   `json:"isbn,omitempty"`       // single-volume edition only
+	// Music: credited artist, media (« 2×12" Vinyl »), country, barcode, catalogue number.
+	Artist         string     `json:"artist,omitempty"`
+	Format         string     `json:"format,omitempty"`
+	Country        string     `json:"country,omitempty"`
+	Barcode        string     `json:"barcode,omitempty"`
+	CatalogNumber  string     `json:"catalog_number,omitempty"`
 	ExistingItemID *uuid.UUID `json:"existing_item_id,omitempty"`
 	SourceURL      string     `json:"source_url"`
 	// MatchedVolume: search by ISBN only — the volume carrying this ISBN.
 	MatchedVolume *ExternalVolumeHit `json:"matched_volume,omitempty"`
+}
+
+// ExternalEditionQuery is the search of GET /external/{connector}/editions: exactly one
+// of a title, a normalised ISBN, a normalised barcode (EAN / UPC) or a work (its
+// editions, when the connector can list them).
+type ExternalEditionQuery struct {
+	Title, ISBN, Barcode, Work string
 }
 
 type ExternalVolumeHit struct {
@@ -37,11 +57,11 @@ type ExternalVolumeHit struct {
 	ISBN   string `json:"isbn,omitempty"`
 }
 
-// ExternalImportRequest is the selection of POST /external/bd-manga/preview
-// and /import: a Wikidata work and / or BnF editions (with their volumes).
+// ExternalImportRequest is the selection of POST /external/{connector}/preview
+// and /import: a work and / or editions (with their volumes or tracks).
 type ExternalImportRequest struct {
-	Work     string   `json:"work,omitempty"`     // Wikidata QID
-	Editions []string `json:"editions,omitempty"` // BnF ARKs
+	Work     string   `json:"work,omitempty"`     // Wikidata QID, MusicBrainz release group
+	Editions []string `json:"editions,omitempty"` // BnF ARKs, MusicBrainz releases
 	// Selected lists the node keys to write (import only).
 	Selected []string `json:"selected,omitempty"`
 	// Overrides replaces the attributes of selected nodes (corrections made in
@@ -57,6 +77,7 @@ const (
 	NodeEdition   = "edition"
 	NodePublisher = "publisher"
 	NodeVolume    = "volume"
+	NodeSeason    = "season" // a season of a series, with its episodes (role volume)
 )
 
 // Status of a node against the catalogue.
@@ -109,4 +130,15 @@ type ExternalRelation struct {
 type ExternalImportReport struct {
 	ImportReport
 	ItemIDs map[string]uuid.UUID `json:"item_ids"`
+}
+
+// ConnectorInfo describes a connector (GET /external/connectors): its path
+// segment and the domain package holding the types it writes.
+type ConnectorInfo struct {
+	ID     string `json:"id"`
+	Domain string `json:"domain"`
+	// EditionsByWork: editions can be listed from a work (editions?work=).
+	EditionsByWork bool `json:"editions_by_work"`
+	// EditionCode: the code editions are searched by, « isbn » or « barcode ».
+	EditionCode string `json:"edition_code"`
 }

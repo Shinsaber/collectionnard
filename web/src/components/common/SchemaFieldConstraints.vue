@@ -223,6 +223,14 @@
       {{ t("schema.constraints.i18nTextHelp", { langs: LANGS.join(", ") }) }}
     </div>
 
+    <!-- ── Liens : structure fixe ── -->
+    <div
+      v-if="field.type === 'links'"
+      class="md:col-span-2 text-xs text-muted italic"
+    >
+      {{ t("schema.constraints.linksHelp") }}
+    </div>
+
     <!-- ── Image gallery config ── -->
     <template v-if="field.type === 'image-gallery'">
       <SchemaImageCategories

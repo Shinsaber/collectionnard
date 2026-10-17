@@ -1,0 +1,46 @@
+{
+  "id": 169,
+  "url": "https://www.tvmaze.com/shows/169/breaking-bad",
+  "name": "Breaking Bad",
+  "type": "Scripted",
+  "language": "English",
+  "genres": [
+    "Drama",
+    "Crime",
+    "Thriller"
+  ],
+  "status": "Ended",
+  "runtime": 60,
+  "averageRuntime": 60,
+  "premiered": "2008-01-20",
+  "ended": "2019-10-11",
+  "officialSite": "http://www.amc.com/shows/breaking-bad",
+  "schedule": {
+    "time": "22:00",
+    "days": [
+      "Sunday"
+    ]
+  },
+  "rating": {
+    "average": 9.2
+  },
+  "weight": 100,
+  "network": {
+    "id": 20,
+    "name": "AMC",
+    "country": {
+      "name": "United States",
+      "code": "US",
+      "timezone": "America/New_York"
+    },
+    "officialSite": null
+  },
+  "webChannel": null,
+  "dvdCountry": null,
+  "externals": {
+    "tvrage": 18164,
+    "thetvdb": 81189,
+    "imdb": "tt0903747"
+  },
+  "updated": 1769198028
+}

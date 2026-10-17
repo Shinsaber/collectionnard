@@ -8,8 +8,8 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/shinsaber/colec/internal/external"
-	"github.com/shinsaber/colec/internal/external/bdmanga"
 	"github.com/shinsaber/colec/internal/external/bnf"
 	"github.com/shinsaber/colec/internal/model"
 )
@@ -25,15 +25,49 @@ func externalContext(w http.ResponseWriter, r *http.Request) (context.Context, c
 	return context.WithTimeout(r.Context(), externalTimeout)
 }
 
-// SearchExternalWorks answers GET /external/bd-manga/works?q= (admin).
+// ListConnectors answers GET /external/connectors (admin): the connectors and the
+// domain package each one writes into.
+func (h *Handler) ListConnectors(w http.ResponseWriter, r *http.Request) {
+	out := make([]model.ConnectorInfo, 0, len(h.Connectors))
+	for _, c := range h.Connectors {
+		info := model.ConnectorInfo{ID: c.ID(), Domain: c.Domain()}
+		if w, ok := c.(interface{ EditionsByWork() bool }); ok {
+			info.EditionsByWork = w.EditionsByWork()
+		}
+		info.EditionCode = "isbn"
+		if ec, ok := c.(interface{ EditionCode() string }); ok {
+			info.EditionCode = ec.EditionCode()
+		}
+		out = append(out, info)
+	}
+	respondJSON(w, http.StatusOK, out)
+}
+
+// connector returns the connector named by the {connector} path segment (404 if unknown).
+func (h *Handler) connector(w http.ResponseWriter, r *http.Request) (external.Connector, bool) {
+	id := chi.URLParam(r, "connector")
+	for _, c := range h.Connectors {
+		if c.ID() == id {
+			return c, true
+		}
+	}
+	respondError(w, http.StatusNotFound, "not_found", "unknown connector")
+	return nil, false
+}
+
+// SearchExternalWorks answers GET /external/{connector}/works?q= (admin).
 func (h *Handler) SearchExternalWorks(w http.ResponseWriter, r *http.Request) {
+	conn, ok := h.connector(w, r)
+	if !ok {
+		return
+	}
 	q, ok := searchText(w, r)
 	if !ok {
 		return
 	}
 	ctx, cancel := externalContext(w, r)
 	defer cancel()
-	hits, err := h.BDManga.SearchWorks(ctx, q)
+	hits, err := conn.SearchWorks(ctx, q)
 	if err != nil {
 		respondExternalError(w, r, err)
 		return
@@ -41,29 +75,48 @@ func (h *Handler) SearchExternalWorks(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, hits)
 }
 
-// SearchExternalEditions answers GET /external/bd-manga/editions?q=|isbn= (admin).
+// SearchExternalEditions answers GET /external/{connector}/editions?q=|isbn=|barcode=|work= (admin).
+// The connector checks the work identifier (Wikidata, MusicBrainz…).
 func (h *Handler) SearchExternalEditions(w http.ResponseWriter, r *http.Request) {
-	rawISBN := strings.TrimSpace(r.URL.Query().Get("isbn"))
-	hasQ := strings.TrimSpace(r.URL.Query().Get("q")) != ""
-	if (rawISBN == "") == !hasQ {
-		respondError(w, http.StatusBadRequest, "bad_request", "exactly one of q and isbn is required")
+	conn, ok := h.connector(w, r)
+	if !ok {
 		return
 	}
-	var title, isbn string
-	if rawISBN != "" {
-		if isbn = bnf.NormalizeISBN(rawISBN); isbn == "" {
+	rawISBN := strings.TrimSpace(r.URL.Query().Get("isbn"))
+	rawBarcode := strings.TrimSpace(r.URL.Query().Get("barcode"))
+	work := strings.TrimSpace(r.URL.Query().Get("work"))
+	hasQ := strings.TrimSpace(r.URL.Query().Get("q")) != ""
+	if n := btoi(rawISBN != "") + btoi(rawBarcode != "") + btoi(work != "") + btoi(hasQ); n != 1 {
+		respondError(w, http.StatusBadRequest, "bad_request", "exactly one of q, isbn, barcode and work is required")
+		return
+	}
+	var query model.ExternalEditionQuery
+	switch {
+	case rawISBN != "":
+		if query.ISBN = bnf.NormalizeISBN(rawISBN); query.ISBN == "" {
 			respondError(w, http.StatusBadRequest, "bad_request", "invalid ISBN")
 			return
 		}
-	} else {
+	case rawBarcode != "":
+		if query.Barcode = external.NormalizeBarcode(rawBarcode); query.Barcode == "" {
+			respondError(w, http.StatusBadRequest, "bad_request", "invalid barcode")
+			return
+		}
+	case work != "":
+		if len(work) > maxSearchLength {
+			respondError(w, http.StatusBadRequest, "bad_request", "work identifier too long")
+			return
+		}
+		query.Work = work
+	default:
 		var ok bool
-		if title, ok = searchText(w, r); !ok {
+		if query.Title, ok = searchText(w, r); !ok {
 			return
 		}
 	}
 	ctx, cancel := externalContext(w, r)
 	defer cancel()
-	hits, err := h.BDManga.SearchEditions(ctx, title, isbn)
+	hits, err := conn.SearchEditions(ctx, query)
 	if err != nil {
 		respondExternalError(w, r, err)
 		return
@@ -71,9 +124,13 @@ func (h *Handler) SearchExternalEditions(w http.ResponseWriter, r *http.Request)
 	respondJSON(w, http.StatusOK, hits)
 }
 
-// PreviewExternal answers POST /external/bd-manga/preview (admin): the items
+// PreviewExternal answers POST /external/{connector}/preview (admin): the items
 // and relations the sources propose, matched against the catalogue.
 func (h *Handler) PreviewExternal(w http.ResponseWriter, r *http.Request) {
+	conn, ok := h.connector(w, r)
+	if !ok {
+		return
+	}
 	var req model.ExternalImportRequest
 	if err := decodeJSON(w, r, &req); err != nil {
 		respondDecodeError(w, err)
@@ -81,7 +138,7 @@ func (h *Handler) PreviewExternal(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := externalContext(w, r)
 	defer cancel()
-	plan, err := h.BDManga.Preview(ctx, req)
+	plan, err := conn.Preview(ctx, req)
 	if err != nil {
 		respondExternalError(w, r, err)
 		return
@@ -89,9 +146,13 @@ func (h *Handler) PreviewExternal(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, plan)
 }
 
-// ImportExternal answers POST /external/bd-manga/import (admin): the selected
+// ImportExternal answers POST /external/{connector}/import (admin): the selected
 // nodes go through the catalogue import (same report, 200 or 422, dry_run).
 func (h *Handler) ImportExternal(w http.ResponseWriter, r *http.Request) {
+	conn, ok := h.connector(w, r)
+	if !ok {
+		return
+	}
 	dryRun, ok := parseDryRun(w, r)
 	if !ok {
 		return
@@ -103,7 +164,7 @@ func (h *Handler) ImportExternal(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := externalContext(w, r)
 	defer cancel()
-	cat, ids, err := h.BDManga.Build(ctx, req)
+	cat, ids, err := conn.Build(ctx, req)
 	if err != nil {
 		respondExternalError(w, r, err)
 		return
@@ -120,6 +181,13 @@ func (h *Handler) ImportExternal(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, status, model.ExternalImportReport{ImportReport: *rep, ItemIDs: ids})
 }
 
+func btoi(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}
+
 // searchText reads the `q` parameter of a search (2 to maxSearchLength characters).
 func searchText(w http.ResponseWriter, r *http.Request) (string, bool) {
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
@@ -133,8 +201,8 @@ func searchText(w http.ResponseWriter, r *http.Request) (string, bool) {
 // respondExternalError maps the errors of a connector: 400 invalid request,
 // 404 unknown external entity, 409 domain types missing (details.missing), 502 source unreachable.
 func respondExternalError(w http.ResponseWriter, r *http.Request, err error) {
-	var input bdmanga.InputError
-	var unavailable *bdmanga.UnavailableError
+	var input external.InputError
+	var unavailable *external.UnavailableError
 	switch {
 	case errors.As(err, &input):
 		respondError(w, http.StatusBadRequest, "bad_request", input.Error())
@@ -142,7 +210,7 @@ func respondExternalError(w http.ResponseWriter, r *http.Request, err error) {
 		respondJSON(w, http.StatusConflict, model.APIError{
 			Error:   "connector_unavailable",
 			Message: unavailable.Error(),
-			Details: map[string]any{"missing": unavailable.Missing},
+			Details: map[string]any{"missing": unavailable.Missing, "domain": unavailable.Domain},
 		})
 	case errors.Is(err, external.ErrNotFound):
 		respondError(w, http.StatusNotFound, "not_found", err.Error())

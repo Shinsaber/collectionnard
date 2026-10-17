@@ -60,3 +60,36 @@ func TestClient(t *testing.T) {
 		t.Errorf("cache size = %d, want ≤ 2", len(c.cache))
 	}
 }
+
+func TestClient_Throttle(t *testing.T) {
+	var times []time.Time
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		times = append(times, time.Now())
+		_, _ = w.Write([]byte("ok"))
+	}))
+	defer srv.Close()
+
+	c := NewClient("test-agent")
+	host := strings.TrimPrefix(srv.URL, "http://")
+	c.Throttle(host, 50*time.Millisecond)
+	ctx := context.Background()
+	for _, p := range []string{"/a", "/b", "/a"} { // the second /a comes from the cache
+		if _, err := c.Get(ctx, srv.URL+p); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if len(times) != 2 {
+		t.Fatalf("calls = %d, want 2", len(times))
+	}
+	if gap := times[1].Sub(times[0]); gap < 45*time.Millisecond {
+		t.Errorf("gap = %v, want ≥ 50ms", gap)
+	}
+
+	c.Throttle(host, time.Hour)
+	_, _ = c.Get(ctx, srv.URL+"/c") // takes the free slot
+	short, cancel := context.WithTimeout(ctx, 20*time.Millisecond)
+	defer cancel()
+	if _, err := c.Get(short, srv.URL+"/d"); !errors.Is(err, ErrUnavailable) {
+		t.Errorf("Get past the deadline = %v, want ErrUnavailable", err)
+	}
+}

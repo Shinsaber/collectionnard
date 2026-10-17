@@ -96,6 +96,7 @@
 import { computed, ref, watch, type PropType } from "vue";
 import { useI18n } from "vue-i18n";
 import { LANGS } from "@/i18n/langs";
+import { linksProperty } from "@/lib/schema";
 import SchemaFieldCard from "./SchemaFieldCard.vue";
 import SchemaRootCard from "./SchemaRootCard.vue";
 import {
@@ -110,6 +111,7 @@ import {
   emptyField,
   i18nTypeOption,
   imageGalleryTypeOption,
+  linksTypeOption,
   parseImageCategories,
   stringMap,
   type SchemaBuilderFeatures,
@@ -145,6 +147,7 @@ const availableTypeOptions = computed(() => {
   const opts = [...baseTypeOptions];
   if (ft.value.i18nText) opts.push(i18nTypeOption);
   if (ft.value.imageGallery) opts.push(imageGalleryTypeOption);
+  if (ft.value.links) opts.push(linksTypeOption);
   if (ft.value.array) opts.push(arrayTypeOption);
   return opts;
 });
@@ -194,6 +197,9 @@ function parseSchema(schema: Record<string, unknown>): SchemaField[] {
       }
       if (type === "object" && prop["x-widget"] === "image-gallery") {
         type = "image-gallery";
+      }
+      if (type === "array" && prop["x-widget"] === "links") {
+        type = "links";
       }
       return {
         key,
@@ -284,6 +290,12 @@ function buildProperty(f: SchemaField): Record<string, unknown> {
   }
   if (f.type === "boolean" && f.defaultValue != null) {
     prop.default = f.defaultValue;
+  }
+  if (f.type === "links") {
+    // Tableau de { label, url } : structure fixe (lib/schema.ts), seules les bornes du tableau varient.
+    Object.assign(prop, linksProperty());
+    if (f.minItems != null && f.minItems > 0) prop.minItems = f.minItems;
+    if (f.maxItems != null && f.maxItems > 0) prop.maxItems = f.maxItems;
   }
   if (f.type === "i18n-text") {
     prop.type = "object";

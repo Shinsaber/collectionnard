@@ -91,16 +91,21 @@ func TestMain(m *testing.M) {
 			fmt.Fprintln(os.Stderr, "migrate:", err)
 			return 1
 		}
-		if err := dbmigrate.Seed(ctx, testURL, seedFile); err != nil {
-			fmt.Fprintln(os.Stderr, "seed:", err)
-			return 1
-		}
 		s, err = store.NewPgStore(ctx, testURL)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "store:", err)
 			return 1
 		}
 		defer s.Close()
+		// Types : paquets de domaine (P3-0) utilisés par seed.sql, puis les données de démonstration.
+		if _, err := s.InstallDomains(ctx, "collections", "tv"); err != nil {
+			fmt.Fprintln(os.Stderr, "domains:", err)
+			return 1
+		}
+		if err := dbmigrate.Seed(ctx, testURL, seedFile); err != nil {
+			fmt.Fprintln(os.Stderr, "seed:", err)
+			return 1
+		}
 		return m.Run()
 	}()
 
@@ -569,7 +574,7 @@ func TestItemTypes_DisplayOrder(t *testing.T) {
 		return out
 	}
 	// Seed values (migration 005 / seed.sql): main types first, bulky ones last.
-	want := []string{"Series", "DVD", "Season", "Broadcast", "Episode"}
+	want := []string{"Series", "VideoRelease", "Season", "Broadcast", "Episode"}
 	seedOnly := slices.DeleteFunc(names(), func(n string) bool { return !slices.Contains(want, n) })
 	if got := seedOnly; !slices.Equal(got, want) {
 		t.Errorf("list order = %v, want %v", got, want)

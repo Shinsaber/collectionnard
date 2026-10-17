@@ -14,6 +14,7 @@ export const NAV_ICONS = {
     "M3 3l18 18M8.6 8.6A5 5 0 0 0 7 18h10.6M20.4 16.4A4 4 0 0 0 18 9a6 6 0 0 0-7.7-3.8",
   importExport: "M12 3v12M7 10l5 5 5-5M4 21h16",
   images: "M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15.5 9a1.5 1.5 0 1 0 0 .01",
+  domains: "M12 3l9 5-9 5-9-5zM3 12.5l9 5 9-5M3 16.5l9 5 9-5",
   external:
     "M7 18a5 5 0 0 1-.6-9.96A6 6 0 0 1 18 9a4 4 0 0 1 0 9zM12 11v6M9 14l3 3 3-3",
   /** Graphe d'un item (hors navigation, même jeu de tracés). */
@@ -66,6 +67,7 @@ export function useNavigation() {
   ]);
 
   const adminLinks = computed<NavLink[]>(() => [
+    { to: "/admin/domains", label: t("layout.nav.domains"), icon: "domains" },
     {
       to: "/admin/item-types",
       label: t("layout.nav.itemTypes"),

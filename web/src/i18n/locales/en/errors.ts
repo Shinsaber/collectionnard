@@ -5,6 +5,33 @@ const en: typeof fr = {
   network: "Server unreachable",
   required: "This field is required",
   invalidUrl: "Invalid URL",
+  check: {
+    type: "Expected type: {type}",
+    enum: "Value not allowed",
+    pattern: "Expected format: {hint}",
+    minLength: "At least {n} character(s)",
+    maxLength: "At most {n} characters",
+    minimum: "Minimum value: {n}",
+    maximum: "Maximum value: {n}",
+    date: "Invalid date (YYYY-MM-DD)",
+    uri: "Invalid URL",
+    email: "Invalid email address",
+    minItems: "At least {n} item(s)",
+    maxItems: "At most {n} items",
+    uniqueItems: "Duplicate items",
+    requiredKey: "« {key} » is required",
+    keyPattern: "Key not allowed: {key}",
+    unknownKey: "Unexpected key: {key}",
+    json: "Invalid JSON",
+    types: {
+      string: "text",
+      integer: "whole number",
+      number: "number",
+      boolean: "yes / no",
+      array: "list",
+      object: "object",
+    },
+  },
   api: {
     bad_request: "Invalid request",
     unauthorized: "Authentication required or invalid credentials",
@@ -17,7 +44,7 @@ const en: typeof fr = {
     timeout: "The server took too long to respond",
     internal: "Internal server error",
     connector_unavailable:
-      "Comics / Manga types not found in the catalogue: {missing} (type renamed or db/seed_bd_manga.sql not loaded)",
+      "Types not found in the catalogue: {missing}. Install or update the domain from Administration → Domains.",
     external_unavailable:
       "External source (Wikidata, BnF) unreachable, try again later",
     item_type_not_allowed:

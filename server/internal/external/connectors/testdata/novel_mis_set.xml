@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns="http://catalogue.bnf.fr/namespaces/InterXMarc" xmlns:ixm="http://catalogue.bnf.fr/namespaces/InterXMarc" xmlns:mn="http://catalogue.bnf.fr/namespaces/motsnotices" xmlns:sd="http://www.loc.gov/zing/srw/diagnostic/">
+<srw:version>1.2</srw:version>
+<srw:echoedSearchRetrieveRequest>
+<srw:version>1.2</srw:version>
+<srw:query>bib.recordid all "45767941"</srw:query>
+</srw:echoedSearchRetrieveRequest>
+<srw:numberOfRecords>1</srw:numberOfRecords>
+<srw:records>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb45767941c" type="Bibliographic">
+<mxc:leader>     cam  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF457679410000008</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb45767941c</mxc:controlfield>
+<mxc:datafield tag="010" ind1=" " ind2=" ">
+<mxc:subfield code="b">Br.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20190712g2019    m  y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="0" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="105" ind1=" " ind2=" ">
+<mxc:subfield code="a">||||z   00|a|</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="106" ind1=" " ind2=" ">
+<mxc:subfield code="a">r</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">i </mxc:subfield>
+<mxc:subfield code="b">xxxe  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">txt</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">n</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">n</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Les misérables</mxc:subfield>
+<mxc:subfield code="b">Texte imprimé</mxc:subfield>
+<mxc:subfield code="f">Victor Hugo</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="214" ind1=" " ind2="0">
+<mxc:subfield code="a">[Paris]</mxc:subfield>
+<mxc:subfield code="c">Pocket</mxc:subfield>
+<mxc:subfield code="d">DL 2019-</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="d">18 cm</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="225" ind1="|" ind2=" ">
+<mxc:subfield code="a">Pocket</mxc:subfield>
+<mxc:subfield code="i">Classiques</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="410" ind1=" " ind2="0">
+<mxc:subfield code="0">37721627</mxc:subfield>
+<mxc:subfield code="t">Pocket. Classiques</mxc:subfield>
+<mxc:subfield code="x">1631-6290</mxc:subfield>
+<mxc:subfield code="d">2019-</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="410" ind1=" " ind2="0">
+<mxc:subfield code="0">34228117</mxc:subfield>
+<mxc:subfield code="t">Presses pocket (Paris)</mxc:subfield>
+<mxc:subfield code="x">0244-6405</mxc:subfield>
+<mxc:subfield code="d">2019-</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="500" ind1="1" ind2="1">
+<mxc:subfield code="3">13516296</mxc:subfield>
+<mxc:subfield code="a">Les misérables</mxc:subfield>
+<mxc:subfield code="m">français</mxc:subfield>
+<mxc:subfield code="2">lien automatique</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="700" ind1=" " ind2="|">
+<mxc:subfield code="3">11907966</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121200982</mxc:subfield>
+<mxc:subfield code="a">Hugo</mxc:subfield>
+<mxc:subfield code="b">Victor</mxc:subfield>
+<mxc:subfield code="f">1802-1885</mxc:subfield>
+<mxc:subfield code="4">070</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20190712</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF457679410000008</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb45767941c</srw:recordIdentifier>
+<srw:recordPosition>1</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20190712</ixm:attr>
+<ixm:attr name="LastModificationDate">20211025</ixm:attr>
+<mn:score>7.379464</mn:score>
+</srw:extraRecordData>
+</srw:record>
+</srw:records>
+</srw:searchRetrieveResponse>

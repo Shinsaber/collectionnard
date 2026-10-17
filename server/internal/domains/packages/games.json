@@ -1,0 +1,907 @@
+{
+  "format": "collectionnard.domain",
+  "version": 1,
+  "id": "games",
+  "package_version": 2,
+  "title": {
+    "fr": "Jeux vidéo",
+    "en": "Video games"
+  },
+  "description": {
+    "fr": "Jeux, éditions (cartouches, disques, codes) et plateformes rattachées à leur constructeur ; sources Wikidata et BnF.",
+    "en": "Games, releases (cartridges, discs, codes) and platforms linked to their manufacturer; Wikidata and BnF sources."
+  },
+  "requires": [
+    "people"
+  ],
+  "item_types": [
+    {
+      "id": "b0000000-0000-0000-0000-000000000040",
+      "name": "Game",
+      "description": "Jeu vidéo : l'œuvre, toutes plateformes et éditions confondues",
+      "display_order": 17,
+      "attributes_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "x-title": {
+          "fr": "Jeu vidéo",
+          "en": "Video game"
+        },
+        "x-description": {
+          "fr": "Le jeu, toutes plateformes et éditions confondues",
+          "en": "The game, all platforms and releases together"
+        },
+        "x-labels": {
+          "fr": {
+            "title": "Titre",
+            "original_title": "Titre original",
+            "release_year": "Année de sortie",
+            "genres": "Genres",
+            "game_modes": "Modes de jeu",
+            "pegi": "PEGI",
+            "description": "Description",
+            "external_ids": "Identifiants externes",
+            "sources": "Sources",
+            "images": "Images",
+            "links": "Liens"
+          },
+          "en": {
+            "title": "Title",
+            "original_title": "Original title",
+            "release_year": "Release year",
+            "genres": "Genres",
+            "game_modes": "Game modes",
+            "pegi": "PEGI",
+            "description": "Description",
+            "external_ids": "External IDs",
+            "sources": "Sources",
+            "images": "Images",
+            "links": "Links"
+          }
+        },
+        "x-label": "{title}",
+        "x-order": [
+          "title",
+          "original_title",
+          "release_year",
+          "genres",
+          "game_modes",
+          "pegi",
+          "description",
+          "images",
+          "links",
+          "external_ids",
+          "sources"
+        ],
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "title": {
+            "type": "object",
+            "x-widget": "i18n-text",
+            "properties": {
+              "en": {
+                "type": "string"
+              },
+              "fr": {
+                "type": "string"
+              }
+            },
+            "propertyNames": {
+              "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+            },
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "original_title": {
+            "type": "string"
+          },
+          "release_year": {
+            "type": "integer",
+            "minimum": 1950
+          },
+          "genres": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": [
+                "action",
+                "adventure",
+                "action_adventure",
+                "rpg",
+                "action_rpg",
+                "tactical_rpg",
+                "platform",
+                "puzzle",
+                "strategy",
+                "simulation",
+                "life_simulation",
+                "racing",
+                "sports",
+                "fighting",
+                "beat_em_up",
+                "hack_and_slash",
+                "shooter",
+                "fps",
+                "shoot_em_up",
+                "horror",
+                "survival_horror",
+                "metroidvania",
+                "roguelike",
+                "point_and_click",
+                "visual_novel",
+                "rhythm",
+                "party",
+                "casual",
+                "arcade",
+                "science_fiction"
+              ]
+            },
+            "x-enum-labels": {
+              "fr": {
+                "action": "Action",
+                "adventure": "Aventure",
+                "action_adventure": "Action-aventure",
+                "rpg": "Jeu de rôle",
+                "action_rpg": "Action-RPG",
+                "tactical_rpg": "RPG tactique",
+                "platform": "Plates-formes",
+                "puzzle": "Réflexion",
+                "strategy": "Stratégie",
+                "simulation": "Simulation",
+                "life_simulation": "Simulation de vie",
+                "racing": "Course",
+                "sports": "Sport",
+                "fighting": "Combat",
+                "beat_em_up": "Beat them all",
+                "hack_and_slash": "Hack and slash",
+                "shooter": "Tir",
+                "fps": "Tir à la première personne",
+                "shoot_em_up": "Shoot 'em up",
+                "horror": "Horreur",
+                "survival_horror": "Survival horror",
+                "metroidvania": "Metroidvania",
+                "roguelike": "Roguelike",
+                "point_and_click": "Point'n click",
+                "visual_novel": "Visual novel",
+                "rhythm": "Rythme",
+                "party": "Party game",
+                "casual": "Jeu occasionnel",
+                "arcade": "Arcade",
+                "science_fiction": "Science-fiction"
+              },
+              "en": {
+                "action": "Action",
+                "adventure": "Adventure",
+                "action_adventure": "Action-adventure",
+                "rpg": "Role-playing",
+                "action_rpg": "Action RPG",
+                "tactical_rpg": "Tactical RPG",
+                "platform": "Platform",
+                "puzzle": "Puzzle",
+                "strategy": "Strategy",
+                "simulation": "Simulation",
+                "life_simulation": "Life simulation",
+                "racing": "Racing",
+                "sports": "Sports",
+                "fighting": "Fighting",
+                "beat_em_up": "Beat 'em up",
+                "hack_and_slash": "Hack and slash",
+                "shooter": "Shooter",
+                "fps": "First-person shooter",
+                "shoot_em_up": "Shoot 'em up",
+                "horror": "Horror",
+                "survival_horror": "Survival horror",
+                "metroidvania": "Metroidvania",
+                "roguelike": "Roguelike",
+                "point_and_click": "Point-and-click",
+                "visual_novel": "Visual novel",
+                "rhythm": "Rhythm",
+                "party": "Party game",
+                "casual": "Casual",
+                "arcade": "Arcade",
+                "science_fiction": "Science fiction"
+              }
+            }
+          },
+          "game_modes": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": [
+                "single_player",
+                "multiplayer",
+                "cooperative",
+                "split_screen",
+                "pvp"
+              ]
+            },
+            "x-enum-labels": {
+              "fr": {
+                "single_player": "Solo",
+                "multiplayer": "Multijoueur",
+                "cooperative": "Coopératif",
+                "split_screen": "Écran partagé",
+                "pvp": "Joueur contre joueur"
+              },
+              "en": {
+                "single_player": "Single-player",
+                "multiplayer": "Multiplayer",
+                "cooperative": "Co-op",
+                "split_screen": "Split screen",
+                "pvp": "Player versus player"
+              }
+            }
+          },
+          "pegi": {
+            "type": "string",
+            "enum": [
+              "3",
+              "7",
+              "12",
+              "16",
+              "18"
+            ],
+            "x-enum-labels": {
+              "fr": {
+                "3": "PEGI 3",
+                "7": "PEGI 7",
+                "12": "PEGI 12",
+                "16": "PEGI 16",
+                "18": "PEGI 18"
+              },
+              "en": {
+                "3": "PEGI 3",
+                "7": "PEGI 7",
+                "12": "PEGI 12",
+                "16": "PEGI 16",
+                "18": "PEGI 18"
+              }
+            }
+          },
+          "description": {
+            "type": "object",
+            "x-widget": "i18n-text",
+            "properties": {
+              "en": {
+                "type": "string"
+              },
+              "fr": {
+                "type": "string"
+              }
+            },
+            "propertyNames": {
+              "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+            },
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "images": {
+            "type": "object",
+            "x-widget": "image-gallery",
+            "additionalProperties": false,
+            "x-image-categories": {
+              "cover": {
+                "ratio": "2/3"
+              }
+            },
+            "properties": {
+              "default_image": {
+                "type": "string"
+              },
+              "cover": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "external_ids": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "wikidata": {
+                "type": "string",
+                "pattern": "^Q[1-9][0-9]*$"
+              },
+              "bnf_ark": {
+                "type": "string",
+                "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$"
+              }
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "source"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "enum": [
+                    "wikidata",
+                    "bnf",
+                    "manual"
+                  ]
+                },
+                "retrieved_at": {
+                  "type": "string",
+                  "format": "date"
+                }
+              }
+            }
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "b0000000-0000-0000-0000-000000000041",
+      "name": "GameRelease",
+      "description": "Édition de jeu : l'objet possédé (cartouche, disque, code…) pour une plateforme",
+      "display_order": 65,
+      "attributes_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "x-title": {
+          "fr": "Édition de jeu",
+          "en": "Game release"
+        },
+        "x-description": {
+          "fr": "Une édition précise d'un jeu sur une plateforme",
+          "en": "A specific release of a game for a platform"
+        },
+        "x-labels": {
+          "fr": {
+            "title": "Titre",
+            "format": "Support",
+            "edition": "Édition",
+            "release_year": "Année",
+            "pegi": "PEGI",
+            "ean": "EAN",
+            "languages": "Langues",
+            "notes": "Contenu",
+            "external_ids": "Identifiants externes",
+            "sources": "Sources",
+            "images": "Images",
+            "links": "Liens"
+          },
+          "en": {
+            "title": "Title",
+            "format": "Format",
+            "edition": "Edition",
+            "release_year": "Year",
+            "pegi": "PEGI",
+            "ean": "EAN",
+            "languages": "Languages",
+            "notes": "Contents",
+            "external_ids": "External IDs",
+            "sources": "Sources",
+            "images": "Images",
+            "links": "Links"
+          }
+        },
+        "x-label": "{title}",
+        "x-order": [
+          "title",
+          "format",
+          "edition",
+          "release_year",
+          "pegi",
+          "ean",
+          "languages",
+          "notes",
+          "images",
+          "links",
+          "external_ids",
+          "sources"
+        ],
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "cartridge",
+              "optical_disc",
+              "card",
+              "download_code",
+              "digital",
+              "other"
+            ],
+            "x-enum-labels": {
+              "fr": {
+                "cartridge": "Cartouche",
+                "optical_disc": "Disque",
+                "card": "Carte de jeu",
+                "download_code": "Code de téléchargement",
+                "digital": "Dématérialisé",
+                "other": "Autre"
+              },
+              "en": {
+                "cartridge": "Cartridge",
+                "optical_disc": "Disc",
+                "card": "Game card",
+                "download_code": "Download code",
+                "digital": "Digital",
+                "other": "Other"
+              }
+            }
+          },
+          "edition": {
+            "type": "string",
+            "description": "Mention d'édition : collector, édition limitée…"
+          },
+          "release_year": {
+            "type": "integer",
+            "minimum": 1950
+          },
+          "pegi": {
+            "type": "string",
+            "enum": [
+              "3",
+              "7",
+              "12",
+              "16",
+              "18"
+            ],
+            "x-enum-labels": {
+              "fr": {
+                "3": "PEGI 3",
+                "7": "PEGI 7",
+                "12": "PEGI 12",
+                "16": "PEGI 16",
+                "18": "PEGI 18"
+              },
+              "en": {
+                "3": "PEGI 3",
+                "7": "PEGI 7",
+                "12": "PEGI 12",
+                "16": "PEGI 16",
+                "18": "PEGI 18"
+              }
+            }
+          },
+          "ean": {
+            "type": "string",
+            "pattern": "^[0-9]{8,14}$"
+          },
+          "languages": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z]{2,3}$"
+            }
+          },
+          "notes": {
+            "type": "string",
+            "description": "Contenu, matériel d'accompagnement"
+          },
+          "images": {
+            "type": "object",
+            "x-widget": "image-gallery",
+            "additionalProperties": false,
+            "x-image-categories": {
+              "front": {
+                "ratio": "2/3"
+              },
+              "back": {
+                "ratio": "2/3"
+              },
+              "media": {
+                "ratio": "1/1"
+              }
+            },
+            "properties": {
+              "default_image": {
+                "type": "string"
+              },
+              "front": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "back": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "media": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "external_ids": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "bnf_ark": {
+                "type": "string",
+                "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$"
+              }
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "source"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "enum": [
+                    "wikidata",
+                    "bnf",
+                    "manual"
+                  ]
+                },
+                "retrieved_at": {
+                  "type": "string",
+                  "format": "date"
+                }
+              }
+            }
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "b0000000-0000-0000-0000-000000000042",
+      "name": "Platform",
+      "description": "Plateforme de jeu : console, ordinateur…, rattachée à son constructeur",
+      "display_order": 135,
+      "attributes_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "x-title": {
+          "fr": "Plateforme",
+          "en": "Platform"
+        },
+        "x-description": {
+          "fr": "Console, ordinateur ou autre support de jeu",
+          "en": "Console, computer or other gaming platform"
+        },
+        "x-labels": {
+          "fr": {
+            "name": "Nom",
+            "kind": "Type",
+            "release_year": "Sortie",
+            "discontinued_year": "Fin de production",
+            "external_ids": "Identifiants externes",
+            "sources": "Sources",
+            "images": "Images",
+            "links": "Liens"
+          },
+          "en": {
+            "name": "Name",
+            "kind": "Kind",
+            "release_year": "Released",
+            "discontinued_year": "Discontinued",
+            "external_ids": "External IDs",
+            "sources": "Sources",
+            "images": "Images",
+            "links": "Links"
+          }
+        },
+        "x-label": "{name}",
+        "x-order": [
+          "name",
+          "kind",
+          "release_year",
+          "discontinued_year",
+          "images",
+          "links",
+          "external_ids",
+          "sources"
+        ],
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "home_console",
+              "handheld",
+              "hybrid",
+              "computer",
+              "mobile",
+              "arcade",
+              "other"
+            ],
+            "x-enum-labels": {
+              "fr": {
+                "home_console": "Console de salon",
+                "handheld": "Console portable",
+                "hybrid": "Console hybride",
+                "computer": "Ordinateur",
+                "mobile": "Mobile",
+                "arcade": "Borne d'arcade",
+                "other": "Autre"
+              },
+              "en": {
+                "home_console": "Home console",
+                "handheld": "Handheld",
+                "hybrid": "Hybrid console",
+                "computer": "Computer",
+                "mobile": "Mobile",
+                "arcade": "Arcade",
+                "other": "Other"
+              }
+            }
+          },
+          "release_year": {
+            "type": "integer",
+            "minimum": 1950
+          },
+          "discontinued_year": {
+            "type": "integer",
+            "minimum": 1950
+          },
+          "images": {
+            "type": "object",
+            "x-widget": "image-gallery",
+            "additionalProperties": false,
+            "x-image-categories": {
+              "photo": {
+                "ratio": "1/1"
+              }
+            },
+            "properties": {
+              "default_image": {
+                "type": "string"
+              },
+              "photo": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "external_ids": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "wikidata": {
+                "type": "string",
+                "pattern": "^Q[1-9][0-9]*$"
+              }
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "source"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "enum": [
+                    "wikidata",
+                    "bnf",
+                    "manual"
+                  ]
+                },
+                "retrieved_at": {
+                  "type": "string",
+                  "format": "date"
+                }
+              }
+            }
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "collection_types": [],
+  "relation_types": [
+    {
+      "id": "c0000000-0000-0000-0000-000000000040",
+      "name": "game_released_as",
+      "description": "Jeu paru dans une édition",
+      "attributes_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "x-title": {
+          "fr": "Paru en",
+          "en": "Released as"
+        },
+        "x-description": {
+          "fr": "Jeu paru dans une édition",
+          "en": "Game released as an edition"
+        },
+        "properties": {}
+      },
+      "source_item_type_ids": [
+        "b0000000-0000-0000-0000-000000000040"
+      ],
+      "target_item_type_ids": [
+        "b0000000-0000-0000-0000-000000000041"
+      ]
+    },
+    {
+      "id": "c0000000-0000-0000-0000-000000000041",
+      "name": "on_platform",
+      "description": "Jeu ou édition sur une plateforme",
+      "attributes_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "x-title": {
+          "fr": "Sur",
+          "en": "On"
+        },
+        "x-description": {
+          "fr": "Plateforme d'un jeu ou d'une édition",
+          "en": "Platform of a game or a release"
+        },
+        "properties": {}
+      },
+      "source_item_type_ids": [
+        "b0000000-0000-0000-0000-000000000040",
+        "b0000000-0000-0000-0000-000000000041"
+      ],
+      "target_item_type_ids": [
+        "b0000000-0000-0000-0000-000000000042"
+      ]
+    },
+    {
+      "id": "c0000000-0000-0000-0000-000000000042",
+      "name": "produced_by",
+      "description": "Jeu, édition ou plateforme d'une société",
+      "attributes_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "x-title": {
+          "fr": "Produit par",
+          "en": "Produced by"
+        },
+        "x-description": {
+          "fr": "Développeur, éditeur, distributeur ou constructeur",
+          "en": "Developer, publisher, distributor or manufacturer"
+        },
+        "x-order": [
+          "roles"
+        ],
+        "required": [
+          "roles"
+        ],
+        "properties": {
+          "roles": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": [
+                "developer",
+                "publisher",
+                "distributor",
+                "manufacturer"
+              ]
+            },
+            "x-enum-labels": {
+              "fr": {
+                "developer": "Développement",
+                "publisher": "Édition",
+                "distributor": "Distribution",
+                "manufacturer": "Fabrication"
+              },
+              "en": {
+                "developer": "Developer",
+                "publisher": "Publisher",
+                "distributor": "Distributor",
+                "manufacturer": "Manufacturer"
+              }
+            },
+            "minItems": 1
+          }
+        },
+        "x-labels": {
+          "fr": {
+            "roles": "Rôles"
+          },
+          "en": {
+            "roles": "Roles"
+          }
+        }
+      },
+      "source_item_type_ids": [
+        "b0000000-0000-0000-0000-000000000040",
+        "b0000000-0000-0000-0000-000000000041",
+        "b0000000-0000-0000-0000-000000000042"
+      ],
+      "target_item_type_ids": [
+        "b0000000-0000-0000-0000-000000000017"
+      ]
+    }
+  ]
+}

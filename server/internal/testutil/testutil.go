@@ -78,6 +78,9 @@ type MockStore struct {
 	ReferencedUploadsFn          func(ctx context.Context) ([]string, error)
 	ListRelatedItemCollectionsFn func(ctx context.Context, userID, itemID uuid.UUID) ([]model.RelatedItemCollections, error)
 	GetOfflineSnapshotFn         func(ctx context.Context, userID uuid.UUID) (*model.OfflineSnapshot, error)
+	ListDomainsFn                func(ctx context.Context) ([]model.DomainInfo, error)
+	InstallDomainFn              func(ctx context.Context, pkg *model.DomainPackage, dryRun bool) (*model.DomainInstallReport, error)
+	RefreshInstalledDomainsFn    func(ctx context.Context, except string) error
 }
 
 func (m *MockStore) Ping(ctx context.Context) error {
@@ -391,6 +394,27 @@ func (m *MockStore) GetOfflineSnapshot(ctx context.Context, userID uuid.UUID) (*
 		return m.GetOfflineSnapshotFn(ctx, userID)
 	}
 	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) ListDomains(ctx context.Context) ([]model.DomainInfo, error) {
+	if m.ListDomainsFn != nil {
+		return m.ListDomainsFn(ctx)
+	}
+	return []model.DomainInfo{}, nil
+}
+
+func (m *MockStore) InstallDomain(ctx context.Context, pkg *model.DomainPackage, dryRun bool) (*model.DomainInstallReport, error) {
+	if m.InstallDomainFn != nil {
+		return m.InstallDomainFn(ctx, pkg, dryRun)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) RefreshInstalledDomains(ctx context.Context, except string) error {
+	if m.RefreshInstalledDomainsFn != nil {
+		return m.RefreshInstalledDomainsFn(ctx, except)
+	}
+	return nil
 }
 
 // --- Test helpers ---

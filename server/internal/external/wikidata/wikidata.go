@@ -10,12 +10,16 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/shinsaber/colec/internal/external"
 )
 
 // DefaultBaseURL is the action API of Wikidata.
 const DefaultBaseURL = "https://www.wikidata.org/w/api.php"
+
+// WikipediaSites: the Wikipedia articles read with the claims (sitelinks), French first.
+const WikipediaSites = "frwiki|enwiki"
 
 // maxIDs is the number of entities wbgetentities accepts per call.
 const maxIDs = 50
@@ -31,6 +35,17 @@ func EntityURL(id string) string { return "https://www.wikidata.org/wiki/" + id 
 type Client struct {
 	Fetch   *external.Client
 	BaseURL string
+
+	// sitelinks: Wikipedia articles of the entities read with their claims (QID → site → URL).
+	sitelinks sync.Map
+}
+
+// Sitelinks returns the Wikipedia articles of an entity already read with its claims.
+func (c *Client) Sitelinks(id string) map[string]string {
+	if v, ok := c.sitelinks.Load(id); ok {
+		return v.(map[string]string)
+	}
+	return nil
 }
 
 func New(fetch *external.Client) *Client {
@@ -82,7 +97,7 @@ func (c *Client) Search(ctx context.Context, text string, classes []string, limi
 func (c *Client) Entities(ctx context.Context, ids, langs []string, withClaims bool) (map[string]*Entity, error) {
 	props := "labels|descriptions"
 	if withClaims {
-		props += "|claims"
+		props += "|claims|sitelinks/urls" // articles Wikipédia : liens d'une fiche importée
 	}
 	out := make(map[string]*Entity, len(ids))
 	for start := 0; start < len(ids); start += maxIDs {
@@ -93,6 +108,9 @@ func (c *Client) Entities(ctx context.Context, ids, langs []string, withClaims b
 			"props":     {props},
 			"languages": {strings.Join(langs, "|")},
 			"format":    {"json"},
+		}
+		if withClaims {
+			q.Set("sitefilter", WikipediaSites)
 		}
 		var resp struct {
 			Entities map[string]rawEntity `json:"entities"`
@@ -124,7 +142,11 @@ func (c *Client) Entities(ctx context.Context, ids, langs []string, withClaims b
 			if raw.Missing != nil || raw.ID == "" {
 				continue
 			}
-			out[id] = raw.entity()
+			e := raw.entity()
+			out[id] = e
+			if e.Sitelinks != nil {
+				c.sitelinks.Store(id, e.Sitelinks)
+			}
 		}
 	}
 	return out, nil

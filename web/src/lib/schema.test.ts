@@ -10,10 +10,15 @@ import {
   i18nText,
   imageCategories,
   isImageGallery,
+  isLinks,
   itemLabel,
+  linkText,
+  linksOf,
+  linksProperty,
   orderedKeys,
   parseRatio,
   renderLabel,
+  safeURL,
   typeDescription,
   typeTitle,
   type Schema,
@@ -95,7 +100,15 @@ describe("fieldLabel / displayValue / orderedKeys", () => {
       "synopsis",
       "start_year",
       "end_year",
+      "original_title",
+      "countries",
+      "original_language",
+      "season_count",
+      "episode_count",
       "images",
+      "links",
+      "external_ids",
+      "sources",
       "extra",
     ]);
     expect(
@@ -249,5 +262,42 @@ describe("i18n : objets multilingues, enums, noms de types", () => {
         "en",
       ),
     ).toBe("TV series");
+  });
+});
+
+describe("liens (x-widget: links)", () => {
+  const publisher = fixtures.find((f) => f.name === "Publisher")!
+    .schema as Schema;
+
+  it("reconnaît le champ et n'affiche que les liens http(s)", () => {
+    expect(isLinks(publisher, "links")).toBe(true);
+    expect(isLinks(publisher, "website")).toBe(false);
+    const links = linksOf([
+      { label: "Wikipédia", url: "https://fr.wikipedia.org/wiki/Nintendo" },
+      { url: "https://www.nintendo.com/fr-fr/" },
+      { label: "piège", url: "javascript:alert(1)" },
+      { label: "vide" },
+    ]);
+    expect(links).toEqual([
+      { label: "Wikipédia", url: "https://fr.wikipedia.org/wiki/Nintendo" },
+      { url: "https://www.nintendo.com/fr-fr/" },
+    ]);
+    expect(links.map(linkText)).toEqual(["Wikipédia", "www.nintendo.com"]);
+    expect(safeURL("data:text/html,x")).toBe("");
+  });
+
+  it("fieldValue : les libellés (ou noms de site), séparés par des virgules", () => {
+    expect(
+      fieldValue(publisher, "links", [
+        { label: "Site", url: "https://a.example" },
+        { url: "https://b.example/x" },
+      ]),
+    ).toBe("Site, b.example");
+  });
+
+  it("linksProperty : le schéma écrit par l'éditeur de types", () => {
+    expect(linksProperty()).toEqual(
+      (publisher.properties as Record<string, unknown>).links,
+    );
   });
 });

@@ -17,7 +17,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/shinsaber/colec/config"
 	"github.com/shinsaber/colec/internal/external"
-	"github.com/shinsaber/colec/internal/external/bdmanga"
+	"github.com/shinsaber/colec/internal/external/connectors"
 	"github.com/shinsaber/colec/internal/middleware"
 	"github.com/shinsaber/colec/internal/model"
 	"github.com/shinsaber/colec/internal/store"
@@ -28,13 +28,20 @@ type Handler struct {
 	Store  store.Store
 	Auth   *middleware.Auth
 	Config *config.Config
-	// BDManga is the connector to the external sources of the BD / Manga domain.
-	BDManga *bdmanga.Connector
+	// Connectors to the external sources, one per kind of collection (/external/{id}/…).
+	Connectors []external.Connector
 }
 
 func New(s store.Store, auth *middleware.Auth, cfg *config.Config) *Handler {
 	fetch := external.NewClient(cfg.ExternalUserAgent)
-	return &Handler{Store: s, Auth: auth, Config: cfg, BDManga: bdmanga.New(s, fetch)}
+	return &Handler{Store: s, Auth: auth, Config: cfg, Connectors: []external.Connector{
+		connectors.New(s, fetch),
+		connectors.NewNovels(s, fetch),
+		connectors.NewMusic(s, fetch),
+		connectors.NewFilms(s, fetch),
+		connectors.NewSeries(s, fetch),
+		connectors.NewGames(s, fetch),
+	}}
 }
 
 // Router builds the chi router with all routes.
@@ -130,10 +137,11 @@ func (h *Handler) Router() chi.Router {
 			r.Post("/api/v1/import", h.ImportCatalog)
 
 			// External sources (BD / Manga: Wikidata, BnF)
-			r.Get("/api/v1/external/bd-manga/works", h.SearchExternalWorks)
-			r.Get("/api/v1/external/bd-manga/editions", h.SearchExternalEditions)
-			r.Post("/api/v1/external/bd-manga/preview", h.PreviewExternal)
-			r.Post("/api/v1/external/bd-manga/import", h.ImportExternal)
+			r.Get("/api/v1/external/connectors", h.ListConnectors)
+			r.Get("/api/v1/external/{connector}/works", h.SearchExternalWorks)
+			r.Get("/api/v1/external/{connector}/editions", h.SearchExternalEditions)
+			r.Post("/api/v1/external/{connector}/preview", h.PreviewExternal)
+			r.Post("/api/v1/external/{connector}/import", h.ImportExternal)
 
 			r.Post("/api/v1/item-types", h.CreateItemType)
 			r.Put("/api/v1/item-types/{id}", h.UpdateItemType)
@@ -157,6 +165,8 @@ func (h *Handler) Router() chi.Router {
 
 			r.Post("/api/v1/uploads", h.UploadFile)
 			r.Post("/api/v1/uploads/purge", h.PurgeUploads)
+			r.Get("/api/v1/domains", h.ListDomains)
+			r.Post("/api/v1/domains/{id}/install", h.InstallDomain)
 		})
 	})
 

@@ -7,6 +7,7 @@ import {
   selectedOverrides,
   writtenCount,
 } from "./externalPlan";
+import type { ExternalNode } from "@/api/types";
 import { dragonBallPlan } from "../../tests/fixtures/external-plan";
 
 describe("externalPlan", () => {
@@ -22,6 +23,43 @@ describe("externalPlan", () => {
       "publisher:glénat",
     ]);
     expect(g.editions[0]!.volumes).toHaveLength(3);
+  });
+
+  it("regroupe chaque saison d'une série avec ses épisodes", () => {
+    const node = (
+      key: string,
+      role: ExternalNode["role"],
+      parent?: string,
+    ): ExternalNode => ({
+      key,
+      role,
+      parent,
+      item_type_id: "t",
+      attributes: {},
+      status: "new",
+      selected: true,
+      source_url: "",
+    });
+    const g = groupPlan({
+      retrieved_at: "2026-10-17",
+      nodes: [
+        node("wikidata:Q1079", "work"),
+        node("broadcast:amc", "universe", "wikidata:Q1079"),
+        node("wikidata:S1", "season", "wikidata:Q1079"),
+        node("wikidata:E1", "volume", "wikidata:S1"),
+        node("wikidata:E2", "volume", "wikidata:S1"),
+        node("bnf:box", "edition", "wikidata:Q1079"),
+      ],
+      relations: [],
+    });
+    expect(g.main.map((n) => n.key)).toEqual([
+      "wikidata:Q1079",
+      "broadcast:amc",
+    ]);
+    expect(g.editions.map((e) => [e.edition.key, e.volumes.length])).toEqual([
+      ["wikidata:S1", 2],
+      ["bnf:box", 0],
+    ]);
   });
 
   it("sélectionne par défaut tout sauf les réimpressions", () => {

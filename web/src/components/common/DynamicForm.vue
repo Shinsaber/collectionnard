@@ -28,6 +28,7 @@
           :placeholder="field.label"
           :class="{ 'is-error': !!errors[field.name] }"
           @update:model-value="update(field.name, $event)"
+          @blur="touch(field.name)"
         />
 
         <!-- Enum (tableau d'enum : choix multiples, ex. rôles) -->
@@ -40,6 +41,7 @@
           clearable
           :class="{ 'is-error': !!errors[field.name] }"
           @update:model-value="updateEnum(field, $event)"
+          @blur="touch(field.name)"
         >
           <ElOption
             v-for="opt in field.enum"
@@ -87,6 +89,7 @@
           class="w-full! font-mono"
           :class="{ 'is-error': !!errors[field.name] }"
           @update:model-value="update(field.name, $event ?? undefined)"
+          @blur="touch(field.name)"
         />
 
         <!-- Boolean -->
@@ -97,61 +100,15 @@
           @update:model-value="update(field.name, $event)"
         />
 
-        <!-- Texte multilingue : onglets par langue (● renseignée, ○ vide), une zone visible. -->
-        <div
+        <!-- Texte multilingue : onglets par langue -->
+        <I18nTextField
           v-else-if="field.widget === 'i18n-text'"
           :id="`${uid}-${field.name}`"
-          class="flex flex-col gap-2"
-          role="group"
-          :aria-labelledby="`${uid}-${field.name}-label`"
-        >
-          <div
-            role="tablist"
-            :aria-label="t('schema.form.languages')"
-            class="flex gap-0.5 self-start rounded-lg bg-soft p-0.75"
-          >
-            <button
-              v-for="l in LANGS"
-              :id="`${uid}-${field.name}-tab-${l}`"
-              :key="l"
-              type="button"
-              role="tab"
-              :aria-selected="shownLang(field.name) === l"
-              :aria-controls="`${uid}-${field.name}-panel-${l}`"
-              class="h-7 rounded-md px-2.5 font-mono text-[11px] font-medium uppercase"
-              :class="
-                shownLang(field.name) === l
-                  ? 'bg-surface text-ink shadow-control'
-                  : 'text-muted'
-              "
-              @click="activeLang[field.name] = l"
-            >
-              {{ getI18n(field.name, l) ? "●" : "○" }} {{ l }}
-            </button>
-          </div>
-          <div
-            v-for="l in LANGS"
-            v-show="shownLang(field.name) === l"
-            :id="`${uid}-${field.name}-panel-${l}`"
-            :key="l"
-            role="tabpanel"
-            :aria-labelledby="`${uid}-${field.name}-tab-${l}`"
-          >
-            <label :for="`${uid}-${field.name}-${l}`" class="sr-only">{{
-              `${field.label} (${l.toUpperCase()})`
-            }}</label>
-            <ElInput
-              :id="`${uid}-${field.name}-${l}`"
-              type="textarea"
-              :model-value="getI18n(field.name, l)"
-              :autosize="{ minRows: 2, maxRows: 8 }"
-              :placeholder="`${field.label} (${l.toUpperCase()})`"
-              @update:model-value="
-                updateI18n(field.name, l, String($event ?? ''))
-              "
-            />
-          </div>
-        </div>
+          :label="field.label"
+          :model-value="model[field.name]"
+          @update:model-value="update(field.name, $event)"
+          @blur="touch(field.name)"
+        />
 
         <!-- Image gallery widget -->
         <ImageGalleryField
@@ -162,15 +119,27 @@
           @update:model-value="update(field.name, $event)"
         />
 
+        <!-- Liens (x-widget: links) : libellé + adresse par ligne -->
+        <LinksField
+          v-else-if="field.widget === 'links'"
+          :id="`${uid}-${field.name}`"
+          :labelledby="`${uid}-${field.name}-label`"
+          :model-value="model[field.name]"
+          @update:model-value="update(field.name, $event)"
+          @blur="touch(field.name)"
+        />
+
         <!-- Fallback: raw JSON for other objects/arrays -->
         <ElInput
           v-else
           :id="`${uid}-${field.name}`"
           type="textarea"
-          :model-value="JSON.stringify(model[field.name] ?? '', null, 2)"
+          :model-value="jsonText(field.name)"
           :rows="3"
           class="font-mono text-xs"
+          :class="{ 'is-error': !!errors[field.name] }"
           @update:model-value="updateJson(field.name, String($event ?? ''))"
+          @blur="blurJson(field.name)"
         />
 
         <!-- Field error message -->
@@ -190,11 +159,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, useId } from "vue";
+import { computed, useId } from "vue";
+import { useSchemaValidation } from "@/composables/useSchemaValidation";
 import { useI18n } from "vue-i18n";
 import { useLang } from "@/composables/useLang";
 import {
-  LANGS,
   enumLabel,
   fieldLabel,
   imageCategories,
@@ -203,6 +172,8 @@ import {
   widgetOf,
 } from "@/lib/schema";
 import ImageGalleryField from "./ImageGalleryField.vue";
+import LinksField from "./LinksField.vue";
+import I18nTextField from "./I18nTextField.vue";
 
 interface SchemaField {
   name: string;
@@ -271,7 +242,7 @@ const fields = computed<SchemaField[]>(() => {
  * sur une demi-ligne.
  */
 function isWide(field: SchemaField): boolean {
-  if (field.widget === "i18n-text" || field.widget === "image-gallery")
+  if (["i18n-text", "image-gallery", "links"].includes(field.widget ?? ""))
     return true;
   if (field.enum) return !!field.multiple;
   if (field.type === "integer" || field.type === "number")
@@ -280,15 +251,6 @@ function isWide(field: SchemaField): boolean {
   if (field.type === "string")
     return !["date", "date-time", "email"].includes(field.format ?? "");
   return true;
-}
-
-// Texte multilingue : une langue affichée à la fois (onglets), la langue courante d'abord.
-const activeLang = reactive<Record<string, string>>({});
-function shownLang(name: string): string {
-  return (
-    activeLang[name] ??
-    ((LANGS as readonly string[]).includes(lang.value) ? lang.value : LANGS[0])
-  );
 }
 
 function enumValue(field: SchemaField): string | string[] | undefined {
@@ -331,73 +293,52 @@ function galleryValue(name: string): Record<string, unknown> | undefined {
 
 function update(name: string, value: unknown) {
   emit("update:modelValue", { ...model.value, [name]: value });
+  changed(name, value);
+}
+
+// Champ JSON : la saisie est gardée telle quelle ; une valeur valide est transmise, une
+// invalide est signalée (« JSON invalide ») sans écraser la valeur précédente.
+function jsonText(name: string): string {
+  return drafts[name] ?? JSON.stringify(model.value[name] ?? "", null, 2);
 }
 
 function updateJson(name: string, raw: string) {
+  drafts[name] = raw;
   try {
-    update(name, JSON.parse(raw));
+    update(name, raw.trim() === "" ? undefined : JSON.parse(raw));
   } catch {
-    // JSON incomplet pendant la saisie : on attend une valeur valide
+    check(name, model.value[name]);
   }
 }
 
-function getI18n(name: string, l: string): string {
-  const obj = model.value[name] as Record<string, string> | undefined;
-  return obj?.[l] ?? "";
-}
-
-function updateI18n(name: string, l: string, value: string) {
-  const current = (model.value[name] as Record<string, string>) ?? {};
-  update(name, { ...current, [l]: value });
-}
-
-// ── Validation ──────────────────────────────────────────────────────
-const errors = reactive<Record<string, string>>({});
-
-function clearErrors() {
-  for (const key of Object.keys(errors)) delete errors[key];
-}
-
-function isValidUrl(value: string): boolean {
+function blurJson(name: string) {
+  touch(name);
   try {
-    new URL(value);
-    return true;
+    JSON.parse(drafts[name] ?? "null");
+    delete drafts[name]; // valide : réaffichée mise en forme
   } catch {
-    return false;
+    // invalide : la saisie reste affichée avec son erreur
   }
 }
 
+// ── Validation (useSchemaValidation) ────────────────────────────────
+const {
+  errors,
+  drafts,
+  touch,
+  changed,
+  check,
+  validate: validateFields,
+  setErrors,
+  clearErrors,
+} = useSchemaValidation(
+  computed(() => props.schema ?? {}),
+  model,
+);
+
+/** Tous les champs, avant l'envoi (requis, motifs, longueurs, bornes, JSON…). */
 function validate(): boolean {
-  clearErrors();
-  let valid = true;
-  for (const field of fields.value) {
-    const val = model.value[field.name];
-    if (
-      field.required &&
-      (val === undefined ||
-        val === null ||
-        val === "" ||
-        (Array.isArray(val) && val.length === 0))
-    ) {
-      errors[field.name] = t("errors.required");
-      valid = false;
-    }
-    if (
-      field.format === "uri" &&
-      typeof val === "string" &&
-      val !== "" &&
-      !isValidUrl(val)
-    ) {
-      errors[field.name] = t("errors.invalidUrl");
-      valid = false;
-    }
-  }
-  return valid;
-}
-
-function setErrors(fieldErrors: Record<string, string>) {
-  clearErrors();
-  Object.assign(errors, fieldErrors);
+  return validateFields(fields.value.map((f) => f.name));
 }
 
 defineExpose({ validate, setErrors, clearErrors });

@@ -31,6 +31,22 @@ describe("champs filtrables et triables", () => {
         minimum: 1900,
         maximum: undefined,
       },
+      { key: "original_title", control: "text" },
+      { key: "original_language", control: "text" },
+      {
+        key: "season_count",
+        control: "numberRange",
+        integer: true,
+        minimum: 1,
+        maximum: undefined,
+      },
+      {
+        key: "episode_count",
+        control: "numberRange",
+        integer: true,
+        minimum: 1,
+        maximum: undefined,
+      },
     ]);
     expect(filterFields(schemaOf("Broadcast"))).toContainEqual({
       key: "type",
@@ -61,6 +77,10 @@ describe("champs filtrables et triables", () => {
       { key: "title", numeric: false },
       { key: "start_year", numeric: true },
       { key: "end_year", numeric: true },
+      { key: "original_title", numeric: false },
+      { key: "original_language", numeric: false },
+      { key: "season_count", numeric: true },
+      { key: "episode_count", numeric: true },
     ]);
   });
 });

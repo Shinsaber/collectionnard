@@ -21,8 +21,9 @@ export function groupPlan(plan: ExternalPlan): PlanGroups {
   const main = MAIN_ROLES.flatMap((role) =>
     plan.nodes.filter((n) => n.role === role),
   );
+  // Éditions, et saisons d'une série (leurs épisodes ont le rôle « volume »).
   const editions = plan.nodes
-    .filter((n) => n.role === "edition")
+    .filter((n) => n.role === "edition" || n.role === "season")
     .map((edition) => ({
       edition,
       publishers: plan.nodes.filter(

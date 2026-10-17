@@ -14,6 +14,14 @@ import { dragonBallPlan, MANGA } from "../../../tests/fixtures/external-plan";
 import ExternalImportView from "./ExternalImportView.vue";
 
 const api = vi.hoisted(() => ({
+  connectors: vi.fn(async () => [
+    {
+      id: "bd-manga",
+      domain: "books",
+      editions_by_work: false,
+      edition_code: "isbn",
+    },
+  ]),
   searchWorks: vi.fn(),
   searchEditions: vi.fn(),
   preview: vi.fn(),
@@ -60,6 +68,7 @@ vi.mock("@/composables/useConfirmDialog", () => ({
 }));
 
 const work: ExternalWorkHit = {
+  id: "Q15051307",
   wikidata_id: "Q15051307",
   label: "Dragon Ball",
   description: "série de manga",
@@ -68,6 +77,7 @@ const work: ExternalWorkHit = {
   source_url: "https://www.wikidata.org/wiki/Q15051307",
 };
 const edition: ExternalEditionHit = {
+  id: "ark:/12148/cb343384394",
   bnf_ark: "ark:/12148/cb343384394",
   title: "Dragon Ball",
   publishers: ["Glénat"],
@@ -106,8 +116,9 @@ describe("ExternalImportView", () => {
     api.searchWorks.mockResolvedValue([work]);
     api.searchEditions.mockResolvedValue([edition]);
     api.preview.mockResolvedValue(dragonBallPlan);
-    api.importSelection.mockImplementation(async (_req, dryRun: boolean) =>
-      report(dryRun),
+    api.importSelection.mockImplementation(
+      async (_connector: string, _req: unknown, dryRun: boolean) =>
+        report(dryRun),
     );
     const w = mount(ExternalImportView, {
       global: { plugins: [ElementPlus], stubs: { RouterLink: true } },
@@ -119,13 +130,15 @@ describe("ExternalImportView", () => {
     await w.findAll("input")[0]!.setValue("dragon ball");
     await w.findAll("form")[0]!.trigger("submit");
     await flushPromises();
-    expect(api.searchWorks).toHaveBeenCalledWith("dragon ball");
+    expect(api.searchWorks).toHaveBeenCalledWith("bd-manga", "dragon ball");
     const workRow = w.find('[data-test="work-hits"] tbody tr');
     expect(workRow.text()).toContain("Manga"); // titre du type (x-title)
     await workRow.trigger("click");
     await flushPromises();
     expect(w.find('[data-test="chosen-work"]').text()).toContain("Dragon Ball");
-    expect(api.searchEditions).toHaveBeenCalledWith({ q: "Dragon Ball" });
+    expect(api.searchEditions).toHaveBeenCalledWith("bd-manga", {
+      q: "Dragon Ball",
+    });
 
     // Édition cochée, puis aperçu.
     await w
@@ -134,7 +147,7 @@ describe("ExternalImportView", () => {
     expect(w.find('[data-test="chosen-editions"]').text()).toContain("Glénat");
     await button(w, "Aperçu").trigger("click");
     await flushPromises();
-    expect(api.preview).toHaveBeenCalledWith({
+    expect(api.preview).toHaveBeenCalledWith("bd-manga", {
       work: "Q15051307",
       editions: ["ark:/12148/cb343384394"],
     });
@@ -156,7 +169,8 @@ describe("ExternalImportView", () => {
     await button(w, "Tout décocher").trigger("click");
     await button(w, "Simuler").trigger("click");
     await flushPromises();
-    const [req, dryRun] = api.importSelection.mock.calls[0]!;
+    const [connector, req, dryRun] = api.importSelection.mock.calls[0]!;
+    expect(connector).toBe("bd-manga");
     expect(dryRun).toBe(true);
     expect([...req.selected].sort()).toEqual([
       "bnf:cb343384394",
@@ -171,7 +185,7 @@ describe("ExternalImportView", () => {
     // 3. Import (confirmation acceptée) puis lien vers l'œuvre.
     await button(w, "Importer").trigger("click");
     await flushPromises();
-    expect(api.importSelection.mock.calls[1]![1]).toBe(false);
+    expect(api.importSelection.mock.calls[1]![2]).toBe(false);
     expect(w.find('[data-test="import-report"]').text()).toContain(
       "Résultat de l'import",
     );
@@ -232,12 +246,68 @@ describe("ExternalImportView", () => {
     await form.find('input[type="text"]').setValue("978-2-87695-205-8");
     await form.trigger("submit");
     await flushPromises();
-    expect(api.searchEditions).toHaveBeenCalledWith({
+    expect(api.searchEditions).toHaveBeenCalledWith("bd-manga", {
       isbn: "978-2-87695-205-8",
     });
     const hits = w.find('[data-test="edition-hits"]').text();
     expect(hits).toContain("Tome 1 : Sangoku");
     expect(hits).toContain("Déjà en base");
+  });
+
+  it("musique : textes du connecteur et recherche par code-barres", async () => {
+    api.connectors.mockResolvedValue([
+      {
+        id: "bd-manga",
+        domain: "books",
+        editions_by_work: false,
+        edition_code: "isbn",
+      },
+      {
+        id: "music",
+        domain: "music",
+        editions_by_work: true,
+        edition_code: "barcode",
+      },
+    ]);
+    api.searchEditions.mockResolvedValue([
+      {
+        id: "541a0976-ca45-3c0f-89e5-26bc376f58d1",
+        title: "OK Computer",
+        publishers: ["Parlophone"],
+        artist: "Radiohead",
+        format: '2×12" Vinyl',
+        country: "GB",
+        catalog_number: "NODATA 02",
+        barcode: "724385522918",
+        start_year: 1997,
+        source_url:
+          "https://musicbrainz.org/release/541a0976-ca45-3c0f-89e5-26bc376f58d1",
+      },
+    ]);
+    const w = mount(ExternalImportView, {
+      global: { plugins: [ElementPlus], stubs: { RouterLink: true } },
+    });
+    await flushPromises();
+    const chip = w
+      .findAll('[role="radio"]')
+      .find((b) => b.text() === "Musique")!;
+    await chip.trigger("click");
+    await flushPromises();
+    expect(w.text()).toContain("Album (MusicBrainz)");
+    const form = w.findAll("form")[1]!;
+    expect(form.text()).toContain("Par code-barres");
+    await form.findAll('input[type="radio"]')[1]!.setValue(true);
+    await form.find('input[type="text"]').setValue("724385522918");
+    await form.trigger("submit");
+    await flushPromises();
+    expect(api.searchEditions).toHaveBeenCalledWith("music", {
+      barcode: "724385522918",
+    });
+    const hits = w.find('[data-test="edition-hits"]').text();
+    expect(hits).toContain(
+      'Radiohead · 2×12" Vinyl · GB · NODATA 02 · 724385522918',
+    );
+    expect(hits).toContain("Parlophone");
   });
 });
 
@@ -297,7 +367,7 @@ describe("ExternalImportView — corrections avant la simulation", () => {
 
     await button(w, "Simuler").trigger("click");
     await flushPromises();
-    const [req] = api.importSelection.mock.calls[0]!;
+    const [, req] = api.importSelection.mock.calls[0]!;
     expect(req.selected).toContain("bnf:cb43462118n");
     expect(req.overrides).toEqual({
       "bnf:cb43462118n": { number: 3, title: { fr: "Dragon Ball" } },

@@ -165,7 +165,7 @@ une abstraction de ce schéma ; elle n'existe pas dans l'implémentation.
 | `x-title`            | racine    | Nom affiché du méta-type par langue : `{ "fr": "Série", "en": "Series" }` ; repli sur la colonne `name` (identifiant technique anglais)                                                                  |
 | `x-description`      | racine    | Description du méta-type par langue ; repli sur la colonne `description`                                                                                                                                 |
 | `x-enum-labels`      | propriété | Libellés des valeurs d'un `enum` par langue : `{ "fr": { "tv": "Télévision" }, "en": { "tv": "TV" } }` ; repli sur la valeur brute                                                                       |
-| `x-widget`           | propriété | Widget dédié : `i18n-text` (objet `{fr, en, …}` : une chaîne par langue, codes supplémentaires acceptés), `image-gallery` (objet de catégories)                                                          |
+| `x-widget`           | propriété | Widget dédié : `i18n-text` (objet `{fr, en, …}` : une chaîne par langue, codes supplémentaires acceptés), `image-gallery` (objet de catégories), `links` (tableau de `{label?, url}`, URL http(s) en format `uri` : liens cliquables sur la fiche, libellé facultatif, nom du site à défaut)                                                          |
 | `x-image-categories` | propriété | Catégories d'images et ratios : `{ "poster": { "ratio": "2/3" } }` (avec `image-gallery`). Contrôles facultatifs à l'envoi, dans le navigateur : `tolerance` (écart de ratio permis, %), `min_width` / `min_height` (px), `strict` (refuser ; sinon avertissement) |
 | `x-label`            | racine    | Gabarit du libellé des instances : `"{title}"`, `"{number}. {title}"`, `"{last_name} {first_name}"` ; sans gabarit, repli sur `title`, `name`, `label` (Go `internal/label`, TS `web/src/lib/schema.ts`) |
 
@@ -306,7 +306,7 @@ La table unique d'items avec attributs dynamiques nécessite une attention parti
 
 ### Sources de données externes (long terme)
 
-- BD / manga : Wikidata (œuvres, auteurs) et BnF (éditions françaises, tomes), connecteur livré en Phase 3 (`server/internal/external/bdmanga`, page admin « Sources externes »)
+- BD / manga : Wikidata (œuvres, auteurs) et BnF (éditions françaises, tomes), connecteur livré en Phase 3 (`server/internal/external/connectors`, page admin « Sources externes »)
 - Intégration d'APIs tierces : TMDB (films/séries), OpenLibrary (livres), Scryfall (Magic), TCGdex (Pokémon)…
 - Scan de codes-barres / ISBN avec auto-complétion (app mobile)
 
@@ -363,11 +363,81 @@ Lots de `docs/audit/03-feuille-de-route.md`, branche `remise-a-niveau` :
 
 ### Phase 3 : Récupération automatique externe
 
-- [ ] Recherche et intégration d'APIs externes
-  - [x] Livre/BD/manga (wikidata, BnF) : connecteur `bdmanga` (admin, page « Sources externes ») — recherche d'une œuvre sur Wikidata et d'éditions françaises à la BnF (titre ou ISBN d'un tome), aperçu à cocher (œuvre, univers, auteurs avec rôles, éditeurs, tomes ; réimpressions décochées) et corrigeable avant la simulation (formulaire du type, ex. tome sans numéro), rapprochement du catalogue (QID, ARK, ISBN, nom d'éditeur) où seuls les champs vides sont complétés, simulation puis import par `POST /import` (tout ou rien) ; `sources` porte la date de récupération (attribution BnF)
-  - [ ] Musique
-  - [ ] Série (thetvdb, imdb, …)
-  - [ ] Film (themoviedb)
+Décisions du 2026-10-16 : sources **ouvertes uniquement** (une clé d'API est acceptable si elle est gratuite) ;
+ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries en DVD / Blu-ray. Branche
+`phase3-sources`, un commit par lot.
+
+- [x] Livre/BD/manga (wikidata, BnF) : connecteur `bd-manga` (admin, page « Sources externes ») — recherche d'une œuvre sur Wikidata et d'éditions françaises à la BnF (titre ou ISBN d'un tome), aperçu à cocher (œuvre, univers, auteurs avec rôles, éditeurs, tomes ; réimpressions décochées) et corrigeable avant la simulation (formulaire du type, ex. tome sans numéro), rapprochement du catalogue (QID, ARK, ISBN, nom d'éditeur) où seuls les champs vides sont complétés, simulation puis import par `POST /import` (tout ou rien) ; `sources` porte la date de récupération (attribution BnF)
+- [x] **P3-0 — Domaines installables** : en production (`docker-compose.prod.yml`, sans seed), aucun type n'existait.
+      Chaque domaine (`collections`, `tv`, `books`, puis musique, vidéo…) est un paquet de méta-types au format de
+      l'import (`server/internal/domains/packages/*.json`, UUID fixes) embarqué dans le serveur, installable depuis la
+      page d'administration « Domaines » ou `colec-server install-domain`. Mise à jour **par fusion à trois versions**
+      (copie de référence en base, migration 007) : les modifications locales sont gardées, seuls les ajouts du paquet
+      sont appliqués, les conflits sont signalés ; une relation dont un domaine lié manque est ajoutée plus tard. Les
+      connecteurs trouvent leurs types par identifiant de paquet (un type renommé reste reconnu). Les seeds ne gardent
+      que les données de démonstration.
+- [x] **P3-1 — Modèle Romans** : paquet `books` v2 — type `Novel` (b…18), Édition = le livre quand il n'y a qu'un
+      volume (ISBN, date, pages, prix, collection, n°, formats relié / broché), `created_by` ouvert aux romans et aux
+      éditions (rôles `illustrator`, `preface`), `contains_work` et `published_as` ouverts aux romans (voir
+      `les.collection.md` § « Romans »). Mise à jour v1 → v2 vérifiée : 1 type créé, 4 mis à jour. L'exemple du seed
+      viendra du connecteur (P3-3), avec des données réelles.
+- [x] **P3-2 — Connecteurs génériques** : interface `external.Connector` (œuvres, éditions par titre ou ISBN / EAN,
+      aperçu, import), registre (`GET /external/connectors`), routes `/external/{connector}/*` (les chemins
+      `/external/bd-manga/*` restent valables) ; page « Sources externes » avec le choix de la sorte de collection ;
+      erreur `connector_unavailable` qui renvoie à la page « Domaines ».
+- [x] **P3-3 — Connecteur Romans** (`novels`, Wikidata + BnF) : roman cherché sur Wikidata, toutes ses éditions BnF
+      par sa notice d'œuvre (`bib.work2bib`, traductions comprises, françaises d'abord), ou par titre / ISBN ; cycle (Saga,
+      ordre), auteurs ; édition en un volume (le livre : ISBN, pages, prix, collection, reliure) ou multivolume (ensemble +
+      tomes) ; traducteurs, illustrateurs et préfaciers de l'édition. Même profil de code que BD / Manga (planificateur,
+      rapprochement, import partagés). Exemples réels dans le seed (L'Étranger, Les Misérables en Pocket 3 tomes).
+- [x] **P3-4 — Musique (CD / vinyles)** : étude des sources (`docs/sources-externes.md` : MusicBrainz retenu, données
+      de base CC0, sans genres ni tags sous licence non commerciale ; Cover Art Archive écarté, sans licence ; Discogs à
+      revoir), modèle (`musique.md`), paquet `music` (Album, Édition musicale, Piste, Artiste, Label), connecteur `music` :
+      album cherché par titre et artiste, ses éditions listées des plus anciennes aux rééditions, ou cherchées par titre /
+      code-barres ; supports, pays, label et référence, pistes (enregistrements partagés entre éditions), artistes crédités
+      quand ils diffèrent ; client MusicBrainz espacé d'une seconde par requête. Exemple réel dans `db/seed_music.sql`
+      (Discovery, double vinyle Virgin 2001).
+- [x] **P3-5 — Films (DVD / Blu-ray)** : étude des sources (Wikidata pour l'œuvre, BnF pour les vidéogrammes
+      français par EAN ; TMDB écarté sauf licence ouverte), modèle, paquet, connecteur.
+  - [x] **P3-5a — Paquet commun « people »** : `Person` et `Publisher` sortis de `books` (v3) vers « people » (mêmes
+        UUID, choix du mainteneur : une même personne relie livres et films) ; dépendances entre paquets (`requires`) :
+        un paquet installe d'abord ceux qu'il requiert, dans la même transaction (simulation comprise, rapport
+        `required`) ; sur une instance existante, la mise à jour de `books` transfère les deux types à « people » en
+        gardant leurs modifications locales. Page « Domaines » : paquets requis affichés.
+  - [x] **P3-5b — Modèle et paquet vidéo** : étude des sources (`docs/sources-externes.md` : Wikidata pour le film,
+        BnF pour les vidéogrammes — notice d'œuvre `bib.work2bib`, EAN `bib.ean` ; TMDB écarté), modèle `video.md`, paquet
+        `video` : `Film` (b…30) et l'édition vidéo partagée avec les séries (`VideoRelease`, ancien `DVD` b…05 enrichi :
+        support, disques, zone, EAN, langues, sous-titres, collection, contenu) ; relations `released_as` (films et séries),
+        `credited` (générique, rôles et personnage), `published_by` (éditeur, distributeur) ; `tv` v2 requiert `video`
+        (mise à jour testée depuis la v1).
+  - [x] **P3-5c — Connecteur Films** (`films`, Wikidata + BnF) : film cherché sur Wikidata, ses éditions vidéo BnF
+        par sa notice d'œuvre, ou par titre / code-barres (`bib.ean`) ; générique (rôles fusionnés par personne, dix
+        interprètes dont cinq cochés), édition (support, disques, zone, durée, EAN, langues, sous-titres, collection,
+        contenu), éditeurs et distributeurs ; une édition seule retrouve son film (`P268`), à défaut le crée depuis la
+        notice. Exemple réel dans `db/seed_video.sql`.
+- [x] **P3-6 — Séries (DVD / Blu-ray)** : étude (Wikidata, TVmaze pour saisons et épisodes, BnF pour les coffrets),
+      en réutilisant le modèle TV existant (Series, Season, Episode) et l'édition vidéo partagée (`VideoRelease`), connecteur.
+  - [x] **P3-6a — Étude et modèle** : sources (`docs/sources-externes.md` : Wikidata pour la série, ses saisons et
+        épisodes ; TVmaze, CC BY-SA sans clé, à défaut ; BnF pour les coffrets, par titre ou EAN, saisons lues en 200 `$h`),
+        modèle (`video.md` § Séries) ; `tv` v3 (identifiants, sources, titres originaux, date de diffusion, nombres de
+        saisons et d'épisodes ; ajouts seulement) et `video` v2 (`credited` ouvert aux séries, rôle `creator`).
+  - [x] **P3-6b — Connecteur Séries** (`series`) : série, diffusion, saisons et épisodes sur Wikidata (titres français),
+        TVmaze pour les saisons sans épisodes ; créateurs et interprètes ; coffrets BnF par titre ou EAN, saisons lues dans
+        le titre et reliées aux épisodes (`includes_episode`, le chemin « par le DVD » du graphe) ; un coffret seul retrouve
+        sa série ; la diffusion est rapprochée par sa relation à la série. Client `tvmaze` (espacé, 429 retenté).
+
+- [x] **P3-7 — Jeux vidéo** (demande des utilisateurs, V1 centrée sur les éditions françaises) : sources libres
+      (Wikidata, BnF ; libretro-database pour la suite), modèle, paquet, connecteur.
+  - [x] **P3-7a — Étude et modèle** : `docs/sources-externes.md` § Jeux vidéo, modèle `jeux-video.md`, paquet `games`
+        (`Game`, `GameRelease`, `Platform` rattachée à son constructeur ; `game_released_as`, `on_platform`,
+        `produced_by`) ; `people` v2 : `Publisher` affiché « Société » (éditeur, studio, constructeur).
+  - [x] **P3-7b — Connecteur Jeux vidéo** (`games`, Wikidata + BnF) : jeu, sociétés, plateformes rattachées à leur
+        constructeur ; éditions françaises par titre ou code-barres (EAN au zéro perdu retrouvé), plateforme lue dans la
+        notice ; une même société n'est proposée qu'une fois ; une édition seule retrouve son jeu. Exemple :
+        `db/seed_games.sql`. Hors V1 : libretro-database, générique, séries de jeux.
+
+- [x] **Liens des sources** : champ « Liens » (`x-widget: links`) sur tous les types des paquets ; chaque import y ajoute
+      les liens vers ses fiches sources (Wikidata, Wikipédia, BnF, MusicBrainz, TVmaze, IMDb), fusionnés par adresse.
 
 ### Phase 4 : Social
 

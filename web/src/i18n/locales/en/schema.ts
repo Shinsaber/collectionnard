@@ -10,6 +10,7 @@ const en: typeof fr = {
     array: "Array",
     i18nText: "Multilingual text",
     imageGallery: "Image gallery",
+    links: "Links",
     object: "Object",
   },
   formats: {
@@ -22,6 +23,12 @@ const en: typeof fr = {
     choose: "Choose…",
     noAttributes: "No attribute defined for this type.",
     languages: "Input language",
+    linkAdd: "Add a link",
+    linkLabel: "Label of link {n}",
+    linkLabelPlaceholder: "Label (optional)",
+    linkUrl: "Address of link {n}",
+    linkUrlPlaceholder: "Address (https://…)",
+    linkRemove: "Remove link {n}",
   },
   gallery: {
     setDefault: "Set as default image",
@@ -82,6 +89,8 @@ const en: typeof fr = {
     exclusiveMinimum: "Exclusive min",
     exclusiveMaximum: "Exclusive max",
     multipleOf: "Multiple of",
+    linksHelp:
+      "List of links: one address (http or https) and an optional label per row; without a label, the site name is shown.",
     i18nTextHelp:
       "Generates an object with one string per language ({langs}): users will enter one value per language.",
     imageCategories: "Image categories",

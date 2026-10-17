@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?><srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns="http://catalogue.bnf.fr/namespaces/InterXMarc" xmlns:ixm="http://catalogue.bnf.fr/namespaces/InterXMarc" xmlns:mn="http://catalogue.bnf.fr/namespaces/motsnotices" xmlns:sd="http://www.loc.gov/zing/srw/diagnostic/">
+<srw:version>1.2</srw:version>
+<srw:echoedSearchRetrieveRequest>
+<srw:version>1.2</srw:version>
+<srw:query>bib.ean all "045496333133" or bib.ean all "45496333133"</srw:query>
+</srw:echoedSearchRetrieveRequest>
+<srw:numberOfRecords>1</srw:numberOfRecords>
+<srw:records>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb43877942t" type="Bibliographic">
+<mxc:leader>     clm  22     3  450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF438779420000008</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb43877942t</mxc:controlfield>
+<mxc:datafield tag="071" ind1="6" ind2="1">
+<mxc:subfield code="b">Wii U</mxc:subfield>
+<mxc:subfield code="a">WUP P AMKP</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="071" ind1="6" ind2="1">
+<mxc:subfield code="b">Wii U</mxc:subfield>
+<mxc:subfield code="a">TSA-WUP-AMKP-FRA</mxc:subfield>
+<mxc:subfield code="c">conteneur</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">45496333133</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20140812d2014    m  y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="0" ind2=" ">
+<mxc:subfield code="a">eng</mxc:subfield>
+<mxc:subfield code="a">ger</mxc:subfield>
+<mxc:subfield code="a">fre</mxc:subfield>
+<mxc:subfield code="a">spa</mxc:subfield>
+<mxc:subfield code="a">ita</mxc:subfield>
+<mxc:subfield code="a">dut</mxc:subfield>
+<mxc:subfield code="a">por</mxc:subfield>
+<mxc:subfield code="a">rus</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">JP</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="135" ind1=" " ind2=" ">
+<mxc:subfield code="a">gbcg|||||||||</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">m </mxc:subfield>
+<mxc:subfield code="b">xxx   </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">mm9</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">c</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Mario kart 8</mxc:subfield>
+<mxc:subfield code="b">Ressource électronique</mxc:subfield>
+<mxc:subfield code="f">[Nintendo]</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="214" ind1=" " ind2="0">
+<mxc:subfield code="a">[Kyoto]</mxc:subfield>
+<mxc:subfield code="c">Nintendo</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="214" ind1=" " ind2="4">
+<mxc:subfield code="d">C 2014</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">1 disque optique numérique (Wii U)</mxc:subfield>
+<mxc:subfield code="c">coul., son.</mxc:subfield>
+<mxc:subfield code="d">12 cm</mxc:subfield>
+<mxc:subfield code="e">1 guide de démarrage rapide</mxc:subfield>
+<mxc:subfield code="e">2 dépl.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="230" ind1=" " ind2=" ">
+<mxc:subfield code="a">Jeu multimédia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">1 à 4 joueurs (2 à 12 joueurs en mode multijoueur en ligne)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">À partir de 3 ans</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Jeu et dépliants en anglais, allemand, français, espagnol, italien, néerlandais, portugais et russe, guide de démarrage rapide en français</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Titre provenant du conteneur</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="316" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43877942001001</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="337" ind1=" " ind2=" ">
+<mxc:subfield code="a">Configuration requise : console Nintendo Wii U ; téléviseur ; jeu compatible avec le Wii U gamepad (mode sans téléviseur). Configuration requise pour le jeu en ligne : accès internet haut débit ; identifiant Nintendo network</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="500" ind1="1" ind2="1">
+<mxc:subfield code="3">17945931</mxc:subfield>
+<mxc:subfield code="a">Mario kart 8</mxc:subfield>
+<mxc:subfield code="n">jeu vidéo</mxc:subfield>
+<mxc:subfield code="m">multilingue</mxc:subfield>
+<mxc:subfield code="q">Wii U</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">jeu d'arcade ou d'action</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">jeu vidéo</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">jeu de simulation</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="1" ind2="1">
+<mxc:subfield code="3">13980292</mxc:subfield>
+<mxc:subfield code="a">Nintendo co.</mxc:subfield>
+<mxc:subfield code="4">635</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="716" ind1=" " ind2=" ">
+<mxc:subfield code="3">16654128</mxc:subfield>
+<mxc:subfield code="a">Wii U</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20140812</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF438779420000008</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43877942001001</mxc:subfield>
+<mxc:subfield code="a">MAE-958</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb43877942t</srw:recordIdentifier>
+<srw:recordPosition>1</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20140812</ixm:attr>
+<ixm:attr name="LastModificationDate">20210913</ixm:attr>
+<mn:score>6.56544</mn:score>
+</srw:extraRecordData>
+</srw:record>
+</srw:records>
+</srw:searchRetrieveResponse>

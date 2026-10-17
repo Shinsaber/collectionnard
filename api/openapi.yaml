@@ -162,7 +162,20 @@ tags:
       utilisateurs ne font pas partie de l'export du catalogue.
   - name: External
     description: |
-      **Admin uniquement.** Récupération depuis des sources ouvertes, connecteur BD / Manga :
+      **Admin uniquement.** Récupération depuis des sources ouvertes, un connecteur par sorte de
+      collection (`/external/{connector}/…`, liste : `GET /external/connectors`) : `bd-manga` (manga, BD) et
+      `novels` (romans : roman, cycle et auteurs sur Wikidata ; éditions BnF de sa notice d'œuvre, traducteurs,
+      illustrateurs et préfaciers) et `music` (CD, vinyles : album, éditions, pistes, artistes et labels sur
+      **MusicBrainz**, données de base CC0 ; ni genres ni tags, sous licence non commerciale ; une requête par
+      seconde ; types du paquet `music`, rapprochés par MBID, labels aussi par nom) et `films` (film, générique et cinq premiers
+      interprètes sur **Wikidata**, éditions vidéo DVD / Blu-ray / VHS du dépôt légal à la **BnF** par sa notice d'œuvre ou par
+      EAN ; une édition seule retrouve son film ; types des paquets `video` et `people`) et `series` (série, diffusion, saisons et
+      épisodes sur **Wikidata**, complétés par **TVmaze** — CC BY-SA, sans clé — pour les saisons sans épisodes ; coffrets à la
+      **BnF** par titre ou EAN, reliés aux épisodes des saisons qu'ils contiennent ; types des paquets `tv`, `video`, `people`).
+      Connecteur `games` : jeu, sociétés et plateformes (rattachées à leur constructeur) sur **Wikidata**, éditions
+      françaises du dépôt légal à la **BnF** par titre ou EAN, une édition seule retrouve son jeu ; types des paquets `games` et
+      `people`.
+      Connecteur `bd-manga` :
       œuvres, univers et auteurs sur **Wikidata** (CC0), éditions françaises et tomes sur la **BnF**
       (Licence Ouverte : source et date de récupération écrites dans `sources`). Parcours :
       recherche (`works`, `editions`) → aperçu (`preview`) → simulation puis import (`import`,
@@ -174,6 +187,13 @@ tags:
       `connector_unavailable`. Les items déjà présents (même QID Wikidata, ARK BnF, ISBN, ou nom
       d'éditeur sans casse ni accents) gardent leurs valeurs : la source ne remplit que les champs
       vides. Source injoignable : 502 `external_unavailable`.
+  - name: Domains
+    description: |
+      **Admin uniquement.** Paquets de domaine (types d'une sorte de collection : séries TV, livres…)
+      embarqués dans le serveur, à installer ou mettre à jour sur l'instance. La mise à jour fusionne :
+      les modifications faites sur l'instance sont gardées. Un paquet peut en requérir d'autres (`requires` : `books` →
+      `people`, qui porte `Person` et `Publisher`), installés avec lui. Aussi en ligne de commande :
+      `colec-server install-domain`.
   - name: Health
     description: |
       État de santé de l'API (connexion à la base). Public, utilisé par le healthcheck
@@ -1202,6 +1222,83 @@ components:
               attributes: { type: object, additionalProperties: true }
               added_at: { type: string, format: date-time }
 
+    DomainInfo:
+      type: object
+      required: [id, title, description, package_version, requires, status, modified_locally, item_types, relation_types, collection_types]
+      properties:
+        id: { type: string, example: books }
+        title:
+          type: object
+          additionalProperties: { type: string }
+          example: { fr: Livres, en: Books }
+        description:
+          type: object
+          additionalProperties: { type: string }
+        package_version: { type: integer, description: Version du paquet embarqué. }
+        requires:
+          type: array
+          items: { type: string }
+          description: Paquets requis (types utilisés par ses relations, ex. `people` pour `books`), installés avant lui.
+        installed_version: { type: integer, description: Version installée (absente si jamais installé). }
+        status:
+          type: string
+          enum: [not_installed, up_to_date, update_available]
+        modified_locally: { type: boolean }
+        item_types: { type: integer }
+        relation_types: { type: integer }
+        collection_types: { type: integer }
+    DomainInstallReport:
+      type: object
+      required: [dry_run, applied, domain, to_version, entries, errors]
+      properties:
+        dry_run: { type: boolean }
+        applied: { type: boolean }
+        domain: { type: string }
+        from_version: { type: integer, description: Version installée avant (absente à la première installation). }
+        to_version: { type: integer }
+        required:
+          type: array
+          description: |
+            Paquets requis qui n'étaient pas installés : installés d'abord, dans la même transaction (un rapport
+            chacun ; la simulation les inclut).
+          items: { $ref: "#/components/schemas/DomainInstallReport" }
+        entries:
+          type: array
+          items:
+            type: object
+            required: [entity, id, name, outcome]
+            properties:
+              entity:
+                type: string
+                enum: [item_types, collection_types, relation_types]
+              id: { type: string, format: uuid }
+              name: { type: string }
+              outcome:
+                type: string
+                enum: [created, updated, merged, unchanged, skipped]
+                description: |
+                  `merged` : modifié localement, ajouts du paquet fusionnés ; `skipped` : supprimé
+                  localement, ou relation dont une extrémité manque.
+              conflicts:
+                type: array
+                items: { type: string }
+                description: Chemins modifiés des deux côtés (valeur locale gardée).
+              missing_types:
+                type: array
+                items: { type: string, format: uuid }
+                description: Types d'item référencés par le paquet mais absents de l'instance.
+        errors:
+          type: array
+          description: Erreurs d'écriture (mêmes entrées que celles du rapport d'import).
+          items:
+            type: object
+            required: [entity, index, message]
+            properties:
+              entity: { type: string }
+              index: { type: integer }
+              id: { type: string, format: uuid }
+              message: { type: string }
+
     # -------------------------------------------------------------------------
     # Upload
     # -------------------------------------------------------------------------
@@ -1374,16 +1471,20 @@ components:
               added_at: { type: string, format: date-time }
     ExternalWorkHit:
       type: object
-      description: Œuvre (manga ou BD) trouvée sur Wikidata.
-      required: [wikidata_id, label, item_type_id, source_url]
+      description: Œuvre trouvée par un connecteur — œuvre Wikidata (livres) ou groupe de parutions MusicBrainz (album).
+      required: [id, label, item_type_id, source_url]
       properties:
-        wikidata_id: { type: string, example: Q15051307 }
-        label: { type: string, description: "Libellé Wikidata (fr, à défaut en)." }
-        description: { type: string }
+        id:
+          type: string
+          description: Identifiant à la source (QID Wikidata, MBID du groupe de parutions) — le `work` d'une sélection.
+          example: Q15051307
+        wikidata_id: { type: string, example: Q15051307, description: Connecteurs livres seulement (= `id`). }
+        label: { type: string, description: "Libellé Wikidata (fr, à défaut en), titre de l'album." }
+        description: { type: string, description: "Album : artiste crédité et types (« Radiohead · Album »)." }
         item_type_id:
           type: string
           format: uuid
-          description: ItemType proposé (`Manga` ou `Comic`).
+          description: ItemType proposé (`Manga`, `Comic`, `Novel`, `Album`).
         start_year: { type: integer }
         existing_item_id:
           type: string
@@ -1393,14 +1494,29 @@ components:
     ExternalEditionHit:
       type: object
       description: |
-        Édition française trouvée à la BnF : ensemble multivolume (zone 461 des tomes) ou collection
-        éditoriale (zone 410).
-      required: [bnf_ark, title, publishers, source_url]
+        Édition trouvée à la BnF : ensemble multivolume (zone 461 des tomes) ou collection éditoriale
+        (zone 410) ; pour un roman en un volume, le livre lui-même (`isbn`). Connecteur `music` : une parution
+        MusicBrainz (release).
+      required: [id, title, publishers, source_url]
       properties:
-        bnf_ark: { type: string, example: "ark:/12148/cb343384394" }
+        id:
+          type: string
+          description: Identifiant à la source (ARK BnF, MBID de la parution) — l'un des `editions` d'une sélection.
+          example: "ark:/12148/cb343384394"
+        bnf_ark: { type: string, example: "ark:/12148/cb343384394", description: Connecteurs livres seulement (= `id`). }
         title: { type: string }
-        publishers: { type: array, items: { type: string } }
+        publishers: { type: array, items: { type: string }, description: "Éditeurs, ou labels d'une parution." }
+        artist: { type: string, description: Musique — artiste crédité (recherche par titre ou code-barres). }
+        format: { type: string, description: "Musique — supports : « CD », « 2×12\" Vinyl », « 2×CD + DVD-Video »." }
+        country: { type: string, description: "Musique — pays de parution (ISO 3166-1, XE Europe, XW monde)." }
+        barcode: { type: string }
+        catalog_number: { type: string, description: Musique — référence catalogue du label. }
         start_year: { type: integer }
+        language:
+          type: string
+          description: Langue du texte (ISO 639-1, sinon code BnF à trois lettres) ; absente si indéterminée.
+        collection: { type: string, description: "Collection éditoriale et numéro : « Folio 2 »." }
+        isbn: { type: string, description: Édition en un volume seulement. }
         existing_item_id: { type: string, format: uuid }
         source_url: { type: string, format: uri }
         matched_volume:
@@ -1414,17 +1530,20 @@ components:
             isbn: { type: string }
     ExternalImportRequest:
       type: object
-      description: Sélection d'une œuvre Wikidata et / ou d'éditions BnF (au moins l'une des deux).
+      description: |
+        Sélection d'une œuvre et / ou d'éditions (au moins l'une des deux) : QID Wikidata et ARK BnF (livres),
+        MBID d'un groupe de parutions et de parutions (`music`).
       properties:
         work:
           type: string
-          pattern: "^Q[1-9][0-9]*$"
-          description: QID Wikidata de l'œuvre.
+          description: Œuvre — QID Wikidata (`^Q[1-9][0-9]*$`) ou MBID du groupe de parutions.
         editions:
           type: array
           maxItems: 10
-          items: { type: string, pattern: "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$" }
-          description: ARK BnF des éditions (leurs tomes sont proposés).
+          items: { type: string }
+          description: |
+            Éditions — ARK BnF (`^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$`, leurs tomes sont proposés) ou MBID
+            de parutions (leurs pistes, labels et artistes sont proposés ; sans `work`, l'album vient de la parution).
         selected:
           type: array
           items: { type: string }
@@ -1452,7 +1571,8 @@ components:
           description: Identifiant du nœud (`wikidata:Q…`, `bnf:cb…`, `publisher:<nom>`).
         role:
           type: string
-          enum: [work, universe, person, edition, publisher, volume]
+          enum: [work, universe, person, edition, season, publisher, volume]
+          description: Vocabulaire du connecteur ; `season` = saison d'une série (ses épisodes ont le rôle `volume`), `universe` = aussi la diffusion d'une série.
         item_type_id: { type: string, format: uuid }
         attributes: { type: object, additionalProperties: true }
         existing_item_id: { type: string, format: uuid }
@@ -1554,6 +1674,14 @@ components:
   # Paramètres réutilisables
   # ===========================================================================
   parameters:
+    connector:
+      name: connector
+      in: path
+      required: true
+      description: Connecteur (`GET /external/connectors`) — `bd-manga`, `novels`, `music`, `films`, `series`, `games`…
+      schema:
+        type: string
+        example: bd-manga
     page:
       name: page
       in: query
@@ -3652,6 +3780,81 @@ paths:
                 error: payload_too_large
                 message: file too large (max 10 MiB)
 
+  /domains:
+    get:
+      tags: [Domains]
+      summary: Domaines installables
+      description: |
+        **Admin uniquement.** Paquets de domaine embarqués dans le serveur (types d'une sorte de
+        collection : séries TV, livres…) et leur état sur l'instance : non installé, à jour, mise à jour
+        disponible ; `modified_locally` si au moins un type installé a été modifié sur l'instance.
+      operationId: listDomains
+      responses:
+        "200":
+          description: Paquets et état.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DomainInfo"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /domains/{id}/install:
+    post:
+      tags: [Domains]
+      summary: Installer ou mettre à jour un domaine
+      description: |
+        **Admin uniquement.** Installe le paquet, ou le met à jour **par fusion** : pour chaque type, la
+        copie de référence (version du paquet installée), la version locale et la nouvelle version sont
+        comparées. Un type non modifié localement est remplacé ; un type modifié garde ses
+        modifications et ne reçoit que les ajouts du paquet (champs, valeurs d'enum, libellés, types
+        permis) ; une valeur modifiée des deux côtés garde la version locale (`conflicts`). Un type
+        supprimé localement n'est pas recréé ; une relation dont les types d'une extrémité manquent
+        (domaine lié non installé) est laissée de côté et ajoutée quand ils existent. Les paquets requis (`requires`,
+        ex. `people` pour `books`) non installés sont installés d'abord, dans la même transaction (rapports dans
+        `required`). Tout ou rien, via
+        l'import du catalogue ; `dry_run=true` simule. Après une installation, les autres domaines
+        installés sont fusionnés à nouveau.
+      operationId: installDomain
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, example: books }
+        - name: dry_run
+          in: query
+          description: Simuler (rapport complet, aucune écriture).
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Rapport (appliqué sauf en simulation).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DomainInstallReport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          description: Erreurs d'écriture (ex. nom de type déjà pris par un autre type) ; rien n'est écrit.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DomainInstallReport"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   /uploads/purge:
     post:
       tags: [Uploads]
@@ -3975,15 +4178,51 @@ paths:
               schema:
                 $ref: "#/components/schemas/ImportReport"
   # ===========================================================================
-  # Sources externes (connecteur BD / Manga)
+  # Sources externes (connecteurs BD / Manga, romans, musique)
   # ===========================================================================
-  /external/bd-manga/works:
+  /external/connectors:
     get:
       tags: [External]
-      summary: Rechercher une œuvre sur Wikidata
+      summary: Connecteurs disponibles
       description: |
-        Recherche par titre parmi les séries de manga, séries de bande dessinée, romans graphiques,
-        comic strips, webtoons… (classes Wikidata), meilleure correspondance d'abord (20 au plus).
+        **Admin uniquement.** Un connecteur par sorte de collection (`bd-manga`, `novels`…) et le paquet de
+        domaine (`GET /domains`) qui porte les types qu'il écrit.
+      operationId: listConnectors
+      responses:
+        "200":
+          description: Connecteurs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [id, domain]
+                  properties:
+                    id: { type: string, example: bd-manga }
+                    domain: { type: string, example: books }
+                    editions_by_work:
+                      type: boolean
+                      description: Les éditions se listent depuis une œuvre (`editions?work=`).
+                    edition_code:
+                      type: string
+                      enum: [isbn, barcode]
+                      description: Code de recherche d'une édition (`editions?isbn=` ou `editions?barcode=`).
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /external/{connector}/works:
+    parameters:
+      - $ref: "#/components/parameters/connector"
+    get:
+      tags: [External]
+      summary: Rechercher une œuvre
+      description: |
+        Recherche par titre, meilleure correspondance d'abord (20 au plus) : `bd-manga` parmi les séries de
+        manga, séries de bande dessinée, romans graphiques, comic strips, webtoons… (classes Wikidata) ; `novels`
+        parmi les romans ; `music` parmi les groupes de parutions MusicBrainz (titre ou artiste).
       operationId: searchExternalWorks
       parameters:
         - name: q
@@ -4004,14 +4243,31 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "409": { $ref: "#/components/responses/ConnectorUnavailable" }
         "502": { $ref: "#/components/responses/ExternalUnavailable" }
-  /external/bd-manga/editions:
+  /external/{connector}/editions:
+    parameters:
+      - $ref: "#/components/parameters/connector"
     get:
       tags: [External]
-      summary: Rechercher une édition française à la BnF
+      summary: Rechercher une édition
       description: |
-        Par titre (`q`, index `bib.serialtitle`, 50 notices au plus, hors vidéos et sons) ou par ISBN
-        d'un tome (`isbn`, ISBN-10 / 13 ou EAN, tirets acceptés) : l'édition qui contient ce tome.
-        Exactement un des deux paramètres.
+        Par titre (`q` : `bd-manga` index `bib.serialtitle`, `novels` index `bib.title`, 50 notices au plus,
+        hors vidéos et sons), par ISBN d'un tome (`isbn`, ISBN-10 / 13 ou EAN, tirets acceptés) : l'édition
+        qui contient ce tome, ou par **œuvre Wikidata** (`work`, connecteur `novels`) : les éditions de la
+        notice d'œuvre BnF du roman (`P268`, index `bib.work2bib`, 150 au plus, éditions françaises
+        d'abord). Connecteur `music` : par titre (index `release`), par **code-barres** (`barcode`, EAN / UPC
+        avec clé de contrôle valide) ou par album (`work`, MBID du groupe de parutions : ses parutions, 100 au
+        plus, les plus anciennes d'abord) ; `isbn` y est refusé, comme `barcode` pour les livres.
+        Connecteur `films` : par titre (notices vidéo, `bib.doctype any "h"`), par **code-barres** (`barcode`, index
+        `bib.ean`) ou par film (`work`, QID : éditions de sa notice d'œuvre BnF, les plus récentes d'abord).
+        Connecteur `series` : coffrets par titre, par **code-barres** ou par série (`work`, QID : notices vidéo titrées
+        comme la série, les coffrets n'ayant pas de notice d'œuvre), titre complété de la saison (200 `$h`).
+        Connecteur `games` : par titre, par **code-barres** (`barcode`, `bib.ean`, aussi sans zéro initial) ou par jeu
+        (`work`, QID : notices de jeu titrées comme lui), les plus récentes d'abord.
+        Exactement un des paramètres ; l'identifiant `work` est vérifié par le connecteur (400).
+
+        Connecteur `novels` : une notice sans ensemble est une édition en un volume (le livre, avec son
+        ISBN) ; une notice liée (461) à un ensemble titré comme le roman représente cet ensemble ; un
+        volume d'« Œuvres complètes » reste une édition en un volume.
       operationId: searchExternalEditions
       parameters:
         - name: q
@@ -4020,6 +4276,14 @@ paths:
         - name: isbn
           in: query
           schema: { type: string, example: "978-2-87695-205-8" }
+        - name: barcode
+          in: query
+          description: Code-barres d'une parution (connecteur `music`), espaces et tirets acceptés.
+          schema: { type: string, example: "634904078126" }
+        - name: work
+          in: query
+          description: Œuvre — QID Wikidata du roman (`novels`), MBID du groupe de parutions (`music`).
+          schema: { type: string, maxLength: 200, example: Q163297 }
       responses:
         "200":
           description: Éditions trouvées.
@@ -4033,7 +4297,9 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "409": { $ref: "#/components/responses/ConnectorUnavailable" }
         "502": { $ref: "#/components/responses/ExternalUnavailable" }
-  /external/bd-manga/preview:
+  /external/{connector}/preview:
+    parameters:
+      - $ref: "#/components/parameters/connector"
     post:
       tags: [External]
       summary: Aperçu des items proposés
@@ -4062,7 +4328,9 @@ paths:
         "409": { $ref: "#/components/responses/ConnectorUnavailable" }
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
         "502": { $ref: "#/components/responses/ExternalUnavailable" }
-  /external/bd-manga/import:
+  /external/{connector}/import:
+    parameters:
+      - $ref: "#/components/parameters/connector"
     post:
       tags: [External]
       summary: Simuler ou importer la sélection

@@ -1,8 +1,8 @@
 -- =============================================================================
 -- Collectionnard — Jeu de données BD / Manga (lot 13, modèle : les.collection.md)
 -- =============================================================================
--- Prérequis : migrations appliquées et db/seed.sql chargé (réutilise l'ItemType Series
--- b…01, le CollectionType Ownership d…01 et l'utilisateur shinsaber a…02).
+-- Prérequis : migrations appliquées, paquets de domaine installés (books, tv, collections) et
+-- db/seed.sql chargé (utilisateur shinsaber a…02).
 --
 -- Données réelles, reprises de sources ouvertes (voir docs/sources-externes.md) :
 --   - Wikidata (CC0) : univers, œuvres, personnes, éditeurs — `external_ids.wikidata` ;
@@ -15,344 +15,17 @@
 -- snake_case ASCII (« shōnen » → `shonen`, « tankōbon » → `tankobon`, « OAV » → `ova`) ;
 -- l'affichage passe par x-title, x-labels et x-enum-labels (fr / en).
 --
--- UUID : b…0010-0017 item_types, c…0010-0016 relation_types, e…0100+ items,
---        f…0010 collection (plages libres de seed.sql).
+-- UUID : e…0100+ items, f…0010 collection (plages libres de seed.sql).
 -- =============================================================================
 
 -- =============================================================================
--- 1. ITEM TYPES
+-- 1. TYPES
 -- =============================================================================
--- Attributs communs du domaine (voir les.collection.md § « Sources de référence ») :
+-- Les types du domaine (ItemTypes b…0010-0017, RelationTypes c…0010-0016) sont le paquet de domaine
+-- « books » (server/internal/domains/packages/books.json), installé avant ce seed avec « tv » et
+-- « collections ». Attributs communs (les.collection.md § « Sources de référence ») :
 --   external_ids : { wikidata: "Q…", bnf_ark: "ark:/12148/…" }
 --   sources      : [{ source: wikidata|bnf|manual, retrieved_at: date }]
-
-INSERT INTO item_types (id, name, description, attributes_schema) VALUES
-
--- Univers (franchise) — optionnel au-dessus des œuvres
-('b0000000-0000-0000-0000-000000000010', 'Universe', 'Univers / franchise regroupant des œuvres', '{
-    "type": "object",
-    "required": ["title"],
-    "x-title": { "fr": "Univers", "en": "Universe" },
-    "x-description": { "fr": "Franchise regroupant des œuvres et des sagas", "en": "Franchise grouping works and sagas" },
-    "x-label": "{title}",
-    "x-order": ["title", "description", "images", "external_ids", "sources"],
-    "x-labels": {
-        "fr": { "title": "Titre", "description": "Description", "images": "Images", "external_ids": "Identifiants externes", "sources": "Sources" },
-        "en": { "title": "Title", "description": "Description", "images": "Images", "external_ids": "External IDs", "sources": "Sources" }
-    },
-    "properties": {
-        "title":        { "type": "object", "x-widget": "i18n-text", "properties": { "fr": { "type": "string" }, "en": { "type": "string" } }, "propertyNames": { "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$" }, "additionalProperties": { "type": "string" } },
-        "description":  { "type": "object", "x-widget": "i18n-text", "properties": { "fr": { "type": "string" }, "en": { "type": "string" } }, "propertyNames": { "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$" }, "additionalProperties": { "type": "string" } },
-        "images":       { "type": "object", "x-widget": "image-gallery", "x-image-categories": { "poster": { "ratio": "2/3" }, "banner": { "ratio": "3/1" }, "logo": { "ratio": "1/1" } }, "properties": { "default_image": { "type": "string" }, "poster": { "type": "array", "items": { "type": "string" } }, "banner": { "type": "array", "items": { "type": "string" } }, "logo": { "type": "array", "items": { "type": "string" } } }, "additionalProperties": false },
-        "external_ids": { "type": "object", "properties": { "wikidata": { "type": "string", "pattern": "^Q[1-9][0-9]*$" }, "bnf_ark": { "type": "string", "pattern": "^ark:/12148/[a-z0-9]+$" } }, "additionalProperties": false },
-        "sources":      { "type": "array", "items": { "type": "object", "required": ["source"], "properties": { "source": { "type": "string", "enum": ["wikidata", "bnf", "manual"] }, "retrieved_at": { "type": "string", "format": "date" } }, "additionalProperties": false } }
-    },
-    "additionalProperties": false
-}'),
-
--- Saga (arc narratif d'un univers)
-('b0000000-0000-0000-0000-000000000011', 'Saga', 'Arc narratif ou sous-ensemble d''un univers', '{
-    "type": "object",
-    "required": ["title"],
-    "x-title": { "fr": "Saga", "en": "Saga" },
-    "x-description": { "fr": "Arc narratif ou sous-ensemble d''un univers", "en": "Story arc or subset of a universe" },
-    "x-label": "{title}",
-    "x-order": ["title", "description", "order", "images", "external_ids", "sources"],
-    "x-labels": {
-        "fr": { "title": "Titre", "description": "Description", "order": "Ordre", "images": "Images", "external_ids": "Identifiants externes", "sources": "Sources" },
-        "en": { "title": "Title", "description": "Description", "order": "Order", "images": "Images", "external_ids": "External IDs", "sources": "Sources" }
-    },
-    "properties": {
-        "title":        { "type": "object", "x-widget": "i18n-text", "properties": { "fr": { "type": "string" }, "en": { "type": "string" } }, "propertyNames": { "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$" }, "additionalProperties": { "type": "string" } },
-        "description":  { "type": "object", "x-widget": "i18n-text", "properties": { "fr": { "type": "string" }, "en": { "type": "string" } }, "propertyNames": { "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$" }, "additionalProperties": { "type": "string" } },
-        "order":        { "type": "integer", "minimum": 1 },
-        "images":       { "type": "object", "x-widget": "image-gallery", "x-image-categories": { "illustration": { "ratio": "16/9" } }, "properties": { "default_image": { "type": "string" }, "illustration": { "type": "array", "items": { "type": "string" } } }, "additionalProperties": false },
-        "external_ids": { "type": "object", "properties": { "wikidata": { "type": "string", "pattern": "^Q[1-9][0-9]*$" }, "bnf_ark": { "type": "string", "pattern": "^ark:/12148/[a-z0-9]+$" } }, "additionalProperties": false },
-        "sources":      { "type": "array", "items": { "type": "object", "required": ["source"], "properties": { "source": { "type": "string", "enum": ["wikidata", "bnf", "manual"] }, "retrieved_at": { "type": "string", "format": "date" } }, "additionalProperties": false } }
-    },
-    "additionalProperties": false
-}'),
-
--- Manga (+ manhwa, manhua, webtoon)
-('b0000000-0000-0000-0000-000000000012', 'Manga', 'Œuvre de type manga (manhwa, manhua, webtoon)', '{
-    "type": "object",
-    "required": ["title"],
-    "x-title": { "fr": "Manga", "en": "Manga" },
-    "x-description": { "fr": "Œuvre de type manga (manhwa, manhua, webtoon)", "en": "Manga work (manhwa, manhua, webtoon)" },
-    "x-label": "{title}",
-    "x-order": ["title", "original_title", "description", "sub_type", "demographic", "status", "start_year", "end_year", "volumes_vo", "images", "external_ids", "sources"],
-    "x-labels": {
-        "fr": { "title": "Titre", "original_title": "Titre original", "description": "Synopsis", "sub_type": "Sous-type", "demographic": "Public", "status": "Statut", "start_year": "Année de début", "end_year": "Année de fin", "volumes_vo": "Tomes (VO)", "images": "Images", "external_ids": "Identifiants externes", "sources": "Sources" },
-        "en": { "title": "Title", "original_title": "Original title", "description": "Synopsis", "sub_type": "Sub-type", "demographic": "Demographic", "status": "Status", "start_year": "Start year", "end_year": "End year", "volumes_vo": "Volumes (original)", "images": "Images", "external_ids": "External IDs", "sources": "Sources" }
-    },
-    "properties": {
-        "title":          { "type": "object", "x-widget": "i18n-text", "properties": { "fr": { "type": "string" }, "en": { "type": "string" } }, "propertyNames": { "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$" }, "additionalProperties": { "type": "string" } },
-        "original_title": { "type": "string" },
-        "description":    { "type": "object", "x-widget": "i18n-text", "properties": { "fr": { "type": "string" }, "en": { "type": "string" } }, "propertyNames": { "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$" }, "additionalProperties": { "type": "string" } },
-        "sub_type":       { "type": "string", "enum": ["manga", "manhwa", "manhua", "webtoon"], "x-enum-labels": { "fr": { "manga": "Manga", "manhwa": "Manhwa", "manhua": "Manhua", "webtoon": "Webtoon" }, "en": { "manga": "Manga", "manhwa": "Manhwa", "manhua": "Manhua", "webtoon": "Webtoon" } } },
-        "demographic":    { "type": "string", "enum": ["shonen", "shojo", "seinen", "josei", "kodomo"], "x-enum-labels": { "fr": { "shonen": "Shōnen", "shojo": "Shōjo", "seinen": "Seinen", "josei": "Josei", "kodomo": "Kodomo" }, "en": { "shonen": "Shōnen", "shojo": "Shōjo", "seinen": "Seinen", "josei": "Josei", "kodomo": "Kodomo" } } },
-        "status":         { "type": "string", "enum": ["ongoing", "completed", "on_hold", "cancelled"], "x-enum-labels": { "fr": { "ongoing": "En cours", "completed": "Terminée", "on_hold": "En pause", "cancelled": "Abandonnée" }, "en": { "ongoing": "Ongoing", "completed": "Completed", "on_hold": "On hold", "cancelled": "Cancelled" } } },
-        "start_year":     { "type": "integer", "minimum": 1800 },
-        "end_year":       { "type": "integer", "minimum": 1800 },
-        "volumes_vo":     { "type": "integer", "minimum": 1 },
-        "images":         { "type": "object", "x-widget": "image-gallery", "x-image-categories": { "poster": { "ratio": "2/3" }, "cover": { "ratio": "2/3" }, "banner": { "ratio": "3/1" } }, "properties": { "default_image": { "type": "string" }, "poster": { "type": "array", "items": { "type": "string" } }, "cover": { "type": "array", "items": { "type": "string" } }, "banner": { "type": "array", "items": { "type": "string" } } }, "additionalProperties": false },
-        "external_ids":   { "type": "object", "properties": { "wikidata": { "type": "string", "pattern": "^Q[1-9][0-9]*$" }, "bnf_ark": { "type": "string", "pattern": "^ark:/12148/[a-z0-9]+$" } }, "additionalProperties": false },
-        "sources":        { "type": "array", "items": { "type": "object", "required": ["source"], "properties": { "source": { "type": "string", "enum": ["wikidata", "bnf", "manual"] }, "retrieved_at": { "type": "string", "format": "date" } }, "additionalProperties": false } }
-    },
-    "additionalProperties": false
-}'),
-
--- BD (franco-belge, comics, roman graphique)
-('b0000000-0000-0000-0000-000000000013', 'Comic', 'Bande dessinée (franco-belge, comics, roman graphique)', '{
-    "type": "object",
-    "required": ["title"],
-    "x-title": { "fr": "BD", "en": "Comic" },
-    "x-description": { "fr": "Bande dessinée (franco-belge, comics, roman graphique)", "en": "Comic (Franco-Belgian, comics, graphic novel)" },
-    "x-label": "{title}",
-    "x-order": ["title", "original_title", "description", "sub_type", "status", "start_year", "end_year", "volumes_vo", "images", "external_ids", "sources"],
-    "x-labels": {
-        "fr": { "title": "Titre", "original_title": "Titre original", "description": "Synopsis", "sub_type": "Sous-type", "status": "Statut", "start_year": "Année de début", "end_year": "Année de fin", "volumes_vo": "Albums (VO)", "images": "Images", "external_ids": "Identifiants externes", "sources": "Sources" },
-        "en": { "title": "Title", "original_title": "Original title", "description": "Synopsis", "sub_type": "Sub-type", "status": "Status", "start_year": "Start year", "end_year": "End year", "volumes_vo": "Albums (original)", "images": "Images", "external_ids": "External IDs", "sources": "Sources" }
-    },
-    "properties": {
-        "title":          { "type": "object", "x-widget": "i18n-text", "properties": { "fr": { "type": "string" }, "en": { "type": "string" } }, "propertyNames": { "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$" }, "additionalProperties": { "type": "string" } },
-        "original_title": { "type": "string" },
-        "description":    { "type": "object", "x-widget": "i18n-text", "properties": { "fr": { "type": "string" }, "en": { "type": "string" } }, "propertyNames": { "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$" }, "additionalProperties": { "type": "string" } },
-        "sub_type":       { "type": "string", "enum": ["franco_belge", "comic", "graphic_novel", "strip"], "x-enum-labels": { "fr": { "franco_belge": "Franco-belge", "comic": "Comics", "graphic_novel": "Roman graphique", "strip": "Strip" }, "en": { "franco_belge": "Franco-Belgian", "comic": "Comics", "graphic_novel": "Graphic novel", "strip": "Comic strip" } } },
-        "status":         { "type": "string", "enum": ["ongoing", "completed", "on_hold", "cancelled"], "x-enum-labels": { "fr": { "ongoing": "En cours", "completed": "Terminée", "on_hold": "En pause", "cancelled": "Abandonnée" }, "en": { "ongoing": "Ongoing", "completed": "Completed", "on_hold": "On hold", "cancelled": "Cancelled" } } },
-        "start_year":     { "type": "integer", "minimum": 1800 },
-        "end_year":       { "type": "integer", "minimum": 1800 },
-        "volumes_vo":     { "type": "integer", "minimum": 1 },
-        "images":         { "type": "object", "x-widget": "image-gallery", "x-image-categories": { "poster": { "ratio": "2/3" }, "cover": { "ratio": "3/4" }, "banner": { "ratio": "3/1" } }, "properties": { "default_image": { "type": "string" }, "poster": { "type": "array", "items": { "type": "string" } }, "cover": { "type": "array", "items": { "type": "string" } }, "banner": { "type": "array", "items": { "type": "string" } } }, "additionalProperties": false },
-        "external_ids":   { "type": "object", "properties": { "wikidata": { "type": "string", "pattern": "^Q[1-9][0-9]*$" }, "bnf_ark": { "type": "string", "pattern": "^ark:/12148/[a-z0-9]+$" } }, "additionalProperties": false },
-        "sources":        { "type": "array", "items": { "type": "object", "required": ["source"], "properties": { "source": { "type": "string", "enum": ["wikidata", "bnf", "manual"] }, "retrieved_at": { "type": "string", "format": "date" } }, "additionalProperties": false } }
-    },
-    "additionalProperties": false
-}'),
-
--- Édition (publication d'une œuvre : originale, perfect, poche…)
-('b0000000-0000-0000-0000-000000000014', 'Edition', 'Publication spécifique d''une œuvre', '{
-    "type": "object",
-    "required": ["title", "language"],
-    "x-title": { "fr": "Édition", "en": "Edition" },
-    "x-description": { "fr": "Publication spécifique d''une œuvre (originale, perfect, poche…)", "en": "Specific publication of a work (original, perfect, pocket…)" },
-    "x-label": "{title}",
-    "x-order": ["title", "language", "format", "status", "volume_count", "start_year", "end_year", "images", "external_ids", "sources"],
-    "x-labels": {
-        "fr": { "title": "Titre", "language": "Langue", "format": "Format", "status": "Statut", "volume_count": "Nombre de tomes", "start_year": "Année de début", "end_year": "Année de fin", "images": "Images", "external_ids": "Identifiants externes", "sources": "Sources" },
-        "en": { "title": "Title", "language": "Language", "format": "Format", "status": "Status", "volume_count": "Number of volumes", "start_year": "Start year", "end_year": "End year", "images": "Images", "external_ids": "External IDs", "sources": "Sources" }
-    },
-    "properties": {
-        "title":        { "type": "object", "x-widget": "i18n-text", "properties": { "fr": { "type": "string" }, "en": { "type": "string" } }, "propertyNames": { "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$" }, "additionalProperties": { "type": "string" } },
-        "language":     { "type": "string", "enum": ["fr", "ja", "en", "ko", "zh", "es", "de", "it"], "x-enum-labels": { "fr": { "fr": "Français", "ja": "Japonais", "en": "Anglais", "ko": "Coréen", "zh": "Chinois", "es": "Espagnol", "de": "Allemand", "it": "Italien" }, "en": { "fr": "French", "ja": "Japanese", "en": "English", "ko": "Korean", "zh": "Chinese", "es": "Spanish", "de": "German", "it": "Italian" } } },
-        "format":       { "type": "string", "enum": ["tankobon", "grand_format", "poche", "perfect", "deluxe", "collector", "omnibus", "album"], "x-enum-labels": { "fr": { "tankobon": "Tankōbon", "grand_format": "Grand format", "poche": "Poche", "perfect": "Perfect edition", "deluxe": "Deluxe", "collector": "Collector", "omnibus": "Omnibus", "album": "Album" }, "en": { "tankobon": "Tankōbon", "grand_format": "Large format", "poche": "Pocket", "perfect": "Perfect edition", "deluxe": "Deluxe", "collector": "Collector", "omnibus": "Omnibus", "album": "Album" } } },
-        "status":       { "type": "string", "enum": ["ongoing", "completed", "on_hold", "out_of_print"], "x-enum-labels": { "fr": { "ongoing": "En cours", "completed": "Terminée", "on_hold": "En pause", "out_of_print": "Épuisée" }, "en": { "ongoing": "Ongoing", "completed": "Completed", "on_hold": "On hold", "out_of_print": "Out of print" } } },
-        "volume_count": { "type": "integer", "minimum": 1 },
-        "start_year":   { "type": "integer", "minimum": 1800 },
-        "end_year":     { "type": "integer", "minimum": 1800 },
-        "images":       { "type": "object", "x-widget": "image-gallery", "x-image-categories": { "cover": { "ratio": "2/3" }, "promo": { "ratio": "16/9" } }, "properties": { "default_image": { "type": "string" }, "cover": { "type": "array", "items": { "type": "string" } }, "promo": { "type": "array", "items": { "type": "string" } } }, "additionalProperties": false },
-        "external_ids": { "type": "object", "properties": { "wikidata": { "type": "string", "pattern": "^Q[1-9][0-9]*$" }, "bnf_ark": { "type": "string", "pattern": "^ark:/12148/[a-z0-9]+$" } }, "additionalProperties": false },
-        "sources":      { "type": "array", "items": { "type": "object", "required": ["source"], "properties": { "source": { "type": "string", "enum": ["wikidata", "bnf", "manual"] }, "retrieved_at": { "type": "string", "format": "date" } }, "additionalProperties": false } }
-    },
-    "additionalProperties": false
-}'),
-
--- Tome (volume physique : l'item le plus souvent mis en collection)
-('b0000000-0000-0000-0000-000000000015', 'Volume', 'Volume physique individuel (tome, album)', '{
-    "type": "object",
-    "required": ["number", "title"],
-    "x-title": { "fr": "Tome", "en": "Volume" },
-    "x-description": { "fr": "Volume physique individuel (tome, album)", "en": "Individual physical volume" },
-    "x-label": "{number}. {title}",
-    "x-order": ["number", "title", "subtitle", "isbn", "publication_date", "page_count", "retail_price", "images", "external_ids", "sources"],
-    "x-labels": {
-        "fr": { "number": "Numéro", "title": "Titre", "subtitle": "Sous-titre", "isbn": "ISBN", "publication_date": "Date de publication", "page_count": "Nombre de pages", "retail_price": "Prix catalogue (€)", "images": "Images", "external_ids": "Identifiants externes", "sources": "Sources" },
-        "en": { "number": "Number", "title": "Title", "subtitle": "Subtitle", "isbn": "ISBN", "publication_date": "Publication date", "page_count": "Page count", "retail_price": "Retail price (€)", "images": "Images", "external_ids": "External IDs", "sources": "Sources" }
-    },
-    "properties": {
-        "number":           { "type": "integer", "minimum": 0 },
-        "title":            { "type": "object", "x-widget": "i18n-text", "properties": { "fr": { "type": "string" }, "en": { "type": "string" } }, "propertyNames": { "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$" }, "additionalProperties": { "type": "string" } },
-        "subtitle":         { "type": "string" },
-        "isbn":             { "type": "string", "pattern": "^97[89][0-9]{10}$", "description": "ISBN-13, chiffres seuls" },
-        "publication_date": { "type": "string", "format": "date" },
-        "page_count":       { "type": "integer", "minimum": 1 },
-        "retail_price":     { "type": "number", "minimum": 0 },
-        "images":           { "type": "object", "x-widget": "image-gallery", "x-image-categories": { "front": { "ratio": "2/3" }, "back": { "ratio": "2/3" }, "spine": { "ratio": "1/8" } }, "properties": { "default_image": { "type": "string" }, "front": { "type": "array", "items": { "type": "string" } }, "back": { "type": "array", "items": { "type": "string" } }, "spine": { "type": "array", "items": { "type": "string" } } }, "additionalProperties": false },
-        "external_ids":     { "type": "object", "properties": { "wikidata": { "type": "string", "pattern": "^Q[1-9][0-9]*$" }, "bnf_ark": { "type": "string", "pattern": "^ark:/12148/[a-z0-9]+$" } }, "additionalProperties": false },
-        "sources":          { "type": "array", "items": { "type": "object", "required": ["source"], "properties": { "source": { "type": "string", "enum": ["wikidata", "bnf", "manual"] }, "retrieved_at": { "type": "string", "format": "date" } }, "additionalProperties": false } }
-    },
-    "additionalProperties": false
-}'),
-
--- Personne (auteur, scénariste, dessinateur…)
-('b0000000-0000-0000-0000-000000000016', 'Person', 'Créateur : auteur, scénariste, dessinateur, coloriste, traducteur…', '{
-    "type": "object",
-    "required": ["last_name"],
-    "x-title": { "fr": "Personne", "en": "Person" },
-    "x-description": { "fr": "Créateur : auteur, scénariste, dessinateur, coloriste, traducteur…", "en": "Creator: author, writer, artist, colorist, translator…" },
-    "x-label": "{first_name} {last_name}",
-    "x-order": ["last_name", "first_name", "native_name", "nationality", "birth_date", "biography", "images", "external_ids", "sources"],
-    "x-labels": {
-        "fr": { "last_name": "Nom", "first_name": "Prénom", "native_name": "Nom natif", "nationality": "Nationalité (code pays)", "birth_date": "Date de naissance", "biography": "Biographie", "images": "Images", "external_ids": "Identifiants externes", "sources": "Sources" },
-        "en": { "last_name": "Last name", "first_name": "First name", "native_name": "Native name", "nationality": "Nationality (country code)", "birth_date": "Birth date", "biography": "Biography", "images": "Images", "external_ids": "External IDs", "sources": "Sources" }
-    },
-    "properties": {
-        "last_name":    { "type": "string", "minLength": 1 },
-        "first_name":   { "type": "string" },
-        "native_name":  { "type": "string" },
-        "nationality":  { "type": "string", "pattern": "^[A-Z]{2}$", "description": "ISO 3166-1 alpha-2" },
-        "birth_date":   { "type": "string", "format": "date" },
-        "biography":    { "type": "object", "x-widget": "i18n-text", "properties": { "fr": { "type": "string" }, "en": { "type": "string" } }, "propertyNames": { "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$" }, "additionalProperties": { "type": "string" } },
-        "images":       { "type": "object", "x-widget": "image-gallery", "x-image-categories": { "portrait": { "ratio": "3/4" } }, "properties": { "default_image": { "type": "string" }, "portrait": { "type": "array", "items": { "type": "string" } } }, "additionalProperties": false },
-        "external_ids": { "type": "object", "properties": { "wikidata": { "type": "string", "pattern": "^Q[1-9][0-9]*$" }, "bnf_ark": { "type": "string", "pattern": "^ark:/12148/[a-z0-9]+$" } }, "additionalProperties": false },
-        "sources":      { "type": "array", "items": { "type": "object", "required": ["source"], "properties": { "source": { "type": "string", "enum": ["wikidata", "bnf", "manual"] }, "retrieved_at": { "type": "string", "format": "date" } }, "additionalProperties": false } }
-    },
-    "additionalProperties": false
-}'),
-
--- Maison d'édition
-('b0000000-0000-0000-0000-000000000017', 'Publisher', 'Maison d''édition', '{
-    "type": "object",
-    "required": ["name"],
-    "x-title": { "fr": "Maison d''édition", "en": "Publisher" },
-    "x-description": { "fr": "Éditeur (Glénat, Kana, Dargaud, Dupuis…)", "en": "Publishing house" },
-    "x-label": "{name}",
-    "x-order": ["name", "country", "website", "description", "images", "external_ids", "sources"],
-    "x-labels": {
-        "fr": { "name": "Nom", "country": "Pays (code)", "website": "Site web", "description": "Description", "images": "Images", "external_ids": "Identifiants externes", "sources": "Sources" },
-        "en": { "name": "Name", "country": "Country (code)", "website": "Website", "description": "Description", "images": "Images", "external_ids": "External IDs", "sources": "Sources" }
-    },
-    "properties": {
-        "name":         { "type": "string", "minLength": 1 },
-        "country":      { "type": "string", "pattern": "^[A-Z]{2}$", "description": "ISO 3166-1 alpha-2" },
-        "website":      { "type": "string", "format": "uri" },
-        "description":  { "type": "object", "x-widget": "i18n-text", "properties": { "fr": { "type": "string" }, "en": { "type": "string" } }, "propertyNames": { "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$" }, "additionalProperties": { "type": "string" } },
-        "images":       { "type": "object", "x-widget": "image-gallery", "x-image-categories": { "logo": { "ratio": "1/1" } }, "properties": { "default_image": { "type": "string" }, "logo": { "type": "array", "items": { "type": "string" } } }, "additionalProperties": false },
-        "external_ids": { "type": "object", "properties": { "wikidata": { "type": "string", "pattern": "^Q[1-9][0-9]*$" }, "bnf_ark": { "type": "string", "pattern": "^ark:/12148/[a-z0-9]+$" } }, "additionalProperties": false },
-        "sources":      { "type": "array", "items": { "type": "object", "required": ["source"], "properties": { "source": { "type": "string", "enum": ["wikidata", "bnf", "manual"] }, "retrieved_at": { "type": "string", "format": "date" } }, "additionalProperties": false } }
-    },
-    "additionalProperties": false
-}');
-
--- =============================================================================
--- 2. RELATION TYPES
--- =============================================================================
-
-INSERT INTO relation_types (id, name, description, attributes_schema) VALUES
-
-('c0000000-0000-0000-0000-000000000010', 'contains_saga', 'Univers contient une saga', '{
-    "type": "object",
-    "x-title": { "fr": "Contient la saga", "en": "Contains saga" },
-    "x-order": ["order"],
-    "x-labels": { "fr": { "order": "Ordre" }, "en": { "order": "Order" } },
-    "properties": { "order": { "type": "integer", "minimum": 1 } },
-    "additionalProperties": false
-}'),
-
-('c0000000-0000-0000-0000-000000000011', 'contains_work', 'Univers ou saga contient une œuvre', '{
-    "type": "object",
-    "x-title": { "fr": "Contient l''œuvre", "en": "Contains work" },
-    "x-order": ["order"],
-    "x-labels": { "fr": { "order": "Ordre" }, "en": { "order": "Order" } },
-    "properties": { "order": { "type": "integer", "minimum": 1 } },
-    "additionalProperties": false
-}'),
-
--- Rôles multiples : une seule relation par (œuvre, personne), `roles` en tableau
--- (respecte l'unicité (relation_type_id, source_item_id, target_item_id)).
-('c0000000-0000-0000-0000-000000000012', 'created_by', 'Œuvre créée par une personne (rôles)', '{
-    "type": "object",
-    "required": ["roles"],
-    "x-title": { "fr": "Créée par", "en": "Created by" },
-    "x-order": ["roles"],
-    "x-labels": { "fr": { "roles": "Rôles" }, "en": { "roles": "Roles" } },
-    "properties": {
-        "roles": {
-            "type": "array",
-            "minItems": 1,
-            "uniqueItems": true,
-            "items": { "type": "string", "enum": ["author", "writer", "artist", "colorist", "translator"] },
-            "x-enum-labels": {
-                "fr": { "author": "Auteur", "writer": "Scénariste", "artist": "Dessinateur", "colorist": "Coloriste", "translator": "Traducteur" },
-                "en": { "author": "Author", "writer": "Writer", "artist": "Artist", "colorist": "Colorist", "translator": "Translator" }
-            }
-        }
-    },
-    "additionalProperties": false
-}'),
-
-('c0000000-0000-0000-0000-000000000013', 'published_as', 'Œuvre publiée sous forme d''une édition', '{
-    "type": "object",
-    "x-title": { "fr": "Publiée en", "en": "Published as" },
-    "properties": {},
-    "additionalProperties": false
-}'),
-
-('c0000000-0000-0000-0000-000000000014', 'edited_by', 'Édition publiée par une maison d''édition', '{
-    "type": "object",
-    "x-title": { "fr": "Éditée par", "en": "Edited by" },
-    "properties": {},
-    "additionalProperties": false
-}'),
-
-('c0000000-0000-0000-0000-000000000015', 'contains_volume', 'Édition contient un tome', '{
-    "type": "object",
-    "x-title": { "fr": "Contient le tome", "en": "Contains volume" },
-    "x-order": ["order"],
-    "x-labels": { "fr": { "order": "Ordre" }, "en": { "order": "Order" } },
-    "properties": { "order": { "type": "integer", "minimum": 0 } },
-    "additionalProperties": false
-}'),
-
-('c0000000-0000-0000-0000-000000000016', 'adapted_as', 'Œuvre adaptée (anime, film…)', '{
-    "type": "object",
-    "x-title": { "fr": "Adaptée en", "en": "Adapted as" },
-    "x-order": ["adaptation_type"],
-    "x-labels": { "fr": { "adaptation_type": "Type d''adaptation" }, "en": { "adaptation_type": "Adaptation type" } },
-    "properties": {
-        "adaptation_type": {
-            "type": "string",
-            "enum": ["anime", "film", "ova", "live_action"],
-            "x-enum-labels": {
-                "fr": { "anime": "Anime", "film": "Film", "ova": "OAV", "live_action": "Prises de vues réelles" },
-                "en": { "anime": "Anime", "film": "Film", "ova": "OVA", "live_action": "Live action" }
-            }
-        }
-    },
-    "additionalProperties": false
-}');
-
--- Types source / cible autorisés
--- b…10 Universe, b…11 Saga, b…12 Manga, b…13 Comic, b…14 Edition, b…15 Volume,
--- b…16 Person, b…17 Publisher, b…01 Series (seed.sql)
-INSERT INTO relation_type_sources (relation_type_id, item_type_id) VALUES
-('c0000000-0000-0000-0000-000000000010', 'b0000000-0000-0000-0000-000000000010'),
-('c0000000-0000-0000-0000-000000000011', 'b0000000-0000-0000-0000-000000000010'),
-('c0000000-0000-0000-0000-000000000011', 'b0000000-0000-0000-0000-000000000011'),
-('c0000000-0000-0000-0000-000000000012', 'b0000000-0000-0000-0000-000000000012'),
-('c0000000-0000-0000-0000-000000000012', 'b0000000-0000-0000-0000-000000000013'),
-('c0000000-0000-0000-0000-000000000013', 'b0000000-0000-0000-0000-000000000012'),
-('c0000000-0000-0000-0000-000000000013', 'b0000000-0000-0000-0000-000000000013'),
-('c0000000-0000-0000-0000-000000000014', 'b0000000-0000-0000-0000-000000000014'),
-('c0000000-0000-0000-0000-000000000015', 'b0000000-0000-0000-0000-000000000014'),
-('c0000000-0000-0000-0000-000000000016', 'b0000000-0000-0000-0000-000000000012'),
-('c0000000-0000-0000-0000-000000000016', 'b0000000-0000-0000-0000-000000000013');
-
-INSERT INTO relation_type_targets (relation_type_id, item_type_id) VALUES
-('c0000000-0000-0000-0000-000000000010', 'b0000000-0000-0000-0000-000000000011'),
-('c0000000-0000-0000-0000-000000000011', 'b0000000-0000-0000-0000-000000000012'),
-('c0000000-0000-0000-0000-000000000011', 'b0000000-0000-0000-0000-000000000013'),
-('c0000000-0000-0000-0000-000000000012', 'b0000000-0000-0000-0000-000000000016'),
-('c0000000-0000-0000-0000-000000000013', 'b0000000-0000-0000-0000-000000000014'),
-('c0000000-0000-0000-0000-000000000014', 'b0000000-0000-0000-0000-000000000017'),
-('c0000000-0000-0000-0000-000000000015', 'b0000000-0000-0000-0000-000000000015'),
-('c0000000-0000-0000-0000-000000000016', 'b0000000-0000-0000-0000-000000000001');
-
--- =============================================================================
--- 3. COLLECTION TYPES
--- =============================================================================
--- Aucun nouveau : Ownership / Wishlist / Watching (seed.sql) conviennent aux Tomes et
--- Éditions. Le CollectionType « Lecture » est « à définir » dans les.collection.md.
 
 -- =============================================================================
 -- 4. ITEMS — Dragon Ball
@@ -615,16 +288,46 @@ INSERT INTO collection_items (collection_id, item_id, attributes) VALUES
 ('f0000000-0000-0000-0000-000000000010', 'e0000000-0000-0000-0000-000000000110',
  '{"condition": "new", "purchase_price": 6.50, "acquisition_date": "2021-03-10"}');
 
--- Ordre d'affichage des types (migration 005) : principaux d'abord, volumineux ensuite.
-UPDATE item_types t SET display_order = v.o
-FROM (VALUES
-    ('b0000000-0000-0000-0000-000000000012'::uuid, 20),  -- Manga
-    ('b0000000-0000-0000-0000-000000000013'::uuid, 30),  -- Comic
-    ('b0000000-0000-0000-0000-000000000010'::uuid, 40),  -- Universe
-    ('b0000000-0000-0000-0000-000000000011'::uuid, 50),  -- Saga
-    ('b0000000-0000-0000-0000-000000000014'::uuid, 70),  -- Edition
-    ('b0000000-0000-0000-0000-000000000015'::uuid, 110), -- Volume
-    ('b0000000-0000-0000-0000-000000000016'::uuid, 130), -- Person
-    ('b0000000-0000-0000-0000-000000000017'::uuid, 140)  -- Publisher
-) AS v(id, o)
-WHERE t.id = v.id;
+-- =============================================================================
+-- 8. ROMANS (P3-3) — générés par le connecteur « novels » (Wikidata CC0 + BnF Licence Ouverte,
+--    récupérés le 2026-10-17) : L'Étranger (une édition Folio = le livre, cycle de l'absurde)
+--    et Les Misérables (édition Pocket 2019 en trois tomes). UUID e…0200-0211.
+-- =============================================================================
+
+INSERT INTO items (id, item_type_id, attributes) VALUES
+-- work : wikidata:Q163297
+('e0000000-0000-0000-0000-000000000200', 'b0000000-0000-0000-0000-000000000018', '{"description":{"en":"1942 novel by Albert Camus","fr":"roman d’Albert Camus"},"external_ids":{"bnf_ark":"ark:/12148/cb11958514w","wikidata":"Q163297"},"first_publication_year":1942,"form":"novel","original_language":"fr","sources":[{"retrieved_at":"2026-10-17","source":"wikidata"}],"title":{"en":"The Stranger","fr":"L''Étranger"}}'),
+-- universe : wikidata:Q3008298
+('e0000000-0000-0000-0000-000000000201', 'b0000000-0000-0000-0000-000000000011', '{"description":{"en":"literary tetralogy by Albert Camus","fr":"absurde camusien"},"external_ids":{"wikidata":"Q3008298"},"sources":[{"retrieved_at":"2026-10-17","source":"wikidata"}],"title":{"en":"The strange writer","fr":"philosophie d''Albert Camus"}}'),
+-- person : wikidata:Q34670
+('e0000000-0000-0000-0000-000000000202', 'b0000000-0000-0000-0000-000000000016', '{"biography":{"en":"French philosopher, author, and journalist (1913–1960)","fr":"écrivain, philosophe et journaliste français"},"birth_date":"1913-11-07","external_ids":{"bnf_ark":"ark:/12148/cb118949856","wikidata":"Q34670"},"first_name":"Albert","last_name":"Camus","nationality":"FR","sources":[{"retrieved_at":"2026-10-17","source":"wikidata"}]}'),
+-- edition : bnf:cb436623939
+('e0000000-0000-0000-0000-000000000203', 'b0000000-0000-0000-0000-000000000014', '{"collection":"Collection Folio","external_ids":{"bnf_ark":"ark:/12148/cb436623939"},"isbn":"9782070453177","language":"fr","retail_price":8.7,"sources":[{"retrieved_at":"2026-10-17","source":"bnf"}],"start_year":2013,"title":{"fr":"L''étranger"}}'),
+-- publisher : publisher:gallimard
+('e0000000-0000-0000-0000-000000000204', 'b0000000-0000-0000-0000-000000000017', '{"name":"Gallimard","sources":[{"retrieved_at":"2026-10-17","source":"bnf"}]}'),
+-- work : wikidata:Q180736
+('e0000000-0000-0000-0000-000000000205', 'b0000000-0000-0000-0000-000000000018', '{"description":{"en":"1862 novel by Victor Hugo","fr":"roman de Victor Hugo"},"external_ids":{"bnf_ark":"ark:/12148/cb13516296h","wikidata":"Q180736"},"first_publication_year":1862,"form":"novel","genres":["historical"],"original_language":"fr","sources":[{"retrieved_at":"2026-10-17","source":"wikidata"}],"title":{"en":"Les Misérables","fr":"Les Misérables"}}'),
+-- person : wikidata:Q535
+('e0000000-0000-0000-0000-000000000206', 'b0000000-0000-0000-0000-000000000016', '{"biography":{"en":"French novelist, poet, dramatist and politician (1802–1885)","fr":"romancier, poète, dramaturge, dessinateur et politicien français (1802–1885)"},"birth_date":"1802-02-26","external_ids":{"bnf_ark":"ark:/12148/cb11907966z","wikidata":"Q535"},"first_name":"Victor","last_name":"Hugo","nationality":"FR","sources":[{"retrieved_at":"2026-10-17","source":"wikidata"}]}'),
+-- edition : bnf:cb45767941c
+('e0000000-0000-0000-0000-000000000207', 'b0000000-0000-0000-0000-000000000014', '{"collection":"Pocket","external_ids":{"bnf_ark":"ark:/12148/cb45767941c"},"language":"fr","sources":[{"retrieved_at":"2026-10-17","source":"bnf"}],"start_year":2019,"title":{"fr":"Les misérables"},"volume_count":3}'),
+-- publisher : publisher:pocket
+('e0000000-0000-0000-0000-000000000208', 'b0000000-0000-0000-0000-000000000017', '{"name":"Pocket","sources":[{"retrieved_at":"2026-10-17","source":"bnf"}]}'),
+-- volume : bnf:cb45718977k
+('e0000000-0000-0000-0000-000000000209', 'b0000000-0000-0000-0000-000000000015', '{"external_ids":{"bnf_ark":"ark:/12148/cb45718977k"},"isbn":"9782266295901","number":1,"page_count":859,"retail_price":6.9,"sources":[{"retrieved_at":"2026-10-17","source":"bnf"}],"title":{"fr":"Les misérables"}}'),
+-- volume : bnf:cb47420905r
+('e0000000-0000-0000-0000-000000000210', 'b0000000-0000-0000-0000-000000000015', '{"external_ids":{"bnf_ark":"ark:/12148/cb47420905r"},"isbn":"9782266296007","number":2,"page_count":891,"retail_price":6.9,"sources":[{"retrieved_at":"2026-10-17","source":"bnf"}],"title":{"fr":"Les misérables"}}'),
+-- volume : bnf:cb45840019s
+('e0000000-0000-0000-0000-000000000211', 'b0000000-0000-0000-0000-000000000015', '{"external_ids":{"bnf_ark":"ark:/12148/cb45840019s"},"isbn":"9782266296137","number":3,"page_count":439,"retail_price":6.9,"sources":[{"retrieved_at":"2026-10-17","source":"bnf"}],"title":{"fr":"Les misérables"}}');
+
+INSERT INTO item_relations (relation_type_id, source_item_id, target_item_id, attributes) VALUES
+('c0000000-0000-0000-0000-000000000011', 'e0000000-0000-0000-0000-000000000201', 'e0000000-0000-0000-0000-000000000200', '{"order":1}'),
+('c0000000-0000-0000-0000-000000000012', 'e0000000-0000-0000-0000-000000000200', 'e0000000-0000-0000-0000-000000000202', '{"roles":["author"]}'),
+('c0000000-0000-0000-0000-000000000012', 'e0000000-0000-0000-0000-000000000205', 'e0000000-0000-0000-0000-000000000206', '{"roles":["author"]}'),
+('c0000000-0000-0000-0000-000000000013', 'e0000000-0000-0000-0000-000000000200', 'e0000000-0000-0000-0000-000000000203', '{}'),
+('c0000000-0000-0000-0000-000000000013', 'e0000000-0000-0000-0000-000000000205', 'e0000000-0000-0000-0000-000000000207', '{}'),
+('c0000000-0000-0000-0000-000000000014', 'e0000000-0000-0000-0000-000000000203', 'e0000000-0000-0000-0000-000000000204', '{}'),
+('c0000000-0000-0000-0000-000000000014', 'e0000000-0000-0000-0000-000000000207', 'e0000000-0000-0000-0000-000000000208', '{}'),
+('c0000000-0000-0000-0000-000000000015', 'e0000000-0000-0000-0000-000000000207', 'e0000000-0000-0000-0000-000000000209', '{"order":1}'),
+('c0000000-0000-0000-0000-000000000015', 'e0000000-0000-0000-0000-000000000207', 'e0000000-0000-0000-0000-000000000211', '{"order":3}'),
+('c0000000-0000-0000-0000-000000000015', 'e0000000-0000-0000-0000-000000000207', 'e0000000-0000-0000-0000-000000000210', '{"order":2}');

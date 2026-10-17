@@ -1,19 +1,19 @@
 <template>
   <section class="p-4 rounded-lg border border-line bg-surface">
     <h2 class="text-lg font-semibold text-ink mb-3">
-      {{ t("admin.external.edition.title") }}
+      {{ t(`admin.external.connectors.${connector}.editionTitle`) }}
     </h2>
     <form class="flex flex-wrap gap-2 mb-3" @submit.prevent="search">
       <ElRadioGroup v-model="mode" size="small" @change="hits = null">
         <ElRadioButton value="title">{{
           t("admin.external.edition.byTitle")
         }}</ElRadioButton>
-        <ElRadioButton value="isbn">{{
-          t("admin.external.edition.byIsbn")
+        <ElRadioButton value="code">{{
+          t(`admin.external.connectors.${connector}.byCode`)
         }}</ElRadioButton>
       </ElRadioGroup>
       <label :for="inputId" class="sr-only">{{
-        t("admin.external.edition.title")
+        t(`admin.external.connectors.${connector}.editionTitle`)
       }}</label>
       <ElInput
         :id="inputId"
@@ -21,8 +21,8 @@
         class="flex-1 min-w-48"
         :placeholder="
           mode === 'title'
-            ? t('admin.external.edition.placeholderTitle')
-            : t('admin.external.edition.placeholderIsbn')
+            ? t(`admin.external.connectors.${connector}.editionPlaceholder`)
+            : t(`admin.external.connectors.${connector}.codePlaceholder`)
         "
         clearable
       />
@@ -44,7 +44,7 @@
       <div class="flex flex-wrap gap-2">
         <ElTag
           v-for="e in modelValue"
-          :key="e.bnf_ark"
+          :key="e.id"
           closable
           :aria-label="t('admin.external.edition.remove', { name: e.title })"
           @close="toggle(e, false)"
@@ -53,11 +53,21 @@
       </div>
     </div>
 
+    <!-- Romans : les traductions sont nombreuses (L'Étranger : 55 éditions) ; masquées par défaut. -->
+    <div v-if="hasTranslations" class="mb-2 flex items-center gap-2 text-sm">
+      <ElSwitch
+        v-model="showTranslations"
+        :aria-label="
+          t('admin.external.edition.translations', { n: translationCount })
+        "
+      />
+      {{ t("admin.external.edition.translations", { n: translationCount }) }}
+    </div>
     <ElTable
       v-if="hits"
-      :data="hits"
+      :data="shownHits"
       size="small"
-      row-key="bnf_ark"
+      row-key="id"
       :empty-text="t('admin.external.edition.none')"
       data-test="edition-hits"
     >
@@ -95,10 +105,16 @@
           >
             {{ matchedLabel(row as ExternalEditionHit) }}
           </div>
+          <div
+            v-if="details(row as ExternalEditionHit)"
+            class="text-xs text-muted"
+          >
+            {{ details(row as ExternalEditionHit) }}
+          </div>
         </template>
       </ElTableColumn>
       <ElTableColumn
-        :label="t('admin.external.edition.publishers')"
+        :label="t(`admin.external.connectors.${connector}.publishers`)"
         min-width="140"
       >
         <template #default="{ row }">
@@ -129,10 +145,10 @@
 </template>
 
 <script setup lang="ts">
-// Recherche d'éditions françaises à la BnF (par titre ou par ISBN d'un tome) ; plusieurs
+// Recherche d'éditions (BnF : titre ou ISBN d'un tome ; MusicBrainz : titre ou code-barres) ; plusieurs
 // éditions peuvent être cochées (10 au plus, limite du serveur). `suggestion` (titre de
 // l'œuvre choisie) préremplit la recherche par titre et la lance.
-import { ref, useId, watch } from "vue";
+import { computed, ref, useId, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { externalApi } from "@/api/client";
 import { useNotify } from "@/composables/useNotify";
@@ -143,6 +159,13 @@ const MAX = 10;
 const props = defineProps<{
   modelValue: ExternalEditionHit[];
   suggestion?: string;
+  /** Œuvre choisie (QID, MBID) : ses éditions sont listées si le connecteur le permet (`byWork`). */
+  work?: string;
+  byWork?: boolean;
+  /** Connecteur (`bd-manga`, `novels`, `music`…). */
+  /** Code de recherche d'une édition : ISBN (livres) ou code-barres (musique). */
+  code?: "isbn" | "barcode";
+  connector: string;
 }>();
 const emit = defineEmits<{
   "update:modelValue": [editions: ExternalEditionHit[]];
@@ -152,7 +175,7 @@ const { t } = useI18n();
 const { notifyError } = useNotify();
 const inputId = useId();
 
-const mode = ref<"title" | "isbn">("title");
+const mode = ref<"title" | "code">("title");
 const query = ref("");
 const hits = ref<ExternalEditionHit[] | null>(null);
 const loading = ref(false);
@@ -160,6 +183,7 @@ const loading = ref(false);
 watch(
   () => props.suggestion,
   (s) => {
+    if (props.byWork && props.work) return; // éditions de l'œuvre (ci-dessous)
     if (s && mode.value === "title") {
       query.value = s;
       void search();
@@ -167,13 +191,65 @@ watch(
   },
 );
 
+// Œuvre choisie : toutes ses éditions (roman : notice d'œuvre BnF ; album : parutions MusicBrainz), sans saisie.
+watch(
+  () => [props.work, props.byWork] as const,
+  async ([work, byWork]) => {
+    if (!work || !byWork) return;
+    if (props.suggestion) query.value = props.suggestion;
+    loading.value = true;
+    try {
+      hits.value = await externalApi.searchEditions(props.connector, { work });
+    } catch (e) {
+      notifyError(e, t("admin.external.searchFailed"));
+    } finally {
+      loading.value = false;
+    }
+  },
+  { immediate: true },
+);
+
+// Éditions dans une autre langue que le français (langue inconnue : gardée).
+const showTranslations = ref(false);
+const isTranslation = (e: ExternalEditionHit) =>
+  !!e.language && e.language !== "fr";
+const translationCount = computed(
+  () => (hits.value ?? []).filter(isTranslation).length,
+);
+const hasTranslations = computed(() => translationCount.value > 0);
+const shownHits = computed(() =>
+  showTranslations.value
+    ? (hits.value ?? [])
+    : (hits.value ?? []).filter((e) => !isTranslation(e)),
+);
+
+/** Détails d'une édition : langue, collection et ISBN (romans) ; artiste, supports, pays, référence et code-barres (musique). */
+function details(e: ExternalEditionHit): string {
+  return [
+    e.artist,
+    e.format,
+    e.country,
+    e.language?.toUpperCase(),
+    e.collection,
+    e.catalog_number,
+    e.isbn ?? e.barcode,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 async function search() {
   const q = query.value.trim();
   if (q.length < 2) return;
   loading.value = true;
   try {
     hits.value = await externalApi.searchEditions(
-      mode.value === "title" ? { q } : { isbn: q },
+      props.connector,
+      mode.value === "title"
+        ? { q }
+        : props.code === "barcode"
+          ? { barcode: q }
+          : { isbn: q },
     );
   } catch (e) {
     notifyError(e, t("admin.external.searchFailed"));
@@ -183,11 +259,11 @@ async function search() {
 }
 
 function isChosen(e: ExternalEditionHit): boolean {
-  return props.modelValue.some((c) => c.bnf_ark === e.bnf_ark);
+  return props.modelValue.some((c) => c.id === e.id);
 }
 
 function toggle(e: ExternalEditionHit, on: boolean) {
-  const rest = props.modelValue.filter((c) => c.bnf_ark !== e.bnf_ark);
+  const rest = props.modelValue.filter((c) => c.id !== e.id);
   emit("update:modelValue", on ? [...rest, e] : rest);
 }
 

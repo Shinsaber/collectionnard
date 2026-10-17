@@ -50,7 +50,7 @@ func counts(rep *model.ImportReport, entity string) model.ImportCounts {
 
 func TestExportCatalog_Seed(t *testing.T) {
 	cat := exportNow(t, s)
-	if cat.Format != model.CatalogFormat || len(cat.ItemTypes) != 5 || len(cat.RelationTypes) != 5 ||
+	if cat.Format != model.CatalogFormat || len(cat.ItemTypes) != 8 || len(cat.RelationTypes) != 7 || // tv + video + people
 		len(cat.CollectionTypes) != 3 || len(cat.Items) != 8 || len(cat.Relations) != 10 {
 		t.Fatalf("unexpected sizes: %d types, %d relation types, %d collection types, %d items, %d relations",
 			len(cat.ItemTypes), len(cat.RelationTypes), len(cat.CollectionTypes), len(cat.Items), len(cat.Relations))
@@ -64,7 +64,8 @@ func TestExportCatalog_Seed(t *testing.T) {
 		t.Errorf("series tags: %v", cat.Items[0].Tags)
 	}
 	for _, rt := range cat.RelationTypes {
-		if rt.ID == rtEditeEn && (len(rt.SourceItemTypeIDs) != 1 || rt.SourceItemTypeIDs[0] != typeSerie) {
+		// released_as (paquet video) : séries et films.
+		if rt.ID == rtEditeEn && (len(rt.SourceItemTypeIDs) != 2 || !slices.Contains(rt.SourceItemTypeIDs, typeSerie)) {
 			t.Errorf("released_as sources: %v", rt.SourceItemTypeIDs)
 		}
 	}
@@ -385,22 +386,25 @@ func TestSeedBDManga_Valid(t *testing.T) {
 	if err := dbmigrate.Migrate(ctx, u.String(), migrationsDir); err != nil {
 		t.Fatal(err)
 	}
-	for _, f := range []string{seedFile, "../../../db/seed_bd_manga.sql"} {
-		if err := dbmigrate.Seed(ctx, u.String(), f); err != nil {
-			t.Fatalf("%s: %v", f, err)
-		}
-	}
 	bd, err := store.NewPgStore(ctx, u.String())
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer bd.Close()
+	if _, err := bd.InstallDomains(ctx); err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range []string{seedFile, "../../../db/seed_bd_manga.sql"} {
+		if err := dbmigrate.Seed(ctx, u.String(), f); err != nil {
+			t.Fatalf("%s: %v", f, err)
+		}
+	}
 
 	rep, err := bd.ImportCatalog(ctx, exportNow(t, bd), true)
 	if err != nil || len(rep.Errors) != 0 {
 		t.Fatalf("seed BD invalid: %v %+v", err, rep.Errors)
 	}
-	if c := counts(rep, model.EntityItems); c.Unchanged != 8+21 {
+	if c := counts(rep, model.EntityItems); c.Unchanged != 8+21+12 { // TV, BD / Manga, romans
 		t.Errorf("items: %+v", c)
 	}
 

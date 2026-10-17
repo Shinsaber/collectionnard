@@ -67,7 +67,22 @@
                 class="break-words"
                 :class="row.long ? 'text-[15px] leading-relaxed' : 'text-base'"
               >
-                {{ row.value }}
+                <ul
+                  v-if="row.links.length"
+                  class="flex flex-wrap gap-x-3 gap-y-1"
+                  data-test="attribute-links"
+                >
+                  <li v-for="l in row.links" :key="l.url">
+                    <a
+                      :href="l.url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-link underline-offset-2 hover:underline"
+                      >{{ linkText(l) }}</a
+                    >
+                  </li>
+                </ul>
+                <template v-else>{{ row.value }}</template>
               </dd>
             </div>
           </dl>
@@ -192,7 +207,11 @@ import {
   fieldValue,
   imageCategories,
   isImageGallery,
+  isLinks,
   itemLabel,
+  linksOf,
+  linkText,
+  safeURL,
   orderedKeys,
   typeTitle,
   type Schema,
@@ -243,6 +262,16 @@ const title = computed(() =>
 /** Valeur au-delà de laquelle un attribut (synopsis…) prend toute la largeur. */
 const LONG_VALUE = 60;
 
+// Liens cliquables : un champ « liens », ou un texte au format URL (site web d'une société).
+function rowLinks(key: string, value: unknown) {
+  if (isLinks(schema.value, key)) return linksOf(value);
+  const prop = (
+    schema.value?.properties as Record<string, Schema> | undefined
+  )?.[key];
+  const url = prop?.format === "uri" ? safeURL(value) : "";
+  return url ? [{ url }] : [];
+}
+
 // Seules les clés présentes dans les données sont affichées, dans l'ordre du schéma ;
 // la galerie a sa propre section.
 const attributeRows = computed(() => {
@@ -262,6 +291,7 @@ const attributeRows = computed(() => {
         label: fieldLabel(schema.value, key, lang.value),
         value,
         long: value.length > LONG_VALUE,
+        links: rowLinks(key, it.attributes[key]),
       };
     });
 });

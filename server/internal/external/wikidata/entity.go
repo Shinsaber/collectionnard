@@ -13,6 +13,8 @@ type Entity struct {
 	Descriptions map[string]string
 	// Claims: property → statements, deprecated ones dropped, preferred first.
 	Claims map[string][]Statement
+	// Sitelinks: Wikipedia article URL by site (« frwiki », « enwiki »), with the claims only.
+	Sitelinks map[string]string
 }
 
 // Statement is one value of a property, with its qualifiers.
@@ -86,6 +88,30 @@ func (e *Entity) Year(properties ...string) (int, bool) {
 	return 0, false
 }
 
+// EarliestYear returns the smallest year among the time values of a property
+// (a film has one release date per country).
+func (e *Entity) EarliestYear(property string) (int, bool) {
+	best := 0
+	for _, st := range e.Claims[property] {
+		if y, ok := st.Value.year(); ok && (best == 0 || y < best) {
+			best = y
+		}
+	}
+	return best, best > 0
+}
+
+// EarliestDate returns the earliest full date (YYYY-MM-DD) among the values of a property.
+func (e *Entity) EarliestDate(property string) (string, bool) {
+	best := ""
+	for _, st := range e.Claims[property] {
+		one := &Entity{Claims: map[string][]Statement{property: {st}}}
+		if d, ok := one.Date(property); ok && (best == "" || d < best) {
+			best = d
+		}
+	}
+	return best, best != ""
+}
+
 // Date returns the first time value of a property precise to the day, as
 // YYYY-MM-DD.
 func (e *Entity) Date(property string) (string, bool) {
@@ -142,6 +168,9 @@ type rawEntity struct {
 	Labels       map[string]rawText        `json:"labels"`
 	Descriptions map[string]rawText        `json:"descriptions"`
 	Claims       map[string][]rawStatement `json:"claims"`
+	Sitelinks    map[string]struct {
+		URL string `json:"url"`
+	} `json:"sitelinks"`
 }
 
 type rawText struct {
@@ -167,6 +196,14 @@ func (r rawEntity) entity() *Entity {
 		Labels:       texts(r.Labels),
 		Descriptions: texts(r.Descriptions),
 		Claims:       make(map[string][]Statement, len(r.Claims)),
+	}
+	for site, l := range r.Sitelinks {
+		if l.URL != "" {
+			if e.Sitelinks == nil {
+				e.Sitelinks = map[string]string{}
+			}
+			e.Sitelinks[site] = l.URL
+		}
 	}
 	for p, sts := range r.Claims {
 		for _, st := range orderStatements(sts) {

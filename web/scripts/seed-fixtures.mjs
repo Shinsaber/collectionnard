@@ -1,20 +1,22 @@
-// Régénère tests/fixtures/seed-schemas.json depuis les seeds SQL (méta-types b…, c…, d…).
-// Usage (depuis web/) : node scripts/seed-fixtures.mjs tests/fixtures/seed-schemas.json ../db/seed.sql ../db/seed_bd_manga.sql
+// Régénère tests/fixtures/seed-schemas.json depuis les paquets de domaine (méta-types b…, c…, d…).
+// Usage (depuis web/) :
+//   node scripts/seed-fixtures.mjs tests/fixtures/seed-schemas.json ../server/internal/domains/packages/{collections,tv,people,video,books,music,games}.json
+//   npx prettier --write tests/fixtures/seed-schemas.json
 import { readFileSync, writeFileSync } from "node:fs";
 import process from "node:process";
-const [, , outPath, ...seeds] = process.argv;
-const re =
-  /\('([bcd]0{7}-[0-9-]+)', '([A-Za-z_]+)', '((?:[^']|'')*)', '(\{(?:[^']|'')*\})'\)/g;
+const [, , outPath, ...packages] = process.argv;
 const out = [];
-for (const seed of seeds) {
-  const sql = readFileSync(seed, "utf8");
-  for (const m of sql.matchAll(re)) {
-    out.push({
-      id: m[1],
-      name: m[2],
-      schema: JSON.parse(m[4].replace(/''/g, "'")),
-    });
+for (const file of packages) {
+  const pkg = JSON.parse(readFileSync(file, "utf8"));
+  for (const t of [
+    ...pkg.item_types,
+    ...pkg.relation_types,
+    ...pkg.collection_types,
+  ]) {
+    out.push({ id: t.id, name: t.name, schema: t.attributes_schema });
   }
 }
+// Ordre stable : par identifiant (b… types d'item, c… relations, d… collections).
+out.sort((a, b) => a.id.localeCompare(b.id));
 writeFileSync(outPath, JSON.stringify(out, null, 2) + "\n");
 console.log(out.length, "schemas");

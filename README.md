@@ -107,7 +107,7 @@ cd server
 go run . migrate                      # applique les migrations en attente (table schema_version)
 SEED_ON_EMPTY=true go run . migrate   # idem, puis les seeds si la table users est vide
 go run . seed                         # applique les seeds sans condition (dev)
-# Seeds : db/seed.sql puis db/seed_bd_manga.sql ; SEED_FILE=a.sql,b.sql pour une autre liste
+# Seeds : db/seed.sql, db/seed_bd_manga.sql, db/seed_music.sql, db/seed_video.sql puis db/seed_games.sql ; SEED_FILE=a.sql,b.sql pour une autre liste
 ```
 
 `pg-start` (shell Nix) et le service `migrate` de docker-compose les lancent automatiquement.
@@ -133,10 +133,14 @@ docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d
 # premier compte (la base démarre vide) :
 docker compose -f docker-compose.prod.yml run --rm server colec-server create-user <nom> <email> --admin
+# types de collection (séries TV, livres…) : page Administration → Domaines, ou :
+docker compose -f docker-compose.prod.yml run --rm server colec-server install-domain --all
 ```
 
 Publier une version : `git tag v1.0.0 && git push origin v1.0.0`. Mettre à jour le serveur : `pull` puis `up -d`
-(les migrations s'appliquent au démarrage).
+(les migrations s'appliquent au démarrage). Après une mise à jour, la page « Domaines » signale les paquets
+à mettre à jour ; la mise à jour **fusionne** : les types modifiés sur l'instance gardent leurs modifications, seuls
+les ajouts du paquet (champs, valeurs, libellés) sont appliqués.
 
 - Seul le service `web` (nginx, non-root, port 3000) est publié ; `server` et `postgres` restent
   sur le réseau interne de compose. Placer devant un reverse-proxy qui termine TLS (Caddy,
@@ -177,6 +181,9 @@ colec/
 │   ├── migrations/         # Migrations SQL tern (001_init.sql = schéma complet)
 │   ├── seed.sql            # Données de test (admin, types, items, relations)
 │   ├── seed_bd_manga.sql   # Domaine BD / Manga (Dragon Ball, Astérix ; données Wikidata / BnF)
+│   ├── seed_music.sql      # Domaine Musique (Discovery de Daft Punk ; données MusicBrainz)
+│   ├── seed_video.sql      # Domaine Vidéo (Amélie, son Blu-ray ; données Wikidata / BnF)
+│   ├── seed_games.sql      # Domaine Jeux vidéo (Mario Kart 8 Deluxe ; données Wikidata / BnF)
 │   └── queries_test.sql    # Requêtes SQL de test
 ├── server/                 # Backend Go
 │   ├── main.go
@@ -186,7 +193,7 @@ colec/
 │       ├── handler/        # Handlers HTTP (1 fichier par domaine)
 │       ├── middleware/     # Auth JWT, RequireAdmin, RateLimiter, RequestLogger
 │       ├── dbmigrate/      # Migrations (tern) + seed
-│       ├── external/       # Sources ouvertes : clients Wikidata et BnF (SRU), connecteur bdmanga
+│       ├── external/       # Sources ouvertes : clients Wikidata, BnF (SRU), MusicBrainz et TVmaze, connecteurs (BD / manga, romans, musique, films, séries, jeux vidéo)
 │       ├── model/          # Structs Go (JSON tags)
 │       ├── store/          # Couche d'accès BDD (pgx)
 │       ├── validator/      # Validation JSON Schema
@@ -280,7 +287,7 @@ Le projet utilise des extensions custom dans les JSON Schemas pour piloter le fr
 | `x-title`            | Nom affiché du type par langue (`{fr: "Série", en: "Series"}`) ; repli sur `name`                         |
 | `x-description`      | Description du type par langue ; repli sur `description`                                                 |
 | `x-enum-labels`      | (propriété) Libellés des valeurs d'enum par langue (`{fr: {tv: "Télévision"}, en: {tv: "TV"}}`)          |
-| `x-widget`           | Widget spécifique : `image-gallery`, `i18n-text` (une chaîne par langue)                                                         |
+| `x-widget`           | Widget spécifique : `image-gallery`, `i18n-text` (une chaîne par langue), `links` (liste de liens libellé + URL)                                                         |
 | `x-image-categories` | Catégories d'images avec ratios (`{poster: {ratio: "2/3"}}`) et contrôles facultatifs à l'envoi : `tolerance` (écart de ratio en %), `min_width` / `min_height` (px), `strict` (refuser plutôt qu'avertir) |
 
 Sans extension, le widget découle du schéma : `enum` → liste déroulante, `integer`/`number` avec `minimum`

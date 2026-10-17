@@ -21,268 +21,20 @@ INSERT INTO users (id, username, email, password, role) VALUES
     ('a0000000-0000-0000-0000-000000000002', 'shinsaber', 'shinsaber@colec.local', '$2a$10$5d6MyNdOvZD/Ac31Dmi6TOR6YWPydNX3m/n2tYouPMeEOPTf2ndrG',  'user');
 
 -- =============================================================================
--- 2. ITEM TYPES avec JSON Schema
+-- 2. TYPES
 -- =============================================================================
-
-INSERT INTO item_types (id, name, description, attributes_schema) VALUES
-
--- Série
-('b0000000-0000-0000-0000-000000000001', 'Series', 'Série télévisée', '{
-    "type": "object",
-    "x-title": { "fr": "Série", "en": "Series" },
-    "x-description": { "fr": "Série télévisée", "en": "TV series" },
-    "required": ["title"],
-    "x-label": "{title}",
-    "x-order": ["title", "synopsis", "start_year", "end_year", "images"],
-    "x-labels": {
-        "fr": { "title": "Titre", "synopsis": "Synopsis", "start_year": "Année de début", "end_year": "Année de fin", "images": "Images" },
-        "en": { "title": "Title", "synopsis": "Synopsis", "start_year": "Start Year", "end_year": "End Year", "images": "Images" }
-    },
-    "properties": {
-        "title":      { "type": "string",  "minLength": 1 },
-        "synopsis":   { "type": "object", "x-widget": "i18n-text", "properties": { "fr": { "type": "string" }, "en": { "type": "string" } }, "propertyNames": { "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$" }, "additionalProperties": { "type": "string" } },
-        "start_year": { "type": "integer", "minimum": 1900 },
-        "end_year":   { "type": "integer", "minimum": 1900 },
-        "images":     { "type": "object", "x-widget": "image-gallery", "x-image-categories": {"poster": {"ratio": "2/3"}, "screenshot": {"ratio": "16/9"}, "banner": {"ratio": "3/1"}}, "properties": { "default_image": { "type": "string" }, "poster": { "type": "array", "items": { "type": "string" } }, "screenshot": { "type": "array", "items": { "type": "string" } }, "banner": { "type": "array", "items": { "type": "string" } } }, "additionalProperties": false }
-    },
-    "additionalProperties": false
-}'),
-
--- Diffusion (chaîne TV, plateforme de streaming…)
-('b0000000-0000-0000-0000-000000000002', 'Broadcast', 'Mode de diffusion (TV, streaming…)', '{
-    "type": "object",
-    "x-title": { "fr": "Diffusion", "en": "Broadcast" },
-    "x-description": { "fr": "Mode de diffusion (TV, streaming…)", "en": "Broadcast medium (TV, streaming…)" },
-    "required": ["name"],
-    "x-label": "{name}",
-    "x-order": ["name", "type", "channel"],
-    "x-labels": {
-        "fr": { "name": "Nom", "type": "Type", "channel": "Support" },
-        "en": { "name": "Name", "type": "Type", "channel": "Support" }
-    },
-    "properties": {
-        "name":    { "type": "string", "minLength": 1 },
-        "type":    { "type": "string", "enum": ["tv", "streaming", "cable", "web"], "x-enum-labels": { "fr": { "tv": "Télévision", "streaming": "Streaming", "cable": "Câble", "web": "Web" }, "en": { "tv": "TV", "streaming": "Streaming", "cable": "Cable", "web": "Web" } } },
-        "channel": { "type": "string" }
-    },
-    "additionalProperties": false
-}'),
-
--- Saison
-('b0000000-0000-0000-0000-000000000003', 'Season', 'Saison d''une série', '{
-    "type": "object",
-    "x-title": { "fr": "Saison", "en": "Season" },
-    "x-description": { "fr": "Saison d''une série", "en": "Season of a series" },
-    "required": ["number"],
-    "x-label": "{name}",
-    "x-order": ["name", "number", "year"],
-    "x-labels": {
-        "fr": { "name": "Nom", "number": "Numéro", "year": "Année" },
-        "en": { "name": "Name", "number": "Number", "year": "Year" }
-    },
-    "properties": {
-        "name":   { "type": "string", "minLength": 1 },
-        "number": { "type": "integer", "minimum": 1 },
-        "year":   { "type": "integer", "minimum": 1900 }
-    },
-    "additionalProperties": false
-}'),
-
--- Épisode
-('b0000000-0000-0000-0000-000000000004', 'Episode', 'Épisode d''une série', '{
-    "type": "object",
-    "x-title": { "fr": "Épisode", "en": "Episode" },
-    "x-description": { "fr": "Épisode d''une série", "en": "Episode of a series" },
-    "required": ["number", "title"],
-    "x-label": "{number}. {title}",
-    "x-order": ["number", "title", "duration", "synopsis"],
-    "x-labels": {
-        "fr": { "number": "Numéro", "title": "Titre", "duration": "Durée (min)", "synopsis": "Synopsis" },
-        "en": { "number": "Number", "title": "Title", "duration": "Duration (min)", "synopsis": "Synopsis" }
-    },
-    "properties": {
-        "number":   { "type": "integer", "minimum": 1 },
-        "title":    { "type": "string",  "minLength": 1 },
-        "duration": { "type": "integer", "minimum": 1, "description": "Durée en minutes" },
-        "synopsis": { "type": "object", "x-widget": "i18n-text", "properties": { "fr": { "type": "string" }, "en": { "type": "string" } }, "propertyNames": { "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$" }, "additionalProperties": { "type": "string" } }
-    },
-    "additionalProperties": false
-}'),
-
--- DVD
-('b0000000-0000-0000-0000-000000000005', 'DVD', 'Édition DVD/Blu-ray', '{
-    "type": "object",
-    "x-title": { "fr": "DVD", "en": "DVD" },
-    "x-description": { "fr": "Édition DVD/Blu-ray", "en": "DVD/Blu-ray edition" },
-    "required": ["title"],
-    "x-label": "{title}",
-    "x-order": ["title", "publisher", "release_year", "disc_count"],
-    "x-labels": {
-        "fr": { "title": "Titre", "publisher": "Éditeur", "release_year": "Année de sortie", "disc_count": "Nombre de disques" },
-        "en": { "title": "Title", "publisher": "Publisher", "release_year": "Release Year", "disc_count": "Number of Discs" }
-    },
-    "properties": {
-        "title":        { "type": "string",  "minLength": 1 },
-        "publisher":    { "type": "string" },
-        "release_year": { "type": "integer", "minimum": 1900 },
-        "disc_count":   { "type": "integer", "minimum": 1 }
-    },
-    "additionalProperties": false
-}');
-
--- =============================================================================
--- 3. RELATION TYPES avec JSON Schema
--- =============================================================================
-
-INSERT INTO relation_types (id, name, description, attributes_schema) VALUES
-
--- Série → Diffusion
-('c0000000-0000-0000-0000-000000000001', 'broadcast_on', 'Série diffusée via un mode de diffusion', '{
-    "type": "object",
-    "x-title": { "fr": "Diffusée sur", "en": "Broadcast on" },
-    "x-description": { "fr": "Série diffusée via un mode de diffusion", "en": "Series broadcast through a medium" },
-    "x-order": ["broadcast_start_year"],
-    "x-labels": {
-        "fr": { "broadcast_start_year": "Année de début de diffusion" },
-        "en": { "broadcast_start_year": "Broadcast Start Year" }
-    },
-    "properties": {
-        "broadcast_start_year": { "type": "integer", "minimum": 1900 }
-    },
-    "additionalProperties": false
-}'),
-
--- Diffusion → Saison
-('c0000000-0000-0000-0000-000000000002', 'contains_season', 'Diffusion contient une saison', '{
-    "type": "object",
-    "x-title": { "fr": "Contient la saison", "en": "Contains season" },
-    "x-description": { "fr": "Diffusion contient une saison", "en": "Broadcast contains a season" },
-    "properties": {},
-    "additionalProperties": false
-}'),
-
--- Saison → Épisode (attribut `order` : convention de tri des relations dans le front)
-('c0000000-0000-0000-0000-000000000003', 'contains_episode', 'Saison contient un épisode', '{
-    "type": "object",
-    "x-title": { "fr": "Contient l''épisode", "en": "Contains episode" },
-    "x-description": { "fr": "Saison contient un épisode", "en": "Season contains an episode" },
-    "x-order": ["order"],
-    "x-labels": {
-        "fr": { "order": "Ordre" },
-        "en": { "order": "Order" }
-    },
-    "properties": {
-        "order": { "type": "integer", "minimum": 1 }
-    },
-    "additionalProperties": false
-}'),
-
--- Série → DVD
-('c0000000-0000-0000-0000-000000000004', 'released_as', 'Série éditée en DVD/Blu-ray', '{
-    "type": "object",
-    "x-title": { "fr": "Éditée en", "en": "Released as" },
-    "x-description": { "fr": "Série éditée en DVD/Blu-ray", "en": "Series released on DVD/Blu-ray" },
-    "properties": {},
-    "additionalProperties": false
-}'),
-
--- DVD → Épisode
-('c0000000-0000-0000-0000-000000000005', 'includes_episode', 'DVD inclut un épisode', '{
-    "type": "object",
-    "x-title": { "fr": "Inclut l''épisode", "en": "Includes episode" },
-    "x-description": { "fr": "DVD inclut un épisode", "en": "DVD includes an episode" },
-    "x-order": ["disc", "track"],
-    "x-labels": {
-        "fr": { "disc": "Disque", "track": "Piste" },
-        "en": { "disc": "Disc", "track": "Track" }
-    },
-    "properties": {
-        "disc":  { "type": "integer", "minimum": 1 },
-        "track": { "type": "integer", "minimum": 1 }
-    },
-    "additionalProperties": false
-}');
-
--- Junction: source item types
-INSERT INTO relation_type_sources (relation_type_id, item_type_id) VALUES
-('c0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001'),
-('c0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002'),
-('c0000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000003'),
-('c0000000-0000-0000-0000-000000000004', 'b0000000-0000-0000-0000-000000000001'),
-('c0000000-0000-0000-0000-000000000005', 'b0000000-0000-0000-0000-000000000005');
-
--- Junction: target item types
-INSERT INTO relation_type_targets (relation_type_id, item_type_id) VALUES
-('c0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000002'),
-('c0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000003'),
-('c0000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000004'),
-('c0000000-0000-0000-0000-000000000004', 'b0000000-0000-0000-0000-000000000005'),
-('c0000000-0000-0000-0000-000000000005', 'b0000000-0000-0000-0000-000000000004');
-
--- =============================================================================
--- 4. COLLECTION TYPES avec JSON Schema
--- =============================================================================
-
-INSERT INTO collection_types (id, name, description, attributes_schema) VALUES
-
-('d0000000-0000-0000-0000-000000000001', 'Ownership', 'Items possédés physiquement', '{
-    "type": "object",
-    "x-title": { "fr": "Possession", "en": "Ownership" },
-    "x-description": { "fr": "Items possédés physiquement", "en": "Physically owned items" },
-    "x-order": ["condition", "purchase_price", "acquisition_date"],
-    "x-labels": {
-        "fr": { "condition": "État physique", "purchase_price": "Prix d''achat", "acquisition_date": "Date d''acquisition" },
-        "en": { "condition": "Physical Condition", "purchase_price": "Purchase Price", "acquisition_date": "Acquisition Date" }
-    },
-    "properties": {
-        "condition":        { "type": "string", "enum": ["new", "very_good", "good", "fair", "poor"], "x-enum-labels": { "fr": { "new": "Neuf", "very_good": "Très bon", "good": "Bon", "fair": "Correct", "poor": "Mauvais" }, "en": { "new": "New", "very_good": "Very good", "good": "Good", "fair": "Fair", "poor": "Poor" } } },
-        "purchase_price":   { "type": "number", "minimum": 0 },
-        "acquisition_date": { "type": "string", "format": "date" }
-    },
-    "additionalProperties": false
-}'),
-
-('d0000000-0000-0000-0000-000000000002', 'Watching', 'Séries/films vus', '{
-    "type": "object",
-    "x-title": { "fr": "Visionnage", "en": "Watching" },
-    "x-description": { "fr": "Séries/films vus", "en": "Watched series/films" },
-    "x-order": ["watched_at", "rating", "progress"],
-    "x-labels": {
-        "fr": { "watched_at": "Date de visionnage", "rating": "Note", "progress": "Progression" },
-        "en": { "watched_at": "Watch Date", "rating": "Rating", "progress": "Progress" }
-    },
-    "properties": {
-        "watched_at": { "type": "string", "format": "date" },
-        "rating":     { "type": "integer", "minimum": 0, "maximum": 10 },
-        "progress":   { "type": "integer", "minimum": 0, "maximum": 100, "description": "Percentage" }
-    },
-    "additionalProperties": false
-}'),
-
-('d0000000-0000-0000-0000-000000000003', 'Wishlist', 'Items souhaités', '{
-    "type": "object",
-    "x-title": { "fr": "Liste d''envies", "en": "Wishlist" },
-    "x-description": { "fr": "Items souhaités", "en": "Wished items" },
-    "x-order": ["priority", "max_budget"],
-    "x-labels": {
-        "fr": { "priority": "Priorité", "max_budget": "Budget maximum" },
-        "en": { "priority": "Priority", "max_budget": "Maximum Budget" }
-    },
-    "properties": {
-        "priority":   { "type": "integer", "minimum": 1, "maximum": 5 },
-        "max_budget": { "type": "number",  "minimum": 0 }
-    },
-    "additionalProperties": false
-}');
+-- Les types (ItemTypes, RelationTypes, CollectionTypes) ne sont plus dans ce fichier : ce sont les
+-- paquets de domaine « collections » et « tv » (server/internal/domains/packages/*.json), installés
+-- avant ce seed (colec-server migrate avec SEED_ON_EMPTY=true, colec-server seed).
 
 -- =============================================================================
 -- 5. ITEMS — Breaking Bad
 -- =============================================================================
 
--- Série
+-- Série (identifiants Wikidata : un import par le connecteur « series » complète ces items au lieu de les doubler)
 INSERT INTO items (id, item_type_id, attributes) VALUES
 ('e0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001',
- '{"title": "Breaking Bad", "synopsis": {"fr": "Un professeur de chimie se tourne vers la fabrication de méthamphétamine.", "en": "A chemistry teacher turns to methamphetamine manufacturing."}, "start_year": 2008, "end_year": 2013, "images": {"poster": [], "screenshot": [], "banner": [], "default_image": ""}}');
+ '{"title": "Breaking Bad", "synopsis": {"fr": "Un professeur de chimie se tourne vers la fabrication de méthamphétamine.", "en": "A chemistry teacher turns to methamphetamine manufacturing."}, "start_year": 2008, "end_year": 2013, "images": {"poster": [], "screenshot": [], "banner": [], "default_image": ""}, "external_ids": {"wikidata": "Q1079", "imdb": "tt0903747"}}');
 
 -- Diffusion AMC
 INSERT INTO items (id, item_type_id, attributes) VALUES
@@ -292,21 +44,21 @@ INSERT INTO items (id, item_type_id, attributes) VALUES
 -- Saison 1
 INSERT INTO items (id, item_type_id, attributes) VALUES
 ('e0000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000003',
- '{"name": "Saison 1", "number": 1, "year": 2008}');
+ '{"name": "Saison 1", "number": 1, "year": 2008, "external_ids": {"wikidata": "Q1582890"}}');
 
 -- Saison 2
 INSERT INTO items (id, item_type_id, attributes) VALUES
 ('e0000000-0000-0000-0000-000000000004', 'b0000000-0000-0000-0000-000000000003',
- '{"name": "Saison 2", "number": 2, "year": 2009}');
+ '{"name": "Saison 2", "number": 2, "year": 2009, "external_ids": {"wikidata": "Q1629860"}}');
 
 -- Épisodes Saison 1
 INSERT INTO items (id, item_type_id, attributes) VALUES
 ('e0000000-0000-0000-0000-000000000010', 'b0000000-0000-0000-0000-000000000004',
- '{"number": 1, "title": "Pilot", "duration": 58, "synopsis": {"fr": "Walter White reçoit un diagnostic de cancer.", "en": "Walter White receives a cancer diagnosis."}}'),
+ '{"number": 1, "title": "Pilot", "duration": 58, "synopsis": {"fr": "Walter White reçoit un diagnostic de cancer.", "en": "Walter White receives a cancer diagnosis."}, "external_ids": {"wikidata": "Q14625947"}}'),
 ('e0000000-0000-0000-0000-000000000011', 'b0000000-0000-0000-0000-000000000004',
- '{"number": 2, "title": "Cat''s in the Bag...", "duration": 48}'),
+ '{"number": 2, "title": "Cat''s in the Bag...", "duration": 48, "external_ids": {"wikidata": "Q13456973"}}'),
 ('e0000000-0000-0000-0000-000000000012', 'b0000000-0000-0000-0000-000000000004',
- '{"number": 3, "title": "...And the Bag''s in the River", "duration": 48}');
+ '{"number": 3, "title": "...And the Bag''s in the River", "duration": 48, "external_ids": {"wikidata": "Q1966380"}}');
 
 -- DVD Intégrale
 INSERT INTO items (id, item_type_id, attributes) VALUES
@@ -408,14 +160,3 @@ INSERT INTO item_tags (item_id, tag_id) VALUES
 ('e0000000-0000-0000-0000-000000000001', 'aa000000-0000-0000-0000-000000000001'),
 ('e0000000-0000-0000-0000-000000000001', 'aa000000-0000-0000-0000-000000000002'),
 ('e0000000-0000-0000-0000-000000000001', 'aa000000-0000-0000-0000-000000000003');
-
--- Ordre d'affichage des types (migration 005) : principaux d'abord, volumineux ensuite.
-UPDATE item_types t SET display_order = v.o
-FROM (VALUES
-    ('b0000000-0000-0000-0000-000000000001'::uuid, 10),  -- Series
-    ('b0000000-0000-0000-0000-000000000005'::uuid, 60),  -- DVD
-    ('b0000000-0000-0000-0000-000000000003'::uuid, 80),  -- Season
-    ('b0000000-0000-0000-0000-000000000002'::uuid, 90),  -- Broadcast
-    ('b0000000-0000-0000-0000-000000000004'::uuid, 120)  -- Episode
-) AS v(id, o)
-WHERE t.id = v.id;

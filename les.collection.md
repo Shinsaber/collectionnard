@@ -1,4 +1,4 @@
-# Collections BD / Manga — Modèle de données
+# Collections livres (BD, manga, romans) — Modèle de données
 
 ## Décisions de conception
 
@@ -19,8 +19,12 @@
 
 ## Implémentation (lot 13)
 
-Seed : [`db/seed_bd_manga.sql`](db/seed_bd_manga.sql) (chargé après `db/seed.sql`). Noms techniques des ItemTypes :
+Types : paquet de domaine « books » ([`server/internal/domains/packages/books.json`](server/internal/domains/packages/books.json),
+page « Domaines » ou `colec-server install-domain books`) ; données de démonstration : [`db/seed_bd_manga.sql`](db/seed_bd_manga.sql)
+(chargé après `db/seed.sql`). Noms techniques des ItemTypes :
 `Universe`, `Saga`, `Manga`, `Comic` (BD), `Edition`, `Volume` (Tome), `Person`, `Publisher` ; noms affichés via `x-title`.
+Depuis la v3 du paquet (P3-5), `Person` et `Publisher` vivent dans le paquet commun « people » (mêmes UUID), requis par
+« books » et la vidéo et installé avec eux : une même personne relie livres et films.
 Valeurs d'enum en ASCII (`shonen`, `tankobon`, `ova`…) affichées avec leurs accents via `x-enum-labels`.
 Exemples réels : Dragon Ball (univers, sagas, deux mangas, Toriyama / Toyotarō, édition Glénat 1993, tomes 1-2,
 anime) et Astérix (BD franco-belge sans saga ; Uderzo `roles: [writer, artist]` ; Dargaud puis Albert René).
@@ -244,9 +248,9 @@ légalement réutilisables et au format du connecteur (section suivante).
 
 ### Import depuis les sources (Phase 3)
 
-Connecteur [`server/internal/external/bdmanga`](server/internal/external/bdmanga), page admin « Sources externes »
-(`/admin/external-import`), API `/external/bd-manga/*` (voir `api/openapi.yaml`, tag `External`). Le connecteur
-trouve les types du domaine par **nom technique** (`Manga`, `Comic`, `Universe`, `Edition`, `Volume`, `Person`,
+Connecteur [`server/internal/external/connectors`](server/internal/external/connectors) (identifiant `bd-manga`), page admin
+« Sources externes » (`/admin/external-import`, choix de la sorte de collection), API `/external/bd-manga/*` (voir `api/openapi.yaml`, tag `External`). Le connecteur
+trouve les types du domaine par **identifiant du paquet `books`**, à défaut par **nom technique** (`Manga`, `Comic`, `Universe`, `Edition`, `Volume`, `Person`,
 `Publisher` ; `contains_work`, `created_by`, `published_as`, `edited_by`, `contains_volume`) et répond 409
 `connector_unavailable` s'il en manque un ; les attributs proposés sont ajustés au schéma (clé ou valeur d'enum
 absente du schéma : ignorée).
@@ -269,6 +273,77 @@ Limites constatées sur les données réelles (2026-10-11) :
   sont ignorés, seuls les prix en euros alimentent `retail_price`.
 - Non repris pour l'instant : sagas (pas d'équivalent Wikidata), adaptations (`adapted_as`), traducteurs et autres
   contributeurs BnF (zones 700-702), format et statut des éditions, images.
+
+---
+
+## Romans (Phase 3)
+
+Implémenté dans le paquet de domaine `books` **v2** (P3-1) : ItemType `Novel` `b0000000-…-000000000018`.
+
+Décision du 2026-10-16 : les romans **réutilisent le domaine livre** (Univers, Saga, Personne, Maison d'édition,
+Édition, Tome) avec un ItemType d'œuvre dédié, `Novel` (« Roman »). La différence avec la BD tient au rapport
+entre l'Édition et le Tome :
+
+- **Un seul volume** (cas courant : « L'Étranger, Folio, 2005 ») : l'**Édition est le livre**. Elle porte l'ISBN,
+  la date, la pagination, le prix, la collection éditoriale ; **aucun Tome**. C'est l'Édition qu'on met en collection.
+- **Plusieurs volumes** (« Les Misérables » en 3 tomes, une intégrale en 2 volumes) : l'Édition regroupe des **Tomes**
+  rattachés par `contains_volume`, comme en BD ; ISBN et prix sont sur chaque Tome.
+
+```
+Univers (optionnel) ── contains_work ──▶ Roman
+Saga / cycle (optionnel, ex. « La Tour sombre ») ── contains_work {order} ──▶ Roman
+Roman
+├── created_by {roles: author} ──▶ Personne
+└── published_as ──▶ Édition (le livre, si un seul volume)
+                     ├── edited_by ──▶ Maison d'édition
+                     ├── created_by {roles: translator | illustrator | preface} ──▶ Personne
+                     └── contains_volume {order} ──▶ Tome   (seulement si plusieurs volumes)
+```
+
+### Roman (`Novel`)
+
+| Attribut                 | Type          | Requis | Description                                                    |
+| ------------------------ | ------------- | ------ | -------------------------------------------------------------- |
+| `title`                  | i18n-text     | ✅     | Titre (par langue)                                             |
+| `original_title`         | string        |        | Titre en VO                                                    |
+| `original_language`      | string        |        | Code ISO 639-1 de la langue d'écriture                         |
+| `form`                   | enum          |        | `novel`, `novella`, `short_stories`, `essay`, `play`, `poetry` |
+| `genres`                 | array d'enum  |        | `fantasy`, `science_fiction`, `crime`, `thriller`, `romance`, `historical`, `horror`, `literary`, `young_adult`, `children`, `classic` |
+| `first_publication_year` | integer       |        | Année de première publication                                 |
+| `description`            | i18n-text     |        | Résumé (écrit à la main ou description Wikidata, CC0)          |
+| `images`                 | image-gallery |        | couverture de référence                                        |
+| `external_ids`, `sources` |              |        | Attributs communs du domaine (Wikidata, BnF)                   |
+
+### Évolutions des types partagés
+
+- **Édition** : nouveaux attributs pour le cas « un seul volume » — `isbn`, `publication_date`, `page_count`,
+  `retail_price`, `collection` (collection éditoriale : « Folio »), `collection_number` (« n° 2 ») ;
+  `format` gagne `hardcover` (relié) et `paperback` (broché) ; la langue d'une traduction est `language`.
+- **`created_by`** : sources étendues à `Novel` et à `Edition` (traducteur, illustrateur, préfacier d'une édition) ;
+  rôles ajoutés : `illustrator`, `preface`.
+- **`contains_work`** et **`published_as`** : `Novel` ajouté aux sources / cibles.
+
+### Import depuis les sources (connecteur `novels`, P3-3)
+
+Page « Sources externes », choix « Romans » (API `/external/novels/*`). Le roman se cherche sur Wikidata ; une fois
+choisi, **toutes ses éditions BnF** s'affichent (notice d'œuvre BnF, `bib.work2bib`), françaises d'abord, les traductions
+derrière un interrupteur ; recherche aussi par titre ou ISBN. Aperçu : roman (forme, genres, langue et titre originaux,
+année), cycle (Saga, ordre), univers, auteurs ; pour chaque édition, le livre (ISBN, pages, prix, collection, reliure) ou
+l'ensemble et ses tomes, éditeurs, traducteurs / illustrateurs / préfaciers (`created_by` de l'édition). Même
+rapprochement et même import que la BD. Exemples réels dans `db/seed_bd_manga.sql` (§ 8).
+
+### Sources
+
+Les mêmes que pour la BD, licences vérifiées le 2026-10-11 (`docs/sources-externes.md`) :
+
+| Niveau                                 | Source       | Correspondance                                                                 |
+| -------------------------------------- | ------------ | ------------------------------------------------------------------------------ |
+| Roman, Saga (cycle), Personne, Éditeur | **Wikidata** | Classes `Q7725634` œuvre littéraire, `Q8261` roman, `Q1667921` série de romans (→ Saga) ; `P50` auteur, `P577` date, `P407` langue, `P136` genre, `P179` partie de la série (→ Saga, ordre `P1545`) |
+| Édition, Tome, traducteur              | **BnF**      | Notice bibliographique d'une monographie (une Édition) ; ensemble multivolume (zone 461) → Édition + Tomes ; zones 700-702 `$4` (code de fonction : traducteur 730…) → `created_by` de l'Édition ; 225 → `collection` / `collection_number` |
+
+À valider en codant le connecteur, comme pour la BD : les classes Wikidata utiles (les romans sont souvent
+déclarés `Q7725634` + `P7937` forme littéraire), et les zones UNIMARC des notices de romans depuis le
+changement de modèle de la BnF (juin 2026).
 
 ---
 

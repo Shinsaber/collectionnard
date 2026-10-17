@@ -9,6 +9,7 @@ export default {
     array: "Tableau",
     i18nText: "Texte multilingue",
     imageGallery: "Galerie d'images",
+    links: "Liens",
     object: "Objet",
   },
   formats: {
@@ -21,6 +22,12 @@ export default {
     choose: "Choisir…",
     noAttributes: "Aucun attribut défini pour ce type.",
     languages: "Langue de saisie",
+    linkAdd: "Ajouter un lien",
+    linkLabel: "Libellé du lien {n}",
+    linkLabelPlaceholder: "Libellé (facultatif)",
+    linkUrl: "Adresse du lien {n}",
+    linkUrlPlaceholder: "Adresse (https://…)",
+    linkRemove: "Retirer le lien {n}",
   },
   gallery: {
     setDefault: "Définir comme image par défaut",
@@ -82,6 +89,8 @@ export default {
     exclusiveMinimum: "Min exclusif",
     exclusiveMaximum: "Max exclusif",
     multipleOf: "Multiple de",
+    linksHelp:
+      "Liste de liens : une adresse (http ou https) et un libellé facultatif par ligne ; sans libellé, le nom du site est affiché.",
     i18nTextHelp:
       "Génère un objet avec une chaîne par langue ({langs}) : les utilisateurs saisiront une valeur par langue.",
     imageCategories: "Catégories d'images",

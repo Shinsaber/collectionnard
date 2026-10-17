@@ -55,9 +55,12 @@ describe("SchemaBuilder — aller-retour sur les schémas du seed", () => {
       const out = await roundTrip(f.schema as Schema);
       expect(out.type).toBe("object");
       expect(comparable(out)).toEqual(comparable(f.schema as Schema));
-      // Le builder matérialise toujours l'ordre des champs.
+      // Le builder matérialise toujours l'ordre des champs : x-order du schéma s'il existe (les
+      // clés de `properties` sortent de PostgreSQL triées, sans rapport avec l'ordre voulu).
+      const schema = f.schema as Schema;
       expect(out["x-order"]).toEqual(
-        Object.keys((f.schema as Schema).properties as Props),
+        (schema["x-order"] as string[] | undefined) ??
+          Object.keys(schema.properties as Props),
       );
     });
   }

@@ -1,0 +1,1050 @@
+{
+  "format": "collectionnard.domain",
+  "version": 1,
+  "id": "music",
+  "package_version": 2,
+  "title": {
+    "fr": "Musique",
+    "en": "Music"
+  },
+  "description": {
+    "fr": "Albums, éditions (CD, vinyles…), pistes, artistes et labels (source MusicBrainz).",
+    "en": "Albums, releases (CD, vinyl…), tracks, artists and labels (MusicBrainz source)."
+  },
+  "item_types": [
+    {
+      "id": "b0000000-0000-0000-0000-000000000020",
+      "name": "Artist",
+      "description": "Artiste : personne ou groupe",
+      "display_order": 125,
+      "attributes_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "x-title": {
+          "fr": "Artiste",
+          "en": "Artist"
+        },
+        "x-description": {
+          "fr": "Personne ou groupe qui interprète",
+          "en": "Performing person or group"
+        },
+        "x-labels": {
+          "fr": {
+            "name": "Nom",
+            "sort_name": "Nom pour le tri",
+            "kind": "Type",
+            "country": "Pays",
+            "begin_year": "Début",
+            "end_year": "Fin",
+            "disambiguation": "Précision",
+            "external_ids": "Identifiants externes",
+            "sources": "Sources",
+            "images": "Images",
+            "links": "Liens"
+          },
+          "en": {
+            "name": "Name",
+            "sort_name": "Sort name",
+            "kind": "Kind",
+            "country": "Country",
+            "begin_year": "Begin",
+            "end_year": "End",
+            "disambiguation": "Disambiguation",
+            "external_ids": "External IDs",
+            "sources": "Sources",
+            "images": "Images",
+            "links": "Links"
+          }
+        },
+        "x-label": "{name}",
+        "x-order": [
+          "name",
+          "sort_name",
+          "kind",
+          "country",
+          "begin_year",
+          "end_year",
+          "disambiguation",
+          "images",
+          "links",
+          "external_ids",
+          "sources"
+        ],
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sort_name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "person",
+              "group",
+              "orchestra",
+              "choir",
+              "character",
+              "other"
+            ],
+            "x-enum-labels": {
+              "fr": {
+                "person": "Personne",
+                "group": "Groupe",
+                "orchestra": "Orchestre",
+                "choir": "Chœur",
+                "character": "Personnage",
+                "other": "Autre"
+              },
+              "en": {
+                "person": "Person",
+                "group": "Group",
+                "orchestra": "Orchestra",
+                "choir": "Choir",
+                "character": "Character",
+                "other": "Other"
+              }
+            }
+          },
+          "country": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$",
+            "description": "ISO 3166-1 alpha-2 (XE : Europe, XW : monde)"
+          },
+          "begin_year": {
+            "type": "integer"
+          },
+          "end_year": {
+            "type": "integer"
+          },
+          "disambiguation": {
+            "type": "string"
+          },
+          "images": {
+            "type": "object",
+            "x-widget": "image-gallery",
+            "additionalProperties": false,
+            "x-image-categories": {
+              "photo": {
+                "ratio": "1/1"
+              }
+            },
+            "properties": {
+              "default_image": {
+                "type": "string"
+              },
+              "photo": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "external_ids": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "musicbrainz": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "wikidata": {
+                "type": "string",
+                "pattern": "^Q[1-9][0-9]*$"
+              }
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "source"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "enum": [
+                    "musicbrainz",
+                    "manual"
+                  ]
+                },
+                "retrieved_at": {
+                  "type": "string",
+                  "format": "date"
+                }
+              }
+            }
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "b0000000-0000-0000-0000-000000000021",
+      "name": "Album",
+      "description": "Album : œuvre musicale, indépendante du support",
+      "display_order": 25,
+      "attributes_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "x-title": {
+          "fr": "Album",
+          "en": "Album"
+        },
+        "x-description": {
+          "fr": "Album, single ou EP, toutes éditions confondues",
+          "en": "Album, single or EP, all releases together"
+        },
+        "x-labels": {
+          "fr": {
+            "title": "Titre",
+            "primary_type": "Type",
+            "secondary_types": "Précisions",
+            "first_release_year": "Première parution",
+            "external_ids": "Identifiants externes",
+            "sources": "Sources",
+            "images": "Images",
+            "links": "Liens"
+          },
+          "en": {
+            "title": "Title",
+            "primary_type": "Type",
+            "secondary_types": "Secondary types",
+            "first_release_year": "First released",
+            "external_ids": "External IDs",
+            "sources": "Sources",
+            "images": "Images",
+            "links": "Links"
+          }
+        },
+        "x-label": "{title}",
+        "x-order": [
+          "title",
+          "primary_type",
+          "secondary_types",
+          "first_release_year",
+          "images",
+          "links",
+          "external_ids",
+          "sources"
+        ],
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "primary_type": {
+            "type": "string",
+            "enum": [
+              "album",
+              "single",
+              "ep",
+              "broadcast",
+              "other"
+            ],
+            "x-enum-labels": {
+              "fr": {
+                "album": "Album",
+                "single": "Single",
+                "ep": "EP",
+                "broadcast": "Émission",
+                "other": "Autre"
+              },
+              "en": {
+                "album": "Album",
+                "single": "Single",
+                "ep": "EP",
+                "broadcast": "Broadcast",
+                "other": "Other"
+              }
+            }
+          },
+          "secondary_types": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": [
+                "compilation",
+                "soundtrack",
+                "live",
+                "remix",
+                "dj_mix",
+                "mixtape",
+                "demo",
+                "spokenword",
+                "interview",
+                "audiobook"
+              ]
+            },
+            "x-enum-labels": {
+              "fr": {
+                "compilation": "Compilation",
+                "soundtrack": "Bande originale",
+                "live": "En public",
+                "remix": "Remix",
+                "dj_mix": "Mix DJ",
+                "mixtape": "Mixtape",
+                "demo": "Démo",
+                "spokenword": "Texte lu",
+                "interview": "Entretien",
+                "audiobook": "Livre audio"
+              },
+              "en": {
+                "compilation": "Compilation",
+                "soundtrack": "Soundtrack",
+                "live": "Live",
+                "remix": "Remix",
+                "dj_mix": "DJ mix",
+                "mixtape": "Mixtape",
+                "demo": "Demo",
+                "spokenword": "Spoken word",
+                "interview": "Interview",
+                "audiobook": "Audiobook"
+              }
+            }
+          },
+          "first_release_year": {
+            "type": "integer"
+          },
+          "images": {
+            "type": "object",
+            "x-widget": "image-gallery",
+            "additionalProperties": false,
+            "x-image-categories": {
+              "cover": {
+                "ratio": "1/1"
+              }
+            },
+            "properties": {
+              "default_image": {
+                "type": "string"
+              },
+              "cover": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "external_ids": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "musicbrainz": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "wikidata": {
+                "type": "string",
+                "pattern": "^Q[1-9][0-9]*$"
+              }
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "source"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "enum": [
+                    "musicbrainz",
+                    "manual"
+                  ]
+                },
+                "retrieved_at": {
+                  "type": "string",
+                  "format": "date"
+                }
+              }
+            }
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "b0000000-0000-0000-0000-000000000022",
+      "name": "Release",
+      "description": "Édition musicale : une parution précise (CD, vinyle…)",
+      "display_order": 75,
+      "attributes_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "x-title": {
+          "fr": "Édition musicale",
+          "en": "Music release"
+        },
+        "x-description": {
+          "fr": "Parution précise d'un album : CD, vinyle, cassette…",
+          "en": "A specific release of an album: CD, vinyl, cassette…"
+        },
+        "x-labels": {
+          "fr": {
+            "title": "Titre",
+            "format": "Support",
+            "media_count": "Disques",
+            "release_date": "Date de parution",
+            "release_year": "Année",
+            "country": "Pays",
+            "barcode": "Code-barres",
+            "catalog_number": "Référence catalogue",
+            "status": "Statut",
+            "packaging": "Conditionnement",
+            "external_ids": "Identifiants externes",
+            "sources": "Sources",
+            "images": "Images",
+            "links": "Liens"
+          },
+          "en": {
+            "title": "Title",
+            "format": "Format",
+            "media_count": "Discs",
+            "release_date": "Release date",
+            "release_year": "Year",
+            "country": "Country",
+            "barcode": "Barcode",
+            "catalog_number": "Catalog number",
+            "status": "Status",
+            "packaging": "Packaging",
+            "external_ids": "External IDs",
+            "sources": "Sources",
+            "images": "Images",
+            "links": "Links"
+          }
+        },
+        "x-label": "{title}",
+        "x-order": [
+          "title",
+          "format",
+          "media_count",
+          "release_date",
+          "release_year",
+          "country",
+          "barcode",
+          "catalog_number",
+          "status",
+          "packaging",
+          "images",
+          "links",
+          "external_ids",
+          "sources"
+        ],
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "cd",
+              "vinyl",
+              "cassette",
+              "digital",
+              "sacd",
+              "dvd",
+              "blu_ray",
+              "other"
+            ],
+            "x-enum-labels": {
+              "fr": {
+                "cd": "CD",
+                "vinyl": "Vinyle",
+                "cassette": "Cassette",
+                "digital": "Numérique",
+                "sacd": "SACD",
+                "dvd": "DVD",
+                "blu_ray": "Blu-ray",
+                "other": "Autre"
+              },
+              "en": {
+                "cd": "CD",
+                "vinyl": "Vinyl",
+                "cassette": "Cassette",
+                "digital": "Digital",
+                "sacd": "SACD",
+                "dvd": "DVD",
+                "blu_ray": "Blu-ray",
+                "other": "Other"
+              }
+            }
+          },
+          "media_count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "release_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "release_year": {
+            "type": "integer"
+          },
+          "country": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$",
+            "description": "ISO 3166-1 alpha-2 (XE : Europe, XW : monde)"
+          },
+          "barcode": {
+            "type": "string",
+            "pattern": "^[0-9]{8,14}$"
+          },
+          "catalog_number": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "official",
+              "promotion",
+              "bootleg",
+              "pseudo_release"
+            ],
+            "x-enum-labels": {
+              "fr": {
+                "official": "Officielle",
+                "promotion": "Promotionnelle",
+                "bootleg": "Pirate",
+                "pseudo_release": "Pseudo-parution"
+              },
+              "en": {
+                "official": "Official",
+                "promotion": "Promotion",
+                "bootleg": "Bootleg",
+                "pseudo_release": "Pseudo-release"
+              }
+            }
+          },
+          "packaging": {
+            "type": "string"
+          },
+          "images": {
+            "type": "object",
+            "x-widget": "image-gallery",
+            "additionalProperties": false,
+            "x-image-categories": {
+              "front": {
+                "ratio": "1/1"
+              },
+              "back": {
+                "ratio": "1/1"
+              },
+              "disc": {
+                "ratio": "1/1"
+              }
+            },
+            "properties": {
+              "default_image": {
+                "type": "string"
+              },
+              "front": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "back": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "disc": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "external_ids": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "musicbrainz": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              }
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "source"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "enum": [
+                    "musicbrainz",
+                    "manual"
+                  ]
+                },
+                "retrieved_at": {
+                  "type": "string",
+                  "format": "date"
+                }
+              }
+            }
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "b0000000-0000-0000-0000-000000000023",
+      "name": "Track",
+      "description": "Piste : un enregistrement",
+      "display_order": 115,
+      "attributes_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "x-title": {
+          "fr": "Piste",
+          "en": "Track"
+        },
+        "x-description": {
+          "fr": "Enregistrement : le même sur un album et une compilation",
+          "en": "Recording: the same one on an album and a compilation"
+        },
+        "x-labels": {
+          "fr": {
+            "title": "Titre",
+            "length": "Durée (s)",
+            "isrc": "ISRC",
+            "external_ids": "Identifiants externes",
+            "sources": "Sources",
+            "links": "Liens"
+          },
+          "en": {
+            "title": "Title",
+            "length": "Length (s)",
+            "isrc": "ISRC",
+            "external_ids": "External IDs",
+            "sources": "Sources",
+            "links": "Links"
+          }
+        },
+        "x-label": "{title}",
+        "x-order": [
+          "title",
+          "length",
+          "isrc",
+          "links",
+          "external_ids",
+          "sources"
+        ],
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "length": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Durée en secondes"
+          },
+          "isrc": {
+            "type": "string"
+          },
+          "external_ids": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "musicbrainz": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              }
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "source"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "enum": [
+                    "musicbrainz",
+                    "manual"
+                  ]
+                },
+                "retrieved_at": {
+                  "type": "string",
+                  "format": "date"
+                }
+              }
+            }
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "b0000000-0000-0000-0000-000000000024",
+      "name": "Label",
+      "description": "Label : maison de disques",
+      "display_order": 145,
+      "attributes_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "x-title": {
+          "fr": "Label",
+          "en": "Label"
+        },
+        "x-description": {
+          "fr": "Maison de disques",
+          "en": "Record label"
+        },
+        "x-labels": {
+          "fr": {
+            "name": "Nom",
+            "country": "Pays",
+            "disambiguation": "Précision",
+            "external_ids": "Identifiants externes",
+            "sources": "Sources",
+            "links": "Liens"
+          },
+          "en": {
+            "name": "Name",
+            "country": "Country",
+            "disambiguation": "Disambiguation",
+            "external_ids": "External IDs",
+            "sources": "Sources",
+            "links": "Links"
+          }
+        },
+        "x-label": "{name}",
+        "x-order": [
+          "name",
+          "country",
+          "disambiguation",
+          "links",
+          "external_ids",
+          "sources"
+        ],
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "country": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$",
+            "description": "ISO 3166-1 alpha-2 (XE : Europe, XW : monde)"
+          },
+          "disambiguation": {
+            "type": "string"
+          },
+          "external_ids": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "musicbrainz": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              }
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "source"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "enum": [
+                    "musicbrainz",
+                    "manual"
+                  ]
+                },
+                "retrieved_at": {
+                  "type": "string",
+                  "format": "date"
+                }
+              }
+            }
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "collection_types": [],
+  "relation_types": [
+    {
+      "id": "c0000000-0000-0000-0000-000000000020",
+      "name": "performed_by",
+      "description": "Album, édition ou piste interprété par un artiste",
+      "attributes_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "x-title": {
+          "fr": "Interprété par",
+          "en": "Performed by"
+        },
+        "x-order": [
+          "credited_as"
+        ],
+        "properties": {
+          "credited_as": {
+            "type": "string"
+          }
+        },
+        "x-labels": {
+          "fr": {
+            "credited_as": "Crédité comme"
+          },
+          "en": {
+            "credited_as": "Credited as"
+          }
+        }
+      },
+      "source_item_type_ids": [
+        "b0000000-0000-0000-0000-000000000021",
+        "b0000000-0000-0000-0000-000000000022",
+        "b0000000-0000-0000-0000-000000000023"
+      ],
+      "target_item_type_ids": [
+        "b0000000-0000-0000-0000-000000000020"
+      ]
+    },
+    {
+      "id": "c0000000-0000-0000-0000-000000000021",
+      "name": "issued_as",
+      "description": "Album paru dans une édition",
+      "attributes_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "x-title": {
+          "fr": "Paru en",
+          "en": "Issued as"
+        },
+        "properties": {}
+      },
+      "source_item_type_ids": [
+        "b0000000-0000-0000-0000-000000000021"
+      ],
+      "target_item_type_ids": [
+        "b0000000-0000-0000-0000-000000000022"
+      ]
+    },
+    {
+      "id": "c0000000-0000-0000-0000-000000000022",
+      "name": "contains_track",
+      "description": "Édition contenant une piste",
+      "attributes_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "x-title": {
+          "fr": "Contient la piste",
+          "en": "Contains track"
+        },
+        "x-order": [
+          "order",
+          "disc",
+          "position"
+        ],
+        "properties": {
+          "order": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "disc": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "x-labels": {
+          "fr": {
+            "order": "Ordre",
+            "disc": "Disque",
+            "position": "Piste"
+          },
+          "en": {
+            "order": "Order",
+            "disc": "Disc",
+            "position": "Track"
+          }
+        }
+      },
+      "source_item_type_ids": [
+        "b0000000-0000-0000-0000-000000000022"
+      ],
+      "target_item_type_ids": [
+        "b0000000-0000-0000-0000-000000000023"
+      ]
+    },
+    {
+      "id": "c0000000-0000-0000-0000-000000000023",
+      "name": "released_by",
+      "description": "Édition publiée par un label",
+      "attributes_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "x-title": {
+          "fr": "Publiée par",
+          "en": "Released by"
+        },
+        "x-order": [
+          "catalog_number"
+        ],
+        "properties": {
+          "catalog_number": {
+            "type": "string"
+          }
+        },
+        "x-labels": {
+          "fr": {
+            "catalog_number": "Référence catalogue"
+          },
+          "en": {
+            "catalog_number": "Catalog number"
+          }
+        }
+      },
+      "source_item_type_ids": [
+        "b0000000-0000-0000-0000-000000000022"
+      ],
+      "target_item_type_ids": [
+        "b0000000-0000-0000-0000-000000000024"
+      ]
+    }
+  ]
+}

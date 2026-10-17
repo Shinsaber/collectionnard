@@ -1,16 +1,18 @@
 <template>
   <section class="p-4 rounded-lg border border-line bg-surface">
     <h2 class="text-lg font-semibold text-ink mb-3">
-      {{ t("admin.external.work.title") }}
+      {{ t(`admin.external.connectors.${connector}.workTitle`) }}
     </h2>
     <form class="flex gap-2 mb-3" @submit.prevent="search">
       <label :for="inputId" class="sr-only">{{
-        t("admin.external.work.title")
+        t(`admin.external.connectors.${connector}.workTitle`)
       }}</label>
       <ElInput
         :id="inputId"
         v-model="query"
-        :placeholder="t('admin.external.work.placeholder')"
+        :placeholder="
+          t(`admin.external.connectors.${connector}.workPlaceholder`)
+        "
         clearable
       />
       <ElButton
@@ -47,7 +49,7 @@
       :data="hits"
       size="small"
       highlight-current-row
-      row-key="wikidata_id"
+      row-key="id"
       :empty-text="t('admin.external.work.none')"
       data-test="work-hits"
       @current-change="pick"
@@ -96,7 +98,7 @@
 </template>
 
 <script setup lang="ts">
-// Recherche d'une œuvre sur Wikidata ; la ligne cliquée devient l'œuvre choisie.
+// Recherche d'une œuvre (Wikidata, album MusicBrainz…) ; la ligne cliquée devient l'œuvre choisie.
 import { ref, useId } from "vue";
 import { useI18n } from "vue-i18n";
 import { externalApi } from "@/api/client";
@@ -106,7 +108,11 @@ import { useMetaTypes } from "@/stores/metaTypes";
 import { typeTitle } from "@/lib/schema";
 import type { ExternalWorkHit } from "@/api/types";
 
-defineProps<{ modelValue: ExternalWorkHit | null }>();
+const props = defineProps<{
+  modelValue: ExternalWorkHit | null;
+  /** Connecteur (`bd-manga`, `novels`, `music`…). */
+  connector: string;
+}>();
 const emit = defineEmits<{
   "update:modelValue": [hit: ExternalWorkHit | null];
 }>();
@@ -133,7 +139,7 @@ async function search() {
   if (q.length < 2) return;
   loading.value = true;
   try {
-    hits.value = await externalApi.searchWorks(q);
+    hits.value = await externalApi.searchWorks(props.connector, q);
   } catch (e) {
     notifyError(e, t("admin.external.searchFailed"));
   } finally {

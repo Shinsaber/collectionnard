@@ -9,19 +9,26 @@ Langue du projet : **français** (docs, commits, échanges). Le socle de donnée
 snake_case ASCII : identifiants, clés JSON des attributs, noms de RelationTypes, valeurs d'enum ;
 l'affichage traduit via `x-labels`, `x-title`, `x-enum-labels` (fr/en, sélecteur dans l'en-tête). L'interface passe par
 vue-i18n (`web/src/i18n/`, registre des langues `langs.ts`) ; l'API renvoie des codes d'erreur traduits par le front et
-des messages techniques en anglais. Ajouter une langue : `Collectionnard.md` § 3 « Langues ». Le seed TV suit cette convention
-(`title`, `start_year`, `broadcast_on`, `Ownership`…) ; un changement de clé = nouvelle migration + seed.
+des messages techniques en anglais. Ajouter une langue : `Collectionnard.md` § 3 « Langues ». Les types suivent cette convention
+(`title`, `start_year`, `broadcast_on`, `Ownership`…) ; un changement de clé = nouvelle version du paquet de domaine.
 
 ## Documents de référence (à lire selon le besoin, ne pas tout charger d'office)
 
 | Fichier                                | Contenu                                                          |
 | -------------------------------------- | ---------------------------------------------------------------- |
 | [Collectionnard.md](Collectionnard.md) | Vision, modèle conceptuel, phases de développement (roadmap)     |
-| [les.collection.md](les.collection.md) | Modèle de données BD / Manga (prochain domaine à intégrer)       |
+| [les.collection.md](les.collection.md) | Modèle de données livres : BD, manga, romans                     |
+| [musique.md](musique.md)               | Modèle de données musique : albums, éditions (CD, vinyles), pistes |
+| [video.md](video.md)                   | Modèle de données vidéo : films, éditions vidéo (DVD, Blu-ray, VHS), partagées avec les séries |
+| [jeux-video.md](jeux-video.md)         | Modèle de données jeux vidéo : jeux, éditions, plateformes rattachées à leur constructeur |
 | [api/openapi.yaml](api/openapi.yaml)   | Spécification OpenAPI 3.1 — **source de vérité de l'API**        |
 | [db/migrations/](db/migrations/)       | Migrations SQL (tern) ; `001_init.sql` = schéma complet commenté |
-| [db/seed.sql](db/seed.sql)             | Jeu de test « Breaking Bad » (multi-chemin Diffusion + DVD)      |
-| [db/seed_bd_manga.sql](db/seed_bd_manga.sql) | Domaine BD / Manga (lot 13), chargé après `seed.sql` |
+| [server/internal/domains/packages/](server/internal/domains/packages/) | **Paquets de domaine** (types : `collections`, `tv`, `people`, `video`, `books`, `music`, `games` ; `requires` : paquets installés avant) — installés par la page « Domaines » ou `install-domain`, mis à jour par fusion |
+| [db/seed.sql](db/seed.sql)             | Données de démo « Breaking Bad » (multi-chemin Diffusion + DVD) ; les types viennent des paquets |
+| [db/seed_bd_manga.sql](db/seed_bd_manga.sql) | Données de démo BD / Manga (lot 13), chargé après `seed.sql` |
+| [db/seed_music.sql](db/seed_music.sql) | Données de démo Musique (P3-4, Discovery), chargé après `seed_bd_manga.sql` |
+| [db/seed_video.sql](db/seed_video.sql) | Données de démo Vidéo (P3-5, Amélie et son Blu-ray), chargé après `seed_music.sql` |
+| [db/seed_games.sql](db/seed_games.sql) | Données de démo Jeux vidéo (P3-7, Mario Kart 8 Deluxe), chargé après `seed_video.sql` |
 | [server/CLAUDE.md](server/CLAUDE.md)   | Conventions backend Go                                           |
 | [web/CLAUDE.md](web/CLAUDE.md)         | Conventions frontend Vue                                         |
 | [docs/audit/](docs/audit/BRIEF.md)     | Brief et résultats de l'audit approfondi (`/audit`)              |
@@ -51,7 +58,7 @@ des messages techniques en anglais. Ajouter une langue : `Collectionnard.md` § 
 
 `x-label` (gabarit du libellé d'une instance : `"{number}. {title}"` — Go `internal/label`, TS
 `web/src/lib/schema.ts`, à garder alignés), `x-order` (ordre des champs), `x-labels` (`{fr:{…}, en:{…}}`),
-`x-widget` (`image-gallery`, `i18n-text`), `x-image-categories` (`{poster:{ratio:"2/3", tolerance?, min_width?, min_height?, strict?}}`, contrôles à l'envoi dans `ImageGalleryField` via `checkImage`), `x-title` / `x-description`
+`x-widget` (`image-gallery`, `i18n-text`, `links` : tableau de `{label?, url}`, liens cliquables sur la fiche), `x-image-categories` (`{poster:{ratio:"2/3", tolerance?, min_width?, min_height?, strict?}}`, contrôles à l'envoi dans `ImageGalleryField` via `checkImage`), `x-title` / `x-description`
 (nom et description affichés du méta-type par langue, repli sur `name` / `description`), `x-enum-labels` (propriété :
 `{fr:{tv:"Télévision"}}`). Pas de widget
 `slider` : le curseur est automatique quand `minimum` **et** `maximum` sont définis.
@@ -113,6 +120,7 @@ cp .env.example .env                 # une fois : JWT_SECRET (≥ 32 car.) et PO
 docker compose up --build
 docker compose down -v && docker compose up --build   # repart d'une base vide (migrations + seed rejoués)
 (cd server && go run . migrate)     # appliquer les migrations à la main (SEED_ON_EMPTY=true pour le seed)
+(cd server && go run . install-domain)   # état des paquets de domaine ; `--all` ou `<domaine>` pour installer / mettre à jour
 ```
 
 Comptes de dev (seed) : `admin` / `admin` (rôle admin), `shinsaber` / `shinsaber` (rôle user).
@@ -131,11 +139,14 @@ Production : images publiées par la CI sur ghcr.io (job `images`, tags `v*` et 
    `colec-server migrate` (`pg-start` et le service compose `migrate` le font automatiquement ;
    à la main : `cd server && go run . migrate`). Signaler toute modif cassante ; `pg-reset` /
    `docker compose down -v` ne servent plus qu'à repartir d'une base vide.
-3. **Seed** : UUID lisibles par préfixe — `a…` users, `b…` item_types, `c…` relation_types,
+3. **Types et seed** : les méta-types vivent dans les **paquets de domaine** (`server/internal/domains/packages/*.json`,
+   format de l'import, UUID fixes) ; modifier un type = incrémenter `package_version` (la mise à jour fusionne,
+   les modifications des instances sont gardées). Les seeds ne contiennent que des données de démonstration,
+   chargées après l'installation des paquets. UUID lisibles par préfixe — `a…` users, `b…` item_types, `c…` relation_types,
    `d…` collection_types, `e…` items. Garder ce schéma pour les nouveaux jeux de données
    (prendre des plages libres, ne pas renuméroter l'existant).
 4. Avant de dire « terminé » : `gofmt -l .` + `go vet` + `golangci-lint run` + `go test ./...` côté
-   server, `npm run lint` + `npm run format:check` + `npm run type-check` + `npm test` côté web,
+   server, `npm run lint` + `npm run lint:openapi` (dès que `api/openapi.yaml` change) + `npm run format:check` + `npm run type-check` + `npm test` + `npm audit --audit-level=high` côté web,
    selon ce qui a été touché (via `nix develop -c` si besoin). La CI (`.github/workflows/ci.yml`)
    rejoue exactement ces étapes.
 5. Mettre à jour les cases à cocher de la section « Phases » de `Collectionnard.md`
@@ -149,5 +160,6 @@ Phase 1 (MVP) : terminée. Phase 1.5 (remise à niveau issue de l'audit, branche
 lots 0 à 11 livrés, voir `Collectionnard.md` §8 et `docs/audit/03-feuille-de-route.md`) : terminée, fusionnée dans `main`.
 Phase 2 livrée : multilingue, recherche avancée (lot 14), import/export (lot 12), refonte graphique responsive
 (identité « Étiquette », lots R0–R8, branche `refonte-graphique`), domaine BD / Manga (lot 13,
-`les.collection.md`, sources Wikidata / BnF). Phase 3 (récupération automatique externe) en cours : connecteur BD / Manga
-livré (`server/internal/external/bdmanga`, page admin « Sources externes ») ; suite : musique, séries, films. Phase 4 : social.
+`les.collection.md`, sources Wikidata / BnF). Phase 3 (récupération automatique externe) en cours, branche `phase3-sources` : domaines installables (P3-0), connecteurs
+BD / Manga, Romans, Musique, Films, Séries et Jeux vidéo (`server/internal/external/connectors`, profils `bd-manga` / `novels` / `music` / `films` / `series` / `games`, clients `wikidata`, `bnf`, `musicbrainz`, `tvmaze`, page admin « Sources externes ») ;
+domaines P3-0 à P3-7 (jeux vidéo, V1 française) livrés, non poussés. Phase 4 : social.

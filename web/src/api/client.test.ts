@@ -55,7 +55,7 @@ describe("extractApiError", () => {
       details: { missing: ["Comic", "Volume"] },
     });
     expect(extractApiError(e).message).toBe(
-      "Types BD / Manga introuvables dans le catalogue : Comic, Volume (type renommé ou db/seed_bd_manga.sql non chargé)",
+      "Types introuvables dans le catalogue : Comic, Volume. Installez ou mettez à jour le domaine depuis Administration → Domaines.",
     );
   });
 

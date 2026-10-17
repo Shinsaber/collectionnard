@@ -1,0 +1,184 @@
+{
+  "format": "collectionnard.domain",
+  "version": 1,
+  "id": "collections",
+  "package_version": 1,
+  "title": {
+    "fr": "Collections",
+    "en": "Collections"
+  },
+  "description": {
+    "fr": "Types de collection courants : possession, visionnage, envies.",
+    "en": "Common collection types: ownership, watching, wishlist."
+  },
+  "item_types": [],
+  "relation_types": [],
+  "collection_types": [
+    {
+      "id": "d0000000-0000-0000-0000-000000000001",
+      "name": "Ownership",
+      "description": "Items possédés physiquement",
+      "item_type_ids": [],
+      "attributes_schema": {
+        "type": "object",
+        "x-order": [
+          "condition",
+          "purchase_price",
+          "acquisition_date"
+        ],
+        "x-title": {
+          "en": "Ownership",
+          "fr": "Possession"
+        },
+        "x-labels": {
+          "en": {
+            "condition": "Physical Condition",
+            "purchase_price": "Purchase Price",
+            "acquisition_date": "Acquisition Date"
+          },
+          "fr": {
+            "condition": "État physique",
+            "purchase_price": "Prix d'achat",
+            "acquisition_date": "Date d'acquisition"
+          }
+        },
+        "properties": {
+          "condition": {
+            "enum": [
+              "new",
+              "very_good",
+              "good",
+              "fair",
+              "poor"
+            ],
+            "type": "string",
+            "x-enum-labels": {
+              "en": {
+                "new": "New",
+                "fair": "Fair",
+                "good": "Good",
+                "poor": "Poor",
+                "very_good": "Very good"
+              },
+              "fr": {
+                "new": "Neuf",
+                "fair": "Correct",
+                "good": "Bon",
+                "poor": "Mauvais",
+                "very_good": "Très bon"
+              }
+            }
+          },
+          "purchase_price": {
+            "type": "number",
+            "minimum": 0
+          },
+          "acquisition_date": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "x-description": {
+          "en": "Physically owned items",
+          "fr": "Items possédés physiquement"
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "d0000000-0000-0000-0000-000000000002",
+      "name": "Watching",
+      "description": "Séries/films vus",
+      "item_type_ids": [],
+      "attributes_schema": {
+        "type": "object",
+        "x-order": [
+          "watched_at",
+          "rating",
+          "progress"
+        ],
+        "x-title": {
+          "en": "Watching",
+          "fr": "Visionnage"
+        },
+        "x-labels": {
+          "en": {
+            "rating": "Rating",
+            "progress": "Progress",
+            "watched_at": "Watch Date"
+          },
+          "fr": {
+            "rating": "Note",
+            "progress": "Progression",
+            "watched_at": "Date de visionnage"
+          }
+        },
+        "properties": {
+          "rating": {
+            "type": "integer",
+            "maximum": 10,
+            "minimum": 0
+          },
+          "progress": {
+            "type": "integer",
+            "maximum": 100,
+            "minimum": 0,
+            "description": "Percentage"
+          },
+          "watched_at": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "x-description": {
+          "en": "Watched series/films",
+          "fr": "Séries/films vus"
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "d0000000-0000-0000-0000-000000000003",
+      "name": "Wishlist",
+      "description": "Items souhaités",
+      "item_type_ids": [],
+      "attributes_schema": {
+        "type": "object",
+        "x-order": [
+          "priority",
+          "max_budget"
+        ],
+        "x-title": {
+          "en": "Wishlist",
+          "fr": "Liste d'envies"
+        },
+        "x-labels": {
+          "en": {
+            "priority": "Priority",
+            "max_budget": "Maximum Budget"
+          },
+          "fr": {
+            "priority": "Priorité",
+            "max_budget": "Budget maximum"
+          }
+        },
+        "properties": {
+          "priority": {
+            "type": "integer",
+            "maximum": 5,
+            "minimum": 1
+          },
+          "max_budget": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "x-description": {
+          "en": "Wished items",
+          "fr": "Items souhaités"
+        },
+        "additionalProperties": false
+      }
+    }
+  ]
+}

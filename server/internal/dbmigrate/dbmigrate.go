@@ -26,7 +26,7 @@ var (
 	defaultSeedDirs      = []string{"db", "../db", "/app/db"}
 	// defaultSeedNames are applied in this order; seed.sql is required, the
 	// domain seeds that follow (they reuse its users and types) are optional.
-	defaultSeedNames = []string{"seed.sql", "seed_bd_manga.sql"}
+	defaultSeedNames = []string{"seed.sql", "seed_bd_manga.sql", "seed_music.sql", "seed_video.sql", "seed_games.sql"}
 )
 
 // ResolveMigrationsDir returns the migrations directory: the explicit value if
