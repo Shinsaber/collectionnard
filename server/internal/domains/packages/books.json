@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "books",
-  "package_version": 3,
+  "package_version": 4,
   "title": {
     "fr": "Livres",
     "en": "Books"
@@ -27,6 +27,7 @@
           "title",
           "description",
           "images",
+          "links",
           "external_ids",
           "sources"
         ],
@@ -43,14 +44,16 @@
             "images": "Images",
             "sources": "Sources",
             "description": "Description",
-            "external_ids": "External IDs"
+            "external_ids": "External IDs",
+            "links": "Links"
           },
           "fr": {
             "title": "Titre",
             "images": "Images",
             "sources": "Sources",
             "description": "Description",
-            "external_ids": "Identifiants externes"
+            "external_ids": "Identifiants externes",
+            "links": "Liens"
           }
         },
         "properties": {
@@ -166,6 +169,26 @@
               }
             },
             "additionalProperties": false
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
           }
         },
         "x-description": {
@@ -188,6 +211,7 @@
           "description",
           "order",
           "images",
+          "links",
           "external_ids",
           "sources"
         ],
@@ -205,7 +229,8 @@
             "images": "Images",
             "sources": "Sources",
             "description": "Description",
-            "external_ids": "External IDs"
+            "external_ids": "External IDs",
+            "links": "Links"
           },
           "fr": {
             "order": "Ordre",
@@ -213,7 +238,8 @@
             "images": "Images",
             "sources": "Sources",
             "description": "Description",
-            "external_ids": "Identifiants externes"
+            "external_ids": "Identifiants externes",
+            "links": "Liens"
           }
         },
         "properties": {
@@ -315,6 +341,26 @@
               }
             },
             "additionalProperties": false
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
           }
         },
         "x-description": {
@@ -343,6 +389,7 @@
           "end_year",
           "volumes_vo",
           "images",
+          "links",
           "external_ids",
           "sources"
         ],
@@ -366,7 +413,8 @@
             "demographic": "Demographic",
             "description": "Synopsis",
             "external_ids": "External IDs",
-            "original_title": "Original title"
+            "original_title": "Original title",
+            "links": "Links"
           },
           "fr": {
             "title": "Titre",
@@ -380,7 +428,8 @@
             "demographic": "Public",
             "description": "Synopsis",
             "external_ids": "Identifiants externes",
-            "original_title": "Titre original"
+            "original_title": "Titre original",
+            "links": "Liens"
           }
         },
         "properties": {
@@ -583,6 +632,26 @@
           },
           "original_title": {
             "type": "string"
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
           }
         },
         "x-description": {
@@ -610,6 +679,7 @@
           "end_year",
           "volumes_vo",
           "images",
+          "links",
           "external_ids",
           "sources"
         ],
@@ -632,7 +702,8 @@
             "volumes_vo": "Albums (original)",
             "description": "Synopsis",
             "external_ids": "External IDs",
-            "original_title": "Original title"
+            "original_title": "Original title",
+            "links": "Links"
           },
           "fr": {
             "title": "Titre",
@@ -645,7 +716,8 @@
             "volumes_vo": "Albums (VO)",
             "description": "Synopsis",
             "external_ids": "Identifiants externes",
-            "original_title": "Titre original"
+            "original_title": "Titre original",
+            "links": "Liens"
           }
         },
         "properties": {
@@ -822,6 +894,26 @@
           },
           "original_title": {
             "type": "string"
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
           }
         },
         "x-description": {
@@ -854,6 +946,7 @@
           "start_year",
           "end_year",
           "images",
+          "links",
           "external_ids",
           "sources"
         ],
@@ -882,7 +975,8 @@
             "page_count": "Pages",
             "retail_price": "List price (€)",
             "collection": "Series (imprint)",
-            "collection_number": "Number in series"
+            "collection_number": "Number in series",
+            "links": "Links"
           },
           "fr": {
             "title": "Titre",
@@ -900,7 +994,8 @@
             "page_count": "Pages",
             "retail_price": "Prix catalogue (€)",
             "collection": "Collection",
-            "collection_number": "N° dans la collection"
+            "collection_number": "N° dans la collection",
+            "links": "Liens"
           }
         },
         "properties": {
@@ -1124,6 +1219,26 @@
           },
           "collection_number": {
             "type": "string"
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
           }
         },
         "x-description": {
@@ -1150,6 +1265,7 @@
           "page_count",
           "retail_price",
           "images",
+          "links",
           "external_ids",
           "sources"
         ],
@@ -1172,7 +1288,8 @@
             "page_count": "Page count",
             "external_ids": "External IDs",
             "retail_price": "Retail price (€)",
-            "publication_date": "Publication date"
+            "publication_date": "Publication date",
+            "links": "Links"
           },
           "fr": {
             "isbn": "ISBN",
@@ -1184,7 +1301,8 @@
             "page_count": "Nombre de pages",
             "external_ids": "Identifiants externes",
             "retail_price": "Prix catalogue (€)",
-            "publication_date": "Date de publication"
+            "publication_date": "Date de publication",
+            "links": "Liens"
           }
         },
         "properties": {
@@ -1306,6 +1424,26 @@
           "publication_date": {
             "type": "string",
             "format": "date"
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
           }
         },
         "x-description": {
@@ -1340,6 +1478,7 @@
           "first_publication_year",
           "description",
           "images",
+          "links",
           "external_ids",
           "sources"
         ],
@@ -1354,7 +1493,8 @@
             "description": "Résumé",
             "images": "Images",
             "external_ids": "Identifiants externes",
-            "sources": "Sources"
+            "sources": "Sources",
+            "links": "Liens"
           },
           "en": {
             "title": "Title",
@@ -1366,7 +1506,8 @@
             "description": "Summary",
             "images": "Images",
             "external_ids": "External IDs",
-            "sources": "Sources"
+            "sources": "Sources",
+            "links": "Links"
           }
         },
         "required": [
@@ -1555,6 +1696,26 @@
                 }
               },
               "additionalProperties": false
+            }
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
             }
           }
         }

@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "video",
-  "package_version": 2,
+  "package_version": 3,
   "title": {
     "fr": "Vidéo : films",
     "en": "Video: films"
@@ -44,7 +44,8 @@
             "description": "Description",
             "external_ids": "Identifiants externes",
             "sources": "Sources",
-            "images": "Images"
+            "images": "Images",
+            "links": "Liens"
           },
           "en": {
             "title": "Title",
@@ -58,7 +59,8 @@
             "description": "Description",
             "external_ids": "External IDs",
             "sources": "Sources",
-            "images": "Images"
+            "images": "Images",
+            "links": "Links"
           }
         },
         "x-label": "{title}",
@@ -73,6 +75,7 @@
           "genres",
           "description",
           "images",
+          "links",
           "external_ids",
           "sources"
         ],
@@ -332,6 +335,26 @@
                 }
               }
             }
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
           }
         }
       }
@@ -371,7 +394,8 @@
             "notes": "Contenu",
             "external_ids": "Identifiants externes",
             "sources": "Sources",
-            "images": "Images"
+            "images": "Images",
+            "links": "Liens"
           },
           "en": {
             "title": "Title",
@@ -391,7 +415,8 @@
             "notes": "Contents",
             "external_ids": "External IDs",
             "sources": "Sources",
-            "images": "Images"
+            "images": "Images",
+            "links": "Links"
           }
         },
         "x-label": "{title}",
@@ -412,6 +437,7 @@
           "aspect_ratio",
           "notes",
           "images",
+          "links",
           "external_ids",
           "sources"
         ],
@@ -585,6 +611,26 @@
                 "retrieved_at": {
                   "type": "string",
                   "format": "date"
+                }
+              }
+            }
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
                 }
               }
             }

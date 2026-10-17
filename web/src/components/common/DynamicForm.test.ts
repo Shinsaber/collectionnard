@@ -45,6 +45,7 @@ describe("DynamicForm", () => {
       "Saisons",
       "Épisodes",
       "Images",
+      "Liens",
       "Identifiants externes",
       "Sources",
     ]);

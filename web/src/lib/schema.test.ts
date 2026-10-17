@@ -106,6 +106,7 @@ describe("fieldLabel / displayValue / orderedKeys", () => {
       "season_count",
       "episode_count",
       "images",
+      "links",
       "external_ids",
       "sources",
       "extra",

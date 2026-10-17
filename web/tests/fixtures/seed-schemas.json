@@ -16,6 +16,7 @@
         "season_count",
         "episode_count",
         "images",
+        "links",
         "external_ids",
         "sources"
       ],
@@ -37,7 +38,8 @@
           "season_count": "Seasons",
           "episode_count": "Episodes",
           "external_ids": "External IDs",
-          "sources": "Sources"
+          "sources": "Sources",
+          "links": "Links"
         },
         "fr": {
           "title": "Titre",
@@ -51,7 +53,8 @@
           "season_count": "Saisons",
           "episode_count": "Épisodes",
           "external_ids": "Identifiants externes",
-          "sources": "Sources"
+          "sources": "Sources",
+          "links": "Liens"
         }
       },
       "properties": {
@@ -188,6 +191,24 @@
               }
             }
           }
+        },
+        "links": {
+          "type": "array",
+          "x-widget": "links",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
         }
       },
       "x-description": {
@@ -203,7 +224,7 @@
     "schema": {
       "type": "object",
       "x-label": "{name}",
-      "x-order": ["name", "type", "channel", "sources"],
+      "x-order": ["name", "type", "channel", "links", "sources"],
       "x-title": {
         "en": "Broadcast",
         "fr": "Diffusion"
@@ -214,13 +235,15 @@
           "name": "Name",
           "type": "Type",
           "channel": "Support",
-          "sources": "Sources"
+          "sources": "Sources",
+          "links": "Links"
         },
         "fr": {
           "name": "Nom",
           "type": "Type",
           "channel": "Support",
-          "sources": "Sources"
+          "sources": "Sources",
+          "links": "Liens"
         }
       },
       "properties": {
@@ -266,6 +289,24 @@
               }
             }
           }
+        },
+        "links": {
+          "type": "array",
+          "x-widget": "links",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
         }
       },
       "x-description": {
@@ -286,6 +327,7 @@
         "number",
         "year",
         "episode_count",
+        "links",
         "external_ids",
         "sources"
       ],
@@ -301,7 +343,8 @@
           "number": "Number",
           "episode_count": "Episodes",
           "external_ids": "External IDs",
-          "sources": "Sources"
+          "sources": "Sources",
+          "links": "Links"
         },
         "fr": {
           "name": "Nom",
@@ -309,7 +352,8 @@
           "number": "Numéro",
           "episode_count": "Épisodes",
           "external_ids": "Identifiants externes",
-          "sources": "Sources"
+          "sources": "Sources",
+          "links": "Liens"
         }
       },
       "properties": {
@@ -360,6 +404,24 @@
               }
             }
           }
+        },
+        "links": {
+          "type": "array",
+          "x-widget": "links",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
         }
       },
       "x-description": {
@@ -382,6 +444,7 @@
         "synopsis",
         "original_title",
         "air_date",
+        "links",
         "external_ids",
         "sources"
       ],
@@ -399,7 +462,8 @@
           "original_title": "Original title",
           "air_date": "First aired",
           "external_ids": "External IDs",
-          "sources": "Sources"
+          "sources": "Sources",
+          "links": "Links"
         },
         "fr": {
           "title": "Titre",
@@ -409,7 +473,8 @@
           "original_title": "Titre original",
           "air_date": "Première diffusion",
           "external_ids": "Identifiants externes",
-          "sources": "Sources"
+          "sources": "Sources",
+          "links": "Liens"
         }
       },
       "properties": {
@@ -486,6 +551,24 @@
               }
             }
           }
+        },
+        "links": {
+          "type": "array",
+          "x-widget": "links",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
         }
       },
       "x-description": {
@@ -528,7 +611,8 @@
           "notes": "Contenu",
           "external_ids": "Identifiants externes",
           "sources": "Sources",
-          "images": "Images"
+          "images": "Images",
+          "links": "Liens"
         },
         "en": {
           "title": "Title",
@@ -548,7 +632,8 @@
           "notes": "Contents",
           "external_ids": "External IDs",
           "sources": "Sources",
-          "images": "Images"
+          "images": "Images",
+          "links": "Links"
         }
       },
       "x-label": "{title}",
@@ -569,6 +654,7 @@
         "aspect_ratio",
         "notes",
         "images",
+        "links",
         "external_ids",
         "sources"
       ],
@@ -737,6 +823,24 @@
               }
             }
           }
+        },
+        "links": {
+          "type": "array",
+          "x-widget": "links",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
         }
       }
     }
@@ -747,7 +851,14 @@
     "schema": {
       "type": "object",
       "x-label": "{title}",
-      "x-order": ["title", "description", "images", "external_ids", "sources"],
+      "x-order": [
+        "title",
+        "description",
+        "images",
+        "links",
+        "external_ids",
+        "sources"
+      ],
       "x-title": {
         "en": "Universe",
         "fr": "Univers"
@@ -759,14 +870,16 @@
           "images": "Images",
           "sources": "Sources",
           "description": "Description",
-          "external_ids": "External IDs"
+          "external_ids": "External IDs",
+          "links": "Links"
         },
         "fr": {
           "title": "Titre",
           "images": "Images",
           "sources": "Sources",
           "description": "Description",
-          "external_ids": "Identifiants externes"
+          "external_ids": "Identifiants externes",
+          "links": "Liens"
         }
       },
       "properties": {
@@ -876,6 +989,24 @@
             }
           },
           "additionalProperties": false
+        },
+        "links": {
+          "type": "array",
+          "x-widget": "links",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
         }
       },
       "x-description": {
@@ -896,6 +1027,7 @@
         "description",
         "order",
         "images",
+        "links",
         "external_ids",
         "sources"
       ],
@@ -911,7 +1043,8 @@
           "images": "Images",
           "sources": "Sources",
           "description": "Description",
-          "external_ids": "External IDs"
+          "external_ids": "External IDs",
+          "links": "Links"
         },
         "fr": {
           "order": "Ordre",
@@ -919,7 +1052,8 @@
           "images": "Images",
           "sources": "Sources",
           "description": "Description",
-          "external_ids": "Identifiants externes"
+          "external_ids": "Identifiants externes",
+          "links": "Liens"
         }
       },
       "properties": {
@@ -1015,6 +1149,24 @@
             }
           },
           "additionalProperties": false
+        },
+        "links": {
+          "type": "array",
+          "x-widget": "links",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
         }
       },
       "x-description": {
@@ -1041,6 +1193,7 @@
         "end_year",
         "volumes_vo",
         "images",
+        "links",
         "external_ids",
         "sources"
       ],
@@ -1062,7 +1215,8 @@
           "demographic": "Demographic",
           "description": "Synopsis",
           "external_ids": "External IDs",
-          "original_title": "Original title"
+          "original_title": "Original title",
+          "links": "Links"
         },
         "fr": {
           "title": "Titre",
@@ -1076,7 +1230,8 @@
           "demographic": "Public",
           "description": "Synopsis",
           "external_ids": "Identifiants externes",
-          "original_title": "Titre original"
+          "original_title": "Titre original",
+          "links": "Liens"
         }
       },
       "properties": {
@@ -1257,6 +1412,24 @@
         },
         "original_title": {
           "type": "string"
+        },
+        "links": {
+          "type": "array",
+          "x-widget": "links",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
         }
       },
       "x-description": {
@@ -1282,6 +1455,7 @@
         "end_year",
         "volumes_vo",
         "images",
+        "links",
         "external_ids",
         "sources"
       ],
@@ -1302,7 +1476,8 @@
           "volumes_vo": "Albums (original)",
           "description": "Synopsis",
           "external_ids": "External IDs",
-          "original_title": "Original title"
+          "original_title": "Original title",
+          "links": "Links"
         },
         "fr": {
           "title": "Titre",
@@ -1315,7 +1490,8 @@
           "volumes_vo": "Albums (VO)",
           "description": "Synopsis",
           "external_ids": "Identifiants externes",
-          "original_title": "Titre original"
+          "original_title": "Titre original",
+          "links": "Liens"
         }
       },
       "properties": {
@@ -1476,6 +1652,24 @@
         },
         "original_title": {
           "type": "string"
+        },
+        "links": {
+          "type": "array",
+          "x-widget": "links",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
         }
       },
       "x-description": {
@@ -1506,6 +1700,7 @@
         "start_year",
         "end_year",
         "images",
+        "links",
         "external_ids",
         "sources"
       ],
@@ -1531,7 +1726,8 @@
           "page_count": "Pages",
           "retail_price": "List price (€)",
           "collection": "Series (imprint)",
-          "collection_number": "Number in series"
+          "collection_number": "Number in series",
+          "links": "Links"
         },
         "fr": {
           "title": "Titre",
@@ -1549,7 +1745,8 @@
           "page_count": "Pages",
           "retail_price": "Prix catalogue (€)",
           "collection": "Collection",
-          "collection_number": "N° dans la collection"
+          "collection_number": "N° dans la collection",
+          "links": "Liens"
         }
       },
       "properties": {
@@ -1753,6 +1950,24 @@
         },
         "collection_number": {
           "type": "string"
+        },
+        "links": {
+          "type": "array",
+          "x-widget": "links",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
         }
       },
       "x-description": {
@@ -1777,6 +1992,7 @@
         "page_count",
         "retail_price",
         "images",
+        "links",
         "external_ids",
         "sources"
       ],
@@ -1796,7 +2012,8 @@
           "page_count": "Page count",
           "external_ids": "External IDs",
           "retail_price": "Retail price (€)",
-          "publication_date": "Publication date"
+          "publication_date": "Publication date",
+          "links": "Links"
         },
         "fr": {
           "isbn": "ISBN",
@@ -1808,7 +2025,8 @@
           "page_count": "Nombre de pages",
           "external_ids": "Identifiants externes",
           "retail_price": "Prix catalogue (€)",
-          "publication_date": "Date de publication"
+          "publication_date": "Date de publication",
+          "links": "Liens"
         }
       },
       "properties": {
@@ -1924,6 +2142,24 @@
         "publication_date": {
           "type": "string",
           "format": "date"
+        },
+        "links": {
+          "type": "array",
+          "x-widget": "links",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
         }
       },
       "x-description": {
@@ -2276,6 +2512,7 @@
         "first_publication_year",
         "description",
         "images",
+        "links",
         "external_ids",
         "sources"
       ],
@@ -2290,7 +2527,8 @@
           "description": "Résumé",
           "images": "Images",
           "external_ids": "Identifiants externes",
-          "sources": "Sources"
+          "sources": "Sources",
+          "links": "Liens"
         },
         "en": {
           "title": "Title",
@@ -2302,7 +2540,8 @@
           "description": "Summary",
           "images": "Images",
           "external_ids": "External IDs",
-          "sources": "Sources"
+          "sources": "Sources",
+          "links": "Links"
         }
       },
       "required": ["title"],
@@ -2484,6 +2723,24 @@
             },
             "additionalProperties": false
           }
+        },
+        "links": {
+          "type": "array",
+          "x-widget": "links",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
         }
       }
     }
@@ -2513,7 +2770,8 @@
           "disambiguation": "Précision",
           "external_ids": "Identifiants externes",
           "sources": "Sources",
-          "images": "Images"
+          "images": "Images",
+          "links": "Liens"
         },
         "en": {
           "name": "Name",
@@ -2525,7 +2783,8 @@
           "disambiguation": "Disambiguation",
           "external_ids": "External IDs",
           "sources": "Sources",
-          "images": "Images"
+          "images": "Images",
+          "links": "Links"
         }
       },
       "x-label": "{name}",
@@ -2538,6 +2797,7 @@
         "end_year",
         "disambiguation",
         "images",
+        "links",
         "external_ids",
         "sources"
       ],
@@ -2645,6 +2905,24 @@
               }
             }
           }
+        },
+        "links": {
+          "type": "array",
+          "x-widget": "links",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
         }
       }
     }
@@ -2671,7 +2949,8 @@
           "first_release_year": "Première parution",
           "external_ids": "Identifiants externes",
           "sources": "Sources",
-          "images": "Images"
+          "images": "Images",
+          "links": "Liens"
         },
         "en": {
           "title": "Title",
@@ -2680,7 +2959,8 @@
           "first_release_year": "First released",
           "external_ids": "External IDs",
           "sources": "Sources",
-          "images": "Images"
+          "images": "Images",
+          "links": "Links"
         }
       },
       "x-label": "{title}",
@@ -2690,6 +2970,7 @@
         "secondary_types",
         "first_release_year",
         "images",
+        "links",
         "external_ids",
         "sources"
       ],
@@ -2819,6 +3100,24 @@
               }
             }
           }
+        },
+        "links": {
+          "type": "array",
+          "x-widget": "links",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
         }
       }
     }
@@ -2851,7 +3150,8 @@
           "packaging": "Conditionnement",
           "external_ids": "Identifiants externes",
           "sources": "Sources",
-          "images": "Images"
+          "images": "Images",
+          "links": "Liens"
         },
         "en": {
           "title": "Title",
@@ -2866,7 +3166,8 @@
           "packaging": "Packaging",
           "external_ids": "External IDs",
           "sources": "Sources",
-          "images": "Images"
+          "images": "Images",
+          "links": "Links"
         }
       },
       "x-label": "{title}",
@@ -2882,6 +3183,7 @@
         "status",
         "packaging",
         "images",
+        "links",
         "external_ids",
         "sources"
       ],
@@ -3036,6 +3338,24 @@
               }
             }
           }
+        },
+        "links": {
+          "type": "array",
+          "x-widget": "links",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
         }
       }
     }
@@ -3060,18 +3380,27 @@
           "length": "Durée (s)",
           "isrc": "ISRC",
           "external_ids": "Identifiants externes",
-          "sources": "Sources"
+          "sources": "Sources",
+          "links": "Liens"
         },
         "en": {
           "title": "Title",
           "length": "Length (s)",
           "isrc": "ISRC",
           "external_ids": "External IDs",
-          "sources": "Sources"
+          "sources": "Sources",
+          "links": "Links"
         }
       },
       "x-label": "{title}",
-      "x-order": ["title", "length", "isrc", "external_ids", "sources"],
+      "x-order": [
+        "title",
+        "length",
+        "isrc",
+        "links",
+        "external_ids",
+        "sources"
+      ],
       "required": ["title"],
       "properties": {
         "title": {
@@ -3113,6 +3442,24 @@
               }
             }
           }
+        },
+        "links": {
+          "type": "array",
+          "x-widget": "links",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
         }
       }
     }
@@ -3137,14 +3484,16 @@
           "country": "Pays",
           "disambiguation": "Précision",
           "external_ids": "Identifiants externes",
-          "sources": "Sources"
+          "sources": "Sources",
+          "links": "Liens"
         },
         "en": {
           "name": "Name",
           "country": "Country",
           "disambiguation": "Disambiguation",
           "external_ids": "External IDs",
-          "sources": "Sources"
+          "sources": "Sources",
+          "links": "Links"
         }
       },
       "x-label": "{name}",
@@ -3152,6 +3501,7 @@
         "name",
         "country",
         "disambiguation",
+        "links",
         "external_ids",
         "sources"
       ],
@@ -3196,6 +3546,24 @@
               }
             }
           }
+        },
+        "links": {
+          "type": "array",
+          "x-widget": "links",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
         }
       }
     }
@@ -3227,7 +3595,8 @@
           "description": "Description",
           "external_ids": "Identifiants externes",
           "sources": "Sources",
-          "images": "Images"
+          "images": "Images",
+          "links": "Liens"
         },
         "en": {
           "title": "Title",
@@ -3241,7 +3610,8 @@
           "description": "Description",
           "external_ids": "External IDs",
           "sources": "Sources",
-          "images": "Images"
+          "images": "Images",
+          "links": "Links"
         }
       },
       "x-label": "{title}",
@@ -3256,6 +3626,7 @@
         "genres",
         "description",
         "images",
+        "links",
         "external_ids",
         "sources"
       ],
@@ -3501,6 +3872,24 @@
               }
             }
           }
+        },
+        "links": {
+          "type": "array",
+          "x-widget": "links",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
         }
       }
     }
@@ -3530,7 +3919,8 @@
           "description": "Description",
           "external_ids": "Identifiants externes",
           "sources": "Sources",
-          "images": "Images"
+          "images": "Images",
+          "links": "Liens"
         },
         "en": {
           "title": "Title",
@@ -3542,7 +3932,8 @@
           "description": "Description",
           "external_ids": "External IDs",
           "sources": "Sources",
-          "images": "Images"
+          "images": "Images",
+          "links": "Links"
         }
       },
       "x-label": "{title}",
@@ -3555,6 +3946,7 @@
         "pegi",
         "description",
         "images",
+        "links",
         "external_ids",
         "sources"
       ],
@@ -3810,6 +4202,24 @@
               }
             }
           }
+        },
+        "links": {
+          "type": "array",
+          "x-widget": "links",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
         }
       }
     }
@@ -3840,7 +4250,8 @@
           "notes": "Contenu",
           "external_ids": "Identifiants externes",
           "sources": "Sources",
-          "images": "Images"
+          "images": "Images",
+          "links": "Liens"
         },
         "en": {
           "title": "Title",
@@ -3853,7 +4264,8 @@
           "notes": "Contents",
           "external_ids": "External IDs",
           "sources": "Sources",
-          "images": "Images"
+          "images": "Images",
+          "links": "Links"
         }
       },
       "x-label": "{title}",
@@ -3867,6 +4279,7 @@
         "languages",
         "notes",
         "images",
+        "links",
         "external_ids",
         "sources"
       ],
@@ -4015,6 +4428,24 @@
               }
             }
           }
+        },
+        "links": {
+          "type": "array",
+          "x-widget": "links",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
         }
       }
     }
@@ -4041,7 +4472,8 @@
           "discontinued_year": "Fin de production",
           "external_ids": "Identifiants externes",
           "sources": "Sources",
-          "images": "Images"
+          "images": "Images",
+          "links": "Liens"
         },
         "en": {
           "name": "Name",
@@ -4050,7 +4482,8 @@
           "discontinued_year": "Discontinued",
           "external_ids": "External IDs",
           "sources": "Sources",
-          "images": "Images"
+          "images": "Images",
+          "links": "Links"
         }
       },
       "x-label": "{name}",
@@ -4060,6 +4493,7 @@
         "release_year",
         "discontinued_year",
         "images",
+        "links",
         "external_ids",
         "sources"
       ],
@@ -4154,6 +4588,24 @@
               "retrieved_at": {
                 "type": "string",
                 "format": "date"
+              }
+            }
+          }
+        },
+        "links": {
+          "type": "array",
+          "x-widget": "links",
+          "items": {
+            "type": "object",
+            "required": ["url"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
               }
             }
           }

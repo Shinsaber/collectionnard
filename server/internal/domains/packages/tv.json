@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "tv",
-  "package_version": 3,
+  "package_version": 4,
   "title": {
     "fr": "Séries TV",
     "en": "TV series"
@@ -34,6 +34,7 @@
           "season_count",
           "episode_count",
           "images",
+          "links",
           "external_ids",
           "sources"
         ],
@@ -57,7 +58,8 @@
             "season_count": "Seasons",
             "episode_count": "Episodes",
             "external_ids": "External IDs",
-            "sources": "Sources"
+            "sources": "Sources",
+            "links": "Links"
           },
           "fr": {
             "title": "Titre",
@@ -71,7 +73,8 @@
             "season_count": "Saisons",
             "episode_count": "Épisodes",
             "external_ids": "Identifiants externes",
-            "sources": "Sources"
+            "sources": "Sources",
+            "links": "Liens"
           }
         },
         "properties": {
@@ -215,6 +218,26 @@
                 }
               }
             }
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
           }
         },
         "x-description": {
@@ -236,6 +259,7 @@
           "name",
           "type",
           "channel",
+          "links",
           "sources"
         ],
         "x-title": {
@@ -250,13 +274,15 @@
             "name": "Name",
             "type": "Type",
             "channel": "Support",
-            "sources": "Sources"
+            "sources": "Sources",
+            "links": "Links"
           },
           "fr": {
             "name": "Nom",
             "type": "Type",
             "channel": "Support",
-            "sources": "Sources"
+            "sources": "Sources",
+            "links": "Liens"
           }
         },
         "properties": {
@@ -314,6 +340,26 @@
                 }
               }
             }
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
           }
         },
         "x-description": {
@@ -336,6 +382,7 @@
           "number",
           "year",
           "episode_count",
+          "links",
           "external_ids",
           "sources"
         ],
@@ -353,7 +400,8 @@
             "number": "Number",
             "episode_count": "Episodes",
             "external_ids": "External IDs",
-            "sources": "Sources"
+            "sources": "Sources",
+            "links": "Links"
           },
           "fr": {
             "name": "Nom",
@@ -361,7 +409,8 @@
             "number": "Numéro",
             "episode_count": "Épisodes",
             "external_ids": "Identifiants externes",
-            "sources": "Sources"
+            "sources": "Sources",
+            "links": "Liens"
           }
         },
         "properties": {
@@ -419,6 +468,26 @@
                 }
               }
             }
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
           }
         },
         "x-description": {
@@ -443,6 +512,7 @@
           "synopsis",
           "original_title",
           "air_date",
+          "links",
           "external_ids",
           "sources"
         ],
@@ -463,7 +533,8 @@
             "original_title": "Original title",
             "air_date": "First aired",
             "external_ids": "External IDs",
-            "sources": "Sources"
+            "sources": "Sources",
+            "links": "Links"
           },
           "fr": {
             "title": "Titre",
@@ -473,7 +544,8 @@
             "original_title": "Titre original",
             "air_date": "Première diffusion",
             "external_ids": "Identifiants externes",
-            "sources": "Sources"
+            "sources": "Sources",
+            "links": "Liens"
           }
         },
         "properties": {
@@ -554,6 +626,26 @@
                 "retrieved_at": {
                   "type": "string",
                   "format": "date"
+                }
+              }
+            }
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
                 }
               }
             }

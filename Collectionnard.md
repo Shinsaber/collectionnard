@@ -436,6 +436,9 @@ ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries 
         notice ; une même société n'est proposée qu'une fois ; une édition seule retrouve son jeu. Exemple :
         `db/seed_games.sql`. Hors V1 : libretro-database, générique, séries de jeux.
 
+- [x] **Liens des sources** : champ « Liens » (`x-widget: links`) sur tous les types des paquets ; chaque import y ajoute
+      les liens vers ses fiches sources (Wikidata, Wikipédia, BnF, MusicBrainz, TVmaze, IMDb), fusionnés par adresse.
+
 ### Phase 4 : Social
 
 - [ ] Statistiques et visualisation graphiques

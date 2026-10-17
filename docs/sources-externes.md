@@ -240,6 +240,14 @@ choix du mainteneur). Modèle : `video.md`.
   « (Wii U) ») ou après le support (« 1 cartouche Super Nintendo »), sinon en 500 `$q` ; rapprochée d'une plateforme du
   jeu par la fin de son nom (« Wii U », « Switch » → « Nintendo Switch »).
 
+## Liens vers les sources (2026-10-17)
+
+Chaque item importé reçoit, dans son champ « Liens » (`x-widget: links`, présent sur tous les types des paquets), les
+liens vers les fiches qui ont servi : Wikidata, articles Wikipédia fr et en (`sitelinks` lus avec les déclarations, sans
+requête de plus), BnF, MusicBrainz, TVmaze, IMDb — déduits de ses identifiants (`external_ids`) et de sa fiche source. Un
+item déjà en base garde ses liens et reçoit ceux qui lui manquent (comparés par adresse). Seul le lien est repris, jamais
+le texte de Wikipédia (CC BY-SA).
+
 ## Sources pour plus tard
 
 ### Grand Comics Database (comics.org)

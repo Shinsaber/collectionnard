@@ -1876,6 +1876,20 @@
             }
           }
         ]
+      },
+      "sitelinks": {
+        "enwiki": {
+          "site": "enwiki",
+          "title": "Amélie",
+          "badges": [],
+          "url": "https://en.wikipedia.org/wiki/Am%C3%A9lie"
+        },
+        "frwiki": {
+          "site": "frwiki",
+          "title": "Le Fabuleux Destin d'Amélie Poulain",
+          "badges": [],
+          "url": "https://fr.wikipedia.org/wiki/Le_Fabuleux_Destin_d%27Am%C3%A9lie_Poulain"
+        }
       }
     },
     "Q217324": {

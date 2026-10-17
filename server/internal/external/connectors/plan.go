@@ -161,6 +161,7 @@ func (c *Connector) plan(ctx context.Context, req model.ExternalImportRequest) (
 			return nil, err
 		}
 	}
+	p.addSourceLinks()
 	if err := p.matchItems(ctx); err != nil {
 		return nil, err
 	}

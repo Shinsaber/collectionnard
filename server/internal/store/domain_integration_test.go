@@ -189,7 +189,7 @@ func TestInstallDomain_TypesMovedToPeople(t *testing.T) {
 				t.Errorf("people: %+v", d)
 			}
 		case "books":
-			if d.Status != model.DomainUpToDate || d.InstalledVersion == nil || *d.InstalledVersion != 3 || !slices.Equal(d.Requires, []string{"people"}) {
+			if d.Status != model.DomainUpToDate || d.InstalledVersion == nil || *d.InstalledVersion != books.PackageVersion || !slices.Equal(d.Requires, []string{"people"}) {
 				t.Errorf("books: %+v", d)
 			}
 		}

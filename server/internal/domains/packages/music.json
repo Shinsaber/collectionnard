@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "music",
-  "package_version": 1,
+  "package_version": 2,
   "title": {
     "fr": "Musique",
     "en": "Music"
@@ -39,7 +39,8 @@
             "disambiguation": "Précision",
             "external_ids": "Identifiants externes",
             "sources": "Sources",
-            "images": "Images"
+            "images": "Images",
+            "links": "Liens"
           },
           "en": {
             "name": "Name",
@@ -51,7 +52,8 @@
             "disambiguation": "Disambiguation",
             "external_ids": "External IDs",
             "sources": "Sources",
-            "images": "Images"
+            "images": "Images",
+            "links": "Links"
           }
         },
         "x-label": "{name}",
@@ -64,6 +66,7 @@
           "end_year",
           "disambiguation",
           "images",
+          "links",
           "external_ids",
           "sources"
         ],
@@ -178,6 +181,26 @@
                 }
               }
             }
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
           }
         }
       }
@@ -206,7 +229,8 @@
             "first_release_year": "Première parution",
             "external_ids": "Identifiants externes",
             "sources": "Sources",
-            "images": "Images"
+            "images": "Images",
+            "links": "Liens"
           },
           "en": {
             "title": "Title",
@@ -215,7 +239,8 @@
             "first_release_year": "First released",
             "external_ids": "External IDs",
             "sources": "Sources",
-            "images": "Images"
+            "images": "Images",
+            "links": "Links"
           }
         },
         "x-label": "{title}",
@@ -225,6 +250,7 @@
           "secondary_types",
           "first_release_year",
           "images",
+          "links",
           "external_ids",
           "sources"
         ],
@@ -367,6 +393,26 @@
                 }
               }
             }
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
           }
         }
       }
@@ -401,7 +447,8 @@
             "packaging": "Conditionnement",
             "external_ids": "Identifiants externes",
             "sources": "Sources",
-            "images": "Images"
+            "images": "Images",
+            "links": "Liens"
           },
           "en": {
             "title": "Title",
@@ -416,7 +463,8 @@
             "packaging": "Packaging",
             "external_ids": "External IDs",
             "sources": "Sources",
-            "images": "Images"
+            "images": "Images",
+            "links": "Links"
           }
         },
         "x-label": "{title}",
@@ -432,6 +480,7 @@
           "status",
           "packaging",
           "images",
+          "links",
           "external_ids",
           "sources"
         ],
@@ -598,6 +647,26 @@
                 }
               }
             }
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
           }
         }
       }
@@ -624,14 +693,16 @@
             "length": "Durée (s)",
             "isrc": "ISRC",
             "external_ids": "Identifiants externes",
-            "sources": "Sources"
+            "sources": "Sources",
+            "links": "Liens"
           },
           "en": {
             "title": "Title",
             "length": "Length (s)",
             "isrc": "ISRC",
             "external_ids": "External IDs",
-            "sources": "Sources"
+            "sources": "Sources",
+            "links": "Links"
           }
         },
         "x-label": "{title}",
@@ -639,6 +710,7 @@
           "title",
           "length",
           "isrc",
+          "links",
           "external_ids",
           "sources"
         ],
@@ -690,6 +762,26 @@
                 }
               }
             }
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
           }
         }
       }
@@ -716,14 +808,16 @@
             "country": "Pays",
             "disambiguation": "Précision",
             "external_ids": "Identifiants externes",
-            "sources": "Sources"
+            "sources": "Sources",
+            "links": "Liens"
           },
           "en": {
             "name": "Name",
             "country": "Country",
             "disambiguation": "Disambiguation",
             "external_ids": "External IDs",
-            "sources": "Sources"
+            "sources": "Sources",
+            "links": "Links"
           }
         },
         "x-label": "{name}",
@@ -731,6 +825,7 @@
           "name",
           "country",
           "disambiguation",
+          "links",
           "external_ids",
           "sources"
         ],
@@ -779,6 +874,26 @@
                 "retrieved_at": {
                   "type": "string",
                   "format": "date"
+                }
+              }
+            }
+          },
+          "links": {
+            "type": "array",
+            "x-widget": "links",
+            "items": {
+              "type": "object",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
                 }
               }
             }

@@ -58,6 +58,10 @@ func fillEmpty(existing, source map[string]any) map[string]any {
 			out[k] = mergeSources(ev, sv)
 			continue
 		}
+		if k == "links" {
+			out[k] = mergeLinks(ev, sv)
+			continue
+		}
 		em, eok := ev.(map[string]any)
 		sm, sok := sv.(map[string]any)
 		if eok && sok {

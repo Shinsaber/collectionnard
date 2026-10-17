@@ -13,6 +13,8 @@ type Entity struct {
 	Descriptions map[string]string
 	// Claims: property → statements, deprecated ones dropped, preferred first.
 	Claims map[string][]Statement
+	// Sitelinks: Wikipedia article URL by site (« frwiki », « enwiki »), with the claims only.
+	Sitelinks map[string]string
 }
 
 // Statement is one value of a property, with its qualifiers.
@@ -166,6 +168,9 @@ type rawEntity struct {
 	Labels       map[string]rawText        `json:"labels"`
 	Descriptions map[string]rawText        `json:"descriptions"`
 	Claims       map[string][]rawStatement `json:"claims"`
+	Sitelinks    map[string]struct {
+		URL string `json:"url"`
+	} `json:"sitelinks"`
 }
 
 type rawText struct {
@@ -191,6 +196,14 @@ func (r rawEntity) entity() *Entity {
 		Labels:       texts(r.Labels),
 		Descriptions: texts(r.Descriptions),
 		Claims:       make(map[string][]Statement, len(r.Claims)),
+	}
+	for site, l := range r.Sitelinks {
+		if l.URL != "" {
+			if e.Sitelinks == nil {
+				e.Sitelinks = map[string]string{}
+			}
+			e.Sitelinks[site] = l.URL
+		}
 	}
 	for p, sts := range r.Claims {
 		for _, st := range orderStatements(sts) {
