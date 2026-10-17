@@ -2,14 +2,14 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "people",
-  "package_version": 1,
+  "package_version": 2,
   "title": {
     "fr": "Personnes et éditeurs",
     "en": "People and publishers"
   },
   "description": {
-    "fr": "Types partagés par les domaines : personnes (auteurs, réalisateurs, acteurs…) et éditeurs (livres, vidéo). Requis par les livres et la vidéo.",
-    "en": "Types shared by the domains: people (authors, directors, actors…) and publishers (books, video). Required by books and video."
+    "fr": "Types partagés par les domaines : personnes (auteurs, réalisateurs, acteurs…) et sociétés (éditeurs, studios, constructeurs). Requis par les livres, la vidéo et les jeux.",
+    "en": "Types shared by the domains: people (authors, directors, actors…) and companies (publishers, studios, manufacturers). Required by books, video and games."
   },
   "item_types": [
     {
@@ -170,7 +170,7 @@
     {
       "id": "b0000000-0000-0000-0000-000000000017",
       "name": "Publisher",
-      "description": "Maison d'édition, éditeur vidéo",
+      "description": "Société : maison d'édition, éditeur vidéo ou de jeux, studio, constructeur",
       "display_order": 140,
       "attributes_schema": {
         "type": "object",
@@ -185,8 +185,8 @@
           "sources"
         ],
         "x-title": {
-          "en": "Publisher",
-          "fr": "Éditeur"
+          "en": "Company",
+          "fr": "Société"
         },
         "required": [
           "name"
@@ -304,8 +304,8 @@
           }
         },
         "x-description": {
-          "en": "Publishing house or video publisher",
-          "fr": "Maison d'édition ou éditeur vidéo (Glénat, Gallimard, TF1 Vidéo…)"
+          "en": "Company: publishing house, video or game publisher, studio, manufacturer",
+          "fr": "Maison d'édition, éditeur vidéo ou de jeux, studio, constructeur (Glénat, TF1 Vidéo, Nintendo…)"
         },
         "additionalProperties": false
       }

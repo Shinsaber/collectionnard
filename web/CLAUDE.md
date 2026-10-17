@@ -68,4 +68,4 @@ Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
   (`npm run lint:fix` et `npm run format` corrigent automatiquement). Tests unitaires : `vitest`,
   fichiers `src/**/*.test.ts` (environnement jsdom, stubs `matchMedia` et `ResizeObserver` dans
   `tests/setup.ts`). Les composants se montent avec `global.plugins: [ElementPlus]` (vue-i18n est ajouté globalement par `tests/setup.ts`) ; les 41 schémas des paquets de domaine sont disponibles dans
-  `tests/fixtures/seed-schemas.json` (régénérer si un paquet de domaine change : `node scripts/seed-fixtures.mjs tests/fixtures/seed-schemas.json ../server/internal/domains/packages/{collections,tv,people,video,books,music}.json`).
+  `tests/fixtures/seed-schemas.json` (régénérer si un paquet de domaine change : `node scripts/seed-fixtures.mjs tests/fixtures/seed-schemas.json ../server/internal/domains/packages/{collections,tv,people,video,books,music,games}.json`).

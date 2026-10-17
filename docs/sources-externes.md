@@ -202,6 +202,30 @@ choix du mainteneur). Modèle : `video.md`.
 - **Diffusion** : un élément « AMC 2008-2013 » propre à la série, sans identifiant : rapproché par la relation
   `broadcast_on` de la série déjà en base (même chaîne), jamais par son nom seul.
 
+## Jeux vidéo (P3-7, recherche du 2026-10-17)
+
+| Source            | Licence / conditions                                                               | Statut                 |
+| ----------------- | ---------------------------------------------------------------------------------- | ---------------------- |
+| Wikidata          | CC0                                                                                | ✅ Retenue (le jeu)    |
+| BnF               | Licence Ouverte (dépôt légal des jeux vidéo)                                       | ✅ Retenue (éditions)  |
+| libretro-database | CC BY-SA 4.0 (dépôt GitHub) ; données en partie issues de No-Intro / Redump         | ⏸ V2 (hors France)     |
+| IGDB (Twitch)     | API gratuite en usage non commercial, contrat Twitch ; aucune licence ouverte       | ❌ Écartée             |
+| RAWG              | Clé gratuite, lien obligatoire, redistribution interdite, payant au-delà d'un seuil | ❌ Écartée             |
+| MobyGames, TheGamesDB | Conditions non lisibles (pages en JavaScript) ; API MobyGames payante à notre connaissance | ❌ Non retenues |
+
+- **Wikidata** : Breath of the Wild (`Q17185964`) porte plateformes `P400`, développeurs `P178`, éditeur `P123`, genres
+  `P136`, modes `P404`, série `P179`, PEGI `P908` (PEGI 3 `Q14915512`, 7 `Q14915514`, 12 `Q14915515`, 16 `Q14915516`, 18
+  `Q14915517`), date `P577`, et une notice BnF `P268` qui **n'est pas** la notice d'œuvre des éditions (`bib.work2bib`
+  vide). Genres et modes retenus : les plus fréquents des jeux Switch (requête SPARQL), libellés vérifiés. Les plateformes
+  ont leur nom en libellé multilingue (`mul`), leur fabricant en `P176` ; leur classe varie (Wii U : « modèle de console
+  de salon », Switch : « modèle d'objet manufacturé ») : le type de plateforme reste facultatif.
+- **BnF** : deux sortes de notices. **Complètes** (guide `clm` / `nlm`, 230 « Jeu multimédia ») : 215 support et
+  plateforme (« 1 cartouche (Nintendo Switch) », « 1 disque optique numérique (Wii U) », « 1 cartouche Super Nintendo »),
+  500 `` notice d'œuvre (`` plateforme), 712 `` 650 éditeur, 310 distributeur, 635 développeur, 630 producteur.
+  **Brèves** (guide sans type, 2026) : 073 EAN, 215 « 1 cartouche informatique » ou « 1 ressource dématérialisée » (code),
+  sans plateforme. Pas de filtre `bib.doctype` propre aux jeux : recherche par titre puis tri sur le support. Un EAN peut
+  avoir perdu son zéro initial (« 45496333133 », 11 chiffres). Environ 1 100 notices « jeu vidéo » datées de 2023.
+
 ## Sources pour plus tard
 
 ### Grand Comics Database (comics.org)
