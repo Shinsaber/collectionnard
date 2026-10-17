@@ -219,6 +219,22 @@ export default {
         groupMain: "Film et générique",
         groupVolumes: "Contenu",
       },
+      series: {
+        title: "Séries",
+        intro:
+          "Recherchez une série sur Wikidata : sa diffusion, ses saisons et ses épisodes sont proposés (TVmaze complète les saisons sans épisodes sur Wikidata). Ses coffrets DVD et Blu-ray sont listés depuis la BnF, ou trouvés par leur code-barres, puis reliés aux épisodes qu'ils contiennent. Simulez puis validez. Les éléments déjà présents gardent leurs valeurs : seuls leurs champs vides sont complétés.",
+        workTitle: "Série (Wikidata)",
+        workPlaceholder: "Titre de la série, ex. Breaking Bad",
+        editionTitle: "Coffrets (BnF)",
+        editionPlaceholder: "Titre de la série",
+        byCode: "Par code-barres",
+        codePlaceholder: "Code-barres (EAN) du coffret, ex. 3333297600736",
+        publishers: "Éditeur(s)",
+        attribution:
+          "Données Wikidata (CC0), TVmaze (CC BY-SA, tvmaze.com) et BnF, catalogue général (Licence Ouverte), récupérées le {date}.",
+        groupMain: "Série, diffusion et générique",
+        groupVolumes: "Épisodes",
+      },
     },
     stepOf: "Étape {n} / {total} · {title}",
     steps: {

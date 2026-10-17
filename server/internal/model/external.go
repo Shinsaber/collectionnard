@@ -77,6 +77,7 @@ const (
 	NodeEdition   = "edition"
 	NodePublisher = "publisher"
 	NodeVolume    = "volume"
+	NodeSeason    = "season" // a season of a series, with its episodes (role volume)
 )
 
 // Status of a node against the catalogue.

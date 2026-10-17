@@ -1,5 +1,6 @@
 // Package connectorstest serves recorded answers of the sources (Wikidata and
-// the BnF: Dragon Ball, L'Étranger, Les Misérables, Amélie ; MusicBrainz) and an in-memory catalogue
+// the BnF: Dragon Ball, L'Étranger, Les Misérables, Amélie, Breaking Bad ; MusicBrainz ;
+// TVmaze) and an in-memory catalogue
 // holding the types of the seeds, for the tests of the connector and of its
 // handlers.
 package connectorstest
@@ -48,6 +49,11 @@ var sruAnswers = map[string]string{
 	`bib.recordid all "42284376"`: "film_dvd.xml",
 	`bib.recordid all "42284132"`: "film_bluray.xml",
 	`bib.ean all "3384442032803"`: "film_ean.xml",
+	// Séries (P3-6) : coffrets Breaking Bad (saison 1 en DVD, « Saison finale [Saison 5] »).
+	`bib.title all "Breaking Bad" and bib.doctype any "h"`: "series_title.xml",
+	`bib.recordid all "43511598"`:                          "series_s1_dvd.xml",
+	`bib.recordid all "43745269"`:                          "series_final_dvd.xml",
+	`bib.ean all "3333297204842"`:                          "series_ean.xml",
 }
 
 // Recorded MusicBrainz answers (2026-10-17, tags and genres removed: not CC0): OK Computer
@@ -94,7 +100,7 @@ func NewSources(t testing.TB) *Sources {
 	var entities struct {
 		Entities map[string]json.RawMessage `json:"entities"`
 	}
-	for _, name := range []string{"wikidata_entities.json", "wikidata_entities_novels.json", "wikidata_entities_films.json"} {
+	for _, name := range []string{"wikidata_entities.json", "wikidata_entities_novels.json", "wikidata_entities_films.json", "wikidata_entities_series.json"} {
 		if err := json.Unmarshal(testdata(t, name), &entities); err != nil {
 			t.Fatal(err)
 		}
@@ -103,6 +109,7 @@ func NewSources(t testing.TB) *Sources {
 	searchNovels := testdata(t, "wikidata_search_novels.json")
 	searchFilms := testdata(t, "wikidata_search_films.json")
 	searchFilmBnF := testdata(t, "wikidata_search_film_bnf.json")
+	searchSeries := testdata(t, "wikidata_search_series.json")
 	s := &Sources{}
 	s.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s.Requests.Add(1)
@@ -119,6 +126,9 @@ func NewSources(t testing.TB) *Sources {
 				switch srsearch := q.Get("srsearch"); {
 				case strings.Contains(srsearch, "P268=14404106q"):
 					_, _ = w.Write(searchFilmBnF) // film d'une notice d'œuvre BnF
+					return
+				case strings.Contains(srsearch, "Q5398426"):
+					_, _ = w.Write(searchSeries) // classes des séries
 					return
 				case strings.Contains(srsearch, "Q11424"):
 					_, _ = w.Write(searchFilms) // classes des films
@@ -143,7 +153,7 @@ func NewSources(t testing.TB) *Sources {
 				}
 				_ = json.NewEncoder(w).Encode(map[string]any{"entities": out})
 			case "wbgetclaims":
-				code := map[string]string{"Q17": "JP", "Q142": "FR", "Q150": "fr", "Q183": "DE", "Q31": "BE"}[q.Get("entity")]
+				code := map[string]string{"Q17": "JP", "Q142": "FR", "Q150": "fr", "Q183": "DE", "Q31": "BE", "Q30": "US", "Q1860": "en"}[q.Get("entity")]
 				claims := []any{}
 				if code != "" {
 					claims = append(claims, map[string]any{"rank": "normal", "mainsnak": map[string]any{
@@ -153,6 +163,16 @@ func NewSources(t testing.TB) *Sources {
 			default:
 				http.NotFound(w, r)
 			}
+		case "/tvmaze/lookup/shows", "/tvmaze/shows/169/seasons", "/tvmaze/shows/169/episodes":
+			// TVmaze (CC BY-SA, résumés et images retirés) : Breaking Bad.
+			name := map[string]string{"/tvmaze/lookup/shows": "tvmaze_show.json", "/tvmaze/shows/169/seasons": "tvmaze_seasons.json",
+				"/tvmaze/shows/169/episodes": "tvmaze_episodes.json"}[r.URL.Path]
+			if r.URL.Path == "/tvmaze/lookup/shows" && q.Get("imdb") != "tt0903747" {
+				http.NotFound(w, r)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write(testdata(t, name))
 		case "/ws/2/release-group", "/ws/2/release":
 			w.Header().Set("Content-Type", "application/json")
 			switch {
@@ -277,6 +297,24 @@ func (c *Catalog) FindItemsByAttribute(_ context.Context, typeID uuid.UUID, path
 	return out, nil
 }
 
+// ListItemRelations returns the relations of an item (source or target), with their target item.
+func (c *Catalog) ListItemRelations(_ context.Context, itemID uuid.UUID, relationTypeID *uuid.UUID) ([]model.ItemRelation, error) {
+	var out []model.ItemRelation
+	for _, r := range c.Relations {
+		if (r.SourceItemID != itemID && r.TargetItemID != itemID) || (relationTypeID != nil && r.RelationTypeID != *relationTypeID) {
+			continue
+		}
+		for i := range c.Items {
+			if c.Items[i].ID == r.TargetItemID {
+				it := c.Items[i]
+				r.TargetItem = &it
+			}
+		}
+		out = append(out, r)
+	}
+	return out, nil
+}
+
 func (c *Catalog) ListRelationsBetween(_ context.Context, ids []uuid.UUID) ([]model.ItemRelation, error) {
 	var out []model.ItemRelation
 	for _, r := range c.Relations {
@@ -309,6 +347,16 @@ func (s *Sources) FilmsConnector(cat connectors.Catalog) *connectors.Connector {
 	c := connectors.NewFilms(cat, external.NewClient("collectionnard-test"))
 	c.WD.BaseURL = s.URL + "/w/api.php"
 	c.BnF.BaseURL = s.URL + "/api/SRU"
+	c.Now = func() time.Time { return Today }
+	return c
+}
+
+// SeriesConnector returns the series connector reading these sources and cat, dated Today.
+func (s *Sources) SeriesConnector(cat connectors.Catalog) *connectors.Connector {
+	c := connectors.NewSeries(cat, external.NewClient("collectionnard-test"))
+	c.WD.BaseURL = s.URL + "/w/api.php"
+	c.BnF.BaseURL = s.URL + "/api/SRU"
+	c.TV.BaseURL = s.URL + "/tvmaze"
 	c.Now = func() time.Time { return Today }
 	return c
 }

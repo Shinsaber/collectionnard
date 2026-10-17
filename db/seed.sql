@@ -31,10 +31,10 @@ INSERT INTO users (id, username, email, password, role) VALUES
 -- 5. ITEMS — Breaking Bad
 -- =============================================================================
 
--- Série
+-- Série (identifiants Wikidata : un import par le connecteur « series » complète ces items au lieu de les doubler)
 INSERT INTO items (id, item_type_id, attributes) VALUES
 ('e0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001',
- '{"title": "Breaking Bad", "synopsis": {"fr": "Un professeur de chimie se tourne vers la fabrication de méthamphétamine.", "en": "A chemistry teacher turns to methamphetamine manufacturing."}, "start_year": 2008, "end_year": 2013, "images": {"poster": [], "screenshot": [], "banner": [], "default_image": ""}}');
+ '{"title": "Breaking Bad", "synopsis": {"fr": "Un professeur de chimie se tourne vers la fabrication de méthamphétamine.", "en": "A chemistry teacher turns to methamphetamine manufacturing."}, "start_year": 2008, "end_year": 2013, "images": {"poster": [], "screenshot": [], "banner": [], "default_image": ""}, "external_ids": {"wikidata": "Q1079", "imdb": "tt0903747"}}');
 
 -- Diffusion AMC
 INSERT INTO items (id, item_type_id, attributes) VALUES
@@ -44,21 +44,21 @@ INSERT INTO items (id, item_type_id, attributes) VALUES
 -- Saison 1
 INSERT INTO items (id, item_type_id, attributes) VALUES
 ('e0000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000003',
- '{"name": "Saison 1", "number": 1, "year": 2008}');
+ '{"name": "Saison 1", "number": 1, "year": 2008, "external_ids": {"wikidata": "Q1582890"}}');
 
 -- Saison 2
 INSERT INTO items (id, item_type_id, attributes) VALUES
 ('e0000000-0000-0000-0000-000000000004', 'b0000000-0000-0000-0000-000000000003',
- '{"name": "Saison 2", "number": 2, "year": 2009}');
+ '{"name": "Saison 2", "number": 2, "year": 2009, "external_ids": {"wikidata": "Q1629860"}}');
 
 -- Épisodes Saison 1
 INSERT INTO items (id, item_type_id, attributes) VALUES
 ('e0000000-0000-0000-0000-000000000010', 'b0000000-0000-0000-0000-000000000004',
- '{"number": 1, "title": "Pilot", "duration": 58, "synopsis": {"fr": "Walter White reçoit un diagnostic de cancer.", "en": "Walter White receives a cancer diagnosis."}}'),
+ '{"number": 1, "title": "Pilot", "duration": 58, "synopsis": {"fr": "Walter White reçoit un diagnostic de cancer.", "en": "Walter White receives a cancer diagnosis."}, "external_ids": {"wikidata": "Q14625947"}}'),
 ('e0000000-0000-0000-0000-000000000011', 'b0000000-0000-0000-0000-000000000004',
- '{"number": 2, "title": "Cat''s in the Bag...", "duration": 48}'),
+ '{"number": 2, "title": "Cat''s in the Bag...", "duration": 48, "external_ids": {"wikidata": "Q13456973"}}'),
 ('e0000000-0000-0000-0000-000000000012', 'b0000000-0000-0000-0000-000000000004',
- '{"number": 3, "title": "...And the Bag''s in the River", "duration": 48}');
+ '{"number": 3, "title": "...And the Bag''s in the River", "duration": 48, "external_ids": {"wikidata": "Q1966380"}}');
 
 -- DVD Intégrale
 INSERT INTO items (id, item_type_id, attributes) VALUES

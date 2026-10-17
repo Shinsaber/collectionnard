@@ -26,6 +26,8 @@ func (c *Connector) SearchWorks(ctx context.Context, text string) ([]model.Exter
 		classes = novelClasses
 	case profileFilms:
 		classes = filmClasses
+	case profileSeries:
+		classes = seriesClasses
 	}
 	ids, err := c.WD.Search(ctx, text, classes, maxWorkHits)
 	if err != nil {
@@ -92,6 +94,8 @@ func (c *Connector) SearchEditions(ctx context.Context, q model.ExternalEditionQ
 		return c.searchReleases(ctx, q)
 	case profileFilms:
 		return c.searchFilmEditions(ctx, q)
+	case profileSeries:
+		return c.searchSeriesEditions(ctx, q)
 	}
 	title, isbn := q.Title, q.ISBN
 	if q.Work != "" || q.Barcode != "" {

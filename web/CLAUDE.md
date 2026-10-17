@@ -27,7 +27,7 @@ Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
 | `views/admin/ImportExportView.vue` | Import / export du catalogue (JSON, simulation puis import, rapport) ; exports CSV/JSON via `components/common/ExportButton.vue` et `lib/csv.ts` (séparateur selon la langue) ; `ImagesView.vue` : purge des images inutilisées (simulation puis suppression) |
 | `src/lib/schema.ts`                   | Lecture des schémas et extensions x-* (pendant de `server/internal/label`)                                                                  |
 | `src/lib/itemSearch.ts`               | Recherche du catalogue : champs filtrables / triables d'un schéma, état ↔ query (URL = paramètres de `GET /items`) |
-| `src/lib/externalPlan.ts`             | Aperçu d'un import externe : regroupement par édition, sélection par défaut, relation au parent (`role` = vocabulaire du connecteur, jamais un ItemType) |
+| `src/lib/externalPlan.ts`             | Aperçu d'un import externe : regroupement par édition (et par saison d'une série : rôle `season`), sélection par défaut, relation au parent (`role` = vocabulaire du connecteur, jamais un ItemType) |
 | `src/i18n/`                          | vue-i18n : registre des langues (`langs.ts`), instance + locales Element Plus (`index.ts`), catalogues `locales/<lang>/<ns>.ts` (fr = référence typée) |
 
 ## Règles

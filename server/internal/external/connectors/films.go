@@ -313,8 +313,15 @@ func (c *Connector) searchFilmEditions(ctx context.Context, q model.ExternalEdit
 // videoQuery restricts a CQL query to the video records (BnF document type « h »).
 func videoQuery(cql string) string { return cql + ` and bib.doctype any "h"` }
 
-// isVideo: a projected medium record (leader 6 « g »).
-func isVideo(r *bnf.Record) bool { return len(r.Leader) > 6 && r.Leader[6] == 'g' }
+// isVideo: a projected medium record (leader 6 « g »), or a record without type
+// whose extent names a video medium (some box sets: « 21 DVD vidéo »).
+func isVideo(r *bnf.Record) bool {
+	if len(r.Leader) > 6 && r.Leader[6] != ' ' {
+		return r.Leader[6] == 'g'
+	}
+	f := parseVideo(r).format
+	return f != "" && f != "other"
+}
 
 // video is what a BnF video record says of its medium (215, 073, 101, 100).
 type video struct {
@@ -330,6 +337,7 @@ type video struct {
 var (
 	reZone     = regexp.MustCompile(`(?i)\bzone (\w+)`)
 	reDuration = regexp.MustCompile(`\((?:(\d+) h)?\s*(?:(\d+) min)?\)`)
+	reBD       = regexp.MustCompile(`^\s*[0-9]*\s*bd\b`) // « 16 BD (50 h) » : Blu-ray sans « vidéo »
 	reLeading  = regexp.MustCompile(`^\s*(\d+)\s`)
 )
 
@@ -340,7 +348,7 @@ func parseVideo(r *bnf.Record) video {
 	switch {
 	case strings.Contains(low, "4k"), strings.Contains(low, "ultra hd"), strings.Contains(low, "uhd"):
 		v.format, v.name = "uhd_blu_ray", "Blu-ray 4K"
-	case strings.Contains(low, "bd vidéo"), strings.Contains(low, "blu-ray"), strings.Contains(low, "disque blu-ray"):
+	case strings.Contains(low, "bd vidéo"), strings.Contains(low, "blu-ray"), reBD.MatchString(low):
 		v.format, v.name = "blu_ray", "Blu-ray"
 	case strings.Contains(low, "hd dvd"):
 		v.format, v.name = "hd_dvd", "HD DVD"
@@ -472,17 +480,38 @@ func cleanPublisher(s string) string {
 // addVideoRelease adds a video release, its publishers and, without a chosen
 // film, the film it records.
 func (p *planner) addVideoRelease(ctx context.Context, ark, workKey string) error {
-	number, _ := bnf.RecordNumber(ark)
-	rec, err := p.fetchRecord(ctx, number)
+	rec, err := p.videoRecord(ctx, ark)
 	if err != nil {
 		return err
 	}
-	if !isVideo(rec) {
-		return notFound("bnf record %s is not a video release", number)
+	if workKey == "" {
+		if workKey, err = p.filmOfRecord(ctx, rec); err != nil {
+			return err
+		}
 	}
+	p.addVideoReleaseNode(rec, ark, rec.Get("200", "a"), workKey)
+	return nil
+}
+
+// videoRecord reads a BnF record that must describe a video.
+func (p *planner) videoRecord(ctx context.Context, ark string) (*bnf.Record, error) {
+	number, _ := bnf.RecordNumber(ark)
+	rec, err := p.fetchRecord(ctx, number)
+	if err != nil {
+		return nil, err
+	}
+	if !isVideo(rec) {
+		return nil, notFound("bnf record %s is not a video release", number)
+	}
+	return rec, nil
+}
+
+// addVideoReleaseNode adds the release of a video record (its medium,
+// languages, contents…), released_as from the work and its publishers.
+func (p *planner) addVideoReleaseNode(rec *bnf.Record, ark, title, workKey string) *node {
 	v := parseVideo(rec)
 	attrs := map[string]any{
-		"title":        rec.Get("200", "a"),
+		"title":        title,
 		"external_ids": map[string]any{"bnf_ark": ark},
 		"sources":      p.sources("bnf"),
 	}
@@ -524,11 +553,6 @@ func (p *planner) addVideoRelease(ctx context.Context, ark, workKey string) erro
 		attrs["publisher"] = pubs[0].name
 	}
 
-	if workKey == "" {
-		if workKey, err = p.filmOfRecord(ctx, rec); err != nil {
-			return err
-		}
-	}
 	release := p.add(&node{
 		key: bnfKey(ark), role: model.NodeEdition, typeID: p.d.typeID(typeVideoRelease),
 		attrs: attrs, keys: bnfKeys(ark), selected: true, parent: workKey, sourceURL: bnf.RecordURL(ark),
@@ -549,7 +573,7 @@ func (p *planner) addVideoRelease(ctx context.Context, ark, workKey string) erro
 		})
 		p.link(relVideoPublishedBy, release.key, node.key, map[string]any{"roles": pub.roles})
 	}
-	return nil
+	return release
 }
 
 // filmOfRecord returns the film a release records (500 $3, BnF work record):

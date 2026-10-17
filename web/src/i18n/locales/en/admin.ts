@@ -218,6 +218,22 @@ const en: typeof fr = {
         groupMain: "Film and credits",
         groupVolumes: "Contents",
       },
+      series: {
+        title: "Series",
+        intro:
+          "Search a series on Wikidata: its broadcast, seasons and episodes are proposed (TVmaze fills in the seasons without episodes on Wikidata). Its DVD and Blu-ray box sets are listed from the BnF, or found by barcode, then linked to the episodes they contain. Simulate, then confirm. Items already in the catalogue keep their values: only their empty fields are filled in.",
+        workTitle: "Series (Wikidata)",
+        workPlaceholder: "Series title, e.g. Breaking Bad",
+        editionTitle: "Box sets (BnF)",
+        editionPlaceholder: "Series title",
+        byCode: "By barcode",
+        codePlaceholder: "Barcode (EAN) of the box set, e.g. 3333297600736",
+        publishers: "Publisher(s)",
+        attribution:
+          "Data from Wikidata (CC0), TVmaze (CC BY-SA, tvmaze.com) and the BnF general catalogue (Licence Ouverte), retrieved on {date}.",
+        groupMain: "Series, broadcast and credits",
+        groupVolumes: "Episodes",
+      },
     },
     stepOf: "Step {n} / {total} · {title}",
     steps: {

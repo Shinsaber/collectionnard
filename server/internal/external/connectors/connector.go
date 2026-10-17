@@ -20,6 +20,7 @@ import (
 	"github.com/shinsaber/colec/internal/external"
 	"github.com/shinsaber/colec/internal/external/bnf"
 	"github.com/shinsaber/colec/internal/external/musicbrainz"
+	"github.com/shinsaber/colec/internal/external/tvmaze"
 	"github.com/shinsaber/colec/internal/external/wikidata"
 	"github.com/shinsaber/colec/internal/model"
 )
@@ -30,6 +31,8 @@ type Catalog interface {
 	ListRelationTypes(ctx context.Context, pg model.Pagination, sourceTypeID, targetTypeID *uuid.UUID) ([]model.RelationType, int, error)
 	FindItemsByAttribute(ctx context.Context, itemTypeID uuid.UUID, path, values []string, fold bool) ([]model.Item, error)
 	ListRelationsBetween(ctx context.Context, ids []uuid.UUID) ([]model.ItemRelation, error)
+	// ListItemRelations: the relations of an item, with their ends (matching through a relation).
+	ListItemRelations(ctx context.Context, itemID uuid.UUID, relationTypeID *uuid.UUID) ([]model.ItemRelation, error)
 }
 
 // profile: the kind of collection a connector imports. All share the planner
@@ -41,6 +44,7 @@ const (
 	profileNovels                 // novels: work → edition (the book, or a set of volumes)
 	profileMusic                  // music (domain « music »): album → releases → tracks
 	profileFilms                  // films (domain « video »): film → video releases (DVD, Blu-ray…)
+	profileSeries                 // TV series (domain « tv »): series → broadcast → seasons → episodes, box sets
 )
 
 type Connector struct {
@@ -48,6 +52,7 @@ type Connector struct {
 	WD      *wikidata.Client
 	BnF     *bnf.Client
 	MB      *musicbrainz.Client
+	TV      *tvmaze.Client
 	Now     func() time.Time
 	profile profile
 }
@@ -68,6 +73,14 @@ func NewNovels(cat Catalog, fetch *external.Client) *Connector {
 func NewFilms(cat Catalog, fetch *external.Client) *Connector {
 	c := New(cat, fetch)
 	c.profile = profileFilms
+	return c
+}
+
+// NewSeries returns the series connector (Wikidata, TVmaze for missing episodes, BnF for box sets).
+func NewSeries(cat Catalog, fetch *external.Client) *Connector {
+	c := New(cat, fetch)
+	c.TV = tvmaze.New(fetch)
+	c.profile = profileSeries
 	return c
 }
 
@@ -113,6 +126,17 @@ const (
 	relReleasedAs       = "released_as"
 	relCredited         = "credited"
 	relVideoPublishedBy = "published_by"
+
+	// Package « tv ».
+	typeSeries    = "Series"
+	typeBroadcast = "Broadcast"
+	typeSeason    = "Season"
+	typeEpisode   = "Episode"
+
+	relBroadcastOn     = "broadcast_on"
+	relContainsSeason  = "contains_season"
+	relContainsEpisode = "contains_episode"
+	relIncludesEpisode = "includes_episode"
 )
 
 var (
@@ -122,12 +146,14 @@ var (
 		profileNovels:  {typeNovel, typeSaga, typeUniverse, typeEdition, typeVolume, typePerson, typePublisher},
 		profileMusic:   {typeAlbum, typeRelease, typeTrack, typeArtist, typeLabel},
 		profileFilms:   {typeFilm, typeVideoRelease, typePerson, typePublisher},
+		profileSeries:  {typeSeries, typeBroadcast, typeSeason, typeEpisode, typeVideoRelease, typePerson, typePublisher},
 	}
 	relationTypeNames = map[profile][]string{
 		profileBDManga: {relContainsWork, relCreatedBy, relPublishedAs, relEditedBy, relContainsVolume},
 		profileNovels:  {relContainsWork, relCreatedBy, relPublishedAs, relEditedBy, relContainsVolume},
 		profileMusic:   {relPerformedBy, relIssuedAs, relContainsTrack, relReleasedBy},
 		profileFilms:   {relReleasedAs, relCredited, relVideoPublishedBy},
+		profileSeries:  {relBroadcastOn, relContainsSeason, relContainsEpisode, relReleasedAs, relIncludesEpisode, relCredited, relVideoPublishedBy},
 	}
 
 	// packageIDs: fixed ids of the types in the domain packages. A type is found by this id
@@ -162,6 +188,14 @@ var (
 		relReleasedAs:       uuid.MustParse("c0000000-0000-0000-0000-000000000004"),
 		relCredited:         uuid.MustParse("c0000000-0000-0000-0000-000000000030"),
 		relVideoPublishedBy: uuid.MustParse("c0000000-0000-0000-0000-000000000031"),
+		typeSeries:          uuid.MustParse("b0000000-0000-0000-0000-000000000001"),
+		typeBroadcast:       uuid.MustParse("b0000000-0000-0000-0000-000000000002"),
+		typeSeason:          uuid.MustParse("b0000000-0000-0000-0000-000000000003"),
+		typeEpisode:         uuid.MustParse("b0000000-0000-0000-0000-000000000004"),
+		relBroadcastOn:      uuid.MustParse("c0000000-0000-0000-0000-000000000001"),
+		relContainsSeason:   uuid.MustParse("c0000000-0000-0000-0000-000000000002"),
+		relContainsEpisode:  uuid.MustParse("c0000000-0000-0000-0000-000000000003"),
+		relIncludesEpisode:  uuid.MustParse("c0000000-0000-0000-0000-000000000005"),
 	}
 )
 
@@ -189,6 +223,8 @@ func (c *Connector) ID() string {
 		return "music"
 	case profileFilms:
 		return "films"
+	case profileSeries:
+		return "series"
 	}
 	return "bd-manga"
 }
@@ -199,6 +235,8 @@ func (c *Connector) Domain() string {
 		return "music"
 	case profileFilms:
 		return "video"
+	case profileSeries:
+		return "tv"
 	}
 	return "books"
 }
@@ -210,7 +248,7 @@ func (c *Connector) EditionsByWork() bool { return c.profile != profileBDManga }
 
 // EditionCode is the code editions are searched by: the ISBN of a book, the barcode of a release.
 func (c *Connector) EditionCode() string {
-	if c.profile == profileMusic || c.profile == profileFilms {
+	if c.profile == profileMusic || c.profile == profileFilms || c.profile == profileSeries {
 		return "barcode"
 	}
 	return "isbn"

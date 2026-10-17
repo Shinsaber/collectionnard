@@ -14,6 +14,13 @@ import (
 	"github.com/shinsaber/colec/internal/model"
 )
 
+// viaMatch finds the existing item of a node among the targets of a relation
+// from the existing item of its parent, by an attribute (the broadcast « AMC »
+// of a series: same channel).
+type viaMatch struct {
+	relation, attr string
+}
+
 // matchKey is one way to find the existing item of a node.
 type matchKey struct {
 	path  []string
@@ -26,7 +33,9 @@ type node struct {
 	typeID                             uuid.UUID
 	attrs                              map[string]any // from the source, fitted to the schema
 	keys                               []matchKey
-	selected                           bool
+	// via: matched through a relation from its parent, when it has no identifier of its own.
+	via      *viaMatch
+	selected bool
 
 	existing *model.Item
 	merged   map[string]any // attributes to write
@@ -137,6 +146,8 @@ func (c *Connector) plan(ctx context.Context, req model.ExternalImportRequest) (
 		addWork, addEdition = p.addAlbum, p.addRelease
 	case profileFilms:
 		addWork, addEdition = p.addFilm, p.addVideoRelease
+	case profileSeries:
+		addWork, addEdition = p.addSeries, p.addBoxSet
 	}
 	if req.Work != "" {
 		if workKey, err = addWork(ctx, req.Work); err != nil {
@@ -149,6 +160,9 @@ func (c *Connector) plan(ctx context.Context, req model.ExternalImportRequest) (
 		}
 	}
 	if err := p.matchItems(ctx); err != nil {
+		return nil, err
+	}
+	if err := p.matchVia(ctx); err != nil {
 		return nil, err
 	}
 	if err := p.matchRelations(ctx); err != nil {
@@ -234,6 +248,38 @@ func (p *planner) matchItems(ctx context.Context) error {
 		for _, r := range rels {
 			nr := p.link(p.relName(r.typeID), p.resolve(r.from), p.resolve(r.to), r.attrs)
 			nr.orderOfTarget = nr.orderOfTarget || r.orderOfTarget
+		}
+	}
+	return nil
+}
+
+// matchVia matches the nodes without identifier (via) against the targets of
+// their relation from the existing item of their parent.
+func (p *planner) matchVia(ctx context.Context) error {
+	for _, n := range p.nodes {
+		if n.via == nil || n.existing != nil {
+			continue
+		}
+		parent := p.byKey[p.resolve(n.parent)]
+		if parent == nil || parent.existing == nil {
+			continue
+		}
+		relType := p.d.relations[n.via.relation]
+		rels, err := p.c.Catalog.ListItemRelations(ctx, parent.existing.ID, &relType)
+		if err != nil {
+			return err
+		}
+		want, _ := n.attrs[n.via.attr].(string)
+		for i := range rels {
+			t := rels[i].TargetItem
+			if rels[i].SourceItemID != parent.existing.ID || t == nil || t.ItemTypeID != n.typeID {
+				continue
+			}
+			if got := stringAt(parseObject(t.Attributes), []string{n.via.attr}); want != "" && fold(got) == fold(want) {
+				n.existing = t
+				n.merged = fillEmpty(parseObject(t.Attributes), n.attrs)
+				break
+			}
 		}
 	}
 	return nil

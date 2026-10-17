@@ -415,12 +415,17 @@ ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries 
         interprètes dont cinq cochés), édition (support, disques, zone, durée, EAN, langues, sous-titres, collection,
         contenu), éditeurs et distributeurs ; une édition seule retrouve son film (`P268`), à défaut le crée depuis la
         notice. Exemple réel dans `db/seed_video.sql`.
-- [ ] **P3-6 — Séries (DVD / Blu-ray)** : étude (Wikidata, TVmaze pour saisons et épisodes, BnF pour les coffrets),
+- [x] **P3-6 — Séries (DVD / Blu-ray)** : étude (Wikidata, TVmaze pour saisons et épisodes, BnF pour les coffrets),
       en réutilisant le modèle TV existant (Series, Season, Episode) et l'édition vidéo partagée (`VideoRelease`), connecteur.
   - [x] **P3-6a — Étude et modèle** : sources (`docs/sources-externes.md` : Wikidata pour la série, ses saisons et
         épisodes ; TVmaze, CC BY-SA sans clé, à défaut ; BnF pour les coffrets, par titre ou EAN, saisons lues en 200 `$h`),
         modèle (`video.md` § Séries) ; `tv` v3 (identifiants, sources, titres originaux, date de diffusion, nombres de
         saisons et d'épisodes ; ajouts seulement) et `video` v2 (`credited` ouvert aux séries, rôle `creator`).
+  - [x] **P3-6b — Connecteur Séries** (`series`) : série, diffusion, saisons et épisodes sur Wikidata (titres français),
+        TVmaze pour les saisons sans épisodes ; créateurs et interprètes ; coffrets BnF par titre ou EAN, saisons lues dans
+        le titre et reliées aux épisodes (`includes_episode`, le chemin « par le DVD » du graphe) ; un coffret seul retrouve
+        sa série ; la diffusion est rapprochée par sa relation à la série. Client `tvmaze` (espacé, 429 retenté).
+
 ### Phase 4 : Social
 
 - [ ] Statistiques et visualisation graphiques

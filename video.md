@@ -101,3 +101,22 @@ Paquet `tv` **v3** (ajouts seulement, aucune clé retirée) : `Series` gagne `or
 | Épisodes           | `P527` de la saison (ordre `P1545`), libellés fr / en, `P577`, `P2047` | `shows/{id}/episodes` (titres anglais) | —                                  |
 | Générique          | `P170` création, `P161` interprétation                                | —                                | —                                        |
 | Coffrets           | —                                                                     | —                                | notices vidéo par titre ou EAN ; saisons lues en 200 `$h` (« Intégrale de la saison 1 », « Intégrale des saisons 1, 2 et 3 », « L'intégrale de la série ») |
+
+### Import (connecteur `series`)
+
+Page admin « Sources externes », sorte de collection « Séries » (`/external/series/*`) :
+
+1. **Série** cherchée sur Wikidata (série télévisée, mini-série, web-série, séries d'animation) ; ses **coffrets** sont
+   listés depuis la BnF (notices vidéo titrées comme la série : « Breaking bad — Intégrale de la saison 1 »), ou trouvés par
+   titre ou **code-barres**.
+2. **Aperçu** : série (titre français, titre original, années, pays, langue, nombres de saisons et d'épisodes, IMDb,
+   TVmaze), diffusion (« AMC 2008-2013 », câble / streaming / télévision selon la classe du diffuseur), saisons et épisodes
+   (titre français, titre original, numéro, date de première diffusion, durée) ; créateurs et dix premiers interprètes ;
+   coffret (support, disques, zone, EAN, langues, contenu), éditeur, et `includes_episode` vers chaque épisode des saisons
+   du coffret (« Saison finale » = dernière saison ; « L'intégrale de la série » = toutes).
+3. **Épisodes manquants** : une saison sans épisodes sur Wikidata est complétée par TVmaze (titres anglais, source
+   `tvmaze`, CC BY-SA) ; une saison inconnue de Wikidata est créée depuis TVmaze.
+4. **Coffret choisi seul** (code-barres) : la série est retrouvée sur Wikidata par le titre du coffret (libellé identique).
+5. **Rapprochement** : QID, IMDb ou identifiant TVmaze ; la diffusion (sans identifiant propre) par la relation
+   `broadcast_on` de la série existante, même chaîne. Le Breaking Bad de `db/seed.sql` porte ses QID : un import le
+   complète au lieu de le doubler.

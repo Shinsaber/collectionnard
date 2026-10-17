@@ -420,7 +420,13 @@ export interface ExternalImportRequest {
 }
 
 export type ExternalNodeRole =
-  "work" | "universe" | "person" | "edition" | "publisher" | "volume";
+  | "work"
+  | "universe"
+  | "person"
+  | "edition"
+  | "season"
+  | "publisher"
+  | "volume";
 
 export type ExternalNodeStatus = "new" | "update" | "unchanged";
 

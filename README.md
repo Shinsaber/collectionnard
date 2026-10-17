@@ -192,7 +192,7 @@ colec/
 │       ├── handler/        # Handlers HTTP (1 fichier par domaine)
 │       ├── middleware/     # Auth JWT, RequireAdmin, RateLimiter, RequestLogger
 │       ├── dbmigrate/      # Migrations (tern) + seed
-│       ├── external/       # Sources ouvertes : clients Wikidata, BnF (SRU) et MusicBrainz, connecteurs (BD / manga, romans, musique, films)
+│       ├── external/       # Sources ouvertes : clients Wikidata, BnF (SRU), MusicBrainz et TVmaze, connecteurs (BD / manga, romans, musique, films, séries)
 │       ├── model/          # Structs Go (JSON tags)
 │       ├── store/          # Couche d'accès BDD (pgx)
 │       ├── validator/      # Validation JSON Schema

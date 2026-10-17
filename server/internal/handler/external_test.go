@@ -33,7 +33,7 @@ func externalMock(t *testing.T) (*testutil.MockStore, *connectorstest.Sources) {
 func callExternal(t *testing.T, mock *testutil.MockStore, src *connectorstest.Sources, method, path, token, body string) (*http.Response, string) {
 	t.Helper()
 	h := testutil.NewTestHandler(mock)
-	h.Connectors = []external.Connector{src.Connector(mock), src.NovelsConnector(mock), src.MusicConnector(mock), src.FilmsConnector(mock)}
+	h.Connectors = []external.Connector{src.Connector(mock), src.NovelsConnector(mock), src.MusicConnector(mock), src.FilmsConnector(mock), src.SeriesConnector(mock)}
 	srv := testutil.NewTestServerFromHandler(h)
 	defer srv.Close()
 	var r io.Reader
@@ -205,7 +205,7 @@ func TestExternal_Connectors(t *testing.T) {
 	resp, body := callExternal(t, mock, src, "GET", "/api/v1/external/connectors", testutil.AdminToken(), "")
 	var list []model.ConnectorInfo
 	if resp.StatusCode != http.StatusOK || json.Unmarshal([]byte(body), &list) != nil ||
-		len(list) != 4 || list[3].ID != "films" || list[3].Domain != "video" || list[3].EditionCode != "barcode" || list[0].ID != "bd-manga" || list[0].Domain != "books" || list[0].EditionCode != "isbn" ||
+		len(list) != 5 || list[4].ID != "series" || list[4].Domain != "tv" || list[3].ID != "films" || list[3].Domain != "video" || list[3].EditionCode != "barcode" || list[0].ID != "bd-manga" || list[0].Domain != "books" || list[0].EditionCode != "isbn" ||
 		list[2].ID != "music" || list[2].Domain != "music" || list[2].EditionCode != "barcode" || !list[2].EditionsByWork {
 		t.Errorf("connectors: %d %s", resp.StatusCode, body)
 	}

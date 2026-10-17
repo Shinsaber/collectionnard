@@ -159,5 +159,5 @@ lots 0 à 11 livrés, voir `Collectionnard.md` §8 et `docs/audit/03-feuille-de-
 Phase 2 livrée : multilingue, recherche avancée (lot 14), import/export (lot 12), refonte graphique responsive
 (identité « Étiquette », lots R0–R8, branche `refonte-graphique`), domaine BD / Manga (lot 13,
 `les.collection.md`, sources Wikidata / BnF). Phase 3 (récupération automatique externe) en cours, branche `phase3-sources` : domaines installables (P3-0), connecteurs
-BD / Manga, Romans, Musique et Films (`server/internal/external/connectors`, profils `bd-manga` / `novels` / `music` / `films`, clients `wikidata`, `bnf`, `musicbrainz`, page admin « Sources externes ») ;
-suite : séries en DVD / Blu-ray (P3-6). Phase 4 : social.
+BD / Manga, Romans, Musique, Films et Séries (`server/internal/external/connectors`, profils `bd-manga` / `novels` / `music` / `films` / `series`, clients `wikidata`, `bnf`, `musicbrainz`, `tvmaze`, page admin « Sources externes ») ;
+tous les domaines prévus (P3-0 à P3-6) sont livrés, non poussés. Phase 4 : social.

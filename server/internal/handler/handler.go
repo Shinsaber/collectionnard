@@ -39,6 +39,7 @@ func New(s store.Store, auth *middleware.Auth, cfg *config.Config) *Handler {
 		connectors.NewNovels(s, fetch),
 		connectors.NewMusic(s, fetch),
 		connectors.NewFilms(s, fetch),
+		connectors.NewSeries(s, fetch),
 	}}
 }
 

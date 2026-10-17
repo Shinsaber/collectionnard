@@ -85,6 +85,12 @@ const (
 
 // workType returns the item type of a work entity for the profile of c ("" when not one of its works).
 func (c *Connector) workType(e *wikidata.Entity) string {
+	if c.profile == profileSeries {
+		if e.HasID(pInstanceOf, seriesClassesSet) {
+			return typeSeries
+		}
+		return ""
+	}
 	if c.profile == profileFilms {
 		if e.HasID(pInstanceOf, filmClassesSet) {
 			return typeFilm

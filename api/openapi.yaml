@@ -169,7 +169,10 @@ tags:
       **MusicBrainz**, données de base CC0 ; ni genres ni tags, sous licence non commerciale ; une requête par
       seconde ; types du paquet `music`, rapprochés par MBID, labels aussi par nom) et `films` (film, générique et cinq premiers
       interprètes sur **Wikidata**, éditions vidéo DVD / Blu-ray / VHS du dépôt légal à la **BnF** par sa notice d'œuvre ou par
-      EAN ; une édition seule retrouve son film ; types des paquets `video` et `people`). Connecteur `bd-manga` :
+      EAN ; une édition seule retrouve son film ; types des paquets `video` et `people`) et `series` (série, diffusion, saisons et
+      épisodes sur **Wikidata**, complétés par **TVmaze** — CC BY-SA, sans clé — pour les saisons sans épisodes ; coffrets à la
+      **BnF** par titre ou EAN, reliés aux épisodes des saisons qu'ils contiennent ; types des paquets `tv`, `video`, `people`).
+      Connecteur `bd-manga` :
       œuvres, univers et auteurs sur **Wikidata** (CC0), éditions françaises et tomes sur la **BnF**
       (Licence Ouverte : source et date de récupération écrites dans `sources`). Parcours :
       recherche (`works`, `editions`) → aperçu (`preview`) → simulation puis import (`import`,
@@ -1565,7 +1568,8 @@ components:
           description: Identifiant du nœud (`wikidata:Q…`, `bnf:cb…`, `publisher:<nom>`).
         role:
           type: string
-          enum: [work, universe, person, edition, publisher, volume]
+          enum: [work, universe, person, edition, season, publisher, volume]
+          description: Vocabulaire du connecteur ; `season` = saison d'une série (ses épisodes ont le rôle `volume`), `universe` = aussi la diffusion d'une série.
         item_type_id: { type: string, format: uuid }
         attributes: { type: object, additionalProperties: true }
         existing_item_id: { type: string, format: uuid }
@@ -1671,7 +1675,7 @@ components:
       name: connector
       in: path
       required: true
-      description: Connecteur (`GET /external/connectors`) — `bd-manga`, `novels`, `music`, `films`…
+      description: Connecteur (`GET /external/connectors`) — `bd-manga`, `novels`, `music`, `films`, `series`…
       schema:
         type: string
         example: bd-manga
@@ -4249,10 +4253,12 @@ paths:
         notice d'œuvre BnF du roman (`P268`, index `bib.work2bib`, 150 au plus, éditions françaises
         d'abord). Connecteur `music` : par titre (index `release`), par **code-barres** (`barcode`, EAN / UPC
         avec clé de contrôle valide) ou par album (`work`, MBID du groupe de parutions : ses parutions, 100 au
-        plus, les plus anciennes d'abord) ; `isbn` y est refusé, comme `barcode` pour les livres. Exactement un
+        plus, les plus anciennes d'abord) ; `isbn` y est refusé, comme `barcode` pour les livres.
         Connecteur `films` : par titre (notices vidéo, `bib.doctype any "h"`), par **code-barres** (`barcode`, index
         `bib.ean`) ou par film (`work`, QID : éditions de sa notice d'œuvre BnF, les plus récentes d'abord).
-        des paramètres ; l'identifiant `work` est vérifié par le connecteur (400).
+        Connecteur `series` : coffrets par titre, par **code-barres** ou par série (`work`, QID : notices vidéo titrées
+        comme la série, les coffrets n'ayant pas de notice d'œuvre), titre complété de la saison (200 `$h`).
+        Exactement un des paramètres ; l'identifiant `work` est vérifié par le connecteur (400).
 
         Connecteur `novels` : une notice sans ensemble est une édition en un volume (le livre, avec son
         ISBN) ; une notice liée (461) à un ensemble titré comme le roman représente cet ensemble ; un

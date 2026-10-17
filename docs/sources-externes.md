@@ -188,6 +188,20 @@ choix du mainteneur). Modèle : `video.md`.
   saison est en 200 `` (« Saison 5 », « Saison finale [Saison 5] », « Intégrale des saisons 1, 2 et 3 »,
   « L'intégrale de la série »).
 
+### Connecteur `series` (2026-10-17)
+
+- **Couverture Wikidata** : Breaking Bad, Kaamelott (459 épisodes), Lupin ont tous leurs épisodes ; Le Bureau des légendes
+  et Dix pour cent n'en ont aucun (50 et 24 épisodes repris de TVmaze), Engrenages un seul sur 75. La durée `P2047` est
+  parfois fausse (un épisode de Kaamelott de trois minutes noté 174 minutes) : reprise telle quelle.
+- **Coût** : la série, ses saisons, puis épisodes, diffuseurs et personnes par lots de 50 entités : un aperçu de Breaking
+  Bad (62 épisodes) prend ≈ 4 s ; TVmaze ajoute trois requêtes (série par IMDb, saisons, épisodes).
+- **Coffrets** : sans notice d'œuvre, ils sont cherchés par titre puis filtrés sur le titre exact de la série (200 `$a`) ;
+  une notice de coffret peut ne pas être typée vidéo (guide vide, « 21 DVD vidéo ») : reconnue à son support. La saison
+  vient de 200 `$h` / `$i` / `$e` : « Intégrale de la saison 1 », « Saisons 1 à 4 », « Saison finale » (dernière saison),
+  « L'intégrale de la série » (toutes).
+- **Diffusion** : un élément « AMC 2008-2013 » propre à la série, sans identifiant : rapproché par la relation
+  `broadcast_on` de la série déjà en base (même chaîne), jamais par son nom seul.
+
 ## Sources pour plus tard
 
 ### Grand Comics Database (comics.org)

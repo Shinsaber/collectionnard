@@ -1,0 +1,102 @@
+[
+  {
+    "id": 753,
+    "url": "https://www.tvmaze.com/seasons/753/breaking-bad-season-1",
+    "number": 1,
+    "name": "",
+    "episodeOrder": 7,
+    "premiereDate": "2008-01-20",
+    "endDate": "2008-03-09",
+    "network": {
+      "id": 20,
+      "name": "AMC",
+      "country": {
+        "name": "United States",
+        "code": "US",
+        "timezone": "America/New_York"
+      },
+      "officialSite": null
+    },
+    "webChannel": null
+  },
+  {
+    "id": 754,
+    "url": "https://www.tvmaze.com/seasons/754/breaking-bad-season-2",
+    "number": 2,
+    "name": "",
+    "episodeOrder": 13,
+    "premiereDate": "2009-03-08",
+    "endDate": "2009-05-31",
+    "network": {
+      "id": 20,
+      "name": "AMC",
+      "country": {
+        "name": "United States",
+        "code": "US",
+        "timezone": "America/New_York"
+      },
+      "officialSite": null
+    },
+    "webChannel": null
+  },
+  {
+    "id": 755,
+    "url": "https://www.tvmaze.com/seasons/755/breaking-bad-season-3",
+    "number": 3,
+    "name": "",
+    "episodeOrder": 13,
+    "premiereDate": "2010-03-21",
+    "endDate": "2010-06-13",
+    "network": {
+      "id": 20,
+      "name": "AMC",
+      "country": {
+        "name": "United States",
+        "code": "US",
+        "timezone": "America/New_York"
+      },
+      "officialSite": null
+    },
+    "webChannel": null
+  },
+  {
+    "id": 756,
+    "url": "https://www.tvmaze.com/seasons/756/breaking-bad-season-4",
+    "number": 4,
+    "name": "",
+    "episodeOrder": 13,
+    "premiereDate": "2011-07-17",
+    "endDate": "2011-10-09",
+    "network": {
+      "id": 20,
+      "name": "AMC",
+      "country": {
+        "name": "United States",
+        "code": "US",
+        "timezone": "America/New_York"
+      },
+      "officialSite": null
+    },
+    "webChannel": null
+  },
+  {
+    "id": 757,
+    "url": "https://www.tvmaze.com/seasons/757/breaking-bad-season-5",
+    "number": 5,
+    "name": "",
+    "episodeOrder": 16,
+    "premiereDate": "2012-07-15",
+    "endDate": "2019-10-11",
+    "network": {
+      "id": 20,
+      "name": "AMC",
+      "country": {
+        "name": "United States",
+        "code": "US",
+        "timezone": "America/New_York"
+      },
+      "officialSite": null
+    },
+    "webChannel": null
+  }
+]

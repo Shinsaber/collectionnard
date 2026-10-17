@@ -1,0 +1,3577 @@
+<?xml version="1.0" encoding="UTF-8"?><srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns="http://catalogue.bnf.fr/namespaces/InterXMarc" xmlns:ixm="http://catalogue.bnf.fr/namespaces/InterXMarc" xmlns:mn="http://catalogue.bnf.fr/namespaces/motsnotices" xmlns:sd="http://www.loc.gov/zing/srw/diagnostic/">
+<srw:version>1.2</srw:version>
+<srw:echoedSearchRetrieveRequest>
+<srw:version>1.2</srw:version>
+<srw:query>bib.title all "Breaking Bad" and bib.doctype any "h"</srw:query>
+</srw:echoedSearchRetrieveRequest>
+<srw:numberOfRecords>21</srw:numberOfRecords>
+<srw:records>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb46634219w" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF466342190000003</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb46634219w</mxc:controlfield>
+<mxc:datafield tag="020" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">72012970</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="071" ind1="4" ind2="1">
+<mxc:subfield code="a">731441</mxc:subfield>
+<mxc:subfield code="b">EDV 11</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3333297314411</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20201013d2020       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="1" ind2=" ">
+<mxc:subfield code="a">eng</mxc:subfield>
+<mxc:subfield code="a">fre</mxc:subfield>
+<mxc:subfield code="c">eng</mxc:subfield>
+<mxc:subfield code="j">fre</mxc:subfield>
+<mxc:subfield code="j">eng</mxc:subfield>
+<mxc:subfield code="j">ara</mxc:subfield>
+<mxc:subfield code="j">dan</mxc:subfield>
+<mxc:subfield code="j">fin</mxc:subfield>
+<mxc:subfield code="j">dut</mxc:subfield>
+<mxc:subfield code="j">nor</mxc:subfield>
+<mxc:subfield code="j">swe</mxc:subfield>
+<mxc:subfield code="g">fre</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   baiz|||||||bk||c</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">El camino</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="e">un film breaking bad</mxc:subfield>
+<mxc:subfield code="f">Vince Gilligan, réal., scénario</mxc:subfield>
+<mxc:subfield code="g">Dave Porter, comp.</mxc:subfield>
+<mxc:subfield code="g">Aaron Paul, Jesse Plemons, Krysten Ritter... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="214" ind1=" " ind2="0">
+<mxc:subfield code="a">[Suresnes]</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment</mxc:subfield>
+<mxc:subfield code="d">2020</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="214" ind1=" " ind2="2">
+<mxc:subfield code="a">[Suresnes]</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">1 DVD vidéo monoface double couche zone 2 (1 h 57 min)</mxc:subfield>
+<mxc:subfield code="c">16/9, coul. (PAL), son., surround (Dolby)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient aussi : commentaires audio, making of, promos, etc.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Interdit à la location</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Film en version originale anglaise et en version française, avec en option audiodescription en anglais pour malvoyants, sous-titrage en français, anglais, arabe, danois, finnois, néerlandais, norvégien, suédois, et anglais pour malentendants</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Mention parallèle de titre ou de responsabilité : El camino : a breaking bad movie</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Copyright Sony pictures television, 2019</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="310" ind1=" " ind2=" ">
+<mxc:subfield code="a">Interdit aux moins de 12 ans</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="454" ind1=" " ind2="0">
+<mxc:subfield code="t">El camino : a breaking bad movie</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="510" ind1="1" ind2=" ">
+<mxc:subfield code="a">El camino</mxc:subfield>
+<mxc:subfield code="e">a breaking bad movie</mxc:subfield>
+<mxc:subfield code="z">eng</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film policier, thriller, espionnage</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : salle de cinéma commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="686" ind1=" " ind2=" ">
+<mxc:subfield code="a">207</mxc:subfield>
+<mxc:subfield code="2">Cadre de classement de la Bibliographie nationale française</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14101375</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000108596775</mxc:subfield>
+<mxc:subfield code="a">Gilligan</mxc:subfield>
+<mxc:subfield code="b">Vince</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">300</mxc:subfield>
+<mxc:subfield code="4">690</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">17092463</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000459804476</mxc:subfield>
+<mxc:subfield code="a">Porter</mxc:subfield>
+<mxc:subfield code="b">Dave</mxc:subfield>
+<mxc:subfield code="4">230</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">16660556</mxc:subfield>
+<mxc:subfield code="o">ISNI000000011461591X</mxc:subfield>
+<mxc:subfield code="a">Paul</mxc:subfield>
+<mxc:subfield code="b">Aaron</mxc:subfield>
+<mxc:subfield code="f">1979-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">17913705</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000077643283</mxc:subfield>
+<mxc:subfield code="a">Plemons</mxc:subfield>
+<mxc:subfield code="b">Jesse</mxc:subfield>
+<mxc:subfield code="f">1988-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">16249172</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000364746365</mxc:subfield>
+<mxc:subfield code="a">Ritter</mxc:subfield>
+<mxc:subfield code="b">Krysten</mxc:subfield>
+<mxc:subfield code="f">1981-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20201013</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF466342190000003</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:46634219001001</mxc:subfield>
+<mxc:subfield code="a">VDVD-116781</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb46634219w</srw:recordIdentifier>
+<srw:recordPosition>1</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20201013</ixm:attr>
+<ixm:attr name="LastModificationDate">20210326</ixm:attr>
+<mn:score>13.451507</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb46634221f" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF466342210000001</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb46634221f</mxc:controlfield>
+<mxc:datafield tag="020" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">72012971</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="071" ind1="4" ind2="1">
+<mxc:subfield code="a">931441</mxc:subfield>
+<mxc:subfield code="b">EDV 11</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3333299314419</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20201013d2020       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="1" ind2=" ">
+<mxc:subfield code="a">eng</mxc:subfield>
+<mxc:subfield code="a">fre</mxc:subfield>
+<mxc:subfield code="c">eng</mxc:subfield>
+<mxc:subfield code="j">fre</mxc:subfield>
+<mxc:subfield code="j">eng</mxc:subfield>
+<mxc:subfield code="j">ara</mxc:subfield>
+<mxc:subfield code="j">chi</mxc:subfield>
+<mxc:subfield code="j">kor</mxc:subfield>
+<mxc:subfield code="j">dan</mxc:subfield>
+<mxc:subfield code="j">spa</mxc:subfield>
+<mxc:subfield code="j">fin</mxc:subfield>
+<mxc:subfield code="j">dut</mxc:subfield>
+<mxc:subfield code="j">nor</mxc:subfield>
+<mxc:subfield code="j">swe</mxc:subfield>
+<mxc:subfield code="j">tha</mxc:subfield>
+<mxc:subfield code="g">fre</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   bai||||||||b||||</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">El camino</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="e">un film breaking bad</mxc:subfield>
+<mxc:subfield code="f">Vince Gilligan, réal., scénario</mxc:subfield>
+<mxc:subfield code="g">Dave Porter, comp.</mxc:subfield>
+<mxc:subfield code="g">Aaron Paul, Jesse Plemons, Krysten Ritter... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="214" ind1=" " ind2="0">
+<mxc:subfield code="a">[Suresnes]</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment</mxc:subfield>
+<mxc:subfield code="d">2020</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="214" ind1=" " ind2="2">
+<mxc:subfield code="a">[Suresnes]</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">1 BD vidéo (2 h 02 min)</mxc:subfield>
+<mxc:subfield code="c">coul., son., surround</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient aussi : commentaires, making of, bêtisier, scènes coupées et rallongées, étude de 3 scènes différentes avec le réalisateur, promos, etc.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Interdit à la location</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Film en version originale anglaise et en version française, avec en option audiodescription en anglais pour malvoyants, sous-titrage en français, anglais, arabe, chinois, coréen, danois, espagnol, finnois, néerlandais, norvégien, suédois, thaï, et anglais pour malentendants</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Mention parallèle de titre ou de responsabilité : El camino : a breaking bad movie</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Copyright Sony pictures television, 2019</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="310" ind1=" " ind2=" ">
+<mxc:subfield code="a">Interdit aux moins de 12 ans</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="454" ind1=" " ind2="0">
+<mxc:subfield code="t">El camino : a breaking bad movie</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="510" ind1="1" ind2=" ">
+<mxc:subfield code="a">El camino</mxc:subfield>
+<mxc:subfield code="e">a breaking bad movie</mxc:subfield>
+<mxc:subfield code="z">eng</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film policier, thriller, espionnage</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : salle de cinéma commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="686" ind1=" " ind2=" ">
+<mxc:subfield code="a">207</mxc:subfield>
+<mxc:subfield code="2">Cadre de classement de la Bibliographie nationale française</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14101375</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000108596775</mxc:subfield>
+<mxc:subfield code="a">Gilligan</mxc:subfield>
+<mxc:subfield code="b">Vince</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">300</mxc:subfield>
+<mxc:subfield code="4">690</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">17092463</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000459804476</mxc:subfield>
+<mxc:subfield code="a">Porter</mxc:subfield>
+<mxc:subfield code="b">Dave</mxc:subfield>
+<mxc:subfield code="4">230</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">16660556</mxc:subfield>
+<mxc:subfield code="o">ISNI000000011461591X</mxc:subfield>
+<mxc:subfield code="a">Paul</mxc:subfield>
+<mxc:subfield code="b">Aaron</mxc:subfield>
+<mxc:subfield code="f">1979-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">17913705</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000077643283</mxc:subfield>
+<mxc:subfield code="a">Plemons</mxc:subfield>
+<mxc:subfield code="b">Jesse</mxc:subfield>
+<mxc:subfield code="f">1988-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">16249172</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000364746365</mxc:subfield>
+<mxc:subfield code="a">Ritter</mxc:subfield>
+<mxc:subfield code="b">Krysten</mxc:subfield>
+<mxc:subfield code="f">1981-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20201013</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF466342210000001</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:46634221001001</mxc:subfield>
+<mxc:subfield code="a">VDVD-116782</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb46634221f</srw:recordIdentifier>
+<srw:recordPosition>2</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20201013</ixm:attr>
+<ixm:attr name="LastModificationDate">20210326</ixm:attr>
+<mn:score>13.451206</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb436329800" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF436329800000006</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb436329800</mxc:controlfield>
+<mxc:datafield tag="020" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">71314793</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="071" ind1="4" ind2="1">
+<mxc:subfield code="a">997515</mxc:subfield>
+<mxc:subfield code="b">Sony pictures home entertainment</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3333299975153</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20130715d2013       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="1" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+<mxc:subfield code="a">eng</mxc:subfield>
+<mxc:subfield code="a">spa</mxc:subfield>
+<mxc:subfield code="c">eng</mxc:subfield>
+<mxc:subfield code="j">fre</mxc:subfield>
+<mxc:subfield code="j">eng</mxc:subfield>
+<mxc:subfield code="j">ara</mxc:subfield>
+<mxc:subfield code="j">spa</mxc:subfield>
+<mxc:subfield code="j">dan</mxc:subfield>
+<mxc:subfield code="j">fin</mxc:subfield>
+<mxc:subfield code="j">dut</mxc:subfield>
+<mxc:subfield code="j">nor</mxc:subfield>
+<mxc:subfield code="j">swe</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   bai||||||||b||||</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Breaking bad</mxc:subfield>
+<mxc:subfield code="h">Saison 5</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="f">Vince Gilligan, idée orig.</mxc:subfield>
+<mxc:subfield code="g">Bryan Cranston, Aaron Paul... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">[Suresnes]</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment [éd., distrib.]</mxc:subfield>
+<mxc:subfield code="d">[DL 2013]</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">2 BD vidéo (6 h 15 min)</mxc:subfield>
+<mxc:subfield code="c">coul., son., surround</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient 8 épisodes</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient aussi : 19 documentaires "Dans les coulisses de "Breaking bad", 3 épisodes non censurés, scènes supplémentaires et étendues, bêtisier, commentaire audio de chaque épisodes par acteurs et équipe, scénaristes de "Breaking bad", scène par scène (réalisateurs discutenet de moments mémorables)...</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Interdit à la location</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Série en version originale anglaise, en versions française et espagnole, avec sous-titrage optionnel en français, anglais, arabe, danois, espagnol, finnois, norvégien, suédois et néerlandais, et en anglais pour sourds et malentendants</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Cop. : Sony pictures television, 2012</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film dramatique</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : diffusion à la télévision</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">série</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="686" ind1=" " ind2=" ">
+<mxc:subfield code="a">207</mxc:subfield>
+<mxc:subfield code="2">Cadre de classement de la Bibliographie nationale française</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14101375</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000108596775</mxc:subfield>
+<mxc:subfield code="a">Gilligan</mxc:subfield>
+<mxc:subfield code="b">Vince</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">100</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14167232</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000119537789</mxc:subfield>
+<mxc:subfield code="a">Cranston</mxc:subfield>
+<mxc:subfield code="b">Bryan</mxc:subfield>
+<mxc:subfield code="f">1956-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">16660556</mxc:subfield>
+<mxc:subfield code="o">ISNI000000011461591X</mxc:subfield>
+<mxc:subfield code="a">Paul</mxc:subfield>
+<mxc:subfield code="b">Aaron</mxc:subfield>
+<mxc:subfield code="f">1979-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20130715</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF436329800000006</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43632980001001</mxc:subfield>
+<mxc:subfield code="a">VDVD-80065</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb436329800</srw:recordIdentifier>
+<srw:recordPosition>3</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20130715</ixm:attr>
+<ixm:attr name="LastModificationDate">20260414</ixm:attr>
+<mn:score>12.259401</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb43642539n" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF436425390000001</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb43642539n</mxc:controlfield>
+<mxc:datafield tag="039" ind1=" " ind2=" ">
+<mxc:subfield code="o">OPP</mxc:subfield>
+<mxc:subfield code="a">43596179</mxc:subfield>
+<mxc:subfield code="d">20130909</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="071" ind1="4" ind2="1">
+<mxc:subfield code="a">797515</mxc:subfield>
+<mxc:subfield code="b">EDV 11</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3333297975155</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20130729d2013       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="1" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+<mxc:subfield code="a">eng</mxc:subfield>
+<mxc:subfield code="a">spa</mxc:subfield>
+<mxc:subfield code="c">eng</mxc:subfield>
+<mxc:subfield code="j">fre</mxc:subfield>
+<mxc:subfield code="j">eng</mxc:subfield>
+<mxc:subfield code="j">ara</mxc:subfield>
+<mxc:subfield code="j">spa</mxc:subfield>
+<mxc:subfield code="j">hin</mxc:subfield>
+<mxc:subfield code="j">pol</mxc:subfield>
+<mxc:subfield code="j">dut</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   baiz|||||||bk||c</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Breaking bad</mxc:subfield>
+<mxc:subfield code="h">Saison 5</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="f">Vince Gilligan, idée orig.</mxc:subfield>
+<mxc:subfield code="g">Bryan Cranston, Aaron Paul... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">[Suresnes]</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment [éd., distrib.]</mxc:subfield>
+<mxc:subfield code="d">2013</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">3 DVD vidéo monofaces double couche zone 2 (5 h 59 min)</mxc:subfield>
+<mxc:subfield code="c">16/9, coul., son., surround (Dolby)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient 8 épisodes</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient aussi : 19 documentaires "Dans les coulisses de "Breaking bad", 3 épisodes non censurés, scènes supplémentaires et étendues, bêtisier, commentaire audio de chaque épisodes par les acteurs et l'équipe, court métrage "Rien n'arrête ce train", etc.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Interdit à la location</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Série en version originale anglaise, en versions française et espagnole, avec sous-titrage optionnel en français, anglais, arabe, espagnol, hindi, polonais et néerlandais, et en anglais pour sourds et malentendants</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Cop. : Sony pictures television, 2012</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film dramatique</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : diffusion à la télévision</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">série</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14101375</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000108596775</mxc:subfield>
+<mxc:subfield code="a">Gilligan</mxc:subfield>
+<mxc:subfield code="b">Vince</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">100</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14167232</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000119537789</mxc:subfield>
+<mxc:subfield code="a">Cranston</mxc:subfield>
+<mxc:subfield code="b">Bryan</mxc:subfield>
+<mxc:subfield code="f">1956-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">16660556</mxc:subfield>
+<mxc:subfield code="o">ISNI000000011461591X</mxc:subfield>
+<mxc:subfield code="a">Paul</mxc:subfield>
+<mxc:subfield code="b">Aaron</mxc:subfield>
+<mxc:subfield code="f">1979-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20130729</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF436425390000001</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43642539001001</mxc:subfield>
+<mxc:subfield code="a">VDVD-80348</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43642539003001</mxc:subfield>
+<mxc:subfield code="a">NUMAV-1208368</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb43642539n</srw:recordIdentifier>
+<srw:recordPosition>4</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20130729</ixm:attr>
+<ixm:attr name="LastModificationDate">20260414</ixm:attr>
+<mn:score>12.070226</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb45405380c" type="Bibliographic">
+<mxc:leader>     cgm  22     3  450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF454053800000004</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb45405380c</mxc:controlfield>
+<mxc:datafield tag="020" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">71801112</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="071" ind1="4" ind2="1">
+<mxc:subfield code="a">930749</mxc:subfield>
+<mxc:subfield code="c">conditionné dans 6 boîtes métalliques</mxc:subfield>
+<mxc:subfield code="b">EDV 11</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3333299307497</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20171205d2017       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="1" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+<mxc:subfield code="a">eng</mxc:subfield>
+<mxc:subfield code="c">eng</mxc:subfield>
+<mxc:subfield code="j">fre</mxc:subfield>
+<mxc:subfield code="j">eng</mxc:subfield>
+<mxc:subfield code="j">ara</mxc:subfield>
+<mxc:subfield code="j">dut</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   bai||||||||b||||</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Breaking bad</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="e">l'intégrale de la série</mxc:subfield>
+<mxc:subfield code="f">Vince Gilligan, idée orig.</mxc:subfield>
+<mxc:subfield code="g">Bryan Cranston, Aaron Paul, Dean Norris... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="214" ind1=" " ind2="0">
+<mxc:subfield code="a">[Suresnes]</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment</mxc:subfield>
+<mxc:subfield code="d">2017</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="214" ind1=" " ind2="2">
+<mxc:subfield code="a">[Suresnes]</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">15 BD vidéo (49 h 08 min)</mxc:subfield>
+<mxc:subfield code="c">coul., son., surround</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Réunit  62 épisodes</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Voir le détail des titres sur la brochure</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient aussi : 55 h de bonus spéciaux au fil des saisons, document inédit</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Interdit à la location</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Série en version originale anglaise, en version française, avec sous-titrage optionnel en français, anglais, arabe et néerlandais</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Emmy award 2013 de la meilleure série télévisée dramatique</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Copyright Sony pictures television Inc., 2008-2013</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="307" ind1=" " ind2=" ">
+<mxc:subfield code="a">Existe aussi en fichiers numériques via un code d'activation</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film dramatique</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : diffusion à la télévision</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">série</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="686" ind1=" " ind2=" ">
+<mxc:subfield code="a">207</mxc:subfield>
+<mxc:subfield code="2">Cadre de classement de la Bibliographie nationale française</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14101375</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000108596775</mxc:subfield>
+<mxc:subfield code="a">Gilligan</mxc:subfield>
+<mxc:subfield code="b">Vince</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">100</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14167232</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000119537789</mxc:subfield>
+<mxc:subfield code="a">Cranston</mxc:subfield>
+<mxc:subfield code="b">Bryan</mxc:subfield>
+<mxc:subfield code="f">1956-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">16660556</mxc:subfield>
+<mxc:subfield code="o">ISNI000000011461591X</mxc:subfield>
+<mxc:subfield code="a">Paul</mxc:subfield>
+<mxc:subfield code="b">Aaron</mxc:subfield>
+<mxc:subfield code="f">1979-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">16902241</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000436687641</mxc:subfield>
+<mxc:subfield code="a">Norris</mxc:subfield>
+<mxc:subfield code="b">Dean</mxc:subfield>
+<mxc:subfield code="f">1963-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20171205</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF454053800000004</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:45405380001001</mxc:subfield>
+<mxc:subfield code="a">VDVD-104509</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb45405380c</srw:recordIdentifier>
+<srw:recordPosition>5</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20171205</ixm:attr>
+<ixm:attr name="LastModificationDate">20180315</ixm:attr>
+<mn:score>11.664007</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb442256161" type="Bibliographic">
+<mxc:leader>     cgm  22     3  450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF44225616000000X</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb442256161</mxc:controlfield>
+<mxc:datafield tag="020" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">71502451</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="071" ind1="4" ind2="1">
+<mxc:subfield code="a">SPHE 1379</mxc:subfield>
+<mxc:subfield code="c">conditionné dans un baril</mxc:subfield>
+<mxc:subfield code="b">EDV11</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3333290013793</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20141119d2014       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="1" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+<mxc:subfield code="a">eng</mxc:subfield>
+<mxc:subfield code="c">eng</mxc:subfield>
+<mxc:subfield code="j">fre</mxc:subfield>
+<mxc:subfield code="j">eng</mxc:subfield>
+<mxc:subfield code="j">ara</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   bai||||||||b||||</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Breaking bad</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="e">l'intégrale de la série</mxc:subfield>
+<mxc:subfield code="f">Vince Gilligan, idée orig.</mxc:subfield>
+<mxc:subfield code="g">Bryan Cranston, Aaron Paul... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">[Suresnes]</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment [éd., distrib.]</mxc:subfield>
+<mxc:subfield code="d">2014</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">16 BD (50 h)</mxc:subfield>
+<mxc:subfield code="c">coul., son., surround</mxc:subfield>
+<mxc:subfield code="e">1 brochure ([15] p. : ill. ; 15 x 20 cm)</mxc:subfield>
+<mxc:subfield code="e">1 tablier</mxc:subfield>
+<mxc:subfield code="e">1 pièce commémorative</mxc:subfield>
+<mxc:subfield code="e">2 sous-verres</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Réunit  62 épisodes</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Voir le détail des titres sur la brochure</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Comprend version numérique à télécharger (digital ultraviolet)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient aussi : 55 h de bonus spéciaux au fil des saisons, document inédit</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Interdit à la location</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Série en version originale anglaise, en version française, avec sous-titrage optionnel en français, anglais et arabe</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Emmy award 2013 de la meilleure série tv dramatique</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Cop. : Sony pictures television Inc., 2008-2013</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film dramatique</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : diffusion à la télévision</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">série</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="686" ind1=" " ind2=" ">
+<mxc:subfield code="a">207</mxc:subfield>
+<mxc:subfield code="2">Cadre de classement de la Bibliographie nationale française</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14101375</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000108596775</mxc:subfield>
+<mxc:subfield code="a">Gilligan</mxc:subfield>
+<mxc:subfield code="b">Vince</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">100</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14167232</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000119537789</mxc:subfield>
+<mxc:subfield code="a">Cranston</mxc:subfield>
+<mxc:subfield code="b">Bryan</mxc:subfield>
+<mxc:subfield code="f">1956-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">16660556</mxc:subfield>
+<mxc:subfield code="o">ISNI000000011461591X</mxc:subfield>
+<mxc:subfield code="a">Paul</mxc:subfield>
+<mxc:subfield code="b">Aaron</mxc:subfield>
+<mxc:subfield code="f">1979-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20141119</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF44225616000000X</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:44225616001001</mxc:subfield>
+<mxc:subfield code="a">VDVD-87639</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb442256161</srw:recordIdentifier>
+<srw:recordPosition>6</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20141119</ixm:attr>
+<ixm:attr name="LastModificationDate">20260414</ixm:attr>
+<mn:score>11.664007</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb43745272j" type="Bibliographic">
+<mxc:leader>     cgm  22     3  450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF437452720000006</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb43745272j</mxc:controlfield>
+<mxc:datafield tag="020" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">71406571</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="071" ind1="4" ind2="1">
+<mxc:subfield code="a">SPHE 1302</mxc:subfield>
+<mxc:subfield code="c">en coffret</mxc:subfield>
+<mxc:subfield code="b">EDV11</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3333290013021</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20140117d2014       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="1" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+<mxc:subfield code="a">eng</mxc:subfield>
+<mxc:subfield code="c">eng</mxc:subfield>
+<mxc:subfield code="j">fre</mxc:subfield>
+<mxc:subfield code="j">eng</mxc:subfield>
+<mxc:subfield code="j">ara</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   baiz|||||||bk||c</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Breaking bad</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="e">L'intégrale de la série</mxc:subfield>
+<mxc:subfield code="f">Vince Gilligan, idée orig.</mxc:subfield>
+<mxc:subfield code="g">Bryan Cranston, Aaron Paul... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">[Suresnes]</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment [éd., distrib.]</mxc:subfield>
+<mxc:subfield code="d">2014</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">21 DVD vidéo monofaces double couche zone 2 (50 h)</mxc:subfield>
+<mxc:subfield code="c">16/9, coul., son., surround (Dolby)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Comprend version numérique à télécharger</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient aussi : 15 documentaires "Dans les coulisses de "Breaking bad", scènes supplémentaires et étendues, bêtisier, commentaire audio de chaque épisode par les acteurs et l'équipe, making of, fin alternative, etc.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Interdit à la location</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Série en version originale anglaise, en version française, avec sous-titrage optionnel en français, anglais et arabe</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Cop. : Sony pictures television, 2013</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film dramatique</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : diffusion à la télévision</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">série</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="686" ind1=" " ind2=" ">
+<mxc:subfield code="a">207</mxc:subfield>
+<mxc:subfield code="2">Cadre de classement de la Bibliographie nationale française</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14101375</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000108596775</mxc:subfield>
+<mxc:subfield code="a">Gilligan</mxc:subfield>
+<mxc:subfield code="b">Vince</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">100</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14167232</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000119537789</mxc:subfield>
+<mxc:subfield code="a">Cranston</mxc:subfield>
+<mxc:subfield code="b">Bryan</mxc:subfield>
+<mxc:subfield code="f">1956-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">16660556</mxc:subfield>
+<mxc:subfield code="o">ISNI000000011461591X</mxc:subfield>
+<mxc:subfield code="a">Paul</mxc:subfield>
+<mxc:subfield code="b">Aaron</mxc:subfield>
+<mxc:subfield code="f">1979-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20140117</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF437452720000006</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43745272001001</mxc:subfield>
+<mxc:subfield code="a">VDVD-83138</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43745272003001</mxc:subfield>
+<mxc:subfield code="a">NUMAV-1208394</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb43745272j</srw:recordIdentifier>
+<srw:recordPosition>7</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20140117</ixm:attr>
+<ixm:attr name="LastModificationDate">20260414</ixm:attr>
+<mn:score>11.595988</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb43745269n" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF437452690000000</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb43745269n</mxc:controlfield>
+<mxc:datafield tag="020" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">71406570</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="071" ind1="4" ind2="1">
+<mxc:subfield code="a">720484</mxc:subfield>
+<mxc:subfield code="b">EDV 11</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3333297204842</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20140117d2014       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="1" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+<mxc:subfield code="a">eng</mxc:subfield>
+<mxc:subfield code="c">eng</mxc:subfield>
+<mxc:subfield code="j">fre</mxc:subfield>
+<mxc:subfield code="j">eng</mxc:subfield>
+<mxc:subfield code="j">ara</mxc:subfield>
+<mxc:subfield code="j">dut</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   baiz|||||||bk||c</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Breaking bad</mxc:subfield>
+<mxc:subfield code="h">Saison finale [Saison 5]</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="f">Vince Gilligan, idée orig.</mxc:subfield>
+<mxc:subfield code="g">Bryan Cranston, Aaron Paul... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">[Suresnes]</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment [éd., distrib.]</mxc:subfield>
+<mxc:subfield code="d">2014</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">3 DVD vidéo monofaces double couche zone 2 (6 h 19 min)</mxc:subfield>
+<mxc:subfield code="c">16/9, coul., son., surround (Dolby)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Comprend 8 épisodes</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Comprend version numérique à télécharger</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient aussi : 15 documentaires "Dans les coulisses de "Breaking bad", scènes supplémentaires et étendues, bêtisier, commentaire audio de chaque épisode par les acteurs et l'équipe, making of, fin alternative, etc.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Interdit à la location</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Série en version originale anglaise, en version française, avec sous-titrage optionnel en français, anglais, arabe et néerlandais, et en anglais pour sourds et malentendants</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Cop. : Sony pictures television, 2013</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film dramatique</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : diffusion à la télévision</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">série</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="686" ind1=" " ind2=" ">
+<mxc:subfield code="a">207</mxc:subfield>
+<mxc:subfield code="2">Cadre de classement de la Bibliographie nationale française</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14101375</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000108596775</mxc:subfield>
+<mxc:subfield code="a">Gilligan</mxc:subfield>
+<mxc:subfield code="b">Vince</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">100</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14167232</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000119537789</mxc:subfield>
+<mxc:subfield code="a">Cranston</mxc:subfield>
+<mxc:subfield code="b">Bryan</mxc:subfield>
+<mxc:subfield code="f">1956-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">16660556</mxc:subfield>
+<mxc:subfield code="o">ISNI000000011461591X</mxc:subfield>
+<mxc:subfield code="a">Paul</mxc:subfield>
+<mxc:subfield code="b">Aaron</mxc:subfield>
+<mxc:subfield code="f">1979-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20140117</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF437452690000000</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43745269001001</mxc:subfield>
+<mxc:subfield code="a">VDVD-83137</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43745269003001</mxc:subfield>
+<mxc:subfield code="a">NUMAV-1207737</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb43745269n</srw:recordIdentifier>
+<srw:recordPosition>8</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20140117</ixm:attr>
+<ixm:attr name="LastModificationDate">20260414</ixm:attr>
+<mn:score>11.595638</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb43632975d" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF436329750000006</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb43632975d</mxc:controlfield>
+<mxc:datafield tag="020" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">71314792</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="071" ind1="4" ind2="1">
+<mxc:subfield code="a">982313</mxc:subfield>
+<mxc:subfield code="b">Sony pictures home entertainment</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3333299823133</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20130715d2013       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="1" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+<mxc:subfield code="a">eng</mxc:subfield>
+<mxc:subfield code="a">spa</mxc:subfield>
+<mxc:subfield code="c">eng</mxc:subfield>
+<mxc:subfield code="j">fre</mxc:subfield>
+<mxc:subfield code="j">eng</mxc:subfield>
+<mxc:subfield code="j">ara</mxc:subfield>
+<mxc:subfield code="j">spa</mxc:subfield>
+<mxc:subfield code="j">dut</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   bai||||||||b||||</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Breaking bad</mxc:subfield>
+<mxc:subfield code="h">Intégrale de la saison 4</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="f">Vince Gilligan, idée orig.</mxc:subfield>
+<mxc:subfield code="g">Bryan Cranston, Aaron Paul... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">[Suresnes]</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment [éd., distrib.]</mxc:subfield>
+<mxc:subfield code="d">[DL 2013]</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">3 BD vidéo (9 h 45 min)</mxc:subfield>
+<mxc:subfield code="c">coul., son., surround</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient 13 épisodes</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient aussi : 21 documentaires "Dans les coulisses de "Breaking bad", scènes inédites, scènes supplémentaires et étendues, bêtisier, publicités "Appelez Saul", documentaires sur l'envers du décor</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Interdit à la location</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Série en version originale anglaise, en versions française et espagnole, avec sous-titrage optionnel en français, anglais, arabe, espagnol et néerlandais</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Cop. : Sony pictures television, 2011</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film dramatique</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : diffusion à la télévision</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">série</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="686" ind1=" " ind2=" ">
+<mxc:subfield code="a">207</mxc:subfield>
+<mxc:subfield code="2">Cadre de classement de la Bibliographie nationale française</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14101375</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000108596775</mxc:subfield>
+<mxc:subfield code="a">Gilligan</mxc:subfield>
+<mxc:subfield code="b">Vince</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">100</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14167232</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000119537789</mxc:subfield>
+<mxc:subfield code="a">Cranston</mxc:subfield>
+<mxc:subfield code="b">Bryan</mxc:subfield>
+<mxc:subfield code="f">1956-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">16660556</mxc:subfield>
+<mxc:subfield code="o">ISNI000000011461591X</mxc:subfield>
+<mxc:subfield code="a">Paul</mxc:subfield>
+<mxc:subfield code="b">Aaron</mxc:subfield>
+<mxc:subfield code="f">1979-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20130715</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF436329750000006</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43632975001001</mxc:subfield>
+<mxc:subfield code="a">VDVD-80064</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb43632975d</srw:recordIdentifier>
+<srw:recordPosition>9</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20130715</ixm:attr>
+<ixm:attr name="LastModificationDate">20260414</ixm:attr>
+<mn:score>11.390948</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb43511615w" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF435116150000007</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb43511615w</mxc:controlfield>
+<mxc:datafield tag="020" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">71302092</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="071" ind1="4" ind2="1">
+<mxc:subfield code="a">770516</mxc:subfield>
+<mxc:subfield code="b">Sony pictures home entertainment</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3333297705165</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20130108d2013       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="1" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+<mxc:subfield code="a">eng</mxc:subfield>
+<mxc:subfield code="c">eng</mxc:subfield>
+<mxc:subfield code="j">fre</mxc:subfield>
+<mxc:subfield code="j">eng</mxc:subfield>
+<mxc:subfield code="j">ara</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   baiz|||||||bk||c</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Breaking bad</mxc:subfield>
+<mxc:subfield code="h">Intégrale de la saison 3</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="f">Vince Gilligan, idée orig.</mxc:subfield>
+<mxc:subfield code="g">Bryan Cranston, Aaron Paul... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">[Suresnes]</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment [éd., distrib.]</mxc:subfield>
+<mxc:subfield code="d">[DL 2013]</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">4 DVD vidéo monofaces double couche zone 2 (9 h 49 min)</mxc:subfield>
+<mxc:subfield code="c">16/9, coul. (PAL), son., surround (Dolby)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient 13 épisodes</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient aussi : commentaires audio de 5 épisodes, dans les coulisses de "Breaking bad", mini podcasts vidéo avec les acteurs et l'équipe de chaque épisode, scènes supplémentaires et séquences inutilisées, 4 documentaires sur les coulisses de la série</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Interdit à la location</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Série en version originale anglaise et en version française, avec sous-titrage optionnel en français, anglais et arabe</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Cop. : Sony pictures television, 2009</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film dramatique</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : diffusion à la télévision</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">série</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="686" ind1=" " ind2=" ">
+<mxc:subfield code="a">207</mxc:subfield>
+<mxc:subfield code="2">Cadre de classement de la Bibliographie nationale française</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14101375</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000108596775</mxc:subfield>
+<mxc:subfield code="a">Gilligan</mxc:subfield>
+<mxc:subfield code="b">Vince</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">100</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14167232</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000119537789</mxc:subfield>
+<mxc:subfield code="a">Cranston</mxc:subfield>
+<mxc:subfield code="b">Bryan</mxc:subfield>
+<mxc:subfield code="f">1956-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">16660556</mxc:subfield>
+<mxc:subfield code="o">ISNI000000011461591X</mxc:subfield>
+<mxc:subfield code="a">Paul</mxc:subfield>
+<mxc:subfield code="b">Aaron</mxc:subfield>
+<mxc:subfield code="f">1979-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20130108</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF435116150000007</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43511615001001</mxc:subfield>
+<mxc:subfield code="a">VDVD-76995</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43511615003001</mxc:subfield>
+<mxc:subfield code="a">NUMAV-1366636</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb43511615w</srw:recordIdentifier>
+<srw:recordPosition>10</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20130108</ixm:attr>
+<ixm:attr name="LastModificationDate">20260414</ixm:attr>
+<mn:score>11.32255</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb435115984" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF435115980000004</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb435115984</mxc:controlfield>
+<mxc:datafield tag="020" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">71302090</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="071" ind1="4" ind2="1">
+<mxc:subfield code="a">760073</mxc:subfield>
+<mxc:subfield code="b">Sony pictures home entertainment</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3333297600736</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20130108d2013       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="1" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+<mxc:subfield code="a">eng</mxc:subfield>
+<mxc:subfield code="c">eng</mxc:subfield>
+<mxc:subfield code="j">fre</mxc:subfield>
+<mxc:subfield code="j">eng</mxc:subfield>
+<mxc:subfield code="j">ara</mxc:subfield>
+<mxc:subfield code="j">dut</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   baiz|||||||bk||c</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Breaking bad</mxc:subfield>
+<mxc:subfield code="h">Intégrale de la saison 1</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="f">Vince Gilligan, idée orig.</mxc:subfield>
+<mxc:subfield code="g">Bryan Cranston... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">[Suresnes]</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment [éd., distrib.]</mxc:subfield>
+<mxc:subfield code="d">[DL 2013]</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">3 DVD vidéo monofaces double couche zone 2 (5 h 32 min)</mxc:subfield>
+<mxc:subfield code="c">16/9, coul. (PAL), son., surround (Dolby)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient 7 épisodes</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient aussi : commentaires audio de 2 épisodes par les créateurs et les comédiens, making of, auditions-castings, scènes supplémentaires, photos de Vince Gilligan, dans les coulisses de "Breaking bad", interviews de Vince Gilligan et Bryan Cranston</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Interdit à la location</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Série en version originale anglaise et en version française, avec sous-titrage optionnel en français, anglais, arabe et néerlandais</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Cop. : Sony pictures television, 2008</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film dramatique</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : diffusion à la télévision</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">série</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="686" ind1=" " ind2=" ">
+<mxc:subfield code="a">207</mxc:subfield>
+<mxc:subfield code="2">Cadre de classement de la Bibliographie nationale française</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14101375</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000108596775</mxc:subfield>
+<mxc:subfield code="a">Gilligan</mxc:subfield>
+<mxc:subfield code="b">Vince</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">100</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14167232</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000119537789</mxc:subfield>
+<mxc:subfield code="a">Cranston</mxc:subfield>
+<mxc:subfield code="b">Bryan</mxc:subfield>
+<mxc:subfield code="f">1956-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20130108</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF435115980000004</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43511598001001</mxc:subfield>
+<mxc:subfield code="a">VDVD-76993</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43511598003001</mxc:subfield>
+<mxc:subfield code="a">NUMAV-1150426</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb435115984</srw:recordIdentifier>
+<srw:recordPosition>11</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20130108</ixm:attr>
+<ixm:attr name="LastModificationDate">20260414</ixm:attr>
+<mn:score>11.32255</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb435116136" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF435116130000002</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb435116136</mxc:controlfield>
+<mxc:datafield tag="020" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">71302091</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="071" ind1="4" ind2="1">
+<mxc:subfield code="a">766651</mxc:subfield>
+<mxc:subfield code="b">Sony pictures home entertainment</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3333297666510</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20130108d2013       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="1" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+<mxc:subfield code="a">eng</mxc:subfield>
+<mxc:subfield code="c">eng</mxc:subfield>
+<mxc:subfield code="j">fre</mxc:subfield>
+<mxc:subfield code="j">eng</mxc:subfield>
+<mxc:subfield code="j">ara</mxc:subfield>
+<mxc:subfield code="j">spa</mxc:subfield>
+<mxc:subfield code="j">dut</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   baiz|||||||bk||c</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Breaking bad</mxc:subfield>
+<mxc:subfield code="h">Intégrale de la saison 2</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="f">Vince Gilligan, idée orig.</mxc:subfield>
+<mxc:subfield code="g">Bryan Cranston, Aaron Paul... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">[Suresnes]</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment [éd., distrib.]</mxc:subfield>
+<mxc:subfield code="d">[DL 2013]</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">4 DVD vidéo monofaces double couche zone 2 (9 h 50 min)</mxc:subfield>
+<mxc:subfield code="c">16/9, coul. (PAL), son., surround (Dolby)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient 13 épisodes</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient aussi : récapitulatif de la saison 1, commentaires audio des comédiens sur 5 épisodes, scènes supplémentaires, l'envers du décor, dans les coulisses de "Breaking bad", clip musical, "Paroles de flic" (court métrages avec Dean Norris), bêtisier, les 6 webisodes, bande-annonce exclusive de la saison 3, album photo de Vince Gilligan</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Interdit à la location</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Série en version originale anglaise et en version française, avec sous-titrage optionnel en français, anglais, arabe, espagnol et néerlandais</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Cop. : Sony pictures television, 2009</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film dramatique</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : diffusion à la télévision</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">série</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="686" ind1=" " ind2=" ">
+<mxc:subfield code="a">207</mxc:subfield>
+<mxc:subfield code="2">Cadre de classement de la Bibliographie nationale française</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14101375</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000108596775</mxc:subfield>
+<mxc:subfield code="a">Gilligan</mxc:subfield>
+<mxc:subfield code="b">Vince</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">100</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14167232</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000119537789</mxc:subfield>
+<mxc:subfield code="a">Cranston</mxc:subfield>
+<mxc:subfield code="b">Bryan</mxc:subfield>
+<mxc:subfield code="f">1956-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">16660556</mxc:subfield>
+<mxc:subfield code="o">ISNI000000011461591X</mxc:subfield>
+<mxc:subfield code="a">Paul</mxc:subfield>
+<mxc:subfield code="b">Aaron</mxc:subfield>
+<mxc:subfield code="f">1979-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20130108</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF435116130000002</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43511613001001</mxc:subfield>
+<mxc:subfield code="a">VDVD-76994</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43511613003001</mxc:subfield>
+<mxc:subfield code="a">NUMAV-1269816</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb435116136</srw:recordIdentifier>
+<srw:recordPosition>12</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20130108</ixm:attr>
+<ixm:attr name="LastModificationDate">20260414</ixm:attr>
+<mn:score>11.3222</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb43511620g" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF435116200000007</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb43511620g</mxc:controlfield>
+<mxc:datafield tag="020" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">71302093</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="071" ind1="4" ind2="1">
+<mxc:subfield code="a">782313</mxc:subfield>
+<mxc:subfield code="b">Sony pictures home entertainment</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3333297823135</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20130108d2013       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="1" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+<mxc:subfield code="a">eng</mxc:subfield>
+<mxc:subfield code="a">spa</mxc:subfield>
+<mxc:subfield code="a">ita</mxc:subfield>
+<mxc:subfield code="c">eng</mxc:subfield>
+<mxc:subfield code="j">fre</mxc:subfield>
+<mxc:subfield code="j">eng</mxc:subfield>
+<mxc:subfield code="j">ara</mxc:subfield>
+<mxc:subfield code="j">dan</mxc:subfield>
+<mxc:subfield code="j">spa</mxc:subfield>
+<mxc:subfield code="j">fin</mxc:subfield>
+<mxc:subfield code="j">gre</mxc:subfield>
+<mxc:subfield code="j">heb</mxc:subfield>
+<mxc:subfield code="j">ice</mxc:subfield>
+<mxc:subfield code="j">ita</mxc:subfield>
+<mxc:subfield code="j">dut</mxc:subfield>
+<mxc:subfield code="j">nor</mxc:subfield>
+<mxc:subfield code="j">pol</mxc:subfield>
+<mxc:subfield code="j">por</mxc:subfield>
+<mxc:subfield code="j">slv</mxc:subfield>
+<mxc:subfield code="j">swe</mxc:subfield>
+<mxc:subfield code="j">cze</mxc:subfield>
+<mxc:subfield code="j">tur</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   baiz|||||||bk||c</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Breaking bad</mxc:subfield>
+<mxc:subfield code="h">Intégrale de la saison 4</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="f">Vince Gilligan, idée orig.</mxc:subfield>
+<mxc:subfield code="g">Bryan Cranston, Aaron Paul... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">[Suresnes]</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment [éd., distrib.]</mxc:subfield>
+<mxc:subfield code="d">[DL 2013]</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">4 DVD vidéo monofaces double couche zone 2 (9 h 45 min)</mxc:subfield>
+<mxc:subfield code="c">16/9, coul. (PAL), son., surround (Dolby)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient 13 épisodes</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient aussi : 24 documentaires "Dans les coulisses de "Breaking bad", scènes inédites, scènes supplémentaires et étendues, bêtisier, publicités "Appelez Saul", documentaires sur l'envers du décor</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Interdit à la location</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Série en version originale anglaise, en versions française, espagnole et italienne, avec sous-titrage optionnel en français, anglais, arabe, danois, espagnol, finnois, grec, hébreu, islandais, italien, néerlandais, norvégien, polonais, portugais, slovène, suédois, tchèque et turc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Cop. : Sony pictures television, 2011</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film dramatique</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : diffusion à la télévision</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">série</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="686" ind1=" " ind2=" ">
+<mxc:subfield code="a">207</mxc:subfield>
+<mxc:subfield code="2">Cadre de classement de la Bibliographie nationale française</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14101375</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000108596775</mxc:subfield>
+<mxc:subfield code="a">Gilligan</mxc:subfield>
+<mxc:subfield code="b">Vince</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">100</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14167232</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000119537789</mxc:subfield>
+<mxc:subfield code="a">Cranston</mxc:subfield>
+<mxc:subfield code="b">Bryan</mxc:subfield>
+<mxc:subfield code="f">1956-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">16660556</mxc:subfield>
+<mxc:subfield code="o">ISNI000000011461591X</mxc:subfield>
+<mxc:subfield code="a">Paul</mxc:subfield>
+<mxc:subfield code="b">Aaron</mxc:subfield>
+<mxc:subfield code="f">1979-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20130108</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF435116200000007</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43511620001001</mxc:subfield>
+<mxc:subfield code="a">VDVD-76996</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43511620004001</mxc:subfield>
+<mxc:subfield code="a">NUMAV-1366642</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb43511620g</srw:recordIdentifier>
+<srw:recordPosition>13</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20130108</ixm:attr>
+<ixm:attr name="LastModificationDate">20260414</ixm:attr>
+<mn:score>11.200258</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb43632969g" type="Bibliographic">
+<mxc:leader>     cgm  22     3  450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF436329690000009</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb43632969g</mxc:controlfield>
+<mxc:datafield tag="020" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">71314791</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="071" ind1="4" ind2="1">
+<mxc:subfield code="a">SPHE1209</mxc:subfield>
+<mxc:subfield code="c">en coffret</mxc:subfield>
+<mxc:subfield code="b">Sony pictures home entertainment France</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3333290012093</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20130715d2013       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="1" ind2=" ">
+<mxc:subfield code="a">eng</mxc:subfield>
+<mxc:subfield code="a">fre</mxc:subfield>
+<mxc:subfield code="a">ger</mxc:subfield>
+<mxc:subfield code="a">spa</mxc:subfield>
+<mxc:subfield code="c">eng</mxc:subfield>
+<mxc:subfield code="j">fre</mxc:subfield>
+<mxc:subfield code="j">eng</mxc:subfield>
+<mxc:subfield code="j">ara</mxc:subfield>
+<mxc:subfield code="j">ger</mxc:subfield>
+<mxc:subfield code="j">tur</mxc:subfield>
+<mxc:subfield code="j">spa</mxc:subfield>
+<mxc:subfield code="j">hin</mxc:subfield>
+<mxc:subfield code="j">dut</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   bai||||||||b||||</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Breaking bad</mxc:subfield>
+<mxc:subfield code="h">Intégrale des saisons 1, 2 et 3</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="f">Vince Gilligan, idée orig.</mxc:subfield>
+<mxc:subfield code="g">Bryan Cranston, Aaron Paul... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">[Suresnes]</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment France [éd., distrib.]</mxc:subfield>
+<mxc:subfield code="d">[DL 2013]</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">8 BD vidéo (26 h 13 min)</mxc:subfield>
+<mxc:subfield code="c">coul., son., surround</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Interdit à la location</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Série en version originale anglaise et en versions française, allemande et espagnole, avec sous-titrage optionnel en français, anglais, arabe, allemand, espagnol, hindi, néerlandais et turc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Cop. : Sony pictures television, 2008-2010</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : diffusion à la télévision</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">série</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="686" ind1=" " ind2=" ">
+<mxc:subfield code="a">207</mxc:subfield>
+<mxc:subfield code="2">Cadre de classement de la Bibliographie nationale française</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14101375</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000108596775</mxc:subfield>
+<mxc:subfield code="a">Gilligan</mxc:subfield>
+<mxc:subfield code="b">Vince</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">100</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14167232</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000119537789</mxc:subfield>
+<mxc:subfield code="a">Cranston</mxc:subfield>
+<mxc:subfield code="b">Bryan</mxc:subfield>
+<mxc:subfield code="f">1956-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">16660556</mxc:subfield>
+<mxc:subfield code="o">ISNI000000011461591X</mxc:subfield>
+<mxc:subfield code="a">Paul</mxc:subfield>
+<mxc:subfield code="b">Aaron</mxc:subfield>
+<mxc:subfield code="f">1979-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20130715</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF436329690000009</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43632969001001</mxc:subfield>
+<mxc:subfield code="a">VDVD-80063</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb43632969g</srw:recordIdentifier>
+<srw:recordPosition>14</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20130715</ixm:attr>
+<ixm:attr name="LastModificationDate">20260414</ixm:attr>
+<mn:score>10.886223</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb453493088" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF453493080000001</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb453493088</mxc:controlfield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20170915d2014       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="0" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   ba||||||||||||||</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">03</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">04</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">03</mxc:subfield>
+<mxc:subfield code="a">b</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">04</mxc:subfield>
+<mxc:subfield code="c">c</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">SOS.com</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="e">la première brigade d'intervention des conduites à risques</mxc:subfield>
+<mxc:subfield code="e">"breaking bad boy"</mxc:subfield>
+<mxc:subfield code="f">Alexandre Lemoine Courx, réal., scénario</mxc:subfield>
+<mxc:subfield code="g">Benjamin Lauber, comp.</mxc:subfield>
+<mxc:subfield code="g">Benjamin Rolland, Julien Courdey [i.e. Courbey], Khalid Maadour... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="214" ind1=" " ind2="2">
+<mxc:subfield code="a">[Paris]</mxc:subfield>
+<mxc:subfield code="c">2A prod</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="214" ind1=" " ind2="4">
+<mxc:subfield code="d">C 2014</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">1 fichier vidéo numérique (6 min 10 s)</mxc:subfield>
+<mxc:subfield code="c">coul., son.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Copyright Consortium -c, 2014</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="316" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:45349308001001</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film burlesque, comédie</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">court métrage</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">16205162</mxc:subfield>
+<mxc:subfield code="a">Lemoine Courx</mxc:subfield>
+<mxc:subfield code="b">Alexandre</mxc:subfield>
+<mxc:subfield code="4">300</mxc:subfield>
+<mxc:subfield code="4">690</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14687148</mxc:subfield>
+<mxc:subfield code="a">Lauber</mxc:subfield>
+<mxc:subfield code="b">Benjamin</mxc:subfield>
+<mxc:subfield code="4">230</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">16205168</mxc:subfield>
+<mxc:subfield code="a">Rolland</mxc:subfield>
+<mxc:subfield code="b">Benjamin</mxc:subfield>
+<mxc:subfield code="f">19..-....</mxc:subfield>
+<mxc:subfield code="c">acteur</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14166965</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000050040984</mxc:subfield>
+<mxc:subfield code="a">Courbey</mxc:subfield>
+<mxc:subfield code="b">Julien</mxc:subfield>
+<mxc:subfield code="f">1976-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">15566168</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000005026358</mxc:subfield>
+<mxc:subfield code="a">Maadour</mxc:subfield>
+<mxc:subfield code="b">Khalid</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20170915</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF453493080000001</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:45349308001001</mxc:subfield>
+<mxc:subfield code="a">VNUM-24065</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:45349308002001</mxc:subfield>
+<mxc:subfield code="a">NUMAV-1077304</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb453493088</srw:recordIdentifier>
+<srw:recordPosition>15</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20170915</ixm:attr>
+<ixm:attr name="LastModificationDate">20181123</ixm:attr>
+<mn:score>10.095804</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb47071751z" type="Bibliographic">
+<mxc:leader>          22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF470717510000004</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb47071751z</mxc:controlfield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3333290016213</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20220728d2018       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="1" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+<mxc:subfield code="a">eng</mxc:subfield>
+<mxc:subfield code="c">eng</mxc:subfield>
+<mxc:subfield code="j">fre</mxc:subfield>
+<mxc:subfield code="j">eng</mxc:subfield>
+<mxc:subfield code="j">ara</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   baiz|||||||bk||c</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Breaking bad</mxc:subfield>
+<mxc:subfield code="h">L'intégrale de la série</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="f">Vince Gilligan, idée orig.</mxc:subfield>
+<mxc:subfield code="g">Bryan Cranston, Aaron Paul... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="214" ind1=" " ind2="0">
+<mxc:subfield code="a">[Suresnes]</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment</mxc:subfield>
+<mxc:subfield code="d">2018</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="214" ind1=" " ind2="2">
+<mxc:subfield code="a">[Suresnes]</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">21 DVD vidéo monofaces double couche zone 2 (47 h 06 min)</mxc:subfield>
+<mxc:subfield code="c">16/9, coul. (PAL), son., surround (Dolby)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient 62 épisodes des 6 saisons</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Interdit à la location</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Série en version originale anglaise, en version française, avec sous-titrage optionnel en français, anglais, arabe</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Copyright Sony pictures television, 2008-2013</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="316" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:47071751001001</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="464" ind1=" " ind2="1">
+<mxc:subfield code="v">6</mxc:subfield>
+<mxc:subfield code="t">Saisons 1 et 2 (6 DVD)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="464" ind1=" " ind2="1">
+<mxc:subfield code="v">7</mxc:subfield>
+<mxc:subfield code="t">Saisons 3 et 4 (7 DVD)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="464" ind1=" " ind2="1">
+<mxc:subfield code="v">8</mxc:subfield>
+<mxc:subfield code="t">Saisons 5 et 6 (8 DVD)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film dramatique</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : diffusion à la télévision</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">série</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14101375</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000108596775</mxc:subfield>
+<mxc:subfield code="a">Gilligan</mxc:subfield>
+<mxc:subfield code="b">Vince</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">100</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14167232</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000119537789</mxc:subfield>
+<mxc:subfield code="a">Cranston</mxc:subfield>
+<mxc:subfield code="b">Bryan</mxc:subfield>
+<mxc:subfield code="f">1956-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">16660556</mxc:subfield>
+<mxc:subfield code="o">ISNI000000011461591X</mxc:subfield>
+<mxc:subfield code="a">Paul</mxc:subfield>
+<mxc:subfield code="b">Aaron</mxc:subfield>
+<mxc:subfield code="f">1979-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20220728</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF470717510000004</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:47071751001001</mxc:subfield>
+<mxc:subfield code="a">DVDH-7705</mxc:subfield>
+<mxc:subfield code="b">759999999Magasin</mxc:subfield>
+<mxc:subfield code="d">N</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb47071751z</srw:recordIdentifier>
+<srw:recordPosition>16</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20220728</ixm:attr>
+<ixm:attr name="LastModificationDate">20221130</ixm:attr>
+<mn:score>9.143452</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb437452689" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF437452680000003</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb437452689</mxc:controlfield>
+<mxc:datafield tag="020" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">71406572</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3333299204840</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20140117d2014       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="1" ind2=" ">
+<mxc:subfield code="a">eng</mxc:subfield>
+<mxc:subfield code="a">fre</mxc:subfield>
+<mxc:subfield code="c">eng</mxc:subfield>
+<mxc:subfield code="j">fre</mxc:subfield>
+<mxc:subfield code="j">eng</mxc:subfield>
+<mxc:subfield code="j">ara</mxc:subfield>
+<mxc:subfield code="j">dut</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   bai||||||||b||||</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Breaking bad</mxc:subfield>
+<mxc:subfield code="h">Saison finale</mxc:subfield>
+<mxc:subfield code="i">Remember my name</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="f">Vince Gilligan, idée orig.</mxc:subfield>
+<mxc:subfield code="g">Bryan Cranston, Aaron Paul... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">Suresnes</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment [éd.]</mxc:subfield>
+<mxc:subfield code="a">Clichy</mxc:subfield>
+<mxc:subfield code="c">Sony music entertainment France [distrib.]</mxc:subfield>
+<mxc:subfield code="d">2014</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">2 BD vidéo (6 h 31 min)</mxc:subfield>
+<mxc:subfield code="c">coul., son., surround</mxc:subfield>
+<mxc:subfield code="e">1 plaquette</mxc:subfield>
+<mxc:subfield code="e">1 version numérique</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient 8 épisodes</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient aussi : commentaires audio des acteurs et de l'équipe sur les 8 épisodes, scènes supplémentaires et étendues, bêtisier, making of de la fin alternative, etc.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Interdit à la location</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Série en version originale anglaise, en version française, avec sous-titrage optionnel en français, anglais, arabe, néerlandais</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Cop. : Sony pictures television, 2013</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="327" ind1="1" ind2=" ">
+<mxc:subfield code="a">Épisodes 1-4 (Blu-ray 1)</mxc:subfield>
+<mxc:subfield code="a">Épisodes 5-8 (Blu-ray 2)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film dramatique</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : diffusion à la télévision</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">série</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="686" ind1=" " ind2=" ">
+<mxc:subfield code="a">207</mxc:subfield>
+<mxc:subfield code="2">Cadre de classement de la Bibliographie nationale française</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14101375</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000108596775</mxc:subfield>
+<mxc:subfield code="a">Gilligan</mxc:subfield>
+<mxc:subfield code="b">Vince</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">100</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14167232</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000119537789</mxc:subfield>
+<mxc:subfield code="a">Cranston</mxc:subfield>
+<mxc:subfield code="b">Bryan</mxc:subfield>
+<mxc:subfield code="f">1956-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">16660556</mxc:subfield>
+<mxc:subfield code="o">ISNI000000011461591X</mxc:subfield>
+<mxc:subfield code="a">Paul</mxc:subfield>
+<mxc:subfield code="b">Aaron</mxc:subfield>
+<mxc:subfield code="f">1979-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20140117</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF437452680000003</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43745268001001</mxc:subfield>
+<mxc:subfield code="a">VDVD-83136</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb437452689</srw:recordIdentifier>
+<srw:recordPosition>17</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20140117</ixm:attr>
+<ixm:attr name="LastModificationDate">20260414</ixm:attr>
+<mn:score>9.141436</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb43745259b" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF437452590000004</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb43745259b</mxc:controlfield>
+<mxc:datafield tag="020" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">71406568</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="071" ind1="4" ind2="1">
+<mxc:subfield code="a">960074</mxc:subfield>
+<mxc:subfield code="b">EDV 11</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3333299600741</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20140117d2012       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="1" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+<mxc:subfield code="a">eng</mxc:subfield>
+<mxc:subfield code="a">ger</mxc:subfield>
+<mxc:subfield code="a">spa</mxc:subfield>
+<mxc:subfield code="c">eng</mxc:subfield>
+<mxc:subfield code="j">fre</mxc:subfield>
+<mxc:subfield code="j">eng</mxc:subfield>
+<mxc:subfield code="j">ger</mxc:subfield>
+<mxc:subfield code="j">ara</mxc:subfield>
+<mxc:subfield code="j">dut</mxc:subfield>
+<mxc:subfield code="j">hin</mxc:subfield>
+<mxc:subfield code="j">crh</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   bai||||||||b||||</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Breaking bad</mxc:subfield>
+<mxc:subfield code="h">Intégrale de la saison 1</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="f">Vince Gilligan, idée orig.</mxc:subfield>
+<mxc:subfield code="g">Bryan Cranston... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">Suresnes</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment [éd.]</mxc:subfield>
+<mxc:subfield code="a">Clichy</mxc:subfield>
+<mxc:subfield code="c">Sony music entertainment France [distrib.]</mxc:subfield>
+<mxc:subfield code="d">2012</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">2 BD vidéo (5 h 46 min)</mxc:subfield>
+<mxc:subfield code="c">coul., son., surround</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient 7 épisodes</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient aussi : commentaires audio de l'épisode pilote de la série et de "Bluff" par les créateurs et les comédiens, making of, auditions-castings, scènes supplémentaires, photos de Vince Gilligan, dans les coulisses de "Breaking bad", interviews de Vince Gilligan et Bryan Cranston</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Interdit à la location</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Série en version originale anglaise, en versions française, allemande, espagnole, avec sous-titrage optionnel en français, anglais, allemand, espagnol, arabe, néerlandais, hindi, turc et en anglais pour sourds et malentendants</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Cop. : Sony pictures television, 2008</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="327" ind1="1" ind2=" ">
+<mxc:subfield code="a">Épisodes 1-4 (Blu-ray 1)</mxc:subfield>
+<mxc:subfield code="a">Épisodes 5-7 (Blu-ray 2)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film dramatique</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : diffusion à la télévision</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">série</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="686" ind1=" " ind2=" ">
+<mxc:subfield code="a">207</mxc:subfield>
+<mxc:subfield code="2">Cadre de classement de la Bibliographie nationale française</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14101375</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000108596775</mxc:subfield>
+<mxc:subfield code="a">Gilligan</mxc:subfield>
+<mxc:subfield code="b">Vince</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">100</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14167232</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000119537789</mxc:subfield>
+<mxc:subfield code="a">Cranston</mxc:subfield>
+<mxc:subfield code="b">Bryan</mxc:subfield>
+<mxc:subfield code="f">1956-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20140117</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF437452590000004</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43745259001001</mxc:subfield>
+<mxc:subfield code="a">VDVD-83133</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb43745259b</srw:recordIdentifier>
+<srw:recordPosition>18</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20140117</ixm:attr>
+<ixm:attr name="LastModificationDate">20260414</ixm:attr>
+<mn:score>8.986808</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb437452658" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF437452650000001</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb437452658</mxc:controlfield>
+<mxc:datafield tag="071" ind1="4" ind2="1">
+<mxc:subfield code="a">970517</mxc:subfield>
+<mxc:subfield code="b">EDV 11</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3333299705170</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20140117d2012       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="1" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+<mxc:subfield code="a">eng</mxc:subfield>
+<mxc:subfield code="a">ger</mxc:subfield>
+<mxc:subfield code="c">eng</mxc:subfield>
+<mxc:subfield code="j">fre</mxc:subfield>
+<mxc:subfield code="j">eng</mxc:subfield>
+<mxc:subfield code="j">ger</mxc:subfield>
+<mxc:subfield code="j">ara</mxc:subfield>
+<mxc:subfield code="j">crh</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   bai||||||||b||||</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Breaking bad</mxc:subfield>
+<mxc:subfield code="h">Intégrale de la saison 3</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="f">Vince Gilligan, idée orig.</mxc:subfield>
+<mxc:subfield code="g">Bryan Cranston, Aaron Paul... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">Suresnes</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment [éd.]</mxc:subfield>
+<mxc:subfield code="a">Clichy</mxc:subfield>
+<mxc:subfield code="c">Sony music entertainment France [distrib.]</mxc:subfield>
+<mxc:subfield code="d">2012</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">3 BD vidéo (10 h 12 min)</mxc:subfield>
+<mxc:subfield code="c">coul., son., surround</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient 13 épisodes</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient aussi : commentaires audio de 5 épisodes, dans les coulisses de "Breaking bad", mini podcasts vidéo avec les acteurs et l'équipe de chaque épisode, scènes supplémentaires et séquences inutilisées, documentaires sur les coulisses de la série</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Interdit à la location</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Série en version originale anglais, en version française, allemande,  avec sous-titrage optionnel en français, anglais, allemand, arabe, turc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Cop. : Sony pictures television, 2010</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="327" ind1="1" ind2=" ">
+<mxc:subfield code="a">Episodes 1-5 (Blu-ray 1)</mxc:subfield>
+<mxc:subfield code="a">Episodes 6-9 (Blu-ray 2)</mxc:subfield>
+<mxc:subfield code="a">Episodes 10-13 (Blu-ray 3)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film dramatique</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : diffusion à la télévision</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">série</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14101375</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000108596775</mxc:subfield>
+<mxc:subfield code="a">Gilligan</mxc:subfield>
+<mxc:subfield code="b">Vince</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">100</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14167232</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000119537789</mxc:subfield>
+<mxc:subfield code="a">Cranston</mxc:subfield>
+<mxc:subfield code="b">Bryan</mxc:subfield>
+<mxc:subfield code="f">1956-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">16660556</mxc:subfield>
+<mxc:subfield code="o">ISNI000000011461591X</mxc:subfield>
+<mxc:subfield code="a">Paul</mxc:subfield>
+<mxc:subfield code="b">Aaron</mxc:subfield>
+<mxc:subfield code="f">1979-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20140117</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF437452650000001</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43745265001001</mxc:subfield>
+<mxc:subfield code="a">VDVD-83135</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb437452658</srw:recordIdentifier>
+<srw:recordPosition>19</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20140117</ixm:attr>
+<ixm:attr name="LastModificationDate">20260414</ixm:attr>
+<mn:score>8.181894</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb437452627" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF43745262000000X</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb437452627</mxc:controlfield>
+<mxc:datafield tag="020" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">71406569</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="071" ind1="4" ind2="1">
+<mxc:subfield code="a">966652</mxc:subfield>
+<mxc:subfield code="b">EDV 11</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3333299666525</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20140117d2012       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="1" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+<mxc:subfield code="a">eng</mxc:subfield>
+<mxc:subfield code="a">ger</mxc:subfield>
+<mxc:subfield code="a">spa</mxc:subfield>
+<mxc:subfield code="c">eng</mxc:subfield>
+<mxc:subfield code="j">fre</mxc:subfield>
+<mxc:subfield code="j">eng</mxc:subfield>
+<mxc:subfield code="j">ger</mxc:subfield>
+<mxc:subfield code="j">ara</mxc:subfield>
+<mxc:subfield code="j">dut</mxc:subfield>
+<mxc:subfield code="j">hin</mxc:subfield>
+<mxc:subfield code="j">tur</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   bai||||||||b||||</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Breaking bad</mxc:subfield>
+<mxc:subfield code="h">Intégrale de la saison 2</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="f">Vince Gilligan, idée orig.</mxc:subfield>
+<mxc:subfield code="g">Bryan Cranston, Aaron Paul... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">Suresnes</mxc:subfield>
+<mxc:subfield code="c">Sony pictures home entertainment [éd.]</mxc:subfield>
+<mxc:subfield code="a">Clichy</mxc:subfield>
+<mxc:subfield code="c">Sony music entertainment France [distrib.]</mxc:subfield>
+<mxc:subfield code="d">2012</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">3 BD vidéo (10 h 15 min)</mxc:subfield>
+<mxc:subfield code="c">coul., son., surround</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient 13 épisodes</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient aussi : récapitulatif de la saison 1, commentaires audio des comédiens sur 5 épisodes, scènes supplémentaires, l'envers du décor, dans les coulisses de "Breaking bad", clip musical, "Paroles de flic" (court métrage avec Dean Norris), bêtisier, les 6 webisodes, bande-annonce exclusive de la saison 3, album photo de Vince Gilligan</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Interdit à la location</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Série en version originale anglaise, en versions française, allemande, espagnole, avec sous-titrage optionnel en français, anglais, allemand, espagnol, arabe, néerlandais, hindi, turc et en anglais pour sourds et malentendants</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Cop. : Sony pictures television, 2009</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="327" ind1="1" ind2=" ">
+<mxc:subfield code="a">Épisodes 1-5 (Blu-ray 1)</mxc:subfield>
+<mxc:subfield code="a">Épisodes 6-9 (Blu-ray 2)</mxc:subfield>
+<mxc:subfield code="a">Épisodes 10-13 (Blu-ray 3)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film dramatique</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : diffusion à la télévision</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">série</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="686" ind1=" " ind2=" ">
+<mxc:subfield code="a">207</mxc:subfield>
+<mxc:subfield code="2">Cadre de classement de la Bibliographie nationale française</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14101375</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000108596775</mxc:subfield>
+<mxc:subfield code="a">Gilligan</mxc:subfield>
+<mxc:subfield code="b">Vince</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">100</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14167232</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000119537789</mxc:subfield>
+<mxc:subfield code="a">Cranston</mxc:subfield>
+<mxc:subfield code="b">Bryan</mxc:subfield>
+<mxc:subfield code="f">1956-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">16660556</mxc:subfield>
+<mxc:subfield code="o">ISNI000000011461591X</mxc:subfield>
+<mxc:subfield code="a">Paul</mxc:subfield>
+<mxc:subfield code="b">Aaron</mxc:subfield>
+<mxc:subfield code="f">1979-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20140117</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF43745262000000X</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:43745262001001</mxc:subfield>
+<mxc:subfield code="a">VDVD-83134</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb437452627</srw:recordIdentifier>
+<srw:recordPosition>20</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20140117</ixm:attr>
+<ixm:attr name="LastModificationDate">20260414</ixm:attr>
+<mn:score>8.18157</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb38301381w" type="Bibliographic">
+<mxc:leader>     ngm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF383013810000005</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb38301381w</mxc:controlfield>
+<mxc:datafield tag="039" ind1=" " ind2=" ">
+<mxc:subfield code="o">OPC</mxc:subfield>
+<mxc:subfield code="a">002147160</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">19950530d1994       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="0" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+<mxc:subfield code="a">eng</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   zai||||||||b||||</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">L'amour à la machine</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="f">Alain Souchon, chant</mxc:subfield>
+<mxc:subfield code="c">The sign</mxc:subfield>
+<mxc:subfield code="g">Ace of base, groupe voc. et instr. </mxc:subfield>
+<mxc:subfield code="c">Sur un prélude de Bach... [etc]</mxc:subfield>
+<mxc:subfield code="g">Maurane, chant</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">[Neuilly-sur-Seine]</mxc:subfield>
+<mxc:subfield code="c">[France disques [distrib.]]</mxc:subfield>
+<mxc:subfield code="d">[1994 (DL)]</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">1 laserdisc</mxc:subfield>
+<mxc:subfield code="c">coul., PAL</mxc:subfield>
+<mxc:subfield code="d">30 cm</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">variété instrumentale et vocale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">vidéomusique</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">13899934</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121181152</mxc:subfield>
+<mxc:subfield code="a">Souchon</mxc:subfield>
+<mxc:subfield code="b">Alain</mxc:subfield>
+<mxc:subfield code="f">1944-....</mxc:subfield>
+<mxc:subfield code="4">721</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">13946627</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000114423459</mxc:subfield>
+<mxc:subfield code="a">Maurane</mxc:subfield>
+<mxc:subfield code="f">1960-2018</mxc:subfield>
+<mxc:subfield code="4">721</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">13958244</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121962688</mxc:subfield>
+<mxc:subfield code="a">Ace of base</mxc:subfield>
+<mxc:subfield code="4">545</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14007083</mxc:subfield>
+<mxc:subfield code="a">France disques</mxc:subfield>
+<mxc:subfield code="4">310</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">19950530</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF383013810000005</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:38301381001001</mxc:subfield>
+<mxc:subfield code="a">VKC 30-1265</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:38301381003001</mxc:subfield>
+<mxc:subfield code="a">NUMAV-31141</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb38301381w</srw:recordIdentifier>
+<srw:recordPosition>21</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">19950530</ixm:attr>
+<ixm:attr name="LastModificationDate">20110208</ixm:attr>
+<mn:score>6.1204634</mn:score>
+</srw:extraRecordData>
+</srw:record>
+</srw:records>
+</srw:searchRetrieveResponse>

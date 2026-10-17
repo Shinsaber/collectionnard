@@ -98,6 +98,18 @@ func (e *Entity) EarliestYear(property string) (int, bool) {
 	return best, best > 0
 }
 
+// EarliestDate returns the earliest full date (YYYY-MM-DD) among the values of a property.
+func (e *Entity) EarliestDate(property string) (string, bool) {
+	best := ""
+	for _, st := range e.Claims[property] {
+		one := &Entity{Claims: map[string][]Statement{property: {st}}}
+		if d, ok := one.Date(property); ok && (best == "" || d < best) {
+			best = d
+		}
+	}
+	return best, best != ""
+}
+
 // Date returns the first time value of a property precise to the day, as
 // YYYY-MM-DD.
 func (e *Entity) Date(property string) (string, bool) {
