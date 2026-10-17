@@ -28,6 +28,7 @@
           :placeholder="field.label"
           :class="{ 'is-error': !!errors[field.name] }"
           @update:model-value="update(field.name, $event)"
+          @blur="touch(field.name)"
         />
 
         <!-- Enum (tableau d'enum : choix multiples, ex. rôles) -->
@@ -40,6 +41,7 @@
           clearable
           :class="{ 'is-error': !!errors[field.name] }"
           @update:model-value="updateEnum(field, $event)"
+          @blur="touch(field.name)"
         >
           <ElOption
             v-for="opt in field.enum"
@@ -87,6 +89,7 @@
           class="w-full! font-mono"
           :class="{ 'is-error': !!errors[field.name] }"
           @update:model-value="update(field.name, $event ?? undefined)"
+          @blur="touch(field.name)"
         />
 
         <!-- Boolean -->
@@ -149,6 +152,7 @@
               @update:model-value="
                 updateI18n(field.name, l, String($event ?? ''))
               "
+              @blur="touch(field.name)"
             />
           </div>
         </div>
@@ -167,10 +171,12 @@
           v-else
           :id="`${uid}-${field.name}`"
           type="textarea"
-          :model-value="JSON.stringify(model[field.name] ?? '', null, 2)"
+          :model-value="jsonText(field.name)"
           :rows="3"
           class="font-mono text-xs"
+          :class="{ 'is-error': !!errors[field.name] }"
           @update:model-value="updateJson(field.name, String($event ?? ''))"
+          @blur="blurJson(field.name)"
         />
 
         <!-- Field error message -->
@@ -191,6 +197,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, useId } from "vue";
+import { useSchemaValidation } from "@/composables/useSchemaValidation";
 import { useI18n } from "vue-i18n";
 import { useLang } from "@/composables/useLang";
 import {
@@ -331,13 +338,31 @@ function galleryValue(name: string): Record<string, unknown> | undefined {
 
 function update(name: string, value: unknown) {
   emit("update:modelValue", { ...model.value, [name]: value });
+  changed(name, value);
+}
+
+// Champ JSON : la saisie est gardée telle quelle ; une valeur valide est transmise, une
+// invalide est signalée (« JSON invalide ») sans écraser la valeur précédente.
+function jsonText(name: string): string {
+  return drafts[name] ?? JSON.stringify(model.value[name] ?? "", null, 2);
 }
 
 function updateJson(name: string, raw: string) {
+  drafts[name] = raw;
   try {
-    update(name, JSON.parse(raw));
+    update(name, raw.trim() === "" ? undefined : JSON.parse(raw));
   } catch {
-    // JSON incomplet pendant la saisie : on attend une valeur valide
+    check(name, model.value[name]);
+  }
+}
+
+function blurJson(name: string) {
+  touch(name);
+  try {
+    JSON.parse(drafts[name] ?? "null");
+    delete drafts[name]; // valide : réaffichée mise en forme
+  } catch {
+    // invalide : la saisie reste affichée avec son erreur
   }
 }
 
@@ -351,53 +376,24 @@ function updateI18n(name: string, l: string, value: string) {
   update(name, { ...current, [l]: value });
 }
 
-// ── Validation ──────────────────────────────────────────────────────
-const errors = reactive<Record<string, string>>({});
+// ── Validation (useSchemaValidation) ────────────────────────────────
+const {
+  errors,
+  drafts,
+  touch,
+  changed,
+  check,
+  validate: validateFields,
+  setErrors,
+  clearErrors,
+} = useSchemaValidation(
+  computed(() => props.schema ?? {}),
+  model,
+);
 
-function clearErrors() {
-  for (const key of Object.keys(errors)) delete errors[key];
-}
-
-function isValidUrl(value: string): boolean {
-  try {
-    new URL(value);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
+/** Tous les champs, avant l'envoi (requis, motifs, longueurs, bornes, JSON…). */
 function validate(): boolean {
-  clearErrors();
-  let valid = true;
-  for (const field of fields.value) {
-    const val = model.value[field.name];
-    if (
-      field.required &&
-      (val === undefined ||
-        val === null ||
-        val === "" ||
-        (Array.isArray(val) && val.length === 0))
-    ) {
-      errors[field.name] = t("errors.required");
-      valid = false;
-    }
-    if (
-      field.format === "uri" &&
-      typeof val === "string" &&
-      val !== "" &&
-      !isValidUrl(val)
-    ) {
-      errors[field.name] = t("errors.invalidUrl");
-      valid = false;
-    }
-  }
-  return valid;
-}
-
-function setErrors(fieldErrors: Record<string, string>) {
-  clearErrors();
-  Object.assign(errors, fieldErrors);
+  return validateFields(fields.value.map((f) => f.name));
 }
 
 defineExpose({ validate, setErrors, clearErrors });

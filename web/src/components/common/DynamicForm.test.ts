@@ -146,6 +146,50 @@ describe("DynamicForm", () => {
     expect(w.text()).toContain("déjà pris");
   });
 
+  it("vérifie un motif à la sortie du champ, puis à chaque saisie ; signale un JSON invalide", async () => {
+    const w = mountForm(
+      {
+        type: "object",
+        properties: {
+          code: {
+            type: "string",
+            pattern: "^[0-9]{3}$",
+            description: "trois chiffres",
+          },
+          ids: {
+            type: "object",
+            additionalProperties: false,
+            properties: { wd: { type: "string", pattern: "^Q[0-9]+$" } },
+          },
+        },
+      },
+      { code: "12a" },
+    );
+    const code = w.find("input");
+    expect(w.text()).not.toContain("Format attendu");
+    await code.trigger("focus");
+    await code.trigger("blur");
+    expect(w.text()).toContain("Format attendu : trois chiffres");
+    // En erreur : revérifié à chaque saisie, le message disparaît dès que la valeur convient.
+    await code.setValue("123");
+    expect(w.text()).not.toContain("trois chiffres");
+
+    const json = w.find("textarea");
+    await json.setValue('{"wd": ');
+    expect(w.text()).toContain("JSON invalide");
+    expect((json.element as HTMLTextAreaElement).value).toBe('{"wd": '); // saisie gardée
+    expect(
+      w.emitted("update:modelValue")!.some((e) => "ids" in (e[0] as object)),
+    ).toBe(false);
+    await json.setValue('{"wd": "x"}');
+    expect(w.text()).toContain("wd : Format attendu : ^Q[0-9]+$");
+
+    const vm = w.vm as unknown as { validate: () => boolean };
+    await w.setProps({ modelValue: { code: "123", ids: { wd: "Q1" } } });
+    await json.setValue('{"wd": "Q1"}');
+    expect(vm.validate()).toBe(true);
+  });
+
   it("affiche un message quand le schéma n'a aucun attribut", () => {
     const w = mountForm({ type: "object" });
     expect(w.text()).toContain("Aucun attribut défini");
