@@ -1505,7 +1505,7 @@ components:
           example: "ark:/12148/cb343384394"
         bnf_ark: { type: string, example: "ark:/12148/cb343384394", description: Connecteurs livres seulement (= `id`). }
         title: { type: string }
-        publishers: { type: array, items: { type: string }, description: Éditeurs, ou labels d'une parution. }
+        publishers: { type: array, items: { type: string }, description: "Éditeurs, ou labels d'une parution." }
         artist: { type: string, description: Musique — artiste crédité (recherche par titre ou code-barres). }
         format: { type: string, description: "Musique — supports : « CD », « 2×12\" Vinyl », « 2×CD + DVD-Video »." }
         country: { type: string, description: "Musique — pays de parution (ISO 3166-1, XE Europe, XW monde)." }

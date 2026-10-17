@@ -146,7 +146,7 @@ Production : images publiées par la CI sur ghcr.io (job `images`, tags `v*` et 
    `d…` collection_types, `e…` items. Garder ce schéma pour les nouveaux jeux de données
    (prendre des plages libres, ne pas renuméroter l'existant).
 4. Avant de dire « terminé » : `gofmt -l .` + `go vet` + `golangci-lint run` + `go test ./...` côté
-   server, `npm run lint` + `npm run format:check` + `npm run type-check` + `npm test` côté web,
+   server, `npm run lint` + `npm run lint:openapi` (dès que `api/openapi.yaml` change) + `npm run format:check` + `npm run type-check` + `npm test` + `npm audit --audit-level=high` côté web,
    selon ce qui a été touché (via `nix develop -c` si besoin). La CI (`.github/workflows/ci.yml`)
    rejoue exactement ces étapes.
 5. Mettre à jour les cases à cocher de la section « Phases » de `Collectionnard.md`
