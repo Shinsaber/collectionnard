@@ -111,7 +111,7 @@ func TestPackages(t *testing.T) {
 			}
 		}
 	}
-	for _, id := range []string{"books", "collections", "music", "people", "tv"} {
+	for _, id := range []string{"books", "collections", "music", "people", "tv", "video"} {
 		if !ids[id] {
 			t.Errorf("package %s missing", id)
 		}

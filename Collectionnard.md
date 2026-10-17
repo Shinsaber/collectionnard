@@ -404,7 +404,12 @@ ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries 
         un paquet installe d'abord ceux qu'il requiert, dans la même transaction (simulation comprise, rapport
         `required`) ; sur une instance existante, la mise à jour de `books` transfère les deux types à « people » en
         gardant leurs modifications locales. Page « Domaines » : paquets requis affichés.
-- [ ] **P3-6 — Séries (DVD / Blu-ray)** : étude (Wikidata, TVmaze pour saisons et épisodes, BnF pour les coffrets),
+  - [x] **P3-5b — Modèle et paquet vidéo** : étude des sources (`docs/sources-externes.md` : Wikidata pour le film,
+        BnF pour les vidéogrammes — notice d'œuvre `bib.work2bib`, EAN `bib.ean` ; TMDB écarté), modèle `video.md`, paquet
+        `video` : `Film` (b…30) et l'édition vidéo partagée avec les séries (`VideoRelease`, ancien `DVD` b…05 enrichi :
+        support, disques, zone, EAN, langues, sous-titres, collection, contenu) ; relations `released_as` (films et séries),
+        `credited` (générique, rôles et personnage), `published_by` (éditeur, distributeur) ; `tv` v2 requiert `video`
+        (mise à jour testée depuis la v1).- [ ] **P3-6 — Séries (DVD / Blu-ray)** : étude (Wikidata, TVmaze pour saisons et épisodes, BnF pour les coffrets),
       en réutilisant le modèle TV existant (Series, Season, Episode, DVD), paquet, connecteur.
 
 ### Phase 4 : Social

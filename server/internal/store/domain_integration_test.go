@@ -5,6 +5,7 @@ package store_test
 import (
 	"encoding/json"
 	"net/url"
+	"os"
 	"slices"
 	"testing"
 
@@ -191,6 +192,53 @@ func TestInstallDomain_TypesMovedToPeople(t *testing.T) {
 			if d.Status != model.DomainUpToDate || d.InstalledVersion == nil || *d.InstalledVersion != 3 || !slices.Equal(d.Requires, []string{"people"}) {
 				t.Errorf("books: %+v", d)
 			}
+		}
+	}
+}
+
+// tv v1 (the DVD type and released_as inside, testdata/tv_v1.json) updates to v2:
+// the video package is installed first and takes both over — DVD becomes
+// VideoRelease, released_as opens to films — and the episodes of a DVD stay linked.
+func TestInstallDomain_TVv1ToVideo(t *testing.T) {
+	st := freshStore(t, "colec_test_domains_video")
+	raw, err := os.ReadFile("testdata/tv_v1.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	v1, err := domains.Parse(raw)
+	if err != nil || v1.PackageVersion != 1 {
+		t.Fatalf("tv v1: %v", err)
+	}
+	if rep, err := st.InstallDomain(ctx, v1, false); err != nil || !rep.Applied {
+		t.Fatalf("v1: %v %+v", err, rep)
+	}
+	dvd := uuid.MustParse("b0000000-0000-0000-0000-000000000005")
+	tv, _ := domains.Get("tv")
+	rep, err := st.InstallDomain(ctx, tv, false)
+	if err != nil || !rep.Applied || len(rep.Required) != 2 || rep.Required[1].Domain != "video" {
+		t.Fatalf("v2: %v %+v", err, rep)
+	}
+	got, err := st.GetItemType(ctx, dvd)
+	if err != nil || got.Name != "VideoRelease" {
+		t.Fatalf("DVD after the update: %v %+v", err, got)
+	}
+	var schema map[string]any
+	_ = json.Unmarshal(got.AttributesSchema, &schema)
+	props := schema["properties"].(map[string]any)
+	if props["publisher"] == nil || props["ean"] == nil {
+		t.Errorf("VideoRelease properties: %v", props)
+	}
+	rt, err := st.GetRelationType(ctx, uuid.MustParse("c0000000-0000-0000-0000-000000000004"))
+	if err != nil || len(rt.SourceItemTypeIDs) != 2 {
+		t.Errorf("released_as: %v %+v", err, rt)
+	}
+	if _, err := st.GetRelationType(ctx, uuid.MustParse("c0000000-0000-0000-0000-000000000005")); err != nil {
+		t.Errorf("includes_episode: %v", err)
+	}
+	list, _ := st.ListDomains(ctx)
+	for _, d := range list {
+		if (d.ID == "tv" || d.ID == "video" || d.ID == "people") && d.Status != model.DomainUpToDate {
+			t.Errorf("%s: %+v", d.ID, d)
 		}
 	}
 }

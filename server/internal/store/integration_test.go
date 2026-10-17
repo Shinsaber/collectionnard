@@ -574,7 +574,7 @@ func TestItemTypes_DisplayOrder(t *testing.T) {
 		return out
 	}
 	// Seed values (migration 005 / seed.sql): main types first, bulky ones last.
-	want := []string{"Series", "DVD", "Season", "Broadcast", "Episode"}
+	want := []string{"Series", "VideoRelease", "Season", "Broadcast", "Episode"}
 	seedOnly := slices.DeleteFunc(names(), func(n string) bool { return !slices.Contains(want, n) })
 	if got := seedOnly; !slices.Equal(got, want) {
 		t.Errorf("list order = %v, want %v", got, want)

@@ -1,0 +1,786 @@
+{
+  "format": "collectionnard.domain",
+  "version": 1,
+  "id": "video",
+  "package_version": 1,
+  "title": {
+    "fr": "Vidéo : films",
+    "en": "Video: films"
+  },
+  "description": {
+    "fr": "Films et éditions vidéo (DVD, Blu-ray, VHS), aussi utilisées par les coffrets de séries ; sources Wikidata et BnF.",
+    "en": "Films and video releases (DVD, Blu-ray, VHS), also used by series box sets; Wikidata and BnF sources."
+  },
+  "requires": [
+    "people"
+  ],
+  "item_types": [
+    {
+      "id": "b0000000-0000-0000-0000-000000000030",
+      "name": "Film",
+      "description": "Film : l'œuvre, indépendante de ses éditions vidéo",
+      "display_order": 15,
+      "attributes_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "x-title": {
+          "fr": "Film",
+          "en": "Film"
+        },
+        "x-description": {
+          "fr": "Film : l'œuvre, toutes éditions vidéo confondues",
+          "en": "Film: the work, all its video releases together"
+        },
+        "x-labels": {
+          "fr": {
+            "title": "Titre",
+            "original_title": "Titre original",
+            "kind": "Type",
+            "release_year": "Année de sortie",
+            "duration": "Durée (min)",
+            "countries": "Pays d'origine",
+            "original_language": "Langue originale",
+            "genres": "Genres",
+            "description": "Description",
+            "external_ids": "Identifiants externes",
+            "sources": "Sources",
+            "images": "Images"
+          },
+          "en": {
+            "title": "Title",
+            "original_title": "Original title",
+            "kind": "Kind",
+            "release_year": "Release year",
+            "duration": "Duration (min)",
+            "countries": "Countries of origin",
+            "original_language": "Original language",
+            "genres": "Genres",
+            "description": "Description",
+            "external_ids": "External IDs",
+            "sources": "Sources",
+            "images": "Images"
+          }
+        },
+        "x-label": "{title}",
+        "x-order": [
+          "title",
+          "original_title",
+          "kind",
+          "release_year",
+          "duration",
+          "countries",
+          "original_language",
+          "genres",
+          "description",
+          "images",
+          "external_ids",
+          "sources"
+        ],
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "title": {
+            "type": "object",
+            "x-widget": "i18n-text",
+            "properties": {
+              "en": {
+                "type": "string"
+              },
+              "fr": {
+                "type": "string"
+              }
+            },
+            "propertyNames": {
+              "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+            },
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "original_title": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "feature",
+              "animated",
+              "documentary",
+              "short",
+              "tv_film"
+            ],
+            "x-enum-labels": {
+              "fr": {
+                "feature": "Long métrage",
+                "animated": "Animation",
+                "documentary": "Documentaire",
+                "short": "Court métrage",
+                "tv_film": "Téléfilm"
+              },
+              "en": {
+                "feature": "Feature film",
+                "animated": "Animated film",
+                "documentary": "Documentary",
+                "short": "Short film",
+                "tv_film": "Television film"
+              }
+            }
+          },
+          "release_year": {
+            "type": "integer",
+            "minimum": 1880
+          },
+          "duration": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Durée en minutes"
+          },
+          "countries": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Z]{2}$"
+            },
+            "description": "Pays d'origine (ISO 3166-1 alpha-2)"
+          },
+          "original_language": {
+            "type": "string",
+            "pattern": "^[a-z]{2,3}$",
+            "description": "Code ISO 639-1 (fr, en, ja…), à défaut ISO 639-2"
+          },
+          "genres": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": [
+                "comedy",
+                "drama",
+                "comedy_drama",
+                "romance",
+                "romantic_comedy",
+                "action",
+                "adventure",
+                "animation",
+                "science_fiction",
+                "fantasy",
+                "horror",
+                "thriller",
+                "crime",
+                "mystery",
+                "war",
+                "western",
+                "documentary",
+                "musical",
+                "historical",
+                "biographical",
+                "family",
+                "children",
+                "film_noir",
+                "spy",
+                "superhero",
+                "disaster",
+                "sports",
+                "martial_arts",
+                "teen"
+              ]
+            },
+            "x-enum-labels": {
+              "fr": {
+                "comedy": "Comédie",
+                "drama": "Drame",
+                "comedy_drama": "Comédie dramatique",
+                "romance": "Romance",
+                "romantic_comedy": "Comédie romantique",
+                "action": "Action",
+                "adventure": "Aventure",
+                "animation": "Animation",
+                "science_fiction": "Science-fiction",
+                "fantasy": "Fantastique",
+                "horror": "Horreur",
+                "thriller": "Thriller",
+                "crime": "Policier",
+                "mystery": "Énigme",
+                "war": "Guerre",
+                "western": "Western",
+                "documentary": "Documentaire",
+                "musical": "Comédie musicale",
+                "historical": "Historique",
+                "biographical": "Biographique",
+                "family": "Familial",
+                "children": "Jeunesse",
+                "film_noir": "Film noir",
+                "spy": "Espionnage",
+                "superhero": "Super-héros",
+                "disaster": "Catastrophe",
+                "sports": "Sport",
+                "martial_arts": "Arts martiaux",
+                "teen": "Adolescents"
+              },
+              "en": {
+                "comedy": "Comedy",
+                "drama": "Drama",
+                "comedy_drama": "Comedy drama",
+                "romance": "Romance",
+                "romantic_comedy": "Romantic comedy",
+                "action": "Action",
+                "adventure": "Adventure",
+                "animation": "Animation",
+                "science_fiction": "Science fiction",
+                "fantasy": "Fantasy",
+                "horror": "Horror",
+                "thriller": "Thriller",
+                "crime": "Crime",
+                "mystery": "Mystery",
+                "war": "War",
+                "western": "Western",
+                "documentary": "Documentary",
+                "musical": "Musical",
+                "historical": "Historical",
+                "biographical": "Biographical",
+                "family": "Family",
+                "children": "Children",
+                "film_noir": "Film noir",
+                "spy": "Spy",
+                "superhero": "Superhero",
+                "disaster": "Disaster",
+                "sports": "Sports",
+                "martial_arts": "Martial arts",
+                "teen": "Teen"
+              }
+            }
+          },
+          "description": {
+            "type": "object",
+            "x-widget": "i18n-text",
+            "properties": {
+              "en": {
+                "type": "string"
+              },
+              "fr": {
+                "type": "string"
+              }
+            },
+            "propertyNames": {
+              "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+            },
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "images": {
+            "type": "object",
+            "x-widget": "image-gallery",
+            "additionalProperties": false,
+            "x-image-categories": {
+              "poster": {
+                "ratio": "2/3"
+              }
+            },
+            "properties": {
+              "default_image": {
+                "type": "string"
+              },
+              "poster": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "external_ids": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "wikidata": {
+                "type": "string",
+                "pattern": "^Q[1-9][0-9]*$"
+              },
+              "bnf_ark": {
+                "type": "string",
+                "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$"
+              },
+              "imdb": {
+                "type": "string",
+                "pattern": "^tt[0-9]{7,9}$"
+              }
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "source"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "enum": [
+                    "wikidata",
+                    "bnf",
+                    "manual"
+                  ]
+                },
+                "retrieved_at": {
+                  "type": "string",
+                  "format": "date"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "b0000000-0000-0000-0000-000000000005",
+      "name": "VideoRelease",
+      "description": "Édition vidéo : DVD, Blu-ray, VHS… (films et coffrets de séries)",
+      "display_order": 60,
+      "attributes_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "x-title": {
+          "fr": "Édition vidéo",
+          "en": "Video release"
+        },
+        "x-description": {
+          "fr": "DVD, Blu-ray, VHS… d'un film ou coffret de série",
+          "en": "DVD, Blu-ray, VHS… of a film, or a series box set"
+        },
+        "x-labels": {
+          "fr": {
+            "title": "Titre",
+            "format": "Support",
+            "disc_count": "Nombre de disques",
+            "region": "Zone",
+            "edition": "Édition",
+            "collection": "Collection",
+            "collection_number": "N° dans la collection",
+            "publisher": "Éditeur",
+            "release_year": "Année de sortie",
+            "ean": "EAN",
+            "runtime": "Durée (min)",
+            "audio_languages": "Langues audio",
+            "subtitle_languages": "Sous-titres",
+            "aspect_ratio": "Format d'image",
+            "notes": "Contenu",
+            "external_ids": "Identifiants externes",
+            "sources": "Sources",
+            "images": "Images"
+          },
+          "en": {
+            "title": "Title",
+            "format": "Format",
+            "disc_count": "Number of Discs",
+            "region": "Region",
+            "edition": "Edition",
+            "collection": "Collection",
+            "collection_number": "Number in collection",
+            "publisher": "Publisher",
+            "release_year": "Release Year",
+            "ean": "EAN",
+            "runtime": "Runtime (min)",
+            "audio_languages": "Audio languages",
+            "subtitle_languages": "Subtitles",
+            "aspect_ratio": "Aspect ratio",
+            "notes": "Contents",
+            "external_ids": "External IDs",
+            "sources": "Sources",
+            "images": "Images"
+          }
+        },
+        "x-label": "{title}",
+        "x-order": [
+          "title",
+          "format",
+          "disc_count",
+          "region",
+          "edition",
+          "collection",
+          "collection_number",
+          "publisher",
+          "release_year",
+          "ean",
+          "runtime",
+          "audio_languages",
+          "subtitle_languages",
+          "aspect_ratio",
+          "notes",
+          "images",
+          "external_ids",
+          "sources"
+        ],
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "dvd",
+              "blu_ray",
+              "uhd_blu_ray",
+              "vhs",
+              "hd_dvd",
+              "laserdisc",
+              "other"
+            ],
+            "x-enum-labels": {
+              "fr": {
+                "dvd": "DVD",
+                "blu_ray": "Blu-ray",
+                "uhd_blu_ray": "Blu-ray 4K",
+                "vhs": "VHS",
+                "hd_dvd": "HD DVD",
+                "laserdisc": "LaserDisc",
+                "other": "Autre"
+              },
+              "en": {
+                "dvd": "DVD",
+                "blu_ray": "Blu-ray",
+                "uhd_blu_ray": "4K Blu-ray",
+                "vhs": "VHS",
+                "hd_dvd": "HD DVD",
+                "laserdisc": "LaserDisc",
+                "other": "Other"
+              }
+            }
+          },
+          "disc_count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "region": {
+            "type": "string",
+            "description": "Zone : 1 à 8 (DVD), A à C (Blu-ray)"
+          },
+          "edition": {
+            "type": "string",
+            "description": "Mention d'édition : collector, version longue…"
+          },
+          "collection": {
+            "type": "string",
+            "description": "Collection de l'éditeur (Collection Studio Ghibli)"
+          },
+          "collection_number": {
+            "type": "string"
+          },
+          "publisher": {
+            "type": "string",
+            "description": "Éditeur en texte libre (l'éditeur lié passe par « Publiée par »)"
+          },
+          "release_year": {
+            "type": "integer",
+            "minimum": 1900
+          },
+          "ean": {
+            "type": "string",
+            "pattern": "^[0-9]{8,14}$"
+          },
+          "runtime": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Durée totale en minutes"
+          },
+          "audio_languages": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z]{2,3}$",
+              "description": "Code ISO 639-1 (fr, en, ja…), à défaut ISO 639-2"
+            }
+          },
+          "subtitle_languages": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z]{2,3}$",
+              "description": "Code ISO 639-1 (fr, en, ja…), à défaut ISO 639-2"
+            }
+          },
+          "aspect_ratio": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Contenu, bonus"
+          },
+          "images": {
+            "type": "object",
+            "x-widget": "image-gallery",
+            "additionalProperties": false,
+            "x-image-categories": {
+              "front": {
+                "ratio": "27/38"
+              },
+              "back": {
+                "ratio": "27/38"
+              },
+              "disc": {
+                "ratio": "1/1"
+              }
+            },
+            "properties": {
+              "default_image": {
+                "type": "string"
+              },
+              "front": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "back": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "disc": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "external_ids": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "bnf_ark": {
+                "type": "string",
+                "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$"
+              }
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "source"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "enum": [
+                    "wikidata",
+                    "bnf",
+                    "manual"
+                  ]
+                },
+                "retrieved_at": {
+                  "type": "string",
+                  "format": "date"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "collection_types": [],
+  "relation_types": [
+    {
+      "id": "c0000000-0000-0000-0000-000000000004",
+      "name": "released_as",
+      "description": "Film ou série édité en vidéo",
+      "attributes_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "x-title": {
+          "fr": "Édité en",
+          "en": "Released as"
+        },
+        "x-description": {
+          "fr": "Film ou série édité en DVD, Blu-ray…",
+          "en": "Film or series released on DVD, Blu-ray…"
+        },
+        "x-order": [
+          "order"
+        ],
+        "properties": {
+          "order": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "x-labels": {
+          "fr": {
+            "order": "Rang dans le coffret"
+          },
+          "en": {
+            "order": "Position in the box set"
+          }
+        }
+      },
+      "source_item_type_ids": [
+        "b0000000-0000-0000-0000-000000000001",
+        "b0000000-0000-0000-0000-000000000030"
+      ],
+      "target_item_type_ids": [
+        "b0000000-0000-0000-0000-000000000005"
+      ]
+    },
+    {
+      "id": "c0000000-0000-0000-0000-000000000030",
+      "name": "credited",
+      "description": "Personne au générique d'un film",
+      "attributes_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "x-title": {
+          "fr": "Au générique",
+          "en": "Credited"
+        },
+        "x-description": {
+          "fr": "Réalisateur, scénariste, acteur, compositeur… d'un film",
+          "en": "Director, screenwriter, actor, composer… of a film"
+        },
+        "x-order": [
+          "roles",
+          "character",
+          "order"
+        ],
+        "required": [
+          "roles"
+        ],
+        "properties": {
+          "roles": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": [
+                "director",
+                "screenwriter",
+                "actor",
+                "composer",
+                "cinematographer",
+                "producer",
+                "editor"
+              ]
+            },
+            "x-enum-labels": {
+              "fr": {
+                "director": "Réalisation",
+                "screenwriter": "Scénario",
+                "actor": "Interprétation",
+                "composer": "Musique",
+                "cinematographer": "Image",
+                "producer": "Production",
+                "editor": "Montage"
+              },
+              "en": {
+                "director": "Director",
+                "screenwriter": "Screenwriter",
+                "actor": "Actor",
+                "composer": "Composer",
+                "cinematographer": "Cinematographer",
+                "producer": "Producer",
+                "editor": "Editor"
+              }
+            },
+            "minItems": 1
+          },
+          "character": {
+            "type": "string"
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "x-labels": {
+          "fr": {
+            "roles": "Rôles",
+            "character": "Personnage",
+            "order": "Ordre au générique"
+          },
+          "en": {
+            "roles": "Roles",
+            "character": "Character",
+            "order": "Billing order"
+          }
+        }
+      },
+      "source_item_type_ids": [
+        "b0000000-0000-0000-0000-000000000030"
+      ],
+      "target_item_type_ids": [
+        "b0000000-0000-0000-0000-000000000016"
+      ]
+    },
+    {
+      "id": "c0000000-0000-0000-0000-000000000031",
+      "name": "published_by",
+      "description": "Édition vidéo publiée ou distribuée par un éditeur",
+      "attributes_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "x-title": {
+          "fr": "Publiée par",
+          "en": "Published by"
+        },
+        "x-description": {
+          "fr": "Éditeur ou distributeur d'une édition vidéo",
+          "en": "Publisher or distributor of a video release"
+        },
+        "x-order": [
+          "roles"
+        ],
+        "properties": {
+          "roles": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": [
+                "publisher",
+                "distributor"
+              ]
+            },
+            "x-enum-labels": {
+              "fr": {
+                "publisher": "Éditeur",
+                "distributor": "Distributeur"
+              },
+              "en": {
+                "publisher": "Publisher",
+                "distributor": "Distributor"
+              }
+            }
+          }
+        },
+        "x-labels": {
+          "fr": {
+            "roles": "Rôles"
+          },
+          "en": {
+            "roles": "Roles"
+          }
+        }
+      },
+      "source_item_type_ids": [
+        "b0000000-0000-0000-0000-000000000005"
+      ],
+      "target_item_type_ids": [
+        "b0000000-0000-0000-0000-000000000017"
+      ]
+    }
+  ]
+}

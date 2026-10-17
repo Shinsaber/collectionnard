@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "tv",
-  "package_version": 1,
+  "package_version": 2,
   "title": {
     "fr": "Séries TV",
     "en": "TV series"
@@ -11,6 +11,9 @@
     "fr": "Séries, diffusions, saisons, épisodes et DVD.",
     "en": "Series, broadcasts, seasons, episodes and DVDs."
   },
+  "requires": [
+    "video"
+  ],
   "item_types": [
     {
       "id": "b0000000-0000-0000-0000-000000000001",
@@ -327,65 +330,6 @@
         },
         "additionalProperties": false
       }
-    },
-    {
-      "id": "b0000000-0000-0000-0000-000000000005",
-      "name": "DVD",
-      "description": "Édition DVD/Blu-ray",
-      "display_order": 60,
-      "attributes_schema": {
-        "type": "object",
-        "x-label": "{title}",
-        "x-order": [
-          "title",
-          "publisher",
-          "release_year",
-          "disc_count"
-        ],
-        "x-title": {
-          "en": "DVD",
-          "fr": "DVD"
-        },
-        "required": [
-          "title"
-        ],
-        "x-labels": {
-          "en": {
-            "title": "Title",
-            "publisher": "Publisher",
-            "disc_count": "Number of Discs",
-            "release_year": "Release Year"
-          },
-          "fr": {
-            "title": "Titre",
-            "publisher": "Éditeur",
-            "disc_count": "Nombre de disques",
-            "release_year": "Année de sortie"
-          }
-        },
-        "properties": {
-          "title": {
-            "type": "string",
-            "minLength": 1
-          },
-          "publisher": {
-            "type": "string"
-          },
-          "disc_count": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "release_year": {
-            "type": "integer",
-            "minimum": 1900
-          }
-        },
-        "x-description": {
-          "en": "DVD/Blu-ray edition",
-          "fr": "Édition DVD/Blu-ray"
-        },
-        "additionalProperties": false
-      }
     }
   ],
   "relation_types": [
@@ -491,30 +435,6 @@
       ],
       "target_item_type_ids": [
         "b0000000-0000-0000-0000-000000000004"
-      ]
-    },
-    {
-      "id": "c0000000-0000-0000-0000-000000000004",
-      "name": "released_as",
-      "description": "Série éditée en DVD/Blu-ray",
-      "attributes_schema": {
-        "type": "object",
-        "x-title": {
-          "en": "Released as",
-          "fr": "Éditée en"
-        },
-        "properties": {},
-        "x-description": {
-          "en": "Series released on DVD/Blu-ray",
-          "fr": "Série éditée en DVD/Blu-ray"
-        },
-        "additionalProperties": false
-      },
-      "source_item_type_ids": [
-        "b0000000-0000-0000-0000-000000000001"
-      ],
-      "target_item_type_ids": [
-        "b0000000-0000-0000-0000-000000000005"
       ]
     },
     {

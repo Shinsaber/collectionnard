@@ -136,6 +136,29 @@ Constats faits en codant le connecteur (2026-10-11), utiles pour les prochains :
 - **Rapprochement** : MBID partout (`external_ids.musicbrainz`), QID Wikidata en second pour l'album ; labels aussi par
   nom (sans casse ni accents), comme les éditeurs ; artistes **pas** par nom (homonymes : deux groupes « Nirvana »).
 
+## Films (P3-5, recherche du 2026-10-17)
+
+Mêmes sources que les romans, mêmes licences (Wikidata CC0, BnF Licence Ouverte) ; **TMDB écarté** (données non ouvertes,
+choix du mainteneur). Modèle : `video.md`.
+
+- **Wikidata** : un film est `P31` film (`Q11424`), film d'animation (`Q202866`), long métrage d'animation (`Q29168811`),
+  documentaire (`Q93204`), court métrage (`Q24862`) ou téléfilm (`Q506240`). Générique : `P57` réalisation, `P58`
+  scénario, `P86` musique, `P344` image, `P161` interprétation (Amélie : 41 acteurs, rarement avec le personnage `P453`) ;
+  `P577` dates de sortie (une par pays, qualificatif `P291`), `P2047` durée en minutes, `P495` pays, `P364` langue
+  originale, `P136` genres, `P345` IMDb, `P268` **notice d'œuvre BnF** (Amélie : `14404106q`). Libellés des genres vérifiés
+  un à un : deux candidats étaient faux (`Q1342372` = film de monstre, pas fantastique `Q157394` ; `Q1146335` = film pour
+  adolescents, pas sport `Q1339864`).
+- **BnF** : les vidéogrammes du dépôt légal sont des notices de type `g` (guide `cgm`), filtrées par
+  `bib.doctype any "h"` ; `bib.work2bib` sur la notice d'œuvre du film liste ses éditions (Amélie : 9, DVD, Blu-ray et VHS ;
+  Chihiro : 9) ; **`bib.ean`** trouve une édition par son code-barres (`bib.fuzzyIsbn` ne le fait pas). Zones : 073 EAN,
+  200 `$a` titre et `$e` mention (« édition limitée »), 205 mention (« Autorisé à la location »), 215 support (« DVD vidéo
+  monoface simple couche zone 2 (2 h) », « BD vidéo » = Blu-ray, « cass. vidéo (VHS) »), nombre de disques en tête,
+  matériel d'accompagnement en `$e` ; 101 langues (`$a` audio, `$c` originale, `$j` sous-titres) ; 225 collection et
+  numéro (« Collection Studio Ghibli », 2) ; 300 notes (contenu, bonus) ; 500 `$3` numéro de la notice d'œuvre ; 702 `$4`
+  fonction (300 réalisation, 690 scénario, 230 musique, 005 interprétation — les têtes d'affiche seulement) ; 712 `$4` 650
+  éditeur, 310 distributeur, 630 producteur (pas toujours présente : 210 `$c` à défaut).
+- Pas d'images : les jaquettes ne sont pas sous licence libre.
+
 ## Sources pour plus tard
 
 ### Grand Comics Database (comics.org)

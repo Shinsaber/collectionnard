@@ -50,7 +50,7 @@ func counts(rep *model.ImportReport, entity string) model.ImportCounts {
 
 func TestExportCatalog_Seed(t *testing.T) {
 	cat := exportNow(t, s)
-	if cat.Format != model.CatalogFormat || len(cat.ItemTypes) != 5 || len(cat.RelationTypes) != 5 ||
+	if cat.Format != model.CatalogFormat || len(cat.ItemTypes) != 8 || len(cat.RelationTypes) != 7 || // tv + video + people
 		len(cat.CollectionTypes) != 3 || len(cat.Items) != 8 || len(cat.Relations) != 10 {
 		t.Fatalf("unexpected sizes: %d types, %d relation types, %d collection types, %d items, %d relations",
 			len(cat.ItemTypes), len(cat.RelationTypes), len(cat.CollectionTypes), len(cat.Items), len(cat.Relations))
@@ -64,7 +64,8 @@ func TestExportCatalog_Seed(t *testing.T) {
 		t.Errorf("series tags: %v", cat.Items[0].Tags)
 	}
 	for _, rt := range cat.RelationTypes {
-		if rt.ID == rtEditeEn && (len(rt.SourceItemTypeIDs) != 1 || rt.SourceItemTypeIDs[0] != typeSerie) {
+		// released_as (paquet video) : séries et films.
+		if rt.ID == rtEditeEn && (len(rt.SourceItemTypeIDs) != 2 || !slices.Contains(rt.SourceItemTypeIDs, typeSerie)) {
 			t.Errorf("released_as sources: %v", rt.SourceItemTypeIDs)
 		}
 	}
