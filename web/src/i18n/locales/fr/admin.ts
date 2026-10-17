@@ -149,7 +149,16 @@ export default {
     failed: "Recherche des images impossible",
   },
   external: {
-    title: "Sources externes — BD / Manga",
+    title: "Sources externes",
+    connector: "Sorte de collection",
+    connectors: {
+      "bd-manga": {
+        title: "BD / Manga",
+        workPlaceholder: "Titre de la série, ex. Dragon Ball",
+        editionPlaceholder: "Titre de la série",
+        isbnPlaceholder: "ISBN d'un tome, ex. 978-2-7234-3335-8",
+      },
+    },
     intro:
       "Recherchez une œuvre sur Wikidata et ses éditions françaises à la BnF, choisissez les éléments à importer (auteurs, éditeurs, tomes…), simulez puis validez. Les éléments déjà présents gardent leurs valeurs : seuls leurs champs vides sont complétés.",
     stepOf: "Étape {n} / {total} · {title}",
@@ -164,7 +173,6 @@ export default {
     openSource: "Voir la fiche source",
     work: {
       title: "Œuvre (Wikidata)",
-      placeholder: "Titre de la série, ex. Dragon Ball",
       none: "Aucune œuvre trouvée",
       label: "Titre",
       description: "Description",
@@ -177,8 +185,6 @@ export default {
       title: "Éditions françaises (BnF)",
       byTitle: "Par titre",
       byIsbn: "Par ISBN",
-      placeholderTitle: "Titre de la série",
-      placeholderIsbn: "ISBN d'un tome, ex. 978-2-7234-3335-8",
       none: "Aucune édition trouvée",
       label: "Édition",
       publishers: "Éditeur(s)",

@@ -41,8 +41,10 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 - Import (`store/export.go`) : une transaction, un savepoint par entité (toutes les erreurs du fichier sont listées),
   upsert `ON CONFLICT (id) … WHERE IS DISTINCT FROM … RETURNING (xmax = 0)` → créé / mis à jour / inchangé ; rollback si
   erreur ou `dry_run`. Toute nouvelle table du catalogue doit être ajoutée à l'export **et** à l'import.
-- Sources externes (`handler/external.go`, routes admin `/external/bd-manga/*`) : un connecteur ne dépend que de
-  l'interface `bdmanga.Catalog` (sous-ensemble du store) ; erreurs → 400 `InputError`, 404 entité externe inconnue,
+- Sources externes (`handler/external.go`, routes admin `/external/{connector}/*`, liste `GET /external/connectors`) :
+  chaque connecteur implémente `external.Connector` (`ID`, `Domain`, recherche d'œuvres et d'éditions, aperçu, `Build`)
+  et s'inscrit dans `Handler.Connectors` ; il trouve ses types par identifiant du paquet de domaine, puis par nom. Le
+  connecteur `bd-manga` ne dépend que de l'interface `bdmanga.Catalog` (sous-ensemble du store) ; erreurs → 400 `InputError`, 404 entité externe inconnue,
   409 `connector_unavailable` (types du domaine absents), 502 `external_unavailable` (source injoignable). L'import
   repasse par `Store.ImportCatalog` : jamais d'écriture directe. Tests sans réseau : `bdmangatest.NewSources(t)`.
 - Les listes renvoient `model.PaginatedResponse` (`data`, `total`, …).

@@ -149,7 +149,16 @@ const en: typeof fr = {
     failed: "Cannot look for images",
   },
   external: {
-    title: "External sources — Comics / Manga",
+    title: "External sources",
+    connector: "Kind of collection",
+    connectors: {
+      "bd-manga": {
+        title: "Comics / Manga",
+        workPlaceholder: "Series title, e.g. Dragon Ball",
+        editionPlaceholder: "Series title",
+        isbnPlaceholder: "ISBN of a volume, e.g. 978-2-7234-3335-8",
+      },
+    },
     intro:
       "Search a work on Wikidata and its French editions at the BnF, choose what to import (creators, publishers, volumes…), simulate, then confirm. Items already in the catalogue keep their values: only their empty fields are filled in.",
     stepOf: "Step {n} / {total} · {title}",
@@ -164,7 +173,6 @@ const en: typeof fr = {
     openSource: "Open the source record",
     work: {
       title: "Work (Wikidata)",
-      placeholder: "Series title, e.g. Dragon Ball",
       none: "No work found",
       label: "Title",
       description: "Description",
@@ -177,8 +185,6 @@ const en: typeof fr = {
       title: "French editions (BnF)",
       byTitle: "By title",
       byIsbn: "By ISBN",
-      placeholderTitle: "Series title",
-      placeholderIsbn: "ISBN of a volume, e.g. 978-2-7234-3335-8",
       none: "No edition found",
       label: "Edition",
       publishers: "Publisher(s)",

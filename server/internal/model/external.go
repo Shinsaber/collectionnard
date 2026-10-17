@@ -110,3 +110,10 @@ type ExternalImportReport struct {
 	ImportReport
 	ItemIDs map[string]uuid.UUID `json:"item_ids"`
 }
+
+// ConnectorInfo describes a connector (GET /external/connectors): its path
+// segment and the domain package holding the types it writes.
+type ConnectorInfo struct {
+	ID     string `json:"id"`
+	Domain string `json:"domain"`
+}

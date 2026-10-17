@@ -14,6 +14,7 @@ import { dragonBallPlan, MANGA } from "../../../tests/fixtures/external-plan";
 import ExternalImportView from "./ExternalImportView.vue";
 
 const api = vi.hoisted(() => ({
+  connectors: vi.fn(async () => [{ id: "bd-manga", domain: "books" }]),
   searchWorks: vi.fn(),
   searchEditions: vi.fn(),
   preview: vi.fn(),
@@ -106,8 +107,9 @@ describe("ExternalImportView", () => {
     api.searchWorks.mockResolvedValue([work]);
     api.searchEditions.mockResolvedValue([edition]);
     api.preview.mockResolvedValue(dragonBallPlan);
-    api.importSelection.mockImplementation(async (_req, dryRun: boolean) =>
-      report(dryRun),
+    api.importSelection.mockImplementation(
+      async (_connector: string, _req: unknown, dryRun: boolean) =>
+        report(dryRun),
     );
     const w = mount(ExternalImportView, {
       global: { plugins: [ElementPlus], stubs: { RouterLink: true } },
@@ -119,13 +121,15 @@ describe("ExternalImportView", () => {
     await w.findAll("input")[0]!.setValue("dragon ball");
     await w.findAll("form")[0]!.trigger("submit");
     await flushPromises();
-    expect(api.searchWorks).toHaveBeenCalledWith("dragon ball");
+    expect(api.searchWorks).toHaveBeenCalledWith("bd-manga", "dragon ball");
     const workRow = w.find('[data-test="work-hits"] tbody tr');
     expect(workRow.text()).toContain("Manga"); // titre du type (x-title)
     await workRow.trigger("click");
     await flushPromises();
     expect(w.find('[data-test="chosen-work"]').text()).toContain("Dragon Ball");
-    expect(api.searchEditions).toHaveBeenCalledWith({ q: "Dragon Ball" });
+    expect(api.searchEditions).toHaveBeenCalledWith("bd-manga", {
+      q: "Dragon Ball",
+    });
 
     // Édition cochée, puis aperçu.
     await w
@@ -134,7 +138,7 @@ describe("ExternalImportView", () => {
     expect(w.find('[data-test="chosen-editions"]').text()).toContain("Glénat");
     await button(w, "Aperçu").trigger("click");
     await flushPromises();
-    expect(api.preview).toHaveBeenCalledWith({
+    expect(api.preview).toHaveBeenCalledWith("bd-manga", {
       work: "Q15051307",
       editions: ["ark:/12148/cb343384394"],
     });
@@ -156,7 +160,8 @@ describe("ExternalImportView", () => {
     await button(w, "Tout décocher").trigger("click");
     await button(w, "Simuler").trigger("click");
     await flushPromises();
-    const [req, dryRun] = api.importSelection.mock.calls[0]!;
+    const [connector, req, dryRun] = api.importSelection.mock.calls[0]!;
+    expect(connector).toBe("bd-manga");
     expect(dryRun).toBe(true);
     expect([...req.selected].sort()).toEqual([
       "bnf:cb343384394",
@@ -171,7 +176,7 @@ describe("ExternalImportView", () => {
     // 3. Import (confirmation acceptée) puis lien vers l'œuvre.
     await button(w, "Importer").trigger("click");
     await flushPromises();
-    expect(api.importSelection.mock.calls[1]![1]).toBe(false);
+    expect(api.importSelection.mock.calls[1]![2]).toBe(false);
     expect(w.find('[data-test="import-report"]').text()).toContain(
       "Résultat de l'import",
     );
@@ -232,7 +237,7 @@ describe("ExternalImportView", () => {
     await form.find('input[type="text"]').setValue("978-2-87695-205-8");
     await form.trigger("submit");
     await flushPromises();
-    expect(api.searchEditions).toHaveBeenCalledWith({
+    expect(api.searchEditions).toHaveBeenCalledWith("bd-manga", {
       isbn: "978-2-87695-205-8",
     });
     const hits = w.find('[data-test="edition-hits"]').text();
@@ -297,7 +302,7 @@ describe("ExternalImportView — corrections avant la simulation", () => {
 
     await button(w, "Simuler").trigger("click");
     await flushPromises();
-    const [req] = api.importSelection.mock.calls[0]!;
+    const [, req] = api.importSelection.mock.calls[0]!;
     expect(req.selected).toContain("bnf:cb43462118n");
     expect(req.overrides).toEqual({
       "bnf:cb43462118n": { number: 3, title: { fr: "Dragon Ball" } },

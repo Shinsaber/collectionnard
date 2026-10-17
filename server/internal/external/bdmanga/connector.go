@@ -13,7 +13,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -91,19 +90,15 @@ const (
 	maxISBNVolumeHits = 20
 )
 
-// UnavailableError: the catalogue lacks types the connector writes.
-type UnavailableError struct {
-	Missing []string
-}
+// UnavailableError and InputError are the errors shared by every connector.
+type (
+	UnavailableError = external.UnavailableError
+	InputError       = external.InputError
+)
 
-func (e *UnavailableError) Error() string {
-	return "BD / Manga types missing from the catalogue: " + strings.Join(e.Missing, ", ")
-}
-
-// InputError is an invalid request (unknown key, malformed identifier…).
-type InputError string
-
-func (e InputError) Error() string { return string(e) }
+// ID and Domain identify the connector (external.Connector).
+func (c *Connector) ID() string     { return "bd-manga" }
+func (c *Connector) Domain() string { return "books" }
 
 // domain holds the resolved types.
 type domain struct {
@@ -156,7 +151,7 @@ func (c *Connector) domain(ctx context.Context) (*domain, error) {
 		}
 	}
 	if len(missing) > 0 {
-		return nil, &UnavailableError{Missing: missing}
+		return nil, &UnavailableError{Domain: c.Domain(), Missing: missing}
 	}
 	return d, nil
 }

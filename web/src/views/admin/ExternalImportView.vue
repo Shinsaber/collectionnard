@@ -7,6 +7,30 @@
         </p>
       </template>
     </PageHeader>
+    <!-- Sorte de collection : un connecteur par domaine (BD / manga, romans…) ; en changer repart à zéro. -->
+    <div
+      v-if="connectors.length > 1"
+      class="mb-5 flex flex-wrap items-center gap-2"
+      role="radiogroup"
+      :aria-label="t('admin.external.connector')"
+    >
+      <button
+        v-for="c in connectors"
+        :key="c.id"
+        type="button"
+        role="radio"
+        class="rounded-full px-3.5 py-1.5 text-sm font-semibold"
+        :class="
+          connector === c.id
+            ? 'bg-primary text-primary-ink'
+            : 'bg-surface text-ink shadow-card'
+        "
+        :aria-checked="connector === c.id"
+        @click="connector = c.id"
+      >
+        {{ t(`admin.external.connectors.${c.id}.title`) }}
+      </button>
+    </div>
     <!-- Import appliqué : active = 4 pour que la dernière étape passe elle aussi au vert. -->
     <!-- Mobile : étape courante en une ligne (les étapes horizontales n'y tiennent pas). -->
     <p
@@ -40,8 +64,12 @@
       la remonte à neuf (clé).
     -->
     <div v-show="step === 0" :key="searchKey" class="space-y-4">
-      <ExternalWorkSearch v-model="work" />
-      <ExternalEditionSearch v-model="editions" :suggestion="work?.label" />
+      <ExternalWorkSearch v-model="work" :connector="connector" />
+      <ExternalEditionSearch
+        v-model="editions"
+        :connector="connector"
+        :suggestion="work?.label"
+      />
       <div class="flex items-center gap-3">
         <ElButton
           type="primary"
@@ -111,9 +139,9 @@
 </template>
 
 <script setup lang="ts">
-// Import depuis les sources externes (admin, connecteur BD / Manga) : recherche d'une œuvre
+// Import depuis les sources externes (admin, un connecteur par sorte de collection) : recherche d'une œuvre
 // (Wikidata) et d'éditions (BnF), aperçu à cocher, simulation, import (tout ou rien).
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { externalApi } from "@/api/client";
 import { useNotify } from "@/composables/useNotify";
@@ -132,6 +160,7 @@ import ImportReportView from "@/components/common/ImportReportView.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
 import { MOBILE_QUERY, useMediaQuery } from "@/composables/useMediaQuery";
 import type {
+  ConnectorInfo,
   ExternalEditionHit,
   ExternalImportReport,
   ExternalImportRequest,
@@ -160,8 +189,20 @@ const selected = ref<string[]>([]);
 const overrides = ref<Overrides>({});
 const report = ref<ExternalImportReport | null>(null);
 const busy = ref(false);
+// Connecteur courant ; la liste vient du serveur (seuls les connecteurs embarqués).
+const connectors = ref<ConnectorInfo[]>([]);
+const connector = ref("bd-manga");
+watch(connector, () => restart());
 
 onMounted(() => {
+  externalApi
+    .connectors()
+    .then((list) => {
+      connectors.value = list;
+      if (list.length && !list.some((c) => c.id === connector.value))
+        connector.value = list[0]!.id;
+    })
+    .catch((e: unknown) => notifyError(e));
   // Types et relations : libellés des nœuds et des rôles.
   Promise.all([metaTypes.loadItemTypes(), metaTypes.loadRelationTypes()]).catch(
     (e: unknown) => notifyError(e),
@@ -186,7 +227,7 @@ function request(withSelection: boolean): ExternalImportRequest {
 async function loadPreview() {
   busy.value = true;
   try {
-    plan.value = await externalApi.preview(request(false));
+    plan.value = await externalApi.preview(connector.value, request(false));
     selected.value = defaultSelection(plan.value);
     overrides.value = {};
     report.value = null;
@@ -201,7 +242,11 @@ async function loadPreview() {
 async function run(dryRun: boolean): Promise<ExternalImportReport | null> {
   busy.value = true;
   try {
-    report.value = await externalApi.importSelection(request(true), dryRun);
+    report.value = await externalApi.importSelection(
+      connector.value,
+      request(true),
+      dryRun,
+    );
     return report.value;
   } catch (e) {
     notifyError(e, t("admin.external.importFailed"));

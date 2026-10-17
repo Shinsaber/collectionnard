@@ -21,8 +21,8 @@
         class="flex-1 min-w-48"
         :placeholder="
           mode === 'title'
-            ? t('admin.external.edition.placeholderTitle')
-            : t('admin.external.edition.placeholderIsbn')
+            ? t(`admin.external.connectors.${connector}.editionPlaceholder`)
+            : t(`admin.external.connectors.${connector}.isbnPlaceholder`)
         "
         clearable
       />
@@ -143,6 +143,8 @@ const MAX = 10;
 const props = defineProps<{
   modelValue: ExternalEditionHit[];
   suggestion?: string;
+  /** Connecteur (`bd-manga`, `novels`…). */
+  connector: string;
 }>();
 const emit = defineEmits<{
   "update:modelValue": [editions: ExternalEditionHit[]];
@@ -173,6 +175,7 @@ async function search() {
   loading.value = true;
   try {
     hits.value = await externalApi.searchEditions(
+      props.connector,
       mode.value === "title" ? { q } : { isbn: q },
     );
   } catch (e) {

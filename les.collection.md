@@ -246,9 +246,9 @@ légalement réutilisables et au format du connecteur (section suivante).
 
 ### Import depuis les sources (Phase 3)
 
-Connecteur [`server/internal/external/bdmanga`](server/internal/external/bdmanga), page admin « Sources externes »
-(`/admin/external-import`), API `/external/bd-manga/*` (voir `api/openapi.yaml`, tag `External`). Le connecteur
-trouve les types du domaine par **nom technique** (`Manga`, `Comic`, `Universe`, `Edition`, `Volume`, `Person`,
+Connecteur [`server/internal/external/bdmanga`](server/internal/external/bdmanga) (identifiant `bd-manga`), page admin
+« Sources externes » (`/admin/external-import`, choix de la sorte de collection), API `/external/bd-manga/*` (voir `api/openapi.yaml`, tag `External`). Le connecteur
+trouve les types du domaine par **identifiant du paquet `books`**, à défaut par **nom technique** (`Manga`, `Comic`, `Universe`, `Edition`, `Volume`, `Person`,
 `Publisher` ; `contains_work`, `created_by`, `published_as`, `edited_by`, `contains_volume`) et répond 409
 `connector_unavailable` s'il en manque un ; les attributs proposés sont ajustés au schéma (clé ou valeur d'enum
 absente du schéma : ignorée).

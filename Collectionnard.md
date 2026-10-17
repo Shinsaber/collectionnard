@@ -381,9 +381,10 @@ ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries 
       éditions (rôles `illustrator`, `preface`), `contains_work` et `published_as` ouverts aux romans (voir
       `les.collection.md` § « Romans »). Mise à jour v1 → v2 vérifiée : 1 type créé, 4 mis à jour. L'exemple du seed
       viendra du connecteur (P3-3), avec des données réelles.
-- [ ] **P3-2 — Connecteurs génériques** : interface commune (recherche, aperçu, import), registre des connecteurs,
-      page « Sources externes » où l'on choisit d'abord le domaine ; le connecteur BD / Manga passe dessus sans
-      changer de comportement.
+- [x] **P3-2 — Connecteurs génériques** : interface `external.Connector` (œuvres, éditions par titre ou ISBN / EAN,
+      aperçu, import), registre (`GET /external/connectors`), routes `/external/{connector}/*` (les chemins
+      `/external/bd-manga/*` restent valables) ; page « Sources externes » avec le choix de la sorte de collection ;
+      erreur `connector_unavailable` qui renvoie à la page « Domaines ».
 - [ ] **P3-3 — Connecteur Romans** (Wikidata + BnF) : roman par titre ou ISBN, auteurs, cycle (Saga), éditions
       à un volume (Édition = livre) ou multivolumes (Édition + Tomes), traducteurs de l'édition.
 - [ ] **P3-4 — Musique (CD / vinyles)** : étude des sources (MusicBrainz, Cover Art Archive, BnF pour les

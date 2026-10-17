@@ -499,3 +499,10 @@ export interface DomainInstallReport {
   entries: DomainInstallEntry[];
   errors: ImportReport["errors"];
 }
+
+/** Connecteur de sources externes (GET /external/connectors). */
+export interface ConnectorInfo {
+  id: string;
+  /** Paquet de domaine qui porte les types écrits par le connecteur. */
+  domain: string;
+}

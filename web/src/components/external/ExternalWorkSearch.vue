@@ -10,7 +10,9 @@
       <ElInput
         :id="inputId"
         v-model="query"
-        :placeholder="t('admin.external.work.placeholder')"
+        :placeholder="
+          t(`admin.external.connectors.${connector}.workPlaceholder`)
+        "
         clearable
       />
       <ElButton
@@ -106,7 +108,11 @@ import { useMetaTypes } from "@/stores/metaTypes";
 import { typeTitle } from "@/lib/schema";
 import type { ExternalWorkHit } from "@/api/types";
 
-defineProps<{ modelValue: ExternalWorkHit | null }>();
+const props = defineProps<{
+  modelValue: ExternalWorkHit | null;
+  /** Connecteur (`bd-manga`, `novels`…). */
+  connector: string;
+}>();
 const emit = defineEmits<{
   "update:modelValue": [hit: ExternalWorkHit | null];
 }>();
@@ -133,7 +139,7 @@ async function search() {
   if (q.length < 2) return;
   loading.value = true;
   try {
-    hits.value = await externalApi.searchWorks(q);
+    hits.value = await externalApi.searchWorks(props.connector, q);
   } catch (e) {
     notifyError(e, t("admin.external.searchFailed"));
   } finally {

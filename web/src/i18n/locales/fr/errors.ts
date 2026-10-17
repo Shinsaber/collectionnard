@@ -17,7 +17,7 @@ export default {
     timeout: "Le serveur a mis trop de temps à répondre",
     internal: "Erreur interne du serveur",
     connector_unavailable:
-      "Types BD / Manga introuvables dans le catalogue : {missing} (type renommé ou db/seed_bd_manga.sql non chargé)",
+      "Types introuvables dans le catalogue : {missing}. Installez ou mettez à jour le domaine depuis Administration → Domaines.",
     external_unavailable:
       "Source externe (Wikidata, BnF) injoignable, réessayez plus tard",
     item_type_not_allowed:

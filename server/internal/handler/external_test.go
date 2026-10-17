@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/shinsaber/colec/internal/external"
 	"github.com/shinsaber/colec/internal/external/bdmanga/bdmangatest"
 	"github.com/shinsaber/colec/internal/model"
 	"github.com/shinsaber/colec/internal/testutil"
@@ -32,7 +33,7 @@ func externalMock(t *testing.T) (*testutil.MockStore, *bdmangatest.Sources) {
 func callExternal(t *testing.T, mock *testutil.MockStore, src *bdmangatest.Sources, method, path, token, body string) (*http.Response, string) {
 	t.Helper()
 	h := testutil.NewTestHandler(mock)
-	h.BDManga = src.Connector(mock)
+	h.Connectors = []external.Connector{src.Connector(mock)}
 	srv := testutil.NewTestServerFromHandler(h)
 	defer srv.Close()
 	var r io.Reader
@@ -196,5 +197,21 @@ func TestExternal_PreviewAndImport(t *testing.T) {
 	}
 	if resp, _ := callExternal(t, mock, src, "POST", "/api/v1/external/bd-manga/import?dry_run=maybe", admin, importBody); resp.StatusCode != http.StatusBadRequest {
 		t.Errorf("bad dry_run: %d", resp.StatusCode)
+	}
+}
+
+func TestExternal_Connectors(t *testing.T) {
+	mock, src := externalMock(t)
+	resp, body := callExternal(t, mock, src, "GET", "/api/v1/external/connectors", testutil.AdminToken(), "")
+	var list []model.ConnectorInfo
+	if resp.StatusCode != http.StatusOK || json.Unmarshal([]byte(body), &list) != nil ||
+		len(list) != 1 || list[0].ID != "bd-manga" || list[0].Domain != "books" {
+		t.Errorf("connectors: %d %s", resp.StatusCode, body)
+	}
+	if resp, _ := callExternal(t, mock, src, "GET", "/api/v1/external/nope/works?q=naruto", testutil.AdminToken(), ""); resp.StatusCode != http.StatusNotFound {
+		t.Errorf("unknown connector: %d", resp.StatusCode)
+	}
+	if resp, _ := callExternal(t, mock, src, "GET", "/api/v1/external/connectors", testutil.UserToken(), ""); resp.StatusCode != http.StatusForbidden {
+		t.Errorf("user: %d", resp.StatusCode)
 	}
 }

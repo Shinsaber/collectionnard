@@ -43,6 +43,7 @@ import type {
   PaginationParams,
   ItemListParams,
   CsvDelimiter,
+  ConnectorInfo,
   ExternalEditionHit,
   ExternalImportReport,
   ExternalImportRequest,
@@ -478,27 +479,41 @@ export const importExportApi = {
     ),
 };
 
-// ── Sources externes (connecteur BD / Manga, admin) ───────────────────
-const EXTERNAL = "/external/bd-manga";
+// ── Sources externes (un connecteur par sorte de collection, admin) ───
+const external = (connector: string) => `/external/${connector}`;
 
 export const externalApi = {
-  /** Œuvres (manga, BD) sur Wikidata, par titre. */
-  searchWorks: (q: string) =>
+  /** Connecteurs disponibles et domaine (paquet de types) de chacun. */
+  connectors: () =>
+    http.get<ConnectorInfo[]>("/external/connectors").then((r) => r.data),
+  /** Œuvres sur Wikidata, par titre. */
+  searchWorks: (connector: string, q: string) =>
     http
-      .get<ExternalWorkHit[]>(`${EXTERNAL}/works`, { params: { q } })
+      .get<ExternalWorkHit[]>(`${external(connector)}/works`, {
+        params: { q },
+      })
       .then((r) => r.data),
-  /** Éditions françaises à la BnF, par titre (`q`) ou par ISBN d'un tome. */
-  searchEditions: (params: { q: string } | { isbn: string }) =>
+  /** Éditions, par titre (`q`) ou par ISBN / EAN. */
+  searchEditions: (
+    connector: string,
+    params: { q: string } | { isbn: string },
+  ) =>
     http
-      .get<ExternalEditionHit[]>(`${EXTERNAL}/editions`, { params })
+      .get<ExternalEditionHit[]>(`${external(connector)}/editions`, { params })
       .then((r) => r.data),
   /** Items et relations proposés pour une sélection, rapprochés du catalogue. */
-  preview: (req: ExternalImportRequest) =>
-    http.post<ExternalPlan>(`${EXTERNAL}/preview`, req).then((r) => r.data),
-  /** Simule ou importe les nœuds de `req.selected` ; renvoie aussi le rapport d'un 422. */
-  importSelection: (req: ExternalImportRequest, dryRun: boolean) =>
+  preview: (connector: string, req: ExternalImportRequest) =>
     http
-      .post<ExternalImportReport>(`${EXTERNAL}/import`, req, {
+      .post<ExternalPlan>(`${external(connector)}/preview`, req)
+      .then((r) => r.data),
+  /** Simule ou importe les nœuds de `req.selected` ; renvoie aussi le rapport d'un 422. */
+  importSelection: (
+    connector: string,
+    req: ExternalImportRequest,
+    dryRun: boolean,
+  ) =>
+    http
+      .post<ExternalImportReport>(`${external(connector)}/import`, req, {
         params: { dry_run: dryRun },
         validateStatus: (s) => s === 200 || s === 422,
       })
