@@ -97,6 +97,26 @@ Constats faits en codant le connecteur (2026-10-11), utiles pour les prochains :
   se rattache (461) à l'ensemble des œuvres complètes : ne le regrouper en édition multivolume que si l'ensemble porte le titre
   du roman.
 
+## Musique (P3-4, recherche du 2026-10-17)
+
+| Source            | Licence / conditions                                                                 | Statut         |
+| ----------------- | ------------------------------------------------------------------------------------ | -------------- |
+| MusicBrainz       | Données de base **CC0** ; tags, genres associés, notes, annotations : CC BY-NC-SA 3.0 | ✅ Retenue      |
+| Cover Art Archive | Aucune licence affichée (« use at your own risk », respecter les droits)               | ❌ Pas d'images |
+| Discogs           | Exports mensuels CC0 ; API : données « CC0 » et « restreintes », conditions non lisibles (403) | ⏸ À revoir    |
+
+- **MusicBrainz** : [licence des données](https://musicbrainz.org/doc/About/Data_License) ; données de base
+  ([liste](https://musicbrainz.org/doc/MusicBrainz_Database)) : zones, artistes, événements, genres, instruments, labels,
+  supports, lieux, enregistrements, groupes de parutions, parutions, séries, œuvres, relations et URL. Supplémentaires (CC
+  BY-NC-SA, **non reprises**) : annotations, tags (y compris les associations de genres) et notes des utilisateurs,
+  statistiques. API `musicbrainz.org/ws/2` sans clé ; User-Agent « Application/version ( contact ) » obligatoire ;
+  [~1 requête par seconde](https://musicbrainz.org/doc/MusicBrainz_API/Rate_Limiting) par adresse IP (503 au-delà).
+- **Cover Art Archive** : [page](https://musicbrainz.org/doc/Cover_Art_Archive) sans licence ; les pochettes restent des
+  envois, comme les couvertures des livres.
+- **Discogs** : exports mensuels sous CC0, API gratuite avec enregistrement de l'application ; les
+  [conditions de l'API](https://support.discogs.com/hc/en-us/articles/360009334593) distinguent données CC0 et données
+  restreintes (page inaccessible le 2026-10-17) : à relire avant tout usage.
+
 ## Sources pour plus tard
 
 ### Grand Comics Database (comics.org)

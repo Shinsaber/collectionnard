@@ -17,7 +17,8 @@ des messages techniques en anglais. Ajouter une langue : `Collectionnard.md` § 
 | Fichier                                | Contenu                                                          |
 | -------------------------------------- | ---------------------------------------------------------------- |
 | [Collectionnard.md](Collectionnard.md) | Vision, modèle conceptuel, phases de développement (roadmap)     |
-| [les.collection.md](les.collection.md) | Modèle de données BD / Manga (prochain domaine à intégrer)       |
+| [les.collection.md](les.collection.md) | Modèle de données livres : BD, manga, romans                     |
+| [musique.md](musique.md)               | Modèle de données musique : albums, éditions (CD, vinyles), pistes |
 | [api/openapi.yaml](api/openapi.yaml)   | Spécification OpenAPI 3.1 — **source de vérité de l'API**        |
 | [db/migrations/](db/migrations/)       | Migrations SQL (tern) ; `001_init.sql` = schéma complet commenté |
 | [server/internal/domains/packages/](server/internal/domains/packages/) | **Paquets de domaine** (types : `collections`, `tv`, `books`) — installés par la page « Domaines » ou `install-domain`, mis à jour par fusion |

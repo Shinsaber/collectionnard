@@ -1,6 +1,6 @@
 // Régénère tests/fixtures/seed-schemas.json depuis les paquets de domaine (méta-types b…, c…, d…).
 // Usage (depuis web/) :
-//   node scripts/seed-fixtures.mjs tests/fixtures/seed-schemas.json ../server/internal/domains/packages/{collections,tv,books}.json
+//   node scripts/seed-fixtures.mjs tests/fixtures/seed-schemas.json ../server/internal/domains/packages/{collections,tv,books,music}.json
 //   npx prettier --write tests/fixtures/seed-schemas.json
 import { readFileSync, writeFileSync } from "node:fs";
 import process from "node:process";

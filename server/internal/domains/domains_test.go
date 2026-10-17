@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shinsaber/colec/internal/model"
+	"github.com/shinsaber/colec/internal/validator"
 )
 
 func js(t *testing.T, s string) any {
@@ -92,18 +93,24 @@ func TestPackages(t *testing.T) {
 		}
 		for _, it := range p.ItemTypes {
 			check(it.ID, it.Name)
+			if err := validator.CheckSchema(it.AttributesSchema); err != nil {
+				t.Errorf("%s/%s: %v", p.ID, it.Name, err)
+			}
 		}
 		for _, ct := range p.CollectionTypes {
 			check(ct.ID, ct.Name)
 		}
 		for _, rt := range p.RelationTypes {
 			check(rt.ID, rt.Name)
+			if err := validator.CheckSchema(rt.AttributesSchema); err != nil {
+				t.Errorf("%s/%s: %v", p.ID, rt.Name, err)
+			}
 			if len(rt.SourceItemTypeIDs) == 0 || len(rt.TargetItemTypeIDs) == 0 {
 				t.Errorf("%s/%s: sources and targets required", p.ID, rt.Name)
 			}
 		}
 	}
-	for _, id := range []string{"books", "collections", "tv"} {
+	for _, id := range []string{"books", "collections", "music", "tv"} {
 		if !ids[id] {
 			t.Errorf("package %s missing", id)
 		}
