@@ -60,7 +60,7 @@ documentées ici pour plus tard (Phase 3 : récupération automatique externe).
 
 ## Connecteur implémenté (Phase 3)
 
-Code : `server/internal/external/` (client HTTP commun, `wikidata/`, `bnf/`, connecteur `bdmanga/`) ; usage et limites
+Code : `server/internal/external/` (client HTTP commun, `wikidata/`, `bnf/`, connecteur `connectors/`) ; usage et limites
 dans [`les.collection.md`](../les.collection.md) § « Import depuis les sources ». Le serveur interroge les sources
 lui-même (pas le navigateur) : User-Agent identifié (`EXTERNAL_USER_AGENT`, nom + contact comme le demandent les
 règles de Wikimedia), délai de 20 s par appel, réponses limitées à 20 Mio et gardées 15 min en mémoire (l'aperçu
@@ -116,6 +116,25 @@ Constats faits en codant le connecteur (2026-10-11), utiles pour les prochains :
 - **Discogs** : exports mensuels sous CC0, API gratuite avec enregistrement de l'application ; les
   [conditions de l'API](https://support.discogs.com/hc/en-us/articles/360009334593) distinguent données CC0 et données
   restreintes (page inaccessible le 2026-10-17) : à relire avant tout usage.
+
+### Connecteur `music` (MusicBrainz, 2026-10-17)
+
+- **Requêtes** : recherche `release-group` (chaque mot dans le titre **ou** l'artiste : `(releasegroup:discovery OR
+  artist:discovery) AND (releasegroup:daft OR artist:daft) …` — la forme « titre OU artiste » sur toute la phrase classait
+  « Daft Punk Live in NYC » avant « Discovery ») ; parutions d'un album par `release?release-group=…&inc=labels+media`
+  (OK Computer : 39) ; recherche `release` par `barcode:` ou `release:(…)` ; parution complète avec
+  `inc=artist-credits+labels+recordings+release-groups+isrcs` ; artiste avec `inc=url-rels` (lien Wikidata, dates).
+  Les valeurs d'`inc` gardent leurs `+` non encodés. Un aperçu album + une parution coûte trois requêtes (≈ 2,5 s).
+- **Débit** : le client commun espace les requêtes vers `musicbrainz.org` de 1,1 s (les réponses en cache ne sont pas
+  retardées) ; un 503 (limite dépassée, service chargé) est retenté une fois.
+- **Pièges** : un **code-barres** est partagé par plusieurs pressages (724385522925 : huit parutions d'OK Computer) —
+  jamais une clé de rapprochement, seulement une recherche ; dates partielles (« 1997 », « 1997-06 ») : `release_date`
+  seulement pour une date complète, l'année sinon ; pays pseudo-ISO **XE** (Europe) et **XW** (monde) ; formats de support
+  nombreux (« 12" Vinyl », « Enhanced CD », « Hybrid SACD », « Digital Media »…) ramenés à l'énumération du type, le
+  premier support d'une parution mixte (CD + DVD) donnant le format ; artiste spécial « Various Artists » (compilations) et
+  label « [no label] » jamais importés ; `label-info` mêle labels et distributeurs, tous repris avec leur référence.
+- **Rapprochement** : MBID partout (`external_ids.musicbrainz`), QID Wikidata en second pour l'album ; labels aussi par
+  nom (sans casse ni accents), comme les éditeurs ; artistes **pas** par nom (homonymes : deux groupes « Nirvana »).
 
 ## Sources pour plus tard
 

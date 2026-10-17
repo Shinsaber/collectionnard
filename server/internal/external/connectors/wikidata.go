@@ -1,4 +1,4 @@
-package bdmanga
+package connectors
 
 import (
 	"context"

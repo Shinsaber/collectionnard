@@ -1,4 +1,4 @@
-package bdmanga_test
+package connectors_test
 
 import (
 	"context"
@@ -9,8 +9,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shinsaber/colec/internal/external"
-	"github.com/shinsaber/colec/internal/external/bdmanga"
-	"github.com/shinsaber/colec/internal/external/bdmanga/bdmangatest"
+	"github.com/shinsaber/colec/internal/external/connectors"
+	"github.com/shinsaber/colec/internal/external/connectors/connectorstest"
 	"github.com/shinsaber/colec/internal/model"
 	"github.com/shinsaber/colec/internal/validator"
 )
@@ -52,8 +52,8 @@ func relation(p *model.ExternalPlan, from, to string) *model.ExternalRelation {
 }
 
 func TestPreview_NewCatalogue(t *testing.T) {
-	src := bdmangatest.NewSources(t)
-	cat := bdmangatest.NewCatalog(t)
+	src := connectorstest.NewSources(t)
+	cat := connectorstest.NewCatalog(t)
 	plan, err := src.Connector(cat).Preview(context.Background(), dragonBallReq)
 	if err != nil {
 		t.Fatal(err)
@@ -64,7 +64,7 @@ func TestPreview_NewCatalogue(t *testing.T) {
 
 	work := nodeByKey(t, plan, "wikidata:"+dragonBall)
 	if work.Role != model.NodeWork || work.Status != model.NodeNew || !work.Selected ||
-		work.ItemTypeID != bdmangatest.TypeID(t, "Manga") {
+		work.ItemTypeID != connectorstest.TypeID(t, "Manga") {
 		t.Errorf("work node = %+v", work)
 	}
 	w := attrs(t, work.Attributes)
@@ -133,7 +133,7 @@ func TestPreview_NewCatalogue(t *testing.T) {
 	}
 
 	// Every proposed item is valid against the schema of its type.
-	its, _ := bdmangatest.Domain(t)
+	its, _ := connectorstest.Domain(t)
 	for _, n := range plan.Nodes {
 		i := slices.IndexFunc(its, func(it model.ItemType) bool { return it.ID == n.ItemTypeID })
 		if err := validator.ValidateAttributes(its[i].AttributesSchema, n.Attributes); err != nil {
@@ -143,16 +143,16 @@ func TestPreview_NewCatalogue(t *testing.T) {
 }
 
 func TestPreview_ExistingItemsKeepTheirValues(t *testing.T) {
-	src := bdmangatest.NewSources(t)
-	cat := bdmangatest.NewCatalog(t)
+	src := connectorstest.NewSources(t)
+	cat := connectorstest.NewCatalog(t)
 	workID, personID, relID := uuid.New(), uuid.New(), uuid.New()
 	cat.Items = []model.Item{
-		{ID: workID, ItemTypeID: bdmangatest.TypeID(t, "Manga"), Tags: []model.Tag{{Name: "culte"}},
+		{ID: workID, ItemTypeID: connectorstest.TypeID(t, "Manga"), Tags: []model.Tag{{Name: "culte"}},
 			Attributes: json.RawMessage(`{"title":{"fr":"Dragon Ball (titre local)"},"status":"ongoing","external_ids":{"wikidata":"Q15051307"},"sources":[{"source":"manual"}]}`)},
-		{ID: personID, ItemTypeID: bdmangatest.TypeID(t, "Person"),
+		{ID: personID, ItemTypeID: connectorstest.TypeID(t, "Person"),
 			Attributes: json.RawMessage(`{"last_name":"Toriyama","external_ids":{"wikidata":"Q208582"}}`)},
 	}
-	cat.Relations = []model.ItemRelation{{ID: relID, RelationTypeID: bdmangatest.TypeID(t, "created_by"),
+	cat.Relations = []model.ItemRelation{{ID: relID, RelationTypeID: connectorstest.TypeID(t, "created_by"),
 		SourceItemID: workID, TargetItemID: personID, Attributes: json.RawMessage(`{"roles":["author"]}`)}}
 
 	plan, err := src.Connector(cat).Preview(context.Background(), model.ExternalImportRequest{Work: dragonBall})
@@ -197,8 +197,8 @@ func TestPreview_ExistingItemsKeepTheirValues(t *testing.T) {
 }
 
 func TestBuild_Selection(t *testing.T) {
-	src := bdmangatest.NewSources(t)
-	cat := bdmangatest.NewCatalog(t)
+	src := connectorstest.NewSources(t)
+	cat := connectorstest.NewCatalog(t)
 	conn := src.Connector(cat)
 	ctx := context.Background()
 
@@ -245,46 +245,46 @@ func TestBuild_Selection(t *testing.T) {
 		"not an object":   {"bnf:cb356004006": json.RawMessage(`[1]`)},
 	} {
 		req.Overrides = o
-		if _, _, err := conn.Build(ctx, req); !errors.As(err, new(bdmanga.InputError)) {
+		if _, _, err := conn.Build(ctx, req); !errors.As(err, new(connectors.InputError)) {
 			t.Errorf("%s: err = %v", name, err)
 		}
 	}
 	req.Overrides = nil
 
 	req.Selected = []string{"wikidata:Q1"}
-	if _, _, err := conn.Build(ctx, req); !errors.As(err, new(bdmanga.InputError)) {
+	if _, _, err := conn.Build(ctx, req); !errors.As(err, new(connectors.InputError)) {
 		t.Errorf("unknown key: err = %v", err)
 	}
 	req.Selected = nil
-	if _, _, err := conn.Build(ctx, req); !errors.As(err, new(bdmanga.InputError)) {
+	if _, _, err := conn.Build(ctx, req); !errors.As(err, new(connectors.InputError)) {
 		t.Errorf("empty selection: err = %v", err)
 	}
 }
 
 func TestPreview_InvalidRequests(t *testing.T) {
-	src := bdmangatest.NewSources(t)
-	conn := src.Connector(bdmangatest.NewCatalog(t))
+	src := connectorstest.NewSources(t)
+	conn := src.Connector(connectorstest.NewCatalog(t))
 	for name, req := range map[string]model.ExternalImportRequest{
 		"empty":        {},
 		"bad qid":      {Work: "42"},
 		"bad ark":      {Editions: []string{"ark:/12148/cb34338439x"}}, // wrong check character
 		"not a record": {Editions: []string{"https://example.org"}},
 	} {
-		if _, err := conn.Preview(context.Background(), req); !errors.As(err, new(bdmanga.InputError)) {
+		if _, err := conn.Preview(context.Background(), req); !errors.As(err, new(connectors.InputError)) {
 			t.Errorf("%s: err = %v, want InputError", name, err)
 		}
 	}
-	if _, err := conn.Preview(context.Background(), model.ExternalImportRequest{Work: "Q999"}); !bdmanga.IsNotFound(err) {
+	if _, err := conn.Preview(context.Background(), model.ExternalImportRequest{Work: "Q999"}); !connectors.IsNotFound(err) {
 		t.Errorf("unknown work: err = %v, want not found", err)
 	}
 }
 
 func TestDomainMissing(t *testing.T) {
-	src := bdmangatest.NewSources(t)
-	cat := bdmangatest.NewCatalog(t)
+	src := connectorstest.NewSources(t)
+	cat := connectorstest.NewCatalog(t)
 	cat.ItemTypes = slices.DeleteFunc(cat.ItemTypes, func(it model.ItemType) bool { return it.Name == "Volume" })
 	_, err := src.Connector(cat).SearchWorks(context.Background(), "dragon ball")
-	var unavailable *bdmanga.UnavailableError
+	var unavailable *connectors.UnavailableError
 	if !errors.As(err, &unavailable) || !slices.Equal(unavailable.Missing, []string{"Volume"}) {
 		t.Errorf("err = %v", err)
 	}
@@ -292,8 +292,8 @@ func TestDomainMissing(t *testing.T) {
 
 // Types renamed on the instance (Comic → bd, created_by → par) are still found by their package id.
 func TestDomainRenamedTypes(t *testing.T) {
-	src := bdmangatest.NewSources(t)
-	cat := bdmangatest.NewCatalog(t)
+	src := connectorstest.NewSources(t)
+	cat := connectorstest.NewCatalog(t)
 	for i := range cat.ItemTypes {
 		if cat.ItemTypes[i].Name == "Comic" {
 			cat.ItemTypes[i].Name = "bd"
@@ -310,10 +310,10 @@ func TestDomainRenamedTypes(t *testing.T) {
 }
 
 func TestSearchWorks(t *testing.T) {
-	src := bdmangatest.NewSources(t)
-	cat := bdmangatest.NewCatalog(t)
+	src := connectorstest.NewSources(t)
+	cat := connectorstest.NewCatalog(t)
 	existing := uuid.New()
-	cat.Items = []model.Item{{ID: existing, ItemTypeID: bdmangatest.TypeID(t, "Manga"),
+	cat.Items = []model.Item{{ID: existing, ItemTypeID: connectorstest.TypeID(t, "Manga"),
 		Attributes: json.RawMessage(`{"title":{"fr":"DB"},"external_ids":{"wikidata":"Q64230248"}}`)}}
 	hits, err := src.Connector(cat).SearchWorks(context.Background(), "dragon ball")
 	if err != nil {
@@ -330,8 +330,8 @@ func TestSearchWorks(t *testing.T) {
 }
 
 func TestSearchEditions(t *testing.T) {
-	src := bdmangatest.NewSources(t)
-	conn := src.Connector(bdmangatest.NewCatalog(t))
+	src := connectorstest.NewSources(t)
+	conn := src.Connector(connectorstest.NewCatalog(t))
 	ctx := context.Background()
 
 	byTitle, err := conn.SearchEditions(ctx, model.ExternalEditionQuery{Title: "dragon ball"})
@@ -362,8 +362,8 @@ func TestSearchEditions(t *testing.T) {
 }
 
 func TestSourcesDownAndCache(t *testing.T) {
-	src := bdmangatest.NewSources(t)
-	conn := src.Connector(bdmangatest.NewCatalog(t))
+	src := connectorstest.NewSources(t)
+	conn := src.Connector(connectorstest.NewCatalog(t))
 	ctx := context.Background()
 	if _, err := conn.Preview(ctx, dragonBallReq); err != nil {
 		t.Fatal(err)

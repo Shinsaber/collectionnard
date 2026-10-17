@@ -107,7 +107,7 @@ cd server
 go run . migrate                      # applique les migrations en attente (table schema_version)
 SEED_ON_EMPTY=true go run . migrate   # idem, puis les seeds si la table users est vide
 go run . seed                         # applique les seeds sans condition (dev)
-# Seeds : db/seed.sql puis db/seed_bd_manga.sql ; SEED_FILE=a.sql,b.sql pour une autre liste
+# Seeds : db/seed.sql, db/seed_bd_manga.sql puis db/seed_music.sql ; SEED_FILE=a.sql,b.sql pour une autre liste
 ```
 
 `pg-start` (shell Nix) et le service `migrate` de docker-compose les lancent automatiquement.
@@ -181,6 +181,7 @@ colec/
 │   ├── migrations/         # Migrations SQL tern (001_init.sql = schéma complet)
 │   ├── seed.sql            # Données de test (admin, types, items, relations)
 │   ├── seed_bd_manga.sql   # Domaine BD / Manga (Dragon Ball, Astérix ; données Wikidata / BnF)
+│   ├── seed_music.sql      # Domaine Musique (Discovery de Daft Punk ; données MusicBrainz)
 │   └── queries_test.sql    # Requêtes SQL de test
 ├── server/                 # Backend Go
 │   ├── main.go
@@ -190,7 +191,7 @@ colec/
 │       ├── handler/        # Handlers HTTP (1 fichier par domaine)
 │       ├── middleware/     # Auth JWT, RequireAdmin, RateLimiter, RequestLogger
 │       ├── dbmigrate/      # Migrations (tern) + seed
-│       ├── external/       # Sources ouvertes : clients Wikidata et BnF (SRU), connecteur bdmanga
+│       ├── external/       # Sources ouvertes : clients Wikidata, BnF (SRU) et MusicBrainz, connecteurs (BD / manga, romans, musique)
 │       ├── model/          # Structs Go (JSON tags)
 │       ├── store/          # Couche d'accès BDD (pgx)
 │       ├── validator/      # Validation JSON Schema

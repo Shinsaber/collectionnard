@@ -24,6 +24,7 @@ des messages techniques en anglais. Ajouter une langue : `Collectionnard.md` § 
 | [server/internal/domains/packages/](server/internal/domains/packages/) | **Paquets de domaine** (types : `collections`, `tv`, `books`) — installés par la page « Domaines » ou `install-domain`, mis à jour par fusion |
 | [db/seed.sql](db/seed.sql)             | Données de démo « Breaking Bad » (multi-chemin Diffusion + DVD) ; les types viennent des paquets |
 | [db/seed_bd_manga.sql](db/seed_bd_manga.sql) | Données de démo BD / Manga (lot 13), chargé après `seed.sql` |
+| [db/seed_music.sql](db/seed_music.sql) | Données de démo Musique (P3-4, Discovery), chargé après `seed_bd_manga.sql` |
 | [server/CLAUDE.md](server/CLAUDE.md)   | Conventions backend Go                                           |
 | [web/CLAUDE.md](web/CLAUDE.md)         | Conventions frontend Vue                                         |
 | [docs/audit/](docs/audit/BRIEF.md)     | Brief et résultats de l'audit approfondi (`/audit`)              |
@@ -156,5 +157,5 @@ lots 0 à 11 livrés, voir `Collectionnard.md` §8 et `docs/audit/03-feuille-de-
 Phase 2 livrée : multilingue, recherche avancée (lot 14), import/export (lot 12), refonte graphique responsive
 (identité « Étiquette », lots R0–R8, branche `refonte-graphique`), domaine BD / Manga (lot 13,
 `les.collection.md`, sources Wikidata / BnF). Phase 3 (récupération automatique externe) en cours, branche `phase3-sources` : domaines installables (P3-0), connecteurs
-BD / Manga et Romans (`server/internal/external/bdmanga`, profils `bd-manga` / `novels`, page admin « Sources externes ») ;
-suite : musique (CD / vinyles), films puis séries en DVD / Blu-ray. Phase 4 : social.
+BD / Manga, Romans et Musique (`server/internal/external/connectors`, profils `bd-manga` / `novels` / `music`, clients `wikidata`, `bnf`, `musicbrainz`, page admin « Sources externes ») ;
+suite : films puis séries en DVD / Blu-ray. Phase 4 : social.

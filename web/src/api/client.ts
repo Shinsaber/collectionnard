@@ -486,17 +486,18 @@ export const externalApi = {
   /** Connecteurs disponibles et domaine (paquet de types) de chacun. */
   connectors: () =>
     http.get<ConnectorInfo[]>("/external/connectors").then((r) => r.data),
-  /** Œuvres sur Wikidata, par titre. */
+  /** Œuvres (Wikidata, albums MusicBrainz…), par titre. */
   searchWorks: (connector: string, q: string) =>
     http
       .get<ExternalWorkHit[]>(`${external(connector)}/works`, {
         params: { q },
       })
       .then((r) => r.data),
-  /** Éditions, par titre (`q`) ou par ISBN / EAN. */
+  /** Éditions, par titre (`q`), ISBN, code-barres ou œuvre. */
   searchEditions: (
     connector: string,
-    params: { q: string } | { isbn: string } | { work: string },
+    params:
+      { q: string } | { isbn: string } | { barcode: string } | { work: string },
   ) =>
     http
       .get<ExternalEditionHit[]>(`${external(connector)}/editions`, { params })

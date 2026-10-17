@@ -154,19 +154,53 @@ const en: typeof fr = {
     connectors: {
       "bd-manga": {
         title: "Comics / Manga",
+        intro:
+          "Search a work on Wikidata and its French editions at the BnF, choose what to import (creators, publishers, volumes…), simulate, then confirm. Items already in the catalogue keep their values: only their empty fields are filled in.",
+        workTitle: "Work (Wikidata)",
         workPlaceholder: "Series title, e.g. Dragon Ball",
+        editionTitle: "Editions (BnF)",
         editionPlaceholder: "Series title",
-        isbnPlaceholder: "ISBN of a volume, e.g. 978-2-7234-3335-8",
+        byCode: "By ISBN",
+        codePlaceholder: "ISBN of a volume, e.g. 978-2-7234-3335-8",
+        publishers: "Publisher(s)",
+        attribution:
+          "Data from Wikidata (CC0) and the BnF general catalogue (Licence Ouverte), retrieved on {date}.",
+        groupMain: "Work, universe and creators",
+        groupVolumes: "Volumes",
       },
       novels: {
         title: "Novels",
+        intro:
+          "Search a novel on Wikidata: its editions at the BnF are listed (translations hidden). Choose what to import (authors, translators, publishers, volumes…), simulate, then confirm. Items already in the catalogue keep their values: only their empty fields are filled in.",
+        workTitle: "Novel (Wikidata)",
         workPlaceholder: "Novel title, e.g. The Stranger",
+        editionTitle: "Editions (BnF)",
         editionPlaceholder: "Novel title",
-        isbnPlaceholder: "ISBN of the book or a volume, e.g. 978-2-07-045317-7",
+        byCode: "By ISBN",
+        codePlaceholder: "ISBN of the book or a volume, e.g. 978-2-07-045317-7",
+        publishers: "Publisher(s)",
+        attribution:
+          "Data from Wikidata (CC0) and the BnF general catalogue (Licence Ouverte), retrieved on {date}.",
+        groupMain: "Novel, cycle and authors",
+        groupVolumes: "Volumes",
+      },
+      music: {
+        title: "Music",
+        intro:
+          "Search an album on MusicBrainz: its releases (CD, vinyl…) are listed, from the oldest to the reissues. Choose what to import (artists, labels, tracks), simulate, then confirm. Items already in the catalogue keep their values: only their empty fields are filled in.",
+        workTitle: "Album (MusicBrainz)",
+        workPlaceholder: "Title or artist, e.g. OK Computer",
+        editionTitle: "Releases (MusicBrainz)",
+        editionPlaceholder: "Release title",
+        byCode: "By barcode",
+        codePlaceholder: "Barcode (EAN / UPC), e.g. 634904078126",
+        publishers: "Label(s)",
+        attribution:
+          "Data from MusicBrainz (CC0, without genres or tags), retrieved on {date}.",
+        groupMain: "Album and artists",
+        groupVolumes: "Tracks",
       },
     },
-    intro:
-      "Search a work on Wikidata and its French editions at the BnF, choose what to import (creators, publishers, volumes…), simulate, then confirm. Items already in the catalogue keep their values: only their empty fields are filled in.",
     stepOf: "Step {n} / {total} · {title}",
     steps: {
       search: "Search",
@@ -178,7 +212,6 @@ const en: typeof fr = {
     inCatalog: "In catalogue",
     openSource: "Open the source record",
     work: {
-      title: "Work (Wikidata)",
       none: "No work found",
       label: "Title",
       description: "Description",
@@ -188,12 +221,9 @@ const en: typeof fr = {
       clear: "Remove the work",
     },
     edition: {
-      title: "Editions (BnF)",
       byTitle: "By title",
-      byIsbn: "By ISBN",
       none: "No edition found",
       label: "Edition",
-      publishers: "Publisher(s)",
       year: "Start",
       matched: "Volume {number}: {title}",
       matchedNoNumber: "Volume: {title}",
@@ -206,13 +236,6 @@ const en: typeof fr = {
     preview: "Preview the import",
     editionHeading: "{type}: {name}",
     needSelection: "Choose a work or at least one edition.",
-    attribution:
-      "Data from Wikidata (CC0) and the BnF general catalogue (Licence Ouverte), retrieved on {date}.",
-    groups: {
-      main: "Work, universe and creators",
-      publishers: "Publishers",
-      volumes: "Volumes",
-    },
     item: "Item",
     type: "Type",
     status: "Status",

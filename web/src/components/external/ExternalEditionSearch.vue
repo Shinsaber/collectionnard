@@ -1,19 +1,19 @@
 <template>
   <section class="p-4 rounded-lg border border-line bg-surface">
     <h2 class="text-lg font-semibold text-ink mb-3">
-      {{ t("admin.external.edition.title") }}
+      {{ t(`admin.external.connectors.${connector}.editionTitle`) }}
     </h2>
     <form class="flex flex-wrap gap-2 mb-3" @submit.prevent="search">
       <ElRadioGroup v-model="mode" size="small" @change="hits = null">
         <ElRadioButton value="title">{{
           t("admin.external.edition.byTitle")
         }}</ElRadioButton>
-        <ElRadioButton value="isbn">{{
-          t("admin.external.edition.byIsbn")
+        <ElRadioButton value="code">{{
+          t(`admin.external.connectors.${connector}.byCode`)
         }}</ElRadioButton>
       </ElRadioGroup>
       <label :for="inputId" class="sr-only">{{
-        t("admin.external.edition.title")
+        t(`admin.external.connectors.${connector}.editionTitle`)
       }}</label>
       <ElInput
         :id="inputId"
@@ -22,7 +22,7 @@
         :placeholder="
           mode === 'title'
             ? t(`admin.external.connectors.${connector}.editionPlaceholder`)
-            : t(`admin.external.connectors.${connector}.isbnPlaceholder`)
+            : t(`admin.external.connectors.${connector}.codePlaceholder`)
         "
         clearable
       />
@@ -44,7 +44,7 @@
       <div class="flex flex-wrap gap-2">
         <ElTag
           v-for="e in modelValue"
-          :key="e.bnf_ark"
+          :key="e.id"
           closable
           :aria-label="t('admin.external.edition.remove', { name: e.title })"
           @close="toggle(e, false)"
@@ -67,7 +67,7 @@
       v-if="hits"
       :data="shownHits"
       size="small"
-      row-key="bnf_ark"
+      row-key="id"
       :empty-text="t('admin.external.edition.none')"
       data-test="edition-hits"
     >
@@ -114,7 +114,7 @@
         </template>
       </ElTableColumn>
       <ElTableColumn
-        :label="t('admin.external.edition.publishers')"
+        :label="t(`admin.external.connectors.${connector}.publishers`)"
         min-width="140"
       >
         <template #default="{ row }">
@@ -145,7 +145,7 @@
 </template>
 
 <script setup lang="ts">
-// Recherche d'éditions françaises à la BnF (par titre ou par ISBN d'un tome) ; plusieurs
+// Recherche d'éditions (BnF : titre ou ISBN d'un tome ; MusicBrainz : titre ou code-barres) ; plusieurs
 // éditions peuvent être cochées (10 au plus, limite du serveur). `suggestion` (titre de
 // l'œuvre choisie) préremplit la recherche par titre et la lance.
 import { computed, ref, useId, watch } from "vue";
@@ -159,10 +159,12 @@ const MAX = 10;
 const props = defineProps<{
   modelValue: ExternalEditionHit[];
   suggestion?: string;
-  /** Œuvre Wikidata choisie : ses éditions sont listées si le connecteur le permet (`byWork`). */
+  /** Œuvre choisie (QID, MBID) : ses éditions sont listées si le connecteur le permet (`byWork`). */
   work?: string;
   byWork?: boolean;
-  /** Connecteur (`bd-manga`, `novels`…). */
+  /** Connecteur (`bd-manga`, `novels`, `music`…). */
+  /** Code de recherche d'une édition : ISBN (livres) ou code-barres (musique). */
+  code?: "isbn" | "barcode";
   connector: string;
 }>();
 const emit = defineEmits<{
@@ -173,7 +175,7 @@ const { t } = useI18n();
 const { notifyError } = useNotify();
 const inputId = useId();
 
-const mode = ref<"title" | "isbn">("title");
+const mode = ref<"title" | "code">("title");
 const query = ref("");
 const hits = ref<ExternalEditionHit[] | null>(null);
 const loading = ref(false);
@@ -189,7 +191,7 @@ watch(
   },
 );
 
-// Roman choisi : toutes ses éditions BnF (notice d'œuvre), sans saisie.
+// Œuvre choisie : toutes ses éditions (roman : notice d'œuvre BnF ; album : parutions MusicBrainz), sans saisie.
 watch(
   () => [props.work, props.byWork] as const,
   async ([work, byWork]) => {
@@ -221,9 +223,17 @@ const shownHits = computed(() =>
     : (hits.value ?? []).filter((e) => !isTranslation(e)),
 );
 
-/** Langue, collection et ISBN d'une édition (romans : traductions, poches…). */
+/** Détails d'une édition : langue, collection et ISBN (romans) ; artiste, supports, pays, référence et code-barres (musique). */
 function details(e: ExternalEditionHit): string {
-  return [e.language?.toUpperCase(), e.collection, e.isbn]
+  return [
+    e.artist,
+    e.format,
+    e.country,
+    e.language?.toUpperCase(),
+    e.collection,
+    e.catalog_number,
+    e.isbn ?? e.barcode,
+  ]
     .filter(Boolean)
     .join(" · ");
 }
@@ -235,7 +245,11 @@ async function search() {
   try {
     hits.value = await externalApi.searchEditions(
       props.connector,
-      mode.value === "title" ? { q } : { isbn: q },
+      mode.value === "title"
+        ? { q }
+        : props.code === "barcode"
+          ? { barcode: q }
+          : { isbn: q },
     );
   } catch (e) {
     notifyError(e, t("admin.external.searchFailed"));
@@ -245,11 +259,11 @@ async function search() {
 }
 
 function isChosen(e: ExternalEditionHit): boolean {
-  return props.modelValue.some((c) => c.bnf_ark === e.bnf_ark);
+  return props.modelValue.some((c) => c.id === e.id);
 }
 
 function toggle(e: ExternalEditionHit, on: boolean) {
-  const rest = props.modelValue.filter((c) => c.bnf_ark !== e.bnf_ark);
+  const rest = props.modelValue.filter((c) => c.id !== e.id);
   emit("update:modelValue", on ? [...rest, e] : rest);
 }
 

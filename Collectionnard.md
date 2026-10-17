@@ -306,7 +306,7 @@ La table unique d'items avec attributs dynamiques nécessite une attention parti
 
 ### Sources de données externes (long terme)
 
-- BD / manga : Wikidata (œuvres, auteurs) et BnF (éditions françaises, tomes), connecteur livré en Phase 3 (`server/internal/external/bdmanga`, page admin « Sources externes »)
+- BD / manga : Wikidata (œuvres, auteurs) et BnF (éditions françaises, tomes), connecteur livré en Phase 3 (`server/internal/external/connectors`, page admin « Sources externes »)
 - Intégration d'APIs tierces : TMDB (films/séries), OpenLibrary (livres), Scryfall (Magic), TCGdex (Pokémon)…
 - Scan de codes-barres / ISBN avec auto-complétion (app mobile)
 
@@ -367,7 +367,7 @@ Décisions du 2026-10-16 : sources **ouvertes uniquement** (une clé d'API est a
 ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries en DVD / Blu-ray. Branche
 `phase3-sources`, un commit par lot.
 
-- [x] Livre/BD/manga (wikidata, BnF) : connecteur `bdmanga` (admin, page « Sources externes ») — recherche d'une œuvre sur Wikidata et d'éditions françaises à la BnF (titre ou ISBN d'un tome), aperçu à cocher (œuvre, univers, auteurs avec rôles, éditeurs, tomes ; réimpressions décochées) et corrigeable avant la simulation (formulaire du type, ex. tome sans numéro), rapprochement du catalogue (QID, ARK, ISBN, nom d'éditeur) où seuls les champs vides sont complétés, simulation puis import par `POST /import` (tout ou rien) ; `sources` porte la date de récupération (attribution BnF)
+- [x] Livre/BD/manga (wikidata, BnF) : connecteur `bd-manga` (admin, page « Sources externes ») — recherche d'une œuvre sur Wikidata et d'éditions françaises à la BnF (titre ou ISBN d'un tome), aperçu à cocher (œuvre, univers, auteurs avec rôles, éditeurs, tomes ; réimpressions décochées) et corrigeable avant la simulation (formulaire du type, ex. tome sans numéro), rapprochement du catalogue (QID, ARK, ISBN, nom d'éditeur) où seuls les champs vides sont complétés, simulation puis import par `POST /import` (tout ou rien) ; `sources` porte la date de récupération (attribution BnF)
 - [x] **P3-0 — Domaines installables** : en production (`docker-compose.prod.yml`, sans seed), aucun type n'existait.
       Chaque domaine (`collections`, `tv`, `books`, puis musique, vidéo…) est un paquet de méta-types au format de
       l'import (`server/internal/domains/packages/*.json`, UUID fixes) embarqué dans le serveur, installable depuis la
@@ -390,8 +390,13 @@ ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries 
       ordre), auteurs ; édition en un volume (le livre : ISBN, pages, prix, collection, reliure) ou multivolume (ensemble +
       tomes) ; traducteurs, illustrateurs et préfaciers de l'édition. Même profil de code que BD / Manga (planificateur,
       rapprochement, import partagés). Exemples réels dans le seed (L'Étranger, Les Misérables en Pocket 3 tomes).
-- [ ] **P3-4 — Musique (CD / vinyles)** : étude des sources (MusicBrainz, Cover Art Archive, BnF pour les
-      phonogrammes ; licences à vérifier), modèle de données (nouveau document), paquet de domaine, connecteur.
+- [x] **P3-4 — Musique (CD / vinyles)** : étude des sources (`docs/sources-externes.md` : MusicBrainz retenu, données
+      de base CC0, sans genres ni tags sous licence non commerciale ; Cover Art Archive écarté, sans licence ; Discogs à
+      revoir), modèle (`musique.md`), paquet `music` (Album, Édition musicale, Piste, Artiste, Label), connecteur `music` :
+      album cherché par titre et artiste, ses éditions listées des plus anciennes aux rééditions, ou cherchées par titre /
+      code-barres ; supports, pays, label et référence, pistes (enregistrements partagés entre éditions), artistes crédités
+      quand ils diffèrent ; client MusicBrainz espacé d'une seconde par requête. Exemple réel dans `db/seed_music.sql`
+      (Discovery, double vinyle Virgin 2001).
 - [ ] **P3-5 — Films (DVD / Blu-ray)** : étude des sources (Wikidata pour l'œuvre, BnF pour les vidéogrammes
       français par EAN ; TMDB écarté sauf licence ouverte), modèle, paquet, connecteur.
 - [ ] **P3-6 — Séries (DVD / Blu-ray)** : étude (Wikidata, TVmaze pour saisons et épisodes, BnF pour les coffrets),

@@ -1,4 +1,4 @@
-package bdmanga
+package connectors
 
 import (
 	"context"
@@ -10,8 +10,12 @@ import (
 	"github.com/shinsaber/colec/internal/model"
 )
 
-// SearchWorks searches manga and comic works on Wikidata by title.
+// SearchWorks searches works by title: manga and comics, or novels, on Wikidata
+// (albums: see searchAlbums).
 func (c *Connector) SearchWorks(ctx context.Context, text string) ([]model.ExternalWorkHit, error) {
+	if c.profile == profileMusic {
+		return c.searchAlbums(ctx, text)
+	}
 	d, err := c.domain(ctx)
 	if err != nil {
 		return nil, err
@@ -40,6 +44,7 @@ func (c *Connector) SearchWorks(ctx context.Context, text string) ([]model.Exter
 			continue
 		}
 		h := model.ExternalWorkHit{
+			ID:          id,
 			WikidataID:  id,
 			Label:       e.Label("fr", "en", "mul", "ja"),
 			Description: e.Descriptions["fr"],
@@ -72,11 +77,14 @@ func (c *Connector) SearchWorks(ctx context.Context, text string) ([]model.Exter
 // SearchEditions searches French editions on the BnF, by title or by the ISBN
 // of one of their volumes (multi-volume sets ; novels: see searchNovelEditions).
 func (c *Connector) SearchEditions(ctx context.Context, q model.ExternalEditionQuery) ([]model.ExternalEditionHit, error) {
-	if c.profile == profileNovels {
+	switch c.profile {
+	case profileNovels:
 		return c.searchNovelEditions(ctx, q)
+	case profileMusic:
+		return c.searchReleases(ctx, q)
 	}
 	title, isbn := q.Title, q.ISBN
-	if q.Work != "" {
+	if q.Work != "" || q.Barcode != "" {
 		return nil, InputError("this connector searches editions by title or ISBN")
 	}
 	d, err := c.domain(ctx)
@@ -134,7 +142,7 @@ func (c *Connector) SearchEditions(ctx context.Context, q model.ExternalEditionQ
 			continue
 		}
 		h := model.ExternalEditionHit{
-			BnfArk: r.ARK, Title: editionTitle(r), Publishers: publishers(r), SourceURL: bnf.RecordURL(r.ARK),
+			ID: r.ARK, BnfArk: r.ARK, Title: editionTitle(r), Publishers: publishers(r), SourceURL: bnf.RecordURL(r.ARK),
 		}
 		if h.Publishers == nil {
 			h.Publishers = []string{}

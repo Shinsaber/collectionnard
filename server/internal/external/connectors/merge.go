@@ -1,4 +1,4 @@
-package bdmanga
+package connectors
 
 import (
 	"bytes"
@@ -105,6 +105,22 @@ func fit(schema, attrs map[string]any) map[string]any {
 		}
 		if enum, ok := p["enum"].([]any); ok && !slices.Contains(enum, v) {
 			continue
+		}
+		if items, ok := p["items"].(map[string]any); ok {
+			if enum, ok := items["enum"].([]any); ok {
+				if list, ok := v.([]any); ok {
+					kept := []any{}
+					for _, x := range list {
+						if slices.Contains(enum, x) {
+							kept = append(kept, x)
+						}
+					}
+					if len(kept) == 0 {
+						continue
+					}
+					v = kept
+				}
+			}
 		}
 		out[k] = v
 	}

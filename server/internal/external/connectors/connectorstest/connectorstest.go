@@ -1,8 +1,8 @@
-// Package bdmangatest serves recorded answers of Wikidata and the BnF (Dragon
-// Ball, Glénat 1993 edition, retrieved 2026-10-11) and an in-memory catalogue
+// Package connectorstest serves recorded answers of the sources (Wikidata and
+// the BnF: Dragon Ball, L'Étranger, Les Misérables ; MusicBrainz) and an in-memory catalogue
 // holding the types of the seeds, for the tests of the connector and of its
 // handlers.
-package bdmangatest
+package connectorstest
 
 import (
 	"context"
@@ -21,7 +21,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/shinsaber/colec/internal/domains"
 	"github.com/shinsaber/colec/internal/external"
-	"github.com/shinsaber/colec/internal/external/bdmanga"
+	"github.com/shinsaber/colec/internal/external/connectors"
 	"github.com/shinsaber/colec/internal/model"
 )
 
@@ -45,9 +45,26 @@ var sruAnswers = map[string]string{
 	`bib.ens2bib all "45767941"`:           "novel_mis_volumes.xml",
 }
 
+// Recorded MusicBrainz answers (2026-10-17, tags and genres removed: not CC0): OK Computer
+// (release group b1392450…), its 1997 double vinyl (541a0976…) and 2016 XL CD (0c324f3a…), Radiohead.
+var mbEntities = map[string]string{
+	"/ws/2/release-group/" + OKComputer:                 "mb_release_group.json",
+	"/ws/2/release/" + OKComputerVinyl:                  "mb_release_vinyl.json",
+	"/ws/2/release/" + OKComputerCD:                     "mb_release_cd.json",
+	"/ws/2/artist/a74b1b7f-71a5-4011-9441-d0b5e4122711": "mb_artist.json",
+}
+
+// MusicBrainz identifiers of the recorded answers.
+const (
+	OKComputer      = "b1392450-e666-3926-a536-22c65f834433"
+	OKComputerVinyl = "541a0976-ca45-3c0f-89e5-26bc376f58d1"
+	OKComputerCD    = "0c324f3a-dcbb-4f09-b33a-c03c676b4044"
+	OKComputerUPC   = "634904078126"
+)
+
 const emptySRU = `<?xml version="1.0" encoding="UTF-8"?><srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/"><srw:version>1.2</srw:version><srw:numberOfRecords>0</srw:numberOfRecords><srw:records></srw:records></srw:searchRetrieveResponse>`
 
-// Sources is a fake Wikidata (/w/api.php) and BnF (/api/SRU).
+// Sources is a fake Wikidata (/w/api.php), BnF (/api/SRU) and MusicBrainz (/ws/2).
 type Sources struct {
 	*httptest.Server
 	// Requests counts the answered requests (cache tests).
@@ -59,7 +76,7 @@ type Sources struct {
 func testdata(t testing.TB, name string) []byte {
 	t.Helper()
 	_, file, _, _ := runtime.Caller(0)
-	b, err := os.ReadFile(filepath.Join(filepath.Dir(file), "..", "testdata", name)) //nolint:gosec // test fixtures: fixed directory, names from sruAnswers
+	b, err := os.ReadFile(filepath.Join(filepath.Dir(file), "..", "testdata", name)) //nolint:gosec // test fixtures: fixed directory, names from sruAnswers and mbEntities
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -121,6 +138,18 @@ func NewSources(t testing.TB) *Sources {
 			default:
 				http.NotFound(w, r)
 			}
+		case "/ws/2/release-group", "/ws/2/release":
+			w.Header().Set("Content-Type", "application/json")
+			switch {
+			case strings.Contains(q.Get("query"), "releasegroup:computer"):
+				_, _ = w.Write(testdata(t, "mb_search_release_groups.json"))
+			case q.Get("query") == "barcode:"+OKComputerUPC:
+				_, _ = w.Write(testdata(t, "mb_search_barcode.json"))
+			case q.Get("release-group") == OKComputer:
+				_, _ = w.Write(testdata(t, "mb_releases_of.json"))
+			default:
+				_, _ = w.Write([]byte(`{"release-groups":[],"releases":[]}`))
+			}
 		case "/api/SRU":
 			w.Header().Set("Content-Type", "application/xml")
 			if name, ok := sruAnswers[q.Get("query")]; ok {
@@ -129,6 +158,11 @@ func NewSources(t testing.TB) *Sources {
 			}
 			_, _ = w.Write([]byte(emptySRU))
 		default:
+			if name, ok := mbEntities[r.URL.Path]; ok {
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write(testdata(t, name))
+				return
+			}
 			http.NotFound(w, r)
 		}
 	}))
@@ -137,8 +171,8 @@ func NewSources(t testing.TB) *Sources {
 }
 
 // Connector returns a connector reading these sources and cat, dated Today.
-func (s *Sources) Connector(cat bdmanga.Catalog) *bdmanga.Connector {
-	c := bdmanga.New(cat, external.NewClient("collectionnard-test"))
+func (s *Sources) Connector(cat connectors.Catalog) *connectors.Connector {
+	c := connectors.New(cat, external.NewClient("collectionnard-test"))
 	c.WD.BaseURL = s.URL + "/w/api.php"
 	c.BnF.BaseURL = s.URL + "/api/SRU"
 	c.Now = func() time.Time { return Today }
@@ -184,7 +218,7 @@ func TypeID(t testing.TB, name string) uuid.UUID {
 	return uuid.Nil
 }
 
-// Catalog is an in-memory bdmanga.Catalog.
+// Catalog is an in-memory connectors.Catalog.
 type Catalog struct {
 	ItemTypes     []model.ItemType
 	RelationTypes []model.RelationType
@@ -239,10 +273,18 @@ func (c *Catalog) ListRelationsBetween(_ context.Context, ids []uuid.UUID) ([]mo
 }
 
 // NovelsConnector returns the novels connector reading these sources and cat, dated Today.
-func (s *Sources) NovelsConnector(cat bdmanga.Catalog) *bdmanga.Connector {
-	c := bdmanga.NewNovels(cat, external.NewClient("collectionnard-test"))
+func (s *Sources) NovelsConnector(cat connectors.Catalog) *connectors.Connector {
+	c := connectors.NewNovels(cat, external.NewClient("collectionnard-test"))
 	c.WD.BaseURL = s.URL + "/w/api.php"
 	c.BnF.BaseURL = s.URL + "/api/SRU"
+	c.Now = func() time.Time { return Today }
+	return c
+}
+
+// MusicConnector returns the music connector reading these sources and cat, dated Today.
+func (s *Sources) MusicConnector(cat connectors.Catalog) *connectors.Connector {
+	c := connectors.NewMusic(cat, external.NewClient("collectionnard-test"))
+	c.MB.BaseURL = s.URL + "/ws/2"
 	c.Now = func() time.Time { return Today }
 	return c
 }

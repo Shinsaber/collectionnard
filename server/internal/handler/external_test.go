@@ -11,14 +11,14 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shinsaber/colec/internal/external"
-	"github.com/shinsaber/colec/internal/external/bdmanga/bdmangatest"
+	"github.com/shinsaber/colec/internal/external/connectors/connectorstest"
 	"github.com/shinsaber/colec/internal/model"
 	"github.com/shinsaber/colec/internal/testutil"
 )
 
 // externalMock is a store holding the seed types, wired to fake sources.
-func externalMock(t *testing.T) (*testutil.MockStore, *bdmangatest.Sources) {
-	its, rts := bdmangatest.Domain(t)
+func externalMock(t *testing.T) (*testutil.MockStore, *connectorstest.Sources) {
+	its, rts := connectorstest.Domain(t)
 	mock := &testutil.MockStore{
 		ListItemTypesFn: func(context.Context, model.Pagination) ([]model.ItemType, int, error) {
 			return its, len(its), nil
@@ -27,13 +27,13 @@ func externalMock(t *testing.T) (*testutil.MockStore, *bdmangatest.Sources) {
 			return rts, len(rts), nil
 		},
 	}
-	return mock, bdmangatest.NewSources(t)
+	return mock, connectorstest.NewSources(t)
 }
 
-func callExternal(t *testing.T, mock *testutil.MockStore, src *bdmangatest.Sources, method, path, token, body string) (*http.Response, string) {
+func callExternal(t *testing.T, mock *testutil.MockStore, src *connectorstest.Sources, method, path, token, body string) (*http.Response, string) {
 	t.Helper()
 	h := testutil.NewTestHandler(mock)
-	h.Connectors = []external.Connector{src.Connector(mock)}
+	h.Connectors = []external.Connector{src.Connector(mock), src.NovelsConnector(mock), src.MusicConnector(mock)}
 	srv := testutil.NewTestServerFromHandler(h)
 	defer srv.Close()
 	var r io.Reader
@@ -205,7 +205,8 @@ func TestExternal_Connectors(t *testing.T) {
 	resp, body := callExternal(t, mock, src, "GET", "/api/v1/external/connectors", testutil.AdminToken(), "")
 	var list []model.ConnectorInfo
 	if resp.StatusCode != http.StatusOK || json.Unmarshal([]byte(body), &list) != nil ||
-		len(list) != 1 || list[0].ID != "bd-manga" || list[0].Domain != "books" {
+		len(list) != 3 || list[0].ID != "bd-manga" || list[0].Domain != "books" || list[0].EditionCode != "isbn" ||
+		list[2].ID != "music" || list[2].Domain != "music" || list[2].EditionCode != "barcode" || !list[2].EditionsByWork {
 		t.Errorf("connectors: %d %s", resp.StatusCode, body)
 	}
 	if resp, _ := callExternal(t, mock, src, "GET", "/api/v1/external/nope/works?q=naruto", testutil.AdminToken(), ""); resp.StatusCode != http.StatusNotFound {
@@ -213,5 +214,29 @@ func TestExternal_Connectors(t *testing.T) {
 	}
 	if resp, _ := callExternal(t, mock, src, "GET", "/api/v1/external/connectors", testutil.UserToken(), ""); resp.StatusCode != http.StatusForbidden {
 		t.Errorf("user: %d", resp.StatusCode)
+	}
+}
+
+func TestExternal_MusicEditions(t *testing.T) {
+	mock, src := externalMock(t)
+	mock.FindItemsByAttributeFn = func(context.Context, uuid.UUID, []string, []string, bool) ([]model.Item, error) {
+		return nil, nil
+	}
+	admin := testutil.AdminToken()
+	resp, body := callExternal(t, mock, src, "GET", "/api/v1/external/music/editions?barcode=6%2034904%20078126", admin, "")
+	var hits []model.ExternalEditionHit
+	if resp.StatusCode != http.StatusOK || json.Unmarshal([]byte(body), &hits) != nil || len(hits) != 3 || hits[0].Barcode != connectorstest.OKComputerUPC {
+		t.Errorf("by barcode: %d %s", resp.StatusCode, body)
+	}
+	for _, bad := range []string{
+		"/api/v1/external/music/editions?barcode=634904078127",               // check digit
+		"/api/v1/external/music/editions?work=Q202996",                       // not a release group
+		"/api/v1/external/music/editions?isbn=9782876952058",                 // books only
+		"/api/v1/external/bd-manga/editions?barcode=634904078126",            // music only
+		"/api/v1/external/novels/editions?work=" + connectorstest.OKComputer, // not a Wikidata work
+	} {
+		if resp, _ := callExternal(t, mock, src, "GET", bad, admin, ""); resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("%s: expected 400, got %d", bad, resp.StatusCode)
+		}
 	}
 }

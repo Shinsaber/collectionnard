@@ -165,7 +165,9 @@ tags:
       **Admin uniquement.** Récupération depuis des sources ouvertes, un connecteur par sorte de
       collection (`/external/{connector}/…`, liste : `GET /external/connectors`) : `bd-manga` (manga, BD) et
       `novels` (romans : roman, cycle et auteurs sur Wikidata ; éditions BnF de sa notice d'œuvre, traducteurs,
-      illustrateurs et préfaciers). Connecteur `bd-manga` :
+      illustrateurs et préfaciers) et `music` (CD, vinyles : album, éditions, pistes, artistes et labels sur
+      **MusicBrainz**, données de base CC0 ; ni genres ni tags, sous licence non commerciale ; une requête par
+      seconde ; types du paquet `music`, rapprochés par MBID, labels aussi par nom). Connecteur `bd-manga` :
       œuvres, univers et auteurs sur **Wikidata** (CC0), éditions françaises et tomes sur la **BnF**
       (Licence Ouverte : source et date de récupération écrites dans `sources`). Parcours :
       recherche (`works`, `editions`) → aperçu (`preview`) → simulation puis import (`import`,
@@ -1450,16 +1452,20 @@ components:
               added_at: { type: string, format: date-time }
     ExternalWorkHit:
       type: object
-      description: Œuvre (manga ou BD) trouvée sur Wikidata.
-      required: [wikidata_id, label, item_type_id, source_url]
+      description: Œuvre trouvée par un connecteur — œuvre Wikidata (livres) ou groupe de parutions MusicBrainz (album).
+      required: [id, label, item_type_id, source_url]
       properties:
-        wikidata_id: { type: string, example: Q15051307 }
-        label: { type: string, description: "Libellé Wikidata (fr, à défaut en)." }
-        description: { type: string }
+        id:
+          type: string
+          description: Identifiant à la source (QID Wikidata, MBID du groupe de parutions) — le `work` d'une sélection.
+          example: Q15051307
+        wikidata_id: { type: string, example: Q15051307, description: Connecteurs livres seulement (= `id`). }
+        label: { type: string, description: "Libellé Wikidata (fr, à défaut en), titre de l'album." }
+        description: { type: string, description: "Album : artiste crédité et types (« Radiohead · Album »)." }
         item_type_id:
           type: string
           format: uuid
-          description: ItemType proposé (`Manga` ou `Comic`).
+          description: ItemType proposé (`Manga`, `Comic`, `Novel`, `Album`).
         start_year: { type: integer }
         existing_item_id:
           type: string
@@ -1470,12 +1476,22 @@ components:
       type: object
       description: |
         Édition trouvée à la BnF : ensemble multivolume (zone 461 des tomes) ou collection éditoriale
-        (zone 410) ; pour un roman en un volume, le livre lui-même (`isbn`).
-      required: [bnf_ark, title, publishers, source_url]
+        (zone 410) ; pour un roman en un volume, le livre lui-même (`isbn`). Connecteur `music` : une parution
+        MusicBrainz (release).
+      required: [id, title, publishers, source_url]
       properties:
-        bnf_ark: { type: string, example: "ark:/12148/cb343384394" }
+        id:
+          type: string
+          description: Identifiant à la source (ARK BnF, MBID de la parution) — l'un des `editions` d'une sélection.
+          example: "ark:/12148/cb343384394"
+        bnf_ark: { type: string, example: "ark:/12148/cb343384394", description: Connecteurs livres seulement (= `id`). }
         title: { type: string }
-        publishers: { type: array, items: { type: string } }
+        publishers: { type: array, items: { type: string }, description: Éditeurs, ou labels d'une parution. }
+        artist: { type: string, description: Musique — artiste crédité (recherche par titre ou code-barres). }
+        format: { type: string, description: "Musique — supports : « CD », « 2×12\" Vinyl », « 2×CD + DVD-Video »." }
+        country: { type: string, description: "Musique — pays de parution (ISO 3166-1, XE Europe, XW monde)." }
+        barcode: { type: string }
+        catalog_number: { type: string, description: Musique — référence catalogue du label. }
         start_year: { type: integer }
         language:
           type: string
@@ -1495,17 +1511,20 @@ components:
             isbn: { type: string }
     ExternalImportRequest:
       type: object
-      description: Sélection d'une œuvre Wikidata et / ou d'éditions BnF (au moins l'une des deux).
+      description: |
+        Sélection d'une œuvre et / ou d'éditions (au moins l'une des deux) : QID Wikidata et ARK BnF (livres),
+        MBID d'un groupe de parutions et de parutions (`music`).
       properties:
         work:
           type: string
-          pattern: "^Q[1-9][0-9]*$"
-          description: QID Wikidata de l'œuvre.
+          description: Œuvre — QID Wikidata (`^Q[1-9][0-9]*$`) ou MBID du groupe de parutions.
         editions:
           type: array
           maxItems: 10
-          items: { type: string, pattern: "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$" }
-          description: ARK BnF des éditions (leurs tomes sont proposés).
+          items: { type: string }
+          description: |
+            Éditions — ARK BnF (`^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$`, leurs tomes sont proposés) ou MBID
+            de parutions (leurs pistes, labels et artistes sont proposés ; sans `work`, l'album vient de la parution).
         selected:
           type: array
           items: { type: string }
@@ -1639,7 +1658,7 @@ components:
       name: connector
       in: path
       required: true
-      description: Connecteur (`GET /external/connectors`) — `bd-manga`, `novels`…
+      description: Connecteur (`GET /external/connectors`) — `bd-manga`, `novels`, `music`…
       schema:
         type: string
         example: bd-manga
@@ -4137,7 +4156,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ImportReport"
   # ===========================================================================
-  # Sources externes (connecteur BD / Manga)
+  # Sources externes (connecteurs BD / Manga, romans, musique)
   # ===========================================================================
   /external/connectors:
     get:
@@ -4162,7 +4181,11 @@ paths:
                     domain: { type: string, example: books }
                     editions_by_work:
                       type: boolean
-                      description: Les éditions se listent depuis une œuvre Wikidata (`editions?work=`).
+                      description: Les éditions se listent depuis une œuvre (`editions?work=`).
+                    edition_code:
+                      type: string
+                      enum: [isbn, barcode]
+                      description: Code de recherche d'une édition (`editions?isbn=` ou `editions?barcode=`).
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -4173,10 +4196,11 @@ paths:
       - $ref: "#/components/parameters/connector"
     get:
       tags: [External]
-      summary: Rechercher une œuvre sur Wikidata
+      summary: Rechercher une œuvre
       description: |
-        Recherche par titre parmi les séries de manga, séries de bande dessinée, romans graphiques,
-        comic strips, webtoons… (classes Wikidata), meilleure correspondance d'abord (20 au plus).
+        Recherche par titre, meilleure correspondance d'abord (20 au plus) : `bd-manga` parmi les séries de
+        manga, séries de bande dessinée, romans graphiques, comic strips, webtoons… (classes Wikidata) ; `novels`
+        parmi les romans ; `music` parmi les groupes de parutions MusicBrainz (titre ou artiste).
       operationId: searchExternalWorks
       parameters:
         - name: q
@@ -4202,13 +4226,16 @@ paths:
       - $ref: "#/components/parameters/connector"
     get:
       tags: [External]
-      summary: Rechercher une édition à la BnF
+      summary: Rechercher une édition
       description: |
         Par titre (`q` : `bd-manga` index `bib.serialtitle`, `novels` index `bib.title`, 50 notices au plus,
         hors vidéos et sons), par ISBN d'un tome (`isbn`, ISBN-10 / 13 ou EAN, tirets acceptés) : l'édition
         qui contient ce tome, ou par **œuvre Wikidata** (`work`, connecteur `novels`) : les éditions de la
         notice d'œuvre BnF du roman (`P268`, index `bib.work2bib`, 150 au plus, éditions françaises
-        d'abord). Exactement un des trois paramètres.
+        d'abord). Connecteur `music` : par titre (index `release`), par **code-barres** (`barcode`, EAN / UPC
+        avec clé de contrôle valide) ou par album (`work`, MBID du groupe de parutions : ses parutions, 100 au
+        plus, les plus anciennes d'abord) ; `isbn` y est refusé, comme `barcode` pour les livres. Exactement un
+        des paramètres ; l'identifiant `work` est vérifié par le connecteur (400).
 
         Connecteur `novels` : une notice sans ensemble est une édition en un volume (le livre, avec son
         ISBN) ; une notice liée (461) à un ensemble titré comme le roman représente cet ensemble ; un
@@ -4221,10 +4248,14 @@ paths:
         - name: isbn
           in: query
           schema: { type: string, example: "978-2-87695-205-8" }
+        - name: barcode
+          in: query
+          description: Code-barres d'une parution (connecteur `music`), espaces et tirets acceptés.
+          schema: { type: string, example: "634904078126" }
         - name: work
           in: query
-          description: QID Wikidata du roman (connecteur `novels`).
-          schema: { type: string, pattern: "^Q[1-9][0-9]*$", example: Q163297 }
+          description: Œuvre — QID Wikidata du roman (`novels`), MBID du groupe de parutions (`music`).
+          schema: { type: string, maxLength: 200, example: Q163297 }
       responses:
         "200":
           description: Éditions trouvées.

@@ -1,6 +1,6 @@
 // Package external fetches the open data sources used to fill the catalogue
-// (Wikidata, BnF). Subpackages hold one client per source; connectors (such as
-// bdmanga) map their data onto the item types of a domain.
+// (Wikidata, BnF, MusicBrainz). Subpackages hold one client per source; the
+// connectors (package connectors) map their data onto the item types of a domain.
 package external
 
 import (
@@ -19,6 +19,18 @@ var ErrUnavailable = errors.New("external source unavailable")
 
 // ErrNotFound means the source answered but does not know the requested entity.
 var ErrNotFound = errors.New("external entity not found")
+
+// StatusError is an answer other than 200 or 404 (an ErrUnavailable).
+type StatusError struct {
+	Host string
+	Code int
+}
+
+func (e *StatusError) Error() string {
+	return fmt.Sprintf("%v: %s answered HTTP %d", ErrUnavailable, e.Host, e.Code)
+}
+
+func (e *StatusError) Unwrap() error { return ErrUnavailable }
 
 const (
 	defaultTimeout    = 20 * time.Second
@@ -40,6 +52,12 @@ type Client struct {
 	mu    sync.Mutex
 	cache map[string]cacheEntry
 	now   func() time.Time
+
+	// spacing: minimum delay between two requests to a host (rate limit of
+	// the source, such as MusicBrainz: one request per second).
+	throttleMu sync.Mutex
+	spacing    map[string]time.Duration
+	next       map[string]time.Time
 }
 
 type cacheEntry struct {
@@ -60,6 +78,44 @@ func NewClient(userAgent string) *Client {
 	}
 }
 
+// Throttle spaces the requests to host by at least d (answers from the cache
+// are not delayed).
+func (c *Client) Throttle(host string, d time.Duration) {
+	c.throttleMu.Lock()
+	defer c.throttleMu.Unlock()
+	if c.spacing == nil {
+		c.spacing, c.next = map[string]time.Duration{}, map[string]time.Time{}
+	}
+	c.spacing[host] = d
+}
+
+// wait blocks until a request to host is allowed (or ctx ends).
+func (c *Client) wait(ctx context.Context, host string) error {
+	c.throttleMu.Lock()
+	d := c.spacing[host]
+	if d <= 0 {
+		c.throttleMu.Unlock()
+		return nil
+	}
+	now := time.Now()
+	at := c.next[host]
+	if at.Before(now) {
+		at = now
+	}
+	c.next[host] = at.Add(d) // the slot is reserved before releasing the lock
+	c.throttleMu.Unlock()
+	if delay := time.Until(at); delay > 0 {
+		t := time.NewTimer(delay)
+		defer t.Stop()
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("%w: %v", ErrUnavailable, ctx.Err())
+		case <-t.C:
+		}
+	}
+	return nil
+}
+
 // Get returns the body of a 200 answer (from the cache when still fresh).
 func (c *Client) Get(ctx context.Context, url string) ([]byte, error) {
 	if body, ok := c.cached(url); ok {
@@ -69,14 +125,20 @@ func (c *Client) Get(ctx context.Context, url string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrUnavailable, err)
 	}
+	if err := c.wait(ctx, req.URL.Host); err != nil {
+		return nil, err
+	}
 	req.Header.Set("User-Agent", c.UserAgent)
 	resp, err := c.HTTP.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrUnavailable, err)
 	}
 	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, fmt.Errorf("%w: %s answered HTTP 404", ErrNotFound, req.URL.Host)
+	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("%w: %s answered HTTP %d", ErrUnavailable, req.URL.Host, resp.StatusCode)
+		return nil, &StatusError{Host: req.URL.Host, Code: resp.StatusCode}
 	}
 	body, err := io.ReadAll(io.LimitReader(resp.Body, c.MaxBody+1))
 	if err != nil {

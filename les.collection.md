@@ -246,7 +246,7 @@ légalement réutilisables et au format du connecteur (section suivante).
 
 ### Import depuis les sources (Phase 3)
 
-Connecteur [`server/internal/external/bdmanga`](server/internal/external/bdmanga) (identifiant `bd-manga`), page admin
+Connecteur [`server/internal/external/connectors`](server/internal/external/connectors) (identifiant `bd-manga`), page admin
 « Sources externes » (`/admin/external-import`, choix de la sorte de collection), API `/external/bd-manga/*` (voir `api/openapi.yaml`, tag `External`). Le connecteur
 trouve les types du domaine par **identifiant du paquet `books`**, à défaut par **nom technique** (`Manga`, `Comic`, `Universe`, `Edition`, `Volume`, `Person`,
 `Publisher` ; `contains_work`, `created_by`, `published_as`, `edited_by`, `contains_volume`) et répond 409

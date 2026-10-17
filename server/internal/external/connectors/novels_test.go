@@ -1,4 +1,4 @@
-package bdmanga_test
+package connectors_test
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/shinsaber/colec/internal/external/bdmanga/bdmangatest"
+	"github.com/shinsaber/colec/internal/external/connectors/connectorstest"
 	"github.com/shinsaber/colec/internal/model"
 )
 
@@ -22,8 +22,8 @@ const (
 )
 
 func TestNovelsSearchWorks(t *testing.T) {
-	src := bdmangatest.NewSources(t)
-	conn := src.NovelsConnector(bdmangatest.NewCatalog(t))
+	src := connectorstest.NewSources(t)
+	conn := src.NovelsConnector(connectorstest.NewCatalog(t))
 	if conn.ID() != "novels" || conn.Domain() != "books" {
 		t.Errorf("id %s, domain %s", conn.ID(), conn.Domain())
 	}
@@ -31,7 +31,7 @@ func TestNovelsSearchWorks(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(hits) != 1 || hits[0].WikidataID != etranger || hits[0].ItemTypeID != bdmangatest.TypeID(t, "Novel") {
+	if len(hits) != 1 || hits[0].WikidataID != etranger || hits[0].ItemTypeID != connectorstest.TypeID(t, "Novel") {
 		t.Fatalf("hits: %+v", hits)
 	}
 	if hits[0].StartYear == nil || *hits[0].StartYear != 1942 {
@@ -40,8 +40,8 @@ func TestNovelsSearchWorks(t *testing.T) {
 }
 
 func TestNovelsSearchEditionsByWork(t *testing.T) {
-	src := bdmangatest.NewSources(t)
-	conn := src.NovelsConnector(bdmangatest.NewCatalog(t))
+	src := connectorstest.NewSources(t)
+	conn := src.NovelsConnector(connectorstest.NewCatalog(t))
 	hits, err := conn.SearchEditions(context.Background(), model.ExternalEditionQuery{Work: etranger})
 	if err != nil {
 		t.Fatal(err)
@@ -69,8 +69,8 @@ func TestNovelsSearchEditionsByWork(t *testing.T) {
 }
 
 func TestNovelsSearchEditionsSets(t *testing.T) {
-	src := bdmangatest.NewSources(t)
-	conn := src.NovelsConnector(bdmangatest.NewCatalog(t))
+	src := connectorstest.NewSources(t)
+	conn := src.NovelsConnector(connectorstest.NewCatalog(t))
 	hits, err := conn.SearchEditions(context.Background(), model.ExternalEditionQuery{Work: miserables})
 	if err != nil {
 		t.Fatal(err)
@@ -89,8 +89,8 @@ func TestNovelsSearchEditionsSets(t *testing.T) {
 }
 
 func TestNovelsPreview(t *testing.T) {
-	src := bdmangatest.NewSources(t)
-	cat := bdmangatest.NewCatalog(t)
+	src := connectorstest.NewSources(t)
+	cat := connectorstest.NewCatalog(t)
 	conn := src.NovelsConnector(cat)
 	plan, err := conn.Preview(context.Background(), model.ExternalImportRequest{
 		Work: etranger, Editions: []string{folio2013, outsider},
@@ -103,7 +103,7 @@ func TestNovelsPreview(t *testing.T) {
 		nodes[n.Key] = n
 	}
 	work := nodes["wikidata:"+etranger]
-	if work.ItemTypeID != bdmangatest.TypeID(t, "Novel") {
+	if work.ItemTypeID != connectorstest.TypeID(t, "Novel") {
 		t.Fatalf("work: %+v", work)
 	}
 	for k, want := range map[string]any{"form": "novel", "original_language": "fr", "first_publication_year": float64(1942)} {
@@ -111,7 +111,7 @@ func TestNovelsPreview(t *testing.T) {
 			t.Errorf("work %s = %v, want %v", k, got, want)
 		}
 	}
-	if s := nodes["wikidata:"+cycleAbsurd]; s.ItemTypeID != bdmangatest.TypeID(t, "Saga") {
+	if s := nodes["wikidata:"+cycleAbsurd]; s.ItemTypeID != connectorstest.TypeID(t, "Saga") {
 		t.Errorf("cycle → Saga: %+v", s)
 	}
 	folio := nodes["bnf:cb436623939"]
@@ -125,8 +125,8 @@ func TestNovelsPreview(t *testing.T) {
 	}
 
 	// Relations : cycle (ordre 1), auteur, traducteur et préfacier de la traduction.
-	createdBy := bdmangatest.TypeID(t, "created_by")
-	containsWork := bdmangatest.TypeID(t, "contains_work")
+	createdBy := connectorstest.TypeID(t, "created_by")
+	containsWork := connectorstest.TypeID(t, "contains_work")
 	roles := map[string]string{}
 	order := ""
 	for _, r := range plan.Relations {
@@ -169,8 +169,8 @@ func TestNovelsPreview(t *testing.T) {
 }
 
 func TestNovelsPreviewMultiVolume(t *testing.T) {
-	src := bdmangatest.NewSources(t)
-	conn := src.NovelsConnector(bdmangatest.NewCatalog(t))
+	src := connectorstest.NewSources(t)
+	conn := src.NovelsConnector(connectorstest.NewCatalog(t))
 	plan, err := conn.Preview(context.Background(), model.ExternalImportRequest{Editions: []string{pocketSet}})
 	if err != nil {
 		t.Fatal(err)

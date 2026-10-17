@@ -1,4 +1,4 @@
-package bdmanga
+package connectors
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shinsaber/colec/internal/external/bnf"
+	"github.com/shinsaber/colec/internal/external/musicbrainz"
 	"github.com/shinsaber/colec/internal/external/wikidata"
 	"github.com/shinsaber/colec/internal/model"
 )
@@ -101,15 +102,26 @@ func (c *Connector) plan(ctx context.Context, req model.ExternalImportRequest) (
 	if req.Work == "" && len(req.Editions) == 0 {
 		return nil, InputError("work or editions is required")
 	}
-	if req.Work != "" && !wikidata.IsQID(req.Work) {
-		return nil, InputError("work must be a Wikidata identifier (Q…)")
-	}
 	if len(req.Editions) > maxEditions {
 		return nil, InputError(fmt.Sprintf("at most %d editions", maxEditions))
 	}
-	for _, ark := range req.Editions {
-		if _, ok := bnf.RecordNumber(ark); !ok {
-			return nil, InputError("invalid BnF ARK: " + ark)
+	if c.profile == profileMusic {
+		if req.Work != "" && !musicbrainz.IsMBID(req.Work) {
+			return nil, InputError("work must be a MusicBrainz release group identifier")
+		}
+		for _, id := range req.Editions {
+			if !musicbrainz.IsMBID(id) {
+				return nil, InputError("invalid MusicBrainz release identifier: " + id)
+			}
+		}
+	} else {
+		if req.Work != "" && !wikidata.IsQID(req.Work) {
+			return nil, InputError("work must be a Wikidata identifier (Q…)")
+		}
+		for _, ark := range req.Editions {
+			if _, ok := bnf.RecordNumber(ark); !ok {
+				return nil, InputError("invalid BnF ARK: " + ark)
+			}
 		}
 	}
 	p, err := c.newPlanner(ctx)
@@ -118,8 +130,11 @@ func (c *Connector) plan(ctx context.Context, req model.ExternalImportRequest) (
 	}
 	workKey := ""
 	addWork, addEdition := p.addWork, p.addEdition
-	if c.profile == profileNovels {
+	switch c.profile {
+	case profileNovels:
 		addWork, addEdition = p.addNovelWork, p.addNovelEdition
+	case profileMusic:
+		addWork, addEdition = p.addAlbum, p.addRelease
 	}
 	if req.Work != "" {
 		if workKey, err = addWork(ctx, req.Work); err != nil {

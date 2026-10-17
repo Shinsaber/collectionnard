@@ -1,4 +1,4 @@
-package bdmanga
+package connectors
 
 import (
 	"context"
@@ -203,6 +203,12 @@ func (p *planner) novelAttrs(ctx context.Context, e *wikidata.Entity) (map[strin
 // title or ISBN. A record linked to a set titled like it stands for that set
 // (multi-volume edition); any other record is a single-volume edition.
 func (c *Connector) searchNovelEditions(ctx context.Context, q model.ExternalEditionQuery) ([]model.ExternalEditionHit, error) {
+	if q.Barcode != "" {
+		return nil, InputError("this connector searches editions by title, ISBN or work")
+	}
+	if q.Work != "" && !wikidata.IsQID(q.Work) {
+		return nil, InputError("work must be a Wikidata identifier (Q…)")
+	}
 	d, err := c.domain(ctx)
 	if err != nil {
 		return nil, err
@@ -343,7 +349,7 @@ func novelTitle(r *bnf.Record) string {
 
 func editionHit(r *bnf.Record) model.ExternalEditionHit {
 	h := model.ExternalEditionHit{
-		BnfArk: r.ARK, Title: novelTitle(r), Publishers: publishers(r), SourceURL: bnf.RecordURL(r.ARK),
+		ID: r.ARK, BnfArk: r.ARK, Title: novelTitle(r), Publishers: publishers(r), SourceURL: bnf.RecordURL(r.ARK),
 		Language: novelLanguage(r),
 	}
 	if h.Publishers == nil {

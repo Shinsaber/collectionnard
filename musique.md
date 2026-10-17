@@ -64,3 +64,20 @@ sans clé, User-Agent avec contact obligatoire, 1 requête par seconde.
 | Artiste                            | artist : `name`, `sort-name`, `type`, `country`, `life-span`, `disambiguation` |
 | Crédits                            | `artist-credit[]` (`name` crédité, `artist.id`, `joinphrase`)               |
 | `external_ids.wikidata`            | relation URL `wikidata` de l'artiste ou du groupe de parutions             |
+
+## Import (connecteur `music`)
+
+Page admin « Sources externes », sorte de collection « Musique » (`/external/music/*`) :
+
+1. **Album** cherché par titre et artiste (« discovery daft punk ») ; une fois choisi, ses **éditions** sont listées, des
+   plus anciennes aux rééditions (supports, pays, label, référence, code-barres). Une édition se cherche aussi par titre ou
+   par **code-barres** (EAN / UPC, clé de contrôle vérifiée).
+2. **Aperçu** : album (types, première année, Wikidata), artistes de l'album (dates, pays, Wikidata), édition (format,
+   nombre de supports, date, pays, code-barres, référence, statut, conditionnement), labels (`released_by` avec la
+   référence), pistes (`contains_track` : disque, position, ordre ; durée en secondes, premier ISRC). Les artistes d'une
+   édition ou d'une piste ne sont liés que s'ils diffèrent de ceux de l'album (« feat. », compilations). Sans album choisi,
+   l'album vient de l'édition.
+3. **Rapprochement** : par MBID (QID Wikidata en second pour l'album), labels aussi par nom ; une piste déjà importée par
+   une autre édition est la même (enregistrement MusicBrainz). Seuls les champs vides sont complétés.
+
+Exemple : `db/seed_music.sql` (Discovery de Daft Punk, double vinyle Virgin 2001, 14 pistes).

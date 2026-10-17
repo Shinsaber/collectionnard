@@ -1,12 +1,16 @@
 <template>
   <div data-test="external-plan">
     <p class="text-xs text-muted mb-3">
-      {{ t("admin.external.attribution", { date: retrievedAt }) }}
+      {{
+        t(`admin.external.connectors.${connector}.attribution`, {
+          date: retrievedAt,
+        })
+      }}
     </p>
 
     <section v-if="groups.main.length > 0" class="mb-6">
       <h3 class="font-semibold text-ink mb-2">
-        {{ t("admin.external.groups.main") }}
+        {{ t(`admin.external.connectors.${connector}.groupMain`) }}
       </h3>
       <ExternalNodeTable
         :plan="plan"
@@ -38,7 +42,9 @@
       />
       <div class="flex items-center gap-2 mt-3 mb-2">
         <h4 class="text-sm font-semibold text-ink">
-          {{ t("admin.external.groups.volumes") }} ({{ g.volumes.length }})
+          {{ t(`admin.external.connectors.${connector}.groupVolumes`) }} ({{
+            g.volumes.length
+          }})
         </h4>
         <ElButton size="small" text @click="setAll(g.volumes, true)">{{
           t("admin.external.selectAll")
@@ -101,6 +107,8 @@ const props = defineProps<{
   plan: ExternalPlan;
   modelValue: string[];
   overrides: Overrides;
+  /** Connecteur (`bd-manga`, `novels`, `music`…) : textes propres à ses sources. */
+  connector: string;
 }>();
 const emit = defineEmits<{
   "update:modelValue": [keys: string[]];

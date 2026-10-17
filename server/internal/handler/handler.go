@@ -17,7 +17,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/shinsaber/colec/config"
 	"github.com/shinsaber/colec/internal/external"
-	"github.com/shinsaber/colec/internal/external/bdmanga"
+	"github.com/shinsaber/colec/internal/external/connectors"
 	"github.com/shinsaber/colec/internal/middleware"
 	"github.com/shinsaber/colec/internal/model"
 	"github.com/shinsaber/colec/internal/store"
@@ -35,8 +35,9 @@ type Handler struct {
 func New(s store.Store, auth *middleware.Auth, cfg *config.Config) *Handler {
 	fetch := external.NewClient(cfg.ExternalUserAgent)
 	return &Handler{Store: s, Auth: auth, Config: cfg, Connectors: []external.Connector{
-		bdmanga.New(s, fetch),
-		bdmanga.NewNovels(s, fetch),
+		connectors.New(s, fetch),
+		connectors.NewNovels(s, fetch),
+		connectors.NewMusic(s, fetch),
 	}}
 }
 

@@ -364,8 +364,11 @@ export interface ImportReport {
 
 // ---------- Sources externes (connecteur BD / Manga) ----------
 /** Œuvre trouvée sur Wikidata (GET /external/bd-manga/works). */
+/** Œuvre trouvée par un connecteur : œuvre Wikidata (livres), groupe de parutions MusicBrainz (album). */
 export interface ExternalWorkHit {
-  wikidata_id: string;
+  /** Identifiant à la source : le `work` d'une sélection. */
+  id: string;
+  wikidata_id?: string;
   label: string;
   description?: string;
   item_type_id: string;
@@ -381,9 +384,11 @@ export interface ExternalVolumeHit {
   isbn?: string;
 }
 
-/** Édition française de la BnF (GET /external/bd-manga/editions). */
+/** Édition trouvée par un connecteur : notice BnF (livres), parution MusicBrainz (musique). */
 export interface ExternalEditionHit {
-  bnf_ark: string;
+  /** Identifiant à la source : l'un des `editions` d'une sélection. */
+  id: string;
+  bnf_ark?: string;
   title: string;
   publishers: string[];
   start_year?: number;
@@ -393,6 +398,12 @@ export interface ExternalEditionHit {
   collection?: string;
   /** Roman en un volume : l'ISBN du livre. */
   isbn?: string;
+  /** Musique : artiste crédité, supports (« 2×12" Vinyl »), pays, code-barres, référence catalogue. */
+  artist?: string;
+  format?: string;
+  country?: string;
+  barcode?: string;
+  catalog_number?: string;
   existing_item_id?: string;
   source_url: string;
   /** Recherche par ISBN : le tome qui porte cet ISBN. */
@@ -436,14 +447,14 @@ export interface ExternalRelation {
   existing_id?: string;
 }
 
-/** Aperçu de POST /external/bd-manga/preview. */
+/** Aperçu de POST /external/{connector}/preview. */
 export interface ExternalPlan {
   retrieved_at: string;
   nodes: ExternalNode[];
   relations: ExternalRelation[];
 }
 
-/** Rapport de POST /external/bd-manga/import : celui de /import + l'id de chaque item écrit. */
+/** Rapport de POST /external/{connector}/import : celui de /import + l'id de chaque item écrit. */
 export interface ExternalImportReport extends ImportReport {
   item_ids: Record<string, string>;
 }
@@ -511,6 +522,8 @@ export interface ConnectorInfo {
   id: string;
   /** Paquet de domaine qui porte les types écrits par le connecteur. */
   domain: string;
-  /** Les éditions se listent depuis une œuvre Wikidata (`editions?work=`). */
+  /** Les éditions se listent depuis une œuvre (`editions?work=`). */
   editions_by_work: boolean;
+  /** Code de recherche d'une édition : `editions?isbn=` ou `editions?barcode=`. */
+  edition_code: "isbn" | "barcode";
 }

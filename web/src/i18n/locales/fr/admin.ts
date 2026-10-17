@@ -154,19 +154,53 @@ export default {
     connectors: {
       "bd-manga": {
         title: "BD / Manga",
+        intro:
+          "Recherchez une œuvre sur Wikidata et ses éditions françaises à la BnF, choisissez les éléments à importer (auteurs, éditeurs, tomes…), simulez puis validez. Les éléments déjà présents gardent leurs valeurs : seuls leurs champs vides sont complétés.",
+        workTitle: "Œuvre (Wikidata)",
         workPlaceholder: "Titre de la série, ex. Dragon Ball",
+        editionTitle: "Éditions (BnF)",
         editionPlaceholder: "Titre de la série",
-        isbnPlaceholder: "ISBN d'un tome, ex. 978-2-7234-3335-8",
+        byCode: "Par ISBN",
+        codePlaceholder: "ISBN d'un tome, ex. 978-2-7234-3335-8",
+        publishers: "Éditeur(s)",
+        attribution:
+          "Données Wikidata (CC0) et BnF, catalogue général (Licence Ouverte), récupérées le {date}.",
+        groupMain: "Œuvre, univers et auteurs",
+        groupVolumes: "Tomes",
       },
       novels: {
         title: "Romans",
+        intro:
+          "Recherchez un roman sur Wikidata : ses éditions à la BnF sont listées (traductions masquées). Choisissez les éléments à importer (auteurs, traducteurs, éditeurs, tomes…), simulez puis validez. Les éléments déjà présents gardent leurs valeurs : seuls leurs champs vides sont complétés.",
+        workTitle: "Roman (Wikidata)",
         workPlaceholder: "Titre du roman, ex. L'Étranger",
+        editionTitle: "Éditions (BnF)",
         editionPlaceholder: "Titre du roman",
-        isbnPlaceholder: "ISBN du livre ou d'un tome, ex. 978-2-07-045317-7",
+        byCode: "Par ISBN",
+        codePlaceholder: "ISBN du livre ou d'un tome, ex. 978-2-07-045317-7",
+        publishers: "Éditeur(s)",
+        attribution:
+          "Données Wikidata (CC0) et BnF, catalogue général (Licence Ouverte), récupérées le {date}.",
+        groupMain: "Roman, cycle et auteurs",
+        groupVolumes: "Tomes",
+      },
+      music: {
+        title: "Musique",
+        intro:
+          "Recherchez un album sur MusicBrainz : ses éditions (CD, vinyles…) sont listées, des plus anciennes aux rééditions. Choisissez les éléments à importer (artistes, labels, pistes), simulez puis validez. Les éléments déjà présents gardent leurs valeurs : seuls leurs champs vides sont complétés.",
+        workTitle: "Album (MusicBrainz)",
+        workPlaceholder: "Titre ou artiste, ex. OK Computer",
+        editionTitle: "Éditions (MusicBrainz)",
+        editionPlaceholder: "Titre de l'édition",
+        byCode: "Par code-barres",
+        codePlaceholder: "Code-barres (EAN / UPC), ex. 634904078126",
+        publishers: "Label(s)",
+        attribution:
+          "Données MusicBrainz (CC0, sans genres ni tags), récupérées le {date}.",
+        groupMain: "Album et artistes",
+        groupVolumes: "Pistes",
       },
     },
-    intro:
-      "Recherchez une œuvre sur Wikidata et ses éditions françaises à la BnF, choisissez les éléments à importer (auteurs, éditeurs, tomes…), simulez puis validez. Les éléments déjà présents gardent leurs valeurs : seuls leurs champs vides sont complétés.",
     stepOf: "Étape {n} / {total} · {title}",
     steps: {
       search: "Recherche",
@@ -178,7 +212,6 @@ export default {
     inCatalog: "Déjà en base",
     openSource: "Voir la fiche source",
     work: {
-      title: "Œuvre (Wikidata)",
       none: "Aucune œuvre trouvée",
       label: "Titre",
       description: "Description",
@@ -188,12 +221,9 @@ export default {
       clear: "Retirer l'œuvre",
     },
     edition: {
-      title: "Éditions (BnF)",
       byTitle: "Par titre",
-      byIsbn: "Par ISBN",
       none: "Aucune édition trouvée",
       label: "Édition",
-      publishers: "Éditeur(s)",
       year: "Début",
       matched: "Tome {number} : {title}",
       matchedNoNumber: "Tome : {title}",
@@ -206,13 +236,6 @@ export default {
     preview: "Aperçu de l'import",
     editionHeading: "{type} : {name}",
     needSelection: "Choisissez une œuvre ou au moins une édition.",
-    attribution:
-      "Données Wikidata (CC0) et BnF, catalogue général (Licence Ouverte), récupérées le {date}.",
-    groups: {
-      main: "Œuvre, univers et auteurs",
-      publishers: "Éditeurs",
-      volumes: "Tomes",
-    },
     item: "Élément",
     type: "Type",
     status: "État",

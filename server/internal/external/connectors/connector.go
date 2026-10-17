@@ -1,13 +1,14 @@
-// Package bdmanga is the BD / Manga connector: it searches works on Wikidata
-// and French editions on the BnF, then proposes the matching items of the
-// domain of db/seed_bd_manga.sql (les.collection.md), matched against the
-// catalogue: existing items keep their values, the source only fills the empty
-// fields.
+// Package connectors holds the connectors to the external sources, one profile
+// per kind of collection: BD / manga and novels (Wikidata + BnF, domain
+// « books », les.collection.md), music (MusicBrainz, domain « music »,
+// musique.md). They share the planner: the proposed items are matched against
+// the catalogue (existing items keep their values, the source only fills the
+// empty fields), then written through the catalogue import.
 //
-// The connector is the only place that knows the domain: it finds its item
-// types and relation types by technical name (Manga, Comic…, created_by…), and
-// reports the missing ones instead of guessing.
-package bdmanga
+// A profile is the only place that knows its domain: it finds its item types
+// and relation types by package id, then by technical name, and reports the
+// missing ones instead of guessing.
+package connectors
 
 import (
 	"context"
@@ -18,6 +19,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/shinsaber/colec/internal/external"
 	"github.com/shinsaber/colec/internal/external/bnf"
+	"github.com/shinsaber/colec/internal/external/musicbrainz"
 	"github.com/shinsaber/colec/internal/external/wikidata"
 	"github.com/shinsaber/colec/internal/model"
 )
@@ -30,19 +32,21 @@ type Catalog interface {
 	ListRelationsBetween(ctx context.Context, ids []uuid.UUID) ([]model.ItemRelation, error)
 }
 
-// profile: the kind of books a connector imports. Both share the planner (nodes,
-// matching, import format) and the « books » domain package.
+// profile: the kind of collection a connector imports. All share the planner
+// (nodes, matching, import format).
 type profile int
 
 const (
 	profileBDManga profile = iota // manga and comics: work → multi-volume edition → volumes
 	profileNovels                 // novels: work → edition (the book, or a set of volumes)
+	profileMusic                  // music (domain « music »): album → releases → tracks
 )
 
 type Connector struct {
 	Catalog Catalog
 	WD      *wikidata.Client
 	BnF     *bnf.Client
+	MB      *musicbrainz.Client
 	Now     func() time.Time
 	profile profile
 }
@@ -57,6 +61,11 @@ func NewNovels(cat Catalog, fetch *external.Client) *Connector {
 	c := New(cat, fetch)
 	c.profile = profileNovels
 	return c
+}
+
+// NewMusic returns the music connector (source: MusicBrainz).
+func NewMusic(cat Catalog, fetch *external.Client) *Connector {
+	return &Connector{Catalog: cat, MB: musicbrainz.New(fetch), Now: time.Now, profile: profileMusic}
 }
 
 // Technical names of the domain (package « books », server/internal/domains/packages).
@@ -76,6 +85,18 @@ const (
 	relPublishedAs    = "published_as"
 	relEditedBy       = "edited_by"
 	relContainsVolume = "contains_volume"
+
+	// Package « music » (musique.md).
+	typeArtist  = "Artist"
+	typeAlbum   = "Album"
+	typeRelease = "Release"
+	typeTrack   = "Track"
+	typeLabel   = "Label"
+
+	relPerformedBy   = "performed_by"
+	relIssuedAs      = "issued_as"
+	relContainsTrack = "contains_track"
+	relReleasedBy    = "released_by"
 )
 
 var (
@@ -83,10 +104,15 @@ var (
 	itemTypeNames = map[profile][]string{
 		profileBDManga: {typeManga, typeComic, typeUniverse, typeEdition, typeVolume, typePerson, typePublisher},
 		profileNovels:  {typeNovel, typeSaga, typeUniverse, typeEdition, typeVolume, typePerson, typePublisher},
+		profileMusic:   {typeAlbum, typeRelease, typeTrack, typeArtist, typeLabel},
 	}
-	relationTypeNames = []string{relContainsWork, relCreatedBy, relPublishedAs, relEditedBy, relContainsVolume}
+	relationTypeNames = map[profile][]string{
+		profileBDManga: {relContainsWork, relCreatedBy, relPublishedAs, relEditedBy, relContainsVolume},
+		profileNovels:  {relContainsWork, relCreatedBy, relPublishedAs, relEditedBy, relContainsVolume},
+		profileMusic:   {relPerformedBy, relIssuedAs, relContainsTrack, relReleasedBy},
+	}
 
-	// packageIDs: fixed ids of the types in the « books » package. A type is found by this id
+	// packageIDs: fixed ids of the types in the domain packages. A type is found by this id
 	// first (it may have been renamed on the instance), then by its technical name (type
 	// created by hand, outside the package).
 	packageIDs = map[string]uuid.UUID{
@@ -104,6 +130,15 @@ var (
 		relPublishedAs:    uuid.MustParse("c0000000-0000-0000-0000-000000000013"),
 		relEditedBy:       uuid.MustParse("c0000000-0000-0000-0000-000000000014"),
 		relContainsVolume: uuid.MustParse("c0000000-0000-0000-0000-000000000015"),
+		typeArtist:        uuid.MustParse("b0000000-0000-0000-0000-000000000020"),
+		typeAlbum:         uuid.MustParse("b0000000-0000-0000-0000-000000000021"),
+		typeRelease:       uuid.MustParse("b0000000-0000-0000-0000-000000000022"),
+		typeTrack:         uuid.MustParse("b0000000-0000-0000-0000-000000000023"),
+		typeLabel:         uuid.MustParse("b0000000-0000-0000-0000-000000000024"),
+		relPerformedBy:    uuid.MustParse("c0000000-0000-0000-0000-000000000020"),
+		relIssuedAs:       uuid.MustParse("c0000000-0000-0000-0000-000000000021"),
+		relContainsTrack:  uuid.MustParse("c0000000-0000-0000-0000-000000000022"),
+		relReleasedBy:     uuid.MustParse("c0000000-0000-0000-0000-000000000023"),
 	}
 )
 
@@ -124,16 +159,33 @@ type (
 
 // ID and Domain identify the connector (external.Connector).
 func (c *Connector) ID() string {
-	if c.profile == profileNovels {
+	switch c.profile {
+	case profileNovels:
 		return "novels"
+	case profileMusic:
+		return "music"
 	}
 	return "bd-manga"
 }
-func (c *Connector) Domain() string { return "books" }
+
+func (c *Connector) Domain() string {
+	if c.profile == profileMusic {
+		return "music"
+	}
+	return "books"
+}
 
 // EditionsByWork: the novels connector lists the editions of a Wikidata work
-// (BnF work record, bib.work2bib).
-func (c *Connector) EditionsByWork() bool { return c.profile == profileNovels }
+// (BnF work record, bib.work2bib), the music connector the releases of an album.
+func (c *Connector) EditionsByWork() bool { return c.profile != profileBDManga }
+
+// EditionCode is the code editions are searched by: the ISBN of a book, the barcode of a release.
+func (c *Connector) EditionCode() string {
+	if c.profile == profileMusic {
+		return "barcode"
+	}
+	return "isbn"
+}
 
 // domain holds the resolved types.
 type domain struct {
@@ -176,7 +228,7 @@ func (c *Connector) domain(ctx context.Context) (*domain, error) {
 		}
 		d.types[n] = t
 	}
-	for _, n := range relationTypeNames {
+	for _, n := range relationTypeNames[c.profile] {
 		if relByID[packageIDs[n]] {
 			d.relations[n] = packageIDs[n]
 		} else if id, ok := relByName[n]; ok {
@@ -193,7 +245,7 @@ func (c *Connector) domain(ctx context.Context) (*domain, error) {
 
 func (d *domain) typeID(name string) uuid.UUID { return d.types[name].ID }
 
-// today is the retrieval date written in `sources` (attribution of the BnF).
+// today is the retrieval date written in `sources` (attribution of the sources).
 func (c *Connector) today() string {
 	now := time.Now
 	if c.Now != nil {

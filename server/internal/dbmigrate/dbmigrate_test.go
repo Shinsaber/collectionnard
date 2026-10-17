@@ -36,7 +36,7 @@ func TestResolveMigrationsDir_Default(t *testing.T) {
 		t.Errorf("got %q, want ../db/migrations", got)
 	}
 	seeds, err := ResolveSeedFiles("")
-	if err != nil || !slices.Equal(seeds, []string{"../db/seed.sql", "../db/seed_bd_manga.sql"}) {
+	if err != nil || !slices.Equal(seeds, []string{"../db/seed.sql", "../db/seed_bd_manga.sql", "../db/seed_music.sql"}) {
 		t.Errorf("seeds: got %q, %v", seeds, err)
 	}
 	// Explicit comma-separated list, spaces and empty entries ignored.

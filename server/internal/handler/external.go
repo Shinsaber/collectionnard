@@ -11,7 +11,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/shinsaber/colec/internal/external"
 	"github.com/shinsaber/colec/internal/external/bnf"
-	"github.com/shinsaber/colec/internal/external/wikidata"
 	"github.com/shinsaber/colec/internal/model"
 )
 
@@ -34,6 +33,10 @@ func (h *Handler) ListConnectors(w http.ResponseWriter, r *http.Request) {
 		info := model.ConnectorInfo{ID: c.ID(), Domain: c.Domain()}
 		if w, ok := c.(interface{ EditionsByWork() bool }); ok {
 			info.EditionsByWork = w.EditionsByWork()
+		}
+		info.EditionCode = "isbn"
+		if ec, ok := c.(interface{ EditionCode() string }); ok {
+			info.EditionCode = ec.EditionCode()
 		}
 		out = append(out, info)
 	}
@@ -72,17 +75,19 @@ func (h *Handler) SearchExternalWorks(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, hits)
 }
 
-// SearchExternalEditions answers GET /external/{connector}/editions?q=|isbn= (admin).
+// SearchExternalEditions answers GET /external/{connector}/editions?q=|isbn=|barcode=|work= (admin).
+// The connector checks the work identifier (Wikidata, MusicBrainz…).
 func (h *Handler) SearchExternalEditions(w http.ResponseWriter, r *http.Request) {
 	conn, ok := h.connector(w, r)
 	if !ok {
 		return
 	}
 	rawISBN := strings.TrimSpace(r.URL.Query().Get("isbn"))
+	rawBarcode := strings.TrimSpace(r.URL.Query().Get("barcode"))
 	work := strings.TrimSpace(r.URL.Query().Get("work"))
 	hasQ := strings.TrimSpace(r.URL.Query().Get("q")) != ""
-	if n := btoi(rawISBN != "") + btoi(work != "") + btoi(hasQ); n != 1 {
-		respondError(w, http.StatusBadRequest, "bad_request", "exactly one of q, isbn and work is required")
+	if n := btoi(rawISBN != "") + btoi(rawBarcode != "") + btoi(work != "") + btoi(hasQ); n != 1 {
+		respondError(w, http.StatusBadRequest, "bad_request", "exactly one of q, isbn, barcode and work is required")
 		return
 	}
 	var query model.ExternalEditionQuery
@@ -92,9 +97,14 @@ func (h *Handler) SearchExternalEditions(w http.ResponseWriter, r *http.Request)
 			respondError(w, http.StatusBadRequest, "bad_request", "invalid ISBN")
 			return
 		}
+	case rawBarcode != "":
+		if query.Barcode = external.NormalizeBarcode(rawBarcode); query.Barcode == "" {
+			respondError(w, http.StatusBadRequest, "bad_request", "invalid barcode")
+			return
+		}
 	case work != "":
-		if !wikidata.IsQID(work) {
-			respondError(w, http.StatusBadRequest, "bad_request", "work must be a Wikidata identifier (Q…)")
+		if len(work) > maxSearchLength {
+			respondError(w, http.StatusBadRequest, "bad_request", "work identifier too long")
 			return
 		}
 		query.Work = work

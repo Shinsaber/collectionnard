@@ -3,7 +3,7 @@
     <PageHeader :title="t('admin.external.title')">
       <template #subtitle>
         <p class="max-w-3xl text-[15px] text-muted">
-          {{ t("admin.external.intro") }}
+          {{ t(`admin.external.connectors.${connector}.intro`) }}
         </p>
       </template>
     </PageHeader>
@@ -69,8 +69,9 @@
         v-model="editions"
         :connector="connector"
         :suggestion="work?.label"
-        :work="work?.wikidata_id"
-        :by-work="connectors.find((c) => c.id === connector)?.editions_by_work"
+        :work="work?.id"
+        :by-work="info?.editions_by_work"
+        :code="info?.edition_code"
       />
       <div class="flex items-center gap-3">
         <ElButton
@@ -94,6 +95,7 @@
         v-model="selected"
         v-model:overrides="overrides"
         :plan="plan"
+        :connector="connector"
       />
       <div class="mt-4 flex flex-wrap gap-2">
         <ElButton @click="step = 0">{{ t("admin.external.back") }}</ElButton>
@@ -142,7 +144,7 @@
 
 <script setup lang="ts">
 // Import depuis les sources externes (admin, un connecteur par sorte de collection) : recherche d'une œuvre
-// (Wikidata) et d'éditions (BnF), aperçu à cocher, simulation, import (tout ou rien).
+// (Wikidata, MusicBrainz…) et d'éditions (BnF, MusicBrainz…), aperçu à cocher, simulation, import (tout ou rien).
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { externalApi } from "@/api/client";
@@ -194,6 +196,9 @@ const busy = ref(false);
 // Connecteur courant ; la liste vient du serveur (seuls les connecteurs embarqués).
 const connectors = ref<ConnectorInfo[]>([]);
 const connector = ref("bd-manga");
+const info = computed(() =>
+  connectors.value.find((c) => c.id === connector.value),
+);
 watch(connector, () => restart());
 
 onMounted(() => {
@@ -215,8 +220,8 @@ const hasSelection = computed(() => !!work.value || editions.value.length > 0);
 
 function request(withSelection: boolean): ExternalImportRequest {
   return {
-    work: work.value?.wikidata_id,
-    editions: editions.value.map((e) => e.bnf_ark),
+    work: work.value?.id,
+    editions: editions.value.map((e) => e.id),
     ...(withSelection
       ? {
           selected: selected.value,

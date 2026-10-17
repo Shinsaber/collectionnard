@@ -1,0 +1,333 @@
+{
+  "secondary-type-ids": [],
+  "title": "OK Computer",
+  "secondary-types": [],
+  "relations": [
+    {
+      "begin": null,
+      "attributes": [],
+      "attribute-values": {},
+      "end": null,
+      "source-credit": "",
+      "target-type": "url",
+      "target-credit": "",
+      "type-id": "a50a1d20-2b20-4d2c-9a29-eb771dd78386",
+      "ended": false,
+      "attribute-ids": {},
+      "direction": "forward",
+      "type": "allmusic",
+      "url": {
+        "id": "11137828-3d75-4801-9753-6e213d8f4c67",
+        "resource": "https://www.allmusic.com/album/mw0000024289"
+      }
+    },
+    {
+      "direction": "forward",
+      "attribute-ids": {},
+      "ended": false,
+      "url": {
+        "id": "c0bccb62-988a-46a7-b0ee-54354088467f",
+        "resource": "https://www.last.fm/music/Radiohead/OK+Computer"
+      },
+      "type": "discography entry",
+      "source-credit": "",
+      "attribute-values": {},
+      "end": null,
+      "begin": null,
+      "attributes": [],
+      "type-id": "5849de4a-78ae-4876-975d-2181107e70b7",
+      "target-credit": "",
+      "target-type": "url"
+    },
+    {
+      "type": "discogs",
+      "url": {
+        "id": "56db613c-e663-4f15-bc41-d00f47ebff73",
+        "resource": "https://www.discogs.com/master/21491"
+      },
+      "direction": "forward",
+      "ended": false,
+      "attribute-ids": {},
+      "type-id": "99e550f3-5ab4-3110-b5b9-fe01d970b126",
+      "target-type": "url",
+      "target-credit": "",
+      "source-credit": "",
+      "attributes": [],
+      "begin": null,
+      "end": null,
+      "attribute-values": {}
+    },
+    {
+      "ended": false,
+      "attribute-ids": {},
+      "direction": "forward",
+      "url": {
+        "id": "a4dfc85f-c718-412e-8598-a1f14392b7b8",
+        "resource": "https://genius.com/albums/Radiohead/Ok-computer"
+      },
+      "type": "lyrics",
+      "attributes": [],
+      "begin": null,
+      "attribute-values": {},
+      "end": null,
+      "source-credit": "",
+      "target-type": "url",
+      "target-credit": "",
+      "type-id": "156344d3-da8b-40c6-8b10-7b1c22727124"
+    },
+    {
+      "url": {
+        "id": "c549a010-8991-41b7-8b65-beb948fa9e2f",
+        "resource": "http://musicmoz.org/Bands_and_Artists/R/Radiohead/Discography/OK_Computer/"
+      },
+      "type": "other databases",
+      "direction": "forward",
+      "ended": false,
+      "attribute-ids": {},
+      "type-id": "38320e40-9f4a-3ae7-8cb2-3f3c9c5d856d",
+      "target-type": "url",
+      "target-credit": "",
+      "source-credit": "",
+      "begin": null,
+      "attributes": [],
+      "attribute-values": {},
+      "end": null
+    },
+    {
+      "source-credit": "",
+      "end": null,
+      "attribute-values": {},
+      "attributes": [],
+      "begin": null,
+      "type-id": "38320e40-9f4a-3ae7-8cb2-3f3c9c5d856d",
+      "target-credit": "",
+      "target-type": "url",
+      "direction": "forward",
+      "attribute-ids": {},
+      "ended": false,
+      "url": {
+        "id": "826b133b-5bec-4d59-bf68-a0e77982c6a0",
+        "resource": "https://rateyourmusic.com/release/album/radiohead/ok_computer/"
+      },
+      "type": "other databases"
+    },
+    {
+      "url": {
+        "id": "96b97a44-0615-4afa-9330-1ef5282927c0",
+        "resource": "https://www.offiziellecharts.de/charts/album-details-2562"
+      },
+      "type": "other databases",
+      "ended": false,
+      "attribute-ids": {},
+      "direction": "forward",
+      "target-type": "url",
+      "target-credit": "",
+      "type-id": "38320e40-9f4a-3ae7-8cb2-3f3c9c5d856d",
+      "attributes": [],
+      "begin": null,
+      "attribute-values": {},
+      "end": null,
+      "source-credit": ""
+    },
+    {
+      "type": "other databases",
+      "url": {
+        "resource": "https://www.progarchives.com/album.asp?id=7066",
+        "id": "2bd72cef-77aa-404d-8018-a07c1ced59d3"
+      },
+      "direction": "forward",
+      "ended": false,
+      "attribute-ids": {},
+      "type-id": "38320e40-9f4a-3ae7-8cb2-3f3c9c5d856d",
+      "target-type": "url",
+      "target-credit": "",
+      "source-credit": "",
+      "attributes": [],
+      "begin": null,
+      "end": null,
+      "attribute-values": {}
+    },
+    {
+      "type-id": "38320e40-9f4a-3ae7-8cb2-3f3c9c5d856d",
+      "target-type": "url",
+      "target-credit": "",
+      "source-credit": "",
+      "begin": null,
+      "attributes": [],
+      "end": null,
+      "attribute-values": {},
+      "type": "other databases",
+      "url": {
+        "resource": "https://www.spirit-of-rock.com/en/album/OK_Computer/3113",
+        "id": "c5754006-635d-4a4d-a4a4-1fa88842bb76"
+      },
+      "direction": "forward",
+      "ended": false,
+      "attribute-ids": {}
+    },
+    {
+      "target-type": "url",
+      "target-credit": "",
+      "type-id": "38320e40-9f4a-3ae7-8cb2-3f3c9c5d856d",
+      "attributes": [],
+      "begin": null,
+      "attribute-values": {},
+      "end": null,
+      "source-credit": "",
+      "type": "other databases",
+      "url": {
+        "resource": "http://www.musik-sammler.de/album/30875",
+        "id": "9ca7c985-00b8-40a9-a9a9-a9cbaf4a305f"
+      },
+      "ended": false,
+      "attribute-ids": {},
+      "direction": "forward"
+    },
+    {
+      "type": "review",
+      "url": {
+        "id": "12fc103b-e397-4370-9d3c-1cf290d2c4fa",
+        "resource": "http://articles.chicagotribune.com/1997-07-04/entertainment/9707040186_1_ambition-ugly-star"
+      },
+      "direction": "forward",
+      "attribute-ids": {},
+      "ended": false,
+      "type-id": "c3ac9c3b-f546-4d15-873f-b294d2c1b708",
+      "target-credit": "",
+      "target-type": "url",
+      "source-credit": "",
+      "attribute-values": {},
+      "end": null,
+      "begin": null,
+      "attributes": []
+    },
+    {
+      "source-credit": "",
+      "end": null,
+      "attribute-values": {},
+      "begin": null,
+      "attributes": [],
+      "type-id": "c3ac9c3b-f546-4d15-873f-b294d2c1b708",
+      "target-credit": "",
+      "target-type": "url",
+      "direction": "forward",
+      "attribute-ids": {},
+      "ended": false,
+      "type": "review",
+      "url": {
+        "id": "2654ebf2-896e-4a24-ae85-3c7eee906f83",
+        "resource": "http://content.time.com/time/magazine/article/0,9171,986902,00.html"
+      }
+    },
+    {
+      "url": {
+        "id": "cd7038be-dfe8-4260-bab4-71011d50f8dd",
+        "resource": "https://www.bbc.co.uk/music/reviews/wcp2"
+      },
+      "type": "review",
+      "ended": false,
+      "attribute-ids": {},
+      "direction": "forward",
+      "target-type": "url",
+      "target-credit": "",
+      "type-id": "c3ac9c3b-f546-4d15-873f-b294d2c1b708",
+      "begin": null,
+      "attributes": [],
+      "end": null,
+      "attribute-values": {},
+      "source-credit": ""
+    },
+    {
+      "url": {
+        "id": "938be333-5275-4201-bfc6-feb7b7bd6635",
+        "resource": "http://web.archive.org/web/20010303103405/www.pitchforkmedia.com/record-reviews/r/radiohead/ok-computer.shtml"
+      },
+      "type": "review",
+      "direction": "forward",
+      "ended": false,
+      "attribute-ids": {},
+      "type-id": "c3ac9c3b-f546-4d15-873f-b294d2c1b708",
+      "target-type": "url",
+      "target-credit": "",
+      "source-credit": "",
+      "begin": null,
+      "attributes": [],
+      "attribute-values": {},
+      "end": null
+    },
+    {
+      "type-id": "c3ac9c3b-f546-4d15-873f-b294d2c1b708",
+      "target-type": "url",
+      "target-credit": "",
+      "source-credit": "",
+      "begin": null,
+      "attributes": [],
+      "attribute-values": {},
+      "end": null,
+      "type": "review",
+      "url": {
+        "id": "ff1be385-cae3-4d32-81e4-a2040ab29904",
+        "resource": "http://www.ew.com/ew/article/0,,20202376,00.html"
+      },
+      "direction": "forward",
+      "ended": false,
+      "attribute-ids": {}
+    },
+    {
+      "target-credit": "",
+      "target-type": "url",
+      "type-id": "c3ac9c3b-f546-4d15-873f-b294d2c1b708",
+      "attribute-values": {},
+      "end": null,
+      "attributes": [],
+      "begin": null,
+      "source-credit": "",
+      "url": {
+        "resource": "http://www.inmusicwetrust.com/articles/01r36.html",
+        "id": "057bf38d-02c8-4c36-b729-d38d83c560a8"
+      },
+      "type": "review",
+      "attribute-ids": {},
+      "ended": false,
+      "direction": "forward"
+    },
+    {
+      "type": "wikidata",
+      "url": {
+        "id": "d27dd960-9b18-44a0-9bb4-1fa53f58e33e",
+        "resource": "https://www.wikidata.org/wiki/Q202996"
+      },
+      "direction": "forward",
+      "attribute-ids": {},
+      "ended": false,
+      "type-id": "b988d08c-5d86-4a57-9557-c83b399e3580",
+      "target-credit": "",
+      "target-type": "url",
+      "source-credit": "",
+      "end": null,
+      "attribute-values": {},
+      "attributes": [],
+      "begin": null
+    }
+  ],
+  "primary-type": "Album",
+  "primary-type-id": "f529b476-6e62-324f-b0aa-1f3e33d313fc",
+  "first-release-date": "1997-05-21",
+  "id": "b1392450-e666-3926-a536-22c65f834433",
+  "disambiguation": "",
+  "artist-credit": [
+    {
+      "artist": {
+        "disambiguation": "",
+        "id": "a74b1b7f-71a5-4011-9441-d0b5e4122711",
+        "type": "Group",
+        "name": "Radiohead",
+        "type-id": "e431f5f6-b5d2-343d-8b36-72607fffb74b",
+        "country": "GB",
+        "sort-name": "Radiohead"
+      },
+      "name": "Radiohead",
+      "joinphrase": ""
+    }
+  ]
+}
