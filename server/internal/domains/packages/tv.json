@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "tv",
-  "package_version": 4,
+  "package_version": 5,
   "title": {
     "fr": "Séries TV",
     "en": "TV series"
@@ -755,7 +755,8 @@
           "en": "Season contains an episode",
           "fr": "Saison contient un épisode"
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "x-completeness": true
       },
       "source_item_type_ids": [
         "b0000000-0000-0000-0000-000000000003"
@@ -802,7 +803,8 @@
           "en": "DVD includes an episode",
           "fr": "DVD inclut un épisode"
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "x-completeness": true
       },
       "source_item_type_ids": [
         "b0000000-0000-0000-0000-000000000005"

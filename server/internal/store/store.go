@@ -130,6 +130,8 @@ type Store interface {
 
 	// Stats
 	GetStats(ctx context.Context) (*model.Stats, error)
+	GetCollectionStats(ctx context.Context, collectionID uuid.UUID) (*model.CollectionStats, error)
+	GetUserStats(ctx context.Context, userID uuid.UUID) (*model.MeStats, error)
 
 	// Import / export (catalogue only: meta-types, items, relations, tags)
 	ExportCatalog(ctx context.Context) (*model.CatalogExport, error)

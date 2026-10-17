@@ -15,6 +15,7 @@ export default {
     domains: "Domaines",
     users: "Utilisateurs",
     offline: "Hors ligne",
+    stats: "Statistiques",
   },
   mainNav: "Navigation principale",
   skipToContent: "Aller au contenu",

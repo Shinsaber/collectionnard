@@ -1,5 +1,4 @@
 <template>
-  <!-- Avatar d'un compte : l'image envoyée (vignette), sinon l'initiale du nom affiché. -->
   <img
     v-if="src"
     :src="src"
@@ -23,6 +22,7 @@
 </template>
 
 <script setup lang="ts">
+// Avatar d'un compte : l'image envoyée (vignette), sinon l'initiale du nom affiché.
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 

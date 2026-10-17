@@ -56,7 +56,9 @@
         v-model:x-label="xLabel"
         v-model:title="xTitle"
         v-model:description="xDescription"
+        v-model:completeness="xCompleteness"
         :labels="ft.labels"
+        :show-completeness="ft.completeness"
       />
 
       <!-- JSON Schema généré (lecture seule) -->
@@ -96,7 +98,7 @@
 import { computed, ref, watch, type PropType } from "vue";
 import { useI18n } from "vue-i18n";
 import { LANGS } from "@/i18n/langs";
-import { linksProperty } from "@/lib/schema";
+import { isCompleteness, linksProperty } from "@/lib/schema";
 import SchemaFieldCard from "./SchemaFieldCard.vue";
 import SchemaRootCard from "./SchemaRootCard.vue";
 import {
@@ -163,6 +165,8 @@ const xLabel = ref("");
 // Nom et description affichés du méta-type, par langue (extensions racine x-title / x-description).
 const xTitle = ref<Record<string, string>>({});
 const xDescription = ref<Record<string, string>>({});
+// Relation de composition (x-completeness) : compte des cibles possédées dans les statistiques.
+const xCompleteness = ref(false);
 // Mots-clés racine inconnus, restitués à l'identique.
 const rootExtra = ref<Record<string, unknown>>({});
 
@@ -384,6 +388,7 @@ const schema = computed<Record<string, unknown>>(() => {
   if (Object.keys(xTitle.value).length > 0) result["x-title"] = xTitle.value;
   if (Object.keys(xDescription.value).length > 0)
     result["x-description"] = xDescription.value;
+  if (xCompleteness.value) result["x-completeness"] = true;
   return result;
 });
 
@@ -406,6 +411,7 @@ function loadFrom(value: Record<string, unknown>) {
   xLabel.value = typeof value["x-label"] === "string" ? value["x-label"] : "";
   xTitle.value = stringMap(value["x-title"]);
   xDescription.value = stringMap(value["x-description"]);
+  xCompleteness.value = isCompleteness(value);
   rootExtra.value = Object.fromEntries(
     Object.entries(value ?? {}).filter(([k]) => !MANAGED_ROOT_KEYS.has(k)),
   );

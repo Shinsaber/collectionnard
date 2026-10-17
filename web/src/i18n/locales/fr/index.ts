@@ -12,6 +12,7 @@ import items from "./items";
 import layout from "./layout";
 import offline from "./offline";
 import schema from "./schema";
+import stats from "./stats";
 
 const fr = {
   account,
@@ -26,6 +27,7 @@ const fr = {
   layout,
   offline,
   schema,
+  stats,
 };
 
 export type Messages = typeof fr;

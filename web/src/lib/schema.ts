@@ -116,6 +116,18 @@ export function itemLabel(
   return renderLabel(schema, item.attributes, lang) || item.id.slice(0, 8);
 }
 
+/**
+ * Relation de composition (extension racine `x-completeness` d'un RelationType) : la cible fait
+ * partie de la source ; les statistiques comptent les cibles possédées sur le total.
+ */
+export function isCompleteness(schema: unknown): boolean {
+  return (
+    !!schema &&
+    typeof schema === "object" &&
+    (schema as Record<string, unknown>)["x-completeness"] === true
+  );
+}
+
 /** Libellé d'un champ via `x-labels`, repli sur la clé mise en forme. */
 export function fieldLabel(
   schema: Schema | null | undefined,

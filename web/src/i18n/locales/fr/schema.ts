@@ -62,6 +62,9 @@ export default {
       "ex. {'{'}title{'}'} ou {'{'}number{'}'}. {'{'}title{'}'}",
     xLabelHelp:
       "Gabarit avec les clés des champs entre accolades ; sans gabarit, le premier champ title, name ou label est utilisé.",
+    completeness: "Relation de composition",
+    completenessHelp:
+      "La cible fait partie de la source (tome d'une édition, épisode d'une saison…) : les statistiques comptent les cibles possédées sur le total (« 30 tomes sur 42 »).",
   },
   field: {
     moveUp: "Monter le champ",

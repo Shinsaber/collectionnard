@@ -18,8 +18,10 @@ describe("isNavActive", () => {
     expect(isNavActive("/collections", "/collections-archive")).toBe(false);
   });
 
-  it("rattache l'administration à l'onglet « Plus »", () => {
+  it("rattache l'administration, les statistiques et le hors ligne à l'onglet « Plus »", () => {
     expect(isMoreActive("/admin/item-types")).toBe(true);
+    expect(isMoreActive("/stats")).toBe(true);
+    expect(isMoreActive("/offline")).toBe(true);
     expect(isMoreActive("/items")).toBe(false);
   });
 });

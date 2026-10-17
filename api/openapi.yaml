@@ -1243,6 +1243,188 @@ components:
           description: Nombre total de relations (arêtes du graphe).
           example: 340
 
+    NumberStat:
+      type: object
+      description: Agrégats d'un attribut numérique (`number` ou `integer`) du CollectionType.
+      required: [field, count, sum, avg, min, max]
+      properties:
+        field:
+          type: string
+          description: Clé de l'attribut dans le schéma du CollectionType.
+          example: purchase_price
+        count:
+          type: integer
+          description: Nombre d'exemplaires qui portent une valeur numérique.
+        sum: { type: number }
+        avg: { type: number }
+        min: { type: number }
+        max: { type: number }
+
+    ValueCount:
+      type: object
+      required: [value, count]
+      properties:
+        value:
+          type: string
+          description: |
+            Valeur brute (valeur d'enum, ou `true` / `false` pour un booléen) ; le client la traduit
+            via `x-enum-labels`.
+          example: very_good
+        count:
+          type: integer
+
+    Distribution:
+      type: object
+      description: |
+        Répartition d'un attribut enum ou booléen du CollectionType. Les valeurs suivent l'ordre de `enum`
+        (celles à zéro comprises), puis les valeurs hors enum par nombre décroissant.
+      required: [field, values, missing]
+      properties:
+        field:
+          type: string
+          example: condition
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/ValueCount"
+        missing:
+          type: integer
+          description: Exemplaires sans valeur pour cet attribut.
+
+    MonthCount:
+      type: object
+      required: [month, count]
+      properties:
+        month:
+          type: string
+          pattern: "^[0-9]{4}-[0-9]{2}$"
+          example: 2026-10
+        count:
+          type: integer
+
+    Timeline:
+      type: object
+      description: Nombre d'exemplaires par mois pour un attribut date (`format` date ou date-time), mois croissants.
+      required: [field, months]
+      properties:
+        field:
+          type: string
+          example: acquisition_date
+        months:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonthCount"
+
+    StatsItem:
+      type: object
+      description: Item réduit à ce qu'il faut pour afficher son libellé (`x-label` de son ItemType, calculé par le client).
+      required: [id, item_type_id, attributes]
+      properties:
+        id: { type: string, format: uuid }
+        item_type_id: { type: string, format: uuid }
+        attributes:
+          type: object
+          additionalProperties: true
+
+    Completeness:
+      type: object
+      description: |
+        Complétude d'un item « contenant » : parmi ses enfants par les relations marquées `x-completeness`
+        (tomes d'une édition, épisodes d'une saison, pistes d'un disque…), combien sont dans la collection.
+      required: [item, owned, total]
+      properties:
+        item:
+          $ref: "#/components/schemas/StatsItem"
+        owned:
+          type: integer
+          example: 30
+        total:
+          type: integer
+          example: 42
+
+    CollectionStats:
+      type: object
+      description: |
+        Statistiques d'une collection, déduites du schéma de son CollectionType (aucune clé codée en dur).
+      required: [collection_id, total_items, items_by_type, numbers, distributions, timelines, added, completeness, completeness_truncated]
+      properties:
+        collection_id: { type: string, format: uuid }
+        total_items:
+          type: integer
+          description: Nombre d'exemplaires de la collection.
+        items_by_type:
+          type: array
+          description: Exemplaires par ItemType (nombre décroissant).
+          items:
+            $ref: "#/components/schemas/ItemsByType"
+        numbers:
+          type: array
+          description: Un élément par attribut numérique du schéma (ordre `x-order`).
+          items:
+            $ref: "#/components/schemas/NumberStat"
+        distributions:
+          type: array
+          description: Un élément par attribut enum ou booléen du schéma.
+          items:
+            $ref: "#/components/schemas/Distribution"
+        timelines:
+          type: array
+          description: Un élément par attribut date du schéma.
+          items:
+            $ref: "#/components/schemas/Timeline"
+        added:
+          type: array
+          description: Ajouts à la collection par mois (date d'ajout).
+          items:
+            $ref: "#/components/schemas/MonthCount"
+        completeness:
+          type: array
+          description: |
+            Contenants dont au moins un enfant est dans la collection : les incomplets d’abord, les plus
+            proches de la complétude en tête, puis les complets (au plus 200).
+          items:
+            $ref: "#/components/schemas/Completeness"
+        completeness_truncated:
+          type: boolean
+          description: Vrai si la liste `completeness` a été coupée à 200 éléments.
+
+    CollectionSummary:
+      type: object
+      required: [id, name, collection_type_id, item_count]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        collection_type_id: { type: string, format: uuid }
+        item_count: { type: integer }
+
+    MeStats:
+      type: object
+      description: Statistiques de toutes les collections de l'utilisateur connecté.
+      required: [total_collections, total_entries, distinct_items, items_by_type, collections, added]
+      properties:
+        total_collections: { type: integer }
+        total_entries:
+          type: integer
+          description: Exemplaires, toutes collections confondues (un item dans deux collections compte deux fois).
+        distinct_items:
+          type: integer
+          description: Items différents, toutes collections confondues.
+        items_by_type:
+          type: array
+          description: Items différents par ItemType (nombre décroissant).
+          items:
+            $ref: "#/components/schemas/ItemsByType"
+        collections:
+          type: array
+          description: Mes collections, la plus grande en premier.
+          items:
+            $ref: "#/components/schemas/CollectionSummary"
+        added:
+          type: array
+          description: Ajouts par mois, toutes collections confondues.
+          items:
+            $ref: "#/components/schemas/MonthCount"
+
     Error:
       type: object
       description: |
@@ -4354,6 +4536,54 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Stats"
+
+  /me/stats:
+    get:
+      tags: [Stats]
+      summary: Mes statistiques
+      description: Synthèse de toutes les collections de l'utilisateur connecté.
+      operationId: getMyStats
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Statistiques de l'utilisateur.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeStats"
+
+  /collections/{id}/stats:
+    get:
+      tags: [Stats]
+      summary: Statistiques d'une collection
+      description: |
+        Collection de l'utilisateur connecté (404 pour celle d'un autre). Agrégats des attributs du
+        CollectionType selon leur type, ajouts par mois et complétude par le graphe (relations
+        `x-completeness`).
+      operationId: getCollectionStats
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Statistiques de la collection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectionStats"
   # ===========================================================================
   # Import / export
   # ===========================================================================

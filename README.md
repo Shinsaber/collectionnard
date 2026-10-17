@@ -16,6 +16,7 @@ Séries TV, DVD, livres, cartes à collectionner, vinyles… tout type de collec
 | **Frontend**        | Vue 3 + TypeScript                                             | 3.5 / 6.0  |
 | **UI**              | Element Plus (MIT) + Tailwind CSS (plugin Vite) ; identité « Étiquette », responsive (mobile → bureau) | 2.14 / 4.3 |
 | **Graphes**         | Cytoscape.js                                                   | 3.34       |
+| **Statistiques**    | Apache ECharts (Apache 2.0, chargé à la demande)               | 6.1        |
 | **Build**           | Vite (Rolldown) + vue-tsc 3, Pinia 4, vue-router 5             | 8.3        |
 | **Déploiement**     | Docker Compose                                                 | 4 services |
 
@@ -289,6 +290,7 @@ Le projet utilise des extensions custom dans les JSON Schemas pour piloter le fr
 | `x-description`      | Description du type par langue ; repli sur `description`                                                 |
 | `x-enum-labels`      | (propriété) Libellés des valeurs d'enum par langue (`{fr: {tv: "Télévision"}, en: {tv: "TV"}}`)          |
 | `x-widget`           | Widget spécifique : `image-gallery`, `i18n-text` (une chaîne par langue), `links` (liste de liens libellé + URL)                                                         |
+| `x-completeness`     | (racine, RelationType) Relation de composition : « 30 tomes sur 42 » dans les statistiques d'une collection |
 | `x-image-categories` | Catégories d'images avec ratios (`{poster: {ratio: "2/3"}}`) et contrôles facultatifs à l'envoi : `tolerance` (écart de ratio en %), `min_width` / `min_height` (px), `strict` (refuser plutôt qu'avertir) |
 
 Sans extension, le widget découle du schéma : `enum` → liste déroulante, `integer`/`number` avec `minimum`

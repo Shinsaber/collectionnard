@@ -250,3 +250,38 @@ itTop("conserve les contrôles d'envoi des catégories d'images", async () => {
   });
   expect((out.properties as Props).images!["x-image-categories"]).toEqual(cats);
 });
+
+// Composition (x-completeness) : case proposée aux seuls types de relation, valeur conservée.
+describe("SchemaBuilder — x-completeness", () => {
+  it("coche, décoche et conserve la composition d'une relation", async () => {
+    const w = mount(SchemaBuilder, {
+      props: {
+        modelValue: { type: "object", properties: {} },
+        features: { completeness: true },
+      },
+      global: { plugins: [ElementPlus] },
+    });
+    await w.vm.$nextTick();
+    const last = () => {
+      const e = w.emitted("update:modelValue")!;
+      return e[e.length - 1]![0] as Schema;
+    };
+    expect(last()["x-completeness"]).toBeUndefined();
+    await w.find('[data-test="x-completeness"] input').setValue(true);
+    expect(last()["x-completeness"]).toBe(true);
+    await w.find('[data-test="x-completeness"] input').setValue(false);
+    expect(last()["x-completeness"]).toBeUndefined();
+  });
+
+  it("cache la case hors des relations sans perdre une valeur existante", async () => {
+    const w = mount(SchemaBuilder, {
+      props: { modelValue: { type: "object", "x-completeness": true } },
+      global: { plugins: [ElementPlus] },
+    });
+    await w.vm.$nextTick();
+    await w.vm.$nextTick();
+    expect(w.find('[data-test="x-completeness"]').exists()).toBe(false);
+    const e = w.emitted("update:modelValue")!;
+    expect((e[e.length - 1]![0] as Schema)["x-completeness"]).toBe(true);
+  });
+});

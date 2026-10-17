@@ -4689,7 +4689,8 @@
         "en": "Season contains an episode",
         "fr": "Saison contient un épisode"
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "x-completeness": true
     }
   },
   {
@@ -4757,7 +4758,8 @@
         "en": "DVD includes an episode",
         "fr": "DVD inclut un épisode"
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "x-completeness": true
     }
   },
   {
@@ -4811,7 +4813,8 @@
           "minimum": 1
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "x-completeness": true
     }
   },
   {
@@ -4925,7 +4928,8 @@
           "minimum": 0
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "x-completeness": true
     }
   },
   {
@@ -5044,7 +5048,8 @@
           "disc": "Disc",
           "position": "Track"
         }
-      }
+      },
+      "x-completeness": true
     }
   },
   {

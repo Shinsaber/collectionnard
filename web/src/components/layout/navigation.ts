@@ -10,6 +10,7 @@ export const NAV_ICONS = {
   itemTypes: "M12 2l9 5v10l-9 5-9-5V7zM12 12l9-5M12 12v10M12 12L3 7",
   relationTypes: "M4 12h16M14 6l6 6-6 6M10 6l-6 6 6 6",
   collectionTypes: "M3 12V4h8l10 10-8 8zM7.5 7.5h.01",
+  stats: "M4 20V10M10 20V4M16 20v-7M22 20H2",
   offline:
     "M3 3l18 18M8.6 8.6A5 5 0 0 0 7 18h10.6M20.4 16.4A4 4 0 0 0 18 9a6 6 0 0 0-7.7-3.8",
   importExport: "M12 3v12M7 10l5 5 5-5M4 21h16",
@@ -38,9 +39,13 @@ export function isNavActive(to: string, path: string): boolean {
   return path === to || path.startsWith(`${to}/`);
 }
 
-/** Section « Plus » de la barre d'onglets mobile : réglages et pages d'administration. */
+/** Section « Plus » de la barre d'onglets mobile : statistiques, hors ligne et pages d'administration. */
 export function isMoreActive(path: string): boolean {
-  return path.startsWith("/admin");
+  return (
+    path.startsWith("/admin") ||
+    isNavActive("/stats", path) ||
+    isNavActive("/offline", path)
+  );
 }
 
 export function useNavigation() {
@@ -54,6 +59,13 @@ export function useNavigation() {
       label: t("layout.nav.collections"),
       icon: "collections",
     },
+    { to: "/stats", label: t("layout.nav.stats"), icon: "stats" },
+    { to: "/offline", label: t("layout.nav.offline"), icon: "offline" },
+  ]);
+
+  /** Liens de la feuille « Plus » (mobile), avant l'administration. */
+  const sheetLinks = computed<NavLink[]>(() => [
+    { to: "/stats", label: t("layout.nav.stats"), icon: "stats" },
     { to: "/offline", label: t("layout.nav.offline"), icon: "offline" },
   ]);
 
@@ -99,5 +111,5 @@ export function useNavigation() {
     { to: "/admin/images", label: t("layout.nav.images"), icon: "images" },
   ]);
 
-  return { mainLinks, tabLinks, adminLinks };
+  return { mainLinks, tabLinks, sheetLinks, adminLinks };
 }

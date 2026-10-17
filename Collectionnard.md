@@ -167,6 +167,7 @@ une abstraction de ce schéma ; elle n'existe pas dans l'implémentation.
 | `x-enum-labels`      | propriété | Libellés des valeurs d'un `enum` par langue : `{ "fr": { "tv": "Télévision" }, "en": { "tv": "TV" } }` ; repli sur la valeur brute                                                                       |
 | `x-widget`           | propriété | Widget dédié : `i18n-text` (objet `{fr, en, …}` : une chaîne par langue, codes supplémentaires acceptés), `image-gallery` (objet de catégories), `links` (tableau de `{label?, url}`, URL http(s) en format `uri` : liens cliquables sur la fiche, libellé facultatif, nom du site à défaut)                                                          |
 | `x-image-categories` | propriété | Catégories d'images et ratios : `{ "poster": { "ratio": "2/3" } }` (avec `image-gallery`). Contrôles facultatifs à l'envoi, dans le navigateur : `tolerance` (écart de ratio permis, %), `min_width` / `min_height` (px), `strict` (refuser ; sinon avertissement) |
+| `x-completeness`     | racine    | RelationType seulement : `true` marque une relation de composition (la cible fait partie de la source : `contains_volume`, `contains_track`, `contains_episode`, `includes_episode`, `contains_work`). Les statistiques d'une collection comptent, pour chaque source, les cibles présentes sur le total (« 30 tomes sur 42 ») |
 | `x-label`            | racine    | Gabarit du libellé des instances : `"{title}"`, `"{number}. {title}"`, `"{last_name} {first_name}"` ; sans gabarit, repli sur `title`, `name`, `label` (Go `internal/label`, TS `web/src/lib/schema.ts`) |
 
 Règles d'affichage dérivées du schéma lui-même (pas d'extension) : un `integer` / `number` avec `minimum`
@@ -448,7 +449,7 @@ propositions modérées **et** rôle contributeur ; échanges reportés.
 - [x] **P4-0 — Comptes, invitations, profils** : invitations à usage unique (admin, membres si permis), inscription
       depuis un lien, page admin « Utilisateurs » (rôle, désactivation, lien de réinitialisation sans SMTP), profil (nom
       affiché, avatar, présentation, mot de passe).
-- [ ] **P4-1 — Statistiques personnelles** : par collection, sommes et moyennes des attributs numériques, répartition
+- [x] **P4-1 — Statistiques personnelles** : par collection, sommes et moyennes des attributs numériques, répartition
       des enums, courbe des dates ; **complétude** par le graphe (« 30 tomes sur 42 ») via une extension
       `x-completeness` des relations de composition ; graphiques ECharts ; `GET /me/stats`, `/collections/{id}/stats`.
 - [ ] **P4-2 — Visibilité et partage** : collection et profil privés, visibles des membres ou publics ; pages publiques

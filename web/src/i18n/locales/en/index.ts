@@ -11,6 +11,7 @@ import items from "./items";
 import layout from "./layout";
 import offline from "./offline";
 import schema from "./schema";
+import stats from "./stats";
 
 const en: Messages = {
   account,
@@ -25,6 +26,7 @@ const en: Messages = {
   layout,
   offline,
   schema,
+  stats,
 };
 
 export default en;

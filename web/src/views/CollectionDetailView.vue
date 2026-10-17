@@ -42,23 +42,34 @@
       </template>
     </PageHeader>
 
-    <CollectionItemList
-      :items="items.data.value"
-      :schema="schema"
-      :loading="items.loading.value"
-      @edit="openEditItem"
-      @remove="confirmRemove"
-    />
-    <ElPagination
-      class="mt-4 justify-end"
-      hide-on-single-page
-      :layout="isMobile ? 'prev, pager, next' : 'total, prev, pager, next'"
-      :pager-count="isMobile ? 5 : 7"
-      :total="items.total.value"
-      :page-size="items.perPage.value"
-      :current-page="items.page.value"
-      @current-change="onPageChange"
-    />
+    <ElTabs v-model="tab">
+      <ElTabPane :label="t('stats.itemsTab')" name="items">
+        <CollectionItemList
+          :items="items.data.value"
+          :schema="schema"
+          :loading="items.loading.value"
+          @edit="openEditItem"
+          @remove="confirmRemove"
+        />
+        <ElPagination
+          class="mt-4 justify-end"
+          hide-on-single-page
+          :layout="isMobile ? 'prev, pager, next' : 'total, prev, pager, next'"
+          :pager-count="isMobile ? 5 : 7"
+          :total="items.total.value"
+          :page-size="items.perPage.value"
+          :current-page="items.page.value"
+          @current-change="onPageChange"
+        />
+      </ElTabPane>
+      <ElTabPane :label="t('stats.tab')" name="stats" lazy>
+        <CollectionStatsPanel
+          :collection-id="id"
+          :schema="schema"
+          :version="statsVersion"
+        />
+      </ElTabPane>
+    </ElTabs>
 
     <!-- Mobile : ajout en bouton flottant, au-dessus de la barre d'onglets. -->
     <button
@@ -109,7 +120,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, defineAsyncComponent, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { collectionApi, importExportApi } from "@/api/client";
 import { usePagination } from "@/composables/usePagination";
@@ -129,6 +140,11 @@ import CollectionAddItemDialog from "@/components/collection/CollectionAddItemDi
 import CollectionItemList from "@/components/collection/CollectionItemList.vue";
 import { defaultDelimiter } from "@/lib/csv";
 import type { Collection, CollectionItem } from "@/api/types";
+
+// Onglet Statistiques : ECharts n'est téléchargé qu'à sa première ouverture.
+const CollectionStatsPanel = defineAsyncComponent(
+  () => import("@/components/stats/CollectionStatsPanel.vue"),
+);
 
 const props = defineProps<{ id: string }>();
 const { t } = useI18n();
@@ -156,6 +172,9 @@ const exportCollection = (format: ExportFormat) =>
   });
 
 const addVisible = ref(false);
+const tab = ref<"items" | "stats">("items");
+// Incrémenté à chaque modification : l'onglet Statistiques se recharge.
+const statsVersion = ref(0);
 const saving = ref(false);
 
 // Edit item
@@ -194,6 +213,7 @@ async function refreshCollection() {
 
 /** Après un ajout ou un retrait : liste et compteur de la collection. */
 async function afterChange() {
+  statsVersion.value++;
   await items.load().catch((e) => notifyError(e, t("collections.loadFailed")));
   await refreshCollection();
 }
@@ -218,6 +238,7 @@ async function updateItem() {
     });
     notifySuccess(t("collections.detail.attributesUpdated"));
     editDialogVisible.value = false;
+    statsVersion.value++;
     await items.load();
   } catch (e) {
     notifyError(e);

@@ -27,6 +27,8 @@ export interface SchemaBuilderFeatures {
   i18nText: boolean;
   imageGallery: boolean;
   links: boolean;
+  // racine
+  completeness: boolean; // x-completeness (types de relation : composition)
 }
 
 export const defaultFeatures: SchemaBuilderFeatures = {
@@ -50,6 +52,7 @@ export const defaultFeatures: SchemaBuilderFeatures = {
   i18nText: true,
   imageGallery: true,
   links: true,
+  completeness: false,
 };
 
 /** Un champ du schéma tel qu'édité dans le builder. */
@@ -202,6 +205,7 @@ export const MANAGED_ROOT_KEYS = new Set([
   "x-label",
   "x-title",
   "x-description",
+  "x-completeness",
 ]);
 
 /** Parse « neuf, bon, mauvais » en tableau d'enum (null si vide). */

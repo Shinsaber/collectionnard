@@ -47,6 +47,8 @@ import type {
   CollectionItemUpdate,
   GraphResponse,
   Stats,
+  MeStats,
+  CollectionStats,
   Tag,
   PaginatedResponse,
   PaginationParams,
@@ -394,6 +396,11 @@ export const tagApi = {
 // ── Stats ─────────────────────────────────────────────────────────────
 export const statsApi = {
   get: () => http.get<Stats>("/stats").then((r) => r.data),
+  /** Synthèse de mes collections (P4-1). */
+  mine: () => http.get<MeStats>("/me/stats").then((r) => r.data),
+  /** Statistiques d'une de mes collections (P4-1). */
+  collection: (id: string) =>
+    http.get<CollectionStats>(`/collections/${id}/stats`).then((r) => r.data),
 };
 
 // ── Domaines installables ───────────────────────────────────────────────

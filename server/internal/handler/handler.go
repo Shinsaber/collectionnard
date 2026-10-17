@@ -106,6 +106,7 @@ func (h *Handler) Router() chi.Router {
 		r.Post("/api/v1/invitations", h.CreateInvitation)
 		r.Delete("/api/v1/invitations/{id}", h.DeleteInvitation)
 		r.Get("/api/v1/me/offline", h.GetOfflineSnapshot)
+		r.Get("/api/v1/me/stats", h.GetMyStats)
 
 		// Read endpoints (all authenticated users)
 		r.Get("/api/v1/item-types", h.ListItemTypes)
@@ -133,6 +134,7 @@ func (h *Handler) Router() chi.Router {
 		r.Put("/api/v1/collections/{id}", h.UpdateCollection)
 		r.Delete("/api/v1/collections/{id}", h.DeleteCollection)
 		r.Get("/api/v1/collections/{id}/export", h.ExportCollection)
+		r.Get("/api/v1/collections/{id}/stats", h.GetCollectionStats)
 		r.Get("/api/v1/collections/{id}/items", h.ListCollectionItems)
 		r.Post("/api/v1/collections/{id}/items", h.AddItemToCollection)
 		r.Put("/api/v1/collections/{collectionId}/items/{itemId}", h.UpdateCollectionItem)

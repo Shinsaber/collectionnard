@@ -326,6 +326,79 @@ export interface ItemsByType {
   count: number;
 }
 
+// --- Statistiques personnelles (P4-1) : miroir de server/internal/model/stats.go ---
+
+export interface NumberStat {
+  field: string;
+  count: number;
+  sum: number;
+  avg: number;
+  min: number;
+  max: number;
+}
+
+export interface ValueCount {
+  value: string;
+  count: number;
+}
+
+export interface Distribution {
+  field: string;
+  values: ValueCount[];
+  missing: number;
+}
+
+export interface MonthCount {
+  /** « 2026-10 » */
+  month: string;
+  count: number;
+}
+
+export interface Timeline {
+  field: string;
+  months: MonthCount[];
+}
+
+export interface StatsItem {
+  id: string;
+  item_type_id: string;
+  attributes: Record<string, unknown>;
+}
+
+export interface Completeness {
+  item: StatsItem;
+  owned: number;
+  total: number;
+}
+
+export interface CollectionStats {
+  collection_id: string;
+  total_items: number;
+  items_by_type: ItemsByType[];
+  numbers: NumberStat[];
+  distributions: Distribution[];
+  timelines: Timeline[];
+  added: MonthCount[];
+  completeness: Completeness[];
+  completeness_truncated: boolean;
+}
+
+export interface CollectionSummary {
+  id: string;
+  name: string;
+  collection_type_id: string;
+  item_count: number;
+}
+
+export interface MeStats {
+  total_collections: number;
+  total_entries: number;
+  distinct_items: number;
+  items_by_type: ItemsByType[];
+  collections: CollectionSummary[];
+  added: MonthCount[];
+}
+
 export interface Stats {
   items_by_type: ItemsByType[];
   total_items: number;

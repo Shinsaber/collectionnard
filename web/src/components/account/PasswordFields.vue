@@ -1,5 +1,4 @@
 <template>
-  <!-- Nouveau mot de passe saisi deux fois : n'émet la valeur que si elle est valide et confirmée. -->
   <div class="flex flex-col gap-1.5">
     <label :for="`${id}-new`" :class="labelClass">{{ label }}</label>
     <ElInput
@@ -34,6 +33,7 @@
 </template>
 
 <script setup lang="ts">
+// Nouveau mot de passe saisi deux fois : n'émet la valeur que si elle est valide et confirmée.
 import { computed, ref, useId, watch } from "vue";
 import { useI18n } from "vue-i18n";
 

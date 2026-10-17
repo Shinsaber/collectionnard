@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "music",
-  "package_version": 2,
+  "package_version": 3,
   "title": {
     "fr": "Musique",
     "en": "Music"
@@ -1002,7 +1002,8 @@
             "disc": "Disc",
             "position": "Track"
           }
-        }
+        },
+        "x-completeness": true
       },
       "source_item_type_ids": [
         "b0000000-0000-0000-0000-000000000022"

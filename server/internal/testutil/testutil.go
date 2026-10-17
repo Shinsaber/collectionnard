@@ -84,6 +84,8 @@ type MockStore struct {
 	ListItemCollectionsFn        func(ctx context.Context, userID, itemID uuid.UUID) ([]model.ItemCollectionMembership, error)
 	ListTagsFn                   func(ctx context.Context, search string) ([]model.Tag, error)
 	GetStatsFn                   func(ctx context.Context) (*model.Stats, error)
+	GetCollectionStatsFn         func(ctx context.Context, collectionID uuid.UUID) (*model.CollectionStats, error)
+	GetUserStatsFn               func(ctx context.Context, userID uuid.UUID) (*model.MeStats, error)
 	ExportCatalogFn              func(ctx context.Context) (*model.CatalogExport, error)
 	ImportCatalogFn              func(ctx context.Context, cat *model.CatalogExport, dryRun bool) (*model.ImportReport, error)
 	ImportCollectionFn           func(ctx context.Context, userID uuid.UUID, exp *model.CollectionExport, dryRun bool) (*model.ImportReport, error)
@@ -366,6 +368,20 @@ func (m *MockStore) GetStats(ctx context.Context) (*model.Stats, error) {
 		return m.GetStatsFn(ctx)
 	}
 	return &model.Stats{}, nil
+}
+
+func (m *MockStore) GetCollectionStats(ctx context.Context, collectionID uuid.UUID) (*model.CollectionStats, error) {
+	if m.GetCollectionStatsFn != nil {
+		return m.GetCollectionStatsFn(ctx, collectionID)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) GetUserStats(ctx context.Context, userID uuid.UUID) (*model.MeStats, error) {
+	if m.GetUserStatsFn != nil {
+		return m.GetUserStatsFn(ctx, userID)
+	}
+	return nil, store.ErrNotFound
 }
 
 func (m *MockStore) ExportCatalog(ctx context.Context) (*model.CatalogExport, error) {

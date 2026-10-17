@@ -61,7 +61,8 @@ des messages techniques en anglais. Ajouter une langue : `Collectionnard.md` § 
 `web/src/lib/schema.ts`, à garder alignés), `x-order` (ordre des champs), `x-labels` (`{fr:{…}, en:{…}}`),
 `x-widget` (`image-gallery`, `i18n-text`, `links` : tableau de `{label?, url}`, liens cliquables sur la fiche), `x-image-categories` (`{poster:{ratio:"2/3", tolerance?, min_width?, min_height?, strict?}}`, contrôles à l'envoi dans `ImageGalleryField` via `checkImage`), `x-title` / `x-description`
 (nom et description affichés du méta-type par langue, repli sur `name` / `description`), `x-enum-labels` (propriété :
-`{fr:{tv:"Télévision"}}`). Pas de widget
+`{fr:{tv:"Télévision"}}`), `x-completeness` (racine d'un RelationType : relation de composition, compte « 30 tomes
+sur 42 » dans les statistiques — Go `internal/collstats` et `store/stats.go`, TS `isCompleteness`). Pas de widget
 `slider` : le curseur est automatique quand `minimum` **et** `maximum` sont définis.
 Toute nouvelle extension doit être gérée dans `DynamicForm.vue` **et** `SchemaBuilder.vue` (qui conserve
 les mots-clés qu'il ne connaît pas), lue via `lib/schema.ts`, et documentée dans le README et
@@ -70,7 +71,7 @@ les mots-clés qu'il ne connaît pas), lue via `lib/schema.ts`, et documentée d
 ## Stack
 
 Go 1.27 (chi 5.3, pgx 5.11, golang-jwt 5.3, santhosh-tekuri/jsonschema v5) · PostgreSQL 16 ·
-Vue 3.5 + TypeScript 6 · Element Plus 2 (MIT) + Tailwind 4 (plugin Vite, configuration dans `main.css`) · Cytoscape.js · Vite 8 · Docker Compose.
+Vue 3.5 + TypeScript 6 · Element Plus 2 (MIT) + Tailwind 4 (plugin Vite, configuration dans `main.css`) · Cytoscape.js · Apache ECharts 6 · Vite 8 · Docker Compose.
 
 ## Environnement : Nix
 
@@ -164,4 +165,4 @@ Phase 2 livrée : multilingue, recherche avancée (lot 14), import/export (lot 1
 `les.collection.md`, sources Wikidata / BnF). Phase 3 (récupération automatique externe) terminée, branche `phase3-sources` fusionnée dans `main` : domaines installables (P3-0), connecteurs
 BD / Manga, Romans, Musique, Films, Séries et Jeux vidéo (`server/internal/external/connectors`, profils `bd-manga` / `novels` / `music` / `films` / `series` / `games`, clients `wikidata`, `bnf`, `musicbrainz`, `tvmaze`, page admin « Sources externes ») ;
 domaines P3-0 à P3-7 (jeux vidéo, V1 française) livrés et fusionnés dans `main`. Phase 4 (social) raffinée, branche `phase4-social` : lots P4-0 à P4-3 dans `social.md` ; P4-0 (comptes, invitations,
-profils) livré.
+profils) et P4-1 (statistiques personnelles) livrés.

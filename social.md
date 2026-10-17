@@ -65,10 +65,26 @@ Toujours génériques : aucune clé d'attribut codée en dur, tout se déduit de
   partie des enfants, possédés / total — « Dragon Ball (Glénat) : 30 tomes sur 42 », « Saison 1 : 5 épisodes sur 7 ».
   Les relations de composition sont marquées dans leur schéma par une nouvelle extension **`x-completeness: true`**
   (`contains_volume`, `contains_episode`, `contains_track`, `includes_episode`…), gérée par le SchemaBuilder.
-- **Progression** (Visionnage) : idem, avec l'attribut numérique ou l'enum du CollectionType.
+- **Progression** (Visionnage) : la complétude d'une collection de visionnage compte les épisodes vus (« Saison 1 : 5
+  sur 7 ») ; l'attribut numérique `progress` y est agrégé comme les autres (moyenne, min, max).
 - **API** : `GET /me/stats`, `GET /collections/{id}/stats` ; `GET /stats` reste le tableau de bord admin.
 - **Front** : page « Statistiques » (toutes mes collections) et onglet « Statistiques » d'une collection, graphiques
   ECharts, thèmes clair / sombre de l'identité « Étiquette ».
+
+**Livré le 2026-10-17.** Choix faits à la réalisation :
+
+- Calcul dans `server/internal/collstats` (Go pur, testé sans base) : `number` / `integer` → somme, moyenne, min, max ;
+  `enum` et `boolean` → répartition (valeurs de l'enum dans leur ordre, zéros compris, puis valeurs hors enum, et un
+  compte « non renseigné ») ; `format` `date` / `date-time` → nombre par mois, mois vides comblés (sur 50 ans au plus).
+  Les ajouts par mois (date d'ajout à la collection) s'y ajoutent.
+- Complétude : enfants directs par les relations `x-completeness` (pas de cumul sur plusieurs niveaux) ; les ensembles
+  incomplets d'abord, les plus avancés en tête, puis les complets ; 200 au plus (`completeness_truncated`).
+  Marquées dans les paquets : `contains_volume`, `contains_work` (books v5), `contains_track` (music v3),
+  `contains_episode`, `includes_episode` (tv v5). Une instance existante les reçoit en mettant ces paquets à jour
+  (page « Domaines »).
+- `GET /stats` reste inchangé (statistiques du catalogue, tableau de bord).
+- ECharts 6.1 (Apache 2.0), modules à la carte, rendu SVG ; chargé seulement par la page « Statistiques » et
+  l'onglet d'une collection.
 
 ## P4-2 — Visibilité et partage
 
