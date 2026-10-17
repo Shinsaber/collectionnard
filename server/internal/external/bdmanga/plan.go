@@ -117,13 +117,17 @@ func (c *Connector) plan(ctx context.Context, req model.ExternalImportRequest) (
 		return nil, err
 	}
 	workKey := ""
+	addWork, addEdition := p.addWork, p.addEdition
+	if c.profile == profileNovels {
+		addWork, addEdition = p.addNovelWork, p.addNovelEdition
+	}
 	if req.Work != "" {
-		if workKey, err = p.addWork(ctx, req.Work); err != nil {
+		if workKey, err = addWork(ctx, req.Work); err != nil {
 			return nil, err
 		}
 	}
 	for _, ark := range slices.Compact(slices.Clone(req.Editions)) {
-		if err := p.addEdition(ctx, ark, workKey); err != nil {
+		if err := addEdition(ctx, ark, workKey); err != nil {
 			return nil, err
 		}
 	}

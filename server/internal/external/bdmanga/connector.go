@@ -30,20 +30,40 @@ type Catalog interface {
 	ListRelationsBetween(ctx context.Context, ids []uuid.UUID) ([]model.ItemRelation, error)
 }
 
+// profile: the kind of books a connector imports. Both share the planner (nodes,
+// matching, import format) and the « books » domain package.
+type profile int
+
+const (
+	profileBDManga profile = iota // manga and comics: work → multi-volume edition → volumes
+	profileNovels                 // novels: work → edition (the book, or a set of volumes)
+)
+
 type Connector struct {
 	Catalog Catalog
 	WD      *wikidata.Client
 	BnF     *bnf.Client
 	Now     func() time.Time
+	profile profile
 }
 
+// New returns the BD / Manga connector.
 func New(cat Catalog, fetch *external.Client) *Connector {
 	return &Connector{Catalog: cat, WD: wikidata.New(fetch), BnF: bnf.New(fetch), Now: time.Now}
+}
+
+// NewNovels returns the novels connector (same sources: Wikidata and the BnF).
+func NewNovels(cat Catalog, fetch *external.Client) *Connector {
+	c := New(cat, fetch)
+	c.profile = profileNovels
+	return c
 }
 
 // Technical names of the domain (package « books », server/internal/domains/packages).
 const (
 	typeManga     = "Manga"
+	typeNovel     = "Novel"
+	typeSaga      = "Saga"
 	typeComic     = "Comic"
 	typeUniverse  = "Universe"
 	typeEdition   = "Edition"
@@ -59,7 +79,11 @@ const (
 )
 
 var (
-	itemTypeNames     = []string{typeManga, typeComic, typeUniverse, typeEdition, typeVolume, typePerson, typePublisher}
+	// Types required by each profile.
+	itemTypeNames = map[profile][]string{
+		profileBDManga: {typeManga, typeComic, typeUniverse, typeEdition, typeVolume, typePerson, typePublisher},
+		profileNovels:  {typeNovel, typeSaga, typeUniverse, typeEdition, typeVolume, typePerson, typePublisher},
+	}
 	relationTypeNames = []string{relContainsWork, relCreatedBy, relPublishedAs, relEditedBy, relContainsVolume}
 
 	// packageIDs: fixed ids of the types in the « books » package. A type is found by this id
@@ -67,12 +91,14 @@ var (
 	// created by hand, outside the package).
 	packageIDs = map[string]uuid.UUID{
 		typeUniverse:      uuid.MustParse("b0000000-0000-0000-0000-000000000010"),
+		typeSaga:          uuid.MustParse("b0000000-0000-0000-0000-000000000011"),
 		typeManga:         uuid.MustParse("b0000000-0000-0000-0000-000000000012"),
 		typeComic:         uuid.MustParse("b0000000-0000-0000-0000-000000000013"),
 		typeEdition:       uuid.MustParse("b0000000-0000-0000-0000-000000000014"),
 		typeVolume:        uuid.MustParse("b0000000-0000-0000-0000-000000000015"),
 		typePerson:        uuid.MustParse("b0000000-0000-0000-0000-000000000016"),
 		typePublisher:     uuid.MustParse("b0000000-0000-0000-0000-000000000017"),
+		typeNovel:         uuid.MustParse("b0000000-0000-0000-0000-000000000018"),
 		relContainsWork:   uuid.MustParse("c0000000-0000-0000-0000-000000000011"),
 		relCreatedBy:      uuid.MustParse("c0000000-0000-0000-0000-000000000012"),
 		relPublishedAs:    uuid.MustParse("c0000000-0000-0000-0000-000000000013"),
@@ -97,8 +123,17 @@ type (
 )
 
 // ID and Domain identify the connector (external.Connector).
-func (c *Connector) ID() string     { return "bd-manga" }
+func (c *Connector) ID() string {
+	if c.profile == profileNovels {
+		return "novels"
+	}
+	return "bd-manga"
+}
 func (c *Connector) Domain() string { return "books" }
+
+// EditionsByWork: the novels connector lists the editions of a Wikidata work
+// (BnF work record, bib.work2bib).
+func (c *Connector) EditionsByWork() bool { return c.profile == profileNovels }
 
 // domain holds the resolved types.
 type domain struct {
@@ -130,7 +165,7 @@ func (c *Connector) domain(ctx context.Context) (*domain, error) {
 		relByID[rt.ID] = true
 	}
 	var missing []string
-	for _, n := range itemTypeNames {
+	for _, n := range itemTypeNames[c.profile] {
 		t := typeByID[packageIDs[n]]
 		if t == nil {
 			t = typeByName[n]

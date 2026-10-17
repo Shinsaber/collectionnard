@@ -496,7 +496,7 @@ export const externalApi = {
   /** Éditions, par titre (`q`) ou par ISBN / EAN. */
   searchEditions: (
     connector: string,
-    params: { q: string } | { isbn: string },
+    params: { q: string } | { isbn: string } | { work: string },
   ) =>
     http
       .get<ExternalEditionHit[]>(`${external(connector)}/editions`, { params })

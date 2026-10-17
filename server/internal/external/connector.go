@@ -18,8 +18,8 @@ type Connector interface {
 	// Domain is the domain package holding the types the connector writes.
 	Domain() string
 	SearchWorks(ctx context.Context, text string) ([]model.ExternalWorkHit, error)
-	// SearchEditions searches by title, or by normalised ISBN / EAN when isbn is set.
-	SearchEditions(ctx context.Context, title, isbn string) ([]model.ExternalEditionHit, error)
+	// SearchEditions searches by title, normalised ISBN / EAN or Wikidata work (one of them).
+	SearchEditions(ctx context.Context, q model.ExternalEditionQuery) ([]model.ExternalEditionHit, error)
 	Preview(ctx context.Context, req model.ExternalImportRequest) (*model.ExternalPlan, error)
 	// Build returns the selection in the catalogue import format, and the
 	// catalogue id of each proposed node key.

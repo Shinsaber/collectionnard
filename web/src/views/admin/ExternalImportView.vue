@@ -69,6 +69,8 @@
         v-model="editions"
         :connector="connector"
         :suggestion="work?.label"
+        :work="work?.wikidata_id"
+        :by-work="connectors.find((c) => c.id === connector)?.editions_by_work"
       />
       <div class="flex items-center gap-3">
         <ElButton

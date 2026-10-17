@@ -334,7 +334,7 @@ func TestSearchEditions(t *testing.T) {
 	conn := src.Connector(bdmangatest.NewCatalog(t))
 	ctx := context.Background()
 
-	byTitle, err := conn.SearchEditions(ctx, "dragon ball", "")
+	byTitle, err := conn.SearchEditions(ctx, model.ExternalEditionQuery{Title: "dragon ball"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -347,7 +347,7 @@ func TestSearchEditions(t *testing.T) {
 		t.Errorf("editions by title = %v", arks)
 	}
 
-	byISBN, err := conn.SearchEditions(ctx, "", "9782876952058")
+	byISBN, err := conn.SearchEditions(ctx, model.ExternalEditionQuery{ISBN: "9782876952058"})
 	if err != nil {
 		t.Fatal(err)
 	}

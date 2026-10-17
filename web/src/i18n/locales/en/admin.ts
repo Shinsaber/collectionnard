@@ -158,6 +158,12 @@ const en: typeof fr = {
         editionPlaceholder: "Series title",
         isbnPlaceholder: "ISBN of a volume, e.g. 978-2-7234-3335-8",
       },
+      novels: {
+        title: "Novels",
+        workPlaceholder: "Novel title, e.g. The Stranger",
+        editionPlaceholder: "Novel title",
+        isbnPlaceholder: "ISBN of the book or a volume, e.g. 978-2-07-045317-7",
+      },
     },
     intro:
       "Search a work on Wikidata and its French editions at the BnF, choose what to import (creators, publishers, volumes…), simulate, then confirm. Items already in the catalogue keep their values: only their empty fields are filled in.",
@@ -182,7 +188,7 @@ const en: typeof fr = {
       clear: "Remove the work",
     },
     edition: {
-      title: "French editions (BnF)",
+      title: "Editions (BnF)",
       byTitle: "By title",
       byIsbn: "By ISBN",
       none: "No edition found",
@@ -191,6 +197,7 @@ const en: typeof fr = {
       year: "Start",
       matched: "Volume {number}: {title}",
       matchedNoNumber: "Volume: {title}",
+      translations: "Show translations ({n})",
       chosen: "Chosen editions",
       remove: "Remove {name}",
       max: "10 editions at most",

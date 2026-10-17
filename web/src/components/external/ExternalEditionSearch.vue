@@ -53,9 +53,19 @@
       </div>
     </div>
 
+    <!-- Romans : les traductions sont nombreuses (L'Étranger : 55 éditions) ; masquées par défaut. -->
+    <div v-if="hasTranslations" class="mb-2 flex items-center gap-2 text-sm">
+      <ElSwitch
+        v-model="showTranslations"
+        :aria-label="
+          t('admin.external.edition.translations', { n: translationCount })
+        "
+      />
+      {{ t("admin.external.edition.translations", { n: translationCount }) }}
+    </div>
     <ElTable
       v-if="hits"
-      :data="hits"
+      :data="shownHits"
       size="small"
       row-key="bnf_ark"
       :empty-text="t('admin.external.edition.none')"
@@ -95,6 +105,12 @@
           >
             {{ matchedLabel(row as ExternalEditionHit) }}
           </div>
+          <div
+            v-if="details(row as ExternalEditionHit)"
+            class="text-xs text-muted"
+          >
+            {{ details(row as ExternalEditionHit) }}
+          </div>
         </template>
       </ElTableColumn>
       <ElTableColumn
@@ -132,7 +148,7 @@
 // Recherche d'éditions françaises à la BnF (par titre ou par ISBN d'un tome) ; plusieurs
 // éditions peuvent être cochées (10 au plus, limite du serveur). `suggestion` (titre de
 // l'œuvre choisie) préremplit la recherche par titre et la lance.
-import { ref, useId, watch } from "vue";
+import { computed, ref, useId, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { externalApi } from "@/api/client";
 import { useNotify } from "@/composables/useNotify";
@@ -143,6 +159,9 @@ const MAX = 10;
 const props = defineProps<{
   modelValue: ExternalEditionHit[];
   suggestion?: string;
+  /** Œuvre Wikidata choisie : ses éditions sont listées si le connecteur le permet (`byWork`). */
+  work?: string;
+  byWork?: boolean;
   /** Connecteur (`bd-manga`, `novels`…). */
   connector: string;
 }>();
@@ -162,12 +181,52 @@ const loading = ref(false);
 watch(
   () => props.suggestion,
   (s) => {
+    if (props.byWork && props.work) return; // éditions de l'œuvre (ci-dessous)
     if (s && mode.value === "title") {
       query.value = s;
       void search();
     }
   },
 );
+
+// Roman choisi : toutes ses éditions BnF (notice d'œuvre), sans saisie.
+watch(
+  () => [props.work, props.byWork] as const,
+  async ([work, byWork]) => {
+    if (!work || !byWork) return;
+    if (props.suggestion) query.value = props.suggestion;
+    loading.value = true;
+    try {
+      hits.value = await externalApi.searchEditions(props.connector, { work });
+    } catch (e) {
+      notifyError(e, t("admin.external.searchFailed"));
+    } finally {
+      loading.value = false;
+    }
+  },
+  { immediate: true },
+);
+
+// Éditions dans une autre langue que le français (langue inconnue : gardée).
+const showTranslations = ref(false);
+const isTranslation = (e: ExternalEditionHit) =>
+  !!e.language && e.language !== "fr";
+const translationCount = computed(
+  () => (hits.value ?? []).filter(isTranslation).length,
+);
+const hasTranslations = computed(() => translationCount.value > 0);
+const shownHits = computed(() =>
+  showTranslations.value
+    ? (hits.value ?? [])
+    : (hits.value ?? []).filter((e) => !isTranslation(e)),
+);
+
+/** Langue, collection et ISBN d'une édition (romans : traductions, poches…). */
+function details(e: ExternalEditionHit): string {
+  return [e.language?.toUpperCase(), e.collection, e.isbn]
+    .filter(Boolean)
+    .join(" · ");
+}
 
 async function search() {
   const q = query.value.trim();

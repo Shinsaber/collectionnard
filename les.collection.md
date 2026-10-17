@@ -321,6 +321,15 @@ Roman
   rôles ajoutés : `illustrator`, `preface`.
 - **`contains_work`** et **`published_as`** : `Novel` ajouté aux sources / cibles.
 
+### Import depuis les sources (connecteur `novels`, P3-3)
+
+Page « Sources externes », choix « Romans » (API `/external/novels/*`). Le roman se cherche sur Wikidata ; une fois
+choisi, **toutes ses éditions BnF** s'affichent (notice d'œuvre BnF, `bib.work2bib`), françaises d'abord, les traductions
+derrière un interrupteur ; recherche aussi par titre ou ISBN. Aperçu : roman (forme, genres, langue et titre originaux,
+année), cycle (Saga, ordre), univers, auteurs ; pour chaque édition, le livre (ISBN, pages, prix, collection, reliure) ou
+l'ensemble et ses tomes, éditeurs, traducteurs / illustrateurs / préfaciers (`created_by` de l'édition). Même
+rapprochement et même import que la BD. Exemples réels dans `db/seed_bd_manga.sql` (§ 8).
+
 ### Sources
 
 Les mêmes que pour la BD, licences vérifiées le 2026-10-11 (`docs/sources-externes.md`) :

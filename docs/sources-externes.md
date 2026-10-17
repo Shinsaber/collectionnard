@@ -82,6 +82,21 @@ Constats faits en codant le connecteur (2026-10-11), utiles pour les prochains :
   U+0089) à retirer. Prix en 010 `$d` (francs pour les notices anciennes), pagination en 215 `$a`, EAN en 073 `$a`.
   `maximumRecords` accepte 1000 notices (≈ 1 Mio pour 150 tomes UNIMARC).
 
+### Romans (connecteur `novels`, 2026-10-17)
+
+- **Wikidata** : un roman est `P31` œuvre littéraire (`Q7725634`) avec `P7937` forme (`Q8261` roman) ; langue `P407`
+  (code ISO 639-1 par `P218` de la langue) ; cycle `P179` avec l'ordre en qualificatif `P1545` — ne devient une Saga que si
+  la série est une série d'œuvres (suite romanesque, série de livres, cycle, trilogie, tétralogie, heptalogie…). Libellés
+  des genres et formes vérifiés un à un (un candidat s'est révélé « équation linéaire »).
+- **BnF** : `P268` du roman = notice d'**œuvre** BnF ; l'index **`bib.work2bib`** liste toutes ses éditions, traductions
+  comprises (L'Étranger : 65 notices, Les Misérables : 312). Zone 500 `$3` des éditions = numéro de cette notice d'œuvre.
+  Contributeurs en 700-702 avec code de fonction `$4` : 070 auteur, **730 traducteur**, 440 illustrateur, **080 préfacier**,
+  340 éditeur scientifique. Collection éditoriale en 225 `$a` / `$v`, reliure en 010 `$b` (« br. », « rel. »).
+- Pièges : langue 101 parfois multiple (édition bilingue) ou indéterminée (`xxx`, `und`, `mul`) ; **compilations** sans titre en
+  200 (titre de l'œuvre en 423 `$t`) ; notices quasi vides (sans label ni zones) à écarter ; un volume d'« Œuvres complètes »
+  se rattache (461) à l'ensemble des œuvres complètes : ne le regrouper en édition multivolume que si l'ensemble porte le titre
+  du roman.
+
 ## Sources pour plus tard
 
 ### Grand Comics Database (comics.org)

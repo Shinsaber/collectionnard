@@ -16,7 +16,11 @@ func (c *Connector) SearchWorks(ctx context.Context, text string) ([]model.Exter
 	if err != nil {
 		return nil, err
 	}
-	ids, err := c.WD.Search(ctx, text, workClasses, maxWorkHits)
+	classes := workClasses
+	if c.profile == profileNovels {
+		classes = novelClasses
+	}
+	ids, err := c.WD.Search(ctx, text, classes, maxWorkHits)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +35,7 @@ func (c *Connector) SearchWorks(ctx context.Context, text string) ([]model.Exter
 		if e == nil {
 			continue
 		}
-		typeName := workType(e)
+		typeName := c.workType(e)
 		if typeName == "" {
 			continue
 		}
@@ -45,7 +49,11 @@ func (c *Connector) SearchWorks(ctx context.Context, text string) ([]model.Exter
 		if h.Description == "" {
 			h.Description = e.Descriptions["en"]
 		}
-		if y, ok := e.Year(pStart, pInception, pPublication); ok {
+		yearProps := []string{pStart, pInception, pPublication}
+		if c.profile == profileNovels {
+			yearProps = []string{pPublication, pInception}
+		}
+		if y, ok := e.Year(yearProps...); ok {
 			h.StartYear = &y
 		}
 		hits = append(hits, h)
@@ -61,9 +69,16 @@ func (c *Connector) SearchWorks(ctx context.Context, text string) ([]model.Exter
 	return hits, nil
 }
 
-// SearchEditions searches French multi-volume sets on the BnF, by title or by
-// the ISBN of one of their volumes.
-func (c *Connector) SearchEditions(ctx context.Context, title, isbn string) ([]model.ExternalEditionHit, error) {
+// SearchEditions searches French editions on the BnF, by title or by the ISBN
+// of one of their volumes (multi-volume sets ; novels: see searchNovelEditions).
+func (c *Connector) SearchEditions(ctx context.Context, q model.ExternalEditionQuery) ([]model.ExternalEditionHit, error) {
+	if c.profile == profileNovels {
+		return c.searchNovelEditions(ctx, q)
+	}
+	title, isbn := q.Title, q.ISBN
+	if q.Work != "" {
+		return nil, InputError("this connector searches editions by title or ISBN")
+	}
 	d, err := c.domain(ctx)
 	if err != nil {
 		return nil, err

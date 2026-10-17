@@ -387,6 +387,12 @@ export interface ExternalEditionHit {
   title: string;
   publishers: string[];
   start_year?: number;
+  /** Langue du texte (ISO 639-1, sinon code BnF à trois lettres). */
+  language?: string;
+  /** Collection éditoriale et numéro : « Folio 2 ». */
+  collection?: string;
+  /** Roman en un volume : l'ISBN du livre. */
+  isbn?: string;
   existing_item_id?: string;
   source_url: string;
   /** Recherche par ISBN : le tome qui porte cet ISBN. */
@@ -505,4 +511,6 @@ export interface ConnectorInfo {
   id: string;
   /** Paquet de domaine qui porte les types écrits par le connecteur. */
   domain: string;
+  /** Les éditions se listent depuis une œuvre Wikidata (`editions?work=`). */
+  editions_by_work: boolean;
 }

@@ -154,5 +154,6 @@ Phase 1 (MVP) : terminée. Phase 1.5 (remise à niveau issue de l'audit, branche
 lots 0 à 11 livrés, voir `Collectionnard.md` §8 et `docs/audit/03-feuille-de-route.md`) : terminée, fusionnée dans `main`.
 Phase 2 livrée : multilingue, recherche avancée (lot 14), import/export (lot 12), refonte graphique responsive
 (identité « Étiquette », lots R0–R8, branche `refonte-graphique`), domaine BD / Manga (lot 13,
-`les.collection.md`, sources Wikidata / BnF). Phase 3 (récupération automatique externe) en cours : connecteur BD / Manga
-livré (`server/internal/external/bdmanga`, page admin « Sources externes ») ; suite : musique, séries, films. Phase 4 : social.
+`les.collection.md`, sources Wikidata / BnF). Phase 3 (récupération automatique externe) en cours, branche `phase3-sources` : domaines installables (P3-0), connecteurs
+BD / Manga et Romans (`server/internal/external/bdmanga`, profils `bd-manga` / `novels`, page admin « Sources externes ») ;
+suite : musique (CD / vinyles), films puis séries en DVD / Blu-ray. Phase 4 : social.

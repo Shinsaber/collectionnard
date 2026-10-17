@@ -158,6 +158,12 @@ export default {
         editionPlaceholder: "Titre de la série",
         isbnPlaceholder: "ISBN d'un tome, ex. 978-2-7234-3335-8",
       },
+      novels: {
+        title: "Romans",
+        workPlaceholder: "Titre du roman, ex. L'Étranger",
+        editionPlaceholder: "Titre du roman",
+        isbnPlaceholder: "ISBN du livre ou d'un tome, ex. 978-2-07-045317-7",
+      },
     },
     intro:
       "Recherchez une œuvre sur Wikidata et ses éditions françaises à la BnF, choisissez les éléments à importer (auteurs, éditeurs, tomes…), simulez puis validez. Les éléments déjà présents gardent leurs valeurs : seuls leurs champs vides sont complétés.",
@@ -182,7 +188,7 @@ export default {
       clear: "Retirer l'œuvre",
     },
     edition: {
-      title: "Éditions françaises (BnF)",
+      title: "Éditions (BnF)",
       byTitle: "Par titre",
       byIsbn: "Par ISBN",
       none: "Aucune édition trouvée",
@@ -191,6 +197,7 @@ export default {
       year: "Début",
       matched: "Tome {number} : {title}",
       matchedNoNumber: "Tome : {title}",
+      translations: "Afficher les traductions ({n})",
       chosen: "Éditions choisies",
       remove: "Retirer {name}",
       max: "10 éditions au plus",

@@ -83,6 +83,17 @@ const (
 	unitVolume = "Q1238720" // tankōbon / volume
 )
 
+// workType returns the item type of a work entity for the profile of c ("" when not one of its works).
+func (c *Connector) workType(e *wikidata.Entity) string {
+	if c.profile == profileNovels {
+		if e.HasID(pInstanceOf, novelClassesSet) {
+			return typeNovel
+		}
+		return ""
+	}
+	return workType(e)
+}
+
 // workType returns the item type of a work entity ("" when not a work).
 func workType(e *wikidata.Entity) string {
 	switch {

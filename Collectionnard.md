@@ -385,8 +385,11 @@ ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries 
       aperçu, import), registre (`GET /external/connectors`), routes `/external/{connector}/*` (les chemins
       `/external/bd-manga/*` restent valables) ; page « Sources externes » avec le choix de la sorte de collection ;
       erreur `connector_unavailable` qui renvoie à la page « Domaines ».
-- [ ] **P3-3 — Connecteur Romans** (Wikidata + BnF) : roman par titre ou ISBN, auteurs, cycle (Saga), éditions
-      à un volume (Édition = livre) ou multivolumes (Édition + Tomes), traducteurs de l'édition.
+- [x] **P3-3 — Connecteur Romans** (`novels`, Wikidata + BnF) : roman cherché sur Wikidata, toutes ses éditions BnF
+      par sa notice d'œuvre (`bib.work2bib`, traductions comprises, françaises d'abord), ou par titre / ISBN ; cycle (Saga,
+      ordre), auteurs ; édition en un volume (le livre : ISBN, pages, prix, collection, reliure) ou multivolume (ensemble +
+      tomes) ; traducteurs, illustrateurs et préfaciers de l'édition. Même profil de code que BD / Manga (planificateur,
+      rapprochement, import partagés). Exemples réels dans le seed (L'Étranger, Les Misérables en Pocket 3 tomes).
 - [ ] **P3-4 — Musique (CD / vinyles)** : étude des sources (MusicBrainz, Cover Art Archive, BnF pour les
       phonogrammes ; licences à vérifier), modèle de données (nouveau document), paquet de domaine, connecteur.
 - [ ] **P3-5 — Films (DVD / Blu-ray)** : étude des sources (Wikidata pour l'œuvre, BnF pour les vidéogrammes

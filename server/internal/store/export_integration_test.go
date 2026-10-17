@@ -403,7 +403,7 @@ func TestSeedBDManga_Valid(t *testing.T) {
 	if err != nil || len(rep.Errors) != 0 {
 		t.Fatalf("seed BD invalid: %v %+v", err, rep.Errors)
 	}
-	if c := counts(rep, model.EntityItems); c.Unchanged != 8+21 {
+	if c := counts(rep, model.EntityItems); c.Unchanged != 8+21+12 { // TV, BD / Manga, romans
 		t.Errorf("items: %+v", c)
 	}
 

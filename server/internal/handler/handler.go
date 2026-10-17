@@ -36,6 +36,7 @@ func New(s store.Store, auth *middleware.Auth, cfg *config.Config) *Handler {
 	fetch := external.NewClient(cfg.ExternalUserAgent)
 	return &Handler{Store: s, Auth: auth, Config: cfg, Connectors: []external.Connector{
 		bdmanga.New(s, fetch),
+		bdmanga.NewNovels(s, fetch),
 	}}
 }
 

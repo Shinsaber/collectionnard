@@ -35,6 +35,14 @@ var sruAnswers = map[string]string{
 	`bib.fuzzyIsbn all "9782876952058"`:                        "bnf_isbn.xml",
 	`bib.recordid any "34338597 34338439"`:                     "bnf_isbn_sets.xml",
 	`bib.serialtitle all "dragon ball"`:                        "bnf_serialtitle.xml",
+	// Romans (P3-3) : L'Étranger (BnF œuvre 11958514), Les Misérables (13516296, édition Pocket 45767941).
+	`bib.work2bib all "11958514"`:          "novel_work2bib.xml",
+	`bib.recordid all "43662393"`:          "novel_folio.xml",
+	`bib.recordid all "35215528"`:          "novel_outsider.xml",
+	`bib.work2bib all "13516296"`:          "novel_mis_work2bib.xml",
+	`bib.recordid any "33046180 45767941"`: "novel_mis_sets.xml",
+	`bib.recordid all "45767941"`:          "novel_mis_set.xml",
+	`bib.ens2bib all "45767941"`:           "novel_mis_volumes.xml",
 }
 
 const emptySRU = `<?xml version="1.0" encoding="UTF-8"?><srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/"><srw:version>1.2</srw:version><srw:numberOfRecords>0</srw:numberOfRecords><srw:records></srw:records></srw:searchRetrieveResponse>`
@@ -64,10 +72,13 @@ func NewSources(t testing.TB) *Sources {
 	var entities struct {
 		Entities map[string]json.RawMessage `json:"entities"`
 	}
-	if err := json.Unmarshal(testdata(t, "wikidata_entities.json"), &entities); err != nil {
-		t.Fatal(err)
+	for _, name := range []string{"wikidata_entities.json", "wikidata_entities_novels.json"} {
+		if err := json.Unmarshal(testdata(t, name), &entities); err != nil {
+			t.Fatal(err)
+		}
 	}
 	search := testdata(t, "wikidata_search.json")
+	searchNovels := testdata(t, "wikidata_search_novels.json")
 	s := &Sources{}
 	s.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s.Requests.Add(1)
@@ -81,6 +92,10 @@ func NewSources(t testing.TB) *Sources {
 			w.Header().Set("Content-Type", "application/json")
 			switch q.Get("action") {
 			case "query":
+				if strings.Contains(q.Get("srsearch"), "Q7725634") {
+					_, _ = w.Write(searchNovels) // classes des romans
+					return
+				}
 				_, _ = w.Write(search)
 			case "wbgetentities":
 				out := map[string]json.RawMessage{}
@@ -96,7 +111,7 @@ func NewSources(t testing.TB) *Sources {
 				}
 				_ = json.NewEncoder(w).Encode(map[string]any{"entities": out})
 			case "wbgetclaims":
-				code := map[string]string{"Q17": "JP", "Q142": "FR"}[q.Get("entity")]
+				code := map[string]string{"Q17": "JP", "Q142": "FR", "Q150": "fr"}[q.Get("entity")]
 				claims := []any{}
 				if code != "" {
 					claims = append(claims, map[string]any{"rank": "normal", "mainsnak": map[string]any{
@@ -221,4 +236,13 @@ func (c *Catalog) ListRelationsBetween(_ context.Context, ids []uuid.UUID) ([]mo
 		}
 	}
 	return out, nil
+}
+
+// NovelsConnector returns the novels connector reading these sources and cat, dated Today.
+func (s *Sources) NovelsConnector(cat bdmanga.Catalog) *bdmanga.Connector {
+	c := bdmanga.NewNovels(cat, external.NewClient("collectionnard-test"))
+	c.WD.BaseURL = s.URL + "/w/api.php"
+	c.BnF.BaseURL = s.URL + "/api/SRU"
+	c.Now = func() time.Time { return Today }
+	return c
 }

@@ -17,17 +17,27 @@ type ExternalWorkHit struct {
 	SourceURL      string     `json:"source_url"`
 }
 
-// ExternalEditionHit is a multi-volume set of the BnF catalogue
-// (GET /external/bd-manga/editions).
+// ExternalEditionHit is an edition of the BnF catalogue (GET /external/{connector}/editions):
+// a multi-volume set, or for a single-volume novel the book itself.
 type ExternalEditionHit struct {
 	BnfArk         string     `json:"bnf_ark"`
 	Title          string     `json:"title"`
 	Publishers     []string   `json:"publishers"`
 	StartYear      *int       `json:"start_year,omitempty"`
+	Language       string     `json:"language,omitempty"`   // ISO 639-1 (translations)
+	Collection     string     `json:"collection,omitempty"` // editorial collection and number: « Folio 2 »
+	ISBN           string     `json:"isbn,omitempty"`       // single-volume edition only
 	ExistingItemID *uuid.UUID `json:"existing_item_id,omitempty"`
 	SourceURL      string     `json:"source_url"`
 	// MatchedVolume: search by ISBN only — the volume carrying this ISBN.
 	MatchedVolume *ExternalVolumeHit `json:"matched_volume,omitempty"`
+}
+
+// ExternalEditionQuery is the search of GET /external/{connector}/editions: exactly one
+// of a title, a normalised ISBN / EAN, or a Wikidata work (its editions, when the
+// connector can list them).
+type ExternalEditionQuery struct {
+	Title, ISBN, Work string
 }
 
 type ExternalVolumeHit struct {
@@ -116,4 +126,6 @@ type ExternalImportReport struct {
 type ConnectorInfo struct {
 	ID     string `json:"id"`
 	Domain string `json:"domain"`
+	// EditionsByWork: editions can be listed from a Wikidata work (editions?work=).
+	EditionsByWork bool `json:"editions_by_work"`
 }

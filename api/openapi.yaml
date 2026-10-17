@@ -163,7 +163,9 @@ tags:
   - name: External
     description: |
       **Admin uniquement.** Récupération depuis des sources ouvertes, un connecteur par sorte de
-      collection (`/external/{connector}/…`, liste : `GET /external/connectors`). Connecteur `bd-manga` :
+      collection (`/external/{connector}/…`, liste : `GET /external/connectors`) : `bd-manga` (manga, BD) et
+      `novels` (romans : roman, cycle et auteurs sur Wikidata ; éditions BnF de sa notice d'œuvre, traducteurs,
+      illustrateurs et préfaciers). Connecteur `bd-manga` :
       œuvres, univers et auteurs sur **Wikidata** (CC0), éditions françaises et tomes sur la **BnF**
       (Licence Ouverte : source et date de récupération écrites dans `sources`). Parcours :
       recherche (`works`, `editions`) → aperçu (`preview`) → simulation puis import (`import`,
@@ -1467,14 +1469,19 @@ components:
     ExternalEditionHit:
       type: object
       description: |
-        Édition française trouvée à la BnF : ensemble multivolume (zone 461 des tomes) ou collection
-        éditoriale (zone 410).
+        Édition trouvée à la BnF : ensemble multivolume (zone 461 des tomes) ou collection éditoriale
+        (zone 410) ; pour un roman en un volume, le livre lui-même (`isbn`).
       required: [bnf_ark, title, publishers, source_url]
       properties:
         bnf_ark: { type: string, example: "ark:/12148/cb343384394" }
         title: { type: string }
         publishers: { type: array, items: { type: string } }
         start_year: { type: integer }
+        language:
+          type: string
+          description: Langue du texte (ISO 639-1, sinon code BnF à trois lettres) ; absente si indéterminée.
+        collection: { type: string, description: "Collection éditoriale et numéro : « Folio 2 »." }
+        isbn: { type: string, description: Édition en un volume seulement. }
         existing_item_id: { type: string, format: uuid }
         source_url: { type: string, format: uri }
         matched_volume:
@@ -4153,6 +4160,9 @@ paths:
                   properties:
                     id: { type: string, example: bd-manga }
                     domain: { type: string, example: books }
+                    editions_by_work:
+                      type: boolean
+                      description: Les éditions se listent depuis une œuvre Wikidata (`editions?work=`).
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -4192,11 +4202,17 @@ paths:
       - $ref: "#/components/parameters/connector"
     get:
       tags: [External]
-      summary: Rechercher une édition française à la BnF
+      summary: Rechercher une édition à la BnF
       description: |
-        Par titre (`q`, index `bib.serialtitle`, 50 notices au plus, hors vidéos et sons) ou par ISBN
-        d'un tome (`isbn`, ISBN-10 / 13 ou EAN, tirets acceptés) : l'édition qui contient ce tome.
-        Exactement un des deux paramètres.
+        Par titre (`q` : `bd-manga` index `bib.serialtitle`, `novels` index `bib.title`, 50 notices au plus,
+        hors vidéos et sons), par ISBN d'un tome (`isbn`, ISBN-10 / 13 ou EAN, tirets acceptés) : l'édition
+        qui contient ce tome, ou par **œuvre Wikidata** (`work`, connecteur `novels`) : les éditions de la
+        notice d'œuvre BnF du roman (`P268`, index `bib.work2bib`, 150 au plus, éditions françaises
+        d'abord). Exactement un des trois paramètres.
+
+        Connecteur `novels` : une notice sans ensemble est une édition en un volume (le livre, avec son
+        ISBN) ; une notice liée (461) à un ensemble titré comme le roman représente cet ensemble ; un
+        volume d'« Œuvres complètes » reste une édition en un volume.
       operationId: searchExternalEditions
       parameters:
         - name: q
@@ -4205,6 +4221,10 @@ paths:
         - name: isbn
           in: query
           schema: { type: string, example: "978-2-87695-205-8" }
+        - name: work
+          in: query
+          description: QID Wikidata du roman (connecteur `novels`).
+          schema: { type: string, pattern: "^Q[1-9][0-9]*$", example: Q163297 }
       responses:
         "200":
           description: Éditions trouvées.

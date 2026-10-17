@@ -287,3 +287,47 @@ INSERT INTO collection_items (collection_id, item_id, attributes) VALUES
  '{"condition": "very_good", "purchase_price": 6.50, "acquisition_date": "2021-03-10"}'),
 ('f0000000-0000-0000-0000-000000000010', 'e0000000-0000-0000-0000-000000000110',
  '{"condition": "new", "purchase_price": 6.50, "acquisition_date": "2021-03-10"}');
+
+-- =============================================================================
+-- 8. ROMANS (P3-3) — générés par le connecteur « novels » (Wikidata CC0 + BnF Licence Ouverte,
+--    récupérés le 2026-10-17) : L'Étranger (une édition Folio = le livre, cycle de l'absurde)
+--    et Les Misérables (édition Pocket 2019 en trois tomes). UUID e…0200-0211.
+-- =============================================================================
+
+INSERT INTO items (id, item_type_id, attributes) VALUES
+-- work : wikidata:Q163297
+('e0000000-0000-0000-0000-000000000200', 'b0000000-0000-0000-0000-000000000018', '{"description":{"en":"1942 novel by Albert Camus","fr":"roman d’Albert Camus"},"external_ids":{"bnf_ark":"ark:/12148/cb11958514w","wikidata":"Q163297"},"first_publication_year":1942,"form":"novel","original_language":"fr","sources":[{"retrieved_at":"2026-10-17","source":"wikidata"}],"title":{"en":"The Stranger","fr":"L''Étranger"}}'),
+-- universe : wikidata:Q3008298
+('e0000000-0000-0000-0000-000000000201', 'b0000000-0000-0000-0000-000000000011', '{"description":{"en":"literary tetralogy by Albert Camus","fr":"absurde camusien"},"external_ids":{"wikidata":"Q3008298"},"sources":[{"retrieved_at":"2026-10-17","source":"wikidata"}],"title":{"en":"The strange writer","fr":"philosophie d''Albert Camus"}}'),
+-- person : wikidata:Q34670
+('e0000000-0000-0000-0000-000000000202', 'b0000000-0000-0000-0000-000000000016', '{"biography":{"en":"French philosopher, author, and journalist (1913–1960)","fr":"écrivain, philosophe et journaliste français"},"birth_date":"1913-11-07","external_ids":{"bnf_ark":"ark:/12148/cb118949856","wikidata":"Q34670"},"first_name":"Albert","last_name":"Camus","nationality":"FR","sources":[{"retrieved_at":"2026-10-17","source":"wikidata"}]}'),
+-- edition : bnf:cb436623939
+('e0000000-0000-0000-0000-000000000203', 'b0000000-0000-0000-0000-000000000014', '{"collection":"Collection Folio","external_ids":{"bnf_ark":"ark:/12148/cb436623939"},"isbn":"9782070453177","language":"fr","retail_price":8.7,"sources":[{"retrieved_at":"2026-10-17","source":"bnf"}],"start_year":2013,"title":{"fr":"L''étranger"}}'),
+-- publisher : publisher:gallimard
+('e0000000-0000-0000-0000-000000000204', 'b0000000-0000-0000-0000-000000000017', '{"name":"Gallimard","sources":[{"retrieved_at":"2026-10-17","source":"bnf"}]}'),
+-- work : wikidata:Q180736
+('e0000000-0000-0000-0000-000000000205', 'b0000000-0000-0000-0000-000000000018', '{"description":{"en":"1862 novel by Victor Hugo","fr":"roman de Victor Hugo"},"external_ids":{"bnf_ark":"ark:/12148/cb13516296h","wikidata":"Q180736"},"first_publication_year":1862,"form":"novel","genres":["historical"],"original_language":"fr","sources":[{"retrieved_at":"2026-10-17","source":"wikidata"}],"title":{"en":"Les Misérables","fr":"Les Misérables"}}'),
+-- person : wikidata:Q535
+('e0000000-0000-0000-0000-000000000206', 'b0000000-0000-0000-0000-000000000016', '{"biography":{"en":"French novelist, poet, dramatist and politician (1802–1885)","fr":"romancier, poète, dramaturge, dessinateur et politicien français (1802–1885)"},"birth_date":"1802-02-26","external_ids":{"bnf_ark":"ark:/12148/cb11907966z","wikidata":"Q535"},"first_name":"Victor","last_name":"Hugo","nationality":"FR","sources":[{"retrieved_at":"2026-10-17","source":"wikidata"}]}'),
+-- edition : bnf:cb45767941c
+('e0000000-0000-0000-0000-000000000207', 'b0000000-0000-0000-0000-000000000014', '{"collection":"Pocket","external_ids":{"bnf_ark":"ark:/12148/cb45767941c"},"language":"fr","sources":[{"retrieved_at":"2026-10-17","source":"bnf"}],"start_year":2019,"title":{"fr":"Les misérables"},"volume_count":3}'),
+-- publisher : publisher:pocket
+('e0000000-0000-0000-0000-000000000208', 'b0000000-0000-0000-0000-000000000017', '{"name":"Pocket","sources":[{"retrieved_at":"2026-10-17","source":"bnf"}]}'),
+-- volume : bnf:cb45718977k
+('e0000000-0000-0000-0000-000000000209', 'b0000000-0000-0000-0000-000000000015', '{"external_ids":{"bnf_ark":"ark:/12148/cb45718977k"},"isbn":"9782266295901","number":1,"page_count":859,"retail_price":6.9,"sources":[{"retrieved_at":"2026-10-17","source":"bnf"}],"title":{"fr":"Les misérables"}}'),
+-- volume : bnf:cb47420905r
+('e0000000-0000-0000-0000-000000000210', 'b0000000-0000-0000-0000-000000000015', '{"external_ids":{"bnf_ark":"ark:/12148/cb47420905r"},"isbn":"9782266296007","number":2,"page_count":891,"retail_price":6.9,"sources":[{"retrieved_at":"2026-10-17","source":"bnf"}],"title":{"fr":"Les misérables"}}'),
+-- volume : bnf:cb45840019s
+('e0000000-0000-0000-0000-000000000211', 'b0000000-0000-0000-0000-000000000015', '{"external_ids":{"bnf_ark":"ark:/12148/cb45840019s"},"isbn":"9782266296137","number":3,"page_count":439,"retail_price":6.9,"sources":[{"retrieved_at":"2026-10-17","source":"bnf"}],"title":{"fr":"Les misérables"}}');
+
+INSERT INTO item_relations (relation_type_id, source_item_id, target_item_id, attributes) VALUES
+('c0000000-0000-0000-0000-000000000011', 'e0000000-0000-0000-0000-000000000201', 'e0000000-0000-0000-0000-000000000200', '{"order":1}'),
+('c0000000-0000-0000-0000-000000000012', 'e0000000-0000-0000-0000-000000000200', 'e0000000-0000-0000-0000-000000000202', '{"roles":["author"]}'),
+('c0000000-0000-0000-0000-000000000012', 'e0000000-0000-0000-0000-000000000205', 'e0000000-0000-0000-0000-000000000206', '{"roles":["author"]}'),
+('c0000000-0000-0000-0000-000000000013', 'e0000000-0000-0000-0000-000000000200', 'e0000000-0000-0000-0000-000000000203', '{}'),
+('c0000000-0000-0000-0000-000000000013', 'e0000000-0000-0000-0000-000000000205', 'e0000000-0000-0000-0000-000000000207', '{}'),
+('c0000000-0000-0000-0000-000000000014', 'e0000000-0000-0000-0000-000000000203', 'e0000000-0000-0000-0000-000000000204', '{}'),
+('c0000000-0000-0000-0000-000000000014', 'e0000000-0000-0000-0000-000000000207', 'e0000000-0000-0000-0000-000000000208', '{}'),
+('c0000000-0000-0000-0000-000000000015', 'e0000000-0000-0000-0000-000000000207', 'e0000000-0000-0000-0000-000000000209', '{"order":1}'),
+('c0000000-0000-0000-0000-000000000015', 'e0000000-0000-0000-0000-000000000207', 'e0000000-0000-0000-0000-000000000211', '{"order":3}'),
+('c0000000-0000-0000-0000-000000000015', 'e0000000-0000-0000-0000-000000000207', 'e0000000-0000-0000-0000-000000000210', '{"order":2}');
