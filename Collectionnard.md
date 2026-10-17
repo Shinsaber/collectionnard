@@ -441,11 +441,24 @@ ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries 
 
 ### Phase 4 : Social
 
-- [ ] Statistiques et visualisation graphiques
-- [ ] Soumission/modification d'items par les users (validation admin)
-- [ ] Profils publics/privés
-- [ ] Partage de collections
-- [ ] Système d'échange
+Raffinée le 2026-10-17 (conception : `social.md`), branche `phase4-social`, un commit par lot. Décisions : visibilité
+au choix (privé, membres, public) par collection et pour le profil ; inscription sur invitation ; contributions par
+propositions modérées **et** rôle contributeur ; échanges reportés.
+
+- [ ] **P4-0 — Comptes, invitations, profils** : invitations à usage unique (admin, membres si permis), inscription
+      depuis un lien, page admin « Utilisateurs » (rôle, désactivation, lien de réinitialisation sans SMTP), profil (nom
+      affiché, avatar, présentation, mot de passe).
+- [ ] **P4-1 — Statistiques personnelles** : par collection, sommes et moyennes des attributs numériques, répartition
+      des enums, courbe des dates ; **complétude** par le graphe (« 30 tomes sur 42 ») via une extension
+      `x-completeness` des relations de composition ; graphiques ECharts ; `GET /me/stats`, `/collections/{id}/stats`.
+- [ ] **P4-2 — Visibilité et partage** : collection et profil privés, visibles des membres ou publics ; pages publiques
+      en lecture seule ; liens de partage secrets et révocables ; extension `x-private` pour cacher les attributs
+      sensibles (prix payé) ; annuaire des membres ; listes de souhaits partageables.
+- [ ] **P4-3 — Contributions** : rôle contributeur (écriture directe du catalogue) ; propositions d'items et de
+      corrections au format de l'import, file de modération (acceptation, correction, refus commenté) ; historique des
+      changements d'un item et retour à une version.
+- [ ] Système d'échange : reporté (exemplaires « à échanger », correspondances avec les listes de souhaits, messagerie),
+      à raffiner après P4-2.
 
 ### Phase 5 : Intégrations, …
 

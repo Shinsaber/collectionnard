@@ -33,6 +33,7 @@ des messages techniques en anglais. Ajouter une langue : `Collectionnard.md` § 
 | [web/CLAUDE.md](web/CLAUDE.md)         | Conventions frontend Vue                                         |
 | [docs/audit/](docs/audit/BRIEF.md)     | Brief et résultats de l'audit approfondi (`/audit`)              |
 | [docs/sources-externes.md](docs/sources-externes.md) | Bases ouvertes BD / Manga : licences, accès (Wikidata, BnF retenues), constats du connecteur |
+| [social.md](social.md)                 | Phase 4 (social) : décisions, modèle et API visés — comptes et invitations, statistiques, visibilité, contributions |
 
 ## Modèle en une table
 
@@ -160,6 +161,6 @@ Phase 1 (MVP) : terminée. Phase 1.5 (remise à niveau issue de l'audit, branche
 lots 0 à 11 livrés, voir `Collectionnard.md` §8 et `docs/audit/03-feuille-de-route.md`) : terminée, fusionnée dans `main`.
 Phase 2 livrée : multilingue, recherche avancée (lot 14), import/export (lot 12), refonte graphique responsive
 (identité « Étiquette », lots R0–R8, branche `refonte-graphique`), domaine BD / Manga (lot 13,
-`les.collection.md`, sources Wikidata / BnF). Phase 3 (récupération automatique externe) en cours, branche `phase3-sources` : domaines installables (P3-0), connecteurs
+`les.collection.md`, sources Wikidata / BnF). Phase 3 (récupération automatique externe) terminée, branche `phase3-sources` fusionnée dans `main` : domaines installables (P3-0), connecteurs
 BD / Manga, Romans, Musique, Films, Séries et Jeux vidéo (`server/internal/external/connectors`, profils `bd-manga` / `novels` / `music` / `films` / `series` / `games`, clients `wikidata`, `bnf`, `musicbrainz`, `tvmaze`, page admin « Sources externes ») ;
-domaines P3-0 à P3-7 (jeux vidéo, V1 française) livrés, non poussés. Phase 4 : social.
+domaines P3-0 à P3-7 (jeux vidéo, V1 française) livrés et fusionnés dans `main`. Phase 4 (social) raffinée, branche `phase4-social` : lots P4-0 à P4-3 dans `social.md`.
