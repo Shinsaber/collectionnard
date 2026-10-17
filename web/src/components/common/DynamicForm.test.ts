@@ -33,13 +33,20 @@ describe("DynamicForm", () => {
       "Synopsis",
       "Année de début",
       "Année de fin",
+      "Titre original",
+      "Pays d'origine",
+      "Langue originale",
+      "Saisons",
+      "Épisodes",
       "Images",
+      "Identifiants externes",
+      "Sources",
     ]);
     // titre est requis → astérisque
     const titre = w.findAll('label[id$="-label"]')[0]!;
     expect(titre.find('span[aria-hidden="true"]').text()).toBe("*");
-    // synopsis : widget i18n-text → deux zones de texte FR / EN
-    expect(w.findAll("textarea")).toHaveLength(2);
+    // synopsis : widget i18n-text → deux zones de texte FR / EN ; pays, identifiants et sources : JSON
+    expect(w.findAll("textarea")).toHaveLength(5);
     // images : galerie avec les 3 catégories déclarées dans x-image-categories (dans l'ordre de
     // l'objet, celui que PostgreSQL rend : les clés d'un JSONB sont triées)
     const cats = w

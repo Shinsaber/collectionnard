@@ -75,3 +75,29 @@ Page admin « Sources externes », sorte de collection « Films » (`/external/f
    ni accents) ; jamais par EAN (TF1 Vidéo a réutilisé 3384442017220 pour deux VHS). Seuls les champs vides sont complétés.
 
 Exemple : `db/seed_video.sql` (Amélie, son générique et le Blu-ray « édition collector » TF1 vidéo 2010).
+
+## Séries en vidéo (P3-6)
+
+Les séries gardent le modèle du paquet `tv` (diffusion, saisons, épisodes) ; leurs coffrets sont des éditions vidéo du
+paquet `video`, liées aux épisodes qu'ils contiennent : un épisode est atteint par sa saison **et** par son coffret.
+
+```
+Série ──broadcast_on {broadcast_start_year} ──▶ Diffusion (AMC) ──contains_season ──▶ Saison ──contains_episode {order} ──▶ Épisode
+  ├── credited {roles: creator, actor…} ──▶ Personne (people)                                            ▲
+  └── released_as ──▶ Édition vidéo (coffret « Intégrale de la saison 1 ») ──includes_episode ─────────────┘
+```
+
+Paquet `tv` **v3** (ajouts seulement, aucune clé retirée) : `Series` gagne `original_title`, `countries`,
+`original_language`, `season_count`, `episode_count`, `external_ids` (`wikidata`, `imdb`, `tvmaze`, `bnf_ark`) et `sources` ;
+`Season` gagne `episode_count`, `external_ids` (`wikidata`, `tvmaze`), `sources` ; `Episode` gagne `original_title`,
+`air_date`, `external_ids` (`wikidata`, `imdb`, `tvmaze`), `sources` ; `Broadcast` gagne `sources`. Sources possibles :
+`wikidata`, `tvmaze`, `bnf`, `manual`. Paquet `video` **v2** : `credited` s'ouvre aux séries, avec le rôle `creator`.
+
+| Élément            | Wikidata (CC0)                                                        | TVmaze (CC BY-SA), à défaut      | BnF (Licence Ouverte)                    |
+| ------------------ | --------------------------------------------------------------------- | -------------------------------- | ---------------------------------------- |
+| Série              | `P31` série télévisée, `P580` / `P582`, `P2437` saisons, `P1113` épisodes, `P495`, `P364`, `P345` | `lookup/shows?imdb=` | — |
+| Diffusion          | `P449` diffuseur d'origine (de la saison, sinon de la série)          | `network`, `webChannel`          | —                                        |
+| Saisons            | `P527` de la série (ordre `P1545`)                                    | `shows/{id}/seasons`             | —                                        |
+| Épisodes           | `P527` de la saison (ordre `P1545`), libellés fr / en, `P577`, `P2047` | `shows/{id}/episodes` (titres anglais) | —                                  |
+| Générique          | `P170` création, `P161` interprétation                                | —                                | —                                        |
+| Coffrets           | —                                                                     | —                                | notices vidéo par titre ou EAN ; saisons lues en 200 `$h` (« Intégrale de la saison 1 », « Intégrale des saisons 1, 2 et 3 », « L'intégrale de la série ») |

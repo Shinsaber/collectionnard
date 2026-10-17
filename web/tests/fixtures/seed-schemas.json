@@ -5,7 +5,20 @@
     "schema": {
       "type": "object",
       "x-label": "{title}",
-      "x-order": ["title", "synopsis", "start_year", "end_year", "images"],
+      "x-order": [
+        "title",
+        "synopsis",
+        "start_year",
+        "end_year",
+        "original_title",
+        "countries",
+        "original_language",
+        "season_count",
+        "episode_count",
+        "images",
+        "external_ids",
+        "sources"
+      ],
       "x-title": {
         "en": "Series",
         "fr": "Série"
@@ -17,14 +30,28 @@
           "images": "Images",
           "end_year": "End Year",
           "synopsis": "Synopsis",
-          "start_year": "Start Year"
+          "start_year": "Start Year",
+          "original_title": "Original title",
+          "countries": "Countries of origin",
+          "original_language": "Original language",
+          "season_count": "Seasons",
+          "episode_count": "Episodes",
+          "external_ids": "External IDs",
+          "sources": "Sources"
         },
         "fr": {
           "title": "Titre",
           "images": "Images",
           "end_year": "Année de fin",
           "synopsis": "Synopsis",
-          "start_year": "Année de début"
+          "start_year": "Année de début",
+          "original_title": "Titre original",
+          "countries": "Pays d'origine",
+          "original_language": "Langue originale",
+          "season_count": "Saisons",
+          "episode_count": "Épisodes",
+          "external_ids": "Identifiants externes",
+          "sources": "Sources"
         }
       },
       "properties": {
@@ -96,6 +123,71 @@
         "start_year": {
           "type": "integer",
           "minimum": 1900
+        },
+        "original_title": {
+          "type": "string"
+        },
+        "countries": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$"
+          },
+          "description": "Pays d'origine (ISO 3166-1 alpha-2)"
+        },
+        "original_language": {
+          "type": "string",
+          "pattern": "^[a-z]{2,3}$",
+          "description": "Code ISO 639-1 (fr, en, ja…), à défaut ISO 639-2"
+        },
+        "season_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "episode_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "external_ids": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "wikidata": {
+              "type": "string",
+              "pattern": "^Q[1-9][0-9]*$"
+            },
+            "imdb": {
+              "type": "string",
+              "pattern": "^tt[0-9]{7,9}$"
+            },
+            "tvmaze": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            },
+            "bnf_ark": {
+              "type": "string",
+              "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$"
+            }
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["source"],
+            "additionalProperties": false,
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": ["wikidata", "tvmaze", "bnf", "manual"]
+              },
+              "retrieved_at": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          }
         }
       },
       "x-description": {
@@ -111,7 +203,7 @@
     "schema": {
       "type": "object",
       "x-label": "{name}",
-      "x-order": ["name", "type", "channel"],
+      "x-order": ["name", "type", "channel", "sources"],
       "x-title": {
         "en": "Broadcast",
         "fr": "Diffusion"
@@ -121,12 +213,14 @@
         "en": {
           "name": "Name",
           "type": "Type",
-          "channel": "Support"
+          "channel": "Support",
+          "sources": "Sources"
         },
         "fr": {
           "name": "Nom",
           "type": "Type",
-          "channel": "Support"
+          "channel": "Support",
+          "sources": "Sources"
         }
       },
       "properties": {
@@ -154,6 +248,24 @@
         },
         "channel": {
           "type": "string"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["source"],
+            "additionalProperties": false,
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": ["wikidata", "tvmaze", "bnf", "manual"]
+              },
+              "retrieved_at": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          }
         }
       },
       "x-description": {
@@ -169,7 +281,14 @@
     "schema": {
       "type": "object",
       "x-label": "{name}",
-      "x-order": ["name", "number", "year"],
+      "x-order": [
+        "name",
+        "number",
+        "year",
+        "episode_count",
+        "external_ids",
+        "sources"
+      ],
       "x-title": {
         "en": "Season",
         "fr": "Saison"
@@ -179,12 +298,18 @@
         "en": {
           "name": "Name",
           "year": "Year",
-          "number": "Number"
+          "number": "Number",
+          "episode_count": "Episodes",
+          "external_ids": "External IDs",
+          "sources": "Sources"
         },
         "fr": {
           "name": "Nom",
           "year": "Année",
-          "number": "Numéro"
+          "number": "Numéro",
+          "episode_count": "Épisodes",
+          "external_ids": "Identifiants externes",
+          "sources": "Sources"
         }
       },
       "properties": {
@@ -199,6 +324,42 @@
         "number": {
           "type": "integer",
           "minimum": 1
+        },
+        "episode_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "external_ids": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "wikidata": {
+              "type": "string",
+              "pattern": "^Q[1-9][0-9]*$"
+            },
+            "tvmaze": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            }
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["source"],
+            "additionalProperties": false,
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": ["wikidata", "tvmaze", "bnf", "manual"]
+              },
+              "retrieved_at": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          }
         }
       },
       "x-description": {
@@ -214,7 +375,16 @@
     "schema": {
       "type": "object",
       "x-label": "{number}. {title}",
-      "x-order": ["number", "title", "duration", "synopsis"],
+      "x-order": [
+        "number",
+        "title",
+        "duration",
+        "synopsis",
+        "original_title",
+        "air_date",
+        "external_ids",
+        "sources"
+      ],
       "x-title": {
         "en": "Episode",
         "fr": "Épisode"
@@ -225,13 +395,21 @@
           "title": "Title",
           "number": "Number",
           "duration": "Duration (min)",
-          "synopsis": "Synopsis"
+          "synopsis": "Synopsis",
+          "original_title": "Original title",
+          "air_date": "First aired",
+          "external_ids": "External IDs",
+          "sources": "Sources"
         },
         "fr": {
           "title": "Titre",
           "number": "Numéro",
           "duration": "Durée (min)",
-          "synopsis": "Synopsis"
+          "synopsis": "Synopsis",
+          "original_title": "Titre original",
+          "air_date": "Première diffusion",
+          "external_ids": "Identifiants externes",
+          "sources": "Sources"
         }
       },
       "properties": {
@@ -264,6 +442,49 @@
           },
           "additionalProperties": {
             "type": "string"
+          }
+        },
+        "original_title": {
+          "type": "string"
+        },
+        "air_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "external_ids": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "wikidata": {
+              "type": "string",
+              "pattern": "^Q[1-9][0-9]*$"
+            },
+            "imdb": {
+              "type": "string",
+              "pattern": "^tt[0-9]{7,9}$"
+            },
+            "tvmaze": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            }
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["source"],
+            "additionalProperties": false,
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": ["wikidata", "tvmaze", "bnf", "manual"]
+              },
+              "retrieved_at": {
+                "type": "string",
+                "format": "date"
+              }
+            }
           }
         }
       },
@@ -3713,8 +3934,8 @@
         "en": "Credited"
       },
       "x-description": {
-        "fr": "Réalisateur, scénariste, acteur, compositeur… d'un film",
-        "en": "Director, screenwriter, actor, composer… of a film"
+        "fr": "Créateur, réalisateur, scénariste, acteur, compositeur… d'un film ou d'une série",
+        "en": "Creator, director, screenwriter, actor, composer… of a film or a series"
       },
       "x-order": ["roles", "character", "order"],
       "required": ["roles"],
@@ -3725,6 +3946,7 @@
           "items": {
             "type": "string",
             "enum": [
+              "creator",
               "director",
               "screenwriter",
               "actor",
@@ -3736,6 +3958,7 @@
           },
           "x-enum-labels": {
             "fr": {
+              "creator": "Création",
               "director": "Réalisation",
               "screenwriter": "Scénario",
               "actor": "Interprétation",
@@ -3745,6 +3968,7 @@
               "editor": "Montage"
             },
             "en": {
+              "creator": "Creator",
               "director": "Director",
               "screenwriter": "Screenwriter",
               "actor": "Actor",

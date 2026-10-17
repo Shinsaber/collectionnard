@@ -95,7 +95,14 @@ describe("fieldLabel / displayValue / orderedKeys", () => {
       "synopsis",
       "start_year",
       "end_year",
+      "original_title",
+      "countries",
+      "original_language",
+      "season_count",
+      "episode_count",
       "images",
+      "external_ids",
+      "sources",
       "extra",
     ]);
     expect(

@@ -30,8 +30,12 @@ describe("ItemSearchFilters", () => {
       "Synopsis",
       "Année de début",
       "Année de fin",
+      "Titre original",
+      "Langue originale",
+      "Saisons",
+      "Épisodes",
     ]);
-    expect(w.findAllComponents(ElInputNumber)).toHaveLength(4); // 2 intervalles
+    expect(w.findAllComponents(ElInputNumber)).toHaveLength(8); // 4 intervalles
   });
 
   it("traduit les valeurs d'enum et émet un filtre répétable", async () => {

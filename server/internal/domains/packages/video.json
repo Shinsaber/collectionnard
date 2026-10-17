@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "video",
-  "package_version": 1,
+  "package_version": 2,
   "title": {
     "fr": "Vidéo : films",
     "en": "Video: films"
@@ -639,7 +639,7 @@
     {
       "id": "c0000000-0000-0000-0000-000000000030",
       "name": "credited",
-      "description": "Personne au générique d'un film",
+      "description": "Personne au générique d'un film ou d'une série",
       "attributes_schema": {
         "type": "object",
         "additionalProperties": false,
@@ -648,8 +648,8 @@
           "en": "Credited"
         },
         "x-description": {
-          "fr": "Réalisateur, scénariste, acteur, compositeur… d'un film",
-          "en": "Director, screenwriter, actor, composer… of a film"
+          "fr": "Créateur, réalisateur, scénariste, acteur, compositeur… d'un film ou d'une série",
+          "en": "Creator, director, screenwriter, actor, composer… of a film or a series"
         },
         "x-order": [
           "roles",
@@ -666,6 +666,7 @@
             "items": {
               "type": "string",
               "enum": [
+                "creator",
                 "director",
                 "screenwriter",
                 "actor",
@@ -677,6 +678,7 @@
             },
             "x-enum-labels": {
               "fr": {
+                "creator": "Création",
                 "director": "Réalisation",
                 "screenwriter": "Scénario",
                 "actor": "Interprétation",
@@ -686,6 +688,7 @@
                 "editor": "Montage"
               },
               "en": {
+                "creator": "Creator",
                 "director": "Director",
                 "screenwriter": "Screenwriter",
                 "actor": "Actor",
@@ -719,6 +722,7 @@
         }
       },
       "source_item_type_ids": [
+        "b0000000-0000-0000-0000-000000000001",
         "b0000000-0000-0000-0000-000000000030"
       ],
       "target_item_type_ids": [

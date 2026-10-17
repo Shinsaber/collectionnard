@@ -417,7 +417,10 @@ ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries 
         notice. Exemple réel dans `db/seed_video.sql`.
 - [ ] **P3-6 — Séries (DVD / Blu-ray)** : étude (Wikidata, TVmaze pour saisons et épisodes, BnF pour les coffrets),
       en réutilisant le modèle TV existant (Series, Season, Episode) et l'édition vidéo partagée (`VideoRelease`), connecteur.
-
+  - [x] **P3-6a — Étude et modèle** : sources (`docs/sources-externes.md` : Wikidata pour la série, ses saisons et
+        épisodes ; TVmaze, CC BY-SA sans clé, à défaut ; BnF pour les coffrets, par titre ou EAN, saisons lues en 200 `$h`),
+        modèle (`video.md` § Séries) ; `tv` v3 (identifiants, sources, titres originaux, date de diffusion, nombres de
+        saisons et d'épisodes ; ajouts seulement) et `video` v2 (`credited` ouvert aux séries, rôle `creator`).
 ### Phase 4 : Social
 
 - [ ] Statistiques et visualisation graphiques

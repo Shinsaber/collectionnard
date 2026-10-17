@@ -175,6 +175,19 @@ choix du mainteneur). Modèle : `video.md`.
   où le nom est entre crochets avec son rôle (« [TF1 vidéo [éd., distrib.]] ») ; mention d'édition en 200 `$e`
   (« édition collector ») plutôt qu'en 205 (« Autorisé à la location »).
 
+## Séries (P3-6, recherche du 2026-10-17)
+
+- **Wikidata** : Breaking Bad (`Q1079`) a ses 5 saisons en `P527` (éléments « saison de série télévisée » `Q3464665`,
+  ordre `P1545`, diffuseur `P449`, nombre d'épisodes `P1113`) et chaque saison ses épisodes en `P527` (éléments
+  `Q21191270`, libellé français, `P577`, `P2047`, `P345`). Couverture inégale selon les séries : à compléter par TVmaze.
+- **TVmaze** : [API](https://www.tvmaze.com/api) sans clé, **CC BY-SA** (citer TVmaze, lien vers la fiche ; partage à
+  l'identique pour une rediffusion des données) ; au moins 20 requêtes par 10 secondes, 429 au-delà. Recherche par IMDb
+  (`lookup/shows?imdb=`), saisons et épisodes (numéro, titre anglais, date, durée). Résumés et images non repris.
+- **BnF** : les coffrets de séries sont des notices vidéo **sans lien vers une notice d'œuvre** (`bib.work2bib` vide pour
+  Breaking Bad, notice `16963580`) : recherche par titre (21 notices, dont le film « El Camino » à écarter) ou par EAN ; la
+  saison est en 200 `` (« Saison 5 », « Saison finale [Saison 5] », « Intégrale des saisons 1, 2 et 3 »,
+  « L'intégrale de la série »).
+
 ## Sources pour plus tard
 
 ### Grand Comics Database (comics.org)
