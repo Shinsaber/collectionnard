@@ -107,7 +107,7 @@ cd server
 go run . migrate                      # applique les migrations en attente (table schema_version)
 SEED_ON_EMPTY=true go run . migrate   # idem, puis les seeds si la table users est vide
 go run . seed                         # applique les seeds sans condition (dev)
-# Seeds : db/seed.sql, db/seed_bd_manga.sql, db/seed_music.sql puis db/seed_video.sql ; SEED_FILE=a.sql,b.sql pour une autre liste
+# Seeds : db/seed.sql, db/seed_bd_manga.sql, db/seed_music.sql, db/seed_video.sql puis db/seed_games.sql ; SEED_FILE=a.sql,b.sql pour une autre liste
 ```
 
 `pg-start` (shell Nix) et le service `migrate` de docker-compose les lancent automatiquement.
@@ -183,6 +183,7 @@ colec/
 │   ├── seed_bd_manga.sql   # Domaine BD / Manga (Dragon Ball, Astérix ; données Wikidata / BnF)
 │   ├── seed_music.sql      # Domaine Musique (Discovery de Daft Punk ; données MusicBrainz)
 │   ├── seed_video.sql      # Domaine Vidéo (Amélie, son Blu-ray ; données Wikidata / BnF)
+│   ├── seed_games.sql      # Domaine Jeux vidéo (Mario Kart 8 Deluxe ; données Wikidata / BnF)
 │   └── queries_test.sql    # Requêtes SQL de test
 ├── server/                 # Backend Go
 │   ├── main.go
@@ -192,7 +193,7 @@ colec/
 │       ├── handler/        # Handlers HTTP (1 fichier par domaine)
 │       ├── middleware/     # Auth JWT, RequireAdmin, RateLimiter, RequestLogger
 │       ├── dbmigrate/      # Migrations (tern) + seed
-│       ├── external/       # Sources ouvertes : clients Wikidata, BnF (SRU), MusicBrainz et TVmaze, connecteurs (BD / manga, romans, musique, films, séries)
+│       ├── external/       # Sources ouvertes : clients Wikidata, BnF (SRU), MusicBrainz et TVmaze, connecteurs (BD / manga, romans, musique, films, séries, jeux vidéo)
 │       ├── model/          # Structs Go (JSON tags)
 │       ├── store/          # Couche d'accès BDD (pgx)
 │       ├── validator/      # Validation JSON Schema

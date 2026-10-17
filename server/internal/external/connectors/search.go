@@ -28,6 +28,8 @@ func (c *Connector) SearchWorks(ctx context.Context, text string) ([]model.Exter
 		classes = filmClasses
 	case profileSeries:
 		classes = seriesClasses
+	case profileGames:
+		classes = gameClasses
 	}
 	ids, err := c.WD.Search(ctx, text, classes, maxWorkHits)
 	if err != nil {
@@ -66,7 +68,7 @@ func (c *Connector) SearchWorks(ctx context.Context, text string) ([]model.Exter
 		if y, ok := e.Year(yearProps...); ok {
 			h.StartYear = &y
 		}
-		if c.profile == profileFilms {
+		if c.profile == profileFilms || c.profile == profileGames {
 			if y, ok := e.EarliestYear(pPublication); ok {
 				h.StartYear = &y
 			}
@@ -96,6 +98,8 @@ func (c *Connector) SearchEditions(ctx context.Context, q model.ExternalEditionQ
 		return c.searchFilmEditions(ctx, q)
 	case profileSeries:
 		return c.searchSeriesEditions(ctx, q)
+	case profileGames:
+		return c.searchGameEditions(ctx, q)
 	}
 	title, isbn := q.Title, q.ISBN
 	if q.Work != "" || q.Barcode != "" {

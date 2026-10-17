@@ -226,6 +226,20 @@ choix du mainteneur). Modèle : `video.md`.
   sans plateforme. Pas de filtre `bib.doctype` propre aux jeux : recherche par titre puis tri sur le support. Un EAN peut
   avoir perdu son zéro initial (« 45496333133 », 11 chiffres). Environ 1 100 notices « jeu vidéo » datées de 2023.
 
+### Connecteur `games` (2026-10-17)
+
+- **Éditions** : pas de lien Wikidata → notice d'œuvre BnF exploitable (`P268` ne donne pas les éditions) : recherche par
+  titre (« Mario Kart 8 Deluxe » : 4 notices dont 3 jeux), filtrée sur le support (guide `l` + 230 « Jeu », ou notice sans
+  type avec « cartouche », « disque optique », « ressource dématérialisée ») et sur le titre (la notice contient le titre du
+  jeu ; 200 `$i` et `$e` compris : « The legend of Zelda : Breath of the wild »).
+- **Sociétés** : Wikidata donne le studio (`P178` : Nintendo EPD) et l'éditeur (`P123` : Nintendo) ; la BnF « Nintendo
+  co. » (712 `$4` 635, développeur) — comparée sans suffixe juridique, la même société n'est proposée qu'une fois ; les
+  notices brèves donnent la filiale française (« NINTENDO FRANCE »), gardée à part. La Switch a deux constructeurs
+  (`P176` : Nintendo et sa division matérielle) : tous deux liés.
+- **Plateformes** : nom en libellé multilingue (`mul`) ; dans la notice BnF, entre parenthèses (« (Nintendo Switch) »,
+  « (Wii U) ») ou après le support (« 1 cartouche Super Nintendo »), sinon en 500 `$q` ; rapprochée d'une plateforme du
+  jeu par la fin de son nom (« Wii U », « Switch » → « Nintendo Switch »).
+
 ## Sources pour plus tard
 
 ### Grand Comics Database (comics.org)

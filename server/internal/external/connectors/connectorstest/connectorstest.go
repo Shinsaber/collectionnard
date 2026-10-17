@@ -1,5 +1,5 @@
 // Package connectorstest serves recorded answers of the sources (Wikidata and
-// the BnF: Dragon Ball, L'Étranger, Les Misérables, Amélie, Breaking Bad ; MusicBrainz ;
+// the BnF: Dragon Ball, L'Étranger, Les Misérables, Amélie, Breaking Bad, Mario Kart 8 ; MusicBrainz ;
 // TVmaze) and an in-memory catalogue
 // holding the types of the seeds, for the tests of the connector and of its
 // handlers.
@@ -54,6 +54,12 @@ var sruAnswers = map[string]string{
 	`bib.recordid all "43511598"`:                          "series_s1_dvd.xml",
 	`bib.recordid all "43745269"`:                          "series_final_dvd.xml",
 	`bib.ean all "3333297204842"`:                          "series_ean.xml",
+	// Jeux vidéo (P3-7) : Mario Kart 8 Deluxe (cartouche Switch, notice brève avec EAN), Mario Kart 8 sur Wii U.
+	`bib.title all "Mario Kart 8 Deluxe"`:                     "game_title.xml",
+	`bib.recordid all "45382491"`:                             "game_switch.xml",
+	`bib.recordid all "48815889"`:                             "game_brief.xml",
+	`bib.recordid all "43877942"`:                             "game_wiiu.xml",
+	`bib.ean all "045496333133" or bib.ean all "45496333133"`: "game_ean.xml",
 }
 
 // Recorded MusicBrainz answers (2026-10-17, tags and genres removed: not CC0): OK Computer
@@ -100,7 +106,7 @@ func NewSources(t testing.TB) *Sources {
 	var entities struct {
 		Entities map[string]json.RawMessage `json:"entities"`
 	}
-	for _, name := range []string{"wikidata_entities.json", "wikidata_entities_novels.json", "wikidata_entities_films.json", "wikidata_entities_series.json"} {
+	for _, name := range []string{"wikidata_entities.json", "wikidata_entities_novels.json", "wikidata_entities_films.json", "wikidata_entities_series.json", "wikidata_entities_games.json"} {
 		if err := json.Unmarshal(testdata(t, name), &entities); err != nil {
 			t.Fatal(err)
 		}
@@ -110,6 +116,8 @@ func NewSources(t testing.TB) *Sources {
 	searchFilms := testdata(t, "wikidata_search_films.json")
 	searchFilmBnF := testdata(t, "wikidata_search_film_bnf.json")
 	searchSeries := testdata(t, "wikidata_search_series.json")
+	searchGames := testdata(t, "wikidata_search_games.json")
+	searchGamesMK8 := testdata(t, "wikidata_search_games_mk8.json")
 	s := &Sources{}
 	s.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s.Requests.Add(1)
@@ -126,6 +134,12 @@ func NewSources(t testing.TB) *Sources {
 				switch srsearch := q.Get("srsearch"); {
 				case strings.Contains(srsearch, "P268=14404106q"):
 					_, _ = w.Write(searchFilmBnF) // film d'une notice d'œuvre BnF
+					return
+				case strings.HasPrefix(srsearch, "Mario kart 8 haswbstatement:P31=Q7889"):
+					_, _ = w.Write(searchGamesMK8) // titre d'une notice BnF (édition seule)
+					return
+				case strings.Contains(srsearch, "P31=Q7889"):
+					_, _ = w.Write(searchGames) // classe des jeux vidéo
 					return
 				case strings.Contains(srsearch, "Q5398426"):
 					_, _ = w.Write(searchSeries) // classes des séries
@@ -357,6 +371,15 @@ func (s *Sources) SeriesConnector(cat connectors.Catalog) *connectors.Connector 
 	c.WD.BaseURL = s.URL + "/w/api.php"
 	c.BnF.BaseURL = s.URL + "/api/SRU"
 	c.TV.BaseURL = s.URL + "/tvmaze"
+	c.Now = func() time.Time { return Today }
+	return c
+}
+
+// GamesConnector returns the video games connector reading these sources and cat, dated Today.
+func (s *Sources) GamesConnector(cat connectors.Catalog) *connectors.Connector {
+	c := connectors.NewGames(cat, external.NewClient("collectionnard-test"))
+	c.WD.BaseURL = s.URL + "/w/api.php"
+	c.BnF.BaseURL = s.URL + "/api/SRU"
 	c.Now = func() time.Time { return Today }
 	return c
 }

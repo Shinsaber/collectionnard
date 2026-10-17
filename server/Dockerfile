@@ -17,9 +17,9 @@ RUN apk add --no-cache ca-certificates tzdata \
     && chown colec:colec /data/uploads
 COPY --from=builder /colec-server /usr/local/bin/colec-server
 COPY db/migrations /app/db/migrations
-COPY db/seed.sql db/seed_bd_manga.sql db/seed_music.sql db/seed_video.sql /app/db/
+COPY db/seed.sql db/seed_bd_manga.sql db/seed_music.sql db/seed_video.sql db/seed_games.sql /app/db/
 ENV MIGRATIONS_DIR=/app/db/migrations \
-    SEED_FILE=/app/db/seed.sql,/app/db/seed_bd_manga.sql,/app/db/seed_music.sql,/app/db/seed_video.sql \
+    SEED_FILE=/app/db/seed.sql,/app/db/seed_bd_manga.sql,/app/db/seed_music.sql,/app/db/seed_video.sql,/app/db/seed_games.sql \
     UPLOAD_DIR=/data/uploads \
     TZ=UTC
 USER colec

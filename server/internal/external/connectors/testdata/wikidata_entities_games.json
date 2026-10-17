@@ -1,0 +1,1487 @@
+{
+  "entities": {
+    "Q28321447": {
+      "id": "Q28321447",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Mario Kart 8 Deluxe"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Mario Kart 8 Deluxe"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "マリオカート8 デラックス"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Mario Kart 8 Deluxe"
+        }
+      },
+      "descriptions": {
+        "en": {
+          "language": "en",
+          "value": "2017 re-release of the Mario Kart 8 video game"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "réédition améliorée de Mario Kart 8 sur Nintendo Switch de 2017"
+        }
+      },
+      "claims": {
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 7889,
+                  "id": "Q7889"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 112144412,
+                  "id": "Q112144412"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P136": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P136",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 95124454,
+                  "id": "Q95124454"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P136",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 18759108,
+                  "id": "Q18759108"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P123": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P123",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 8093,
+                  "id": "Q8093"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P577": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2017-04-28T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ],
+        "P400": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P400",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 19610114,
+                  "id": "Q19610114"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P178": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P178",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 20972825,
+                  "id": "Q20972825"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P404": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P404",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 208850,
+                  "id": "Q208850"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P404",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 6895044,
+                  "id": "Q6895044"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P404",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 719798,
+                  "id": "Q719798"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P908": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P908",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 14915512,
+                  "id": "Q14915512"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P856": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P856",
+              "datavalue": {
+                "value": "http://mariokart8.nintendo.com",
+                "type": "string"
+              },
+              "datatype": "url"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P856",
+              "datavalue": {
+                "value": "https://www.nintendo.co.jp/switch/aabpa/",
+                "type": "string"
+              },
+              "datatype": "url"
+            }
+          }
+        ],
+        "P1476": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P1476",
+              "datavalue": {
+                "value": {
+                  "text": "マリオカート8 デラックス",
+                  "language": "ja"
+                },
+                "type": "monolingualtext"
+              },
+              "datatype": "monolingualtext"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P1476",
+              "datavalue": {
+                "value": {
+                  "text": "Mario Kart 8 Deluxe",
+                  "language": "en"
+                },
+                "type": "monolingualtext"
+              },
+              "datatype": "monolingualtext"
+            }
+          }
+        ]
+      }
+    },
+    "Q20972825": {
+      "id": "Q20972825",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Nintendo Entertainment Planning & Development"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "任天堂企画制作本部"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Nintendo Entertainment Planning & Development"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Nintendo Entertainment Planning & Development"
+        }
+      },
+      "descriptions": {
+        "en": {
+          "language": "en",
+          "value": "Nintendo's largest internal video game studio"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "studio japonais de développement de jeux vidéo"
+        }
+      },
+      "claims": {
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 334453,
+                  "id": "Q334453"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 210167,
+                  "id": "Q210167"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P571": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P571",
+              "datavalue": {
+                "value": {
+                  "time": "+2015-09-16T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ],
+        "P17": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P17",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 17,
+                  "id": "Q17"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ]
+      }
+    },
+    "Q8093": {
+      "id": "Q8093",
+      "type": "item",
+      "labels": {
+        "ja": {
+          "language": "ja",
+          "value": "任天堂"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Nintendo"
+        },
+        "en": {
+          "language": "en",
+          "value": "Nintendo"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Nintendo"
+        }
+      },
+      "descriptions": {
+        "fr": {
+          "language": "fr",
+          "value": "entreprise multinationale japonaise de jeu vidéo"
+        },
+        "en": {
+          "language": "en",
+          "value": "Japanese multinational video game and consumer electronics company"
+        }
+      },
+      "claims": {
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 1058914,
+                  "id": "Q1058914"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 1137109,
+                  "id": "Q1137109"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 891723,
+                  "id": "Q891723"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 210167,
+                  "id": "Q210167"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P571": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P571",
+              "datavalue": {
+                "value": {
+                  "time": "+1889-09-23T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P571",
+              "datavalue": {
+                "value": {
+                  "time": "+1947-00-00T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 9,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ],
+        "P856": [
+          {
+            "rank": "deprecated",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P856",
+              "datavalue": {
+                "value": "https://www.nintendo.com/countryselector/",
+                "type": "string"
+              },
+              "datatype": "url"
+            }
+          },
+          {
+            "rank": "preferred",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P856",
+              "datavalue": {
+                "value": "https://www.nintendo.com/jp/index.html",
+                "type": "string"
+              },
+              "datatype": "url"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P856",
+              "datavalue": {
+                "value": "https://www.nintendo.de/",
+                "type": "string"
+              },
+              "datatype": "url"
+            }
+          },
+          {
+            "rank": "deprecated",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P856",
+              "datavalue": {
+                "value": "https://www.nintendo.com/us/regionselector/",
+                "type": "string"
+              },
+              "datatype": "url"
+            }
+          },
+          {
+            "rank": "preferred",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P856",
+              "datavalue": {
+                "value": "https://www.nintendo.com/region-selector/",
+                "type": "string"
+              },
+              "datatype": "url"
+            }
+          }
+        ],
+        "P17": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P17",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 17,
+                  "id": "Q17"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P268": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P268",
+              "datavalue": {
+                "value": "13980292t",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ]
+      }
+    },
+    "Q19610114": {
+      "id": "Q19610114",
+      "type": "item",
+      "labels": {
+        "mul": {
+          "language": "mul",
+          "value": "Nintendo Switch"
+        }
+      },
+      "descriptions": {
+        "en": {
+          "language": "en",
+          "value": "hybrid video game console"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "console de jeux vidéo hybride sortie en 2017"
+        }
+      },
+      "claims": {
+        "P856": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P856",
+              "datavalue": {
+                "value": "http://www.nintendo.com/switch/",
+                "type": "string"
+              },
+              "datatype": "url"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P856",
+              "datavalue": {
+                "value": "https://www.nintendo.co.jp/hardware/switch/",
+                "type": "string"
+              },
+              "datatype": "url"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P856",
+              "datavalue": {
+                "value": "https://www.nintendo.co.uk/Nintendo-Switch/Nintendo-Switch-1148779.html",
+                "type": "string"
+              },
+              "datatype": "url"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P856",
+              "datavalue": {
+                "value": "http://www.nintendo.com.au/nintendo-switch/",
+                "type": "string"
+              },
+              "datatype": "url"
+            }
+          }
+        ],
+        "P176": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P176",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 21190892,
+                  "id": "Q21190892"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P176",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 8093,
+                  "id": "Q8093"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P178": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P178",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 8093,
+                  "id": "Q8093"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 10929058,
+                  "id": "Q10929058"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P577": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2017-03-03T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ],
+        "P1476": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P1476",
+              "datavalue": {
+                "value": {
+                  "text": "Nintendo Switch",
+                  "language": "en"
+                },
+                "type": "monolingualtext"
+              },
+              "datatype": "monolingualtext"
+            }
+          }
+        ]
+      }
+    },
+    "Q21190892": {
+      "id": "Q21190892",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Nintendo Platform Technology Development"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "任天堂技術開発本部"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Nintendo Platform Technology Development"
+        }
+      },
+      "descriptions": {
+        "en": {
+          "language": "en",
+          "value": "division of Nintendo"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "branche interne à la société Nintendo"
+        }
+      },
+      "claims": {
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 334453,
+                  "id": "Q334453"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 210167,
+                  "id": "Q210167"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P571": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P571",
+              "datavalue": {
+                "value": {
+                  "time": "+2015-09-16T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ],
+        "P17": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P17",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 17,
+                  "id": "Q17"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ]
+      }
+    },
+    "Q13427106": {
+      "id": "Q13427106",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Mario Kart 8"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "マリオカート8"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Mario Kart 8"
+        }
+      },
+      "descriptions": {
+        "fr": {
+          "language": "fr",
+          "value": "jeu vidéo de 2014"
+        },
+        "en": {
+          "language": "en",
+          "value": "2014 racing video game"
+        }
+      },
+      "claims": {
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 7889,
+                  "id": "Q7889"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P123": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P123",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 8093,
+                  "id": "Q8093"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P404": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P404",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 208850,
+                  "id": "Q208850"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P404",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 6895044,
+                  "id": "Q6895044"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P400": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P400",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 56942,
+                  "id": "Q56942"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P136": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P136",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 18759108,
+                  "id": "Q18759108"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P577": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2014-05-29T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2014-05-30T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2014-05-31T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ],
+        "P178": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P178",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 170420,
+                  "id": "Q170420"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P908": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P908",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 14915512,
+                  "id": "Q14915512"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P856": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P856",
+              "datavalue": {
+                "value": "http://mariokart8.nintendo.com",
+                "type": "string"
+              },
+              "datatype": "url"
+            }
+          }
+        ],
+        "P495": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P495",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 17,
+                  "id": "Q17"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P1476": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P1476",
+              "datavalue": {
+                "value": {
+                  "text": "マリオカート8",
+                  "language": "ja"
+                },
+                "type": "monolingualtext"
+              },
+              "datatype": "monolingualtext"
+            }
+          }
+        ]
+      }
+    },
+    "Q170420": {
+      "id": "Q170420",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Nintendo Entertainment Analysis & Development"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Nintendo Entertainment Analysis and Development"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "任天堂情報開発本部"
+        }
+      },
+      "descriptions": {
+        "en": {
+          "language": "en",
+          "value": "division of Nintendo"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "studio japonais de développement de jeux vidéo"
+        }
+      },
+      "claims": {
+        "P17": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P17",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 17,
+                  "id": "Q17"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 210167,
+                  "id": "Q210167"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 334453,
+                  "id": "Q334453"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P571": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P571",
+              "datavalue": {
+                "value": {
+                  "time": "+1983-09-00T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 10,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ]
+      }
+    },
+    "Q56942": {
+      "id": "Q56942",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Wii U"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Wii U"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "Wii U"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Wii U"
+        }
+      },
+      "descriptions": {
+        "en": {
+          "language": "en",
+          "value": "eighth-generation home video game console by Nintendo"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "console de jeux vidéo de salon du fabricant japonais Nintendo de 2012"
+        }
+      },
+      "claims": {
+        "P176": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P176",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 8093,
+                  "id": "Q8093"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P856": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P856",
+              "datavalue": {
+                "value": "https://www.nintendo.com/en-gb/Wii-U/Wii-U-344102.html",
+                "type": "string"
+              },
+              "datatype": "url"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P856",
+              "datavalue": {
+                "value": "http://www.nintendo.co.jp/wiiu/",
+                "type": "string"
+              },
+              "datatype": "url"
+            }
+          }
+        ],
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 115187350,
+                  "id": "Q115187350"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P178": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P178",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 8093,
+                  "id": "Q8093"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P577": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2012-11-18T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ],
+        "P2669": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P2669",
+              "datavalue": {
+                "value": {
+                  "time": "+2018-00-00T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 9,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ],
+        "P1476": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P1476",
+              "datavalue": {
+                "value": {
+                  "text": "Nintendo Wii",
+                  "language": "ja"
+                },
+                "type": "monolingualtext"
+              },
+              "datatype": "monolingualtext"
+            }
+          }
+        ]
+      }
+    }
+  }
+}

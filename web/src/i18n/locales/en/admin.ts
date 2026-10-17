@@ -234,6 +234,22 @@ const en: typeof fr = {
         groupMain: "Series, broadcast and credits",
         groupVolumes: "Episodes",
       },
+      games: {
+        title: "Video games",
+        intro:
+          "Search a game on Wikidata: its platforms (linked to their manufacturer) and companies are proposed, and its French legal-deposit releases (cartridges, discs, codes) are listed from the BnF. A release can also be found by its barcode: its game is then found too. Simulate, then confirm. Items already in the catalogue keep their values: only their empty fields are filled in.",
+        workTitle: "Game (Wikidata)",
+        workPlaceholder: "Game title, e.g. Mario Kart 8 Deluxe",
+        editionTitle: "French releases (BnF)",
+        editionPlaceholder: "Game title",
+        byCode: "By barcode",
+        codePlaceholder: "Barcode (EAN) on the box, e.g. 045496420246",
+        publishers: "Company(ies)",
+        attribution:
+          "Data from Wikidata (CC0) and the BnF general catalogue (Licence Ouverte), retrieved on {date}.",
+        groupMain: "Game, platforms and companies",
+        groupVolumes: "Contents",
+      },
     },
     stepOf: "Step {n} / {total} · {title}",
     steps: {

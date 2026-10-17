@@ -148,6 +148,8 @@ func (c *Connector) plan(ctx context.Context, req model.ExternalImportRequest) (
 		addWork, addEdition = p.addFilm, p.addVideoRelease
 	case profileSeries:
 		addWork, addEdition = p.addSeries, p.addBoxSet
+	case profileGames:
+		addWork, addEdition = p.addGame, p.addGameRelease
 	}
 	if req.Work != "" {
 		if workKey, err = addWork(ctx, req.Work); err != nil {

@@ -51,3 +51,25 @@ Vérifié le 2026-10-17 (voir `docs/sources-externes.md`).
 | Sociétés du jeu     | `P178` développeur, `P123` éditeur                                                 | 712 `$4` : 635 développement, 650 édition, 310 distribution, 630 production |
 | Plateformes         | `P400` ; plateforme : `P176` fabricant, `P571` / `P2669` dates, `P31` classe        | 215 : « 1 cartouche (Nintendo Switch) », « 1 cartouche Super Nintendo » |
 | Édition             | —                                                                                  | 073 EAN, 200 titre et mention, 215 support, 101 langues, 230 « Jeu multimédia », 300 notes |
+
+## Import (connecteur `games`)
+
+Page admin « Sources externes », sorte de collection « Jeux vidéo » (`/external/games/*`) :
+
+1. **Jeu** cherché sur Wikidata (`P31` jeu vidéo) ; une fois choisi, ses **éditions françaises** sont listées depuis la
+   BnF (notices titrées comme lui : « Mario kart 8 : deluxe » pour Mario Kart 8 Deluxe, pas le Mario Kart 8 de la Wii U),
+   les plus récentes d'abord. Une édition se trouve aussi par **code-barres** (EAN ; la BnF a parfois perdu le zéro
+   initial d'un UPC : les deux formes sont cherchées).
+2. **Aperçu** : jeu (titres, année, genres, modes, PEGI), sociétés (`produced_by` : développeur, éditeur), plateformes
+   (`on_platform`) chacune **rattachée à son constructeur** (`produced_by` {manufacturer}), éditions (support, EAN, année,
+   langues, contenu), leur plateforme (lue dans la notice : « 1 cartouche (Nintendo Switch) » ; pour une notice brève sans
+   plateforme, celle du jeu s'il n'en a qu'une) et leurs sociétés (712 : éditeur, distributeur, développeur).
+3. **Une même société** n'est proposée qu'une fois : « Nintendo co. » de la BnF rejoint le « Nintendo » de Wikidata (nom
+   comparé sans suffixe juridique) ; « Nintendo France » reste une société à part.
+4. **Édition choisie seule** (code-barres) : son jeu est retrouvé sur Wikidata par le titre de la notice.
+5. **Rapprochement** : QID ou ARK, sociétés et plateformes aussi par nom (sans casse ni accents).
+
+Exemple : `db/seed_games.sql` (Mario Kart 8 Deluxe, la Switch et Nintendo, deux éditions françaises).
+
+Limites de la V1 : éditions françaises seulement (BnF) ; libretro-database (CC BY-SA : éditions par région, numéros de
+série) pour une V2 ; pas de générique de personnes (réalisateur, compositeur) ni de série de jeux.

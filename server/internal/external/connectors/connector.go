@@ -45,6 +45,7 @@ const (
 	profileMusic                  // music (domain « music »): album → releases → tracks
 	profileFilms                  // films (domain « video »): film → video releases (DVD, Blu-ray…)
 	profileSeries                 // TV series (domain « tv »): series → broadcast → seasons → episodes, box sets
+	profileGames                  // video games (domain « games »): game → French releases, platforms and companies
 )
 
 type Connector struct {
@@ -81,6 +82,13 @@ func NewSeries(cat Catalog, fetch *external.Client) *Connector {
 	c := New(cat, fetch)
 	c.TV = tvmaze.New(fetch)
 	c.profile = profileSeries
+	return c
+}
+
+// NewGames returns the video games connector (Wikidata for the game, BnF for its French releases).
+func NewGames(cat Catalog, fetch *external.Client) *Connector {
+	c := New(cat, fetch)
+	c.profile = profileGames
 	return c
 }
 
@@ -137,6 +145,15 @@ const (
 	relContainsSeason  = "contains_season"
 	relContainsEpisode = "contains_episode"
 	relIncludesEpisode = "includes_episode"
+
+	// Package « games » (jeux-video.md) ; companies: Publisher of « people ».
+	typeGame        = "Game"
+	typeGameRelease = "GameRelease"
+	typePlatform    = "Platform"
+
+	relGameReleasedAs = "game_released_as"
+	relOnPlatform     = "on_platform"
+	relProducedBy     = "produced_by"
 )
 
 var (
@@ -147,6 +164,7 @@ var (
 		profileMusic:   {typeAlbum, typeRelease, typeTrack, typeArtist, typeLabel},
 		profileFilms:   {typeFilm, typeVideoRelease, typePerson, typePublisher},
 		profileSeries:  {typeSeries, typeBroadcast, typeSeason, typeEpisode, typeVideoRelease, typePerson, typePublisher},
+		profileGames:   {typeGame, typeGameRelease, typePlatform, typePublisher},
 	}
 	relationTypeNames = map[profile][]string{
 		profileBDManga: {relContainsWork, relCreatedBy, relPublishedAs, relEditedBy, relContainsVolume},
@@ -154,6 +172,7 @@ var (
 		profileMusic:   {relPerformedBy, relIssuedAs, relContainsTrack, relReleasedBy},
 		profileFilms:   {relReleasedAs, relCredited, relVideoPublishedBy},
 		profileSeries:  {relBroadcastOn, relContainsSeason, relContainsEpisode, relReleasedAs, relIncludesEpisode, relCredited, relVideoPublishedBy},
+		profileGames:   {relGameReleasedAs, relOnPlatform, relProducedBy},
 	}
 
 	// packageIDs: fixed ids of the types in the domain packages. A type is found by this id
@@ -196,6 +215,12 @@ var (
 		relContainsSeason:   uuid.MustParse("c0000000-0000-0000-0000-000000000002"),
 		relContainsEpisode:  uuid.MustParse("c0000000-0000-0000-0000-000000000003"),
 		relIncludesEpisode:  uuid.MustParse("c0000000-0000-0000-0000-000000000005"),
+		typeGame:            uuid.MustParse("b0000000-0000-0000-0000-000000000040"),
+		typeGameRelease:     uuid.MustParse("b0000000-0000-0000-0000-000000000041"),
+		typePlatform:        uuid.MustParse("b0000000-0000-0000-0000-000000000042"),
+		relGameReleasedAs:   uuid.MustParse("c0000000-0000-0000-0000-000000000040"),
+		relOnPlatform:       uuid.MustParse("c0000000-0000-0000-0000-000000000041"),
+		relProducedBy:       uuid.MustParse("c0000000-0000-0000-0000-000000000042"),
 	}
 )
 
@@ -225,6 +250,8 @@ func (c *Connector) ID() string {
 		return "films"
 	case profileSeries:
 		return "series"
+	case profileGames:
+		return "games"
 	}
 	return "bd-manga"
 }
@@ -237,6 +264,8 @@ func (c *Connector) Domain() string {
 		return "video"
 	case profileSeries:
 		return "tv"
+	case profileGames:
+		return "games"
 	}
 	return "books"
 }
@@ -248,7 +277,7 @@ func (c *Connector) EditionsByWork() bool { return c.profile != profileBDManga }
 
 // EditionCode is the code editions are searched by: the ISBN of a book, the barcode of a release.
 func (c *Connector) EditionCode() string {
-	if c.profile == profileMusic || c.profile == profileFilms || c.profile == profileSeries {
+	if c.profile == profileMusic || c.profile == profileFilms || c.profile == profileSeries || c.profile == profileGames {
 		return "barcode"
 	}
 	return "isbn"

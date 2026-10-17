@@ -426,11 +426,15 @@ ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries 
         le titre et reliées aux épisodes (`includes_episode`, le chemin « par le DVD » du graphe) ; un coffret seul retrouve
         sa série ; la diffusion est rapprochée par sa relation à la série. Client `tvmaze` (espacé, 429 retenté).
 
-- [ ] **P3-7 — Jeux vidéo** (demande des utilisateurs, V1 centrée sur les éditions françaises) : sources libres
+- [x] **P3-7 — Jeux vidéo** (demande des utilisateurs, V1 centrée sur les éditions françaises) : sources libres
       (Wikidata, BnF ; libretro-database pour la suite), modèle, paquet, connecteur.
   - [x] **P3-7a — Étude et modèle** : `docs/sources-externes.md` § Jeux vidéo, modèle `jeux-video.md`, paquet `games`
         (`Game`, `GameRelease`, `Platform` rattachée à son constructeur ; `game_released_as`, `on_platform`,
         `produced_by`) ; `people` v2 : `Publisher` affiché « Société » (éditeur, studio, constructeur).
+  - [x] **P3-7b — Connecteur Jeux vidéo** (`games`, Wikidata + BnF) : jeu, sociétés, plateformes rattachées à leur
+        constructeur ; éditions françaises par titre ou code-barres (EAN au zéro perdu retrouvé), plateforme lue dans la
+        notice ; une même société n'est proposée qu'une fois ; une édition seule retrouve son jeu. Exemple :
+        `db/seed_games.sql`. Hors V1 : libretro-database, générique, séries de jeux.
 
 ### Phase 4 : Social
 

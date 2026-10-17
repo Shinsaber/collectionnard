@@ -172,6 +172,9 @@ tags:
       EAN ; une édition seule retrouve son film ; types des paquets `video` et `people`) et `series` (série, diffusion, saisons et
       épisodes sur **Wikidata**, complétés par **TVmaze** — CC BY-SA, sans clé — pour les saisons sans épisodes ; coffrets à la
       **BnF** par titre ou EAN, reliés aux épisodes des saisons qu'ils contiennent ; types des paquets `tv`, `video`, `people`).
+      Connecteur `games` : jeu, sociétés et plateformes (rattachées à leur constructeur) sur **Wikidata**, éditions
+      françaises du dépôt légal à la **BnF** par titre ou EAN, une édition seule retrouve son jeu ; types des paquets `games` et
+      `people`.
       Connecteur `bd-manga` :
       œuvres, univers et auteurs sur **Wikidata** (CC0), éditions françaises et tomes sur la **BnF**
       (Licence Ouverte : source et date de récupération écrites dans `sources`). Parcours :
@@ -1675,7 +1678,7 @@ components:
       name: connector
       in: path
       required: true
-      description: Connecteur (`GET /external/connectors`) — `bd-manga`, `novels`, `music`, `films`, `series`…
+      description: Connecteur (`GET /external/connectors`) — `bd-manga`, `novels`, `music`, `films`, `series`, `games`…
       schema:
         type: string
         example: bd-manga
@@ -4258,6 +4261,8 @@ paths:
         `bib.ean`) ou par film (`work`, QID : éditions de sa notice d'œuvre BnF, les plus récentes d'abord).
         Connecteur `series` : coffrets par titre, par **code-barres** ou par série (`work`, QID : notices vidéo titrées
         comme la série, les coffrets n'ayant pas de notice d'œuvre), titre complété de la saison (200 `$h`).
+        Connecteur `games` : par titre, par **code-barres** (`barcode`, `bib.ean`, aussi sans zéro initial) ou par jeu
+        (`work`, QID : notices de jeu titrées comme lui), les plus récentes d'abord.
         Exactement un des paramètres ; l'identifiant `work` est vérifié par le connecteur (400).
 
         Connecteur `novels` : une notice sans ensemble est une édition en un volume (le livre, avec son

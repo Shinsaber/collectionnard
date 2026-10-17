@@ -235,6 +235,22 @@ export default {
         groupMain: "Série, diffusion et générique",
         groupVolumes: "Épisodes",
       },
+      games: {
+        title: "Jeux vidéo",
+        intro:
+          "Recherchez un jeu sur Wikidata : ses plateformes (rattachées à leur constructeur) et ses sociétés sont proposées, et ses éditions françaises du dépôt légal (cartouches, disques, codes) sont listées depuis la BnF. Une édition se trouve aussi par son code-barres : son jeu est alors retrouvé. Simulez puis validez. Les éléments déjà présents gardent leurs valeurs : seuls leurs champs vides sont complétés.",
+        workTitle: "Jeu (Wikidata)",
+        workPlaceholder: "Titre du jeu, ex. Mario Kart 8 Deluxe",
+        editionTitle: "Éditions françaises (BnF)",
+        editionPlaceholder: "Titre du jeu",
+        byCode: "Par code-barres",
+        codePlaceholder: "Code-barres (EAN) de la boîte, ex. 045496420246",
+        publishers: "Société(s)",
+        attribution:
+          "Données Wikidata (CC0) et BnF, catalogue général (Licence Ouverte), récupérées le {date}.",
+        groupMain: "Jeu, plateformes et sociétés",
+        groupVolumes: "Contenu",
+      },
     },
     stepOf: "Étape {n} / {total} · {title}",
     steps: {
