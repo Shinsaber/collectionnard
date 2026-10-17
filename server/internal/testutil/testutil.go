@@ -25,9 +25,23 @@ const TestAccessTTL = 15 * time.Minute
 
 // MockStore implements store.Store with configurable function fields.
 type MockStore struct {
-	PingFn                       func(ctx context.Context) error
-	GetUserByUsernameFn          func(ctx context.Context, username string) (*model.User, string, error)
-	GetUserByIDFn                func(ctx context.Context, id uuid.UUID) (*model.User, error)
+	PingFn              func(ctx context.Context) error
+	GetUserByUsernameFn func(ctx context.Context, username string) (*model.User, string, error)
+	GetUserByIDFn       func(ctx context.Context, id uuid.UUID) (*model.User, error)
+	// Accounts (P4-0)
+	GetUserPasswordHashFn        func(ctx context.Context, id uuid.UUID) (string, error)
+	ListUsersFn                  func(ctx context.Context, pg model.Pagination) ([]model.User, int, error)
+	UpdateUserFn                 func(ctx context.Context, id uuid.UUID, in model.UserUpdate) (*model.User, error)
+	UpdateProfileFn              func(ctx context.Context, id uuid.UUID, in model.ProfileUpdate) (*model.User, error)
+	SetPasswordFn                func(ctx context.Context, id uuid.UUID, passwordHash string) error
+	CreateInvitationFn           func(ctx context.Context, tokenHash string, createdBy uuid.UUID, role, note string, expiresAt time.Time) (*model.Invitation, error)
+	GetInvitationFn              func(ctx context.Context, id uuid.UUID) (*model.Invitation, error)
+	ListInvitationsFn            func(ctx context.Context, createdBy *uuid.UUID) ([]model.Invitation, error)
+	DeleteInvitationFn           func(ctx context.Context, id uuid.UUID) error
+	CheckInvitationFn            func(ctx context.Context, tokenHash string) (time.Time, error)
+	RegisterWithInvitationFn     func(ctx context.Context, tokenHash, username, email, passwordHash string) (*model.User, error)
+	CreatePasswordResetFn        func(ctx context.Context, userID uuid.UUID, tokenHash string, createdBy uuid.UUID, expiresAt time.Time) error
+	ResetPasswordFn              func(ctx context.Context, tokenHash, passwordHash string) error
 	CreateRefreshTokenFn         func(ctx context.Context, userID uuid.UUID, tokenHash string, expiresAt time.Time) error
 	ConsumeRefreshTokenFn        func(ctx context.Context, tokenHash string) (uuid.UUID, error)
 	DeleteRefreshTokenFn         func(ctx context.Context, tokenHash string) error

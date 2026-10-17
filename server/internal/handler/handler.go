@@ -67,6 +67,9 @@ func (h *Handler) Router() chi.Router {
 		r.Post("/api/v1/auth/login", h.Login)
 		r.Post("/api/v1/auth/refresh", h.Refresh)
 		r.Post("/api/v1/auth/logout", h.Logout)
+		r.Get("/api/v1/auth/invitation", h.CheckInvitation)
+		r.Post("/api/v1/auth/register", h.Register)
+		r.Post("/api/v1/auth/reset-password", h.ResetPassword)
 	})
 
 	// Serve uploaded files (public — img tags can't send Authorization headers)
@@ -96,6 +99,12 @@ func (h *Handler) Router() chi.Router {
 		r.Use(h.Auth.Authenticate)
 
 		r.Get("/api/v1/auth/me", h.GetCurrentUser)
+		r.Put("/api/v1/me/profile", h.UpdateProfile)
+		r.Put("/api/v1/me/password", h.ChangePassword)
+		// Invitations : admins, ou membres si MEMBER_INVITES (contrôlé par le handler).
+		r.Get("/api/v1/invitations", h.ListInvitations)
+		r.Post("/api/v1/invitations", h.CreateInvitation)
+		r.Delete("/api/v1/invitations/{id}", h.DeleteInvitation)
 		r.Get("/api/v1/me/offline", h.GetOfflineSnapshot)
 
 		// Read endpoints (all authenticated users)
@@ -132,6 +141,10 @@ func (h *Handler) Router() chi.Router {
 		// Admin-only endpoints
 		r.Group(func(r chi.Router) {
 			r.Use(h.Auth.RequireAdmin)
+
+			r.Get("/api/v1/users", h.ListUsers)
+			r.Put("/api/v1/users/{id}", h.UpdateUser)
+			r.Post("/api/v1/users/{id}/reset-link", h.CreateResetLink)
 
 			r.Get("/api/v1/export", h.ExportCatalog)
 			r.Post("/api/v1/import", h.ImportCatalog)

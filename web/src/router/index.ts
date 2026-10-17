@@ -16,6 +16,18 @@ const router = createRouter({
       meta: { public: true },
     },
     {
+      path: "/register",
+      name: "register",
+      component: () => import("@/views/RegisterView.vue"),
+      meta: { public: true },
+    },
+    {
+      path: "/reset-password",
+      name: "reset-password",
+      component: () => import("@/views/ResetPasswordView.vue"),
+      meta: { public: true },
+    },
+    {
       path: "/",
       component: () => import("@/components/layout/AppLayout.vue"),
       children: [
@@ -94,6 +106,17 @@ const router = createRouter({
           path: "offline",
           name: "offline",
           component: () => import("@/views/OfflineView.vue"),
+        },
+        {
+          path: "profile",
+          name: "profile",
+          component: () => import("@/views/ProfileView.vue"),
+        },
+        {
+          path: "admin/users",
+          name: "admin-users",
+          component: () => import("@/views/admin/UsersView.vue"),
+          meta: { admin: true },
         },
         {
           path: "admin/domains",

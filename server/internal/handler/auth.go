@@ -54,6 +54,10 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusUnauthorized, "unauthorized", "invalid username or password")
 		return
 	}
+	if user.DisabledAt != nil {
+		respondError(w, http.StatusUnauthorized, "account_disabled", "this account is disabled")
+		return
+	}
 
 	h.issueTokens(w, r, user)
 }
@@ -92,6 +96,10 @@ func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 		respondInternal(w, r, err, "internal error")
 		return
 	}
+	if user.DisabledAt != nil {
+		respondError(w, http.StatusUnauthorized, "account_disabled", "this account is disabled")
+		return
+	}
 
 	h.issueTokens(w, r, user)
 }
@@ -121,6 +129,7 @@ func (h *Handler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 		handleStoreError(w, r, err)
 		return
 	}
+	user.CanInvite = h.canInvite(r)
 	respondJSON(w, http.StatusOK, user)
 }
 

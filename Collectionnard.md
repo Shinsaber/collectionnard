@@ -445,7 +445,7 @@ Raffinée le 2026-10-17 (conception : `social.md`), branche `phase4-social`, un 
 au choix (privé, membres, public) par collection et pour le profil ; inscription sur invitation ; contributions par
 propositions modérées **et** rôle contributeur ; échanges reportés.
 
-- [ ] **P4-0 — Comptes, invitations, profils** : invitations à usage unique (admin, membres si permis), inscription
+- [x] **P4-0 — Comptes, invitations, profils** : invitations à usage unique (admin, membres si permis), inscription
       depuis un lien, page admin « Utilisateurs » (rôle, désactivation, lien de réinitialisation sans SMTP), profil (nom
       affiché, avatar, présentation, mot de passe).
 - [ ] **P4-1 — Statistiques personnelles** : par collection, sommes et moyennes des attributs numériques, répartition

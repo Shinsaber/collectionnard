@@ -1,0 +1,77 @@
+// Catalogue « account » : comptes, invitations, profil (Phase 4, P4-0).
+export default {
+  email: "Adresse e-mail",
+  displayName: "Nom affiché",
+  bio: "Présentation",
+  role: "Rôle",
+  roles: { user: "Membre", admin: "Admin" },
+  avatarAlt: "Avatar de {name}",
+  register: {
+    subtitle: "Créer votre compte",
+    invalid:
+      "Ce lien d'invitation n'est plus valable (déjà utilisé, expiré ou retiré). Demandez-en un nouveau.",
+    usernameHelp:
+      "2 à 100 caractères : lettres, chiffres, « _ », « . » ou « - ».",
+    submit: "Créer mon compte",
+  },
+  reset: {
+    subtitle: "Choisir un nouveau mot de passe",
+    submit: "Enregistrer le mot de passe",
+    done: "Mot de passe changé : vous pouvez vous connecter.",
+  },
+  password: {
+    title: "Mot de passe",
+    current: "Mot de passe actuel",
+    new: "Nouveau mot de passe",
+    confirm: "Confirmer le mot de passe",
+    help: "Au moins {n} caractères.",
+    mismatch: "Les deux saisies diffèrent.",
+    submit: "Changer le mot de passe",
+    saved: "Mot de passe changé ; vos autres sessions sont fermées.",
+  },
+  profile: {
+    title: "Mon profil",
+    subtitle: "Compte {username} · {email}",
+    section: "Profil",
+    avatarChoose: "Choisir un avatar",
+    avatarRemove: "Retirer l'avatar",
+    saved: "Profil enregistré",
+  },
+  link: {
+    once: "Ce lien n'est montré qu'une fois : copiez-le et transmettez-le vous-même.",
+    expires: "Valable jusqu'au {date}, pour un seul usage.",
+    copy: "Copier le lien",
+    copied: "Copié",
+  },
+  invitations: {
+    title: "Invitations",
+    help: "Un lien à usage unique permet de créer un compte sur cette instance.",
+    days: "Validité (jours)",
+    note: "Mémo",
+    notePlaceholder: "Pour qui ? (facultatif)",
+    create: "Créer une invitation",
+    none: "Aucune invitation",
+    by: "par {name}",
+    status: "État",
+    pending: "En attente, jusqu'au {date}",
+    used: "Utilisée par {name}",
+    expired: "Expirée",
+    withdraw: "Retirer l'invitation",
+    withdrawConfirm:
+      "Retirer cette invitation ? Son lien ne fonctionnera plus.",
+    linkTitle: "Lien d'invitation",
+  },
+  users: {
+    title: "Utilisateurs",
+    help: "Comptes de l'instance : rôle, activation, réinitialisation du mot de passe (lien à transmettre, sans e-mail).",
+    account: "Compte",
+    roleOf: "Rôle de {name}",
+    active: "Actif",
+    activeOf: "Compte de {name} actif",
+    resetLink: "Lien de réinitialisation",
+    resetLinkTitle: "Réinitialisation du mot de passe de {name}",
+    disableConfirm:
+      "Désactiver le compte de {name} ? Ses sessions sont fermées et il ne pourra plus se connecter.",
+    saved: "Compte de {name} modifié",
+  },
+};

@@ -70,6 +70,11 @@ tags:
       Authentification par JWT. Utilisez `POST /auth/login` pour obtenir un token,
       puis passez-le dans le header `Authorization: Bearer <token>` pour tous les
       autres appels.
+  - name: Users
+    description: |
+      Comptes et profils (Phase 4, P4-0) : profil et mot de passe de l'utilisateur courant, invitations à usage
+      unique (admin, ou membre si `MEMBER_INVITES`), gestion des comptes et liens de réinitialisation par un admin
+      (sans envoi d'e-mail). Voir `social.md`.
   - name: ItemTypes
     description: |
       **Admin uniquement.** Gestion des types d'items. Un ItemType définit le schéma
@@ -302,12 +307,126 @@ components:
             Rôle de l'utilisateur :
             - `admin` : peut créer/modifier types, items, relations
             - `user` : peut gérer ses collections et consulter le catalogue
+        display_name:
+          type: string
+          maxLength: 100
+          description: Nom affiché (repli sur `username`).
+        bio: { type: string, maxLength: 2000, description: Présentation libre. }
+        avatar:
+          type: string
+          description: "URL d'une image envoyée (`url` de `POST /uploads`, `/api/v1/uploads/…`)."
+        disabled_at:
+          type: string
+          format: date-time
+          description: Compte désactivé depuis cette date (connexion et rafraîchissement refusés).
+        can_invite:
+          type: boolean
+          description: |
+            `GET /auth/me` seulement — l'utilisateur peut créer des invitations (admin, ou membre si
+            `MEMBER_INVITES` est activé).
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
+
+    UserUpdate:
+      type: object
+      description: Modification d'un compte par un admin (champs absents inchangés).
+      properties:
+        role: { type: string, enum: [admin, user] }
+        disabled:
+          type: boolean
+          description: |
+            `true` désactive le compte (ses jetons de rafraîchissement sont révoqués ; un jeton d'accès déjà émis
+            reste valable jusqu'à son expiration, `ACCESS_TOKEN_TTL`), `false` le réactive.
+
+    ProfileUpdate:
+      type: object
+      description: Profil de l'utilisateur courant (remplacement complet ; chaîne vide = champ effacé).
+      properties:
+        display_name: { type: string, maxLength: 100 }
+        bio: { type: string, maxLength: 2000 }
+        avatar:
+          type: string
+          pattern: "^/api/v1/uploads/[^/]+$"
+          description: URL d'une image envoyée (`url` de `POST /uploads`) ; gardée par la purge des images.
+
+    PasswordChange:
+      type: object
+      required: [current_password, new_password]
+      properties:
+        current_password: { type: string }
+        new_password: { type: string, minLength: 8 }
+
+    Invitation:
+      type: object
+      description: Invitation à créer un compte. Le jeton n'est jamais renvoyé après sa création.
+      required: [id, role, expires_at, status, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        role: { type: string, enum: [admin, user] }
+        note: { type: string, maxLength: 255, description: "Mémo de l'auteur (« pour Camille »)." }
+        created_by: { type: string, format: uuid }
+        created_by_username: { type: string }
+        expires_at: { type: string, format: date-time }
+        status:
+          type: string
+          enum: [pending, used, expired]
+        used_at: { type: string, format: date-time }
+        used_by_username: { type: string }
+        created_at: { type: string, format: date-time }
+
+    InvitationCreate:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [admin, user]
+          default: user
+          description: Rôle du compte créé ; `admin` réservé aux admins.
+        note: { type: string, maxLength: 255 }
+        expires_in_days: { type: integer, minimum: 1, maximum: 90, default: 7 }
+
+    InvitationCreated:
+      type: object
+      description: Invitation créée et son jeton, montré cette seule fois (lien `/register?token=…`).
+      required: [invitation, token]
+      properties:
+        invitation: { $ref: "#/components/schemas/Invitation" }
+        token: { type: string }
+
+    InvitationCheck:
+      type: object
+      required: [valid]
+      properties:
+        valid: { type: boolean }
+        expires_at: { type: string, format: date-time }
+
+    RegisterRequest:
+      type: object
+      required: [token, username, email, password]
+      properties:
+        token: { type: string, description: Jeton de l'invitation. }
+        username: { type: string, minLength: 2, maxLength: 100, pattern: "^[A-Za-z0-9_.-]+$" }
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+
+    ResetLink:
+      type: object
+      description: Lien de réinitialisation du mot de passe, montré cette seule fois (`/reset-password?token=…`).
+      required: [token, expires_at]
+      properties:
+        token: { type: string }
+        expires_at: { type: string, format: date-time }
+
+    ResetPasswordRequest:
+      type: object
+      required: [token, password]
+      properties:
+        token: { type: string }
+        password: { type: string, minLength: 8 }
 
     # -------------------------------------------------------------------------
     # ItemType
@@ -2068,6 +2187,270 @@ paths:
                 $ref: "#/components/schemas/User"
         "401":
           $ref: "#/components/responses/Unauthorized"
+
+  /auth/invitation:
+    get:
+      tags: [Auth]
+      summary: Vérifier une invitation
+      description: |
+        Public. Indique si le jeton d'invitation permet encore de créer un compte (ni utilisé, ni expiré, ni
+        retiré). Limité comme `/auth/login`.
+      operationId: checkInvitation
+      security: []
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Validité de l'invitation.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InvitationCheck" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Créer un compte depuis une invitation
+      description: |
+        Public. Crée le compte avec le rôle de l'invitation, consomme l'invitation (usage unique) et connecte
+        l'utilisateur (même réponse que `POST /auth/login`). Limité comme `/auth/login`.
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RegisterRequest" }
+      responses:
+        "200":
+          description: Compte créé et connecté.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401":
+          description: Invitation inconnue, utilisée, expirée ou retirée (`invalid_invitation`).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "409":
+          description: Nom d'utilisateur (sans casse) ou adresse e-mail déjà utilisé.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Choisir un nouveau mot de passe
+      description: |
+        Public. Consomme un lien de réinitialisation (`POST /users/{id}/reset-link`), change le mot de passe et
+        révoque les jetons de rafraîchissement du compte. Limité comme `/auth/login`.
+      operationId: resetPassword
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ResetPasswordRequest" }
+      responses:
+        "204": { description: Mot de passe changé. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401":
+          description: Lien inconnu, utilisé ou expiré (`invalid_reset_link`), ou compte désactivé.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /me/profile:
+    put:
+      tags: [Users]
+      summary: Modifier mon profil
+      description: Nom affiché, présentation et avatar de l'utilisateur courant.
+      operationId: updateProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProfileUpdate" }
+      responses:
+        "200":
+          description: Profil modifié.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /me/password:
+    put:
+      tags: [Users]
+      summary: Changer mon mot de passe
+      description: |
+        Vérifie le mot de passe actuel, enregistre le nouveau et révoque toutes les sessions (jetons de
+        rafraîchissement) ; la session courante en reçoit de nouveaux (même réponse que `POST /auth/login`).
+      operationId: changePassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PasswordChange" }
+      responses:
+        "200":
+          description: Mot de passe changé ; nouveaux jetons de la session courante.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: Mot de passe actuel incorrect (`wrong_password`).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /invitations:
+    get:
+      tags: [Users]
+      summary: Lister les invitations
+      description: Les invitations créées par l'utilisateur ; toutes pour un admin. Les plus récentes d'abord.
+      operationId: listInvitations
+      responses:
+        "200":
+          description: Invitations.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Invitation" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/InternalError" }
+    post:
+      tags: [Users]
+      summary: Créer une invitation
+      description: |
+        Admin, ou membre si `MEMBER_INVITES=true` (un membre n'invite que des utilisateurs). Le jeton est renvoyé
+        cette seule fois ; le client en fait le lien `/register?token=…`.
+      operationId: createInvitation
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InvitationCreate" }
+      responses:
+        "201":
+          description: Invitation créée.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InvitationCreated" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /invitations/{id}:
+    delete:
+      tags: [Users]
+      summary: Retirer une invitation
+      description: Son auteur ou un admin ; une invitation déjà utilisée ne peut plus être retirée (409).
+      operationId: deleteInvitation
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: Invitation retirée. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /users:
+    get:
+      tags: [Users]
+      summary: Lister les comptes
+      description: "**Admin uniquement.** Tous les comptes, par nom d'utilisateur."
+      operationId: listUsers
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "200":
+          description: Comptes.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /users/{id}:
+    put:
+      tags: [Users]
+      summary: Modifier un compte
+      description: |
+        **Admin uniquement.** Rôle et désactivation. Un admin ne peut ni se désactiver ni retirer son propre rôle
+        admin ; le dernier admin actif ne peut pas être rétrogradé ni désactivé (409 `last_admin`).
+      operationId: updateUser
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserUpdate" }
+      responses:
+        "200":
+          description: Compte modifié.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /users/{id}/reset-link:
+    post:
+      tags: [Users]
+      summary: Créer un lien de réinitialisation du mot de passe
+      description: |
+        **Admin uniquement.** Lien à usage unique, valable 24 h, que l'admin transmet lui-même (pas d'envoi
+        d'e-mail). Les liens précédents du compte non utilisés sont annulés.
+      operationId: createResetLink
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "201":
+          description: Lien créé.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResetLink" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
 
   # ===========================================================================
   # Item Types (admin)

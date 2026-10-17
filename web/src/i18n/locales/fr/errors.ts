@@ -50,5 +50,24 @@ export default {
       "Source externe (Wikidata, BnF) injoignable, réessayez plus tard",
     item_type_not_allowed:
       "Ce type d'item n'est pas permis dans ce type de collection",
+    account_disabled:
+      "Ce compte est désactivé : contactez un admin de l'instance.",
+    invalid_invitation:
+      "Ce lien d'invitation n'est plus valable (déjà utilisé, expiré ou retiré).",
+    account_exists:
+      "Ce nom d'utilisateur ou cette adresse e-mail est déjà utilisé.",
+    invalid_username:
+      "Nom d'utilisateur : 2 à 100 lettres, chiffres, « _ », « . » ou « - ».",
+    invalid_email: "Adresse e-mail invalide.",
+    weak_password:
+      "Mot de passe trop court (8 caractères au moins) ou trop long.",
+    invalid_reset_link:
+      "Ce lien de réinitialisation n'est plus valable : demandez-en un nouveau à un admin.",
+    wrong_password: "Mot de passe actuel incorrect.",
+    self_lockout:
+      "Vous ne pouvez ni désactiver votre compte ni vous retirer le rôle admin.",
+    last_admin: "L'instance doit garder au moins un admin actif.",
+    invitation_used:
+      "Cette invitation a déjà servi : elle ne peut plus être retirée.",
   },
 };

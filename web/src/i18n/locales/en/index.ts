@@ -1,4 +1,5 @@
 import type { Messages } from "../fr";
+import account from "./account";
 import admin from "./admin";
 import auth from "./auth";
 import collections from "./collections";
@@ -12,6 +13,7 @@ import offline from "./offline";
 import schema from "./schema";
 
 const en: Messages = {
+  account,
   admin,
   auth,
   collections,

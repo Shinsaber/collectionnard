@@ -1,5 +1,6 @@
 // Catalogue français — langue de référence : sa forme (`Messages`) est imposée aux autres
 // langues par le compilateur. Un fichier par espace de noms (`t("items.title")`…).
+import account from "./account";
 import admin from "./admin";
 import auth from "./auth";
 import collections from "./collections";
@@ -13,6 +14,7 @@ import offline from "./offline";
 import schema from "./schema";
 
 const fr = {
+  account,
   admin,
   auth,
   collections,

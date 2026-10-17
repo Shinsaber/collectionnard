@@ -14,6 +14,7 @@ const en: typeof fr = {
     externalImport: "External sources",
     images: "Images",
     domains: "Domains",
+    users: "Users",
     offline: "Offline",
   },
   mainNav: "Main navigation",
@@ -27,6 +28,7 @@ const en: typeof fr = {
   lightMode: "Light mode",
   darkMode: "Dark mode",
   logout: "Log out",
+  profile: "My profile",
 };
 
 export default en;

@@ -3,7 +3,7 @@
 Module : `github.com/shinsaber/colec` · Entrée : `main.go` · Config par variables
 d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 caractères) sont
 **obligatoires** (le serveur refuse de démarrer sinon) ; `PORT`, `ACCESS_TOKEN_TTL` (15m),
-`REFRESH_TOKEN_TTL` (720h), `LOGIN_RATE_LIMIT` (10/min/IP), `UPLOAD_DIR`, `MAX_UPLOAD_SIZE`, `MAX_IMPORT_SIZE` (20 Mio), `TRUSTED_PROXY` (false), `EXTERNAL_USER_AGENT` (User-Agent envoyé à Wikidata / BnF) ont un défaut.
+`REFRESH_TOKEN_TTL` (720h), `LOGIN_RATE_LIMIT` (10/min/IP), `UPLOAD_DIR`, `MAX_UPLOAD_SIZE`, `MAX_IMPORT_SIZE` (20 Mio), `TRUSTED_PROXY` (false), `EXTERNAL_USER_AGENT` (User-Agent envoyé à Wikidata / BnF), `MEMBER_INVITES` (false : seuls les admins invitent) ont un défaut.
 
 ## Couches (`internal/`)
 
@@ -55,6 +55,12 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 - Images : `/api/v1/uploads/<nom>?w=240` sert une vignette JPEG (liste blanche `thumbWidths`, garde-fou 50 Mpx), générée une fois dans `UPLOAD_DIR/.thumbs/` et supprimée avec l'original par la purge (`handler/thumbnail.go`).
 - Auth : access token JWT court (`Auth.GenerateToken`) + refresh token opaque dont seul le hash
   SHA-256 est stocké (`store/refresh_token.go`, rotation à chaque `/auth/refresh`).
+- Comptes (`handler/account.go`, `store/account.go`, P4-0) : invitations et liens de réinitialisation suivent le même
+  principe (jeton aléatoire `newToken` montré une fois, seul son hash stocké, lien construit par le front). Inscription
+  en une transaction (invitation verrouillée `FOR UPDATE`). Désactiver un compte, changer ou réinitialiser son mot de
+  passe révoque ses refresh tokens ; `Login` / `Refresh` refusent un compte désactivé (401 `account_disabled`).
+  `UpdateUser` verrouille les admins et refuse de retirer le dernier actif (`store.ErrLastAdmin` → 409 `last_admin`).
+  Toute colonne qui référence un envoi (comme `users.avatar`) doit figurer dans `ReferencedUploads` (purge des images).
 
 ## Ajouter / modifier un endpoint — checklist
 

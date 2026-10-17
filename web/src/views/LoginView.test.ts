@@ -10,6 +10,8 @@ import LoginView from "./LoginView.vue";
 const { loginMock } = vi.hoisted(() => ({ loginMock: vi.fn() }));
 vi.mock("@/api/client", () => ({
   authApi: { login: loginMock, logout: vi.fn(), refresh: vi.fn(), me: vi.fn() },
+  // Code d'erreur de l'API : porté ici par l'erreur simulée.
+  extractApiError: (e: { code?: string }) => ({ code: e.code, message: "" }),
 }));
 
 function mountLogin() {
@@ -71,5 +73,17 @@ describe("LoginView", () => {
 
     expect(wrapper.text()).toContain("Identifiants invalides");
     expect(localStorage.getItem("token")).toBeNull();
+  });
+
+  it("signale un compte désactivé", async () => {
+    loginMock.mockRejectedValue(
+      Object.assign(new Error("401"), { code: "account_disabled" }),
+    );
+    const { wrapper } = mountLogin();
+    await wrapper.find('input[autocomplete="username"]').setValue("parti");
+    await wrapper.find('input[type="password"]').setValue("x");
+    await wrapper.find("form").trigger("submit");
+    await flushPromises();
+    expect(wrapper.text()).toContain("Ce compte est désactivé");
   });
 });

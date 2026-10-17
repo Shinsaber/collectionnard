@@ -22,6 +22,7 @@ type Config struct {
 	RefreshTokenTTL time.Duration // lifetime of a refresh token (rotated on use)
 	LoginRateLimit  int           // max calls per minute and per IP on /auth/*
 	TrustedProxy    bool          // trust X-Real-IP set by a reverse proxy (nginx)
+	MemberInvites   bool          // members (not only admins) may create invitations (MEMBER_INVITES)
 	GraphMaxNodes   int           // max nodes returned by GET /items/{id}/graph
 	UploadDir       string
 	MaxUploadSize   int64 // bytes
@@ -90,6 +91,15 @@ func Load() (*Config, error) {
 		trustedProxy = b
 	}
 
+	memberInvites := false
+	if v := os.Getenv("MEMBER_INVITES"); v != "" {
+		b, err := strconv.ParseBool(v)
+		if err != nil {
+			return nil, fmt.Errorf("invalid MEMBER_INVITES: %q (true/false expected)", v)
+		}
+		memberInvites = b
+	}
+
 	uploadDir := os.Getenv("UPLOAD_DIR")
 	if uploadDir == "" {
 		uploadDir = "uploads"
@@ -126,6 +136,7 @@ func Load() (*Config, error) {
 		RefreshTokenTTL:   refreshTTL,
 		LoginRateLimit:    loginRateLimit,
 		TrustedProxy:      trustedProxy,
+		MemberInvites:     memberInvites,
 		GraphMaxNodes:     graphMaxNodes,
 		UploadDir:         uploadDir,
 		MaxUploadSize:     maxUploadSize,

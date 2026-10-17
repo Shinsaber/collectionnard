@@ -23,8 +23,77 @@ export interface User {
   username: string;
   email: string;
   role: "admin" | "user";
+  /** Profil (P4-0) : nom affiché (repli sur username), présentation, avatar (URL d'un envoi). */
+  display_name?: string;
+  bio?: string;
+  avatar?: string;
+  /** Compte désactivé depuis cette date. */
+  disabled_at?: string;
+  /** GET /auth/me seulement : peut créer des invitations. */
+  can_invite?: boolean;
   created_at: string;
   updated_at: string;
+}
+
+// ---------- Comptes, invitations, profils (P4-0, social.md) ----------
+export interface UserUpdate {
+  role?: "admin" | "user";
+  disabled?: boolean;
+}
+
+export interface ProfileUpdate {
+  display_name: string;
+  bio: string;
+  avatar: string;
+}
+
+export interface PasswordChange {
+  current_password: string;
+  new_password: string;
+}
+
+export type InvitationStatus = "pending" | "used" | "expired";
+
+export interface Invitation {
+  id: string;
+  role: "admin" | "user";
+  note?: string;
+  created_by?: string;
+  created_by_username?: string;
+  expires_at: string;
+  status: InvitationStatus;
+  used_at?: string;
+  used_by_username?: string;
+  created_at: string;
+}
+
+export interface InvitationCreate {
+  role?: "admin" | "user";
+  note?: string;
+  expires_in_days?: number;
+}
+
+/** Le jeton n'est montré qu'une fois : le lien `/register?token=…` se construit côté client. */
+export interface InvitationCreated {
+  invitation: Invitation;
+  token: string;
+}
+
+export interface InvitationCheck {
+  valid: boolean;
+  expires_at?: string;
+}
+
+export interface RegisterRequest {
+  token: string;
+  username: string;
+  email: string;
+  password: string;
+}
+
+export interface ResetLink {
+  token: string;
+  expires_at: string;
 }
 
 // ---------- ItemType ----------

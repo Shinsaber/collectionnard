@@ -28,21 +28,31 @@ Raffinage du 2026-10-17, branche `phase4-social`, un commit par lot. Les lots et
 - `users` : `display_name`, `bio`, `avatar` (nom d'un envoi), `disabled_at` (compte désactivé : connexion refusée, jetons
   de rafraîchissement révoqués).
 - `invitations` : `id`, `token_hash` (SHA-256, comme les jetons de rafraîchissement), `created_by`, `role` (rôle donné au
-  compte), `note`, `expires_at`, `used_at`, `used_by`.
+  compte), `note`, `expires_at` (1 à 90 jours, 7 par défaut), `used_at`, `used_by`. Un admin invite un admin ou un
+  membre ; un membre n'invite que des membres. Une invitation utilisée ne se retire plus (409 `invitation_used`).
+- `password_resets` : même principe (hash du jeton, 24 h, un nouveau lien annule les précédents) ; l'utiliser révoque
+  toutes les sessions. Refusé pour un compte désactivé.
 - Invitations par les membres : réglage d'instance (variable `MEMBER_INVITES`, faux par défaut).
 
 **API** :
 
 - `POST /invitations` (admin, ou membre si permis) → lien `…/register?token=…` affiché une fois ; `GET /invitations`
   (les miennes, toutes pour un admin) ; `DELETE /invitations/{id}`.
-- `GET /invitations/{token}` (public) : invitation valide ou non ; `POST /auth/register` (public) : `{token, username,
-  email, password}` → compte créé, connecté.
+- `GET /auth/invitation?token=…` (public ; jeton en paramètre de requête plutôt que dans le chemin, hors des logs de
+  routes) : invitation valide ou non ; `POST /auth/register` (public) : `{token, username, email, password}` → compte
+  créé, connecté (une transaction : en cas de conflit, l'invitation reste utilisable).
 - `GET /users`, `PUT /users/{id}` (admin) : rôle, désactivation ; `POST /users/{id}/reset-link` (admin) : lien de
-  réinitialisation du mot de passe, même mécanisme que l'invitation (pas de SMTP).
-- `GET /me/profile`, `PUT /me/profile` : nom affiché, présentation, avatar ; `PUT /me/password`.
+  réinitialisation du mot de passe, même mécanisme que l'invitation (pas de SMTP) ; `POST /auth/reset-password`
+  (public) le consomme. Ni se rétrograder ni se désactiver soi-même (409 `self_lockout`), ni retirer le dernier admin
+  actif (409 `last_admin`). Un compte désactivé : 401 `account_disabled` à la connexion et au rafraîchissement ; le
+  jeton d'accès déjà émis reste valable jusqu'à son expiration (15 min).
+- `GET /auth/me` porte le profil et `can_invite` ; `PUT /me/profile` : nom affiché, présentation, avatar (URL d'un
+  envoi, gardée par la purge des images) ; `PUT /me/password` : ancien mot de passe exigé, autres sessions révoquées,
+  nouveaux jetons renvoyés.
 
-**Front** : page admin « Utilisateurs » (liste, rôle, désactivation, invitations), page d'inscription depuis un lien,
-page « Mon profil ».
+**Front** : page admin « Utilisateurs » (`/admin/users` : liste, rôle, désactivation, lien de réinitialisation,
+invitations), pages publiques `/register` et `/reset-password`, page « Mon profil » (`/profile`, ouverte depuis la carte
+de l'utilisateur ; invitations si permis). Livré le 2026-10-17.
 
 ## P4-1 — Statistiques personnelles
 

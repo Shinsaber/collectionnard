@@ -109,9 +109,6 @@ func runHashPassword(args []string) int {
 	return 0
 }
 
-// minPasswordLength is the minimum length accepted by create-user.
-const minPasswordLength = 8
-
 // runCreateUser implements `colec-server create-user <username> <email> [--admin]`:
 // the first account of a production instance (seed disabled), or any later one.
 // The password is typed twice without echo on a terminal, otherwise read from the
@@ -196,8 +193,8 @@ func readNewPassword() (string, error) {
 		}
 		password = strings.TrimRight(line, "\r\n")
 	}
-	if len([]rune(password)) < minPasswordLength {
-		return "", fmt.Errorf("password too short (%d characters minimum)", minPasswordLength)
+	if len([]rune(password)) < model.MinPasswordLength {
+		return "", fmt.Errorf("password too short (%d characters minimum)", model.MinPasswordLength)
 	}
 	return password, nil
 }

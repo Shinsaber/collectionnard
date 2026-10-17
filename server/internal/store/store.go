@@ -38,6 +38,21 @@ type Store interface {
 	// User
 	GetUserByUsername(ctx context.Context, username string) (*model.User, string, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (*model.User, error)
+	GetUserPasswordHash(ctx context.Context, id uuid.UUID) (string, error)
+
+	// Accounts, invitations, password resets (P4-0, social.md)
+	ListUsers(ctx context.Context, pg model.Pagination) ([]model.User, int, error)
+	UpdateUser(ctx context.Context, id uuid.UUID, in model.UserUpdate) (*model.User, error)
+	UpdateProfile(ctx context.Context, id uuid.UUID, in model.ProfileUpdate) (*model.User, error)
+	SetPassword(ctx context.Context, id uuid.UUID, passwordHash string) error
+	CreateInvitation(ctx context.Context, tokenHash string, createdBy uuid.UUID, role, note string, expiresAt time.Time) (*model.Invitation, error)
+	GetInvitation(ctx context.Context, id uuid.UUID) (*model.Invitation, error)
+	ListInvitations(ctx context.Context, createdBy *uuid.UUID) ([]model.Invitation, error)
+	DeleteInvitation(ctx context.Context, id uuid.UUID) error
+	CheckInvitation(ctx context.Context, tokenHash string) (time.Time, error)
+	RegisterWithInvitation(ctx context.Context, tokenHash, username, email, passwordHash string) (*model.User, error)
+	CreatePasswordReset(ctx context.Context, userID uuid.UUID, tokenHash string, createdBy uuid.UUID, expiresAt time.Time) error
+	ResetPassword(ctx context.Context, tokenHash, passwordHash string) error
 
 	// RefreshToken (hash SHA-256 du token, jamais le token brut)
 	CreateRefreshToken(ctx context.Context, userID uuid.UUID, tokenHash string, expiresAt time.Time) error

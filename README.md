@@ -87,6 +87,7 @@ go run .
 | `UPLOAD_DIR`        | `uploads`  | Dossier des images uploadées                                                                           |
 | `MAX_UPLOAD_SIZE`   | `10485760` | Taille max d'un upload (octets) ; les corps JSON sont limités à 1 Mio                                  |
 | `EXTERNAL_USER_AGENT` | `Collectionnard/1.0 (+URL du dépôt)` | User-Agent envoyé à Wikidata et à la BnF (leurs règles demandent un nom et un contact) |
+| `MEMBER_INVITES`    | `false`    | `true` : les membres peuvent aussi créer des invitations (sinon les admins seulement)                  |
 
 **Frontend** :
 

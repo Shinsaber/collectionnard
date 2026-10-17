@@ -13,6 +13,7 @@ export default {
     externalImport: "Sources externes",
     images: "Images",
     domains: "Domaines",
+    users: "Utilisateurs",
     offline: "Hors ligne",
   },
   mainNav: "Navigation principale",
@@ -26,4 +27,5 @@ export default {
   lightMode: "Mode clair",
   darkMode: "Mode sombre",
   logout: "Se déconnecter",
+  profile: "Mon profil",
 };

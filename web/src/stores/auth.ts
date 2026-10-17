@@ -1,13 +1,19 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import { authApi } from "@/api/client";
+import { authApi, meApi } from "@/api/client";
 import {
   clearTokens,
   getAccessToken,
   getRefreshToken,
   setTokens,
 } from "@/api/tokens";
-import type { User, LoginRequest } from "@/api/types";
+import type {
+  LoginRequest,
+  LoginResponse,
+  PasswordChange,
+  RegisterRequest,
+  User,
+} from "@/api/types";
 import { clearOfflineData } from "@/lib/offlineDb";
 import { useOfflineStore } from "@/stores/offline";
 import axios from "axios";
@@ -21,11 +27,28 @@ export const useAuthStore = defineStore("auth", () => {
   const isAuthenticated = computed(() => !!token.value || !!getRefreshToken());
   const isAdmin = computed(() => user.value?.role === "admin");
 
-  async function login(credentials: LoginRequest) {
-    const res = await authApi.login(credentials);
+  // Session ouverte (connexion, inscription, nouveau mot de passe) : jetons et profil.
+  function openSession(res: LoginResponse) {
     setTokens(res.token, res.refresh_token);
     token.value = res.token;
     user.value = res.user;
+  }
+
+  async function login(credentials: LoginRequest) {
+    openSession(await authApi.login(credentials));
+  }
+
+  /** Compte créé depuis une invitation, puis connecté (P4-0). */
+  async function register(data: RegisterRequest) {
+    openSession(await authApi.register(data));
+    await fetchMe(); // can_invite n'est donné que par /auth/me
+  }
+
+  /** Toutes les sessions sont révoquées : la courante reçoit de nouveaux jetons. */
+  async function changePassword(data: PasswordChange) {
+    const canInvite = user.value?.can_invite;
+    openSession(await meApi.changePassword(data));
+    if (user.value) user.value.can_invite = canInvite;
   }
 
   async function fetchMe() {
@@ -67,5 +90,15 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
-  return { user, token, isAuthenticated, isAdmin, login, fetchMe, logout };
+  return {
+    user,
+    token,
+    isAuthenticated,
+    isAdmin,
+    login,
+    register,
+    changePassword,
+    fetchMe,
+    logout,
+  };
 });

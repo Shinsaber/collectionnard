@@ -34,10 +34,16 @@ type RefreshRequest struct {
 // ---------------------------------------------------------------------------
 
 type User struct {
-	ID        uuid.UUID `json:"id"`
-	Username  string    `json:"username"`
-	Email     string    `json:"email"`
-	Role      string    `json:"role"`
+	ID          uuid.UUID  `json:"id"`
+	Username    string     `json:"username"`
+	Email       string     `json:"email"`
+	Role        string     `json:"role"`
+	DisplayName *string    `json:"display_name,omitempty"`
+	Bio         *string    `json:"bio,omitempty"`
+	Avatar      *string    `json:"avatar,omitempty"` // URL d'un envoi (/api/v1/uploads/…)
+	DisabledAt  *time.Time `json:"disabled_at,omitempty"`
+	// CanInvite: GET /auth/me only — the user may create invitations.
+	CanInvite bool      `json:"can_invite,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

@@ -7,7 +7,16 @@ import {
 } from "./tokens";
 import type {
   LoginRequest,
+  Invitation,
+  InvitationCheck,
+  InvitationCreate,
+  InvitationCreated,
   LoginResponse,
+  PasswordChange,
+  ProfileUpdate,
+  RegisterRequest,
+  ResetLink,
+  UserUpdate,
   RefreshRequest,
   User,
   ItemType,
@@ -197,6 +206,42 @@ export const authApi = {
       refresh_token: refreshToken,
     } satisfies RefreshRequest),
   me: () => http.get<User>("/auth/me").then((r) => r.data),
+  /** Invitation encore utilisable ? (public) */
+  checkInvitation: (token: string) =>
+    http
+      .get<InvitationCheck>("/auth/invitation", { params: { token } })
+      .then((r) => r.data),
+  /** Crée le compte d'une invitation et connecte (public). */
+  register: (data: RegisterRequest) =>
+    http.post<LoginResponse>("/auth/register", data).then((r) => r.data),
+  /** Nouveau mot de passe depuis un lien de réinitialisation (public). */
+  resetPassword: (token: string, password: string) =>
+    http.post<void>("/auth/reset-password", { token, password }),
+};
+
+// ── Mon compte, invitations, comptes (P4-0) ──────────────────────────
+export const meApi = {
+  updateProfile: (data: ProfileUpdate) =>
+    http.put<User>("/me/profile", data).then((r) => r.data),
+  /** Révoque toutes les sessions ; renvoie les nouveaux jetons de la session courante. */
+  changePassword: (data: PasswordChange) =>
+    http.put<LoginResponse>("/me/password", data).then((r) => r.data),
+};
+
+export const invitationApi = {
+  list: () => http.get<Invitation[]>("/invitations").then((r) => r.data),
+  create: (data: InvitationCreate) =>
+    http.post<InvitationCreated>("/invitations", data).then((r) => r.data),
+  delete: (id: string) => http.delete(`/invitations/${id}`),
+};
+
+export const userApi = {
+  list: (params?: PaginationParams) =>
+    http.get<PaginatedResponse<User>>("/users", { params }).then((r) => r.data),
+  update: (id: string, data: UserUpdate) =>
+    http.put<User>(`/users/${id}`, data).then((r) => r.data),
+  resetLink: (id: string) =>
+    http.post<ResetLink>(`/users/${id}/reset-link`).then((r) => r.data),
 };
 
 // ── Item Types ────────────────────────────────────────────────────────
