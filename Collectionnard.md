@@ -397,7 +397,7 @@ ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries 
       code-barres ; supports, pays, label et référence, pistes (enregistrements partagés entre éditions), artistes crédités
       quand ils diffèrent ; client MusicBrainz espacé d'une seconde par requête. Exemple réel dans `db/seed_music.sql`
       (Discovery, double vinyle Virgin 2001).
-- [ ] **P3-5 — Films (DVD / Blu-ray)** : étude des sources (Wikidata pour l'œuvre, BnF pour les vidéogrammes
+- [x] **P3-5 — Films (DVD / Blu-ray)** : étude des sources (Wikidata pour l'œuvre, BnF pour les vidéogrammes
       français par EAN ; TMDB écarté sauf licence ouverte), modèle, paquet, connecteur.
   - [x] **P3-5a — Paquet commun « people »** : `Person` et `Publisher` sortis de `books` (v3) vers « people » (mêmes
         UUID, choix du mainteneur : une même personne relie livres et films) ; dépendances entre paquets (`requires`) :
@@ -409,8 +409,14 @@ ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries 
         `video` : `Film` (b…30) et l'édition vidéo partagée avec les séries (`VideoRelease`, ancien `DVD` b…05 enrichi :
         support, disques, zone, EAN, langues, sous-titres, collection, contenu) ; relations `released_as` (films et séries),
         `credited` (générique, rôles et personnage), `published_by` (éditeur, distributeur) ; `tv` v2 requiert `video`
-        (mise à jour testée depuis la v1).- [ ] **P3-6 — Séries (DVD / Blu-ray)** : étude (Wikidata, TVmaze pour saisons et épisodes, BnF pour les coffrets),
-      en réutilisant le modèle TV existant (Series, Season, Episode, DVD), paquet, connecteur.
+        (mise à jour testée depuis la v1).
+  - [x] **P3-5c — Connecteur Films** (`films`, Wikidata + BnF) : film cherché sur Wikidata, ses éditions vidéo BnF
+        par sa notice d'œuvre, ou par titre / code-barres (`bib.ean`) ; générique (rôles fusionnés par personne, dix
+        interprètes dont cinq cochés), édition (support, disques, zone, durée, EAN, langues, sous-titres, collection,
+        contenu), éditeurs et distributeurs ; une édition seule retrouve son film (`P268`), à défaut le crée depuis la
+        notice. Exemple réel dans `db/seed_video.sql`.
+- [ ] **P3-6 — Séries (DVD / Blu-ray)** : étude (Wikidata, TVmaze pour saisons et épisodes, BnF pour les coffrets),
+      en réutilisant le modèle TV existant (Series, Season, Episode) et l'édition vidéo partagée (`VideoRelease`), connecteur.
 
 ### Phase 4 : Social
 

@@ -1,0 +1,1589 @@
+<?xml version="1.0" encoding="UTF-8"?><srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns="http://catalogue.bnf.fr/namespaces/InterXMarc" xmlns:ixm="http://catalogue.bnf.fr/namespaces/InterXMarc" xmlns:mn="http://catalogue.bnf.fr/namespaces/motsnotices" xmlns:sd="http://www.loc.gov/zing/srw/diagnostic/">
+<srw:version>1.2</srw:version>
+<srw:echoedSearchRetrieveRequest>
+<srw:version>1.2</srw:version>
+<srw:query>bib.work2bib all "14404106"</srw:query>
+</srw:echoedSearchRetrieveRequest>
+<srw:numberOfRecords>9</srw:numberOfRecords>
+<srw:records>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb42284376s" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF422843760000005</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb42284376s</mxc:controlfield>
+<mxc:datafield tag="020" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">71019706</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="071" ind1="4" ind2="1">
+<mxc:subfield code="a">203280</mxc:subfield>
+<mxc:subfield code="b">TF1 vidéo</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3384442032803</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20101004d2010       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="0" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   baiz|||||||bk||c</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Le fabuleux destin d'Amélie Poulain</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="f">Jean-Pierre Jeunet, réal., scénario</mxc:subfield>
+<mxc:subfield code="g">Guillaume Laurant, scénario</mxc:subfield>
+<mxc:subfield code="g">Yann Tiersen, comp.</mxc:subfield>
+<mxc:subfield code="g">Audrey Tautou, Mathieu Kassovitz, Rufus... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">[Boulogne-Billancourt]</mxc:subfield>
+<mxc:subfield code="c">TF1 vidéo [éd., distrib.]</mxc:subfield>
+<mxc:subfield code="d">[DL 2010]</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">1 DVD vidéo monoface simple couche zone 2 (2 h)</mxc:subfield>
+<mxc:subfield code="c">16/9, coul. (PAL), son., surround (Dolby, DTS)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient aussi : commentaire audio de Jean-Pierre Jeunet, audiovision pour aveugles et malvoyants, liens internet</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Réservé exclusivement à la vente</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Film en version originale française, avec sous-titrage optionnel pour sourds et malentendants</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Cop. : Victoires productions : Tapioca films : France 3 cinéma  : UGC Images : MMC indépendant, 2001</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="316" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:42284376001001</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="500" ind1="1" ind2="1">
+<mxc:subfield code="3">14404106</mxc:subfield>
+<mxc:subfield code="a">Le fabuleux destin d'Amélie Poulain</mxc:subfield>
+<mxc:subfield code="n">film</mxc:subfield>
+<mxc:subfield code="m">français</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film burlesque, comédie</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : salle de cinéma commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="686" ind1=" " ind2=" ">
+<mxc:subfield code="a">207</mxc:subfield>
+<mxc:subfield code="2">Cadre de classement de la Bibliographie nationale française</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">12614978</mxc:subfield>
+<mxc:subfield code="a">Jeunet</mxc:subfield>
+<mxc:subfield code="b">Jean-Pierre</mxc:subfield>
+<mxc:subfield code="f">1953-....</mxc:subfield>
+<mxc:subfield code="4">300</mxc:subfield>
+<mxc:subfield code="4">690</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14113424</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121188477</mxc:subfield>
+<mxc:subfield code="a">Laurant</mxc:subfield>
+<mxc:subfield code="b">Guillaume</mxc:subfield>
+<mxc:subfield code="4">690</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14023970</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000114506545</mxc:subfield>
+<mxc:subfield code="a">Tiersen</mxc:subfield>
+<mxc:subfield code="b">Yann</mxc:subfield>
+<mxc:subfield code="f">1970-....</mxc:subfield>
+<mxc:subfield code="4">230</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">12495720</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121486802</mxc:subfield>
+<mxc:subfield code="a">Kassovitz</mxc:subfield>
+<mxc:subfield code="b">Mathieu</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">11923113</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121419490</mxc:subfield>
+<mxc:subfield code="a">Rufus</mxc:subfield>
+<mxc:subfield code="f">1942-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14053885</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121028297</mxc:subfield>
+<mxc:subfield code="a">Tautou</mxc:subfield>
+<mxc:subfield code="b">Audrey</mxc:subfield>
+<mxc:subfield code="f">1976-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20101004</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF422843760000005</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:42284376001001</mxc:subfield>
+<mxc:subfield code="a">VDVD-59800</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:42284376002001</mxc:subfield>
+<mxc:subfield code="a">NUMAV-983279</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb42284376s</srw:recordIdentifier>
+<srw:recordPosition>1</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20101004</ixm:attr>
+<ixm:attr name="LastModificationDate">20260414</ixm:attr>
+<mn:score>6.6422386</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb38606951b" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF38606951000000X</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb38606951b</mxc:controlfield>
+<mxc:datafield tag="039" ind1=" " ind2=" ">
+<mxc:subfield code="o">OPC</mxc:subfield>
+<mxc:subfield code="a">005297290</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="071" ind1="4" ind2="1">
+<mxc:subfield code="a">201722</mxc:subfield>
+<mxc:subfield code="c">boîte</mxc:subfield>
+<mxc:subfield code="b">référence éditoriale</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3384442017220</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20021107d2002       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="0" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   zaho|||||||cb|||</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Le fabuleux destin d'Amélie Poulain</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="f">Jean-Pierre Jeunet, réal., scénario</mxc:subfield>
+<mxc:subfield code="g">Guillaume Laurant, scénario, dial.</mxc:subfield>
+<mxc:subfield code="g">Yann Tiersen, comp.</mxc:subfield>
+<mxc:subfield code="g">Audrey Tautou, Mathieu Kassovitz, Rufus... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">[Boulogne-Billancourt]</mxc:subfield>
+<mxc:subfield code="c">[TF1 vidéo [éd.]]</mxc:subfield>
+<mxc:subfield code="a">[Boulogne-Billancourt]</mxc:subfield>
+<mxc:subfield code="c">[TF1 vidéo [distrib.]]</mxc:subfield>
+<mxc:subfield code="d">[2002 (DL)]</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">1 cass. vidéo (VHS) (2 h)</mxc:subfield>
+<mxc:subfield code="c">coul. (SECAM)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Exemplaire réservé à la vente</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Copyright : France 3 Cinéma, cop. 2001</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="500" ind1="1" ind2="1">
+<mxc:subfield code="3">14404106</mxc:subfield>
+<mxc:subfield code="a">Le fabuleux destin d'Amélie Poulain</mxc:subfield>
+<mxc:subfield code="n">film</mxc:subfield>
+<mxc:subfield code="m">français</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film burlesque, comédie</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">12614978</mxc:subfield>
+<mxc:subfield code="a">Jeunet</mxc:subfield>
+<mxc:subfield code="b">Jean-Pierre</mxc:subfield>
+<mxc:subfield code="f">1953-....</mxc:subfield>
+<mxc:subfield code="4">300</mxc:subfield>
+<mxc:subfield code="4">690</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14113424</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121188477</mxc:subfield>
+<mxc:subfield code="a">Laurant</mxc:subfield>
+<mxc:subfield code="b">Guillaume</mxc:subfield>
+<mxc:subfield code="4">690</mxc:subfield>
+<mxc:subfield code="4">090</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14023970</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000114506545</mxc:subfield>
+<mxc:subfield code="a">Tiersen</mxc:subfield>
+<mxc:subfield code="b">Yann</mxc:subfield>
+<mxc:subfield code="f">1970-....</mxc:subfield>
+<mxc:subfield code="4">230</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14053885</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121028297</mxc:subfield>
+<mxc:subfield code="a">Tautou</mxc:subfield>
+<mxc:subfield code="b">Audrey</mxc:subfield>
+<mxc:subfield code="f">1976-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">12495720</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121486802</mxc:subfield>
+<mxc:subfield code="a">Kassovitz</mxc:subfield>
+<mxc:subfield code="b">Mathieu</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">11923113</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121419490</mxc:subfield>
+<mxc:subfield code="a">Rufus</mxc:subfield>
+<mxc:subfield code="f">1942-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14032561</mxc:subfield>
+<mxc:subfield code="a">TF1 vidéo</mxc:subfield>
+<mxc:subfield code="4">650</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14032561</mxc:subfield>
+<mxc:subfield code="a">TF1 vidéo</mxc:subfield>
+<mxc:subfield code="4">310</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14290172</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000096942043</mxc:subfield>
+<mxc:subfield code="a">Victoires productions</mxc:subfield>
+<mxc:subfield code="4">630</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14288929</mxc:subfield>
+<mxc:subfield code="a">Tapioca films</mxc:subfield>
+<mxc:subfield code="4">630</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14280787</mxc:subfield>
+<mxc:subfield code="a">France 3 Cinéma</mxc:subfield>
+<mxc:subfield code="4">630</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20021107</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF38606951000000X</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:38606951001001</mxc:subfield>
+<mxc:subfield code="a">VK-88473</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:38606951003001</mxc:subfield>
+<mxc:subfield code="a">NUMAV-119179</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">N</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb38606951b</srw:recordIdentifier>
+<srw:recordPosition>2</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20021107</ixm:attr>
+<ixm:attr name="LastModificationDate">20260414</ixm:attr>
+<mn:score>6.641859</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb38606945d" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF386069450000002</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb38606945d</mxc:controlfield>
+<mxc:datafield tag="039" ind1=" " ind2=" ">
+<mxc:subfield code="o">OPC</mxc:subfield>
+<mxc:subfield code="a">005297230</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="071" ind1="4" ind2="1">
+<mxc:subfield code="a">201516</mxc:subfield>
+<mxc:subfield code="c">boîte</mxc:subfield>
+<mxc:subfield code="b">référence éditoriale</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3384442015165</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20021107d2002       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="0" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   zaho|||||||cb|||</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Le fabuleux destin d'Amélie Poulain</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="f">Jean-Pierre Jeunet, réal., scénario</mxc:subfield>
+<mxc:subfield code="g">Guillaume Laurant, scénario, dial.</mxc:subfield>
+<mxc:subfield code="g">Yann Tiersen, comp.</mxc:subfield>
+<mxc:subfield code="g">Audrey Tautou, Mathieu Kassovitz, Rufus... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">[Boulogne-Billancourt]</mxc:subfield>
+<mxc:subfield code="c">[TF1 vidéo [éd.]]</mxc:subfield>
+<mxc:subfield code="a">[Boulogne-Billancourt]</mxc:subfield>
+<mxc:subfield code="c">[TF1 vidéo [distrib.]]</mxc:subfield>
+<mxc:subfield code="d">[2002 (DL)]</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">1 cass. vidéo (VHS) (2 h)</mxc:subfield>
+<mxc:subfield code="c">coul. (SECAM)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Exemplaire réservé à la location</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Copyright : France 3 Cinéma, cop. 2001</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="500" ind1="1" ind2="1">
+<mxc:subfield code="3">14404106</mxc:subfield>
+<mxc:subfield code="a">Le fabuleux destin d'Amélie Poulain</mxc:subfield>
+<mxc:subfield code="n">film</mxc:subfield>
+<mxc:subfield code="m">français</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film burlesque, comédie</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">12614978</mxc:subfield>
+<mxc:subfield code="a">Jeunet</mxc:subfield>
+<mxc:subfield code="b">Jean-Pierre</mxc:subfield>
+<mxc:subfield code="f">1953-....</mxc:subfield>
+<mxc:subfield code="4">300</mxc:subfield>
+<mxc:subfield code="4">690</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14113424</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121188477</mxc:subfield>
+<mxc:subfield code="a">Laurant</mxc:subfield>
+<mxc:subfield code="b">Guillaume</mxc:subfield>
+<mxc:subfield code="4">690</mxc:subfield>
+<mxc:subfield code="4">090</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14023970</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000114506545</mxc:subfield>
+<mxc:subfield code="a">Tiersen</mxc:subfield>
+<mxc:subfield code="b">Yann</mxc:subfield>
+<mxc:subfield code="f">1970-....</mxc:subfield>
+<mxc:subfield code="4">230</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14053885</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121028297</mxc:subfield>
+<mxc:subfield code="a">Tautou</mxc:subfield>
+<mxc:subfield code="b">Audrey</mxc:subfield>
+<mxc:subfield code="f">1976-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">12495720</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121486802</mxc:subfield>
+<mxc:subfield code="a">Kassovitz</mxc:subfield>
+<mxc:subfield code="b">Mathieu</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">11923113</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121419490</mxc:subfield>
+<mxc:subfield code="a">Rufus</mxc:subfield>
+<mxc:subfield code="f">1942-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14032561</mxc:subfield>
+<mxc:subfield code="a">TF1 vidéo</mxc:subfield>
+<mxc:subfield code="4">650</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14032561</mxc:subfield>
+<mxc:subfield code="a">TF1 vidéo</mxc:subfield>
+<mxc:subfield code="4">310</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14290172</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000096942043</mxc:subfield>
+<mxc:subfield code="a">Victoires productions</mxc:subfield>
+<mxc:subfield code="4">630</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14288929</mxc:subfield>
+<mxc:subfield code="a">Tapioca films</mxc:subfield>
+<mxc:subfield code="4">630</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14280787</mxc:subfield>
+<mxc:subfield code="a">France 3 Cinéma</mxc:subfield>
+<mxc:subfield code="4">630</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20021107</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF386069450000002</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:38606945001001</mxc:subfield>
+<mxc:subfield code="a">VK-88486</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:38606945003001</mxc:subfield>
+<mxc:subfield code="a">NUMAV-119192</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">N</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb38606945d</srw:recordIdentifier>
+<srw:recordPosition>3</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20021107</ixm:attr>
+<ixm:attr name="LastModificationDate">20260414</ixm:attr>
+<mn:score>6.641859</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb385822094" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF385822090000006</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb385822094</mxc:controlfield>
+<mxc:datafield tag="039" ind1=" " ind2=" ">
+<mxc:subfield code="o">OPC</mxc:subfield>
+<mxc:subfield code="a">005041230</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3384442017220</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20020426d2002       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="0" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   zaho|||||||cb|||</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Le fabuleux destin d'Amélie Poulain</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="f">Jean-Pierre Jeunet, réal., scénario</mxc:subfield>
+<mxc:subfield code="g">Guillaume Laurant, scénario, dial.</mxc:subfield>
+<mxc:subfield code="g">Yann Tiersen, comp.</mxc:subfield>
+<mxc:subfield code="g">Audrey Tautou, Mathieu Kassovitz, Lorella Cravotta... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">[Boulogne-Billancourt]</mxc:subfield>
+<mxc:subfield code="c">[TF1 vidéo [éd.]]</mxc:subfield>
+<mxc:subfield code="a">[Boulogne-Billancourt]</mxc:subfield>
+<mxc:subfield code="c">[TF1 vidéo [distrib.]]</mxc:subfield>
+<mxc:subfield code="d">[2002 (DL)]</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">1 cass. vidéo (VHS) (2 h)</mxc:subfield>
+<mxc:subfield code="c">coul. (SECAM), son., stéréo</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Exemplaire réservé exclusivement à la vente</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Copyright : Victoires productions, cop. 2000</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="500" ind1="1" ind2="1">
+<mxc:subfield code="3">14404106</mxc:subfield>
+<mxc:subfield code="a">Le fabuleux destin d'Amélie Poulain</mxc:subfield>
+<mxc:subfield code="n">film</mxc:subfield>
+<mxc:subfield code="m">français</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film burlesque, comédie</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">12614978</mxc:subfield>
+<mxc:subfield code="a">Jeunet</mxc:subfield>
+<mxc:subfield code="b">Jean-Pierre</mxc:subfield>
+<mxc:subfield code="f">1953-....</mxc:subfield>
+<mxc:subfield code="4">300</mxc:subfield>
+<mxc:subfield code="4">690</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14113424</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121188477</mxc:subfield>
+<mxc:subfield code="a">Laurant</mxc:subfield>
+<mxc:subfield code="b">Guillaume</mxc:subfield>
+<mxc:subfield code="4">690</mxc:subfield>
+<mxc:subfield code="4">090</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14023970</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000114506545</mxc:subfield>
+<mxc:subfield code="a">Tiersen</mxc:subfield>
+<mxc:subfield code="b">Yann</mxc:subfield>
+<mxc:subfield code="f">1970-....</mxc:subfield>
+<mxc:subfield code="4">230</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14053885</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121028297</mxc:subfield>
+<mxc:subfield code="a">Tautou</mxc:subfield>
+<mxc:subfield code="b">Audrey</mxc:subfield>
+<mxc:subfield code="f">1976-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">12495720</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121486802</mxc:subfield>
+<mxc:subfield code="a">Kassovitz</mxc:subfield>
+<mxc:subfield code="b">Mathieu</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14167250</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000062289410</mxc:subfield>
+<mxc:subfield code="a">Cravotta</mxc:subfield>
+<mxc:subfield code="b">Lorella</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14032561</mxc:subfield>
+<mxc:subfield code="a">TF1 vidéo</mxc:subfield>
+<mxc:subfield code="4">650</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14032561</mxc:subfield>
+<mxc:subfield code="a">TF1 vidéo</mxc:subfield>
+<mxc:subfield code="4">310</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14290172</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000096942043</mxc:subfield>
+<mxc:subfield code="a">Victoires productions</mxc:subfield>
+<mxc:subfield code="4">630</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20020426</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF385822090000006</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:38582209001001</mxc:subfield>
+<mxc:subfield code="a">VK-86572</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:38582209003001</mxc:subfield>
+<mxc:subfield code="a">NUMAV-2632</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">N</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb385822094</srw:recordIdentifier>
+<srw:recordPosition>4</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20020426</ixm:attr>
+<ixm:attr name="LastModificationDate">20260414</ixm:attr>
+<mn:score>6.641859</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb38603143s" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF386031430000000</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb38603143s</mxc:controlfield>
+<mxc:datafield tag="039" ind1=" " ind2=" ">
+<mxc:subfield code="o">OPC</mxc:subfield>
+<mxc:subfield code="a">005259070</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3384442014847</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20021009d2002       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="0" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   zaiz|||||||bk|||</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Le fabuleux destin d'Amélie Poulain</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="f">Jean-Pierre Jeunet, réal., scénario</mxc:subfield>
+<mxc:subfield code="g">Guillaume Laurant, scénario</mxc:subfield>
+<mxc:subfield code="g">Yann Tiersen, comp.</mxc:subfield>
+<mxc:subfield code="g">Audrey Tautou, Mathieu Kassovitz, Rufus... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">[Boulogne-Billancourt]</mxc:subfield>
+<mxc:subfield code="c">[TF1 vidéo [éd.]]</mxc:subfield>
+<mxc:subfield code="a">[Boulogne-Billancourt]</mxc:subfield>
+<mxc:subfield code="c">[TF1 vidéo [distrib.]]</mxc:subfield>
+<mxc:subfield code="d">[2002 (DL)]</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">1 DVD vidéo monoface simple couche zone 2 (2 h)</mxc:subfield>
+<mxc:subfield code="c">16/9, coul. (PAL), son., surround</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Copyright : Victoires productions, cop. 2001</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="500" ind1="1" ind2="1">
+<mxc:subfield code="3">14404106</mxc:subfield>
+<mxc:subfield code="a">Le fabuleux destin d'Amélie Poulain</mxc:subfield>
+<mxc:subfield code="n">film</mxc:subfield>
+<mxc:subfield code="m">français</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film burlesque, comédie</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">12614978</mxc:subfield>
+<mxc:subfield code="a">Jeunet</mxc:subfield>
+<mxc:subfield code="b">Jean-Pierre</mxc:subfield>
+<mxc:subfield code="f">1953-....</mxc:subfield>
+<mxc:subfield code="4">300</mxc:subfield>
+<mxc:subfield code="4">690</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14113424</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121188477</mxc:subfield>
+<mxc:subfield code="a">Laurant</mxc:subfield>
+<mxc:subfield code="b">Guillaume</mxc:subfield>
+<mxc:subfield code="4">690</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14023970</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000114506545</mxc:subfield>
+<mxc:subfield code="a">Tiersen</mxc:subfield>
+<mxc:subfield code="b">Yann</mxc:subfield>
+<mxc:subfield code="f">1970-....</mxc:subfield>
+<mxc:subfield code="4">230</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14053885</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121028297</mxc:subfield>
+<mxc:subfield code="a">Tautou</mxc:subfield>
+<mxc:subfield code="b">Audrey</mxc:subfield>
+<mxc:subfield code="f">1976-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">12495720</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121486802</mxc:subfield>
+<mxc:subfield code="a">Kassovitz</mxc:subfield>
+<mxc:subfield code="b">Mathieu</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">11923113</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121419490</mxc:subfield>
+<mxc:subfield code="a">Rufus</mxc:subfield>
+<mxc:subfield code="f">1942-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14032561</mxc:subfield>
+<mxc:subfield code="a">TF1 vidéo</mxc:subfield>
+<mxc:subfield code="4">650</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14032561</mxc:subfield>
+<mxc:subfield code="a">TF1 vidéo</mxc:subfield>
+<mxc:subfield code="4">310</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">11864183</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121538262</mxc:subfield>
+<mxc:subfield code="a">France 3</mxc:subfield>
+<mxc:subfield code="4">630</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14288929</mxc:subfield>
+<mxc:subfield code="a">Tapioca films</mxc:subfield>
+<mxc:subfield code="4">630</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14290172</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000096942043</mxc:subfield>
+<mxc:subfield code="a">Victoires productions</mxc:subfield>
+<mxc:subfield code="4">630</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20021009</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF386031430000000</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:38603143001001</mxc:subfield>
+<mxc:subfield code="a">VDVD-5284</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:38603143003001</mxc:subfield>
+<mxc:subfield code="a">NUMAV-468225</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb38603143s</srw:recordIdentifier>
+<srw:recordPosition>5</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20021009</ixm:attr>
+<ixm:attr name="LastModificationDate">20260414</ixm:attr>
+<mn:score>6.641509</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb38621305q" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF386213050000009</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb38621305q</mxc:controlfield>
+<mxc:datafield tag="039" ind1=" " ind2=" ">
+<mxc:subfield code="o">OPC</mxc:subfield>
+<mxc:subfield code="a">106103090</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="071" ind1="4" ind2="1">
+<mxc:subfield code="a">201722</mxc:subfield>
+<mxc:subfield code="b">EDV 1035</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3384442017046</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20020724d2002       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="0" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   baho|||cagzcb||d</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Le fabuleux destin d'Amélie Poulain</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="f">Jean-Pierre Jeunet, réal., scénario</mxc:subfield>
+<mxc:subfield code="g">Guillaume Laurant, scénario, dial.</mxc:subfield>
+<mxc:subfield code="g">Yann Tiersen, comp.</mxc:subfield>
+<mxc:subfield code="g">Audrey Tautou, Mathieu Kassovitz, Rufus... [et al.], act.</mxc:subfield>
+<mxc:subfield code="g">André Dussollier, voix</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">[Boulogne-Billancourt]</mxc:subfield>
+<mxc:subfield code="c">[TF1 vidéo [éd., distrib.]]</mxc:subfield>
+<mxc:subfield code="d">[2002 (DL)]</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">1 cass. vidéo (VHS) (2 h)</mxc:subfield>
+<mxc:subfield code="c">coul. (SECAM), son., stéréo</mxc:subfield>
+<mxc:subfield code="e">1 CD audio</mxc:subfield>
+<mxc:subfield code="e">1 affiche (40 x 60 cm)</mxc:subfield>
+<mxc:subfield code="e">1 livret ([12] p. : ill. ; 20 cm)</mxc:subfield>
+<mxc:subfield code="e">8 photos dans 1 enveloppe (15 x 21 cm)</mxc:subfield>
+<mxc:subfield code="e">8 photos dans 1 enveloppe (11 x 11 cm)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">La cassette et les documents qui l'accompagnent sont contenus dans une boîte en métal</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient aussi : fantaisies d'Audrey Tautou</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Réservé à la vente</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Cop. : Victoires productions : Tapioca films : France 3 cinéma, 2001</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="500" ind1="1" ind2="1">
+<mxc:subfield code="3">14404106</mxc:subfield>
+<mxc:subfield code="a">Le fabuleux destin d'Amélie Poulain</mxc:subfield>
+<mxc:subfield code="n">film</mxc:subfield>
+<mxc:subfield code="m">français</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film burlesque, comédie</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : salle de cinéma commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">12614978</mxc:subfield>
+<mxc:subfield code="a">Jeunet</mxc:subfield>
+<mxc:subfield code="b">Jean-Pierre</mxc:subfield>
+<mxc:subfield code="f">1953-....</mxc:subfield>
+<mxc:subfield code="4">300</mxc:subfield>
+<mxc:subfield code="4">690</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14113424</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121188477</mxc:subfield>
+<mxc:subfield code="a">Laurant</mxc:subfield>
+<mxc:subfield code="b">Guillaume</mxc:subfield>
+<mxc:subfield code="4">690</mxc:subfield>
+<mxc:subfield code="4">090</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14023970</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000114506545</mxc:subfield>
+<mxc:subfield code="a">Tiersen</mxc:subfield>
+<mxc:subfield code="b">Yann</mxc:subfield>
+<mxc:subfield code="f">1970-....</mxc:subfield>
+<mxc:subfield code="4">230</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14053885</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121028297</mxc:subfield>
+<mxc:subfield code="a">Tautou</mxc:subfield>
+<mxc:subfield code="b">Audrey</mxc:subfield>
+<mxc:subfield code="f">1976-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">12495720</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121486802</mxc:subfield>
+<mxc:subfield code="a">Kassovitz</mxc:subfield>
+<mxc:subfield code="b">Mathieu</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">11923113</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121419490</mxc:subfield>
+<mxc:subfield code="a">Rufus</mxc:subfield>
+<mxc:subfield code="f">1942-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">13893543</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000110023503</mxc:subfield>
+<mxc:subfield code="a">Dussollier</mxc:subfield>
+<mxc:subfield code="b">André</mxc:subfield>
+<mxc:subfield code="f">1946-....</mxc:subfield>
+<mxc:subfield code="4">550</mxc:subfield>
+<mxc:subfield code="4">vre</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14032561</mxc:subfield>
+<mxc:subfield code="a">TF1 vidéo</mxc:subfield>
+<mxc:subfield code="4">650</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14032561</mxc:subfield>
+<mxc:subfield code="a">TF1 vidéo</mxc:subfield>
+<mxc:subfield code="4">310</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14280787</mxc:subfield>
+<mxc:subfield code="a">France 3 Cinéma</mxc:subfield>
+<mxc:subfield code="4">630</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20020724</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF386213050000009</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:38621305001001</mxc:subfield>
+<mxc:subfield code="a">VK-88756</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:38621305003001</mxc:subfield>
+<mxc:subfield code="a">NUMAV-119360</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">N</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb38621305q</srw:recordIdentifier>
+<srw:recordPosition>6</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20020724</ixm:attr>
+<ixm:attr name="LastModificationDate">20260414</ixm:attr>
+<mn:score>6.6411853</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb386031862" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF386031860000008</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb386031862</mxc:controlfield>
+<mxc:datafield tag="039" ind1=" " ind2=" ">
+<mxc:subfield code="o">OPC</mxc:subfield>
+<mxc:subfield code="a">005259550</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3384442017237</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20021009d2002       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="0" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   zaiz|||||||bk|||</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Le fabuleux destin d'Amélie Poulain</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="f">Jean-Pierre Jeunet, réal., scénario</mxc:subfield>
+<mxc:subfield code="g">Guillaume Laurant, scénario</mxc:subfield>
+<mxc:subfield code="g">Yann Tiersen, comp.</mxc:subfield>
+<mxc:subfield code="g">Audrey Tautou, Mathieu Kassovitz, Rufus... [et al.], act.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">[Boulogne-Billancourt]</mxc:subfield>
+<mxc:subfield code="c">[TF1 vidéo [éd.]]</mxc:subfield>
+<mxc:subfield code="a">[Boulogne-Billancourt]</mxc:subfield>
+<mxc:subfield code="c">[TF1 vidéo [distrib.]]</mxc:subfield>
+<mxc:subfield code="d">[2002 (DL)]</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">2 DVD vidéo monoface simple couche zone 2 (2 h)</mxc:subfield>
+<mxc:subfield code="c">16/9, coul. (PAL), son., surround</mxc:subfield>
+<mxc:subfield code="e">1 brochure (12 p. ; 17 cm)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient aussi : making of, court métrage "Foutaises", bande-annonce, galerie de photos, extrait du storyboard, essais des comédiens, projets d'affiches, interview de Jean-Pierre Jeunet sur le second DVD</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="306" ind1=" " ind2=" ">
+<mxc:subfield code="a">Copyright : Victoires productions, cop. 2001</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="500" ind1="1" ind2="1">
+<mxc:subfield code="3">14404106</mxc:subfield>
+<mxc:subfield code="a">Le fabuleux destin d'Amélie Poulain</mxc:subfield>
+<mxc:subfield code="n">film</mxc:subfield>
+<mxc:subfield code="m">français</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">film burlesque, comédie</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">fiction</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">12614978</mxc:subfield>
+<mxc:subfield code="a">Jeunet</mxc:subfield>
+<mxc:subfield code="b">Jean-Pierre</mxc:subfield>
+<mxc:subfield code="f">1953-....</mxc:subfield>
+<mxc:subfield code="4">300</mxc:subfield>
+<mxc:subfield code="4">690</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14113424</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121188477</mxc:subfield>
+<mxc:subfield code="a">Laurant</mxc:subfield>
+<mxc:subfield code="b">Guillaume</mxc:subfield>
+<mxc:subfield code="4">690</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14023970</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000114506545</mxc:subfield>
+<mxc:subfield code="a">Tiersen</mxc:subfield>
+<mxc:subfield code="b">Yann</mxc:subfield>
+<mxc:subfield code="f">1970-....</mxc:subfield>
+<mxc:subfield code="4">230</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">14053885</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121028297</mxc:subfield>
+<mxc:subfield code="a">Tautou</mxc:subfield>
+<mxc:subfield code="b">Audrey</mxc:subfield>
+<mxc:subfield code="f">1976-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">12495720</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121486802</mxc:subfield>
+<mxc:subfield code="a">Kassovitz</mxc:subfield>
+<mxc:subfield code="b">Mathieu</mxc:subfield>
+<mxc:subfield code="f">1967-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="702" ind1=" " ind2="|">
+<mxc:subfield code="3">11923113</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121419490</mxc:subfield>
+<mxc:subfield code="a">Rufus</mxc:subfield>
+<mxc:subfield code="f">1942-....</mxc:subfield>
+<mxc:subfield code="4">005</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14032561</mxc:subfield>
+<mxc:subfield code="a">TF1 vidéo</mxc:subfield>
+<mxc:subfield code="4">650</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14032561</mxc:subfield>
+<mxc:subfield code="a">TF1 vidéo</mxc:subfield>
+<mxc:subfield code="4">310</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">11864183</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000121538262</mxc:subfield>
+<mxc:subfield code="a">France 3</mxc:subfield>
+<mxc:subfield code="4">630</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14288929</mxc:subfield>
+<mxc:subfield code="a">Tapioca films</mxc:subfield>
+<mxc:subfield code="4">630</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="712" ind1="0" ind2="2">
+<mxc:subfield code="3">14290172</mxc:subfield>
+<mxc:subfield code="o">ISNI0000000096942043</mxc:subfield>
+<mxc:subfield code="a">Victoires productions</mxc:subfield>
+<mxc:subfield code="4">630</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20021009</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF386031860000008</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:38603186001001</mxc:subfield>
+<mxc:subfield code="a">VDVD-5296</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:38603186003001</mxc:subfield>
+<mxc:subfield code="a">NUMAV-468312</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb386031862</srw:recordIdentifier>
+<srw:recordPosition>7</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20021009</ixm:attr>
+<ixm:attr name="LastModificationDate">20260414</ixm:attr>
+<mn:score>6.640885</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb42284132m" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF42284132000000X</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb42284132m</mxc:controlfield>
+<mxc:datafield tag="020" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">71019705</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3384442196406</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20101004d2010       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="0" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   bai||||||||b|||c</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Le fabuleux destin d'Amélie Poulain</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="e">édition collector</mxc:subfield>
+<mxc:subfield code="f">Jean-Pierre Jeunet, réal.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">Boulogne-Billancourt</mxc:subfield>
+<mxc:subfield code="c">TF1 vidéo [éd., distrib.]</mxc:subfield>
+<mxc:subfield code="d">[DL 2010]</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">1 BD vidéo (2 h)</mxc:subfield>
+<mxc:subfield code="c">coul. et n. et b., son., surround</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient aussi : commentaire audio du réalisateur, interview du réalisateur (21 min), making of (13 min), bande-annonce, photos, extrait du storyboard, essais des comédiens (6 min), projets d'affiches, etc.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Réservé exclusivement à la vente</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="316" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:42284132001001</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : salle de cinéma commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="686" ind1=" " ind2=" ">
+<mxc:subfield code="a">207</mxc:subfield>
+<mxc:subfield code="2">Cadre de classement de la Bibliographie nationale française</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20101004</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF42284132000000X</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:42284132001001</mxc:subfield>
+<mxc:subfield code="a">VDVD-59752</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb42284132m</srw:recordIdentifier>
+<srw:recordPosition>8</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20101004</ixm:attr>
+<ixm:attr name="LastModificationDate">20250325</ixm:attr>
+<mn:score>6.6401005</mn:score>
+</srw:extraRecordData>
+</srw:record>
+<srw:record>
+<srw:recordSchema>marcxchange</srw:recordSchema>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordData>
+<mxc:record xmlns:mxc="info:lc/xmlns/marcxchange-v2" format="UNIMARC" id="ark:/12148/cb42197703f" type="Bibliographic">
+<mxc:leader>     cgm  22        450 </mxc:leader>
+<mxc:controlfield tag="001">FRBNF421977030000005</mxc:controlfield>
+<mxc:controlfield tag="003">http://catalogue.bnf.fr/ark:/12148/cb42197703f</mxc:controlfield>
+<mxc:datafield tag="039" ind1=" " ind2=" ">
+<mxc:subfield code="o">OPP</mxc:subfield>
+<mxc:subfield code="a">42284228</mxc:subfield>
+<mxc:subfield code="d">20101122</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="071" ind1="4" ind2="1">
+<mxc:subfield code="a">224012</mxc:subfield>
+<mxc:subfield code="b">TF1 vidéo</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="073" ind1=" " ind2="0">
+<mxc:subfield code="a">3384442240123</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="100" ind1=" " ind2=" ">
+<mxc:subfield code="a">20100512d2009       y0frey50      ba</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="101" ind1="0" ind2=" ">
+<mxc:subfield code="a">fre</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="102" ind1=" " ind2=" ">
+<mxc:subfield code="a">FR</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="115" ind1=" " ind2=" ">
+<mxc:subfield code="a">c   baiz|||||||bk||c</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">b </mxc:subfield>
+<mxc:subfield code="b">xa2e  </mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="181" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">tdi</mxc:subfield>
+<mxc:subfield code="2">rdacontent</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2="0">
+<mxc:subfield code="6">01</mxc:subfield>
+<mxc:subfield code="a">g</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="182" ind1=" " ind2=" ">
+<mxc:subfield code="6">02</mxc:subfield>
+<mxc:subfield code="c">v</mxc:subfield>
+<mxc:subfield code="2">rdamedia</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="200" ind1="1" ind2=" ">
+<mxc:subfield code="a">Le fabuleux destin d'Amélie Poulain</mxc:subfield>
+<mxc:subfield code="b">Images animées</mxc:subfield>
+<mxc:subfield code="e">édition collector</mxc:subfield>
+<mxc:subfield code="f">Jean-Pierre Jeunet, réal.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="210" ind1=" " ind2=" ">
+<mxc:subfield code="a">Boulogne-Billancourt</mxc:subfield>
+<mxc:subfield code="c">TF1 vidéo [éd., distrib.]</mxc:subfield>
+<mxc:subfield code="d">2009</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="215" ind1=" " ind2=" ">
+<mxc:subfield code="a">2 DVD vidéo monofaces simple couche zone 2 (2 h)</mxc:subfield>
+<mxc:subfield code="c">16/9, coul. et n. et b. (PAL), son., surround (Dolby, DTS)</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Contient aussi :  DVD 2 (suppléments) : interview du réalisateur (21 min), making of (13 min), bande-annonce, galerie de photos, extrait du storyboard, essais des comédiens (6 min), projets d'affiches, etc.</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="300" ind1=" " ind2=" ">
+<mxc:subfield code="a">Réservé exclusivement à la vente</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="304" ind1=" " ind2=" ">
+<mxc:subfield code="a">Notice rédigée d'après la jaquette</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="316" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:42197703002001</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">édition vidéo commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="608" ind1=" " ind2=" ">
+<mxc:subfield code="a">document d'origine : salle de cinéma commerciale</mxc:subfield>
+<mxc:subfield code="2">frTAV</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="801" ind1=" " ind2="0">
+<mxc:subfield code="a">FR</mxc:subfield>
+<mxc:subfield code="b">FR-751131015</mxc:subfield>
+<mxc:subfield code="c">20100512</mxc:subfield>
+<mxc:subfield code="g">AFNOR</mxc:subfield>
+<mxc:subfield code="h">FRBNF421977030000005</mxc:subfield>
+<mxc:subfield code="2">intermrc</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:42197703001001</mxc:subfield>
+<mxc:subfield code="a">DVDH-1966</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Haut de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">N</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:42197703002001</mxc:subfield>
+<mxc:subfield code="a">VDVD-59779</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+<mxc:datafield tag="930" ind1=" " ind2=" ">
+<mxc:subfield code="5">FR-759999999:42197703003001</mxc:subfield>
+<mxc:subfield code="a">NUMAV-982346</mxc:subfield>
+<mxc:subfield code="b">759999999</mxc:subfield>
+<mxc:subfield code="c">Tolbiac - Rez de Jardin - Audiovisuel - Magasin</mxc:subfield>
+<mxc:subfield code="d">O</mxc:subfield>
+</mxc:datafield>
+</mxc:record>      </srw:recordData>
+<srw:recordIdentifier>ark:/12148/cb42197703f</srw:recordIdentifier>
+<srw:recordPosition>9</srw:recordPosition>
+<srw:extraRecordData>
+<ixm:attr name="CreationDate">20100512</ixm:attr>
+<ixm:attr name="LastModificationDate">20160930</ixm:attr>
+<mn:score>6.6392655</mn:score>
+</srw:extraRecordData>
+</srw:record>
+</srw:records>
+</srw:searchRetrieveResponse>

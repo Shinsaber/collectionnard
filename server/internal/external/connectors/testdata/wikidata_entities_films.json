@@ -1,0 +1,5217 @@
+{
+  "entities": {
+    "Q484048": {
+      "id": "Q484048",
+      "type": "item",
+      "labels": {
+        "fr": {
+          "language": "fr",
+          "value": "Le Fabuleux Destin d'Amélie Poulain"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "アメリ"
+        },
+        "en": {
+          "language": "en",
+          "value": "Amélie"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "天使愛美麗"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "아멜리에"
+        }
+      },
+      "descriptions": {
+        "en": {
+          "language": "en",
+          "value": "2001 film directed by Jean-Pierre Jeunet"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "film français de 2001"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "2001年のフランスの映画作品"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "2001年法国电影"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "장피에르 죄네 감독의 2001년 로맨틱 코미디 영화"
+        }
+      },
+      "claims": {
+        "P57": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P57",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 217324,
+                  "id": "Q217324"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P161": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 304123,
+                  "id": "Q304123"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 491766,
+                  "id": "Q491766"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 312661,
+                  "id": "Q312661"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 38554,
+                  "id": "Q38554"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 241437,
+                  "id": "Q241437"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 518457,
+                  "id": "Q518457"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 3141565,
+                  "id": "Q3141565"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 715111,
+                  "id": "Q715111"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 2121322,
+                  "id": "Q2121322"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 2848938,
+                  "id": "Q2848938"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 681451,
+                  "id": "Q681451"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 2865970,
+                  "id": "Q2865970"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 2965745,
+                  "id": "Q2965745"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 2975084,
+                  "id": "Q2975084"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 460423,
+                  "id": "Q460423"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 2979699,
+                  "id": "Q2979699"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 3034988,
+                  "id": "Q3034988"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 3063686,
+                  "id": "Q3063686"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 3086001,
+                  "id": "Q3086001"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 3082910,
+                  "id": "Q3082910"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 257752,
+                  "id": "Q257752"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 17497104,
+                  "id": "Q17497104"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 3174482,
+                  "id": "Q3174482"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 3168991,
+                  "id": "Q3168991"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 3183397,
+                  "id": "Q3183397"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 3259425,
+                  "id": "Q3259425"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 3264884,
+                  "id": "Q3264884"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 15069878,
+                  "id": "Q15069878"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 549827,
+                  "id": "Q549827"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 3310736,
+                  "id": "Q3310736"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 318088,
+                  "id": "Q318088"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 16669771,
+                  "id": "Q16669771"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 1860448,
+                  "id": "Q1860448"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 3479446,
+                  "id": "Q3479446"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 3491048,
+                  "id": "Q3491048"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 3524276,
+                  "id": "Q3524276"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 609514,
+                  "id": "Q609514"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 3554211,
+                  "id": "Q3554211"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 3160088,
+                  "id": "Q3160088"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 19629489,
+                  "id": "Q19629489"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P161",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 15147190,
+                  "id": "Q15147190"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P344": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P344",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 993210,
+                  "id": "Q993210"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P345": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P345",
+              "datavalue": {
+                "value": "tt0211915",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 11424,
+                  "id": "Q11424"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P58": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P58",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 217324,
+                  "id": "Q217324"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P58",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 1915951,
+                  "id": "Q1915951"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "deprecated",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P58",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 2978450,
+                  "id": "Q2978450"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P136": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P136",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 118612349,
+                  "id": "Q118612349"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P136",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 157443,
+                  "id": "Q157443"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P136",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 130232,
+                  "id": "Q130232"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P136",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 102706436,
+                  "id": "Q102706436"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P495": [
+          {
+            "rank": "preferred",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P495",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 142,
+                  "id": "Q142"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P495",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 183,
+                  "id": "Q183"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P364": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P364",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 150,
+                  "id": "Q150"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P1476": [
+          {
+            "rank": "preferred",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P1476",
+              "datavalue": {
+                "value": {
+                  "text": "Le Fabuleux Destin d'Amélie Poulain",
+                  "language": "fr"
+                },
+                "type": "monolingualtext"
+              },
+              "datatype": "monolingualtext"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P1476",
+              "datavalue": {
+                "value": {
+                  "text": "Amélie",
+                  "language": "en"
+                },
+                "type": "monolingualtext"
+              },
+              "datatype": "monolingualtext"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P1476",
+              "datavalue": {
+                "value": {
+                  "text": "아멜리에",
+                  "language": "ko"
+                },
+                "type": "monolingualtext"
+              },
+              "datatype": "monolingualtext"
+            }
+          }
+        ],
+        "P86": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P86",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 157256,
+                  "id": "Q157256"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P2047": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P2047",
+              "datavalue": {
+                "value": {
+                  "amount": "+122",
+                  "unit": "http://www.wikidata.org/entity/Q7727"
+                },
+                "type": "quantity"
+              },
+              "datatype": "quantity"
+            }
+          }
+        ],
+        "P268": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P268",
+              "datavalue": {
+                "value": "14404106q",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P577": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-02-28T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-04-19T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-04-25T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-07-06T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-08-16T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-08-20T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-09-07T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-09-20T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-09-20T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-09-21T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-10-05T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-10-12T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-10-19T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-10-24T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-10-25T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-10-26T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-11-02T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-11-08T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-12-14T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-11-17T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-11-23T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-12-06T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-12-06T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-12-15T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2001-12-26T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2002-01-10T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2002-01-11T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2002-01-24T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2002-01-25T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2002-02-08T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2002-02-08T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2002-02-21T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2002-02-22T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2002-02-22T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2002-03-06T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2002-03-08T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2002-03-14T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2002-03-14T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2002-03-21T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2002-03-21T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2002-03-22T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2002-04-05T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2002-04-24T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P577",
+              "datavalue": {
+                "value": {
+                  "time": "+2002-11-29T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ]
+      }
+    },
+    "Q217324": {
+      "id": "Q217324",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Jean-Pierre Jeunet"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Jean-Pierre Jeunet"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "ジャン＝ピエール・ジュネ"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "장피에르 죄네"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "尚-皮爾·桑里"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Jean-Pierre Jeunet"
+        }
+      },
+      "descriptions": {
+        "fr": {
+          "language": "fr",
+          "value": "cinéaste français"
+        },
+        "en": {
+          "language": "en",
+          "value": "French film director"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "法国电影导演（Jean-Pierre Jeunet）"
+        }
+      },
+      "claims": {
+        "P345": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P345",
+              "datavalue": {
+                "value": "nm0000466",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P268": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P268",
+              "datavalue": {
+                "value": "126149782",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P569": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P569",
+              "datavalue": {
+                "value": {
+                  "time": "+1953-09-03T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ],
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 705891,
+                  "id": "Q705891"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P27": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P27",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 142,
+                  "id": "Q142"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P735": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P735",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 6169840,
+                  "id": "Q6169840"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P1559": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P1559",
+              "datavalue": {
+                "value": {
+                  "text": "Jean-Pierre Jeunet",
+                  "language": "fr"
+                },
+                "type": "monolingualtext"
+              },
+              "datatype": "monolingualtext"
+            }
+          }
+        ],
+        "P734": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P734",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 105310479,
+                  "id": "Q105310479"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ]
+      }
+    },
+    "Q1915951": {
+      "id": "Q1915951",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Guillaume Laurant"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Guillaume Laurant"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "ギョーム・ローラン"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "吉罗姆·洛朗"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Guillaume Laurant"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "기욤 로랑"
+        }
+      },
+      "descriptions": {
+        "en": {
+          "language": "en",
+          "value": "French screenwriter (born 1961)"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "scénariste français"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "프랑스 각본가"
+        }
+      },
+      "claims": {
+        "P345": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P345",
+              "datavalue": {
+                "value": "nm0491011",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 5,
+                  "id": "Q5"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P735": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P735",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 18190448,
+                  "id": "Q18190448"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P27": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P27",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 142,
+                  "id": "Q142"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P268": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P268",
+              "datavalue": {
+                "value": "14113424x",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P1559": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P1559",
+              "datavalue": {
+                "value": {
+                  "text": "Guillaume Laurant",
+                  "language": "fr"
+                },
+                "type": "monolingualtext"
+              },
+              "datatype": "monolingualtext"
+            }
+          }
+        ],
+        "P734": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P734",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 37540218,
+                  "id": "Q37540218"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P569": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P569",
+              "datavalue": {
+                "value": {
+                  "time": "+1961-11-22T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ]
+      }
+    },
+    "Q157256": {
+      "id": "Q157256",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Yann Tiersen"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Yann Tiersen"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "ヤン・ティルセン"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "얀 티에르상"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "扬·提尔森"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Yann Tiersen"
+        }
+      },
+      "descriptions": {
+        "fr": {
+          "language": "fr",
+          "value": "auteur-compositeur et musicien français"
+        },
+        "en": {
+          "language": "en",
+          "value": "French composer (born 1970)"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "프랑스의 작곡가"
+        }
+      },
+      "claims": {
+        "P569": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P569",
+              "datavalue": {
+                "value": {
+                  "time": "+1970-06-23T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ],
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 5,
+                  "id": "Q5"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P27": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P27",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 142,
+                  "id": "Q142"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P345": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P345",
+              "datavalue": {
+                "value": "nm0862961",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P268": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P268",
+              "datavalue": {
+                "value": "14023970h",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P735": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P735",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 13564380,
+                  "id": "Q13564380"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P136": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P136",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 572901,
+                  "id": "Q572901"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P136",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 14378,
+                  "id": "Q14378"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P136",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 11399,
+                  "id": "Q11399"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P734": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P734",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 7801135,
+                  "id": "Q7801135"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P1559": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P1559",
+              "datavalue": {
+                "value": {
+                  "text": "Yann Tiersen",
+                  "language": "fr"
+                },
+                "type": "monolingualtext"
+              },
+              "datatype": "monolingualtext"
+            }
+          }
+        ]
+      }
+    },
+    "Q993210": {
+      "id": "Q993210",
+      "type": "item",
+      "labels": {
+        "fr": {
+          "language": "fr",
+          "value": "Bruno Delbonnel"
+        },
+        "en": {
+          "language": "en",
+          "value": "Bruno Delbonnel"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "ブリュノ・デルボネル"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "布魯諾·戴波內爾"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "브뤼노 델보넬"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Bruno Delbonnel"
+        }
+      },
+      "descriptions": {
+        "en": {
+          "language": "en",
+          "value": "French cinematographer"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "프랑스의 영화 촬영 감독"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "directeur de la photographie et réalisateur français"
+        }
+      },
+      "claims": {
+        "P345": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P345",
+              "datavalue": {
+                "value": "nm0216632",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 5,
+                  "id": "Q5"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P569": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P569",
+              "datavalue": {
+                "value": {
+                  "time": "+1957-01-01T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 9,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ],
+        "P27": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P27",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 142,
+                  "id": "Q142"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P735": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P735",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 1874605,
+                  "id": "Q1874605"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P1559": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P1559",
+              "datavalue": {
+                "value": {
+                  "text": "Bruno Delbonnel",
+                  "language": "fr"
+                },
+                "type": "monolingualtext"
+              },
+              "datatype": "monolingualtext"
+            }
+          }
+        ],
+        "P734": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P734",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 101038443,
+                  "id": "Q101038443"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ]
+      }
+    },
+    "Q304123": {
+      "id": "Q304123",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Audrey Tautou"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Audrey Tautou"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "オドレイ・トトゥ"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "오드레 토투"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "奧黛莉·朵杜"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Audrey Tautou"
+        }
+      },
+      "descriptions": {
+        "en": {
+          "language": "en",
+          "value": "French actress (born 1976)"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "actrice, mannequin et photographe française"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "フランスの俳優"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "프랑스 배우"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "法国女演员"
+        }
+      },
+      "claims": {
+        "P735": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P735",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 2639295,
+                  "id": "Q2639295"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P735",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 18088111,
+                  "id": "Q18088111"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P345": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P345",
+              "datavalue": {
+                "value": "nm0851582",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P569": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P569",
+              "datavalue": {
+                "value": {
+                  "time": "+1976-08-09T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ],
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 5,
+                  "id": "Q5"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P27": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P27",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 142,
+                  "id": "Q142"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P1559": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P1559",
+              "datavalue": {
+                "value": {
+                  "text": "Audrey Tautou",
+                  "language": "fr"
+                },
+                "type": "monolingualtext"
+              },
+              "datatype": "monolingualtext"
+            }
+          }
+        ],
+        "P268": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P268",
+              "datavalue": {
+                "value": "14053885w",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P734": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P734",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 65114021,
+                  "id": "Q65114021"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ]
+      }
+    },
+    "Q491766": {
+      "id": "Q491766",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Mathieu Kassovitz"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Mathieu Kassovitz"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "マチュー・カソヴィッツ"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "마티외 카소비츠"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "马修·卡索维茨"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Mathieu Kassovitz"
+        }
+      },
+      "descriptions": {
+        "fr": {
+          "language": "fr",
+          "value": "acteur, producteur, réalisateur et scénariste français"
+        },
+        "en": {
+          "language": "en",
+          "value": "French actor, film director, film producer and screenwriter (born 1967)"
+        }
+      },
+      "claims": {
+        "P27": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P27",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 142,
+                  "id": "Q142"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P345": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P345",
+              "datavalue": {
+                "value": "nm0440913",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P569": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P569",
+              "datavalue": {
+                "value": {
+                  "time": "+1967-08-03T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ],
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 5,
+                  "id": "Q5"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P268": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P268",
+              "datavalue": {
+                "value": "12495720r",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P735": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P735",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 17484081,
+                  "id": "Q17484081"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P1559": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P1559",
+              "datavalue": {
+                "value": {
+                  "text": "Mathieu Kassovitz",
+                  "language": "fr"
+                },
+                "type": "monolingualtext"
+              },
+              "datatype": "monolingualtext"
+            }
+          }
+        ],
+        "P734": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P734",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 125823365,
+                  "id": "Q125823365"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ]
+      }
+    },
+    "Q312661": {
+      "id": "Q312661",
+      "type": "item",
+      "labels": {
+        "ja": {
+          "language": "ja",
+          "value": "ジャメル・ドゥブーズ"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "자멜 드부즈"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "加梅勒·杜布兹"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Jamel Debbouze"
+        },
+        "en": {
+          "language": "en",
+          "value": "Jamel Debbouze"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Jamel Debbouze"
+        }
+      },
+      "descriptions": {
+        "fr": {
+          "language": "fr",
+          "value": "acteur et producteur franco-marocain"
+        },
+        "en": {
+          "language": "en",
+          "value": "Moroccan Amazigh -French comedian and actor"
+        }
+      },
+      "claims": {
+        "P27": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P27",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 142,
+                  "id": "Q142"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P27",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 1028,
+                  "id": "Q1028"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P345": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P345",
+              "datavalue": {
+                "value": "nm0213354",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 5,
+                  "id": "Q5"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P569": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P569",
+              "datavalue": {
+                "value": {
+                  "time": "+1975-06-18T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ],
+        "P268": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P268",
+              "datavalue": {
+                "value": "14021335v",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P735": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P735",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 16796264,
+                  "id": "Q16796264"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P1559": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P1559",
+              "datavalue": {
+                "value": {
+                  "text": "جما",
+                  "language": "ar"
+                },
+                "type": "monolingualtext"
+              },
+              "datatype": "monolingualtext"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P1559",
+              "datavalue": {
+                "value": {
+                  "text": "Jamel Debbouze",
+                  "language": "fr"
+                },
+                "type": "monolingualtext"
+              },
+              "datatype": "monolingualtext"
+            }
+          }
+        ],
+        "P136": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P136",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 40831,
+                  "id": "Q40831"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P136",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 191489,
+                  "id": "Q191489"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P734": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P734",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 108353376,
+                  "id": "Q108353376"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ]
+      }
+    },
+    "Q38554": {
+      "id": "Q38554",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Dominique Pinon"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Dominique Pinon"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "ドミニク・ピノン"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "도미니크 피뇽"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "多米尼克·皮諾"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Dominique Pinon"
+        }
+      },
+      "descriptions": {
+        "fr": {
+          "language": "fr",
+          "value": "acteur français"
+        },
+        "en": {
+          "language": "en",
+          "value": "French actor"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "法國演員"
+        }
+      },
+      "claims": {
+        "P27": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P27",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 142,
+                  "id": "Q142"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P345": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P345",
+              "datavalue": {
+                "value": "nm0684500",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P268": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P268",
+              "datavalue": {
+                "value": "140338217",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P569": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P569",
+              "datavalue": {
+                "value": {
+                  "time": "+1955-03-04T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ],
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 5,
+                  "id": "Q5"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P735": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P735",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 509951,
+                  "id": "Q509951"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P1559": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P1559",
+              "datavalue": {
+                "value": {
+                  "text": "Dominique Pinon",
+                  "language": "fr"
+                },
+                "type": "monolingualtext"
+              },
+              "datatype": "monolingualtext"
+            }
+          }
+        ],
+        "P734": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P734",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 36879713,
+                  "id": "Q36879713"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ]
+      }
+    },
+    "Q241437": {
+      "id": "Q241437",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Yolande Moreau"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Yolande Moreau"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "ヨランド・モロー"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "욜랑드 모로"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "友蘭達·夢露"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Yolande Moreau"
+        }
+      },
+      "descriptions": {
+        "fr": {
+          "language": "fr",
+          "value": "actrice, réalisatrice et scénariste belge"
+        },
+        "en": {
+          "language": "en",
+          "value": "Belgian actress, film director and screenwriter"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "比利时女演员（Yolande Moreau，1953—）"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "ベルギーの女優、コメディアン (1953-)"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "벨기에의 여배우, 희극 배우 (1953-)"
+        }
+      },
+      "claims": {
+        "P345": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P345",
+              "datavalue": {
+                "value": "nm0603446",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 5,
+                  "id": "Q5"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P569": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P569",
+              "datavalue": {
+                "value": {
+                  "time": "+1953-02-27T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ],
+        "P27": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P27",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 31,
+                  "id": "Q31"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P735": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P735",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 19869459,
+                  "id": "Q19869459"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P734": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P734",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 16877399,
+                  "id": "Q16877399"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P1559": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P1559",
+              "datavalue": {
+                "value": {
+                  "text": "Yolande Moreau",
+                  "language": "fr"
+                },
+                "type": "monolingualtext"
+              },
+              "datatype": "monolingualtext"
+            }
+          }
+        ],
+        "P268": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P268",
+              "datavalue": {
+                "value": "14208567n",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ]
+      }
+    },
+    "Q518457": {
+      "id": "Q518457",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "André Dussollier"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "André Dussollier"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "アンドレ・デュソリエ"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "앙드레 뒤솔리에"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "安祖·杜素利亞"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "André Dussollier"
+        }
+      },
+      "descriptions": {
+        "en": {
+          "language": "en",
+          "value": "French actor"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "acteur français"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "法國演員"
+        }
+      },
+      "claims": {
+        "P345": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P345",
+              "datavalue": {
+                "value": "nm0244707",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P268": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P268",
+              "datavalue": {
+                "value": "138935436",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 5,
+                  "id": "Q5"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P569": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P569",
+              "datavalue": {
+                "value": {
+                  "time": "+1946-02-17T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ],
+        "P27": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P27",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 142,
+                  "id": "Q142"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P735": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P735",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 6298851,
+                  "id": "Q6298851"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P1559": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P1559",
+              "datavalue": {
+                "value": {
+                  "text": "André Dussollier",
+                  "language": "fr"
+                },
+                "type": "monolingualtext"
+              },
+              "datatype": "monolingualtext"
+            }
+          }
+        ],
+        "P734": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P734",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 98210876,
+                  "id": "Q98210876"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ]
+      }
+    },
+    "Q3141565": {
+      "id": "Q3141565",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Isabelle Nanty"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Isabelle Nanty"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "イザベル・ナンティ"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "이자벨 낭티"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "伊莎贝拉·南蒂"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Isabelle Nanty"
+        }
+      },
+      "descriptions": {
+        "fr": {
+          "language": "fr",
+          "value": "actrice, réalisatrice, scénariste et chanteuse française"
+        },
+        "en": {
+          "language": "en",
+          "value": "French actress, film director, theatre director and screenwriter"
+        }
+      },
+      "claims": {
+        "P27": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P27",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 142,
+                  "id": "Q142"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 5,
+                  "id": "Q5"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P569": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P569",
+              "datavalue": {
+                "value": {
+                  "time": "+1962-01-21T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ],
+        "P268": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P268",
+              "datavalue": {
+                "value": "140141187",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P345": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P345",
+              "datavalue": {
+                "value": "nm0620964",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P735": [
+          {
+            "rank": "preferred",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P735",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 6078151,
+                  "id": "Q6078151"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          },
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P735",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 27980387,
+                  "id": "Q27980387"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P1559": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P1559",
+              "datavalue": {
+                "value": {
+                  "text": "Isabelle Nanty",
+                  "language": "fr"
+                },
+                "type": "monolingualtext"
+              },
+              "datatype": "monolingualtext"
+            }
+          }
+        ],
+        "P734": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P734",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 107531698,
+                  "id": "Q107531698"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ]
+      }
+    },
+    "Q715111": {
+      "id": "Q715111",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Rufus"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Rufus"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "リュファス"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "駱夫斯"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Rufus"
+        }
+      },
+      "descriptions": {
+        "fr": {
+          "language": "fr",
+          "value": "acteur et humoriste français"
+        },
+        "en": {
+          "language": "en",
+          "value": "French actor and comedian"
+        }
+      },
+      "claims": {
+        "P345": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P345",
+              "datavalue": {
+                "value": "nm0749363",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 5,
+                  "id": "Q5"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P569": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P569",
+              "datavalue": {
+                "value": {
+                  "time": "+1942-12-19T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ],
+        "P27": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P27",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 142,
+                  "id": "Q142"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P1559": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P1559",
+              "datavalue": {
+                "value": {
+                  "text": "Rufus",
+                  "language": "fr"
+                },
+                "type": "monolingualtext"
+              },
+              "datatype": "monolingualtext"
+            }
+          }
+        ],
+        "P734": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P734",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 42587832,
+                  "id": "Q42587832"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P735": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P735",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 941049,
+                  "id": "Q941049"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P268": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P268",
+              "datavalue": {
+                "value": "11923113m",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ]
+      }
+    },
+    "Q2121322": {
+      "id": "Q2121322",
+      "type": "item",
+      "labels": {
+        "ja": {
+          "language": "ja",
+          "value": "ティッキー・オルガド"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Ticky Holgado"
+        },
+        "en": {
+          "language": "en",
+          "value": "Ticky Holgado"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "蒂基·奥尔加多"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "티키 홀가도"
+        }
+      },
+      "descriptions": {
+        "fr": {
+          "language": "fr",
+          "value": "acteur français"
+        },
+        "en": {
+          "language": "en",
+          "value": "French actor (1944-2004)"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "法國演員"
+        }
+      },
+      "claims": {
+        "P735": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P735",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 471788,
+                  "id": "Q471788"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P345": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P345",
+              "datavalue": {
+                "value": "nm0390458",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P27": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P27",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 142,
+                  "id": "Q142"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P569": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P569",
+              "datavalue": {
+                "value": {
+                  "time": "+1944-06-24T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ],
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 5,
+                  "id": "Q5"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P268": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P268",
+              "datavalue": {
+                "value": "14014107k",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P734": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P734",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 21493910,
+                  "id": "Q21493910"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ]
+      }
+    },
+    "Q2848938": {
+      "id": "Q2848938",
+      "type": "item",
+      "labels": {
+        "fr": {
+          "language": "fr",
+          "value": "Andrée Damant"
+        },
+        "en": {
+          "language": "en",
+          "value": "Andrée Damant"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "安德烈·达芒"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "앙드레 다망"
+        }
+      },
+      "descriptions": {
+        "fr": {
+          "language": "fr",
+          "value": "actrice française"
+        },
+        "en": {
+          "language": "en",
+          "value": "French actress (1929–2022)"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "프랑스 여배우"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "フランスの女優"
+        }
+      },
+      "claims": {
+        "P31": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P31",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 5,
+                  "id": "Q5"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P27": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P27",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 142,
+                  "id": "Q142"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P345": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P345",
+              "datavalue": {
+                "value": "nm0198610",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ],
+        "P735": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P735",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 18180970,
+                  "id": "Q18180970"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P569": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P569",
+              "datavalue": {
+                "value": {
+                  "time": "+1929-09-20T00:00:00Z",
+                  "timezone": 0,
+                  "before": 0,
+                  "after": 0,
+                  "precision": 11,
+                  "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                },
+                "type": "time"
+              },
+              "datatype": "time"
+            }
+          }
+        ],
+        "P734": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P734",
+              "datavalue": {
+                "value": {
+                  "entity-type": "item",
+                  "numeric-id": 63922385,
+                  "id": "Q63922385"
+                },
+                "type": "wikibase-entityid"
+              },
+              "datatype": "wikibase-item"
+            }
+          }
+        ],
+        "P268": [
+          {
+            "rank": "normal",
+            "mainsnak": {
+              "snaktype": "value",
+              "property": "P268",
+              "datavalue": {
+                "value": "14168787w",
+                "type": "string"
+              },
+              "datatype": "external-id"
+            }
+          }
+        ]
+      }
+    },
+    "Q101038443": {
+      "id": "Q101038443",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Delbonnel"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Delbonnel"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Delbonnel"
+        }
+      },
+      "descriptions": null
+    },
+    "Q105310479": {
+      "id": "Q105310479",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Jeunet"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Jeunet"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Jeunet"
+        }
+      },
+      "descriptions": null
+    },
+    "Q107531698": {
+      "id": "Q107531698",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Nanty"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Nanty"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Nanty"
+        }
+      },
+      "descriptions": null
+    },
+    "Q108353376": {
+      "id": "Q108353376",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Debbouze"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Debbouze"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "杜布兹"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Debbouze"
+        }
+      },
+      "descriptions": null
+    },
+    "Q125823365": {
+      "id": "Q125823365",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Kassovitz"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Kassovitz"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "卡索维茨"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Kassovitz"
+        }
+      },
+      "descriptions": null
+    },
+    "Q13564380": {
+      "id": "Q13564380",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Yann"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Yann"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "ヤン"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Yann"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "Yann"
+        }
+      },
+      "descriptions": null
+    },
+    "Q16796264": {
+      "id": "Q16796264",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Jamel"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Jamel"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "加梅勒"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Jamel"
+        }
+      },
+      "descriptions": null
+    },
+    "Q16877399": {
+      "id": "Q16877399",
+      "type": "item",
+      "labels": {
+        "ja": {
+          "language": "ja",
+          "value": "モロー"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "莫罗"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Moreau"
+        },
+        "en": {
+          "language": "en",
+          "value": "Moreau"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Moreau"
+        }
+      },
+      "descriptions": null
+    },
+    "Q17484081": {
+      "id": "Q17484081",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Mathieu"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Mathieu"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "マチュー"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "马蒂厄"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Mathieu"
+        }
+      },
+      "descriptions": null
+    },
+    "Q18180970": {
+      "id": "Q18180970",
+      "type": "item",
+      "labels": {
+        "ja": {
+          "language": "ja",
+          "value": "アンドレイ"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "安德烈"
+        },
+        "en": {
+          "language": "en",
+          "value": "Andrée"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Andrée"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Andrée"
+        }
+      },
+      "descriptions": null
+    },
+    "Q18190448": {
+      "id": "Q18190448",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Guillaume"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Guillaume"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "ギヨーム"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "纪尧姆"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Guillaume"
+        }
+      },
+      "descriptions": null
+    },
+    "Q1874605": {
+      "id": "Q1874605",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Bruno"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Bruno"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "布鲁诺/布吕诺"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "ブルーノ"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Bruno"
+        }
+      },
+      "descriptions": null
+    },
+    "Q19869459": {
+      "id": "Q19869459",
+      "type": "item",
+      "labels": {
+        "fr": {
+          "language": "fr",
+          "value": "Yolande"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "ヨランド"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Yolande"
+        },
+        "en": {
+          "language": "en",
+          "value": "Yolande"
+        }
+      },
+      "descriptions": null
+    },
+    "Q21493910": {
+      "id": "Q21493910",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Holgado"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Holgado"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Holgado"
+        }
+      },
+      "descriptions": null
+    },
+    "Q2639295": {
+      "id": "Q2639295",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Audrey"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Audrey"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "オードリー"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "오드레"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "Audrey"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Audrey"
+        }
+      },
+      "descriptions": null
+    },
+    "Q36879713": {
+      "id": "Q36879713",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Pinon"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Pinon"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "皮农"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "ピノン"
+        }
+      },
+      "descriptions": null
+    },
+    "Q37540218": {
+      "id": "Q37540218",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Laurant"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Laurant"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "罗兰"
+        }
+      },
+      "descriptions": null
+    },
+    "Q42587832": {
+      "id": "Q42587832",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Narcy"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Narcy"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Narcy"
+        }
+      },
+      "descriptions": null
+    },
+    "Q471788": {
+      "id": "Q471788",
+      "type": "item",
+      "labels": {
+        "fr": {
+          "language": "fr",
+          "value": "Joseph"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "ヨセフ"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "요셉 (동음이의)"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "约瑟夫"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Joseph"
+        },
+        "en": {
+          "language": "en",
+          "value": "Joseph"
+        }
+      },
+      "descriptions": null
+    },
+    "Q509951": {
+      "id": "Q509951",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Dominique"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Dominique"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "ドミニク"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "多米尼克"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Dominique"
+        }
+      },
+      "descriptions": null
+    },
+    "Q6078151": {
+      "id": "Q6078151",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Isabelle"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Isabelle"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "イサベッレ"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "伊莎贝尔"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Isabelle"
+        }
+      },
+      "descriptions": null
+    },
+    "Q6169840": {
+      "id": "Q6169840",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Jean-Pierre"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Jean-Pierre"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "ジャン＝ピエール"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "让-皮埃尔"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "장피에르"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Jean-Pierre"
+        }
+      },
+      "descriptions": null
+    },
+    "Q6298851": {
+      "id": "Q6298851",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "André"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "André"
+        },
+        "ja": {
+          "language": "ja",
+          "value": "アンドレ"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "安德烈"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "André"
+        }
+      },
+      "descriptions": null
+    },
+    "Q63922385": {
+      "id": "Q63922385",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Damant"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Damant"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "达曼特"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Damant"
+        }
+      },
+      "descriptions": null
+    },
+    "Q65114021": {
+      "id": "Q65114021",
+      "type": "item",
+      "labels": {
+        "fr": {
+          "language": "fr",
+          "value": "Tautou"
+        },
+        "en": {
+          "language": "en",
+          "value": "Tautou"
+        }
+      },
+      "descriptions": null
+    },
+    "Q7801135": {
+      "id": "Q7801135",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Tiersen"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Tiersen"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Tiersen"
+        }
+      },
+      "descriptions": null
+    },
+    "Q941049": {
+      "id": "Q941049",
+      "type": "item",
+      "labels": {
+        "ja": {
+          "language": "ja",
+          "value": "ジャック"
+        },
+        "ko": {
+          "language": "ko",
+          "value": "자크"
+        },
+        "zh": {
+          "language": "zh",
+          "value": "雅克"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Jacques"
+        },
+        "en": {
+          "language": "en",
+          "value": "Jacques"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Jacques"
+        }
+      },
+      "descriptions": null
+    },
+    "Q98210876": {
+      "id": "Q98210876",
+      "type": "item",
+      "labels": {
+        "en": {
+          "language": "en",
+          "value": "Dussollier"
+        },
+        "fr": {
+          "language": "fr",
+          "value": "Dussollier"
+        },
+        "mul": {
+          "language": "mul",
+          "value": "Dussollier"
+        }
+      },
+      "descriptions": null
+    }
+  }
+}

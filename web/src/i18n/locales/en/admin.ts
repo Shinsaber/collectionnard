@@ -202,6 +202,22 @@ const en: typeof fr = {
         groupMain: "Album and artists",
         groupVolumes: "Tracks",
       },
+      films: {
+        title: "Films",
+        intro:
+          "Search a film on Wikidata: its legal-deposit video releases (DVD, Blu-ray, VHS) are listed from the BnF, newest first. A release can also be found by its barcode: its film is then found too. Choose what to import (direction, cast, publisher), simulate, then confirm. Items already in the catalogue keep their values: only their empty fields are filled in.",
+        workTitle: "Film (Wikidata)",
+        workPlaceholder: "Film title, e.g. Amélie",
+        editionTitle: "Video releases (BnF)",
+        editionPlaceholder: "Film title",
+        byCode: "By barcode",
+        codePlaceholder: "Barcode (EAN) on the case, e.g. 3384442032803",
+        publishers: "Publisher(s)",
+        attribution:
+          "Data from Wikidata (CC0) and the BnF general catalogue (Licence Ouverte), retrieved on {date}.",
+        groupMain: "Film and credits",
+        groupVolumes: "Contents",
+      },
     },
     stepOf: "Step {n} / {total} · {title}",
     steps: {

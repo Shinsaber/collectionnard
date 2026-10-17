@@ -167,7 +167,9 @@ tags:
       `novels` (romans : roman, cycle et auteurs sur Wikidata ; éditions BnF de sa notice d'œuvre, traducteurs,
       illustrateurs et préfaciers) et `music` (CD, vinyles : album, éditions, pistes, artistes et labels sur
       **MusicBrainz**, données de base CC0 ; ni genres ni tags, sous licence non commerciale ; une requête par
-      seconde ; types du paquet `music`, rapprochés par MBID, labels aussi par nom). Connecteur `bd-manga` :
+      seconde ; types du paquet `music`, rapprochés par MBID, labels aussi par nom) et `films` (film, générique et cinq premiers
+      interprètes sur **Wikidata**, éditions vidéo DVD / Blu-ray / VHS du dépôt légal à la **BnF** par sa notice d'œuvre ou par
+      EAN ; une édition seule retrouve son film ; types des paquets `video` et `people`). Connecteur `bd-manga` :
       œuvres, univers et auteurs sur **Wikidata** (CC0), éditions françaises et tomes sur la **BnF**
       (Licence Ouverte : source et date de récupération écrites dans `sources`). Parcours :
       recherche (`works`, `editions`) → aperçu (`preview`) → simulation puis import (`import`,
@@ -1669,7 +1671,7 @@ components:
       name: connector
       in: path
       required: true
-      description: Connecteur (`GET /external/connectors`) — `bd-manga`, `novels`, `music`…
+      description: Connecteur (`GET /external/connectors`) — `bd-manga`, `novels`, `music`, `films`…
       schema:
         type: string
         example: bd-manga
@@ -4248,6 +4250,8 @@ paths:
         d'abord). Connecteur `music` : par titre (index `release`), par **code-barres** (`barcode`, EAN / UPC
         avec clé de contrôle valide) ou par album (`work`, MBID du groupe de parutions : ses parutions, 100 au
         plus, les plus anciennes d'abord) ; `isbn` y est refusé, comme `barcode` pour les livres. Exactement un
+        Connecteur `films` : par titre (notices vidéo, `bib.doctype any "h"`), par **code-barres** (`barcode`, index
+        `bib.ean`) ou par film (`work`, QID : éditions de sa notice d'œuvre BnF, les plus récentes d'abord).
         des paramètres ; l'identifiant `work` est vérifié par le connecteur (400).
 
         Connecteur `novels` : une notice sans ensemble est une édition en un volume (le livre, avec son

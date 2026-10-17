@@ -40,6 +40,7 @@ const (
 	profileBDManga profile = iota // manga and comics: work → multi-volume edition → volumes
 	profileNovels                 // novels: work → edition (the book, or a set of volumes)
 	profileMusic                  // music (domain « music »): album → releases → tracks
+	profileFilms                  // films (domain « video »): film → video releases (DVD, Blu-ray…)
 )
 
 type Connector struct {
@@ -60,6 +61,13 @@ func New(cat Catalog, fetch *external.Client) *Connector {
 func NewNovels(cat Catalog, fetch *external.Client) *Connector {
 	c := New(cat, fetch)
 	c.profile = profileNovels
+	return c
+}
+
+// NewFilms returns the films connector (Wikidata for the film, BnF for its video releases).
+func NewFilms(cat Catalog, fetch *external.Client) *Connector {
+	c := New(cat, fetch)
+	c.profile = profileFilms
 	return c
 }
 
@@ -97,6 +105,14 @@ const (
 	relIssuedAs      = "issued_as"
 	relContainsTrack = "contains_track"
 	relReleasedBy    = "released_by"
+
+	// Package « video » (video.md) ; people and publishers: package « people ».
+	typeFilm         = "Film"
+	typeVideoRelease = "VideoRelease"
+
+	relReleasedAs       = "released_as"
+	relCredited         = "credited"
+	relVideoPublishedBy = "published_by"
 )
 
 var (
@@ -105,40 +121,47 @@ var (
 		profileBDManga: {typeManga, typeComic, typeUniverse, typeEdition, typeVolume, typePerson, typePublisher},
 		profileNovels:  {typeNovel, typeSaga, typeUniverse, typeEdition, typeVolume, typePerson, typePublisher},
 		profileMusic:   {typeAlbum, typeRelease, typeTrack, typeArtist, typeLabel},
+		profileFilms:   {typeFilm, typeVideoRelease, typePerson, typePublisher},
 	}
 	relationTypeNames = map[profile][]string{
 		profileBDManga: {relContainsWork, relCreatedBy, relPublishedAs, relEditedBy, relContainsVolume},
 		profileNovels:  {relContainsWork, relCreatedBy, relPublishedAs, relEditedBy, relContainsVolume},
 		profileMusic:   {relPerformedBy, relIssuedAs, relContainsTrack, relReleasedBy},
+		profileFilms:   {relReleasedAs, relCredited, relVideoPublishedBy},
 	}
 
 	// packageIDs: fixed ids of the types in the domain packages. A type is found by this id
 	// first (it may have been renamed on the instance), then by its technical name (type
 	// created by hand, outside the package).
 	packageIDs = map[string]uuid.UUID{
-		typeUniverse:      uuid.MustParse("b0000000-0000-0000-0000-000000000010"),
-		typeSaga:          uuid.MustParse("b0000000-0000-0000-0000-000000000011"),
-		typeManga:         uuid.MustParse("b0000000-0000-0000-0000-000000000012"),
-		typeComic:         uuid.MustParse("b0000000-0000-0000-0000-000000000013"),
-		typeEdition:       uuid.MustParse("b0000000-0000-0000-0000-000000000014"),
-		typeVolume:        uuid.MustParse("b0000000-0000-0000-0000-000000000015"),
-		typePerson:        uuid.MustParse("b0000000-0000-0000-0000-000000000016"),
-		typePublisher:     uuid.MustParse("b0000000-0000-0000-0000-000000000017"),
-		typeNovel:         uuid.MustParse("b0000000-0000-0000-0000-000000000018"),
-		relContainsWork:   uuid.MustParse("c0000000-0000-0000-0000-000000000011"),
-		relCreatedBy:      uuid.MustParse("c0000000-0000-0000-0000-000000000012"),
-		relPublishedAs:    uuid.MustParse("c0000000-0000-0000-0000-000000000013"),
-		relEditedBy:       uuid.MustParse("c0000000-0000-0000-0000-000000000014"),
-		relContainsVolume: uuid.MustParse("c0000000-0000-0000-0000-000000000015"),
-		typeArtist:        uuid.MustParse("b0000000-0000-0000-0000-000000000020"),
-		typeAlbum:         uuid.MustParse("b0000000-0000-0000-0000-000000000021"),
-		typeRelease:       uuid.MustParse("b0000000-0000-0000-0000-000000000022"),
-		typeTrack:         uuid.MustParse("b0000000-0000-0000-0000-000000000023"),
-		typeLabel:         uuid.MustParse("b0000000-0000-0000-0000-000000000024"),
-		relPerformedBy:    uuid.MustParse("c0000000-0000-0000-0000-000000000020"),
-		relIssuedAs:       uuid.MustParse("c0000000-0000-0000-0000-000000000021"),
-		relContainsTrack:  uuid.MustParse("c0000000-0000-0000-0000-000000000022"),
-		relReleasedBy:     uuid.MustParse("c0000000-0000-0000-0000-000000000023"),
+		typeUniverse:        uuid.MustParse("b0000000-0000-0000-0000-000000000010"),
+		typeSaga:            uuid.MustParse("b0000000-0000-0000-0000-000000000011"),
+		typeManga:           uuid.MustParse("b0000000-0000-0000-0000-000000000012"),
+		typeComic:           uuid.MustParse("b0000000-0000-0000-0000-000000000013"),
+		typeEdition:         uuid.MustParse("b0000000-0000-0000-0000-000000000014"),
+		typeVolume:          uuid.MustParse("b0000000-0000-0000-0000-000000000015"),
+		typePerson:          uuid.MustParse("b0000000-0000-0000-0000-000000000016"),
+		typePublisher:       uuid.MustParse("b0000000-0000-0000-0000-000000000017"),
+		typeNovel:           uuid.MustParse("b0000000-0000-0000-0000-000000000018"),
+		relContainsWork:     uuid.MustParse("c0000000-0000-0000-0000-000000000011"),
+		relCreatedBy:        uuid.MustParse("c0000000-0000-0000-0000-000000000012"),
+		relPublishedAs:      uuid.MustParse("c0000000-0000-0000-0000-000000000013"),
+		relEditedBy:         uuid.MustParse("c0000000-0000-0000-0000-000000000014"),
+		relContainsVolume:   uuid.MustParse("c0000000-0000-0000-0000-000000000015"),
+		typeArtist:          uuid.MustParse("b0000000-0000-0000-0000-000000000020"),
+		typeAlbum:           uuid.MustParse("b0000000-0000-0000-0000-000000000021"),
+		typeRelease:         uuid.MustParse("b0000000-0000-0000-0000-000000000022"),
+		typeTrack:           uuid.MustParse("b0000000-0000-0000-0000-000000000023"),
+		typeLabel:           uuid.MustParse("b0000000-0000-0000-0000-000000000024"),
+		relPerformedBy:      uuid.MustParse("c0000000-0000-0000-0000-000000000020"),
+		relIssuedAs:         uuid.MustParse("c0000000-0000-0000-0000-000000000021"),
+		relContainsTrack:    uuid.MustParse("c0000000-0000-0000-0000-000000000022"),
+		relReleasedBy:       uuid.MustParse("c0000000-0000-0000-0000-000000000023"),
+		typeFilm:            uuid.MustParse("b0000000-0000-0000-0000-000000000030"),
+		typeVideoRelease:    uuid.MustParse("b0000000-0000-0000-0000-000000000005"),
+		relReleasedAs:       uuid.MustParse("c0000000-0000-0000-0000-000000000004"),
+		relCredited:         uuid.MustParse("c0000000-0000-0000-0000-000000000030"),
+		relVideoPublishedBy: uuid.MustParse("c0000000-0000-0000-0000-000000000031"),
 	}
 )
 
@@ -164,24 +187,30 @@ func (c *Connector) ID() string {
 		return "novels"
 	case profileMusic:
 		return "music"
+	case profileFilms:
+		return "films"
 	}
 	return "bd-manga"
 }
 
 func (c *Connector) Domain() string {
-	if c.profile == profileMusic {
+	switch c.profile {
+	case profileMusic:
 		return "music"
+	case profileFilms:
+		return "video"
 	}
 	return "books"
 }
 
 // EditionsByWork: the novels connector lists the editions of a Wikidata work
-// (BnF work record, bib.work2bib), the music connector the releases of an album.
+// (BnF work record, bib.work2bib), the music connector the releases of an album, the films connector the
+// video releases of a film (BnF work record).
 func (c *Connector) EditionsByWork() bool { return c.profile != profileBDManga }
 
 // EditionCode is the code editions are searched by: the ISBN of a book, the barcode of a release.
 func (c *Connector) EditionCode() string {
-	if c.profile == profileMusic {
+	if c.profile == profileMusic || c.profile == profileFilms {
 		return "barcode"
 	}
 	return "isbn"

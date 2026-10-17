@@ -40,27 +40,30 @@
         @toggle="toggle"
         @edit="openEdit"
       />
-      <div class="flex items-center gap-2 mt-3 mb-2">
-        <h4 class="text-sm font-semibold text-ink">
-          {{ t(`admin.external.connectors.${connector}.groupVolumes`) }} ({{
-            g.volumes.length
-          }})
-        </h4>
-        <ElButton size="small" text @click="setAll(g.volumes, true)">{{
-          t("admin.external.selectAll")
-        }}</ElButton>
-        <ElButton size="small" text @click="setAll(g.volumes, false)">{{
-          t("admin.external.selectNone")
-        }}</ElButton>
-      </div>
-      <ExternalNodeTable
-        :plan="plan"
-        :nodes="g.volumes"
-        :selected="selectedSet"
-        :overrides="overrides"
-        @toggle="toggle"
-        @edit="openEdit"
-      />
+      <!-- Tomes, pistes… : absents d'une édition en un volume ou d'une édition vidéo. -->
+      <template v-if="g.volumes.length > 0">
+        <div class="flex items-center gap-2 mt-3 mb-2">
+          <h4 class="text-sm font-semibold text-ink">
+            {{ t(`admin.external.connectors.${connector}.groupVolumes`) }} ({{
+              g.volumes.length
+            }})
+          </h4>
+          <ElButton size="small" text @click="setAll(g.volumes, true)">{{
+            t("admin.external.selectAll")
+          }}</ElButton>
+          <ElButton size="small" text @click="setAll(g.volumes, false)">{{
+            t("admin.external.selectNone")
+          }}</ElButton>
+        </div>
+        <ExternalNodeTable
+          :plan="plan"
+          :nodes="g.volumes"
+          :selected="selectedSet"
+          :overrides="overrides"
+          @toggle="toggle"
+          @edit="openEdit"
+        />
+      </template>
     </section>
 
     <p class="text-sm text-ink" data-test="plan-count">

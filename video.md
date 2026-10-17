@@ -56,3 +56,22 @@ Vérifié le 2026-10-17 (voir `docs/sources-externes.md`).
 | Notice d'œuvre BnF          | `P268` (ex. `14404106q`)                                     | 500 `$3` des éditions ; index `bib.work2bib`           |
 | `credited`                  | `P57` réalisation, `P58` scénario, `P86` musique, `P344` image, `P161` interprétation (ordre de l'élément) | 702 `$4` : 300 réalisation, 690 scénario, 230 musique, 005 interprétation |
 | Édition                     | —                                                            | 073 EAN, 200 `$a` titre et `$e` mention (« édition limitée »), 205 mention, 215 support (« DVD vidéo », « BD vidéo » = Blu-ray, « cass. vidéo (VHS) ») / disques / zone / durée, 101 langues (`$a` audio, `$c` originale, `$j` sous-titres), 225 collection et numéro, 300 contenu, 712 `$4` 650 éditeur, 310 distributeur (à défaut 210 `$c`) |
+
+## Import (connecteur `films`)
+
+Page admin « Sources externes », sorte de collection « Films » (`/external/films/*`) :
+
+1. **Film** cherché sur Wikidata parmi les classes de films ; une fois choisi, ses **éditions vidéo** sont listées depuis
+   sa notice d'œuvre BnF (`P268` → `bib.work2bib`, notices vidéo seulement), des plus récentes aux plus anciennes
+   (support, disques, zone, EAN, éditeur). Une édition se cherche aussi par titre ou par **code-barres** (`bib.ean`).
+2. **Aperçu** : film (titres, type, année, durée, pays, langue, genres, IMDb), générique (réalisation, scénario, musique,
+   image : cochés ; dix premiers interprètes, les cinq premiers cochés, ordre au générique), édition (support, disques,
+   zone, durée, format d'image, EAN, mention d'édition, collection, langues audio et sous-titres, contenu et matériel
+   d'accompagnement), éditeurs (`published_by` : éditeur, distributeur).
+3. **Édition choisie seule** (code-barres) : son film est retrouvé par la notice d'œuvre BnF (recherche Wikidata
+   `haswbstatement:P268=…`) ; à défaut, un film est créé depuis la notice (titre de l'œuvre, langue originale, générique
+   des zones 7XX).
+4. **Rapprochement** : QID Wikidata ou ARK BnF (le film par sa notice d'œuvre), éditeurs par ARK puis par nom (sans casse
+   ni accents) ; jamais par EAN (TF1 Vidéo a réutilisé 3384442017220 pour deux VHS). Seuls les champs vides sont complétés.
+
+Exemple : `db/seed_video.sql` (Amélie, son générique et le Blu-ray « édition collector » TF1 vidéo 2010).

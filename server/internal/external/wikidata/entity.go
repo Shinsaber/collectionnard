@@ -86,6 +86,18 @@ func (e *Entity) Year(properties ...string) (int, bool) {
 	return 0, false
 }
 
+// EarliestYear returns the smallest year among the time values of a property
+// (a film has one release date per country).
+func (e *Entity) EarliestYear(property string) (int, bool) {
+	best := 0
+	for _, st := range e.Claims[property] {
+		if y, ok := st.Value.year(); ok && (best == 0 || y < best) {
+			best = y
+		}
+	}
+	return best, best > 0
+}
+
 // Date returns the first time value of a property precise to the day, as
 // YYYY-MM-DD.
 func (e *Entity) Date(property string) (string, bool) {

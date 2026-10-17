@@ -159,6 +159,22 @@ choix du mainteneur). Modèle : `video.md`.
   éditeur, 310 distributeur, 630 producteur (pas toujours présente : 210 `$c` à défaut).
 - Pas d'images : les jaquettes ne sont pas sous licence libre.
 
+### Connecteur `films` (2026-10-17)
+
+- **Requêtes** : film par `wbgetentities` (générique : une entité par personne, puis leurs noms et prénoms, et la
+  nationalité de chacun par `wbgetclaims`) ; éditions par `bib.work2bib` de la notice d'œuvre `P268` (notices vidéo
+  seulement, guide `g`) ; par EAN `bib.ean` ; par titre `bib.title … and bib.doctype any "h"`. Un aperçu film + une
+  édition coûte une vingtaine de requêtes Wikidata (≈ 3 s), une édition seule ≈ 0,4 s de plus.
+- **Édition seule** (scan du code-barres) : la notice d'œuvre de l'édition (500 `$3`, ex. `14404106` → `14404106q` avec le
+  caractère de contrôle) est cherchée sur Wikidata par `haswbstatement:P268=14404106q`, limitée aux classes de films ; à
+  défaut, le film est créé depuis la notice BnF (titre 500 `$a`, langue originale 101 `$c`, générique 7XX `$4`).
+- **Générique** : rôles d'une même personne fusionnés en une relation (Jeunet : réalisation et scénario) ; Wikidata liste
+  41 interprètes pour Amélie, sans ordre garanti ni personnage (`P453` rare) : dix proposés, les cinq premiers cochés.
+- **Pièges** : `P577` porte une date par pays (année retenue : la plus ancienne) ; un même EAN pour deux VHS (location et
+  vente) : jamais une clé de rapprochement ; éditeur souvent absent de 712 dans les notices récentes : repli sur 210 `$c`,
+  où le nom est entre crochets avec son rôle (« [TF1 vidéo [éd., distrib.]] ») ; mention d'édition en 200 `$e`
+  (« édition collector ») plutôt qu'en 205 (« Autorisé à la location »).
+
 ## Sources pour plus tard
 
 ### Grand Comics Database (comics.org)

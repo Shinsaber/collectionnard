@@ -1,5 +1,5 @@
 // Package connectorstest serves recorded answers of the sources (Wikidata and
-// the BnF: Dragon Ball, L'Étranger, Les Misérables ; MusicBrainz) and an in-memory catalogue
+// the BnF: Dragon Ball, L'Étranger, Les Misérables, Amélie ; MusicBrainz) and an in-memory catalogue
 // holding the types of the seeds, for the tests of the connector and of its
 // handlers.
 package connectorstest
@@ -43,6 +43,11 @@ var sruAnswers = map[string]string{
 	`bib.recordid any "33046180 45767941"`: "novel_mis_sets.xml",
 	`bib.recordid all "45767941"`:          "novel_mis_set.xml",
 	`bib.ens2bib all "45767941"`:           "novel_mis_volumes.xml",
+	// Films (P3-5) : Amélie (notice d'œuvre BnF 14404106), DVD TF1 2010 (42284376) et Blu-ray collector (42284132).
+	`bib.work2bib all "14404106"`: "film_work2bib.xml",
+	`bib.recordid all "42284376"`: "film_dvd.xml",
+	`bib.recordid all "42284132"`: "film_bluray.xml",
+	`bib.ean all "3384442032803"`: "film_ean.xml",
 }
 
 // Recorded MusicBrainz answers (2026-10-17, tags and genres removed: not CC0): OK Computer
@@ -89,13 +94,15 @@ func NewSources(t testing.TB) *Sources {
 	var entities struct {
 		Entities map[string]json.RawMessage `json:"entities"`
 	}
-	for _, name := range []string{"wikidata_entities.json", "wikidata_entities_novels.json"} {
+	for _, name := range []string{"wikidata_entities.json", "wikidata_entities_novels.json", "wikidata_entities_films.json"} {
 		if err := json.Unmarshal(testdata(t, name), &entities); err != nil {
 			t.Fatal(err)
 		}
 	}
 	search := testdata(t, "wikidata_search.json")
 	searchNovels := testdata(t, "wikidata_search_novels.json")
+	searchFilms := testdata(t, "wikidata_search_films.json")
+	searchFilmBnF := testdata(t, "wikidata_search_film_bnf.json")
 	s := &Sources{}
 	s.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s.Requests.Add(1)
@@ -109,6 +116,14 @@ func NewSources(t testing.TB) *Sources {
 			w.Header().Set("Content-Type", "application/json")
 			switch q.Get("action") {
 			case "query":
+				switch srsearch := q.Get("srsearch"); {
+				case strings.Contains(srsearch, "P268=14404106q"):
+					_, _ = w.Write(searchFilmBnF) // film d'une notice d'œuvre BnF
+					return
+				case strings.Contains(srsearch, "Q11424"):
+					_, _ = w.Write(searchFilms) // classes des films
+					return
+				}
 				if strings.Contains(q.Get("srsearch"), "Q7725634") {
 					_, _ = w.Write(searchNovels) // classes des romans
 					return
@@ -128,7 +143,7 @@ func NewSources(t testing.TB) *Sources {
 				}
 				_ = json.NewEncoder(w).Encode(map[string]any{"entities": out})
 			case "wbgetclaims":
-				code := map[string]string{"Q17": "JP", "Q142": "FR", "Q150": "fr"}[q.Get("entity")]
+				code := map[string]string{"Q17": "JP", "Q142": "FR", "Q150": "fr", "Q183": "DE", "Q31": "BE"}[q.Get("entity")]
 				claims := []any{}
 				if code != "" {
 					claims = append(claims, map[string]any{"rank": "normal", "mainsnak": map[string]any{
@@ -285,6 +300,15 @@ func (s *Sources) NovelsConnector(cat connectors.Catalog) *connectors.Connector 
 func (s *Sources) MusicConnector(cat connectors.Catalog) *connectors.Connector {
 	c := connectors.NewMusic(cat, external.NewClient("collectionnard-test"))
 	c.MB.BaseURL = s.URL + "/ws/2"
+	c.Now = func() time.Time { return Today }
+	return c
+}
+
+// FilmsConnector returns the films connector reading these sources and cat, dated Today.
+func (s *Sources) FilmsConnector(cat connectors.Catalog) *connectors.Connector {
+	c := connectors.NewFilms(cat, external.NewClient("collectionnard-test"))
+	c.WD.BaseURL = s.URL + "/w/api.php"
+	c.BnF.BaseURL = s.URL + "/api/SRU"
 	c.Now = func() time.Time { return Today }
 	return c
 }

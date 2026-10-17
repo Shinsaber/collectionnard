@@ -202,6 +202,23 @@ export default {
         groupMain: "Album et artistes",
         groupVolumes: "Pistes",
       },
+      films: {
+        title: "Films",
+        intro:
+          "Recherchez un film sur Wikidata : ses éditions vidéo du dépôt légal (DVD, Blu-ray, VHS) sont listées depuis la BnF, des plus récentes aux plus anciennes. Une édition se trouve aussi par son code-barres : son film est alors retrouvé. Choisissez les éléments à importer (réalisation, interprètes, éditeur), simulez puis validez. Les éléments déjà présents gardent leurs valeurs : seuls leurs champs vides sont complétés.",
+        workTitle: "Film (Wikidata)",
+        workPlaceholder:
+          "Titre du film, ex. Le Fabuleux Destin d'Amélie Poulain",
+        editionTitle: "Éditions vidéo (BnF)",
+        editionPlaceholder: "Titre du film",
+        byCode: "Par code-barres",
+        codePlaceholder: "Code-barres (EAN) de la jaquette, ex. 3384442032803",
+        publishers: "Éditeur(s)",
+        attribution:
+          "Données Wikidata (CC0) et BnF, catalogue général (Licence Ouverte), récupérées le {date}.",
+        groupMain: "Film et générique",
+        groupVolumes: "Contenu",
+      },
     },
     stepOf: "Étape {n} / {total} · {title}",
     steps: {
