@@ -8,7 +8,7 @@ import DashboardView from "./DashboardView.vue";
 const types = Array.from({ length: 13 }, (_, i) => ({
   type_id: `t${i}`,
   type_name: `Type${i}`,
-  count: i, // le plus fourni est le dernier de la liste de l'API
+  count: 13 - i, // l'ordre de l'API (ordre d'affichage) prime sur le nombre d'items
 }));
 vi.mock("@/api/client", () => ({
   statsApi: {
@@ -31,7 +31,7 @@ vi.mock("@/api/client", () => ({
 describe("DashboardView — items par type", () => {
   beforeEach(() => setActivePinia(createPinia()));
 
-  it("montre les 10 types les plus fournis, puis tout à la demande", async () => {
+  it("montre les 10 premiers types dans l'ordre d'affichage, puis tout à la demande", async () => {
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [{ path: "/:any(.*)*", component: { template: "<div />" } }],
@@ -42,8 +42,10 @@ describe("DashboardView — items par type", () => {
     await flushPromises();
     const rows = () => w.findAll('a[href^="/items?item_type_id="]');
     expect(rows()).toHaveLength(10);
-    expect(rows()[0]!.text()).toContain("Type12");
-    expect(w.text()).not.toContain("Type2");
+    expect(rows().map((r) => r.attributes("href"))).toEqual(
+      types.slice(0, 10).map((t) => `/items?item_type_id=${t.type_id}`),
+    );
+    expect(w.text()).not.toContain("Type10");
     await w.find('[data-test="types-toggle"]').trigger("click");
     expect(rows()).toHaveLength(13);
   });

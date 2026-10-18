@@ -241,18 +241,16 @@ const statTiles = computed(() => {
   ];
 });
 
-/** Types montrés d'emblée : les plus fournis ; « Tout afficher » pour le reste. */
+/** Types montrés d'emblée (les premiers dans l'ordre d'affichage) ; « Tout afficher » pour le reste. */
 const TYPE_LIMIT = 10;
 const allTypes = ref(false);
 
 /**
- * Répartition par type, les plus fournis d'abord (à égalité, l'ordre d'affichage des types
- * de l'API) ; barres relatives au maximum.
+ * Répartition par type dans l'ordre d'affichage des types (`display_order`, puis nom : ordre de
+ * l'API, réglé par l'admin) ; barres relatives au maximum.
  */
 const byType = computed(() => {
-  const rows = [...(stats.value?.items_by_type ?? [])].sort(
-    (a, b) => b.count - a.count,
-  );
+  const rows = stats.value?.items_by_type ?? [];
   const max = Math.max(1, ...rows.map((r) => r.count));
   return rows.map((r) => ({
     id: r.type_id,
