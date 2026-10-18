@@ -4422,7 +4422,8 @@ paths:
       tags: [Uploads]
       summary: Uploader un fichier image
       description: |
-        **Admin uniquement.**
+        Tout compte connecté (avatar du profil, images d'une proposition) ; la purge des images
+        (`POST /uploads/purge`, admin) supprime les envois que rien ne référence.
 
         Accepte un fichier image via multipart/form-data et le sauvegarde sur le serveur.
         Retourne l'URL d'accès au fichier, le nom généré et la taille.

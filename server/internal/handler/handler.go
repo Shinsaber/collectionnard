@@ -120,6 +120,9 @@ func (h *Handler) Router() chi.Router {
 		r.Post("/api/v1/invitations", h.CreateInvitation)
 		r.Delete("/api/v1/invitations/{id}", h.DeleteInvitation)
 		r.Get("/api/v1/me/offline", h.GetOfflineSnapshot)
+		// Envoi d'images : tout compte connecté (avatar du profil, images des propositions) ;
+		// la purge supprime les envois que rien ne référence.
+		r.Post("/api/v1/uploads", h.UploadFile)
 		r.Get("/api/v1/me/stats", h.GetMyStats)
 		r.Get("/api/v1/members", h.ListMembers)
 
@@ -196,7 +199,6 @@ func (h *Handler) Router() chi.Router {
 			r.Put("/api/v1/relations/{id}", h.UpdateRelation)
 			r.Delete("/api/v1/relations/{id}", h.DeleteRelation)
 
-			r.Post("/api/v1/uploads", h.UploadFile)
 			r.Post("/api/v1/uploads/purge", h.PurgeUploads)
 			r.Get("/api/v1/domains", h.ListDomains)
 			r.Post("/api/v1/domains/{id}/install", h.InstallDomain)
