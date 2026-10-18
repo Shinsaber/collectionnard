@@ -1715,6 +1715,25 @@ components:
         item:
           $ref: "#/components/schemas/Item"
 
+    Notification:
+      type: object
+      description: |
+        Événement pour l'utilisateur connecté (P4-3c). `kind` : `proposal_accepted`, `proposal_rejected`,
+        `proposal_changes_requested` (décision sur une de mes propositions), `proposal_comment` (nouveau message
+        dans une discussion à laquelle je participe). `payload` : `proposal_id`, `title`, et `by` (auteur de
+        l'événement, nom d'utilisateur).
+      required: [id, kind, payload, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        kind:
+          type: string
+          enum: [proposal_accepted, proposal_rejected, proposal_changes_requested, proposal_comment]
+        payload:
+          type: object
+          additionalProperties: true
+        created_at: { type: string, format: date-time }
+        read_at: { type: string, format: date-time }
+
     Error:
       type: object
       description: |
@@ -6136,3 +6155,63 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProposalComment"
+
+  # ===========================================================================
+  # Notifications (P4-3c)
+  # ===========================================================================
+
+  /me/notifications:
+    get:
+      tags: [Users]
+      summary: Mes notifications
+      description: Les plus récentes d'abord ; `unread` compte toutes les non-lues.
+      operationId: listNotifications
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Notifications.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, total, page, per_page, unread]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Notification"
+                  total: { type: integer }
+                  page: { type: integer }
+                  per_page: { type: integer }
+                  unread: { type: integer }
+
+  /me/notifications/read:
+    post:
+      tags: [Users]
+      summary: Marquer des notifications comme lues
+      description: "`ids` absent ou vide : toutes mes notifications."
+      operationId: markNotificationsRead
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Marquées comme lues.

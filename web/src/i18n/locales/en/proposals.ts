@@ -71,6 +71,19 @@ const en: typeof fr = {
     confirm: "Save anyway",
   },
   notFound: "This proposal does not exist or is not visible.",
+  reportButton: "Report",
+  suggestField: "Suggest a field",
+  report: {
+    title: "Report an error",
+    help: "Wrong information, a duplicate, an item to delete: a moderator will handle it.",
+    text: "Description",
+    defaultTitle: "Report: {label}",
+  },
+  suggestion: {
+    title: "Suggest a field",
+    help: "A field missing from a type (“illustrator on Volume”): administrators decide.",
+    defaultTitle: "Field suggestion",
+  },
 };
 
 export default en;

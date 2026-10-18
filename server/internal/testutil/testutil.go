@@ -106,6 +106,9 @@ type MockStore struct {
 	EntitySnapshotFn             func(ctx context.Context, itemIDs, relationIDs []uuid.UUID) (*model.ProposalBase, error)
 	ListProposalCommentsFn       func(ctx context.Context, proposalID uuid.UUID) ([]model.ProposalComment, error)
 	CreateProposalCommentFn      func(ctx context.Context, proposalID, authorID uuid.UUID, body string) (*model.ProposalComment, error)
+	CreateNotificationsFn        func(ctx context.Context, userIDs []uuid.UUID, kind string, payload any) error
+	ListNotificationsFn          func(ctx context.Context, userID uuid.UUID, pg model.Pagination) ([]model.Notification, int, int, error)
+	MarkNotificationsReadFn      func(ctx context.Context, userID uuid.UUID, ids []uuid.UUID) error
 	GetUserStatsFn               func(ctx context.Context, userID uuid.UUID) (*model.MeStats, error)
 	ExportCatalogFn              func(ctx context.Context) (*model.CatalogExport, error)
 	ImportCatalogFn              func(ctx context.Context, cat *model.CatalogExport, dryRun bool) (*model.ImportReport, error)

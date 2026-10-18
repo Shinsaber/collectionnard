@@ -69,4 +69,17 @@ export default {
     confirm: "Enregistrer quand même",
   },
   notFound: "Cette proposition n'existe pas ou n'est pas visible.",
+  reportButton: "Signaler",
+  suggestField: "Suggérer un champ",
+  report: {
+    title: "Signaler une erreur",
+    help: "Une information fausse, un doublon, un item à supprimer : un modérateur s'en occupera.",
+    text: "Description",
+    defaultTitle: "Signalement : {label}",
+  },
+  suggestion: {
+    title: "Suggérer un champ",
+    help: "Un champ qui manque à un type (« illustrateur sur Volume ») : les administrateurs décident.",
+    defaultTitle: "Suggestion de champ",
+  },
 };

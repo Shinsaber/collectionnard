@@ -103,3 +103,32 @@ func TestProposalLifecycle(t *testing.T) {
 		t.Errorf("withdraw: %v %+v", err, r)
 	}
 }
+
+func TestNotificationsStore(t *testing.T) {
+	st := freshStore(t, "colec_test_notifications")
+	a, _ := st.CreateUser(ctx, "camille", "c@example.org", "x", model.RoleUser)
+	b, _ := st.CreateUser(ctx, "dominique", "d@example.org", "x", model.RoleUser)
+	if err := st.CreateNotifications(ctx, []uuid.UUID{a.ID, a.ID, b.ID}, model.NotifyProposalAccepted, map[string]any{"title": "T"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.CreateNotifications(ctx, []uuid.UUID{a.ID}, model.NotifyProposalComment, map[string]any{}); err != nil {
+		t.Fatal(err)
+	}
+	list, total, unread, err := st.ListNotifications(ctx, a.ID, model.Pagination{Page: 1, PerPage: 20})
+	if err != nil || total != 2 || unread != 2 || list[0].Kind != model.NotifyProposalComment {
+		t.Fatalf("list (duplicates ignored, newest first): %v %d %d %+v", err, total, unread, list)
+	}
+	if err := st.MarkNotificationsRead(ctx, a.ID, []uuid.UUID{list[1].ID}); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, unread, _ = st.ListNotifications(ctx, a.ID, model.Pagination{Page: 1, PerPage: 20}); unread != 1 {
+		t.Errorf("one read: %d unread", unread)
+	}
+	// Marquer « tout » ne touche pas aux notifications d'un autre compte.
+	if err := st.MarkNotificationsRead(ctx, a.ID, nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, unread, _ = st.ListNotifications(ctx, b.ID, model.Pagination{Page: 1, PerPage: 20}); unread != 1 {
+		t.Errorf("other account: %d unread", unread)
+	}
+}

@@ -11,6 +11,7 @@ import graph from "./graph";
 import history from "./history";
 import items from "./items";
 import layout from "./layout";
+import notifications from "./notifications";
 import offline from "./offline";
 import proposals from "./proposals";
 import schema from "./schema";
@@ -29,6 +30,7 @@ const fr = {
   history,
   items,
   layout,
+  notifications,
   offline,
   proposals,
   schema,

@@ -48,6 +48,7 @@ import type {
   GraphResponse,
   Stats,
   MeStats,
+  NotificationPage,
   Duplicate,
   Proposal,
   ProposalComment,
@@ -330,6 +331,17 @@ export const collectionTypeApi = {
 };
 
 // ── Items ─────────────────────────────────────────────────────────────
+/** Notifications dans l'application (P4-3c). */
+export const notificationApi = {
+  list: (params?: PaginationParams) =>
+    http
+      .get<NotificationPage>("/me/notifications", { params })
+      .then((r) => r.data),
+  /** `ids` absent : toutes. */
+  read: (ids?: string[]) =>
+    http.post("/me/notifications/read", ids ? { ids } : {}),
+};
+
 /** Propositions et modération (P4-3b). */
 export const proposalApi = {
   list: (

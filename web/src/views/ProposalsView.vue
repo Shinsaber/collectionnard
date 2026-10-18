@@ -5,12 +5,22 @@
         <p class="text-[15px] text-muted">{{ t("proposals.help") }}</p>
       </template>
       <template #actions>
+        <ElButton data-test="suggest-field" @click="suggestOpen = true">
+          <i class="pi pi-lightbulb mr-2" aria-hidden="true"></i>
+          {{ t("proposals.suggestField") }}
+        </ElButton>
         <RouterLink to="/admin/external-import" class="el-button">
           <i class="pi pi-cloud-download mr-2" aria-hidden="true"></i>
           {{ t("proposals.fromSource") }}
         </RouterLink>
       </template>
     </PageHeader>
+
+    <TextProposalDialog
+      v-model:visible="suggestOpen"
+      kind="schema_suggestion"
+      @sent="reload"
+    />
 
     <ElTabs v-model="scope" @tab-change="reload">
       <ElTabPane :label="t('proposals.mine')" name="mine" />
@@ -82,6 +92,7 @@
 // Propositions (P4-3b) : les miennes, et la file à relire pour les admins et contributeurs.
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { useRoute } from "vue-router";
 import { proposalApi } from "@/api/client";
 import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";
@@ -90,13 +101,18 @@ import { useAuthStore } from "@/stores/auth";
 import { statusClass } from "@/lib/proposals";
 import AppSpinner from "@/components/common/AppSpinner.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
+import TextProposalDialog from "@/components/proposals/TextProposalDialog.vue";
 
 const { t } = useI18n();
 const { lang } = useLang();
 const { notifyError } = useNotify();
 const auth = useAuthStore();
 
-const scope = ref<"mine" | "review">("mine");
+const route = useRoute();
+const scope = ref<"mine" | "review">(
+  route.query.scope === "review" && auth.canEditCatalog ? "review" : "mine",
+);
+const suggestOpen = ref(false);
 const toReview = ref(0);
 const list = usePagination((params: Record<string, unknown>) =>
   proposalApi.list({ ...params, scope: scope.value }),

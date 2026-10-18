@@ -159,6 +159,11 @@ type Store interface {
 	EntitySnapshot(ctx context.Context, itemIDs, relationIDs []uuid.UUID) (*model.ProposalBase, error)
 	ListProposalComments(ctx context.Context, proposalID uuid.UUID) ([]model.ProposalComment, error)
 	CreateProposalComment(ctx context.Context, proposalID, authorID uuid.UUID, body string) (*model.ProposalComment, error)
+
+	// Notifications (P4-3c)
+	CreateNotifications(ctx context.Context, userIDs []uuid.UUID, kind string, payload any) error
+	ListNotifications(ctx context.Context, userID uuid.UUID, pg model.Pagination) ([]model.Notification, int, int, error)
+	MarkNotificationsRead(ctx context.Context, userID uuid.UUID, ids []uuid.UUID) error
 	GetUserStats(ctx context.Context, userID uuid.UUID) (*model.MeStats, error)
 
 	// Import / export (catalogue only: meta-types, items, relations, tags)

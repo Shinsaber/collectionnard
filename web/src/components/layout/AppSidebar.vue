@@ -2,9 +2,12 @@
   <aside
     class="sticky top-0 z-10 flex h-dvh w-62 shrink-0 flex-col gap-6 overflow-y-auto bg-bar px-3.5 py-5 shadow-side"
   >
-    <RouterLink to="/" class="self-start rounded-md px-2 py-1">
-      <AppLogo :size="30" />
-    </RouterLink>
+    <div class="flex items-center justify-between">
+      <RouterLink to="/" class="rounded-md px-2 py-1">
+        <AppLogo :size="30" />
+      </RouterLink>
+      <NotificationBell />
+    </div>
 
     <nav :aria-label="t('layout.mainNav')" class="flex flex-col gap-1">
       <RouterLink
@@ -51,6 +54,7 @@ import { useId } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import AppLogo from "./AppLogo.vue";
+import NotificationBell from "./NotificationBell.vue";
 import AppUserCard from "./AppUserCard.vue";
 import NavIcon from "./NavIcon.vue";
 import { isNavActive, useNavigation } from "./navigation";

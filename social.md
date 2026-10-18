@@ -233,8 +233,17 @@ grandit avec les propositions acceptées.
   `POST /external/{connector}/propose` ; l'import direct reste aux contributeurs. Quota : `PROPOSAL_QUOTA` (5) + 1 par
   acceptée, plafond 50, 20 créations par 24 h ; contributeurs et admins sans quota.
 
+- **P4-3c (2026-10-18)** : migration 012 (`notifications`). Événements : décision sur une de mes propositions
+  (acceptée, refusée, modifications demandées) et message dans une discussion (auteur, relecteur et participants, jamais
+  l'émetteur) ; `payload` = proposition, titre, nom de l'émetteur. Un échec d'envoi ne fait jamais échouer la requête
+  (journalisé). `GET /me/notifications` (avec `unread`), `POST /me/notifications/read`. Cloche dans la barre latérale et
+  la barre du haut (non lues + propositions à relire pour un modérateur), « Signaler » sur une fiche (tout le monde sauf
+  l'admin) et « Suggérer un champ » (page Propositions), suivis comme toute proposition. Le résumé quotidien par e-mail
+  reste à faire (SMTP).
+
 ### Reporté
 
+- Résumé quotidien des notifications non lues par **e-mail** (SMTP, réglage par compte).
 - Contributeur **par domaine** et **promotion suggérée** (« Camille pourrait devenir contributrice » après N propositions
   acceptées) : ensemble, si l'instance grandit.
 - **Fusion de doublons** (regrouper collections, relations et liens sur l'item gardé).

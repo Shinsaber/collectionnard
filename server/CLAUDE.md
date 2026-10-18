@@ -76,6 +76,9 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
   ses propres propositions (403 `own_proposal`). Acceptation par `AcceptCatalogProposal` : import et état dans une
   transaction (`importCatalog(…, before)`), acteur = **auteur** de la proposition, origine `proposal`. Les images d'une
   proposition non décidée sont gardées par la purge (`ReferencedUploads`).
+- Notifications (`handler/notification.go`, `store/notification.go`, P4-3c) : `notifyProposal` / `notifyComment`
+  après une décision ou un message ; l'émetteur n'est jamais notifié, un échec est journalisé sans faire échouer la
+  requête.
 - Visibilité et partage (`handler/sharing.go`, `store/sharing.go`, P4-2) : routes publiques derrière
   `Auth.OptionalAuthenticate` (sans jeton : anonyme, `GetUserID` = `uuid.Nil` ; jeton invalide : 401) ; `loadReadable`
   vérifie visibilité et compte actif (404 sinon) et calcule les champs cachés ; une nouvelle lecture publique doit

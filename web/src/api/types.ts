@@ -577,6 +577,26 @@ export interface Duplicate {
   item: Item;
 }
 
+// ---------- Notifications (P4-3c) ----------
+
+export type NotificationKind =
+  | "proposal_accepted"
+  | "proposal_rejected"
+  | "proposal_changes_requested"
+  | "proposal_comment";
+
+export interface AppNotification {
+  id: string;
+  kind: NotificationKind;
+  payload: { proposal_id?: string; title?: string; by?: string };
+  created_at: string;
+  read_at?: string;
+}
+
+export interface NotificationPage extends PaginatedResponse<AppNotification> {
+  unread: number;
+}
+
 export interface Stats {
   items_by_type: ItemsByType[];
   total_items: number;

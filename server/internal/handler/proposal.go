@@ -420,6 +420,7 @@ func (h *Handler) AcceptProposal(w http.ResponseWriter, r *http.Request) {
 			proposalStoreError(w, r, err)
 			return
 		}
+		h.notifyProposal(r, p, model.NotifyProposalAccepted, p.AuthorID)
 		respondJSON(w, http.StatusOK, updated)
 		return
 	}
@@ -459,6 +460,7 @@ func (h *Handler) AcceptProposal(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+	h.notifyProposal(r, p, model.NotifyProposalAccepted, p.AuthorID)
 	updated, err := h.Store.GetProposal(r.Context(), p.ID)
 	if err != nil {
 		handleStoreError(w, r, err)
@@ -487,6 +489,11 @@ func (h *Handler) decide(w http.ResponseWriter, r *http.Request, status string) 
 		proposalStoreError(w, r, err)
 		return
 	}
+	kind := model.NotifyProposalRejected
+	if status == model.ProposalChangesRequested {
+		kind = model.NotifyProposalChangesRequested
+	}
+	h.notifyProposal(r, p, kind, p.AuthorID)
 	respondJSON(w, http.StatusOK, updated)
 }
 
@@ -539,6 +546,7 @@ func (h *Handler) CreateProposalComment(w http.ResponseWriter, r *http.Request) 
 		handleStoreError(w, r, err)
 		return
 	}
+	h.notifyComment(r, p)
 	respondJSON(w, http.StatusCreated, c)
 }
 

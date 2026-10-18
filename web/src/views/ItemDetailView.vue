@@ -97,36 +97,11 @@
               <i class="pi pi-plus mr-2" aria-hidden="true"></i>
               {{ t("items.detail.addToCollection") }}
             </ElButton>
-            <div
-              class="grid auto-cols-fr grid-flow-col gap-2 sm:flex sm:flex-wrap"
-            >
-              <button
-                type="button"
-                :class="secondaryClass"
-                @click="editDialogVisible = true"
-              >
-                <i class="pi pi-pencil text-sm" aria-hidden="true"></i>
-                {{
-                  auth.canEditCatalog
-                    ? t("common.edit")
-                    : t("proposals.suggest")
-                }}
-              </button>
-              <RouterLink
-                :to="{ path: '/items', query: { related_to: item.id } }"
-                :class="secondaryClass"
-              >
-                <i class="pi pi-list text-sm" aria-hidden="true"></i>
-                {{ t("items.search.relatedItems") }}
-              </RouterLink>
-              <RouterLink
-                :to="`/items/${item.id}/graph`"
-                :class="secondaryClass"
-              >
-                <NavIcon name="graph" :size="16" />
-                {{ t("items.detail.graph") }}
-              </RouterLink>
-            </div>
+            <ItemSecondaryActions
+              :item-id="item.id"
+              :item-label="title"
+              @edit="editDialogVisible = true"
+            />
           </div>
         </div>
       </section>
@@ -234,11 +209,11 @@ import ItemCollectionsCard from "@/components/item/ItemCollectionsCard.vue";
 import ItemEditDialog from "@/components/item/ItemEditDialog.vue";
 import ItemGallery from "@/components/item/ItemGallery.vue";
 import ItemHistoryCard from "@/components/item/ItemHistoryCard.vue";
+import ItemSecondaryActions from "@/components/item/ItemSecondaryActions.vue";
 import AddToCollectionDialog from "@/components/item/AddToCollectionDialog.vue";
 import RelationCreateDialog from "@/components/item/RelationCreateDialog.vue";
 import RelationEditDialog from "@/components/item/RelationEditDialog.vue";
 import RelationTree from "@/components/item/RelationTree.vue";
-import NavIcon from "@/components/layout/NavIcon.vue";
 import type { Item, ItemCollectionMembership, ItemRelation } from "@/api/types";
 
 const props = defineProps<{ id: string }>();
@@ -261,10 +236,6 @@ const addToCollectionVisible = ref(false);
 const createRelationVisible = ref(false);
 const editRelationVisible = ref(false);
 const editingRelation = ref<ItemRelation | null>(null);
-
-/** Boutons secondaires : tuile icône + texte sur mobile, bouton doux en ligne au-delà. */
-const secondaryClass =
-  "flex h-14 flex-col items-center justify-center gap-1 rounded-xl bg-soft px-2 text-xs font-semibold text-ink sm:h-10 sm:flex-row sm:gap-2 sm:rounded-[10px] sm:px-4 sm:text-sm";
 
 const coverWidth = computed(() => (isMobile.value ? 108 : 200));
 

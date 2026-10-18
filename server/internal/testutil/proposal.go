@@ -101,3 +101,26 @@ func (m *MockStore) CreateProposalComment(ctx context.Context, proposalID, autho
 	}
 	return nil, store.ErrNotFound
 }
+
+// Notifications (P4-3c).
+
+func (m *MockStore) CreateNotifications(ctx context.Context, userIDs []uuid.UUID, kind string, payload any) error {
+	if m.CreateNotificationsFn != nil {
+		return m.CreateNotificationsFn(ctx, userIDs, kind, payload)
+	}
+	return nil
+}
+
+func (m *MockStore) ListNotifications(ctx context.Context, userID uuid.UUID, pg model.Pagination) ([]model.Notification, int, int, error) {
+	if m.ListNotificationsFn != nil {
+		return m.ListNotificationsFn(ctx, userID, pg)
+	}
+	return []model.Notification{}, 0, 0, nil
+}
+
+func (m *MockStore) MarkNotificationsRead(ctx context.Context, userID uuid.UUID, ids []uuid.UUID) error {
+	if m.MarkNotificationsReadFn != nil {
+		return m.MarkNotificationsReadFn(ctx, userID, ids)
+	}
+	return nil
+}

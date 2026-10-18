@@ -167,5 +167,5 @@ Phase 2 livrée : multilingue, recherche avancée (lot 14), import/export (lot 1
 `les.collection.md`, sources Wikidata / BnF). Phase 3 (récupération automatique externe) terminée, branche `phase3-sources` fusionnée dans `main` : domaines installables (P3-0), connecteurs
 BD / Manga, Romans, Musique, Films, Séries et Jeux vidéo (`server/internal/external/connectors`, profils `bd-manga` / `novels` / `music` / `films` / `series` / `games`, clients `wikidata`, `bnf`, `musicbrainz`, `tvmaze`, page admin « Sources externes ») ;
 domaines P3-0 à P3-7 (jeux vidéo, V1 française) livrés et fusionnés dans `main`. Phase 4 (social) raffinée, branche `phase4-social` : lots P4-0 à P4-3 dans `social.md` ; P4-0 (comptes, invitations,
-profils), P4-1 (statistiques personnelles), P4-2 (visibilité et partage), P4-3a (historique, contributeur) et P4-3b (propositions,
-modération) livrés.
+profils), P4-1 (statistiques personnelles), P4-2 (visibilité et partage) et P4-3 (historique, contributeur, propositions, modération,
+notifications) livrés : Phase 4 terminée hors échanges (reportés).

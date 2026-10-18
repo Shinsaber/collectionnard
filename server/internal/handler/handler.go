@@ -124,6 +124,8 @@ func (h *Handler) Router() chi.Router {
 		// la purge supprime les envois que rien ne référence.
 		r.Post("/api/v1/uploads", h.UploadFile)
 		r.Get("/api/v1/me/stats", h.GetMyStats)
+		r.Get("/api/v1/me/notifications", h.ListNotifications)
+		r.Post("/api/v1/me/notifications/read", h.MarkNotificationsRead)
 		r.Get("/api/v1/members", h.ListMembers)
 
 		// Read endpoints (all authenticated users)
