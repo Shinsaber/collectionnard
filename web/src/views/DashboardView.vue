@@ -151,7 +151,7 @@
               {{ t("dashboard.itemsByType") }}
             </h2>
             <RouterLink
-              v-for="b in byType"
+              v-for="b in shownByType"
               :key="b.id"
               :to="{ path: '/items', query: { item_type_id: b.id } }"
               class="-mx-2 flex flex-col gap-1 rounded-lg px-2 py-1 transition-colors hover:bg-canvas"
@@ -172,6 +172,20 @@
                 ></div>
               </div>
             </RouterLink>
+            <ElButton
+              v-if="byType.length > TYPE_LIMIT"
+              text
+              size="small"
+              class="self-start"
+              data-test="types-toggle"
+              @click="allTypes = !allTypes"
+            >
+              {{
+                allTypes
+                  ? t("dashboard.showLess")
+                  : t("dashboard.showAllTypes", { n: byType.length })
+              }}
+            </ElButton>
           </div>
         </section>
       </div>
@@ -227,9 +241,18 @@ const statTiles = computed(() => {
   ];
 });
 
-/** Répartition par type, dans l'ordre d'affichage des types (API) ; barres relatives au maximum. */
+/** Types montrés d'emblée : les plus fournis ; « Tout afficher » pour le reste. */
+const TYPE_LIMIT = 10;
+const allTypes = ref(false);
+
+/**
+ * Répartition par type, les plus fournis d'abord (à égalité, l'ordre d'affichage des types
+ * de l'API) ; barres relatives au maximum.
+ */
 const byType = computed(() => {
-  const rows = stats.value?.items_by_type ?? [];
+  const rows = [...(stats.value?.items_by_type ?? [])].sort(
+    (a, b) => b.count - a.count,
+  );
   const max = Math.max(1, ...rows.map((r) => r.count));
   return rows.map((r) => ({
     id: r.type_id,
@@ -238,6 +261,9 @@ const byType = computed(() => {
     pct: Math.max(2, Math.round((r.count / max) * 100)),
   }));
 });
+const shownByType = computed(() =>
+  allTypes.value ? byType.value : byType.value.slice(0, TYPE_LIMIT),
+);
 
 /** Nom affiché d'un ItemType des stats ; repli sur le nom brut tant que les types manquent. */
 function typeName(id: string, name: string): string {

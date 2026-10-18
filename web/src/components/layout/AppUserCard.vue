@@ -96,8 +96,10 @@ const themeLabel = computed(() =>
 );
 
 async function handleLogout() {
+  // Quitter la page d'abord : ses requêtes en cours ou relancées par le changement de route
+  // partiraient sinon sans jeton (401 affichés après la déconnexion).
+  await router.push("/login");
   await auth.logout();
   useOfflineStore().clear();
-  router.push("/login");
 }
 </script>
