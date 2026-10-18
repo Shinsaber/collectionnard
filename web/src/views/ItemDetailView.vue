@@ -18,138 +18,147 @@
       <span aria-current="page" class="truncate">{{ title }}</span>
     </nav>
 
-    <div class="flex flex-wrap items-start gap-6">
-      <!-- Fiche : affiche, titre, tags, attributs, actions -->
-      <section
-        class="flex min-w-0 flex-[999_1_560px] flex-wrap gap-5 rounded-2xl bg-surface p-4.5 shadow-card sm:gap-7 sm:p-6"
-      >
-        <ItemCover
-          :item="item"
-          :label="title"
-          :width="coverWidth"
-          :ratio="defaultImageRatio"
-          :alt="t('items.detail.defaultImageAlt', { title })"
-        />
-        <div class="flex min-w-0 flex-[1_1_300px] flex-col gap-3.5">
+    <!-- En-tête : couverture, type et collections, titre, appartenance, tags, actions -->
+    <section
+      class="flex flex-wrap gap-5 rounded-2xl bg-surface p-4.5 shadow-card sm:gap-8 sm:p-7"
+    >
+      <ItemCover
+        :item="item"
+        :label="title"
+        :width="coverWidth"
+        :ratio="defaultImageRatio"
+        :alt="t('items.detail.defaultImageAlt', { title })"
+      />
+      <div class="flex min-w-0 flex-[1_1_300px] flex-col gap-3.5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
           <span class="font-mono text-xs uppercase tracking-wider text-muted">{{
             typeTitle(item.item_type, lang) || "?"
           }}</span>
-          <h1
-            class="text-[28px] font-extrabold leading-none tracking-tight sm:text-[44px]"
+          <button
+            type="button"
+            class="rounded-full bg-tint px-3.5 py-1.5 text-sm font-semibold text-tint-ink"
+            data-test="collections-pill"
+            @click="openTab('collections')"
           >
-            {{ title }}
-          </h1>
-          <div v-if="item.tags?.length" class="flex flex-wrap gap-2">
-            <span
-              v-for="tag in item.tags"
-              :key="tag.id"
-              class="rounded-full bg-soft px-2.5 py-0.5 text-[13px]"
-              >{{ tag.name }}</span
-            >
-          </div>
-
-          <dl
-            v-if="attributeRows.length"
-            class="mt-1 grid grid-cols-2 gap-x-5 gap-y-3.5 sm:grid-cols-3"
-          >
-            <div
-              v-for="row in attributeRows"
-              :key="row.key"
-              class="flex min-w-0 flex-col gap-0.5"
-              :class="{ 'col-span-full': row.long }"
-            >
-              <dt
-                class="font-mono text-[11px] uppercase tracking-wider text-muted"
-              >
-                {{ row.label }}
-              </dt>
-              <dd
-                class="break-words"
-                :class="row.long ? 'text-[15px] leading-relaxed' : 'text-base'"
-              >
-                <ul
-                  v-if="row.links.length"
-                  class="flex flex-wrap gap-x-3 gap-y-1"
-                  data-test="attribute-links"
-                >
-                  <li v-for="l in row.links" :key="l.url">
-                    <a
-                      :href="l.url"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="text-link underline-offset-2 hover:underline"
-                      >{{ linkText(l) }}</a
-                    >
-                  </li>
-                </ul>
-                <template v-else>{{ row.value }}</template>
-              </dd>
-            </div>
-          </dl>
-
-          <!-- Actions : une principale ; les secondaires en grille d'icônes sur mobile. -->
-          <div class="mt-1.5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            <ElButton
-              type="primary"
-              size="large"
-              @click="addToCollectionVisible = true"
-            >
-              <i class="pi pi-plus mr-2" aria-hidden="true"></i>
-              {{ t("items.detail.addToCollection") }}
-            </ElButton>
-            <ItemSecondaryActions
-              :item-id="item.id"
-              :item-label="title"
-              @edit="editDialogVisible = true"
-            />
-          </div>
+            {{
+              itemCollections.length
+                ? t("items.detail.inCollections", itemCollections.length)
+                : t("items.detail.inNoCollection")
+            }}
+          </button>
         </div>
-      </section>
-
-      <ItemCollectionsCard
-        class="min-w-0 flex-[1_1_300px]"
-        :memberships="itemCollections"
-        @add="addToCollectionVisible = true"
-      />
-    </div>
-
-    <!-- Relations -->
-    <section class="flex flex-col gap-3.5">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h2 class="text-xl font-extrabold tracking-tight sm:text-[22px]">
-          {{ t("items.detail.relations") }}
-        </h2>
-        <ElButton
-          v-if="auth.canEditCatalog"
-          @click="createRelationVisible = true"
+        <h1
+          class="text-[28px] font-extrabold leading-none tracking-tight sm:text-[44px]"
         >
-          <i class="pi pi-plus mr-2" aria-hidden="true"></i>
-          {{ t("items.detail.createRelation") }}
-        </ElButton>
+          {{ title }}
+        </h1>
+        <!-- Appartenance : relations de composition entrantes (x-completeness) -->
+        <p
+          v-if="partOf.length"
+          class="text-[15px] text-muted"
+          data-test="part-of"
+        >
+          {{ t("items.detail.partOf") }}
+          <template v-for="(p, i) in partOf" :key="p.id">
+            <template v-if="i > 0"> · </template>
+            <RouterLink
+              :to="`/items/${p.id}`"
+              class="font-semibold text-link"
+              >{{ p.label }}</RouterLink
+            >
+            <span v-if="p.order != null" class="font-mono text-xs">
+              (n° {{ p.order }})</span
+            >
+          </template>
+        </p>
+        <div v-if="item.tags?.length" class="flex flex-wrap gap-2">
+          <span
+            v-for="tag in item.tags"
+            :key="tag.id"
+            class="rounded-full bg-soft px-2.5 py-0.5 text-[13px]"
+            >{{ tag.name }}</span
+          >
+        </div>
+        <div class="mt-1 flex flex-wrap items-center gap-2.5">
+          <ElButton
+            type="primary"
+            size="large"
+            class="max-sm:flex-1"
+            @click="addToCollectionVisible = true"
+          >
+            <i class="pi pi-plus mr-2" aria-hidden="true"></i>
+            {{ t("items.detail.addToCollection") }}…
+          </ElButton>
+          <ItemMoreMenu
+            :item-id="item.id"
+            :item-label="title"
+            @edit="editDialogVisible = true"
+          />
+        </div>
       </div>
-      <p
-        v-if="relations.length === 0"
-        class="rounded-2xl bg-surface p-5 text-sm text-muted shadow-card"
-      >
-        {{ t("items.detail.noRelations") }}
-      </p>
-      <RelationTree
-        v-else
-        :relations="relations"
-        :context-item-id="item.id"
-        :show-delete="auth.canEditCatalog"
-        @delete="confirmDeleteRelation"
-        @edit="openEditRelation"
-      />
     </section>
 
-    <ItemGallery :attributes="item.attributes" :schema="schema" />
+    <ItemAttributes :schema="schema" :attributes="item.attributes" />
 
-    <ItemHistoryCard
-      :item="item"
-      :version="historyVersion"
-      @reverted="(i) => (item = i)"
-    />
+    <!-- Onglets : relations, collections, images, historique -->
+    <section ref="tabsRef">
+      <ElTabs v-model="tab">
+        <ElTabPane
+          name="relations"
+          :label="`${t('items.detail.relations')} · ${relations.length}`"
+        >
+          <div class="flex flex-col gap-3.5">
+            <ElButton
+              v-if="auth.canEditCatalog"
+              class="self-end"
+              @click="createRelationVisible = true"
+            >
+              <i class="pi pi-plus mr-2" aria-hidden="true"></i>
+              {{ t("items.detail.createRelation") }}
+            </ElButton>
+            <p
+              v-if="relations.length === 0"
+              class="rounded-2xl bg-surface p-5 text-sm text-muted shadow-card"
+            >
+              {{ t("items.detail.noRelations") }}
+            </p>
+            <RelationTree
+              v-else
+              :relations="relations"
+              :context-item-id="item.id"
+              :show-delete="auth.canEditCatalog"
+              @delete="confirmDeleteRelation"
+              @edit="openEditRelation"
+            />
+          </div>
+        </ElTabPane>
+        <ElTabPane
+          name="collections"
+          :label="`${t('items.detail.inYourCollections')} · ${itemCollections.length}`"
+        >
+          <ItemCollectionsCard
+            bare
+            :memberships="itemCollections"
+            @add="addToCollectionVisible = true"
+          />
+        </ElTabPane>
+        <ElTabPane
+          v-if="imageCount > 0"
+          name="images"
+          :label="`${t('items.detail.images')} · ${imageCount}`"
+        >
+          <ItemGallery :attributes="item.attributes" :schema="schema" bare />
+        </ElTabPane>
+        <ElTabPane name="history" :label="t('history.title')" lazy>
+          <ItemHistoryCard
+            :item="item"
+            :version="historyVersion"
+            bare
+            @reverted="(i) => (item = i)"
+          />
+        </ElTabPane>
+      </ElTabs>
+    </section>
 
     <AddToCollectionDialog
       v-model:visible="addToCollectionVisible"
@@ -180,7 +189,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import AppSpinner from "@/components/common/AppSpinner.vue";
@@ -191,16 +200,10 @@ import { useNotify } from "@/composables/useNotify";
 import { MOBILE_QUERY, useMediaQuery } from "@/composables/useMediaQuery";
 import {
   defaultImage,
-  fieldLabel,
-  fieldValue,
   imageCategories,
+  isCompleteness,
   isImageGallery,
-  isLinks,
   itemLabel,
-  linksOf,
-  linkText,
-  safeURL,
-  orderedKeys,
   typeTitle,
   type Schema,
 } from "@/lib/schema";
@@ -209,7 +212,8 @@ import ItemCollectionsCard from "@/components/item/ItemCollectionsCard.vue";
 import ItemEditDialog from "@/components/item/ItemEditDialog.vue";
 import ItemGallery from "@/components/item/ItemGallery.vue";
 import ItemHistoryCard from "@/components/item/ItemHistoryCard.vue";
-import ItemSecondaryActions from "@/components/item/ItemSecondaryActions.vue";
+import ItemAttributes from "@/components/item/ItemAttributes.vue";
+import ItemMoreMenu from "@/components/item/ItemMoreMenu.vue";
 import AddToCollectionDialog from "@/components/item/AddToCollectionDialog.vue";
 import RelationCreateDialog from "@/components/item/RelationCreateDialog.vue";
 import RelationEditDialog from "@/components/item/RelationEditDialog.vue";
@@ -246,41 +250,50 @@ const title = computed(() =>
   item.value ? itemLabel(item.value, lang.value) : "",
 );
 
-/** Valeur au-delà de laquelle un attribut (synopsis…) prend toute la largeur. */
-const LONG_VALUE = 60;
+type Tab = "relations" | "collections" | "images" | "history";
+const tab = ref<Tab>("relations");
+const tabsRef = ref<HTMLElement | null>(null);
 
-// Liens cliquables : un champ « liens », ou un texte au format URL (site web d'une société).
-function rowLinks(key: string, value: unknown) {
-  if (isLinks(schema.value, key)) return linksOf(value);
-  const prop = (
-    schema.value?.properties as Record<string, Schema> | undefined
-  )?.[key];
-  const url = prop?.format === "uri" ? safeURL(value) : "";
-  return url ? [{ url }] : [];
+/** Ouvre un onglet et le fait défiler à l'écran (pastille des collections). */
+async function openTab(name: Tab) {
+  tab.value = name;
+  await nextTick();
+  tabsRef.value?.scrollIntoView?.({ behavior: "smooth", block: "start" });
 }
 
-// Seules les clés présentes dans les données sont affichées, dans l'ordre du schéma ;
-// la galerie a sa propre section.
-const attributeRows = computed(() => {
+/**
+ * Appartenance : sources des relations entrantes marquées `x-completeness` (tome d'une
+ * édition, épisode d'une saison…), avec le numéro d'ordre de la relation s'il existe.
+ */
+const partOf = computed(() =>
+  relations.value
+    .filter(
+      (r) =>
+        r.target_item_id === item.value?.id &&
+        isCompleteness(r.relation_type?.attributes_schema),
+    )
+    .map((r) => ({
+      id: r.source_item_id,
+      label: itemLabel(r.source_item, lang.value),
+      order: (r.attributes?.order as number | undefined) ?? null,
+    })),
+);
+
+/** Images de la galerie (toutes catégories) : l'onglet n'apparaît que s'il y en a. */
+const imageCount = computed(() => {
   const it = item.value;
-  if (!it) return [];
-  return orderedKeys(schema.value, it.attributes)
-    .filter((k) => k in it.attributes && !isImageGallery(schema.value, k))
-    .map((key) => {
-      const value = fieldValue(
-        schema.value,
-        key,
-        it.attributes[key],
-        lang.value,
-      );
-      return {
-        key,
-        label: fieldLabel(schema.value, key, lang.value),
-        value,
-        long: value.length > LONG_VALUE,
-        links: rowLinks(key, it.attributes[key]),
-      };
-    });
+  if (!it) return 0;
+  let n = 0;
+  for (const key of Object.keys(it.attributes)) {
+    if (!isImageGallery(schema.value, key)) continue;
+    for (const cat of imageCategories(schema.value, key))
+      n +=
+        (
+          (it.attributes[key] as Record<string, unknown>)?.[cat.name] as
+            unknown[] | undefined
+        )?.length ?? 0;
+  }
+  return n;
 });
 
 const defaultImageUrl = computed(() =>

@@ -149,7 +149,7 @@
           <!-- Sous-relations (récursif) -->
           <div
             v-if="expanded.has(rel.id)"
-            class="mb-2.5 ml-5 border-l-2 border-line pl-3 sm:ml-9"
+            class="mb-2.5 ml-5 border-l-2 border-dash pl-3 sm:ml-9"
           >
             <p v-if="loading.has(rel.id)" class="py-2 text-xs text-muted">
               <i class="pi pi-spin pi-spinner mr-1" aria-hidden="true"></i>

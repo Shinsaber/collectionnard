@@ -1,7 +1,7 @@
 <template>
   <!-- Fiche d'un item : collections de l'utilisateur qui le contiennent, avec leurs attributs contextuels. -->
   <section class="flex flex-col gap-3">
-    <h2 class="text-lg font-extrabold tracking-tight">
+    <h2 v-if="!bare" class="text-lg font-extrabold tracking-tight">
       {{ t("items.detail.inYourCollections") }}
     </h2>
     <article
@@ -54,7 +54,8 @@ import { fieldLabel, fieldValue, orderedKeys, typeTitle } from "@/lib/schema";
 import type { Schema } from "@/lib/schema";
 import type { ItemCollectionMembership } from "@/api/types";
 
-defineProps<{ memberships: ItemCollectionMembership[] }>();
+/** `bare` : sans titre (dans l'onglet « Dans mes collections » de la fiche). */
+defineProps<{ memberships: ItemCollectionMembership[]; bare?: boolean }>();
 const emit = defineEmits<{ add: [] }>();
 
 const { t } = useI18n();
