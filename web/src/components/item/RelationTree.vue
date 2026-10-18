@@ -1,10 +1,13 @@
 <template>
   <!-- Relations d'un item, groupées par type ; sous-relations dépliables (récursif). -->
-  <div class="flex flex-col" :class="nested ? 'gap-2' : 'gap-5'">
+  <div class="flex flex-col" :class="nested ? 'gap-2.5' : 'gap-5'">
+    <!-- Sous-relations : chaque groupe dans son propre bloc (fond doux), pour bien délimiter les ensembles. -->
     <div
       v-for="group in groups"
       :key="group.typeId"
-      class="flex flex-col gap-2"
+      class="flex flex-col"
+      :class="nested ? ['gap-1 rounded-xl px-2 pt-2 pb-1', nestedBg] : 'gap-2'"
+      data-test="relation-group"
     >
       <div class="flex items-center gap-2 px-1">
         <h3
@@ -203,6 +206,11 @@ const props = withDefaults(
     nested?: boolean;
   }>(),
   { showDelete: true, maxDepth: 5, nested: false },
+);
+
+/** Fonds alternés selon la profondeur : un groupe imbriqué ne se confond jamais avec son parent. */
+const nestedBg = computed(() =>
+  props.maxDepth % 2 === 0 ? "bg-soft" : "bg-surface",
 );
 
 defineEmits<{

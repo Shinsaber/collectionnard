@@ -7,11 +7,13 @@
       data-test="item-more"
     >
       <span class="max-sm:hidden">{{ t("items.detail.more") }}</span>
-      <i
-        class="pi pi-chevron-down text-xs max-sm:hidden"
-        aria-hidden="true"
-      ></i>
-      <i class="pi pi-ellipsis-h sm:hidden" aria-hidden="true"></i>
+      <!-- Les classes responsives sur un <span> : la feuille de primeicons force le display des <i>. -->
+      <span class="max-sm:hidden" aria-hidden="true"
+        ><i class="pi pi-chevron-down text-xs"></i
+      ></span>
+      <span class="sm:hidden" aria-hidden="true"
+        ><i class="pi pi-ellipsis-h"></i
+      ></span>
     </button>
     <template #dropdown>
       <ElDropdownMenu>
