@@ -24,10 +24,14 @@
           <template #default="{ row }">
             <div class="flex flex-col gap-0.5 py-1">
               <RouterLink
+                v-if="linkItems"
                 :to="`/items/${(row as CollectionItem).item_id}`"
                 class="text-[15px] font-bold text-ink hover:text-link"
                 >{{ labelOf(row as CollectionItem) }}</RouterLink
               >
+              <span v-else class="text-[15px] font-bold text-ink">{{
+                labelOf(row as CollectionItem)
+              }}</span>
               <span class="font-mono text-xs uppercase text-muted">{{
                 typeTitle((row as CollectionItem).item?.item_type, lang) || "?"
               }}</span>
@@ -46,7 +50,7 @@
             }}</span>
           </template>
         </ElTableColumn>
-        <ElTableColumn width="104" align="right">
+        <ElTableColumn v-if="!readonly" width="104" align="right">
           <template #default="{ row }">
             <div class="flex justify-end gap-1">
               <ElButton
@@ -87,10 +91,14 @@
         />
         <div class="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
           <RouterLink
+            v-if="linkItems"
             :to="`/items/${ci.item_id}`"
             class="text-[15px] font-bold leading-tight text-ink"
             >{{ labelOf(ci) }}</RouterLink
           >
+          <span v-else class="text-[15px] font-bold leading-tight text-ink">{{
+            labelOf(ci)
+          }}</span>
           <dl
             v-if="filledKeys(ci).length"
             class="flex flex-wrap gap-x-3 gap-y-1 text-[13px]"
@@ -102,6 +110,7 @@
           </dl>
         </div>
         <ElDropdown
+          v-if="!readonly"
           trigger="click"
           class="self-center"
           @command="(cmd: 'edit' | 'remove') => onCommand(cmd, ci)"
@@ -156,11 +165,18 @@ import ItemCover from "@/components/item/ItemCover.vue";
 import type { CollectionItem } from "@/api/types";
 
 // Items d'une collection : colonnes / attributs tirés du schéma du CollectionType.
-const props = defineProps<{
-  items: CollectionItem[];
-  schema: Schema | undefined;
-  loading: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    items: CollectionItem[];
+    schema: Schema | undefined;
+    loading: boolean;
+    /** Lecture seule (page publique, lien de partage) : ni modification ni retrait. */
+    readonly?: boolean;
+    /** Lien vers la fiche de l'item (réservée aux comptes connectés). */
+    linkItems?: boolean;
+  }>(),
+  { readonly: false, linkItems: true },
+);
 
 const emit = defineEmits<{
   edit: [ci: CollectionItem];

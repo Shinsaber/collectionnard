@@ -51,19 +51,24 @@ func callExternal(t *testing.T, mock *testutil.MockStore, src *connectorstest.So
 	return resp, string(b)
 }
 
+// Search and preview: any member (P4-3b, members propose); direct import:
+// admins and contributors.
 func TestExternal_Access(t *testing.T) {
 	mock, src := externalMock(t)
-	for _, c := range []struct{ method, path, body string }{
-		{"GET", "/api/v1/external/bd-manga/works?q=dragon+ball", ""},
-		{"GET", "/api/v1/external/bd-manga/editions?q=dragon+ball", ""},
-		{"POST", "/api/v1/external/bd-manga/preview", `{"work":"Q15051307"}`},
-		{"POST", "/api/v1/external/bd-manga/import", `{"work":"Q15051307","selected":["wikidata:Q15051307"]}`},
+	for _, c := range []struct {
+		method, path, body string
+		member             int
+	}{
+		{"GET", "/api/v1/external/bd-manga/works?q=dragon+ball", "", http.StatusOK},
+		{"GET", "/api/v1/external/bd-manga/editions?q=dragon+ball", "", http.StatusOK},
+		{"POST", "/api/v1/external/bd-manga/preview", `{"work":"Q15051307"}`, http.StatusOK},
+		{"POST", "/api/v1/external/bd-manga/import", `{"work":"Q15051307","selected":["wikidata:Q15051307"]}`, http.StatusForbidden},
 	} {
 		if resp, _ := callExternal(t, mock, src, c.method, c.path, "", c.body); resp.StatusCode != http.StatusUnauthorized {
 			t.Errorf("%s %s anonymous: %d", c.method, c.path, resp.StatusCode)
 		}
-		if resp, _ := callExternal(t, mock, src, c.method, c.path, testutil.UserToken(), c.body); resp.StatusCode != http.StatusForbidden {
-			t.Errorf("%s %s user: %d", c.method, c.path, resp.StatusCode)
+		if resp, _ := callExternal(t, mock, src, c.method, c.path, testutil.UserToken(), c.body); resp.StatusCode != c.member {
+			t.Errorf("%s %s member: %d, want %d", c.method, c.path, resp.StatusCode, c.member)
 		}
 	}
 }
@@ -212,8 +217,8 @@ func TestExternal_Connectors(t *testing.T) {
 	if resp, _ := callExternal(t, mock, src, "GET", "/api/v1/external/nope/works?q=naruto", testutil.AdminToken(), ""); resp.StatusCode != http.StatusNotFound {
 		t.Errorf("unknown connector: %d", resp.StatusCode)
 	}
-	if resp, _ := callExternal(t, mock, src, "GET", "/api/v1/external/connectors", testutil.UserToken(), ""); resp.StatusCode != http.StatusForbidden {
-		t.Errorf("user: %d", resp.StatusCode)
+	if resp, _ := callExternal(t, mock, src, "GET", "/api/v1/external/connectors", testutil.UserToken(), ""); resp.StatusCode != http.StatusOK {
+		t.Errorf("member: %d", resp.StatusCode)
 	}
 }
 
@@ -238,5 +243,40 @@ func TestExternal_MusicEditions(t *testing.T) {
 		if resp, _ := callExternal(t, mock, src, "GET", bad, admin, ""); resp.StatusCode != http.StatusBadRequest {
 			t.Errorf("%s: expected 400, got %d", bad, resp.StatusCode)
 		}
+	}
+}
+
+// A member turns a selection into a submitted proposal: nothing is imported,
+// the payload is checked by a dry run.
+func TestExternal_Propose(t *testing.T) {
+	mock, src := externalMock(t)
+	var created *model.ProposalInput
+	var dryRuns, writes int
+	mock.ImportCatalogFn = func(_ context.Context, _ *model.CatalogExport, dryRun bool) (*model.ImportReport, error) {
+		if dryRun {
+			dryRuns++
+		} else {
+			writes++
+		}
+		return model.NewImportReport(dryRun), nil
+	}
+	mock.CreateProposalFn = func(_ context.Context, author uuid.UUID, in model.ProposalInput) (*model.Proposal, error) {
+		created = &in
+		return &model.Proposal{ID: uuid.New(), Kind: in.Kind, Status: model.ProposalDraft, Title: in.Title,
+			Payload: in.Payload, AuthorID: author}, nil
+	}
+	mock.SubmitProposalFn = func(_ context.Context, id uuid.UUID, _ *model.ProposalBase) (*model.Proposal, error) {
+		return &model.Proposal{ID: id, Status: model.ProposalPending}, nil
+	}
+	resp, body := callExternal(t, mock, src, "POST", "/api/v1/external/bd-manga/propose", testutil.UserToken(),
+		`{"work":"Q15051307","selected":["wikidata:Q15051307"],"title":"Dragon Ball"}`)
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("propose: %d %s", resp.StatusCode, body)
+	}
+	if created == nil || created.Title != "Dragon Ball" || created.Payload == nil || len(created.Payload.Items) == 0 {
+		t.Fatalf("proposal: %+v", created)
+	}
+	if dryRuns != 1 || writes != 0 {
+		t.Errorf("dry runs %d, writes %d", dryRuns, writes)
 	}
 }

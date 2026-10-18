@@ -100,6 +100,7 @@
       <div class="mt-4 flex flex-wrap gap-2">
         <ElButton @click="step = 0">{{ t("admin.external.back") }}</ElButton>
         <ElButton
+          v-if="auth.canEditCatalog"
           type="primary"
           :disabled="selected.length === 0"
           :loading="busy"
@@ -107,6 +108,18 @@
         >
           <i v-if="!busy" class="pi pi-search mr-2" aria-hidden="true"></i>
           {{ t("admin.external.simulate") }}
+        </ElButton>
+        <!-- Membre (P4-3b) : la sélection devient une proposition relue par un contributeur. -->
+        <ElButton
+          v-else
+          type="primary"
+          :disabled="selected.length === 0"
+          :loading="busy"
+          data-test="external-propose"
+          @click="propose"
+        >
+          <i v-if="!busy" class="pi pi-send mr-2" aria-hidden="true"></i>
+          {{ t("proposals.propose") }}
         </ElButton>
       </div>
     </div>
@@ -143,6 +156,8 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
 // Import depuis les sources externes (admin, un connecteur par sorte de collection) : recherche d'une œuvre
 // (Wikidata, MusicBrainz…) et d'éditions (BnF, MusicBrainz…), aperçu à cocher, simulation, import (tout ou rien).
 import { computed, onMounted, ref, watch } from "vue";
@@ -183,6 +198,8 @@ const metaTypes = useMetaTypes();
 const isMobile = useMediaQuery(MOBILE_QUERY);
 const STEP_KEYS = ["search", "selection", "simulation", "done"] as const;
 
+const auth = useAuthStore();
+const router = useRouter();
 const step = ref(0);
 /** Change à chaque « Nouvel import » : remonte la recherche (résultats et saisie vidés). */
 const searchKey = ref(0);
@@ -258,6 +275,22 @@ async function run(dryRun: boolean): Promise<ExternalImportReport | null> {
   } catch (e) {
     notifyError(e, t("admin.external.importFailed"));
     return null;
+  } finally {
+    busy.value = false;
+  }
+}
+
+async function propose() {
+  busy.value = true;
+  try {
+    const p = await externalApi.propose(connector.value, {
+      ...request(true),
+      title: work.value?.label ?? editions.value[0]?.title,
+    });
+    notifySuccess(t("proposals.sent"));
+    await router.push(`/proposals/${p.id}`);
+  } catch (e) {
+    notifyError(e);
   } finally {
     busy.value = false;
   }

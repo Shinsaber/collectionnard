@@ -3,7 +3,7 @@
 Module : `github.com/shinsaber/colec` · Entrée : `main.go` · Config par variables
 d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 caractères) sont
 **obligatoires** (le serveur refuse de démarrer sinon) ; `PORT`, `ACCESS_TOKEN_TTL` (15m),
-`REFRESH_TOKEN_TTL` (720h), `LOGIN_RATE_LIMIT` (10/min/IP), `UPLOAD_DIR`, `MAX_UPLOAD_SIZE`, `MAX_IMPORT_SIZE` (20 Mio), `TRUSTED_PROXY` (false), `EXTERNAL_USER_AGENT` (User-Agent envoyé à Wikidata / BnF) ont un défaut.
+`REFRESH_TOKEN_TTL` (720h), `LOGIN_RATE_LIMIT` (10/min/IP), `UPLOAD_DIR`, `MAX_UPLOAD_SIZE`, `MAX_IMPORT_SIZE` (20 Mio), `TRUSTED_PROXY` (false), `EXTERNAL_USER_AGENT` (User-Agent envoyé à Wikidata / BnF), `MEMBER_INVITES` (false : seuls les admins invitent), `PROPOSAL_QUOTA` (5) ont un défaut.
 
 ## Couches (`internal/`)
 
@@ -17,6 +17,9 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 | `testutil`   | `MockStore` (champs `XxxFn`), `NewTestServer`, `AdminToken`/`UserToken`, `AuthHeader`                |
 | `label`      | `Render(schema, attrs, lang)` : libellé d'un item via `x-label` (pendant de `web/src/lib/schema.ts`) |
 | `itemquery`  | Recherche avancée de `GET /items` : filtres `attr.<clé>[.<op>]`, tri `attr.<clé>`, requête plein texte — validés contre le schéma du type (pendant de `web/src/lib/itemSearch.ts`) |
+| `collstats`  | Statistiques d'une collection (P4-1) déduites du schéma du CollectionType : nombres, répartitions (enum, booléen), mois des dates, ajouts par mois ; la complétude (relations `x-completeness`) est calculée en SQL dans `store/stats.go` |
+| `privacy`    | Visibilité et champs cachés (P4-2) : `CanView`, `Levels`, `HiddenFields` (`x-private` ou `hidden_fields`), `StripAttributes`, `StripSchema`. **Toute lecture faite pour un autre que le propriétaire** (routes `/public/…`, `/share`, statistiques) passe par ce filtre, admins compris |
+| `identifier` | Champs `x-identifier` d'un schéma (premier niveau ou un niveau dans un objet) et leurs valeurs : doublons (`POST /items/duplicates`, P4-3b) |
 | `csvexport`  | Mise à plat CSV des attributs (colonnes depuis le schéma, i18n-text → `clé.langue`, BOM, anti-injection de formules) |
 | `dbmigrate`  | Migrations tern (`db/migrations`) + seeds de démonstration (`SEED_FILE` : liste séparée par des virgules ; défaut `seed.sql`, `seed_bd_manga.sql`, `seed_music.sql`, `seed_video.sql` puis `seed_games.sql`), précédés de l'installation des paquets de domaine : sous-commandes `colec-server migrate` / `seed` / `install-domain` (`cmd.go`) |
 | `domains`    | Paquets de domaine embarqués (`packages/*.json`, types au format de l'import) et plan d'installation : `Merge3` (référence / local / paquet ; les modifications locales sont gardées, seuls les ajouts du paquet sont fusionnés). `requires` : paquets requis (ex. `books` → `people`, qui porte Person et Publisher), installés d'abord dans la même transaction (`Requirements`, rapport `required`). Le store écrit par l'import et garde les copies de référence (`meta_type_origins`, migration 007) |
@@ -55,6 +58,31 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 - Images : `/api/v1/uploads/<nom>?w=240` sert une vignette JPEG (liste blanche `thumbWidths`, garde-fou 50 Mpx), générée une fois dans `UPLOAD_DIR/.thumbs/` et supprimée avec l'original par la purge (`handler/thumbnail.go`).
 - Auth : access token JWT court (`Auth.GenerateToken`) + refresh token opaque dont seul le hash
   SHA-256 est stocké (`store/refresh_token.go`, rotation à chaque `/auth/refresh`).
+- Comptes (`handler/account.go`, `store/account.go`, P4-0) : invitations et liens de réinitialisation suivent le même
+  principe (jeton aléatoire `newToken` montré une fois, seul son hash stocké, lien construit par le front). Inscription
+  en une transaction (invitation verrouillée `FOR UPDATE`). Désactiver un compte, changer ou réinitialiser son mot de
+  passe révoque ses refresh tokens ; `Login` / `Refresh` refusent un compte désactivé (401 `account_disabled`).
+  `UpdateUser` verrouille les admins et refuse de retirer le dernier actif (`store.ErrLastAdmin` → 409 `last_admin`).
+  Toute colonne qui référence un envoi (comme `users.avatar`) doit figurer dans `ReferencedUploads` (purge des images).
+- Historique du catalogue (P4-3a, migration 010) : des déclencheurs PostgreSQL écrivent `item_history` /
+  `relation_history` à chaque écriture d'un item ou d'une relation. Toute transaction qui écrit dans le catalogue
+  s'ouvre par `s.begin(ctx)` (pas `s.pool.Begin`) pour transmettre l'acteur du contexte (`store.WithActor`, posé
+  par le middleware `withActor` ; `store.WithOrigin(ctx, store.OriginImport…)` pour préciser l'origine). Rôles :
+  `RequireRole(model.RoleAdmin, model.RoleContributor)` pour l'écriture du catalogue, `RequireAdmin` pour la
+  suppression d'item, les méta-types et l'administration. Auteurs d'historique résolus par `authors`
+  (`handler/history.go`) selon la visibilité **actuelle** du profil ; les admins voient toujours l'auteur.
+- Propositions (`handler/proposal.go`, `store/proposal.go`, P4-3b) : tout changement d'état est gardé en SQL
+  (`WHERE status = ANY`, `ErrConflict` → 409 `proposal_state`) ; modération réservée à `model.CanEditCatalog`, jamais sur
+  ses propres propositions (403 `own_proposal`). Acceptation par `AcceptCatalogProposal` : import et état dans une
+  transaction (`importCatalog(…, before)`), acteur = **auteur** de la proposition, origine `proposal`. Les images d'une
+  proposition non décidée sont gardées par la purge (`ReferencedUploads`).
+- Notifications (`handler/notification.go`, `store/notification.go`, P4-3c) : `notifyProposal` / `notifyComment`
+  après une décision ou un message ; l'émetteur n'est jamais notifié, un échec est journalisé sans faire échouer la
+  requête.
+- Visibilité et partage (`handler/sharing.go`, `store/sharing.go`, P4-2) : routes publiques derrière
+  `Auth.OptionalAuthenticate` (sans jeton : anonyme, `GetUserID` = `uuid.Nil` ; jeton invalide : 401) ; `loadReadable`
+  vérifie visibilité et compte actif (404 sinon) et calcule les champs cachés ; une nouvelle lecture publique doit
+  passer par lui et par `privacy.Strip*`. Liens de partage : même principe que les invitations (hash seul).
 
 ## Ajouter / modifier un endpoint — checklist
 

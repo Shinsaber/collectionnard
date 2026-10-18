@@ -109,25 +109,25 @@ func runHashPassword(args []string) int {
 	return 0
 }
 
-// minPasswordLength is the minimum length accepted by create-user.
-const minPasswordLength = 8
-
-// runCreateUser implements `colec-server create-user <username> <email> [--admin]`:
+// runCreateUser implements `colec-server create-user <username> <email> [--admin|--contributor]`:
 // the first account of a production instance (seed disabled), or any later one.
 // The password is typed twice without echo on a terminal, otherwise read from the
 // first line of standard input (scripts: `echo … | colec-server create-user …`).
 func runCreateUser(args []string) int {
-	role := "user"
+	role := model.RoleUser
 	var pos []string
 	for _, a := range args {
-		if a == "--admin" {
-			role = "admin"
-		} else {
+		switch a {
+		case "--admin":
+			role = model.RoleAdmin
+		case "--contributor":
+			role = model.RoleContributor
+		default:
 			pos = append(pos, a)
 		}
 	}
 	if len(pos) != 2 || pos[0] == "" || !strings.Contains(pos[1], "@") {
-		fmt.Fprintln(os.Stderr, "usage: colec-server create-user <username> <email> [--admin]")
+		fmt.Fprintln(os.Stderr, "usage: colec-server create-user <username> <email> [--admin|--contributor]")
 		return 2
 	}
 	databaseURL := os.Getenv("DATABASE_URL")
@@ -196,8 +196,8 @@ func readNewPassword() (string, error) {
 		}
 		password = strings.TrimRight(line, "\r\n")
 	}
-	if len([]rune(password)) < minPasswordLength {
-		return "", fmt.Errorf("password too short (%d characters minimum)", minPasswordLength)
+	if len([]rune(password)) < model.MinPasswordLength {
+		return "", fmt.Errorf("password too short (%d characters minimum)", model.MinPasswordLength)
 	}
 	return password, nil
 }

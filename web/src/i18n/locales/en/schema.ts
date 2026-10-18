@@ -62,6 +62,9 @@ const en: typeof fr = {
       "e.g. {'{'}title{'}'} or {'{'}number{'}'}. {'{'}title{'}'}",
     xLabelHelp:
       "Template with field keys between braces; without a template, the first title, name or label field is used.",
+    completeness: "Composition relation",
+    completenessHelp:
+      'The target is part of the source (volume of an edition, episode of a season…): statistics count the owned targets out of the total ("30 volumes of 42").',
   },
   field: {
     moveUp: "Move field up",
@@ -71,6 +74,12 @@ const en: typeof fr = {
     type: "Field type",
     required: "Required field",
     requiredShort: "Req.",
+    private:
+      "Private: hidden from anyone but the collection owner (price paid…), even when public",
+    privateShort: "Private",
+    identifier:
+      "Identifier (ISBN, EAN, QID…): another item with the same value is reported as a possible duplicate",
+    identifierShort: "Identifier",
     remove: "Remove field",
     addAfter: "Add a field after",
   },

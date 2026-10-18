@@ -59,6 +59,7 @@
                 <i class="pi pi-pencil" aria-hidden="true"></i>
               </ElButton>
               <ElButton
+                v-if="canDelete"
                 text
                 type="danger"
                 :aria-label="t('common.delete')"
@@ -117,8 +118,10 @@ import type { Item } from "@/api/types";
 defineProps<{
   items: Item[];
   loading: boolean;
-  /** Actions d'administration (graphe, modifier, supprimer) dans le tableau. */
+  /** Actions d'édition (graphe, modifier) dans le tableau : admins et contributeurs. */
   canEdit: boolean;
+  /** Suppression : admins seulement (un contributeur signale). */
+  canDelete?: boolean;
   emptyText: string;
 }>();
 

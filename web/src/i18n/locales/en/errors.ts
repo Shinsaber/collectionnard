@@ -49,6 +49,31 @@ const en: typeof fr = {
       "External source (Wikidata, BnF) unreachable, try again later",
     item_type_not_allowed:
       "This item type is not allowed in this collection type",
+    account_disabled:
+      "This account is disabled: contact an admin of the instance.",
+    invalid_invitation:
+      "This invitation link is no longer valid (already used, expired or withdrawn).",
+    account_exists: "This username or email address is already in use.",
+    invalid_username:
+      "Username: 2 to 100 letters, digits, « _ », « . » or « - ».",
+    invalid_email: "Invalid email address.",
+    weak_password: "Password too short (at least 8 characters) or too long.",
+    invalid_reset_link:
+      "This reset link is no longer valid: ask an admin for a new one.",
+    wrong_password: "Current password is incorrect.",
+    self_lockout:
+      "You cannot disable your own account or remove your own admin role.",
+    last_admin: "The instance must keep at least one active admin.",
+    invitation_used:
+      "This invitation has been used: it can no longer be withdrawn.",
+    proposal_state: "This proposal changed state meanwhile: reload the page.",
+    proposal_quota: "Too many proposals waiting: wait for their review.",
+    proposal_invalid:
+      "The proposal fails the catalogue checks (invalid fields).",
+    proposal_conflict:
+      "Records changed since the proposal: resolve the conflicts.",
+    proposal_meta_types: "A proposal changes items and relations only.",
+    own_proposal: "Nobody reviews their own proposals.",
   },
 };
 

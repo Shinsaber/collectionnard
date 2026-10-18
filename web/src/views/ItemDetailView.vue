@@ -97,33 +97,11 @@
               <i class="pi pi-plus mr-2" aria-hidden="true"></i>
               {{ t("items.detail.addToCollection") }}
             </ElButton>
-            <div
-              class="grid auto-cols-fr grid-flow-col gap-2 sm:flex sm:flex-wrap"
-            >
-              <button
-                v-if="auth.isAdmin"
-                type="button"
-                :class="secondaryClass"
-                @click="editDialogVisible = true"
-              >
-                <i class="pi pi-pencil text-sm" aria-hidden="true"></i>
-                {{ t("common.edit") }}
-              </button>
-              <RouterLink
-                :to="{ path: '/items', query: { related_to: item.id } }"
-                :class="secondaryClass"
-              >
-                <i class="pi pi-list text-sm" aria-hidden="true"></i>
-                {{ t("items.search.relatedItems") }}
-              </RouterLink>
-              <RouterLink
-                :to="`/items/${item.id}/graph`"
-                :class="secondaryClass"
-              >
-                <NavIcon name="graph" :size="16" />
-                {{ t("items.detail.graph") }}
-              </RouterLink>
-            </div>
+            <ItemSecondaryActions
+              :item-id="item.id"
+              :item-label="title"
+              @edit="editDialogVisible = true"
+            />
           </div>
         </div>
       </section>
@@ -141,7 +119,10 @@
         <h2 class="text-xl font-extrabold tracking-tight sm:text-[22px]">
           {{ t("items.detail.relations") }}
         </h2>
-        <ElButton v-if="auth.isAdmin" @click="createRelationVisible = true">
+        <ElButton
+          v-if="auth.canEditCatalog"
+          @click="createRelationVisible = true"
+        >
           <i class="pi pi-plus mr-2" aria-hidden="true"></i>
           {{ t("items.detail.createRelation") }}
         </ElButton>
@@ -156,13 +137,19 @@
         v-else
         :relations="relations"
         :context-item-id="item.id"
-        :show-delete="auth.isAdmin"
+        :show-delete="auth.canEditCatalog"
         @delete="confirmDeleteRelation"
         @edit="openEditRelation"
       />
     </section>
 
     <ItemGallery :attributes="item.attributes" :schema="schema" />
+
+    <ItemHistoryCard
+      :item="item"
+      :version="historyVersion"
+      @reverted="(i) => (item = i)"
+    />
 
     <AddToCollectionDialog
       v-model:visible="addToCollectionVisible"
@@ -186,6 +173,7 @@
       v-model:visible="editDialogVisible"
       :item="item"
       :item-types="[]"
+      :propose="!auth.canEditCatalog"
       @saved="loadItem(item!.id)"
     />
   </div>
@@ -220,11 +208,12 @@ import ItemCover from "@/components/item/ItemCover.vue";
 import ItemCollectionsCard from "@/components/item/ItemCollectionsCard.vue";
 import ItemEditDialog from "@/components/item/ItemEditDialog.vue";
 import ItemGallery from "@/components/item/ItemGallery.vue";
+import ItemHistoryCard from "@/components/item/ItemHistoryCard.vue";
+import ItemSecondaryActions from "@/components/item/ItemSecondaryActions.vue";
 import AddToCollectionDialog from "@/components/item/AddToCollectionDialog.vue";
 import RelationCreateDialog from "@/components/item/RelationCreateDialog.vue";
 import RelationEditDialog from "@/components/item/RelationEditDialog.vue";
 import RelationTree from "@/components/item/RelationTree.vue";
-import NavIcon from "@/components/layout/NavIcon.vue";
 import type { Item, ItemCollectionMembership, ItemRelation } from "@/api/types";
 
 const props = defineProps<{ id: string }>();
@@ -236,6 +225,8 @@ const { notifyError, notifySuccess } = useNotify();
 const isMobile = useMediaQuery(MOBILE_QUERY);
 
 const item = ref<Item | null>(null);
+// Incrémenté après chaque écriture (fiche, relations) : l'historique est relu.
+const historyVersion = ref(0);
 const relations = ref<ItemRelation[]>([]);
 const itemCollections = ref<ItemCollectionMembership[]>([]);
 const loading = ref(true);
@@ -245,10 +236,6 @@ const addToCollectionVisible = ref(false);
 const createRelationVisible = ref(false);
 const editRelationVisible = ref(false);
 const editingRelation = ref<ItemRelation | null>(null);
-
-/** Boutons secondaires : tuile icône + texte sur mobile, bouton doux en ligne au-delà. */
-const secondaryClass =
-  "flex h-14 flex-col items-center justify-center gap-1 rounded-xl bg-soft px-2 text-xs font-semibold text-ink sm:h-10 sm:flex-row sm:gap-2 sm:rounded-[10px] sm:px-4 sm:text-sm";
 
 const coverWidth = computed(() => (isMobile.value ? 108 : 200));
 
@@ -334,6 +321,7 @@ async function confirmDeleteRelation(rel: ItemRelation) {
     await relationApi.delete(rel.id);
     notifySuccess(t("items.detail.relationDeleted"));
     relations.value = relations.value.filter((r) => r.id !== rel.id);
+    historyVersion.value++;
   } catch (e) {
     notifyError(e);
   }
@@ -343,6 +331,7 @@ async function reloadRelations() {
   if (!item.value) return;
   try {
     relations.value = (await itemApi.relations(item.value.id)) ?? [];
+    historyVersion.value++;
   } catch (e) {
     notifyError(e, t("items.detail.relationsUnavailable"));
   }
@@ -366,6 +355,7 @@ async function loadItem(id: string) {
     ]);
     item.value = i;
     relations.value = rels ?? [];
+    historyVersion.value++;
     loadCollections(id);
   } catch (e) {
     notifyError(e, t("items.detail.notFound"));

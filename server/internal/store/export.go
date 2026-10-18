@@ -238,6 +238,13 @@ type importer struct {
 }
 
 func (s *PgStore) ImportCatalog(ctx context.Context, cat *model.CatalogExport, dryRun bool) (*model.ImportReport, error) {
+	return s.importCatalog(ctx, cat, dryRun, nil)
+}
+
+// importCatalog imports cat; before commits, `before` runs in the same
+// transaction (accepting a proposal: its status changes with the import, or
+// neither does). An error of `before` rolls everything back.
+func (s *PgStore) importCatalog(ctx context.Context, cat *model.CatalogExport, dryRun bool, before func(pgx.Tx) error) (*model.ImportReport, error) {
 	rep := model.NewImportReport(dryRun)
 	if cat.Format != model.CatalogFormat || cat.Version != model.ExportVersion {
 		rep.Fail(model.EntityFile, -1, nil, fmt.Sprintf(
@@ -246,7 +253,7 @@ func (s *PgStore) ImportCatalog(ctx context.Context, cat *model.CatalogExport, d
 		return rep, nil
 	}
 
-	tx, err := s.pool.Begin(ctx)
+	tx, err := s.begin(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -272,6 +279,11 @@ func (s *PgStore) ImportCatalog(ctx context.Context, cat *model.CatalogExport, d
 
 	if len(rep.Errors) > 0 || dryRun {
 		return rep, nil // deferred rollback
+	}
+	if before != nil {
+		if err := before(tx); err != nil {
+			return nil, err
+		}
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return nil, err

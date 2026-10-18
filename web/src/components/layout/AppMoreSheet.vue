@@ -10,20 +10,22 @@
     <div class="flex flex-col gap-5 pb-[env(safe-area-inset-bottom)]">
       <AppUserCard />
       <RouterLink
-        to="/offline"
+        v-for="link in sheetLinks"
+        :key="link.to"
+        :to="link.to"
         class="flex min-h-13 items-center gap-3 rounded-xl bg-surface px-4 text-[15px] shadow-card"
         :class="
-          isNavActive('/offline', route.path)
+          isNavActive(link.to, route.path)
             ? 'bg-tint font-bold text-tint-ink'
             : 'font-medium text-ink'
         "
       >
-        <NavIcon name="offline" />
-        <span class="flex-1">{{ t("layout.nav.offline") }}</span>
+        <NavIcon :name="link.icon" />
+        <span class="flex-1">{{ link.label }}</span>
         <i class="pi pi-angle-right text-muted" aria-hidden="true"></i>
       </RouterLink>
       <nav
-        v-if="auth.isAdmin"
+        v-if="adminLinks.length > 0"
         :aria-labelledby="adminTitleId"
         class="flex flex-col"
       >
@@ -60,7 +62,6 @@
 import { useId, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
-import { useAuthStore } from "@/stores/auth";
 import AppUserCard from "./AppUserCard.vue";
 import NavIcon from "./NavIcon.vue";
 import { isNavActive, useNavigation } from "./navigation";
@@ -68,8 +69,7 @@ import { isNavActive, useNavigation } from "./navigation";
 const open = defineModel<boolean>({ required: true });
 const { t } = useI18n();
 const route = useRoute();
-const auth = useAuthStore();
-const { adminLinks } = useNavigation();
+const { sheetLinks, adminLinks } = useNavigation();
 const adminTitleId = useId();
 
 // Une navigation (lien de la feuille ou retour arrière) referme la feuille.

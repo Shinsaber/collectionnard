@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -38,6 +39,21 @@ type Store interface {
 	// User
 	GetUserByUsername(ctx context.Context, username string) (*model.User, string, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (*model.User, error)
+	GetUserPasswordHash(ctx context.Context, id uuid.UUID) (string, error)
+
+	// Accounts, invitations, password resets (P4-0, social.md)
+	ListUsers(ctx context.Context, pg model.Pagination) ([]model.User, int, error)
+	UpdateUser(ctx context.Context, id uuid.UUID, in model.UserUpdate) (*model.User, error)
+	UpdateProfile(ctx context.Context, id uuid.UUID, in model.ProfileUpdate) (*model.User, error)
+	SetPassword(ctx context.Context, id uuid.UUID, passwordHash string) error
+	CreateInvitation(ctx context.Context, tokenHash string, createdBy uuid.UUID, role, note string, expiresAt time.Time) (*model.Invitation, error)
+	GetInvitation(ctx context.Context, id uuid.UUID) (*model.Invitation, error)
+	ListInvitations(ctx context.Context, createdBy *uuid.UUID) ([]model.Invitation, error)
+	DeleteInvitation(ctx context.Context, id uuid.UUID) error
+	CheckInvitation(ctx context.Context, tokenHash string) (time.Time, error)
+	RegisterWithInvitation(ctx context.Context, tokenHash, username, email, passwordHash string) (*model.User, error)
+	CreatePasswordReset(ctx context.Context, userID uuid.UUID, tokenHash string, createdBy uuid.UUID, expiresAt time.Time) error
+	ResetPassword(ctx context.Context, tokenHash, passwordHash string) error
 
 	// RefreshToken (hash SHA-256 du token, jamais le token brut)
 	CreateRefreshToken(ctx context.Context, userID uuid.UUID, tokenHash string, expiresAt time.Time) error
@@ -115,6 +131,40 @@ type Store interface {
 
 	// Stats
 	GetStats(ctx context.Context) (*model.Stats, error)
+	GetCollectionStats(ctx context.Context, collectionID uuid.UUID, hidden []string) (*model.CollectionStats, error)
+
+	// Visibilité et partage (P4-2)
+	ListVisibleCollections(ctx context.Context, ownerID uuid.UUID, levels []string) ([]model.Collection, error)
+	CreateShareLink(ctx context.Context, collectionID uuid.UUID, tokenHash string) (*model.ShareLink, error)
+	ListShareLinks(ctx context.Context, collectionID uuid.UUID) ([]model.ShareLink, error)
+	RevokeShareLink(ctx context.Context, collectionID, linkID uuid.UUID) error
+	GetSharedCollectionID(ctx context.Context, tokenHash string) (uuid.UUID, error)
+	ListMembers(ctx context.Context, pg model.Pagination) ([]model.User, int, error)
+
+	// Historique du catalogue (P4-3a)
+	GetItemHistory(ctx context.Context, itemID uuid.UUID) (*model.ItemHistory, error)
+	GetItemVersion(ctx context.Context, itemID uuid.UUID, version int) (json.RawMessage, error)
+
+	// Propositions et modération (P4-3b)
+	CreateProposal(ctx context.Context, authorID uuid.UUID, in model.ProposalInput) (*model.Proposal, error)
+	GetProposal(ctx context.Context, id uuid.UUID) (*model.Proposal, error)
+	ListProposals(ctx context.Context, f model.ProposalFilter, pg model.Pagination) ([]model.Proposal, int, error)
+	UpdateProposal(ctx context.Context, id uuid.UUID, in model.ProposalInput) (*model.Proposal, error)
+	SubmitProposal(ctx context.Context, id uuid.UUID, base *model.ProposalBase) (*model.Proposal, error)
+	WithdrawProposal(ctx context.Context, id uuid.UUID) (*model.Proposal, error)
+	ReviewProposal(ctx context.Context, id uuid.UUID, status string, reviewerID uuid.UUID, comment string) (*model.Proposal, error)
+	AcceptCatalogProposal(ctx context.Context, id, reviewerID uuid.UUID, payload *model.CatalogExport, comment string) (*model.ImportReport, error)
+	ProposalQuotaUsage(ctx context.Context, authorID uuid.UUID) (waiting, accepted, today int, err error)
+	CountProposalsToReview(ctx context.Context, reviewerID uuid.UUID) (int, error)
+	EntitySnapshot(ctx context.Context, itemIDs, relationIDs []uuid.UUID) (*model.ProposalBase, error)
+	ListProposalComments(ctx context.Context, proposalID uuid.UUID) ([]model.ProposalComment, error)
+	CreateProposalComment(ctx context.Context, proposalID, authorID uuid.UUID, body string) (*model.ProposalComment, error)
+
+	// Notifications (P4-3c)
+	CreateNotifications(ctx context.Context, userIDs []uuid.UUID, kind string, payload any) error
+	ListNotifications(ctx context.Context, userID uuid.UUID, pg model.Pagination) ([]model.Notification, int, int, error)
+	MarkNotificationsRead(ctx context.Context, userID uuid.UUID, ids []uuid.UUID) error
+	GetUserStats(ctx context.Context, userID uuid.UUID) (*model.MeStats, error)
 
 	// Import / export (catalogue only: meta-types, items, relations, tags)
 	ExportCatalog(ctx context.Context) (*model.CatalogExport, error)

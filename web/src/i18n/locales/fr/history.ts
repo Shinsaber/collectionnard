@@ -1,0 +1,35 @@
+// Catalogue « history » (français) : historique du catalogue (P4-3a).
+export default {
+  title: "Historique",
+  help: "Toutes les modifications de la fiche et de ses relations, avec leur auteur.",
+  created: "Ajouté par {author} le {date}",
+  updated: "Modifié en dernier par {author} le {date}",
+  member: "un membre",
+  system: "le système",
+  none: "Aucune modification enregistrée.",
+  truncated: "Seules les 500 dernières modifications sont listées.",
+  showAll: "Tout afficher ({n})",
+  showLess: "Réduire",
+  version: "v{n}",
+  item: "Fiche",
+  relation: "Relation",
+  kinds: {
+    created: "Création",
+    deleted: "Suppression",
+    updated: "Modification",
+  },
+  origins: {
+    direct: "Saisie",
+    import: "Import",
+    external: "Source externe",
+    proposal: "Proposition acceptée",
+    revert: "Retour à la version {ref}",
+    system: "Système",
+  },
+  otherItem: "item lié",
+  empty: "—",
+  revert: "Revenir à cette version",
+  revertConfirm:
+    "Restaurer les attributs de la version {n} ? Le retour est lui-même enregistré dans l'historique.",
+  reverted: "Version {n} restaurée.",
+};

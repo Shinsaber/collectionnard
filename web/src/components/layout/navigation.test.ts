@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { createPinia, setActivePinia } from "pinia";
 import { mount } from "@vue/test-utils";
 import ElementPlus from "element-plus";
 import { createMemoryHistory, createRouter } from "vue-router";
@@ -18,13 +19,16 @@ describe("isNavActive", () => {
     expect(isNavActive("/collections", "/collections-archive")).toBe(false);
   });
 
-  it("rattache l'administration à l'onglet « Plus »", () => {
+  it("rattache l'administration, les statistiques et le hors ligne à l'onglet « Plus »", () => {
     expect(isMoreActive("/admin/item-types")).toBe(true);
+    expect(isMoreActive("/stats")).toBe(true);
+    expect(isMoreActive("/offline")).toBe(true);
     expect(isMoreActive("/items")).toBe(false);
   });
 });
 
 describe("AppTabBar", () => {
+  beforeEach(() => setActivePinia(createPinia()));
   const Empty = defineComponent({ template: "<div />" });
 
   async function mountAt(path: string, moreOpen = false) {

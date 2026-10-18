@@ -47,6 +47,20 @@
       />
       <span class="text-xs text-muted">{{ t("schema.root.xLabelHelp") }}</span>
     </div>
+
+    <!-- Relation de composition (x-completeness), types de relation seulement -->
+    <div v-if="showCompleteness" class="flex flex-col gap-1">
+      <ElCheckbox
+        :model-value="completeness"
+        data-test="x-completeness"
+        @update:model-value="emit('update:completeness', Boolean($event))"
+      >
+        {{ t("schema.root.completeness") }} (<code>x-completeness</code>)
+      </ElCheckbox>
+      <span class="text-xs text-muted">{{
+        t("schema.root.completenessHelp")
+      }}</span>
+    </div>
   </div>
 </template>
 
@@ -56,7 +70,8 @@ import { useI18n } from "vue-i18n";
 import { LANGS } from "@/i18n/langs";
 
 // En-tête du SchemaBuilder : extensions racine du schéma — nom et description
-// affichés du méta-type par langue (`x-title`, `x-description`) et gabarit `x-label`.
+// affichés du méta-type par langue (`x-title`, `x-description`), gabarit `x-label` et,
+// pour un type de relation, la composition `x-completeness`.
 // Les langues hors `LANGS` présentes dans les objets sont conservées par le parent.
 const props = defineProps<{
   xLabel: string;
@@ -64,12 +79,16 @@ const props = defineProps<{
   description: Record<string, string>;
   /** Affiche les saisies par langue (feature `labels` du builder). */
   labels: boolean;
+  completeness?: boolean;
+  /** Affiche la case x-completeness (feature `completeness` : types de relation). */
+  showCompleteness?: boolean;
 }>();
 
 const emit = defineEmits<{
   "update:xLabel": [value: string];
   "update:title": [value: Record<string, string>];
   "update:description": [value: Record<string, string>];
+  "update:completeness": [value: boolean];
 }>();
 
 const { t } = useI18n();

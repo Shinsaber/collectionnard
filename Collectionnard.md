@@ -167,6 +167,9 @@ une abstraction de ce schéma ; elle n'existe pas dans l'implémentation.
 | `x-enum-labels`      | propriété | Libellés des valeurs d'un `enum` par langue : `{ "fr": { "tv": "Télévision" }, "en": { "tv": "TV" } }` ; repli sur la valeur brute                                                                       |
 | `x-widget`           | propriété | Widget dédié : `i18n-text` (objet `{fr, en, …}` : une chaîne par langue, codes supplémentaires acceptés), `image-gallery` (objet de catégories), `links` (tableau de `{label?, url}`, URL http(s) en format `uri` : liens cliquables sur la fiche, libellé facultatif, nom du site à défaut)                                                          |
 | `x-image-categories` | propriété | Catégories d'images et ratios : `{ "poster": { "ratio": "2/3" } }` (avec `image-gallery`). Contrôles facultatifs à l'envoi, dans le navigateur : `tolerance` (écart de ratio permis, %), `min_width` / `min_height` (px), `strict` (refuser ; sinon avertissement) |
+| `x-private`          | propriété | CollectionType : champ caché par défaut à tout autre lecteur que le propriétaire (prix payé, budget max), même dans une collection publique ; le propriétaire peut remplacer ce défaut par collection (`hidden_fields`). Retiré **par le serveur** des pages publiques, liens de partage et statistiques, administrateurs compris |
+| `x-identifier`       | propriété | ItemType : identifiant (ISBN, EAN, QID Wikidata, ARK BnF, MBID…), au premier niveau ou dans un objet (`external_ids.wikidata`). Un autre item du même type portant la même valeur est signalé comme doublon possible avant l'enregistrement ou la proposition (`POST /items/duplicates`) |
+| `x-completeness`     | racine    | RelationType seulement : `true` marque une relation de composition (la cible fait partie de la source : `contains_volume`, `contains_track`, `contains_episode`, `includes_episode`, `contains_work`). Les statistiques d'une collection comptent, pour chaque source, les cibles présentes sur le total (« 30 tomes sur 42 ») |
 | `x-label`            | racine    | Gabarit du libellé des instances : `"{title}"`, `"{number}. {title}"`, `"{last_name} {first_name}"` ; sans gabarit, repli sur `title`, `name`, `label` (Go `internal/label`, TS `web/src/lib/schema.ts`) |
 
 Règles d'affichage dérivées du schéma lui-même (pas d'extension) : un `integer` / `number` avec `minimum`
@@ -441,11 +444,26 @@ ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries 
 
 ### Phase 4 : Social
 
-- [ ] Statistiques et visualisation graphiques
-- [ ] Soumission/modification d'items par les users (validation admin)
-- [ ] Profils publics/privés
-- [ ] Partage de collections
-- [ ] Système d'échange
+Raffinée le 2026-10-17 (conception : `social.md`), branche `phase4-social`, un commit par lot. Décisions : visibilité
+au choix (privé, membres, public) par collection et pour le profil ; inscription sur invitation ; contributions par
+propositions modérées **et** rôle contributeur ; échanges reportés.
+
+- [x] **P4-0 — Comptes, invitations, profils** : invitations à usage unique (admin, membres si permis), inscription
+      depuis un lien, page admin « Utilisateurs » (rôle, désactivation, lien de réinitialisation sans SMTP), profil (nom
+      affiché, avatar, présentation, mot de passe).
+- [x] **P4-1 — Statistiques personnelles** : par collection, sommes et moyennes des attributs numériques, répartition
+      des enums, courbe des dates ; **complétude** par le graphe (« 30 tomes sur 42 ») via une extension
+      `x-completeness` des relations de composition ; graphiques ECharts ; `GET /me/stats`, `/collections/{id}/stats`.
+- [x] **P4-2 — Visibilité et partage** : collection et profil privés, visibles des membres ou publics ; pages publiques
+      en lecture seule ; liens de partage secrets et révocables ; extension `x-private` (défaut du type) et `hidden_fields` (choix du propriétaire par collection) pour retirer, côté serveur, les attributs
+      sensibles (prix payé) ; annuaire des membres ; listes de souhaits partageables.
+- [x] **P4-3 — Contributions** (raffiné et livré le 2026-10-18) : P4-3a (livré) historique des items et relations (origine, retour à
+      une version, attribution selon la visibilité actuelle) + rôle contributeur (écriture directe, sans suppression) ;
+      P4-3b (livré) propositions au format de l'import avec version de départ et conflits, brouillons, discussion, modération par
+      admins et contributeurs, doublons, quota ; P4-3c (livré) notifications dans l'application, signalements, suggestions de
+      champ. Plus tard : résumé e-mail, contributeur par domaine, fusion de doublons, gamification.
+- [ ] Système d'échange : reporté (exemplaires « à échanger », correspondances avec les listes de souhaits, messagerie),
+      à raffiner après P4-2.
 
 ### Phase 5 : Intégrations, …
 

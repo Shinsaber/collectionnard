@@ -8,15 +8,18 @@
         <AppLogo :size="28" />
       </RouterLink>
     </div>
-    <button
-      type="button"
-      class="flex size-11 items-center justify-center rounded-full bg-ink text-sm font-bold text-surface shadow-control"
-      :aria-label="t('layout.account')"
-      aria-haspopup="dialog"
-      @click="emit('openMore')"
-    >
-      <span aria-hidden="true">{{ initial }}</span>
-    </button>
+    <div class="flex items-center gap-1">
+      <NotificationBell />
+      <button
+        type="button"
+        class="flex size-11 items-center justify-center rounded-full bg-ink text-sm font-bold text-surface shadow-control"
+        :aria-label="t('layout.account')"
+        aria-haspopup="dialog"
+        @click="emit('openMore')"
+      >
+        <span aria-hidden="true">{{ initial }}</span>
+      </button>
+    </div>
   </header>
 </template>
 
@@ -25,6 +28,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/stores/auth";
 import AppLogo from "./AppLogo.vue";
+import NotificationBell from "./NotificationBell.vue";
 
 const emit = defineEmits<{ openMore: [] }>();
 const { t } = useI18n();

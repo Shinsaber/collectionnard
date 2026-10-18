@@ -1,0 +1,31 @@
+// Catalogue « stats » (français) : statistiques personnelles (P4-1).
+export default {
+  title: "Statistiques",
+  help: "Vue d'ensemble de mes collections.",
+  tab: "Statistiques",
+  itemsTab: "Exemplaires",
+  loadFailed: "Statistiques indisponibles.",
+  empty:
+    "Rien à compter pour l'instant : ajoutez des items à cette collection.",
+  emptyAll: "Aucune collection pour l'instant.",
+  entries: "Exemplaires",
+  collections: "Collections",
+  distinctItems: "Items différents",
+  byType: "Par type d'item",
+  byCollection: "Par collection",
+  added: "Ajouts par mois",
+  numberDetail: "moyenne {avg} · min {min} · max {max}",
+  filled: "aucune valeur | 1 valeur | {n} valeurs",
+  yes: "Oui",
+  no: "Non",
+  missing: "Non renseigné",
+  completeness: {
+    title: "Complétude",
+    help: "Ensembles dont j'ai une partie : tomes d'une édition, épisodes d'une saison, pistes d'un disque…",
+    count: "{owned} sur {total}",
+    complete: "Complet",
+    showAll: "Tout afficher ({n})",
+    showLess: "Réduire",
+    truncated: "Seuls les 200 premiers ensembles sont listés.",
+  },
+};

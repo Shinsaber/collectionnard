@@ -62,6 +62,9 @@ export default {
       "ex. {'{'}title{'}'} ou {'{'}number{'}'}. {'{'}title{'}'}",
     xLabelHelp:
       "Gabarit avec les clés des champs entre accolades ; sans gabarit, le premier champ title, name ou label est utilisé.",
+    completeness: "Relation de composition",
+    completenessHelp:
+      "La cible fait partie de la source (tome d'une édition, épisode d'une saison…) : les statistiques comptent les cibles possédées sur le total (« 30 tomes sur 42 »).",
   },
   field: {
     moveUp: "Monter le champ",
@@ -71,6 +74,12 @@ export default {
     type: "Type du champ",
     required: "Champ requis",
     requiredShort: "Req.",
+    private:
+      "Privé : caché à tout autre que le propriétaire de la collection (prix payé…), même publique",
+    privateShort: "Privé",
+    identifier:
+      "Identifiant (ISBN, EAN, QID…) : un autre item portant la même valeur est signalé comme doublon possible",
+    identifierShort: "Identifiant",
     remove: "Supprimer le champ",
     addAfter: "Ajouter un champ après",
   },

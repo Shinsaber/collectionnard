@@ -32,6 +32,11 @@
         class="shrink-0 rounded-sm bg-danger/12 px-2 py-0.5 font-mono text-[11px] uppercase text-danger"
         >{{ t("schema.field.requiredShort") }}</span
       >
+      <span
+        v-if="field.private"
+        class="shrink-0 rounded-sm bg-tint px-2 py-0.5 font-mono text-[11px] uppercase text-tint-ink"
+        >{{ t("schema.field.privateShort") }}</span
+      >
       <i
         class="pi shrink-0 text-xs"
         :class="open ? 'pi-chevron-up text-link' : 'pi-chevron-down text-muted'"
@@ -95,6 +100,22 @@
           :title="t('schema.field.required')"
           @update:model-value="set('required', $event)"
           >{{ t("schema.field.requiredShort") }}</ElCheckbox
+        >
+        <ElCheckbox
+          v-if="features.identifier && field.type === 'string'"
+          :model-value="field.identifier ?? false"
+          :title="t('schema.field.identifier')"
+          data-test="x-identifier"
+          @update:model-value="set('identifier', Boolean($event))"
+          >{{ t("schema.field.identifierShort") }}</ElCheckbox
+        >
+        <ElCheckbox
+          v-if="features.private"
+          :model-value="field.private ?? false"
+          :title="t('schema.field.private')"
+          data-test="x-private"
+          @update:model-value="set('private', Boolean($event))"
+          >{{ t("schema.field.privateShort") }}</ElCheckbox
         >
 
         <div class="ml-auto flex gap-0.5">

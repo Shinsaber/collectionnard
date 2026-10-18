@@ -1,4 +1,5 @@
 import type { Messages } from "../fr";
+import account from "./account";
 import admin from "./admin";
 import auth from "./auth";
 import collections from "./collections";
@@ -6,12 +7,18 @@ import common from "./common";
 import dashboard from "./dashboard";
 import errors from "./errors";
 import graph from "./graph";
+import history from "./history";
 import items from "./items";
 import layout from "./layout";
+import notifications from "./notifications";
 import offline from "./offline";
+import proposals from "./proposals";
 import schema from "./schema";
+import sharing from "./sharing";
+import stats from "./stats";
 
 const en: Messages = {
+  account,
   admin,
   auth,
   collections,
@@ -19,10 +26,15 @@ const en: Messages = {
   dashboard,
   errors,
   graph,
+  history,
   items,
   layout,
+  notifications,
   offline,
+  proposals,
   schema,
+  sharing,
+  stats,
 };
 
 export default en;

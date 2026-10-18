@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "collections",
-  "package_version": 1,
+  "package_version": 2,
   "title": {
     "fr": "Collections",
     "en": "Collections"
@@ -71,7 +71,8 @@
           },
           "purchase_price": {
             "type": "number",
-            "minimum": 0
+            "minimum": 0,
+            "x-private": true
           },
           "acquisition_date": {
             "type": "string",
@@ -170,7 +171,8 @@
           },
           "max_budget": {
             "type": "number",
-            "minimum": 0
+            "minimum": 0,
+            "x-private": true
           }
         },
         "x-description": {

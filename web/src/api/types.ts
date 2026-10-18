@@ -18,13 +18,87 @@ export interface RefreshRequest {
 }
 
 // ---------- User ----------
+/** `contributor` (P4-3) : écrit dans le catalogue sans supprimer d'item, modère les propositions. */
+export type Role = "admin" | "contributor" | "user";
+
 export interface User {
   id: string;
   username: string;
   email: string;
-  role: "admin" | "user";
+  role: Role;
+  /** Profil (P4-0) : nom affiché (repli sur username), présentation, avatar (URL d'un envoi). */
+  display_name?: string;
+  bio?: string;
+  avatar?: string;
+  /** Compte désactivé depuis cette date. */
+  disabled_at?: string;
+  /** GET /auth/me seulement : peut créer des invitations. */
+  profile_visibility?: Visibility;
+  can_invite?: boolean;
   created_at: string;
   updated_at: string;
+}
+
+// ---------- Comptes, invitations, profils (P4-0, social.md) ----------
+export interface UserUpdate {
+  role?: Role;
+  disabled?: boolean;
+}
+
+export interface ProfileUpdate {
+  display_name: string;
+  bio: string;
+  avatar: string;
+  profile_visibility: Visibility;
+}
+
+export interface PasswordChange {
+  current_password: string;
+  new_password: string;
+}
+
+export type InvitationStatus = "pending" | "used" | "expired";
+
+export interface Invitation {
+  id: string;
+  role: Role;
+  note?: string;
+  created_by?: string;
+  created_by_username?: string;
+  expires_at: string;
+  status: InvitationStatus;
+  used_at?: string;
+  used_by_username?: string;
+  created_at: string;
+}
+
+export interface InvitationCreate {
+  role?: Role;
+  note?: string;
+  expires_in_days?: number;
+}
+
+/** Le jeton n'est montré qu'une fois : le lien `/register?token=…` se construit côté client. */
+export interface InvitationCreated {
+  invitation: Invitation;
+  token: string;
+}
+
+export interface InvitationCheck {
+  valid: boolean;
+  expires_at?: string;
+}
+
+export interface RegisterRequest {
+  token: string;
+  username: string;
+  email: string;
+  password: string;
+}
+
+export interface ResetLink {
+  token: string;
+  expires_at: string;
 }
 
 // ---------- ItemType ----------
@@ -172,6 +246,9 @@ export interface Collection {
   name: string;
   description?: string;
   item_count: number;
+  visibility: Visibility;
+  /** Champs cachés aux autres lecteurs ; `null` = les propriétés `x-private` du type. */
+  hidden_fields: string[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -185,6 +262,52 @@ export interface CollectionCreate {
 export interface CollectionUpdate {
   name?: string;
   description?: string;
+  visibility?: Visibility;
+  /** Absent : inchangé ; `null` : défaut du type (`x-private`). */
+  hidden_fields?: string[] | null;
+}
+
+// ---------- Visibilité et partage (P4-2) : miroir de server/internal/model/sharing.go ----------
+
+export type Visibility = "private" | "members" | "public";
+
+export interface Owner {
+  username: string;
+  display_name?: string;
+  avatar?: string;
+}
+
+/** Collection lue par un autre que son propriétaire : schéma du type sans les champs cachés. */
+export interface PublicCollection {
+  id: string;
+  name: string;
+  description?: string;
+  collection_type: CollectionType;
+  item_count: number;
+  owner: Owner;
+  visibility: Visibility;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PublicProfile {
+  username: string;
+  display_name?: string;
+  bio?: string;
+  avatar?: string;
+  profile_visibility: Visibility;
+  created_at: string;
+}
+
+export interface ShareLink {
+  id: string;
+  collection_id: string;
+  created_at: string;
+}
+
+export interface ShareLinkCreated {
+  share_link: ShareLink;
+  token: string;
 }
 
 // ---------- CollectionItem ----------
@@ -255,6 +378,235 @@ export interface ItemsByType {
   type_id: string;
   type_name: string;
   count: number;
+}
+
+// --- Statistiques personnelles (P4-1) : miroir de server/internal/model/stats.go ---
+
+export interface NumberStat {
+  field: string;
+  count: number;
+  sum: number;
+  avg: number;
+  min: number;
+  max: number;
+}
+
+export interface ValueCount {
+  value: string;
+  count: number;
+}
+
+export interface Distribution {
+  field: string;
+  values: ValueCount[];
+  missing: number;
+}
+
+export interface MonthCount {
+  /** « 2026-10 » */
+  month: string;
+  count: number;
+}
+
+export interface Timeline {
+  field: string;
+  months: MonthCount[];
+}
+
+export interface StatsItem {
+  id: string;
+  item_type_id: string;
+  attributes: Record<string, unknown>;
+}
+
+export interface Completeness {
+  item: StatsItem;
+  owned: number;
+  total: number;
+}
+
+export interface CollectionStats {
+  collection_id: string;
+  total_items: number;
+  items_by_type: ItemsByType[];
+  numbers: NumberStat[];
+  distributions: Distribution[];
+  timelines: Timeline[];
+  added: MonthCount[];
+  completeness: Completeness[];
+  completeness_truncated: boolean;
+  /** Types d'item cités (libellés, y compris pour un lecteur anonyme). */
+  item_types: ItemType[];
+}
+
+export interface CollectionSummary {
+  id: string;
+  name: string;
+  collection_type_id: string;
+  item_count: number;
+}
+
+export interface MeStats {
+  total_collections: number;
+  total_entries: number;
+  distinct_items: number;
+  items_by_type: ItemsByType[];
+  collections: CollectionSummary[];
+  added: MonthCount[];
+}
+
+// ---------- Historique du catalogue (P4-3a) : miroir de server/internal/model/history.go ----------
+
+export interface HistoryAuthor {
+  /** `user` : profil visible ; `member` : « un membre » ; `system` : seed, SQL. */
+  kind: "user" | "member" | "system";
+  user?: Owner;
+}
+
+export type HistoryOrigin =
+  "direct" | "import" | "external" | "proposal" | "revert" | "system";
+
+export interface HistoryEntry {
+  kind: "item" | "relation";
+  entity_id: string;
+  version: number;
+  origin: HistoryOrigin;
+  origin_ref?: string;
+  author: HistoryAuthor;
+  before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null;
+  relation?: {
+    relation_type_id: string;
+    source_item_id: string;
+    target_item_id: string;
+  };
+  created_at: string;
+}
+
+export interface ItemHistory {
+  entries: HistoryEntry[];
+  truncated: boolean;
+  created?: HistoryEntry;
+}
+
+// ---------- Propositions (P4-3b) : miroir de server/internal/model/proposal.go ----------
+
+export type ProposalKind = "catalog" | "schema_suggestion" | "report";
+export type ProposalStatus =
+  | "draft"
+  | "pending"
+  | "changes_requested"
+  | "accepted"
+  | "rejected"
+  | "withdrawn";
+
+/** Item d'une charge, au format de l'import du catalogue. */
+export interface PayloadItem {
+  id: string;
+  item_type_id: string;
+  attributes: Record<string, unknown>;
+  tags?: string[];
+}
+
+export interface PayloadRelation {
+  id: string;
+  relation_type_id: string;
+  source_item_id: string;
+  target_item_id: string;
+  attributes: Record<string, unknown>;
+}
+
+/** Charge d'une proposition `catalog` : items et relations seulement. */
+export interface ProposalPayload {
+  format?: string;
+  version?: number;
+  items?: PayloadItem[];
+  relations?: PayloadRelation[];
+}
+
+export interface Proposal {
+  id: string;
+  kind: ProposalKind;
+  status: ProposalStatus;
+  title: string;
+  description?: string;
+  payload?: ProposalPayload;
+  base?: {
+    items?: Record<string, Record<string, unknown>>;
+    relations?: Record<string, Record<string, unknown>>;
+  };
+  item_id?: string;
+  author: Owner;
+  author_disabled?: boolean;
+  reviewer?: Owner;
+  review_comment?: string;
+  comment_count: number;
+  created_at: string;
+  updated_at: string;
+  submitted_at?: string;
+  decided_at?: string;
+}
+
+export interface ProposalQuota {
+  /** Admin ou contributeur : aucun quota. */
+  unlimited: boolean;
+  waiting: number;
+  limit: number;
+  accepted: number;
+  base: number;
+  max: number;
+  today: number;
+  daily_limit: number;
+}
+
+export interface ProposalInput {
+  kind?: ProposalKind;
+  title: string;
+  description?: string;
+  payload?: ProposalPayload;
+  item_id?: string;
+  submit?: boolean;
+}
+
+export interface ProposalConflict {
+  kind: "item" | "relation";
+  id: string;
+  base: Record<string, unknown> | null;
+  current: Record<string, unknown> | null;
+  proposed: Record<string, unknown> | null;
+}
+
+export interface ProposalComment {
+  id: string;
+  author: Owner;
+  body: string;
+  created_at: string;
+}
+
+export interface Duplicate {
+  field: string;
+  value: string;
+  item: Item;
+}
+
+// ---------- Notifications (P4-3c) ----------
+
+export type NotificationKind =
+  | "proposal_accepted"
+  | "proposal_rejected"
+  | "proposal_changes_requested"
+  | "proposal_comment";
+
+export interface AppNotification {
+  id: string;
+  kind: NotificationKind;
+  payload: { proposal_id?: string; title?: string; by?: string };
+  created_at: string;
+  read_at?: string;
+}
+
+export interface NotificationPage extends PaginatedResponse<AppNotification> {
+  unread: number;
 }
 
 export interface Stats {
@@ -417,6 +769,8 @@ export interface ExternalImportRequest {
   selected?: string[];
   /** Import seulement : attributs corrigés dans l'aperçu (clé de nœud → attributs complets). */
   overrides?: Record<string, Record<string, unknown>>;
+  /** `propose` seulement : titre de la proposition. */
+  title?: string;
 }
 
 export type ExternalNodeRole =

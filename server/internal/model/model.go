@@ -34,12 +34,19 @@ type RefreshRequest struct {
 // ---------------------------------------------------------------------------
 
 type User struct {
-	ID        uuid.UUID `json:"id"`
-	Username  string    `json:"username"`
-	Email     string    `json:"email"`
-	Role      string    `json:"role"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID          uuid.UUID  `json:"id"`
+	Username    string     `json:"username"`
+	Email       string     `json:"email"`
+	Role        string     `json:"role"`
+	DisplayName *string    `json:"display_name,omitempty"`
+	Bio         *string    `json:"bio,omitempty"`
+	Avatar      *string    `json:"avatar,omitempty"` // URL d'un envoi (/api/v1/uploads/…)
+	DisabledAt  *time.Time `json:"disabled_at,omitempty"`
+	// CanInvite: GET /auth/me only — the user may create invitations.
+	ProfileVisibility string    `json:"profile_visibility"`
+	CanInvite         bool      `json:"can_invite,omitempty"`
+	CreatedAt         time.Time `json:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
 }
 
 // ---------------------------------------------------------------------------
@@ -198,8 +205,11 @@ type Collection struct {
 	Name             string          `json:"name"`
 	Description      *string         `json:"description,omitempty"`
 	ItemCount        int             `json:"item_count"`
-	CreatedAt        time.Time       `json:"created_at"`
-	UpdatedAt        time.Time       `json:"updated_at"`
+	Visibility       string          `json:"visibility"`
+	// HiddenFields: nil = the x-private properties of the CollectionType (JSON null).
+	HiddenFields []string  `json:"hidden_fields"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type CollectionCreate struct {
@@ -209,8 +219,10 @@ type CollectionCreate struct {
 }
 
 type CollectionUpdate struct {
-	Name        *string `json:"name,omitempty"`
-	Description *string `json:"description,omitempty"`
+	Name         *string         `json:"name,omitempty"`
+	Description  *string         `json:"description,omitempty"`
+	Visibility   *string         `json:"visibility,omitempty"`
+	HiddenFields OptionalStrings `json:"hidden_fields"`
 }
 
 // ---------------------------------------------------------------------------

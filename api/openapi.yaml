@@ -70,6 +70,11 @@ tags:
       Authentification par JWT. Utilisez `POST /auth/login` pour obtenir un token,
       puis passez-le dans le header `Authorization: Bearer <token>` pour tous les
       autres appels.
+  - name: Users
+    description: |
+      Comptes et profils (Phase 4, P4-0) : profil et mot de passe de l'utilisateur courant, invitations à usage
+      unique (admin, ou membre si `MEMBER_INVITES`), gestion des comptes et liens de réinitialisation par un admin
+      (sans envoi d'e-mail). Voir `social.md`.
   - name: ItemTypes
     description: |
       **Admin uniquement.** Gestion des types d'items. Un ItemType définit le schéma
@@ -109,7 +114,7 @@ tags:
       **Écriture** : admin uniquement (MVP). **Lecture** : tous les utilisateurs authentifiés.
   - name: Relations
     description: |
-      **Admin uniquement.** Gestion des relations entre items (les arêtes du graphe).
+      **Admin ou contributeur.** Gestion des relations entre items (les arêtes du graphe).
       Chaque relation relie un item source à un item target via un RelationType.
 
       Le système valide automatiquement que :
@@ -145,6 +150,15 @@ tags:
       Étiquettes libres associées aux items pour faciliter la recherche et le filtrage.
       Les tags sont créés automatiquement lors de la création d'un item si le nom
       n'existe pas encore. Ils sont partagés globalement (pas par utilisateur).
+  - name: Public
+    description: |
+      Lectures sans compte ou par d'autres membres (P4-2) : profils, collections visibles, liens de partage.
+      Les champs cachés d'une collection (`x-private` du type ou `hidden_fields` du propriétaire) sont retirés
+      par le serveur pour tout autre lecteur que le propriétaire, admins compris.
+  - name: Proposals
+    description: |
+      Propositions des membres (P4-3b) : ajouts et corrections du catalogue au format de l'import, suggestions de
+      champ, signalements ; modération par les admins et contributeurs, discussion.
   - name: Stats
     description: |
       Statistiques globales sur le catalogue et les collections :
@@ -162,7 +176,8 @@ tags:
       utilisateurs ne font pas partie de l'export du catalogue.
   - name: External
     description: |
-      **Admin uniquement.** Récupération depuis des sources ouvertes, un connecteur par sorte de
+      Recherche et aperçu : tout compte connecté ; import direct : admins et contributeurs ; un membre propose
+      la sélection (`/propose`, P4-3b). Récupération depuis des sources ouvertes, un connecteur par sorte de
       collection (`/external/{connector}/…`, liste : `GET /external/connectors`) : `bd-manga` (manga, BD) et
       `novels` (romans : roman, cycle et auteurs sur Wikidata ; éditions BnF de sa notice d'œuvre, traducteurs,
       illustrateurs et préfaciers) et `music` (CD, vinyles : album, éditions, pistes, artistes et labels sur
@@ -297,17 +312,138 @@ components:
           example: shinsaber@colec.local
         role:
           type: string
-          enum: [admin, user]
+          enum: [admin, contributor, user]
           description: |
             Rôle de l'utilisateur :
             - `admin` : peut créer/modifier types, items, relations
+            - `contributor` : écrit directement dans le catalogue (sans supprimer d'item) et modère les propositions
             - `user` : peut gérer ses collections et consulter le catalogue
+        display_name:
+          type: string
+          maxLength: 100
+          description: Nom affiché (repli sur `username`).
+        bio: { type: string, maxLength: 2000, description: Présentation libre. }
+        avatar:
+          type: string
+          description: "URL d'une image envoyée (`url` de `POST /uploads`, `/api/v1/uploads/…`)."
+        disabled_at:
+          type: string
+          format: date-time
+          description: Compte désactivé depuis cette date (connexion et rafraîchissement refusés).
+        profile_visibility:
+          $ref: "#/components/schemas/Visibility"
+        can_invite:
+          type: boolean
+          description: |
+            `GET /auth/me` seulement — l'utilisateur peut créer des invitations (admin, ou membre si
+            `MEMBER_INVITES` est activé).
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
+
+    UserUpdate:
+      type: object
+      description: Modification d'un compte par un admin (champs absents inchangés).
+      properties:
+        role: { type: string, enum: [admin, contributor, user] }
+        disabled:
+          type: boolean
+          description: |
+            `true` désactive le compte (ses jetons de rafraîchissement sont révoqués ; un jeton d'accès déjà émis
+            reste valable jusqu'à son expiration, `ACCESS_TOKEN_TTL`), `false` le réactive.
+
+    ProfileUpdate:
+      type: object
+      description: Profil de l'utilisateur courant (remplacement complet ; chaîne vide = champ effacé).
+      properties:
+        display_name: { type: string, maxLength: 100 }
+        bio: { type: string, maxLength: 2000 }
+        avatar:
+          type: string
+          pattern: "^/api/v1/uploads/[^/]+$"
+          description: URL d'une image envoyée (`url` de `POST /uploads`) ; gardée par la purge des images.
+        profile_visibility:
+          allOf:
+            - $ref: "#/components/schemas/Visibility"
+          description: Qui voit le profil et la liste des collections visibles ; absent ou vide = `private`.
+
+    PasswordChange:
+      type: object
+      required: [current_password, new_password]
+      properties:
+        current_password: { type: string }
+        new_password: { type: string, minLength: 8 }
+
+    Invitation:
+      type: object
+      description: Invitation à créer un compte. Le jeton n'est jamais renvoyé après sa création.
+      required: [id, role, expires_at, status, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        role: { type: string, enum: [admin, contributor, user] }
+        note: { type: string, maxLength: 255, description: "Mémo de l'auteur (« pour Camille »)." }
+        created_by: { type: string, format: uuid }
+        created_by_username: { type: string }
+        expires_at: { type: string, format: date-time }
+        status:
+          type: string
+          enum: [pending, used, expired]
+        used_at: { type: string, format: date-time }
+        used_by_username: { type: string }
+        created_at: { type: string, format: date-time }
+
+    InvitationCreate:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [admin, contributor, user]
+          default: user
+          description: Rôle du compte créé ; `admin` réservé aux admins.
+        note: { type: string, maxLength: 255 }
+        expires_in_days: { type: integer, minimum: 1, maximum: 90, default: 7 }
+
+    InvitationCreated:
+      type: object
+      description: Invitation créée et son jeton, montré cette seule fois (lien `/register?token=…`).
+      required: [invitation, token]
+      properties:
+        invitation: { $ref: "#/components/schemas/Invitation" }
+        token: { type: string }
+
+    InvitationCheck:
+      type: object
+      required: [valid]
+      properties:
+        valid: { type: boolean }
+        expires_at: { type: string, format: date-time }
+
+    RegisterRequest:
+      type: object
+      required: [token, username, email, password]
+      properties:
+        token: { type: string, description: Jeton de l'invitation. }
+        username: { type: string, minLength: 2, maxLength: 100, pattern: "^[A-Za-z0-9_.-]+$" }
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+
+    ResetLink:
+      type: object
+      description: Lien de réinitialisation du mot de passe, montré cette seule fois (`/reset-password?token=…`).
+      required: [token, expires_at]
+      properties:
+        token: { type: string }
+        expires_at: { type: string, format: date-time }
+
+    ResetPasswordRequest:
+      type: object
+      required: [token, password]
+      properties:
+        token: { type: string }
+        password: { type: string, minLength: 8 }
 
     # -------------------------------------------------------------------------
     # ItemType
@@ -815,6 +951,14 @@ components:
           type: integer
           description: Nombre d'items dans la collection (calculé automatiquement).
           example: 42
+        visibility:
+          $ref: "#/components/schemas/Visibility"
+        hidden_fields:
+          type: [array, "null"]
+          items: { type: string }
+          description: |
+            Champs du CollectionType cachés aux autres lecteurs. `null` : les propriétés `x-private` du schéma ;
+            sinon la liste complète, qui remplace ce défaut (`[]` montre tout).
         created_at:
           type: string
           format: date-time
@@ -848,6 +992,14 @@ components:
           description: Nouveau nom (doit rester unique pour cet utilisateur).
         description:
           type: string
+        visibility:
+          $ref: "#/components/schemas/Visibility"
+        hidden_fields:
+          type: [array, "null"]
+          items: { type: string }
+          description: |
+            Absent : inchangé. `null` : retour au défaut du type (`x-private`). Liste : champs cachés (clés du
+            schéma du CollectionType, sinon 422).
 
     # -------------------------------------------------------------------------
     # CollectionItem
@@ -1123,6 +1275,487 @@ components:
           type: integer
           description: Nombre total de relations (arêtes du graphe).
           example: 340
+
+    NumberStat:
+      type: object
+      description: Agrégats d'un attribut numérique (`number` ou `integer`) du CollectionType.
+      required: [field, count, sum, avg, min, max]
+      properties:
+        field:
+          type: string
+          description: Clé de l'attribut dans le schéma du CollectionType.
+          example: purchase_price
+        count:
+          type: integer
+          description: Nombre d'exemplaires qui portent une valeur numérique.
+        sum: { type: number }
+        avg: { type: number }
+        min: { type: number }
+        max: { type: number }
+
+    ValueCount:
+      type: object
+      required: [value, count]
+      properties:
+        value:
+          type: string
+          description: |
+            Valeur brute (valeur d'enum, ou `true` / `false` pour un booléen) ; le client la traduit
+            via `x-enum-labels`.
+          example: very_good
+        count:
+          type: integer
+
+    Distribution:
+      type: object
+      description: |
+        Répartition d'un attribut enum ou booléen du CollectionType. Les valeurs suivent l'ordre de `enum`
+        (celles à zéro comprises), puis les valeurs hors enum par nombre décroissant.
+      required: [field, values, missing]
+      properties:
+        field:
+          type: string
+          example: condition
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/ValueCount"
+        missing:
+          type: integer
+          description: Exemplaires sans valeur pour cet attribut.
+
+    MonthCount:
+      type: object
+      required: [month, count]
+      properties:
+        month:
+          type: string
+          pattern: "^[0-9]{4}-[0-9]{2}$"
+          example: 2026-10
+        count:
+          type: integer
+
+    Timeline:
+      type: object
+      description: Nombre d'exemplaires par mois pour un attribut date (`format` date ou date-time), mois croissants.
+      required: [field, months]
+      properties:
+        field:
+          type: string
+          example: acquisition_date
+        months:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonthCount"
+
+    StatsItem:
+      type: object
+      description: Item réduit à ce qu'il faut pour afficher son libellé (`x-label` de son ItemType, calculé par le client).
+      required: [id, item_type_id, attributes]
+      properties:
+        id: { type: string, format: uuid }
+        item_type_id: { type: string, format: uuid }
+        attributes:
+          type: object
+          additionalProperties: true
+
+    Completeness:
+      type: object
+      description: |
+        Complétude d'un item « contenant » : parmi ses enfants par les relations marquées `x-completeness`
+        (tomes d'une édition, épisodes d'une saison, pistes d'un disque…), combien sont dans la collection.
+      required: [item, owned, total]
+      properties:
+        item:
+          $ref: "#/components/schemas/StatsItem"
+        owned:
+          type: integer
+          example: 30
+        total:
+          type: integer
+          example: 42
+
+    CollectionStats:
+      type: object
+      description: |
+        Statistiques d'une collection, déduites du schéma de son CollectionType (aucune clé codée en dur).
+      required: [collection_id, total_items, items_by_type, numbers, distributions, timelines, added, completeness, completeness_truncated, item_types]
+      properties:
+        collection_id: { type: string, format: uuid }
+        total_items:
+          type: integer
+          description: Nombre d'exemplaires de la collection.
+        items_by_type:
+          type: array
+          description: Exemplaires par ItemType (nombre décroissant).
+          items:
+            $ref: "#/components/schemas/ItemsByType"
+        numbers:
+          type: array
+          description: Un élément par attribut numérique du schéma (ordre `x-order`).
+          items:
+            $ref: "#/components/schemas/NumberStat"
+        distributions:
+          type: array
+          description: Un élément par attribut enum ou booléen du schéma.
+          items:
+            $ref: "#/components/schemas/Distribution"
+        timelines:
+          type: array
+          description: Un élément par attribut date du schéma.
+          items:
+            $ref: "#/components/schemas/Timeline"
+        added:
+          type: array
+          description: Ajouts à la collection par mois (date d'ajout).
+          items:
+            $ref: "#/components/schemas/MonthCount"
+        completeness:
+          type: array
+          description: |
+            Contenants dont au moins un enfant est dans la collection : les incomplets d’abord, les plus
+            proches de la complétude en tête, puis les complets (au plus 200).
+          items:
+            $ref: "#/components/schemas/Completeness"
+        completeness_truncated:
+          type: boolean
+          description: Vrai si la liste `completeness` a été coupée à 200 éléments.
+        item_types:
+          type: array
+          description: |
+            ItemTypes cités par `items_by_type` et `completeness` (libellés calculés par le client, y compris pour un
+            lecteur anonyme qui ne peut pas lire `/item-types`).
+          items:
+            $ref: "#/components/schemas/ItemType"
+
+    CollectionSummary:
+      type: object
+      required: [id, name, collection_type_id, item_count]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        collection_type_id: { type: string, format: uuid }
+        item_count: { type: integer }
+
+    MeStats:
+      type: object
+      description: Statistiques de toutes les collections de l'utilisateur connecté.
+      required: [total_collections, total_entries, distinct_items, items_by_type, collections, added]
+      properties:
+        total_collections: { type: integer }
+        total_entries:
+          type: integer
+          description: Exemplaires, toutes collections confondues (un item dans deux collections compte deux fois).
+        distinct_items:
+          type: integer
+          description: Items différents, toutes collections confondues.
+        items_by_type:
+          type: array
+          description: Items différents par ItemType (nombre décroissant).
+          items:
+            $ref: "#/components/schemas/ItemsByType"
+        collections:
+          type: array
+          description: Mes collections, la plus grande en premier.
+          items:
+            $ref: "#/components/schemas/CollectionSummary"
+        added:
+          type: array
+          description: Ajouts par mois, toutes collections confondues.
+          items:
+            $ref: "#/components/schemas/MonthCount"
+
+    Visibility:
+      type: string
+      enum: [private, members, public]
+      description: |
+        `private` : le propriétaire seul ; `members` : tout compte connecté ; `public` : tout le monde,
+        connecté ou non.
+
+    Owner:
+      type: object
+      description: Propriétaire d'une collection publique, tel que les autres le voient.
+      required: [username]
+      properties:
+        username: { type: string }
+        display_name: { type: string }
+        avatar: { type: string }
+
+    PublicCollection:
+      type: object
+      description: |
+        Collection lue par un autre que son propriétaire (page publique, lien de partage). Le schéma du
+        CollectionType a perdu ses champs cachés (propriétés, `x-order`, `required`, `x-labels`).
+      required: [id, name, collection_type, item_count, owner, visibility, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        collection_type:
+          $ref: "#/components/schemas/CollectionType"
+        item_count: { type: integer }
+        owner:
+          $ref: "#/components/schemas/Owner"
+        visibility:
+          $ref: "#/components/schemas/Visibility"
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    PublicProfile:
+      type: object
+      description: Profil d'un membre tel que les autres le voient (ni e-mail ni rôle).
+      required: [username, profile_visibility, created_at]
+      properties:
+        username: { type: string }
+        display_name: { type: string }
+        bio: { type: string }
+        avatar: { type: string }
+        profile_visibility:
+          $ref: "#/components/schemas/Visibility"
+        created_at: { type: string, format: date-time }
+
+    ShareLink:
+      type: object
+      description: Lien de partage secret d'une collection (lecture seule). Le jeton n'est jamais renvoyé après sa création.
+      required: [id, collection_id, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        collection_id: { type: string, format: uuid }
+        created_at: { type: string, format: date-time }
+
+    ShareLinkCreated:
+      type: object
+      required: [share_link, token]
+      properties:
+        share_link:
+          $ref: "#/components/schemas/ShareLink"
+        token:
+          type: string
+          description: Jeton à transmettre (montré une seule fois) ; le client construit le lien `…/share?token=…`.
+
+    HistoryAuthor:
+      type: object
+      description: |
+        Auteur d'une écriture du catalogue. `kind` : `user` (profil visible du lecteur, `user` renseigné),
+        `member` (profil non visible du lecteur, ou compte désactivé : « un membre »), `system` (seed, SQL).
+        Calculé à chaque lecture selon la visibilité **actuelle** du profil ; les admins voient toujours l'auteur.
+      required: [kind]
+      properties:
+        kind: { type: string, enum: [user, member, system] }
+        user:
+          $ref: "#/components/schemas/Owner"
+
+    HistoryEntry:
+      type: object
+      description: Une écriture d'un item ou d'une relation qui le touche (instantanés des attributs).
+      required: [kind, entity_id, version, origin, author, created_at]
+      properties:
+        kind: { type: string, enum: [item, relation] }
+        entity_id: { type: string, format: uuid }
+        version:
+          type: integer
+          description: Version de l'entité (1 = création).
+        origin:
+          type: string
+          enum: [direct, import, external, proposal, revert, system]
+        origin_ref:
+          type: string
+          description: Connecteur (`external`), proposition (`proposal`), version restaurée (`revert`).
+        author:
+          $ref: "#/components/schemas/HistoryAuthor"
+        before:
+          type: [object, "null"]
+          additionalProperties: true
+          description: Attributs avant (`null` à la création).
+        after:
+          type: [object, "null"]
+          additionalProperties: true
+          description: Attributs après (`null` à la suppression).
+        relation:
+          type: object
+          description: Relation concernée (`kind` = `relation`).
+          properties:
+            relation_type_id: { type: string, format: uuid }
+            source_item_id: { type: string, format: uuid }
+            target_item_id: { type: string, format: uuid }
+        created_at: { type: string, format: date-time }
+
+    ItemHistory:
+      type: object
+      required: [entries, truncated]
+      properties:
+        entries:
+          type: array
+          description: Écritures de l'item et de ses relations, la plus récente en premier (500 au plus).
+          items:
+            $ref: "#/components/schemas/HistoryEntry"
+        truncated: { type: boolean }
+        created:
+          $ref: "#/components/schemas/HistoryEntry"
+          description: Création de l'item (version 1), même hors de `entries` ; absente pour un item antérieur à l'historique.
+
+    RevertRequest:
+      type: object
+      required: [version]
+      properties:
+        version:
+          type: integer
+          minimum: 1
+          description: Version de l'item dont les attributs sont restaurés.
+
+    Proposal:
+      type: object
+      description: |
+        Proposition d'un membre (P4-3b). `catalog` : items et relations au format de l'import du catalogue ;
+        `schema_suggestion` / `report` : un texte (`description`), un signalement visant un item.
+      required: [id, kind, status, title, author, comment_count, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        kind: { type: string, enum: [catalog, schema_suggestion, report] }
+        status:
+          type: string
+          enum: [draft, pending, changes_requested, accepted, rejected, withdrawn]
+        title: { type: string, maxLength: 200 }
+        description: { type: string }
+        payload:
+          $ref: "#/components/schemas/CatalogExport"
+        base:
+          type: object
+          description: "Instantané des entités existantes modifiées, à la soumission (`items`, `relations` : id → attributs)."
+          additionalProperties: true
+        item_id: { type: string, format: uuid }
+        author:
+          $ref: "#/components/schemas/Owner"
+        author_disabled:
+          type: boolean
+          description: Compte de l'auteur désactivé (proposition gardée pour la modération).
+        reviewer:
+          $ref: "#/components/schemas/Owner"
+        review_comment: { type: string }
+        comment_count: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        submitted_at: { type: string, format: date-time }
+        decided_at: { type: string, format: date-time }
+
+    ProposalQuota:
+      type: object
+      required: [unlimited, waiting, limit, accepted, base, max, today, daily_limit]
+      properties:
+        unlimited:
+          type: boolean
+          description: Admin ou contributeur, sans quota.
+        waiting:
+          type: integer
+          description: Propositions en attente ou à corriger.
+        limit:
+          type: integer
+          description: Propositions en attente permises (base + acceptées, plafonnée à `max`).
+        accepted: { type: integer }
+        base:
+          type: integer
+          description: "`PROPOSAL_QUOTA`."
+        max: { type: integer }
+        today:
+          type: integer
+          description: Propositions créées dans les dernières 24 h.
+        daily_limit: { type: integer }
+
+    ProposalInput:
+      type: object
+      description: Création (`kind` requis) ou modification d'une proposition en brouillon ou à corriger.
+      required: [title]
+      properties:
+        kind: { type: string, enum: [catalog, schema_suggestion, report] }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: string, maxLength: 10000 }
+        payload:
+          $ref: "#/components/schemas/CatalogExport"
+        item_id: { type: string, format: uuid }
+        submit:
+          type: boolean
+          description: Création seulement — soumettre aussitôt (sinon brouillon).
+
+    ProposalDecision:
+      type: object
+      description: Refus ou demande de modifications ; le commentaire est obligatoire.
+      required: [comment]
+      properties:
+        comment: { type: string, minLength: 1, maxLength: 10000 }
+
+    ProposalAccept:
+      type: object
+      properties:
+        payload:
+          $ref: "#/components/schemas/CatalogExport"
+          description: Charge corrigée par le modérateur (sinon celle de l'auteur).
+        conflicts_resolved:
+          type: boolean
+          description: Le modérateur a tranché les conflits (sinon 409 `proposal_conflict` s'il y en a).
+        comment: { type: string, maxLength: 10000 }
+
+    ProposalConflict:
+      type: object
+      description: Entité modifiée par la proposition et changée depuis sa soumission (départ / actuel / proposé).
+      required: [kind, id]
+      properties:
+        kind: { type: string, enum: [item, relation] }
+        id: { type: string, format: uuid }
+        base: { type: [object, "null"], additionalProperties: true }
+        current: { type: [object, "null"], additionalProperties: true, description: "`null` : supprimée depuis." }
+        proposed: { type: [object, "null"], additionalProperties: true }
+
+    ProposalComment:
+      type: object
+      required: [id, author, body, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        author:
+          $ref: "#/components/schemas/Owner"
+        body: { type: string }
+        created_at: { type: string, format: date-time }
+
+    DuplicateCheck:
+      type: object
+      required: [item_type_id, attributes]
+      properties:
+        item_type_id: { type: string, format: uuid }
+        attributes: { type: object, additionalProperties: true }
+        exclude_id:
+          type: string
+          format: uuid
+          description: Item en cours de modification (ignoré).
+
+    Duplicate:
+      type: object
+      description: Item existant qui porte la même valeur pour un champ `x-identifier`.
+      required: [field, value, item]
+      properties:
+        field:
+          type: string
+          description: Chemin du champ, `isbn` ou `external_ids.wikidata`.
+        value: { type: string }
+        item:
+          $ref: "#/components/schemas/Item"
+
+    Notification:
+      type: object
+      description: |
+        Événement pour l'utilisateur connecté (P4-3c). `kind` : `proposal_accepted`, `proposal_rejected`,
+        `proposal_changes_requested` (décision sur une de mes propositions), `proposal_comment` (nouveau message
+        dans une discussion à laquelle je participe). `payload` : `proposal_id`, `title`, et `by` (auteur de
+        l'événement, nom d'utilisateur).
+      required: [id, kind, payload, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        kind:
+          type: string
+          enum: [proposal_accepted, proposal_rejected, proposal_changes_requested, proposal_comment]
+        payload:
+          type: object
+          additionalProperties: true
+        created_at: { type: string, format: date-time }
+        read_at: { type: string, format: date-time }
 
     Error:
       type: object
@@ -1548,6 +2181,10 @@ components:
           type: array
           items: { type: string }
           description: Import seulement — clés (`key`) des nœuds de l'aperçu à écrire.
+        title:
+          type: string
+          maxLength: 200
+          description: Titre de la proposition (`propose` seulement ; à défaut, le connecteur).
         overrides:
           type: object
           description: |
@@ -1674,6 +2311,22 @@ components:
   # Paramètres réutilisables
   # ===========================================================================
   parameters:
+    username:
+      name: username
+      in: path
+      required: true
+      schema: { type: string }
+    collectionId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    shareToken:
+      name: token
+      in: query
+      required: true
+      description: Jeton d'un lien de partage.
+      schema: { type: string }
     connector:
       name: connector
       in: path
@@ -1729,6 +2382,17 @@ components:
   # Réponses réutilisables
   # ===========================================================================
   responses:
+    CollectionItemPage:
+      description: Exemplaires paginés, attributs cachés retirés pour tout autre lecteur que le propriétaire.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: "#/components/schemas/PaginatedResponse"
+              - properties:
+                  data:
+                    items:
+                      $ref: "#/components/schemas/CollectionItem"
     NotFound:
       description: |
         Ressource non trouvée. L'ID spécifié ne correspond à aucun élément existant,
@@ -2068,6 +2732,270 @@ paths:
                 $ref: "#/components/schemas/User"
         "401":
           $ref: "#/components/responses/Unauthorized"
+
+  /auth/invitation:
+    get:
+      tags: [Auth]
+      summary: Vérifier une invitation
+      description: |
+        Public. Indique si le jeton d'invitation permet encore de créer un compte (ni utilisé, ni expiré, ni
+        retiré). Limité comme `/auth/login`.
+      operationId: checkInvitation
+      security: []
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Validité de l'invitation.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InvitationCheck" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Créer un compte depuis une invitation
+      description: |
+        Public. Crée le compte avec le rôle de l'invitation, consomme l'invitation (usage unique) et connecte
+        l'utilisateur (même réponse que `POST /auth/login`). Limité comme `/auth/login`.
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RegisterRequest" }
+      responses:
+        "200":
+          description: Compte créé et connecté.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401":
+          description: Invitation inconnue, utilisée, expirée ou retirée (`invalid_invitation`).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "409":
+          description: Nom d'utilisateur (sans casse) ou adresse e-mail déjà utilisé.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Choisir un nouveau mot de passe
+      description: |
+        Public. Consomme un lien de réinitialisation (`POST /users/{id}/reset-link`), change le mot de passe et
+        révoque les jetons de rafraîchissement du compte. Limité comme `/auth/login`.
+      operationId: resetPassword
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ResetPasswordRequest" }
+      responses:
+        "204": { description: Mot de passe changé. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401":
+          description: Lien inconnu, utilisé ou expiré (`invalid_reset_link`), ou compte désactivé.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /me/profile:
+    put:
+      tags: [Users]
+      summary: Modifier mon profil
+      description: Nom affiché, présentation et avatar de l'utilisateur courant.
+      operationId: updateProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProfileUpdate" }
+      responses:
+        "200":
+          description: Profil modifié.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /me/password:
+    put:
+      tags: [Users]
+      summary: Changer mon mot de passe
+      description: |
+        Vérifie le mot de passe actuel, enregistre le nouveau et révoque toutes les sessions (jetons de
+        rafraîchissement) ; la session courante en reçoit de nouveaux (même réponse que `POST /auth/login`).
+      operationId: changePassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PasswordChange" }
+      responses:
+        "200":
+          description: Mot de passe changé ; nouveaux jetons de la session courante.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: Mot de passe actuel incorrect (`wrong_password`).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /invitations:
+    get:
+      tags: [Users]
+      summary: Lister les invitations
+      description: Les invitations créées par l'utilisateur ; toutes pour un admin. Les plus récentes d'abord.
+      operationId: listInvitations
+      responses:
+        "200":
+          description: Invitations.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Invitation" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/InternalError" }
+    post:
+      tags: [Users]
+      summary: Créer une invitation
+      description: |
+        Admin, ou membre si `MEMBER_INVITES=true` (un membre n'invite que des utilisateurs). Le jeton est renvoyé
+        cette seule fois ; le client en fait le lien `/register?token=…`.
+      operationId: createInvitation
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InvitationCreate" }
+      responses:
+        "201":
+          description: Invitation créée.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InvitationCreated" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /invitations/{id}:
+    delete:
+      tags: [Users]
+      summary: Retirer une invitation
+      description: Son auteur ou un admin ; une invitation déjà utilisée ne peut plus être retirée (409).
+      operationId: deleteInvitation
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: Invitation retirée. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /users:
+    get:
+      tags: [Users]
+      summary: Lister les comptes
+      description: "**Admin uniquement.** Tous les comptes, par nom d'utilisateur."
+      operationId: listUsers
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "200":
+          description: Comptes.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /users/{id}:
+    put:
+      tags: [Users]
+      summary: Modifier un compte
+      description: |
+        **Admin uniquement.** Rôle et désactivation. Un admin ne peut ni se désactiver ni retirer son propre rôle
+        admin ; le dernier admin actif ne peut pas être rétrogradé ni désactivé (409 `last_admin`).
+      operationId: updateUser
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserUpdate" }
+      responses:
+        "200":
+          description: Compte modifié.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /users/{id}/reset-link:
+    post:
+      tags: [Users]
+      summary: Créer un lien de réinitialisation du mot de passe
+      description: |
+        **Admin uniquement.** Lien à usage unique, valable 24 h, que l'admin transmet lui-même (pas d'envoi
+        d'e-mail). Les liens précédents du compte non utilisés sont annulés.
+      operationId: createResetLink
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "201":
+          description: Lien créé.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResetLink" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
 
   # ===========================================================================
   # Item Types (admin)
@@ -2783,7 +3711,7 @@ paths:
       tags: [Items]
       summary: Créer un item
       description: |
-        **Admin uniquement (MVP).**
+        **Admin ou contributeur.**
 
         Crée un nouvel item dans le catalogue. Les attributs sont **validés contre le
         JSON Schema** du ItemType référencé. En cas de non-conformité, une erreur 422
@@ -2860,7 +3788,7 @@ paths:
       tags: [Items]
       summary: Modifier un item
       description: |
-        **Admin uniquement.**
+        **Admin ou contributeur.**
 
         Modifie les attributs et/ou tags d'un item. Les attributs sont **revalidés**
         contre le JSON Schema du ItemType.
@@ -3053,7 +3981,7 @@ paths:
       tags: [Relations]
       summary: Créer une relation entre deux items
       description: |
-        **Admin uniquement.**
+        **Admin ou contributeur.**
 
         Crée une relation (arête orientée) entre deux items existants.
 
@@ -3134,7 +4062,7 @@ paths:
       tags: [Relations]
       summary: Modifier les attributs d'une relation
       description: |
-        **Admin uniquement.**
+        **Admin ou contributeur.**
 
         Modifie les attributs d'une relation existante. Les items source et target
         **ne peuvent pas être changés** — pour cela, supprimer et recréer la relation.
@@ -3172,7 +4100,7 @@ paths:
       tags: [Relations]
       summary: Supprimer une relation
       description: |
-        **Admin uniquement.** Supprime la relation. Les items source et cible
+        **Admin ou contributeur.** Supprime la relation. Les items source et cible
         ne sont pas affectés.
       operationId: deleteRelation
       responses:
@@ -3728,7 +4656,8 @@ paths:
       tags: [Uploads]
       summary: Uploader un fichier image
       description: |
-        **Admin uniquement.**
+        Tout compte connecté (avatar du profil, images d'une proposition) ; la purge des images
+        (`POST /uploads/purge`, admin) supprime les envois que rien ne référence.
 
         Accepte un fichier image via multipart/form-data et le sauvegarde sur le serveur.
         Retourne l'URL d'accès au fichier, le nom généré et la taille.
@@ -3971,6 +4900,54 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Stats"
+
+  /me/stats:
+    get:
+      tags: [Stats]
+      summary: Mes statistiques
+      description: Synthèse de toutes les collections de l'utilisateur connecté.
+      operationId: getMyStats
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Statistiques de l'utilisateur.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeStats"
+
+  /collections/{id}/stats:
+    get:
+      tags: [Stats]
+      summary: Statistiques d'une collection
+      description: |
+        Collection de l'utilisateur connecté (404 pour celle d'un autre). Agrégats des attributs du
+        CollectionType selon leur type, ajouts par mois et complétude par le graphe (relations
+        `x-completeness`).
+      operationId: getCollectionStats
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Statistiques de la collection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectionStats"
   # ===========================================================================
   # Import / export
   # ===========================================================================
@@ -4185,7 +5162,7 @@ paths:
       tags: [External]
       summary: Connecteurs disponibles
       description: |
-        **Admin uniquement.** Un connecteur par sorte de collection (`bd-manga`, `novels`…) et le paquet de
+        Tout compte connecté. Un connecteur par sorte de collection (`bd-manga`, `novels`…) et le paquet de
         domaine (`GET /domains`) qui porte les types qu'il écrit.
       operationId: listConnectors
       responses:
@@ -4328,6 +5305,49 @@ paths:
         "409": { $ref: "#/components/responses/ConnectorUnavailable" }
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
         "502": { $ref: "#/components/responses/ExternalUnavailable" }
+  /external/{connector}/propose:
+    parameters:
+      - $ref: "#/components/parameters/connector"
+    post:
+      tags: [External]
+      summary: Proposer la sélection
+      description: |
+        Tout compte connecté (P4-3b). Même requête que `import` (avec `title`) : la sélection devient une
+        proposition `catalog` soumise à la modération (mêmes contrôles : quota, simulation d'import, instantané
+        de départ) au lieu d'être importée.
+      operationId: proposeExternal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExternalImportRequest"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "502":
+          description: Source externe injoignable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "201":
+          description: Proposition créée et soumise.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proposal"
+
   /external/{connector}/import:
     parameters:
       - $ref: "#/components/parameters/connector"
@@ -4369,3 +5389,873 @@ paths:
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
         "500": { $ref: "#/components/responses/InternalError" }
         "502": { $ref: "#/components/responses/ExternalUnavailable" }
+
+  # ===========================================================================
+  # Visibilité et partage (P4-2)
+  # ===========================================================================
+
+  /members:
+    get:
+      tags: [Users]
+      summary: Annuaire des membres
+      description: Comptes actifs dont le profil est visible des membres ou public, par nom d'utilisateur.
+      operationId: listMembers
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Profils visibles.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, total, page, per_page]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PublicProfile"
+                  total: { type: integer }
+                  page: { type: integer }
+                  per_page: { type: integer }
+
+  /public/users/{username}:
+    get:
+      tags: [Public]
+      summary: Profil d'un membre
+      description: |
+        Authentification facultative. 404 si le profil n'est pas visible du lecteur (privé, réservé aux membres
+        pour un anonyme, compte désactivé). Un jeton invalide répond 401.
+      operationId: getPublicProfile
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/username"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Profil.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicProfile"
+
+  /public/users/{username}/collections:
+    get:
+      tags: [Public]
+      summary: Collections visibles d'un membre
+      description: |
+        Authentification facultative. Le profil doit être visible du lecteur (sinon 404) ; seules les collections
+        visibles du lecteur sont listées, la plus grande en premier.
+      operationId: listPublicCollections
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/username"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Collections.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PublicCollection"
+
+  /public/collections/{id}:
+    get:
+      tags: [Public]
+      summary: Collection visible
+      description: |
+        Authentification facultative. 404 si la collection n'est pas visible du lecteur ou si son propriétaire est
+        désactivé. Pour tout autre que le propriétaire, les champs cachés sont retirés (admins compris).
+      operationId: getPublicCollection
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Collection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicCollection"
+
+  /public/collections/{id}/items:
+    get:
+      tags: [Public]
+      summary: Items d'une collection visible
+      description: Mêmes règles que `GET /public/collections/{id}` ; attributs cachés retirés de chaque exemplaire.
+      operationId: listPublicCollectionItems
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          $ref: "#/components/responses/CollectionItemPage"
+
+  /public/collections/{id}/stats:
+    get:
+      tags: [Public]
+      summary: Statistiques d'une collection visible
+      description: Mêmes règles ; un champ caché n'entre dans aucun agrégat.
+      operationId: getPublicCollectionStats
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Statistiques.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectionStats"
+
+  /share:
+    get:
+      tags: [Public]
+      summary: Collection partagée par lien
+      description: |
+        Anonyme, lecture seule. Le lien vaut quelle que soit la visibilité de la collection, jusqu'à sa
+        révocation (404 ensuite). Champs cachés retirés. Le jeton passe en paramètre de requête.
+      operationId: getSharedCollection
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/shareToken"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Collection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicCollection"
+
+  /share/items:
+    get:
+      tags: [Public]
+      summary: Items d'une collection partagée
+      operationId: listSharedCollectionItems
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/shareToken"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          $ref: "#/components/responses/CollectionItemPage"
+
+  /share/stats:
+    get:
+      tags: [Public]
+      summary: Statistiques d'une collection partagée
+      operationId: getSharedCollectionStats
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/shareToken"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Statistiques.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectionStats"
+
+  /collections/{id}/share-links:
+    get:
+      tags: [Collections]
+      summary: Liens de partage actifs d'une collection
+      description: Collection de l'utilisateur connecté (404 pour celle d'un autre).
+      operationId: listShareLinks
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liens actifs, le plus récent en premier.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ShareLink"
+    post:
+      tags: [Collections]
+      summary: Créer un lien de partage
+      operationId: createShareLink
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Lien créé ; le jeton n'est montré qu'ici.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShareLinkCreated"
+
+  /collections/{id}/share-links/{linkId}:
+    delete:
+      tags: [Collections]
+      summary: Révoquer un lien de partage
+      operationId: revokeShareLink
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+        - name: linkId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Lien révoqué.
+
+  # ===========================================================================
+  # Historique du catalogue (P4-3a)
+  # ===========================================================================
+
+  /items/{id}/history:
+    get:
+      tags: [Items]
+      summary: Historique d'un item
+      description: Écritures de l'item et des relations dont il est la source ou la cible, avec leur auteur et leur origine.
+      operationId: getItemHistory
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Historique.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemHistory"
+
+  /items/{id}/revert:
+    post:
+      tags: [Items]
+      summary: Revenir à une version
+      description: |
+        **Admin ou contributeur.** Restaure les attributs d'une version (validés contre le schéma actuel du type, 422
+        sinon) ; l'écriture est historisée avec l'origine `revert`. 400 pour une version de suppression.
+      operationId: revertItem
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RevertRequest"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Item restauré.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+
+  # ===========================================================================
+  # Propositions et modération (P4-3b)
+  # ===========================================================================
+
+  /items/duplicates:
+    post:
+      tags: [Items]
+      summary: Chercher des doublons
+      description: Items du même type qui portent déjà une valeur d'un champ `x-identifier` (ISBN, EAN, QID…) de `attributes`.
+      operationId: findDuplicates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DuplicateCheck"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Doublons (vide s'il n'y en a pas).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Duplicate"
+
+  /proposals:
+    get:
+      tags: [Proposals]
+      summary: Lister des propositions
+      description: |
+        `scope=mine` (défaut) : les miennes, brouillons compris. `scope=review` (admins, contributeurs) : les
+        propositions soumises des autres (jamais les brouillons), les plus anciennes en attente d'abord.
+      operationId: listProposals
+      parameters:
+        - name: scope
+          in: query
+          schema: { type: string, enum: [mine, review], default: mine }
+        - name: status
+          in: query
+          schema: { type: string, enum: [draft, pending, changes_requested, accepted, rejected, withdrawn] }
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Propositions.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Proposal"
+    post:
+      tags: [Proposals]
+      summary: Créer une proposition
+      description: |
+        Brouillon, ou soumise si `submit`. Une charge `catalog` ne contient que des items et des relations
+        (422 `proposal_meta_types` sinon) ; elle est vérifiée par une simulation d'import à la soumission
+        (422 `proposal_invalid` avec le rapport). Quota de propositions en attente (409 `proposal_quota`).
+      operationId: createProposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProposalInput"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Proposition créée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proposal"
+
+  /proposals/quota:
+    get:
+      tags: [Proposals]
+      summary: Mon quota de propositions
+      description: |
+        Propositions en attente (en attente ou à corriger) et limite : `PROPOSAL_QUOTA` + 1 par proposition
+        acceptée, plafonnée ; créations des dernières 24 h et leur limite. `unlimited` pour un admin ou un
+        contributeur (aucun quota).
+      operationId: getProposalQuota
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Quota.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposalQuota"
+
+  /proposals/review-count:
+    get:
+      tags: [Proposals]
+      summary: Nombre de propositions à relire
+      description: Admins et contributeurs (pastille) ; propositions des autres en attente.
+      operationId: countProposalsToReview
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Nombre.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count]
+                properties:
+                  count: { type: integer }
+
+  /proposals/{id}:
+    get:
+      tags: [Proposals]
+      summary: Lire une proposition
+      description: Auteur, ou modérateur (sauf brouillon). 404 sinon.
+      operationId: getProposal
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Proposition.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proposal"
+    put:
+      tags: [Proposals]
+      summary: Modifier une proposition
+      description: Auteur, en brouillon ou à corriger (409 `proposal_state` sinon).
+      operationId: updateProposal
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProposalInput"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Proposition modifiée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proposal"
+
+  /proposals/{id}/submit:
+    post:
+      tags: [Proposals]
+      summary: Soumettre une proposition
+      description: Auteur, depuis brouillon ou à corriger ; l'instantané de départ est (re)pris à ce moment.
+      operationId: submitProposal
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Proposition soumise.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proposal"
+
+  /proposals/{id}/withdraw:
+    post:
+      tags: [Proposals]
+      summary: Retirer une proposition
+      description: Auteur, avant décision.
+      operationId: withdrawProposal
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Proposition retirée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proposal"
+
+  /proposals/{id}/conflicts:
+    get:
+      tags: [Proposals]
+      summary: Conflits d'une proposition
+      description: Modérateurs ; entités changées depuis la soumission (vide sinon).
+      operationId: getProposalConflicts
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Conflits.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProposalConflict"
+
+  /proposals/{id}/accept:
+    post:
+      tags: [Proposals]
+      summary: Accepter une proposition
+      description: |
+        Modérateurs (admins, contributeurs), jamais sur leurs propres propositions (403 `own_proposal`), en attente
+        seulement. `catalog` : application tout ou rien par l'import, historisée avec l'origine `proposal` et
+        l'auteur de la proposition ; 409 `proposal_conflict` (avec les conflits) si une entité a changé et que
+        `conflicts_resolved` n'est pas vrai.
+      operationId: acceptProposal
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProposalAccept"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Proposition acceptée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proposal"
+
+  /proposals/{id}/reject:
+    post:
+      tags: [Proposals]
+      summary: Refuser une proposition
+      description: Modérateurs, en attente seulement ; commentaire obligatoire.
+      operationId: rejectProposal
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProposalDecision"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Proposition refusée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proposal"
+
+  /proposals/{id}/request-changes:
+    post:
+      tags: [Proposals]
+      summary: Demander des modifications
+      description: Modérateurs, en attente seulement ; la proposition revient à l'auteur (`changes_requested`).
+      operationId: requestProposalChanges
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProposalDecision"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Modifications demandées.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proposal"
+
+  /proposals/{id}/comments:
+    get:
+      tags: [Proposals]
+      summary: Discussion d'une proposition
+      operationId: listProposalComments
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Commentaires, du plus ancien au plus récent.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProposalComment"
+    post:
+      tags: [Proposals]
+      summary: Commenter une proposition
+      description: Auteur ou modérateur, tant que la proposition n'est pas acceptée, refusée ni retirée.
+      operationId: createProposalComment
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { type: string, minLength: 1, maxLength: 10000 }
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Commentaire ajouté.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposalComment"
+
+  # ===========================================================================
+  # Notifications (P4-3c)
+  # ===========================================================================
+
+  /me/notifications:
+    get:
+      tags: [Users]
+      summary: Mes notifications
+      description: Les plus récentes d'abord ; `unread` compte toutes les non-lues.
+      operationId: listNotifications
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Notifications.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, total, page, per_page, unread]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Notification"
+                  total: { type: integer }
+                  page: { type: integer }
+                  per_page: { type: integer }
+                  unread: { type: integer }
+
+  /me/notifications/read:
+    post:
+      tags: [Users]
+      summary: Marquer des notifications comme lues
+      description: "`ids` absent ou vide : toutes mes notifications."
+      operationId: markNotificationsRead
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Marquées comme lues.

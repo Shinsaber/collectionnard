@@ -7,7 +7,16 @@ import {
 } from "./tokens";
 import type {
   LoginRequest,
+  Invitation,
+  InvitationCheck,
+  InvitationCreate,
+  InvitationCreated,
   LoginResponse,
+  PasswordChange,
+  ProfileUpdate,
+  RegisterRequest,
+  ResetLink,
+  UserUpdate,
   RefreshRequest,
   User,
   ItemType,
@@ -38,6 +47,21 @@ import type {
   CollectionItemUpdate,
   GraphResponse,
   Stats,
+  MeStats,
+  NotificationPage,
+  Duplicate,
+  Proposal,
+  ProposalComment,
+  ProposalConflict,
+  ProposalInput,
+  ProposalPayload,
+  ProposalQuota,
+  ItemHistory,
+  CollectionStats,
+  PublicCollection,
+  PublicProfile,
+  ShareLink,
+  ShareLinkCreated,
   Tag,
   PaginatedResponse,
   PaginationParams,
@@ -62,10 +86,21 @@ const http = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+// Lectures publiques (P4-2) : servies aussi sans compte. Un jeton refusé et non
+// renouvelable ne renvoie pas vers /login : la requête est rejouée en anonyme.
+declare module "axios" {
+  interface AxiosRequestConfig {
+    /** Lecture publique : rejouée sans jeton si la session ne se renouvelle pas. */
+    publicRead?: boolean;
+    _anonymous?: boolean;
+  }
+}
+const publicRead = { publicRead: true };
+
 // Inject the access token
 http.interceptors.request.use((config) => {
   const token = getAccessToken();
-  if (token) {
+  if (token && !config._anonymous) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
@@ -130,6 +165,12 @@ http.interceptors.response.use(
       refreshing = null;
     });
     const newToken = await refreshing;
+    if (!newToken && config.publicRead) {
+      clearTokens();
+      config._anonymous = true;
+      delete config.headers.Authorization;
+      return http(config);
+    }
     if (!newToken) {
       redirectToLogin();
       return Promise.reject(error);
@@ -138,6 +179,9 @@ http.interceptors.response.use(
     return http(config);
   },
 );
+
+/** Instance HTTP, exposée aux seuls tests (adaptateur simulé) : les vues passent par les `*Api`. */
+export const httpForTests = http;
 
 // ── API Error Helper ──────────────────────────────────────────────────
 /**
@@ -197,6 +241,42 @@ export const authApi = {
       refresh_token: refreshToken,
     } satisfies RefreshRequest),
   me: () => http.get<User>("/auth/me").then((r) => r.data),
+  /** Invitation encore utilisable ? (public) */
+  checkInvitation: (token: string) =>
+    http
+      .get<InvitationCheck>("/auth/invitation", { params: { token } })
+      .then((r) => r.data),
+  /** Crée le compte d'une invitation et connecte (public). */
+  register: (data: RegisterRequest) =>
+    http.post<LoginResponse>("/auth/register", data).then((r) => r.data),
+  /** Nouveau mot de passe depuis un lien de réinitialisation (public). */
+  resetPassword: (token: string, password: string) =>
+    http.post<void>("/auth/reset-password", { token, password }),
+};
+
+// ── Mon compte, invitations, comptes (P4-0) ──────────────────────────
+export const meApi = {
+  updateProfile: (data: ProfileUpdate) =>
+    http.put<User>("/me/profile", data).then((r) => r.data),
+  /** Révoque toutes les sessions ; renvoie les nouveaux jetons de la session courante. */
+  changePassword: (data: PasswordChange) =>
+    http.put<LoginResponse>("/me/password", data).then((r) => r.data),
+};
+
+export const invitationApi = {
+  list: () => http.get<Invitation[]>("/invitations").then((r) => r.data),
+  create: (data: InvitationCreate) =>
+    http.post<InvitationCreated>("/invitations", data).then((r) => r.data),
+  delete: (id: string) => http.delete(`/invitations/${id}`),
+};
+
+export const userApi = {
+  list: (params?: PaginationParams) =>
+    http.get<PaginatedResponse<User>>("/users", { params }).then((r) => r.data),
+  update: (id: string, data: UserUpdate) =>
+    http.put<User>(`/users/${id}`, data).then((r) => r.data),
+  resetLink: (id: string) =>
+    http.post<ResetLink>(`/users/${id}/reset-link`).then((r) => r.data),
 };
 
 // ── Item Types ────────────────────────────────────────────────────────
@@ -252,7 +332,91 @@ export const collectionTypeApi = {
 };
 
 // ── Items ─────────────────────────────────────────────────────────────
+/** Notifications dans l'application (P4-3c). */
+export const notificationApi = {
+  list: (params?: PaginationParams) =>
+    http
+      .get<NotificationPage>("/me/notifications", { params })
+      .then((r) => r.data),
+  /** `ids` absent : toutes. */
+  read: (ids?: string[]) =>
+    http.post("/me/notifications/read", ids ? { ids } : {}),
+};
+
+/** Propositions et modération (P4-3b). */
+export const proposalApi = {
+  list: (
+    params: PaginationParams & { scope?: "mine" | "review"; status?: string },
+  ) =>
+    http
+      .get<PaginatedResponse<Proposal>>("/proposals", { params })
+      .then((r) => r.data),
+  create: (data: ProposalInput) =>
+    http.post<Proposal>("/proposals", data).then((r) => r.data),
+  get: (id: string) =>
+    http.get<Proposal>(`/proposals/${id}`).then((r) => r.data),
+  update: (id: string, data: ProposalInput) =>
+    http.put<Proposal>(`/proposals/${id}`, data).then((r) => r.data),
+  submit: (id: string) =>
+    http.post<Proposal>(`/proposals/${id}/submit`).then((r) => r.data),
+  withdraw: (id: string) =>
+    http.post<Proposal>(`/proposals/${id}/withdraw`).then((r) => r.data),
+  conflicts: (id: string) =>
+    http
+      .get<ProposalConflict[]>(`/proposals/${id}/conflicts`)
+      .then((r) => r.data),
+  accept: (
+    id: string,
+    body: {
+      payload?: ProposalPayload;
+      conflicts_resolved?: boolean;
+      comment?: string;
+    } = {},
+  ) => http.post<Proposal>(`/proposals/${id}/accept`, body).then((r) => r.data),
+  reject: (id: string, comment: string) =>
+    http
+      .post<Proposal>(`/proposals/${id}/reject`, { comment })
+      .then((r) => r.data),
+  requestChanges: (id: string, comment: string) =>
+    http
+      .post<Proposal>(`/proposals/${id}/request-changes`, { comment })
+      .then((r) => r.data),
+  comments: (id: string) =>
+    http
+      .get<ProposalComment[]>(`/proposals/${id}/comments`)
+      .then((r) => r.data),
+  comment: (id: string, body: string) =>
+    http
+      .post<ProposalComment>(`/proposals/${id}/comments`, { body })
+      .then((r) => r.data),
+  /** Mon quota : en attente / limite, créations des 24 dernières heures. */
+  quota: () => http.get<ProposalQuota>("/proposals/quota").then((r) => r.data),
+  reviewCount: () =>
+    http
+      .get<{ count: number }>("/proposals/review-count")
+      .then((r) => r.data.count),
+};
+
 export const itemApi = {
+  /** Items du même type portant déjà un identifiant (`x-identifier`) des attributs (P4-3b). */
+  duplicates: (
+    itemTypeId: string,
+    attributes: Record<string, unknown>,
+    excludeId?: string,
+  ) =>
+    http
+      .post<Duplicate[]>("/items/duplicates", {
+        item_type_id: itemTypeId,
+        attributes,
+        exclude_id: excludeId,
+      })
+      .then((r) => r.data),
+  /** Historique de l'item et de ses relations (P4-3a). */
+  history: (id: string) =>
+    http.get<ItemHistory>(`/items/${id}/history`).then((r) => r.data),
+  /** Retour à une version (admins, contributeurs). */
+  revert: (id: string, version: number) =>
+    http.post<Item>(`/items/${id}/revert`, { version }).then((r) => r.data),
   /** Recherche avancée : `attr.<clé>[.<op>]`, `related_to`, `sort=attr.<clé>` (voir lib/itemSearch). */
   list: (params?: ItemListParams) =>
     http
@@ -347,8 +511,93 @@ export const tagApi = {
 };
 
 // ── Stats ─────────────────────────────────────────────────────────────
+/** Liens de partage d'une de mes collections (P4-2). */
+export const shareLinkApi = {
+  list: (collectionId: string) =>
+    http
+      .get<ShareLink[]>(`/collections/${collectionId}/share-links`)
+      .then((r) => r.data),
+  create: (collectionId: string) =>
+    http
+      .post<ShareLinkCreated>(`/collections/${collectionId}/share-links`)
+      .then((r) => r.data),
+  revoke: (collectionId: string, linkId: string) =>
+    http.delete(`/collections/${collectionId}/share-links/${linkId}`),
+};
+
+/** Lectures publiques (P4-2) : champs cachés déjà retirés par le serveur. */
+export const publicApi = {
+  profile: (username: string) =>
+    http
+      .get<PublicProfile>(
+        `/public/users/${encodeURIComponent(username)}`,
+        publicRead,
+      )
+      .then((r) => r.data),
+  collections: (username: string) =>
+    http
+      .get<PublicCollection[]>(
+        `/public/users/${encodeURIComponent(username)}/collections`,
+        publicRead,
+      )
+      .then((r) => r.data),
+  collection: (id: string) =>
+    http
+      .get<PublicCollection>(`/public/collections/${id}`, publicRead)
+      .then((r) => r.data),
+  items: (id: string, params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<CollectionItem>>(
+        `/public/collections/${id}/items`,
+        {
+          ...publicRead,
+          params,
+        },
+      )
+      .then((r) => r.data),
+  stats: (id: string) =>
+    http
+      .get<CollectionStats>(`/public/collections/${id}/stats`, publicRead)
+      .then((r) => r.data),
+};
+
+/** Collection ouverte par un lien de partage (jeton en paramètre de requête). */
+export const sharedApi = {
+  collection: (token: string) =>
+    http
+      .get<PublicCollection>("/share", { ...publicRead, params: { token } })
+      .then((r) => r.data),
+  items: (token: string, params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<CollectionItem>>("/share/items", {
+        ...publicRead,
+        params: { ...params, token },
+      })
+      .then((r) => r.data),
+  stats: (token: string) =>
+    http
+      .get<CollectionStats>("/share/stats", {
+        ...publicRead,
+        params: { token },
+      })
+      .then((r) => r.data),
+};
+
+/** Annuaire des membres (profils visibles des membres ou publics). */
+export const memberApi = {
+  list: (params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<PublicProfile>>("/members", { params })
+      .then((r) => r.data),
+};
+
 export const statsApi = {
   get: () => http.get<Stats>("/stats").then((r) => r.data),
+  /** Synthèse de mes collections (P4-1). */
+  mine: () => http.get<MeStats>("/me/stats").then((r) => r.data),
+  /** Statistiques d'une de mes collections (P4-1). */
+  collection: (id: string) =>
+    http.get<CollectionStats>(`/collections/${id}/stats`).then((r) => r.data),
 };
 
 // ── Domaines installables ───────────────────────────────────────────────
@@ -518,5 +767,10 @@ export const externalApi = {
         params: { dry_run: dryRun },
         validateStatus: (s) => s === 200 || s === 422,
       })
+      .then((r) => r.data),
+  /** Membre (P4-3b) : la sélection devient une proposition soumise. */
+  propose: (connector: string, req: ExternalImportRequest) =>
+    http
+      .post<Proposal>(`${external(connector)}/propose`, req)
       .then((r) => r.data),
 };

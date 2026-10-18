@@ -250,3 +250,94 @@ itTop("conserve les contrôles d'envoi des catégories d'images", async () => {
   });
   expect((out.properties as Props).images!["x-image-categories"]).toEqual(cats);
 });
+
+// Composition (x-completeness) : case proposée aux seuls types de relation, valeur conservée.
+describe("SchemaBuilder — x-completeness", () => {
+  it("coche, décoche et conserve la composition d'une relation", async () => {
+    const w = mount(SchemaBuilder, {
+      props: {
+        modelValue: { type: "object", properties: {} },
+        features: { completeness: true },
+      },
+      global: { plugins: [ElementPlus] },
+    });
+    await w.vm.$nextTick();
+    const last = () => {
+      const e = w.emitted("update:modelValue")!;
+      return e[e.length - 1]![0] as Schema;
+    };
+    expect(last()["x-completeness"]).toBeUndefined();
+    await w.find('[data-test="x-completeness"] input').setValue(true);
+    expect(last()["x-completeness"]).toBe(true);
+    await w.find('[data-test="x-completeness"] input').setValue(false);
+    expect(last()["x-completeness"]).toBeUndefined();
+  });
+
+  it("cache la case hors des relations sans perdre une valeur existante", async () => {
+    const w = mount(SchemaBuilder, {
+      props: { modelValue: { type: "object", "x-completeness": true } },
+      global: { plugins: [ElementPlus] },
+    });
+    await w.vm.$nextTick();
+    await w.vm.$nextTick();
+    expect(w.find('[data-test="x-completeness"]').exists()).toBe(false);
+    const e = w.emitted("update:modelValue")!;
+    expect((e[e.length - 1]![0] as Schema)["x-completeness"]).toBe(true);
+  });
+});
+
+// Champ privé (x-private) : case proposée aux seuls types de collection, valeur conservée.
+describe("SchemaBuilder — x-private", () => {
+  it("marque et démarque un champ privé", async () => {
+    const w = mount(SchemaBuilder, {
+      props: {
+        modelValue: {
+          type: "object",
+          properties: { purchase_price: { type: "number", "x-private": true } },
+        },
+        features: { private: true },
+      },
+      global: { plugins: [ElementPlus] },
+    });
+    await w.vm.$nextTick();
+    const last = () => {
+      const e = w.emitted("update:modelValue")!;
+      const s = e[e.length - 1]![0] as Schema;
+      return (s.properties as Props).purchase_price!;
+    };
+    expect(last()["x-private"]).toBe(true);
+    await w.find("button").trigger("click"); // déplie le champ
+    await w.find('[data-test="x-private"] input').setValue(false);
+    expect(last()["x-private"]).toBeUndefined();
+  });
+
+  it("conserve x-private même sans la case (autres sortes de type)", async () => {
+    const out = await roundTrip({
+      type: "object",
+      properties: { price: { type: "number", "x-private": true } },
+    });
+    expect(((out.properties as Props).price as Schema)["x-private"]).toBe(true);
+  });
+});
+
+describe("SchemaBuilder — x-identifier", () => {
+  it("conserve x-identifier, y compris dans un objet (external_ids)", async () => {
+    const out = await roundTrip({
+      type: "object",
+      properties: {
+        isbn: { type: "string", "x-identifier": true },
+        external_ids: {
+          type: "object",
+          properties: { wikidata: { type: "string", "x-identifier": true } },
+        },
+      },
+    });
+    const props = out.properties as Props;
+    expect((props.isbn as Schema)["x-identifier"]).toBe(true);
+    expect(
+      ((props.external_ids as Schema).properties as Props).wikidata![
+        "x-identifier"
+      ],
+    ).toBe(true);
+  });
+});

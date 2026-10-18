@@ -101,8 +101,13 @@ func (s *PgStore) CreateRelation(ctx context.Context, in model.ItemRelationCreat
 		attrs = json.RawMessage(`{}`)
 	}
 
+	tx, err := s.begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
 	var id uuid.UUID
-	err := s.pool.QueryRow(ctx,
+	err = tx.QueryRow(ctx,
 		`INSERT INTO item_relations (relation_type_id, source_item_id, target_item_id, attributes)
 		 VALUES ($1, $2, $3, $4) RETURNING id`,
 		in.RelationTypeID, in.SourceItemID, in.TargetItemID, attrs,
@@ -116,11 +121,19 @@ func (s *PgStore) CreateRelation(ctx context.Context, in model.ItemRelationCreat
 		}
 		return nil, err
 	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
 	return s.GetRelation(ctx, id)
 }
 
 func (s *PgStore) UpdateRelation(ctx context.Context, id uuid.UUID, in model.ItemRelationUpdate) (*model.ItemRelation, error) {
-	ct, err := s.pool.Exec(ctx,
+	tx, err := s.begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	ct, err := tx.Exec(ctx,
 		`UPDATE item_relations SET attributes = $2 WHERE id = $1`,
 		id, in.Attributes,
 	)
@@ -130,16 +143,24 @@ func (s *PgStore) UpdateRelation(ctx context.Context, id uuid.UUID, in model.Ite
 	if ct.RowsAffected() == 0 {
 		return nil, ErrNotFound
 	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
 	return s.GetRelation(ctx, id)
 }
 
 func (s *PgStore) DeleteRelation(ctx context.Context, id uuid.UUID) error {
-	ct, err := s.pool.Exec(ctx, `DELETE FROM item_relations WHERE id = $1`, id)
+	tx, err := s.begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	ct, err := tx.Exec(ctx, `DELETE FROM item_relations WHERE id = $1`, id)
 	if err != nil {
 		return err
 	}
 	if ct.RowsAffected() == 0 {
 		return ErrNotFound
 	}
-	return nil
+	return tx.Commit(ctx)
 }

@@ -1,5 +1,6 @@
 // Catalogue français — langue de référence : sa forme (`Messages`) est imposée aux autres
 // langues par le compilateur. Un fichier par espace de noms (`t("items.title")`…).
+import account from "./account";
 import admin from "./admin";
 import auth from "./auth";
 import collections from "./collections";
@@ -7,12 +8,18 @@ import common from "./common";
 import dashboard from "./dashboard";
 import errors from "./errors";
 import graph from "./graph";
+import history from "./history";
 import items from "./items";
 import layout from "./layout";
+import notifications from "./notifications";
 import offline from "./offline";
+import proposals from "./proposals";
 import schema from "./schema";
+import sharing from "./sharing";
+import stats from "./stats";
 
 const fr = {
+  account,
   admin,
   auth,
   collections,
@@ -20,10 +27,15 @@ const fr = {
   dashboard,
   errors,
   graph,
+  history,
   items,
   layout,
+  notifications,
   offline,
+  proposals,
   schema,
+  sharing,
+  stats,
 };
 
 export type Messages = typeof fr;

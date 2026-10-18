@@ -6,6 +6,8 @@ import {
 import { useAuthStore } from "@/stores/auth";
 import { useOfflineStore } from "@/stores/offline";
 
+const PublicLayout = () => import("@/components/layout/PublicLayout.vue");
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -14,6 +16,60 @@ const router = createRouter({
       name: "login",
       component: () => import("@/views/LoginView.vue"),
       meta: { public: true },
+    },
+    {
+      path: "/register",
+      name: "register",
+      component: () => import("@/views/RegisterView.vue"),
+      meta: { public: true },
+    },
+    {
+      path: "/reset-password",
+      name: "reset-password",
+      component: () => import("@/views/ResetPasswordView.vue"),
+      meta: { public: true },
+    },
+    // Pages publiques (P4-2) : sans compte, hors de la coquille de l'application.
+    {
+      path: "/u/:username",
+      component: PublicLayout,
+      meta: { public: true },
+      children: [
+        {
+          path: "",
+          name: "public-profile",
+          component: () => import("@/views/public/PublicProfileView.vue"),
+          props: true,
+          meta: { public: true },
+        },
+      ],
+    },
+    {
+      path: "/c/:id",
+      component: PublicLayout,
+      meta: { public: true },
+      children: [
+        {
+          path: "",
+          name: "public-collection",
+          component: () => import("@/views/public/PublicCollectionView.vue"),
+          props: true,
+          meta: { public: true },
+        },
+      ],
+    },
+    {
+      path: "/share",
+      component: PublicLayout,
+      meta: { public: true },
+      children: [
+        {
+          path: "",
+          name: "shared-collection",
+          component: () => import("@/views/public/SharedCollectionView.vue"),
+          meta: { public: true },
+        },
+      ],
     },
     {
       path: "/",
@@ -96,6 +152,38 @@ const router = createRouter({
           component: () => import("@/views/OfflineView.vue"),
         },
         {
+          path: "proposals",
+          name: "proposals",
+          component: () => import("@/views/ProposalsView.vue"),
+        },
+        {
+          path: "proposals/:id",
+          name: "proposal",
+          component: () => import("@/views/ProposalDetailView.vue"),
+          props: true,
+        },
+        {
+          path: "members",
+          name: "members",
+          component: () => import("@/views/MembersView.vue"),
+        },
+        {
+          path: "stats",
+          name: "stats",
+          component: () => import("@/views/StatsView.vue"),
+        },
+        {
+          path: "profile",
+          name: "profile",
+          component: () => import("@/views/ProfileView.vue"),
+        },
+        {
+          path: "admin/users",
+          name: "admin-users",
+          component: () => import("@/views/admin/UsersView.vue"),
+          meta: { admin: true },
+        },
+        {
           path: "admin/domains",
           name: "domains",
           component: () => import("@/views/admin/DomainsView.vue"),
@@ -110,8 +198,8 @@ const router = createRouter({
         {
           path: "admin/external-import",
           name: "external-import",
+          // Membres aussi (P4-3b) : ils proposent la sélection au lieu de l'importer.
           component: () => import("@/views/admin/ExternalImportView.vue"),
-          meta: { admin: true },
         },
       ],
     },
@@ -136,6 +224,10 @@ router.beforeEach(async (to) => {
   // Serveur injoignable : seule la copie hors ligne des collections est consultable (lot E5c).
   if (!useOfflineStore().reachable && to.name !== "offline") {
     return { name: "offline" };
+  }
+
+  if (to.meta.catalog && !auth.canEditCatalog) {
+    return { name: "dashboard" };
   }
 
   if (to.meta.admin && !auth.isAdmin) {

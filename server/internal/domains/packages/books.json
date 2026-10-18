@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "books",
-  "package_version": 4,
+  "package_version": 6,
   "title": {
     "fr": "Livres",
     "en": "Books"
@@ -161,11 +161,13 @@
             "properties": {
               "bnf_ark": {
                 "type": "string",
-                "pattern": "^ark:/12148/[a-z0-9]+$"
+                "pattern": "^ark:/12148/[a-z0-9]+$",
+                "x-identifier": true
               },
               "wikidata": {
                 "type": "string",
-                "pattern": "^Q[1-9][0-9]*$"
+                "pattern": "^Q[1-9][0-9]*$",
+                "x-identifier": true
               }
             },
             "additionalProperties": false
@@ -333,11 +335,13 @@
             "properties": {
               "bnf_ark": {
                 "type": "string",
-                "pattern": "^ark:/12148/[a-z0-9]+$"
+                "pattern": "^ark:/12148/[a-z0-9]+$",
+                "x-identifier": true
               },
               "wikidata": {
                 "type": "string",
-                "pattern": "^Q[1-9][0-9]*$"
+                "pattern": "^Q[1-9][0-9]*$",
+                "x-identifier": true
               }
             },
             "additionalProperties": false
@@ -621,11 +625,13 @@
             "properties": {
               "bnf_ark": {
                 "type": "string",
-                "pattern": "^ark:/12148/[a-z0-9]+$"
+                "pattern": "^ark:/12148/[a-z0-9]+$",
+                "x-identifier": true
               },
               "wikidata": {
                 "type": "string",
-                "pattern": "^Q[1-9][0-9]*$"
+                "pattern": "^Q[1-9][0-9]*$",
+                "x-identifier": true
               }
             },
             "additionalProperties": false
@@ -883,11 +889,13 @@
             "properties": {
               "bnf_ark": {
                 "type": "string",
-                "pattern": "^ark:/12148/[a-z0-9]+$"
+                "pattern": "^ark:/12148/[a-z0-9]+$",
+                "x-identifier": true
               },
               "wikidata": {
                 "type": "string",
-                "pattern": "^Q[1-9][0-9]*$"
+                "pattern": "^Q[1-9][0-9]*$",
+                "x-identifier": true
               }
             },
             "additionalProperties": false
@@ -1183,11 +1191,13 @@
             "properties": {
               "bnf_ark": {
                 "type": "string",
-                "pattern": "^ark:/12148/[a-z0-9]+$"
+                "pattern": "^ark:/12148/[a-z0-9]+$",
+                "x-identifier": true
               },
               "wikidata": {
                 "type": "string",
-                "pattern": "^Q[1-9][0-9]*$"
+                "pattern": "^Q[1-9][0-9]*$",
+                "x-identifier": true
               }
             },
             "additionalProperties": false
@@ -1199,7 +1209,8 @@
           "isbn": {
             "type": "string",
             "pattern": "^97[89][0-9]{10}$",
-            "description": "ISBN-13, chiffres seuls"
+            "description": "ISBN-13, chiffres seuls",
+            "x-identifier": true
           },
           "publication_date": {
             "type": "string",
@@ -1309,7 +1320,8 @@
           "isbn": {
             "type": "string",
             "pattern": "^97[89][0-9]{10}$",
-            "description": "ISBN-13, chiffres seuls"
+            "description": "ISBN-13, chiffres seuls",
+            "x-identifier": true
           },
           "title": {
             "type": "object",
@@ -1408,11 +1420,13 @@
             "properties": {
               "bnf_ark": {
                 "type": "string",
-                "pattern": "^ark:/12148/[a-z0-9]+$"
+                "pattern": "^ark:/12148/[a-z0-9]+$",
+                "x-identifier": true
               },
               "wikidata": {
                 "type": "string",
-                "pattern": "^Q[1-9][0-9]*$"
+                "pattern": "^Q[1-9][0-9]*$",
+                "x-identifier": true
               }
             },
             "additionalProperties": false
@@ -1665,11 +1679,13 @@
             "properties": {
               "bnf_ark": {
                 "type": "string",
-                "pattern": "^ark:/12148/[a-z0-9]+$"
+                "pattern": "^ark:/12148/[a-z0-9]+$",
+                "x-identifier": true
               },
               "wikidata": {
                 "type": "string",
-                "pattern": "^Q[1-9][0-9]*$"
+                "pattern": "^Q[1-9][0-9]*$",
+                "x-identifier": true
               }
             },
             "additionalProperties": false
@@ -1786,7 +1802,8 @@
             "minimum": 1
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "x-completeness": true
       },
       "source_item_type_ids": [
         "b0000000-0000-0000-0000-000000000010",
@@ -1942,7 +1959,8 @@
             "minimum": 0
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "x-completeness": true
       },
       "source_item_type_ids": [
         "b0000000-0000-0000-0000-000000000014"

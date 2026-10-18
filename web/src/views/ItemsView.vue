@@ -13,9 +13,13 @@
           :disabled="!selectedType"
           :title="selectedType ? undefined : t('items.export.chooseTypeFirst')"
         />
-        <ElButton v-if="auth.isAdmin" type="primary" @click="openCreate">
+        <ElButton type="primary" @click="openCreate">
           <i class="pi pi-plus mr-2" aria-hidden="true"></i>
-          {{ t("items.list.newItem") }}
+          {{
+            auth.canEditCatalog
+              ? t("items.list.newItem")
+              : t("proposals.proposeItem")
+          }}
         </ElButton>
       </template>
     </PageHeader>
@@ -116,7 +120,8 @@
         <ItemList
           :items="pag.data.value"
           :loading="pag.loading.value"
-          :can-edit="auth.isAdmin"
+          :can-edit="auth.canEditCatalog"
+          :can-delete="auth.isAdmin"
           :empty-text="
             hasCriteria ? t('items.list.empty') : t('items.list.emptyCatalog')
           "
@@ -186,6 +191,7 @@
       v-model:visible="dialogVisible"
       :item="editing"
       :item-types="itemTypes"
+      :propose="!auth.canEditCatalog"
       @saved="load"
     />
   </div>

@@ -33,6 +33,7 @@ des messages techniques en anglais. Ajouter une langue : `Collectionnard.md` § 
 | [web/CLAUDE.md](web/CLAUDE.md)         | Conventions frontend Vue                                         |
 | [docs/audit/](docs/audit/BRIEF.md)     | Brief et résultats de l'audit approfondi (`/audit`)              |
 | [docs/sources-externes.md](docs/sources-externes.md) | Bases ouvertes BD / Manga : licences, accès (Wikidata, BnF retenues), constats du connecteur |
+| [social.md](social.md)                 | Phase 4 (social) : décisions, modèle et API visés — comptes et invitations, statistiques, visibilité, contributions |
 
 ## Modèle en une table
 
@@ -60,7 +61,10 @@ des messages techniques en anglais. Ajouter une langue : `Collectionnard.md` § 
 `web/src/lib/schema.ts`, à garder alignés), `x-order` (ordre des champs), `x-labels` (`{fr:{…}, en:{…}}`),
 `x-widget` (`image-gallery`, `i18n-text`, `links` : tableau de `{label?, url}`, liens cliquables sur la fiche), `x-image-categories` (`{poster:{ratio:"2/3", tolerance?, min_width?, min_height?, strict?}}`, contrôles à l'envoi dans `ImageGalleryField` via `checkImage`), `x-title` / `x-description`
 (nom et description affichés du méta-type par langue, repli sur `name` / `description`), `x-enum-labels` (propriété :
-`{fr:{tv:"Télévision"}}`). Pas de widget
+`{fr:{tv:"Télévision"}}`), `x-private` (propriété d'un CollectionType : caché aux autres lecteurs, retiré par le serveur — Go `internal/privacy`),
+`x-identifier` (propriété d'un ItemType : ISBN, EAN, QID… — doublons signalés, Go `internal/identifier`),
+`x-completeness` (racine d'un RelationType : relation de composition, compte « 30 tomes
+sur 42 » dans les statistiques — Go `internal/collstats` et `store/stats.go`, TS `isCompleteness`). Pas de widget
 `slider` : le curseur est automatique quand `minimum` **et** `maximum` sont définis.
 Toute nouvelle extension doit être gérée dans `DynamicForm.vue` **et** `SchemaBuilder.vue` (qui conserve
 les mots-clés qu'il ne connaît pas), lue via `lib/schema.ts`, et documentée dans le README et
@@ -69,7 +73,7 @@ les mots-clés qu'il ne connaît pas), lue via `lib/schema.ts`, et documentée d
 ## Stack
 
 Go 1.27 (chi 5.3, pgx 5.11, golang-jwt 5.3, santhosh-tekuri/jsonschema v5) · PostgreSQL 16 ·
-Vue 3.5 + TypeScript 6 · Element Plus 2 (MIT) + Tailwind 4 (plugin Vite, configuration dans `main.css`) · Cytoscape.js · Vite 8 · Docker Compose.
+Vue 3.5 + TypeScript 6 · Element Plus 2 (MIT) + Tailwind 4 (plugin Vite, configuration dans `main.css`) · Cytoscape.js · Apache ECharts 6 · Vite 8 · Docker Compose.
 
 ## Environnement : Nix
 
@@ -124,7 +128,7 @@ docker compose down -v && docker compose up --build   # repart d'une base vide (
 ```
 
 Comptes de dev (seed) : `admin` / `admin` (rôle admin), `shinsaber` / `shinsaber` (rôle user).
-Nouveau compte : `go run . create-user <nom> <email> [--admin]` (mot de passe demandé).
+Nouveau compte : `go run . create-user <nom> <email> [--admin|--contributor]` (mot de passe demandé).
 Production : images publiées par la CI sur ghcr.io (job `images`, tags `v*` et `main`), `docker-compose.prod.yml`
 (sans seed) — voir README « Mise en production ».
 
@@ -160,6 +164,8 @@ Phase 1 (MVP) : terminée. Phase 1.5 (remise à niveau issue de l'audit, branche
 lots 0 à 11 livrés, voir `Collectionnard.md` §8 et `docs/audit/03-feuille-de-route.md`) : terminée, fusionnée dans `main`.
 Phase 2 livrée : multilingue, recherche avancée (lot 14), import/export (lot 12), refonte graphique responsive
 (identité « Étiquette », lots R0–R8, branche `refonte-graphique`), domaine BD / Manga (lot 13,
-`les.collection.md`, sources Wikidata / BnF). Phase 3 (récupération automatique externe) en cours, branche `phase3-sources` : domaines installables (P3-0), connecteurs
+`les.collection.md`, sources Wikidata / BnF). Phase 3 (récupération automatique externe) terminée, branche `phase3-sources` fusionnée dans `main` : domaines installables (P3-0), connecteurs
 BD / Manga, Romans, Musique, Films, Séries et Jeux vidéo (`server/internal/external/connectors`, profils `bd-manga` / `novels` / `music` / `films` / `series` / `games`, clients `wikidata`, `bnf`, `musicbrainz`, `tvmaze`, page admin « Sources externes ») ;
-domaines P3-0 à P3-7 (jeux vidéo, V1 française) livrés, non poussés. Phase 4 : social.
+domaines P3-0 à P3-7 (jeux vidéo, V1 française) livrés et fusionnés dans `main`. Phase 4 (social) raffinée, branche `phase4-social` : lots P4-0 à P4-3 dans `social.md` ; P4-0 (comptes, invitations,
+profils), P4-1 (statistiques personnelles), P4-2 (visibilité et partage) et P4-3 (historique, contributeur, propositions, modération,
+notifications) livrés : Phase 4 terminée hors échanges (reportés).

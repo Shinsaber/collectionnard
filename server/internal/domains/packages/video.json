@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "video",
-  "package_version": 3,
+  "package_version": 4,
   "title": {
     "fr": "Vidéo : films",
     "en": "Video: films"
@@ -300,15 +300,18 @@
             "properties": {
               "wikidata": {
                 "type": "string",
-                "pattern": "^Q[1-9][0-9]*$"
+                "pattern": "^Q[1-9][0-9]*$",
+                "x-identifier": true
               },
               "bnf_ark": {
                 "type": "string",
-                "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$"
+                "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$",
+                "x-identifier": true
               },
               "imdb": {
                 "type": "string",
-                "pattern": "^tt[0-9]{7,9}$"
+                "pattern": "^tt[0-9]{7,9}$",
+                "x-identifier": true
               }
             }
           },
@@ -510,7 +513,8 @@
           },
           "ean": {
             "type": "string",
-            "pattern": "^[0-9]{8,14}$"
+            "pattern": "^[0-9]{8,14}$",
+            "x-identifier": true
           },
           "runtime": {
             "type": "integer",
@@ -587,7 +591,8 @@
             "properties": {
               "bnf_ark": {
                 "type": "string",
-                "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$"
+                "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$",
+                "x-identifier": true
               }
             }
           },

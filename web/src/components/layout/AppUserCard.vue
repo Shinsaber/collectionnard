@@ -1,23 +1,23 @@
 <template>
   <div class="flex flex-col gap-3 rounded-xl bg-surface p-3 shadow-card">
-    <div class="flex items-center gap-3">
-      <span
-        class="flex size-9 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-bold text-surface"
-        aria-hidden="true"
-        >{{ initial }}</span
-      >
+    <!-- Avatar et nom : mènent au profil (P4-0). -->
+    <RouterLink
+      to="/profile"
+      class="flex items-center gap-3 rounded-lg"
+      :title="t('layout.profile')"
+      data-test="user-card-profile"
+    >
+      <UserAvatar :user="auth.user" :size="36" />
       <div class="flex min-w-0 flex-col">
         <span class="truncate text-sm font-bold">{{
-          auth.user?.username
+          auth.user?.display_name || auth.user?.username
         }}</span>
         <span
           class="font-mono text-[11px] uppercase tracking-wider text-muted"
-          >{{
-            auth.isAdmin ? t("layout.adminBadge") : t("layout.userBadge")
-          }}</span
+          >{{ t(`account.roles.${auth.user?.role ?? "user"}`) }}</span
         >
       </div>
-    </div>
+    </RouterLink>
     <div class="grid grid-cols-3 gap-1.5">
       <!-- Sélecteur de langue : liste extensible issue du registre `langs` -->
       <ElDropdown trigger="click" class="block!" @command="setLang">
@@ -83,6 +83,7 @@ import { useAuthStore } from "@/stores/auth";
 import { useOfflineStore } from "@/stores/offline";
 import { useTheme } from "@/composables/useTheme";
 import { useLang } from "@/composables/useLang";
+import UserAvatar from "@/components/account/UserAvatar.vue";
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -90,9 +91,6 @@ const { t } = useI18n();
 const { theme, toggle: toggleTheme } = useTheme();
 const { lang, setLang, langs, langNames } = useLang();
 
-const initial = computed(
-  () => auth.user?.username?.charAt(0).toUpperCase() ?? "?",
-);
 const themeLabel = computed(() =>
   theme.value === "dark" ? t("layout.lightMode") : t("layout.darkMode"),
 );

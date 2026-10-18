@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "tv",
-  "package_version": 4,
+  "package_version": 6,
   "title": {
     "fr": "Séries TV",
     "en": "TV series"
@@ -178,19 +178,23 @@
             "properties": {
               "wikidata": {
                 "type": "string",
-                "pattern": "^Q[1-9][0-9]*$"
+                "pattern": "^Q[1-9][0-9]*$",
+                "x-identifier": true
               },
               "imdb": {
                 "type": "string",
-                "pattern": "^tt[0-9]{7,9}$"
+                "pattern": "^tt[0-9]{7,9}$",
+                "x-identifier": true
               },
               "tvmaze": {
                 "type": "string",
-                "pattern": "^[0-9]+$"
+                "pattern": "^[0-9]+$",
+                "x-identifier": true
               },
               "bnf_ark": {
                 "type": "string",
-                "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$"
+                "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$",
+                "x-identifier": true
               }
             }
           },
@@ -436,11 +440,13 @@
             "properties": {
               "wikidata": {
                 "type": "string",
-                "pattern": "^Q[1-9][0-9]*$"
+                "pattern": "^Q[1-9][0-9]*$",
+                "x-identifier": true
               },
               "tvmaze": {
                 "type": "string",
-                "pattern": "^[0-9]+$"
+                "pattern": "^[0-9]+$",
+                "x-identifier": true
               }
             }
           },
@@ -593,15 +599,18 @@
             "properties": {
               "wikidata": {
                 "type": "string",
-                "pattern": "^Q[1-9][0-9]*$"
+                "pattern": "^Q[1-9][0-9]*$",
+                "x-identifier": true
               },
               "imdb": {
                 "type": "string",
-                "pattern": "^tt[0-9]{7,9}$"
+                "pattern": "^tt[0-9]{7,9}$",
+                "x-identifier": true
               },
               "tvmaze": {
                 "type": "string",
-                "pattern": "^[0-9]+$"
+                "pattern": "^[0-9]+$",
+                "x-identifier": true
               }
             }
           },
@@ -755,7 +764,8 @@
           "en": "Season contains an episode",
           "fr": "Saison contient un épisode"
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "x-completeness": true
       },
       "source_item_type_ids": [
         "b0000000-0000-0000-0000-000000000003"
@@ -802,7 +812,8 @@
           "en": "DVD includes an episode",
           "fr": "DVD inclut un épisode"
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "x-completeness": true
       },
       "source_item_type_ids": [
         "b0000000-0000-0000-0000-000000000005"

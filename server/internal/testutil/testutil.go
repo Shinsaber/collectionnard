@@ -25,9 +25,23 @@ const TestAccessTTL = 15 * time.Minute
 
 // MockStore implements store.Store with configurable function fields.
 type MockStore struct {
-	PingFn                       func(ctx context.Context) error
-	GetUserByUsernameFn          func(ctx context.Context, username string) (*model.User, string, error)
-	GetUserByIDFn                func(ctx context.Context, id uuid.UUID) (*model.User, error)
+	PingFn              func(ctx context.Context) error
+	GetUserByUsernameFn func(ctx context.Context, username string) (*model.User, string, error)
+	GetUserByIDFn       func(ctx context.Context, id uuid.UUID) (*model.User, error)
+	// Accounts (P4-0)
+	GetUserPasswordHashFn        func(ctx context.Context, id uuid.UUID) (string, error)
+	ListUsersFn                  func(ctx context.Context, pg model.Pagination) ([]model.User, int, error)
+	UpdateUserFn                 func(ctx context.Context, id uuid.UUID, in model.UserUpdate) (*model.User, error)
+	UpdateProfileFn              func(ctx context.Context, id uuid.UUID, in model.ProfileUpdate) (*model.User, error)
+	SetPasswordFn                func(ctx context.Context, id uuid.UUID, passwordHash string) error
+	CreateInvitationFn           func(ctx context.Context, tokenHash string, createdBy uuid.UUID, role, note string, expiresAt time.Time) (*model.Invitation, error)
+	GetInvitationFn              func(ctx context.Context, id uuid.UUID) (*model.Invitation, error)
+	ListInvitationsFn            func(ctx context.Context, createdBy *uuid.UUID) ([]model.Invitation, error)
+	DeleteInvitationFn           func(ctx context.Context, id uuid.UUID) error
+	CheckInvitationFn            func(ctx context.Context, tokenHash string) (time.Time, error)
+	RegisterWithInvitationFn     func(ctx context.Context, tokenHash, username, email, passwordHash string) (*model.User, error)
+	CreatePasswordResetFn        func(ctx context.Context, userID uuid.UUID, tokenHash string, createdBy uuid.UUID, expiresAt time.Time) error
+	ResetPasswordFn              func(ctx context.Context, tokenHash, passwordHash string) error
 	CreateRefreshTokenFn         func(ctx context.Context, userID uuid.UUID, tokenHash string, expiresAt time.Time) error
 	ConsumeRefreshTokenFn        func(ctx context.Context, tokenHash string) (uuid.UUID, error)
 	DeleteRefreshTokenFn         func(ctx context.Context, tokenHash string) error
@@ -70,6 +84,32 @@ type MockStore struct {
 	ListItemCollectionsFn        func(ctx context.Context, userID, itemID uuid.UUID) ([]model.ItemCollectionMembership, error)
 	ListTagsFn                   func(ctx context.Context, search string) ([]model.Tag, error)
 	GetStatsFn                   func(ctx context.Context) (*model.Stats, error)
+	GetCollectionStatsFn         func(ctx context.Context, collectionID uuid.UUID, hidden []string) (*model.CollectionStats, error)
+	ListVisibleCollectionsFn     func(ctx context.Context, ownerID uuid.UUID, levels []string) ([]model.Collection, error)
+	CreateShareLinkFn            func(ctx context.Context, collectionID uuid.UUID, tokenHash string) (*model.ShareLink, error)
+	ListShareLinksFn             func(ctx context.Context, collectionID uuid.UUID) ([]model.ShareLink, error)
+	RevokeShareLinkFn            func(ctx context.Context, collectionID, linkID uuid.UUID) error
+	GetSharedCollectionIDFn      func(ctx context.Context, tokenHash string) (uuid.UUID, error)
+	ListMembersFn                func(ctx context.Context, pg model.Pagination) ([]model.User, int, error)
+	GetItemHistoryFn             func(ctx context.Context, itemID uuid.UUID) (*model.ItemHistory, error)
+	GetItemVersionFn             func(ctx context.Context, itemID uuid.UUID, version int) (json.RawMessage, error)
+	CreateProposalFn             func(ctx context.Context, authorID uuid.UUID, in model.ProposalInput) (*model.Proposal, error)
+	GetProposalFn                func(ctx context.Context, id uuid.UUID) (*model.Proposal, error)
+	ListProposalsFn              func(ctx context.Context, f model.ProposalFilter, pg model.Pagination) ([]model.Proposal, int, error)
+	UpdateProposalFn             func(ctx context.Context, id uuid.UUID, in model.ProposalInput) (*model.Proposal, error)
+	SubmitProposalFn             func(ctx context.Context, id uuid.UUID, base *model.ProposalBase) (*model.Proposal, error)
+	WithdrawProposalFn           func(ctx context.Context, id uuid.UUID) (*model.Proposal, error)
+	ReviewProposalFn             func(ctx context.Context, id uuid.UUID, status string, reviewerID uuid.UUID, comment string) (*model.Proposal, error)
+	AcceptCatalogProposalFn      func(ctx context.Context, id, reviewerID uuid.UUID, payload *model.CatalogExport, comment string) (*model.ImportReport, error)
+	ProposalQuotaUsageFn         func(ctx context.Context, authorID uuid.UUID) (int, int, int, error)
+	CountProposalsToReviewFn     func(ctx context.Context, reviewerID uuid.UUID) (int, error)
+	EntitySnapshotFn             func(ctx context.Context, itemIDs, relationIDs []uuid.UUID) (*model.ProposalBase, error)
+	ListProposalCommentsFn       func(ctx context.Context, proposalID uuid.UUID) ([]model.ProposalComment, error)
+	CreateProposalCommentFn      func(ctx context.Context, proposalID, authorID uuid.UUID, body string) (*model.ProposalComment, error)
+	CreateNotificationsFn        func(ctx context.Context, userIDs []uuid.UUID, kind string, payload any) error
+	ListNotificationsFn          func(ctx context.Context, userID uuid.UUID, pg model.Pagination) ([]model.Notification, int, int, error)
+	MarkNotificationsReadFn      func(ctx context.Context, userID uuid.UUID, ids []uuid.UUID) error
+	GetUserStatsFn               func(ctx context.Context, userID uuid.UUID) (*model.MeStats, error)
 	ExportCatalogFn              func(ctx context.Context) (*model.CatalogExport, error)
 	ImportCatalogFn              func(ctx context.Context, cat *model.CatalogExport, dryRun bool) (*model.ImportReport, error)
 	ImportCollectionFn           func(ctx context.Context, userID uuid.UUID, exp *model.CollectionExport, dryRun bool) (*model.ImportReport, error)
@@ -354,6 +394,20 @@ func (m *MockStore) GetStats(ctx context.Context) (*model.Stats, error) {
 	return &model.Stats{}, nil
 }
 
+func (m *MockStore) GetCollectionStats(ctx context.Context, collectionID uuid.UUID, hidden []string) (*model.CollectionStats, error) {
+	if m.GetCollectionStatsFn != nil {
+		return m.GetCollectionStatsFn(ctx, collectionID, hidden)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) GetUserStats(ctx context.Context, userID uuid.UUID) (*model.MeStats, error) {
+	if m.GetUserStatsFn != nil {
+		return m.GetUserStatsFn(ctx, userID)
+	}
+	return nil, store.ErrNotFound
+}
+
 func (m *MockStore) ExportCatalog(ctx context.Context) (*model.CatalogExport, error) {
 	if m.ExportCatalogFn != nil {
 		return m.ExportCatalogFn(ctx)
@@ -422,6 +476,8 @@ func (m *MockStore) RefreshInstalledDomains(ctx context.Context, except string) 
 var (
 	AdminID = uuid.MustParse("a0000000-0000-0000-0000-000000000001")
 	UserID  = uuid.MustParse("a0000000-0000-0000-0000-000000000002")
+	// ContributorID : rôle contributor (P4-3).
+	ContributorID = uuid.MustParse("a0000000-0000-0000-0000-000000000003")
 )
 
 func AdminUser() *model.User {
@@ -447,6 +503,7 @@ func TestConfig() *config.Config {
 		RefreshTokenTTL: 24 * time.Hour,
 		LoginRateLimit:  1000,
 		GraphMaxNodes:   500,
+		ProposalQuota:   5,
 		UploadDir:       os.TempDir(),
 		MaxUploadSize:   10 << 20,
 		MaxImportSize:   1 << 20,
@@ -470,6 +527,13 @@ func NewTestServer(mockStore *MockStore) *httptest.Server {
 func AdminToken() string {
 	auth := middleware.NewAuth(TestSecret, TestAccessTTL)
 	t, _ := auth.GenerateToken(AdminID, "admin")
+	return t
+}
+
+// ContributorToken : jeton d'un contributeur (écrit dans le catalogue, modère).
+func ContributorToken() string {
+	auth := middleware.NewAuth(TestSecret, TestAccessTTL)
+	t, _ := auth.GenerateToken(ContributorID, "contributor")
 	return t
 }
 

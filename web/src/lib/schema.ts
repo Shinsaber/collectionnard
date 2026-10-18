@@ -116,6 +116,25 @@ export function itemLabel(
   return renderLabel(schema, item.attributes, lang) || item.id.slice(0, 8);
 }
 
+/**
+ * Relation de composition (extension racine `x-completeness` d'un RelationType) : la cible fait
+ * partie de la source ; les statistiques comptent les cibles possédées sur le total.
+ */
+export function isCompleteness(schema: unknown): boolean {
+  return (
+    !!schema &&
+    typeof schema === "object" &&
+    (schema as Record<string, unknown>)["x-completeness"] === true
+  );
+}
+
+/** Champs `x-private` d'un CollectionType : cachés aux autres lecteurs par défaut (P4-2). */
+export function privateKeys(schema: Schema | null | undefined): string[] {
+  return Object.entries(properties(schema))
+    .filter(([, p]) => p?.["x-private"] === true)
+    .map(([k]) => k);
+}
+
 /** Libellé d'un champ via `x-labels`, repli sur la clé mise en forme. */
 export function fieldLabel(
   schema: Schema | null | undefined,

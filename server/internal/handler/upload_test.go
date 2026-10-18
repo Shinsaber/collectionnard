@@ -41,7 +41,8 @@ func TestUploadFile_Success(t *testing.T) {
 	}
 }
 
-func TestUploadFile_ForbiddenForUser(t *testing.T) {
+// A member may upload (profile avatar, P4-0; images of a proposal, P4-3).
+func TestUploadFile_AllowedForMember(t *testing.T) {
 	mock := &testutil.MockStore{}
 	srv := testutil.NewTestServer(mock)
 	defer srv.Close()
@@ -58,8 +59,8 @@ func TestUploadFile_ForbiddenForUser(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusForbidden {
-		t.Fatalf("expected 403, got %d", resp.StatusCode)
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("expected 201, got %d", resp.StatusCode)
 	}
 }
 

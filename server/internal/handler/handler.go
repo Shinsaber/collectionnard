@@ -67,6 +67,9 @@ func (h *Handler) Router() chi.Router {
 		r.Post("/api/v1/auth/login", h.Login)
 		r.Post("/api/v1/auth/refresh", h.Refresh)
 		r.Post("/api/v1/auth/logout", h.Logout)
+		r.Get("/api/v1/auth/invitation", h.CheckInvitation)
+		r.Post("/api/v1/auth/register", h.Register)
+		r.Post("/api/v1/auth/reset-password", h.ResetPassword)
 	})
 
 	// Serve uploaded files (public — img tags can't send Authorization headers)
@@ -91,12 +94,39 @@ func (h *Handler) Router() chi.Router {
 		http.ServeFile(w, r, filepath.Join(string(uploadsDir), name)) //nolint:gosec // name sans "/" ni "..", extension en liste blanche (ci-dessus)
 	})
 
+	// Lectures publiques (P4-2) : authentification facultative, un jeton invalide répond 401.
+	// Champs cachés d'une collection retirés pour tout lecteur (handler/sharing.go).
+	r.Group(func(r chi.Router) {
+		r.Use(h.Auth.OptionalAuthenticate)
+		r.Get("/api/v1/public/users/{username}", h.GetPublicProfile)
+		r.Get("/api/v1/public/users/{username}/collections", h.ListPublicCollections)
+		r.Get("/api/v1/public/collections/{id}", h.GetPublicCollection)
+		r.Get("/api/v1/public/collections/{id}/items", h.ListPublicCollectionItems)
+		r.Get("/api/v1/public/collections/{id}/stats", h.GetPublicCollectionStats)
+		r.Get("/api/v1/share", h.GetSharedCollection)
+		r.Get("/api/v1/share/items", h.ListSharedCollectionItems)
+		r.Get("/api/v1/share/stats", h.GetSharedCollectionStats)
+	})
+
 	// Authenticated
 	r.Group(func(r chi.Router) {
-		r.Use(h.Auth.Authenticate)
+		r.Use(h.Auth.Authenticate, withActor)
 
 		r.Get("/api/v1/auth/me", h.GetCurrentUser)
+		r.Put("/api/v1/me/profile", h.UpdateProfile)
+		r.Put("/api/v1/me/password", h.ChangePassword)
+		// Invitations : admins, ou membres si MEMBER_INVITES (contrôlé par le handler).
+		r.Get("/api/v1/invitations", h.ListInvitations)
+		r.Post("/api/v1/invitations", h.CreateInvitation)
+		r.Delete("/api/v1/invitations/{id}", h.DeleteInvitation)
 		r.Get("/api/v1/me/offline", h.GetOfflineSnapshot)
+		// Envoi d'images : tout compte connecté (avatar du profil, images des propositions) ;
+		// la purge supprime les envois que rien ne référence.
+		r.Post("/api/v1/uploads", h.UploadFile)
+		r.Get("/api/v1/me/stats", h.GetMyStats)
+		r.Get("/api/v1/me/notifications", h.ListNotifications)
+		r.Post("/api/v1/me/notifications/read", h.MarkNotificationsRead)
+		r.Get("/api/v1/members", h.ListMembers)
 
 		// Read endpoints (all authenticated users)
 		r.Get("/api/v1/item-types", h.ListItemTypes)
@@ -124,24 +154,68 @@ func (h *Handler) Router() chi.Router {
 		r.Put("/api/v1/collections/{id}", h.UpdateCollection)
 		r.Delete("/api/v1/collections/{id}", h.DeleteCollection)
 		r.Get("/api/v1/collections/{id}/export", h.ExportCollection)
+		r.Get("/api/v1/collections/{id}/stats", h.GetCollectionStats)
+		r.Get("/api/v1/collections/{id}/share-links", h.ListShareLinks)
+		r.Post("/api/v1/collections/{id}/share-links", h.CreateShareLink)
+		r.Delete("/api/v1/collections/{id}/share-links/{linkId}", h.RevokeShareLink)
 		r.Get("/api/v1/collections/{id}/items", h.ListCollectionItems)
 		r.Post("/api/v1/collections/{id}/items", h.AddItemToCollection)
 		r.Put("/api/v1/collections/{collectionId}/items/{itemId}", h.UpdateCollectionItem)
 		r.Delete("/api/v1/collections/{collectionId}/items/{itemId}", h.RemoveItemFromCollection)
 
+		r.Get("/api/v1/items/{id}/history", h.GetItemHistory)
+		r.Post("/api/v1/items/duplicates", h.FindDuplicates)
+
+		// Sources externes (Wikidata, BnF, MusicBrainz, TVmaze) : recherche et aperçu pour tous ;
+		// un membre en fait une proposition (P4-3b), un contributeur importe directement.
+		r.Get("/api/v1/external/connectors", h.ListConnectors)
+		r.Get("/api/v1/external/{connector}/works", h.SearchExternalWorks)
+		r.Get("/api/v1/external/{connector}/editions", h.SearchExternalEditions)
+		r.Post("/api/v1/external/{connector}/preview", h.PreviewExternal)
+		r.Post("/api/v1/external/{connector}/propose", h.ProposeExternal)
+
+		// Propositions (P4-3b) : membres ; modération (admins, contributeurs) contrôlée par le handler.
+		r.Get("/api/v1/proposals", h.ListProposals)
+		r.Post("/api/v1/proposals", h.CreateProposal)
+		r.Get("/api/v1/proposals/review-count", h.CountProposalsToReview)
+		r.Get("/api/v1/proposals/quota", h.GetProposalQuota)
+		r.Get("/api/v1/proposals/{id}", h.GetProposal)
+		r.Put("/api/v1/proposals/{id}", h.UpdateProposal)
+		r.Post("/api/v1/proposals/{id}/submit", h.SubmitProposal)
+		r.Post("/api/v1/proposals/{id}/withdraw", h.WithdrawProposal)
+		r.Get("/api/v1/proposals/{id}/conflicts", h.GetProposalConflicts)
+		r.Post("/api/v1/proposals/{id}/accept", h.AcceptProposal)
+		r.Post("/api/v1/proposals/{id}/reject", h.RejectProposal)
+		r.Post("/api/v1/proposals/{id}/request-changes", h.RequestProposalChanges)
+		r.Get("/api/v1/proposals/{id}/comments", h.ListProposalComments)
+		r.Post("/api/v1/proposals/{id}/comments", h.CreateProposalComment)
+
+		// Écriture du catalogue : admins et contributeurs (P4-3a), sans suppression d'item.
+		r.Group(func(r chi.Router) {
+			r.Use(h.Auth.RequireRole(model.RoleAdmin, model.RoleContributor))
+
+			r.Post("/api/v1/items", h.CreateItem)
+			r.Put("/api/v1/items/{id}", h.UpdateItem)
+			r.Post("/api/v1/items/{id}/revert", h.RevertItem)
+
+			r.Post("/api/v1/relations", h.CreateRelation)
+			r.Put("/api/v1/relations/{id}", h.UpdateRelation)
+			r.Delete("/api/v1/relations/{id}", h.DeleteRelation)
+
+			// Sources externes : import direct (les membres proposent, ci-dessus).
+			r.Post("/api/v1/external/{connector}/import", h.ImportExternal)
+		})
+
 		// Admin-only endpoints
 		r.Group(func(r chi.Router) {
 			r.Use(h.Auth.RequireAdmin)
 
+			r.Get("/api/v1/users", h.ListUsers)
+			r.Put("/api/v1/users/{id}", h.UpdateUser)
+			r.Post("/api/v1/users/{id}/reset-link", h.CreateResetLink)
+
 			r.Get("/api/v1/export", h.ExportCatalog)
 			r.Post("/api/v1/import", h.ImportCatalog)
-
-			// External sources (BD / Manga: Wikidata, BnF)
-			r.Get("/api/v1/external/connectors", h.ListConnectors)
-			r.Get("/api/v1/external/{connector}/works", h.SearchExternalWorks)
-			r.Get("/api/v1/external/{connector}/editions", h.SearchExternalEditions)
-			r.Post("/api/v1/external/{connector}/preview", h.PreviewExternal)
-			r.Post("/api/v1/external/{connector}/import", h.ImportExternal)
 
 			r.Post("/api/v1/item-types", h.CreateItemType)
 			r.Put("/api/v1/item-types/{id}", h.UpdateItemType)
@@ -155,15 +229,8 @@ func (h *Handler) Router() chi.Router {
 			r.Put("/api/v1/collection-types/{id}", h.UpdateCollectionType)
 			r.Delete("/api/v1/collection-types/{id}", h.DeleteCollectionType)
 
-			r.Post("/api/v1/items", h.CreateItem)
-			r.Put("/api/v1/items/{id}", h.UpdateItem)
 			r.Delete("/api/v1/items/{id}", h.DeleteItem)
 
-			r.Post("/api/v1/relations", h.CreateRelation)
-			r.Put("/api/v1/relations/{id}", h.UpdateRelation)
-			r.Delete("/api/v1/relations/{id}", h.DeleteRelation)
-
-			r.Post("/api/v1/uploads", h.UploadFile)
 			r.Post("/api/v1/uploads/purge", h.PurgeUploads)
 			r.Get("/api/v1/domains", h.ListDomains)
 			r.Post("/api/v1/domains/{id}/install", h.InstallDomain)

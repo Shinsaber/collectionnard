@@ -16,6 +16,7 @@ Séries TV, DVD, livres, cartes à collectionner, vinyles… tout type de collec
 | **Frontend**        | Vue 3 + TypeScript                                             | 3.5 / 6.0  |
 | **UI**              | Element Plus (MIT) + Tailwind CSS (plugin Vite) ; identité « Étiquette », responsive (mobile → bureau) | 2.14 / 4.3 |
 | **Graphes**         | Cytoscape.js                                                   | 3.34       |
+| **Statistiques**    | Apache ECharts (Apache 2.0, chargé à la demande)               | 6.1        |
 | **Build**           | Vite (Rolldown) + vue-tsc 3, Pinia 4, vue-router 5             | 8.3        |
 | **Déploiement**     | Docker Compose                                                 | 4 services |
 
@@ -87,6 +88,8 @@ go run .
 | `UPLOAD_DIR`        | `uploads`  | Dossier des images uploadées                                                                           |
 | `MAX_UPLOAD_SIZE`   | `10485760` | Taille max d'un upload (octets) ; les corps JSON sont limités à 1 Mio                                  |
 | `EXTERNAL_USER_AGENT` | `Collectionnard/1.0 (+URL du dépôt)` | User-Agent envoyé à Wikidata et à la BnF (leurs règles demandent un nom et un contact) |
+| `PROPOSAL_QUOTA`    | `5`        | Propositions en attente par membre (+1 par proposition acceptée, plafond 50) ; contributeurs et admins sans quota |
+| `MEMBER_INVITES`    | `false`    | `true` : les membres peuvent aussi créer des invitations (sinon les admins seulement)                  |
 
 **Frontend** :
 
@@ -288,6 +291,9 @@ Le projet utilise des extensions custom dans les JSON Schemas pour piloter le fr
 | `x-description`      | Description du type par langue ; repli sur `description`                                                 |
 | `x-enum-labels`      | (propriété) Libellés des valeurs d'enum par langue (`{fr: {tv: "Télévision"}, en: {tv: "TV"}}`)          |
 | `x-widget`           | Widget spécifique : `image-gallery`, `i18n-text` (une chaîne par langue), `links` (liste de liens libellé + URL)                                                         |
+| `x-private`          | (propriété, CollectionType) Champ caché aux autres lecteurs (prix payé) ; retiré par le serveur des pages publiques et liens de partage |
+| `x-identifier`       | (propriété, ItemType) Identifiant (ISBN, EAN, QID…) : doublons signalés avant l'enregistrement |
+| `x-completeness`     | (racine, RelationType) Relation de composition : « 30 tomes sur 42 » dans les statistiques d'une collection |
 | `x-image-categories` | Catégories d'images avec ratios (`{poster: {ratio: "2/3"}}`) et contrôles facultatifs à l'envoi : `tolerance` (écart de ratio en %), `min_width` / `min_height` (px), `strict` (refuser plutôt qu'avertir) |
 
 Sans extension, le widget découle du schéma : `enum` → liste déroulante, `integer`/`number` avec `minimum`

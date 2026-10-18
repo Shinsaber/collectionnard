@@ -3,7 +3,8 @@ package store
 import "context"
 
 // ReferencedUploads returns the file names of /api/v1/uploads/ URLs found in
-// any string attribute, at any depth, of items, relations and collection items.
+// any string attribute, at any depth, of items, relations and collection items,
+// and the avatars of the users.
 func (s *PgStore) ReferencedUploads(ctx context.Context) ([]string, error) {
 	const path = `strict $.** ? (@.type() == "string" && @ like_regex "/api/v1/uploads/")`
 	rows, err := s.pool.Query(ctx, `
@@ -14,6 +15,12 @@ func (s *PgStore) ReferencedUploads(ctx context.Context) ([]string, error) {
 			SELECT jsonb_path_query(attributes, $1::jsonpath) FROM item_relations
 			UNION ALL
 			SELECT jsonb_path_query(attributes, $1::jsonpath) FROM collection_items
+			UNION ALL
+			SELECT to_jsonb(avatar) FROM users WHERE avatar LIKE '%/api/v1/uploads/%'
+			UNION ALL
+			-- Images d'une proposition non décidée (P4-3b) ; un refus ou un retrait les libère.
+			SELECT jsonb_path_query(payload, $1::jsonpath) FROM proposals
+			WHERE payload IS NOT NULL AND status IN ('draft', 'pending', 'changes_requested')
 		) refs`, path)
 	if err != nil {
 		return nil, err
