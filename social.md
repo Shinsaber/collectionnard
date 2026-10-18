@@ -138,17 +138,86 @@ Toujours génériques : aucune clé d'attribut codée en dur, tout se déduit de
 
 ## P4-3 — Contributions au catalogue
 
-- **Rôle contributeur** : migration du `CHECK` (`admin` | `contributor` | `user`) ; le contributeur écrit dans le
-  catalogue (items, relations, sources externes) sans modération, pas dans les méta-types ni l'administration.
-- **Propositions** : table `proposals` (`id`, `author_id`, `status` `pending` | `accepted` | `rejected` | `withdrawn`,
-  `title`, `payload`, `reviewer_id`, `review_comment`, dates). La charge utile est **au format de l'import du catalogue**
-  (items et relations à créer ou modifier) : une proposition acceptée passe par `ImportCatalog`, tout ou rien, comme un
-  import externe. Un utilisateur propose depuis les mêmes écrans : formulaire d'item (« Proposer »), correction d'une
-  fiche, page « Sources externes » ouverte en mode proposition.
-- **Modération** : file des propositions pour les admins (aperçu des différences, acceptation, correction avant
-  acceptation, refus commenté) ; pastille du nombre en attente ; l'auteur suit l'état de ses propositions.
-- **Historique** : table `item_history` (item, auteur, date, origine — direct, proposition, import —, attributs avant et
-  après) pour toute écriture du catalogue ; fiche d'un item : « Historique », retour à une version (admin).
+Raffiné le 2026-10-18. Décisions du mainteneur : modération par les **admins et les contributeurs** ; corrections au
+format de l'import **avec version de départ** (conflits détectés) ; **notifications dans l'application** (table) dès la V1,
+résumé quotidien des non-lues par e-mail plus tard (SMTP) ; brouillons, suggestions de champ et fil de discussion
+retenus ; attribution des contributions affichée selon la visibilité **actuelle** du profil ; quota de propositions qui
+grandit avec les propositions acceptées.
+
+### Rôles et droits
+
+- Rôles : `admin` | `contributor` | `user` (migration du `CHECK` ; page « Utilisateurs » et `create-user`).
+- **Contributeur** : écrit directement dans le catalogue (items, relations, images, sources externes), sans modération ;
+  modère les propositions ; **ne supprime pas** (il signale, l'admin supprime : un item présent dans les collections des
+  autres ne disparaît pas sur un coup de tête) ; n'accède ni aux méta-types ni à l'administration.
+- **Modération** : admins et contributeurs, jamais sur **leurs propres** propositions.
+- Membre (`user`) : propose, commente ses propositions, signale.
+
+### Historique (socle de tout le lot)
+
+- Tables `item_history` et `relation_history` : entité, version (entier croissant par entité), auteur (`user_id`, jamais
+  un nom), date, **origine** (`direct`, `proposal` + id, `import`, `external` + connecteur, `domain`, `revert`),
+  **instantané complet** avant / après (la différence se calcule à l'affichage). Une écriture du catalogue = une ligne,
+  dans la même transaction. Tout est conservé (volume faible).
+- Fiche d'un item : onglet « Historique » (versions, différences champ par champ, origine) ; **retour à une version**
+  (admin, contributeur), lui-même historisé (`revert`).
+- **Attribution** (« ajouté par Camille ») : calculée à la lecture depuis `user_id`, selon la visibilité **actuelle** du
+  profil pour ce lecteur (P4-2) ; sinon « un membre ». Un compte désactivé ou un profil rendu privé plus tard disparaît
+  donc de tout l'historique affiché, rétroactivement. Les admins voient toujours l'auteur (modération).
+
+### Propositions
+
+- Table `proposals` : `id`, `author_id`, `kind` (`catalog` | `schema_suggestion` | `report`), `status`, `title`,
+  `payload`, `base`, `reviewer_id`, `review_comment`, dates (création, soumission, décision).
+- États : `draft` (brouillon, invisible des modérateurs) → `pending` → `changes_requested` (retour à l'auteur, qui
+  corrige et resoumet) → `accepted` | `rejected` (commentaire obligatoire) ; `withdrawn` par l'auteur avant décision.
+- **`catalog`** : `payload` au **format de l'import du catalogue** (items et relations à créer ou modifier ; images
+  comprises), `base` = **instantané des entités modifiées au moment de la proposition**. À l'acceptation, pour chaque
+  entité modifiée : inchangée depuis `base` → appliquée ; changée → **conflit à trois volets** (départ / actuel /
+  proposé) que le modérateur tranche champ par champ (même logique que `domains.Merge3`). Le modérateur peut corriger
+  la charge avant d'accepter. L'application passe par `ImportCatalog`, tout ou rien, historisée avec l'origine
+  `proposal`.
+- **`schema_suggestion`** : texte libre adressé aux admins (« il manque le champ illustrateur sur Volume ») ; aucune
+  écriture des méta-types.
+- **`report`** (signalement) : « cette fiche est fausse » / « à supprimer », commentaire seul, rattaché à un item.
+- **Fil de discussion** : table `proposal_comments` (auteur, texte, date) ; auteur et modérateurs échangent sur une
+  proposition, à tout état non final.
+- **Doublons** : à la saisie, même identifiant qu'un item existant (ISBN, EAN, QID, ARK, MBID… via
+  `FindItemsByAttribute`) → avertissement avant l'envoi.
+- **Images** : la purge garde les envois cités par une proposition non finale ; un refus ou un retrait les libère.
+- **Quota** : propositions `pending` par auteur limitées à `PROPOSAL_QUOTA` (défaut 5) + 1 par proposition acceptée,
+  plafonné (50) ; création limitée par jour. Contributeurs et admins sans quota. Un compte désactivé : ses propositions
+  restent visibles des modérateurs, marquées comme telles.
+- Points d'entrée : formulaire d'item (bouton « Proposer » au lieu de « Enregistrer » pour un membre), « Suggérer une
+  correction » et « Signaler » sur une fiche, page « Sources externes » ouverte aux membres en mode proposition,
+  « Mes propositions » (brouillons, états, discussion), file « À relire » pour les modérateurs (aperçu des différences,
+  conflits, actions).
+
+### Notifications
+
+- Table `notifications` : `user_id`, `kind`, `payload` (références : proposition, item…), `created_at`, `read_at`.
+  Types V1 : proposition acceptée, refusée, modifications demandées, nouveau commentaire ; pour les modérateurs, la file
+  « À relire » est une pastille calculée (pas une notification par proposition).
+- API : `GET /me/notifications` (non lues d'abord), `POST /me/notifications/read` (toutes ou une liste) ; cloche dans
+  l'en-tête avec le nombre de non-lues. Même brique réutilisée par les échanges.
+- **Plus tard** : résumé quotidien des notifications non lues par e-mail (SMTP, réglage par compte).
+
+### Découpage
+
+1. **P4-3a — Historique et rôle contributeur** : tables d'historique écrites par toute écriture du catalogue, onglet
+   « Historique », retour à une version, attribution, rôle `contributor` (écriture directe, pas de suppression).
+2. **P4-3b — Propositions et modération** : propositions `catalog` (brouillon, version de départ, conflits), file de
+   modération, discussion, doublons, images gardées, quota.
+3. **P4-3c — Notifications, signalements, suggestions** : table et cloche, `report` et `schema_suggestion`.
+
+### Reporté
+
+- Contributeur **par domaine** et **promotion suggérée** (« Camille pourrait devenir contributrice » après N propositions
+  acceptées) : ensemble, si l'instance grandit.
+- **Fusion de doublons** (regrouper collections, relations et liens sur l'item gardé).
+- **Gamification** : liste des champs incomplets à remplir, quota et reconnaissance liés aux contributions.
+- Acceptation partielle, acceptation automatique des changements sans risque, votes, expiration des propositions, fil
+  « Activité du catalogue », champs verrouillés (`x-locked`), annulation en masse des écritures d'un auteur.
 
 ## Reporté : échanges
 
