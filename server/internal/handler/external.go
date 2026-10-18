@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/shinsaber/colec/internal/external"
 	"github.com/shinsaber/colec/internal/external/bnf"
+	"github.com/shinsaber/colec/internal/middleware"
 	"github.com/shinsaber/colec/internal/model"
 	"github.com/shinsaber/colec/internal/store"
 )
@@ -180,6 +181,44 @@ func (h *Handler) ImportExternal(w http.ResponseWriter, r *http.Request) {
 		status = http.StatusUnprocessableEntity
 	}
 	respondJSON(w, status, model.ExternalImportReport{ImportReport: *rep, ItemIDs: ids})
+}
+
+// ProposeExternal answers POST /external/{connector}/propose (any member,
+// P4-3b): the selected nodes become a submitted catalog proposal instead of
+// being imported.
+func (h *Handler) ProposeExternal(w http.ResponseWriter, r *http.Request) {
+	conn, ok := h.connector(w, r)
+	if !ok {
+		return
+	}
+	var req model.ExternalImportRequest
+	if err := decodeJSON(w, r, &req); err != nil {
+		respondDecodeError(w, err)
+		return
+	}
+	if !h.dailyQuota(w, r) {
+		return
+	}
+	ctx, cancel := externalContext(w, r)
+	defer cancel()
+	cat, _, err := conn.Build(ctx, req)
+	if err != nil {
+		respondExternalError(w, r, err)
+		return
+	}
+	in := model.ProposalInput{Kind: model.ProposalCatalog, Title: req.Title, Payload: cat}
+	if strings.TrimSpace(in.Title) == "" {
+		in.Title = conn.ID()
+	}
+	if !checkInput(w, in.Kind, &in) {
+		return
+	}
+	p, err := h.Store.CreateProposal(r.Context(), middleware.GetUserID(r.Context()), in)
+	if err != nil {
+		handleStoreError(w, r, err)
+		return
+	}
+	h.submit(w, r, p, http.StatusCreated)
 }
 
 func btoi(b bool) int {

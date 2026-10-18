@@ -489,6 +489,94 @@ export interface ItemHistory {
   created?: HistoryEntry;
 }
 
+// ---------- Propositions (P4-3b) : miroir de server/internal/model/proposal.go ----------
+
+export type ProposalKind = "catalog" | "schema_suggestion" | "report";
+export type ProposalStatus =
+  | "draft"
+  | "pending"
+  | "changes_requested"
+  | "accepted"
+  | "rejected"
+  | "withdrawn";
+
+/** Item d'une charge, au format de l'import du catalogue. */
+export interface PayloadItem {
+  id: string;
+  item_type_id: string;
+  attributes: Record<string, unknown>;
+  tags?: string[];
+}
+
+export interface PayloadRelation {
+  id: string;
+  relation_type_id: string;
+  source_item_id: string;
+  target_item_id: string;
+  attributes: Record<string, unknown>;
+}
+
+/** Charge d'une proposition `catalog` : items et relations seulement. */
+export interface ProposalPayload {
+  format?: string;
+  version?: number;
+  items?: PayloadItem[];
+  relations?: PayloadRelation[];
+}
+
+export interface Proposal {
+  id: string;
+  kind: ProposalKind;
+  status: ProposalStatus;
+  title: string;
+  description?: string;
+  payload?: ProposalPayload;
+  base?: {
+    items?: Record<string, Record<string, unknown>>;
+    relations?: Record<string, Record<string, unknown>>;
+  };
+  item_id?: string;
+  author: Owner;
+  author_disabled?: boolean;
+  reviewer?: Owner;
+  review_comment?: string;
+  comment_count: number;
+  created_at: string;
+  updated_at: string;
+  submitted_at?: string;
+  decided_at?: string;
+}
+
+export interface ProposalInput {
+  kind?: ProposalKind;
+  title: string;
+  description?: string;
+  payload?: ProposalPayload;
+  item_id?: string;
+  submit?: boolean;
+}
+
+export interface ProposalConflict {
+  kind: "item" | "relation";
+  id: string;
+  base: Record<string, unknown> | null;
+  current: Record<string, unknown> | null;
+  proposed: Record<string, unknown> | null;
+}
+
+export interface ProposalComment {
+  id: string;
+  author: Owner;
+  body: string;
+  created_at: string;
+}
+
+export interface Duplicate {
+  field: string;
+  value: string;
+  item: Item;
+}
+
 export interface Stats {
   items_by_type: ItemsByType[];
   total_items: number;
@@ -649,6 +737,8 @@ export interface ExternalImportRequest {
   selected?: string[];
   /** Import seulement : attributs corrigés dans l'aperçu (clé de nœud → attributs complets). */
   overrides?: Record<string, Record<string, unknown>>;
+  /** `propose` seulement : titre de la proposition. */
+  title?: string;
 }
 
 export type ExternalNodeRole =

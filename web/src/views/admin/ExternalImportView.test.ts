@@ -1,5 +1,6 @@
 import { flushPromises, mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
+import { useAuthStore } from "@/stores/auth";
 import ElementPlus from "element-plus";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
@@ -107,6 +108,14 @@ function button(w: ReturnType<typeof mount>, text: string) {
 describe("ExternalImportView", () => {
   beforeEach(async () => {
     setActivePinia(createPinia());
+    useAuthStore().user = {
+      id: "a1",
+      username: "admin",
+      email: "",
+      role: "admin",
+      created_at: "",
+      updated_at: "",
+    };
     Object.values(api).forEach((m) => m.mockReset());
     useLang().setLang("fr");
     await nextTick();
@@ -314,6 +323,14 @@ describe("ExternalImportView", () => {
 describe("ExternalImportView — corrections avant la simulation", () => {
   beforeEach(async () => {
     setActivePinia(createPinia());
+    useAuthStore().user = {
+      id: "a1",
+      username: "admin",
+      email: "",
+      role: "admin",
+      created_at: "",
+      updated_at: "",
+    };
     Object.values(api).forEach((m) => m.mockReset());
     useLang().setLang("fr");
     await nextTick();

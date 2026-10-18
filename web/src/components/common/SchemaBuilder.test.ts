@@ -319,3 +319,25 @@ describe("SchemaBuilder — x-private", () => {
     expect(((out.properties as Props).price as Schema)["x-private"]).toBe(true);
   });
 });
+
+describe("SchemaBuilder — x-identifier", () => {
+  it("conserve x-identifier, y compris dans un objet (external_ids)", async () => {
+    const out = await roundTrip({
+      type: "object",
+      properties: {
+        isbn: { type: "string", "x-identifier": true },
+        external_ids: {
+          type: "object",
+          properties: { wikidata: { type: "string", "x-identifier": true } },
+        },
+      },
+    });
+    const props = out.properties as Props;
+    expect((props.isbn as Schema)["x-identifier"]).toBe(true);
+    expect(
+      ((props.external_ids as Schema).properties as Props).wikidata![
+        "x-identifier"
+      ],
+    ).toBe(true);
+  });
+});

@@ -17,6 +17,10 @@ func (s *PgStore) ReferencedUploads(ctx context.Context) ([]string, error) {
 			SELECT jsonb_path_query(attributes, $1::jsonpath) FROM collection_items
 			UNION ALL
 			SELECT to_jsonb(avatar) FROM users WHERE avatar LIKE '%/api/v1/uploads/%'
+			UNION ALL
+			-- Images d'une proposition non décidée (P4-3b) ; un refus ou un retrait les libère.
+			SELECT jsonb_path_query(payload, $1::jsonpath) FROM proposals
+			WHERE payload IS NOT NULL AND status IN ('draft', 'pending', 'changes_requested')
 		) refs`, path)
 	if err != nil {
 		return nil, err

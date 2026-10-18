@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "music",
-  "package_version": 3,
+  "package_version": 4,
   "title": {
     "fr": "Musique",
     "en": "Music"
@@ -151,11 +151,13 @@
             "properties": {
               "musicbrainz": {
                 "type": "string",
-                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+                "x-identifier": true
               },
               "wikidata": {
                 "type": "string",
-                "pattern": "^Q[1-9][0-9]*$"
+                "pattern": "^Q[1-9][0-9]*$",
+                "x-identifier": true
               }
             }
           },
@@ -363,11 +365,13 @@
             "properties": {
               "musicbrainz": {
                 "type": "string",
-                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+                "x-identifier": true
               },
               "wikidata": {
                 "type": "string",
-                "pattern": "^Q[1-9][0-9]*$"
+                "pattern": "^Q[1-9][0-9]*$",
+                "x-identifier": true
               }
             }
           },
@@ -545,7 +549,8 @@
           },
           "barcode": {
             "type": "string",
-            "pattern": "^[0-9]{8,14}$"
+            "pattern": "^[0-9]{8,14}$",
+            "x-identifier": true
           },
           "catalog_number": {
             "type": "string"
@@ -621,7 +626,8 @@
             "properties": {
               "musicbrainz": {
                 "type": "string",
-                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+                "x-identifier": true
               }
             }
           },
@@ -736,7 +742,8 @@
             "properties": {
               "musicbrainz": {
                 "type": "string",
-                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+                "x-identifier": true
               }
             }
           },
@@ -851,7 +858,8 @@
             "properties": {
               "musicbrainz": {
                 "type": "string",
-                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+                "x-identifier": true
               }
             }
           },

@@ -11,6 +11,7 @@ import history from "./history";
 import items from "./items";
 import layout from "./layout";
 import offline from "./offline";
+import proposals from "./proposals";
 import schema from "./schema";
 import sharing from "./sharing";
 import stats from "./stats";
@@ -28,6 +29,7 @@ const en: Messages = {
   items,
   layout,
   offline,
+  proposals,
   schema,
   sharing,
   stats,

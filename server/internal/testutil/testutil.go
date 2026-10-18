@@ -93,6 +93,19 @@ type MockStore struct {
 	ListMembersFn                func(ctx context.Context, pg model.Pagination) ([]model.User, int, error)
 	GetItemHistoryFn             func(ctx context.Context, itemID uuid.UUID) (*model.ItemHistory, error)
 	GetItemVersionFn             func(ctx context.Context, itemID uuid.UUID, version int) (json.RawMessage, error)
+	CreateProposalFn             func(ctx context.Context, authorID uuid.UUID, in model.ProposalInput) (*model.Proposal, error)
+	GetProposalFn                func(ctx context.Context, id uuid.UUID) (*model.Proposal, error)
+	ListProposalsFn              func(ctx context.Context, f model.ProposalFilter, pg model.Pagination) ([]model.Proposal, int, error)
+	UpdateProposalFn             func(ctx context.Context, id uuid.UUID, in model.ProposalInput) (*model.Proposal, error)
+	SubmitProposalFn             func(ctx context.Context, id uuid.UUID, base *model.ProposalBase) (*model.Proposal, error)
+	WithdrawProposalFn           func(ctx context.Context, id uuid.UUID) (*model.Proposal, error)
+	ReviewProposalFn             func(ctx context.Context, id uuid.UUID, status string, reviewerID uuid.UUID, comment string) (*model.Proposal, error)
+	AcceptCatalogProposalFn      func(ctx context.Context, id, reviewerID uuid.UUID, payload *model.CatalogExport, comment string) (*model.ImportReport, error)
+	ProposalQuotaUsageFn         func(ctx context.Context, authorID uuid.UUID) (int, int, int, error)
+	CountProposalsToReviewFn     func(ctx context.Context, reviewerID uuid.UUID) (int, error)
+	EntitySnapshotFn             func(ctx context.Context, itemIDs, relationIDs []uuid.UUID) (*model.ProposalBase, error)
+	ListProposalCommentsFn       func(ctx context.Context, proposalID uuid.UUID) ([]model.ProposalComment, error)
+	CreateProposalCommentFn      func(ctx context.Context, proposalID, authorID uuid.UUID, body string) (*model.ProposalComment, error)
 	GetUserStatsFn               func(ctx context.Context, userID uuid.UUID) (*model.MeStats, error)
 	ExportCatalogFn              func(ctx context.Context) (*model.CatalogExport, error)
 	ImportCatalogFn              func(ctx context.Context, cat *model.CatalogExport, dryRun bool) (*model.ImportReport, error)
@@ -487,6 +500,7 @@ func TestConfig() *config.Config {
 		RefreshTokenTTL: 24 * time.Hour,
 		LoginRateLimit:  1000,
 		GraphMaxNodes:   500,
+		ProposalQuota:   5,
 		UploadDir:       os.TempDir(),
 		MaxUploadSize:   10 << 20,
 		MaxImportSize:   1 << 20,

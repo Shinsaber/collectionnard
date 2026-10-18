@@ -102,6 +102,14 @@
           >{{ t("schema.field.requiredShort") }}</ElCheckbox
         >
         <ElCheckbox
+          v-if="features.identifier && field.type === 'string'"
+          :model-value="field.identifier ?? false"
+          :title="t('schema.field.identifier')"
+          data-test="x-identifier"
+          @update:model-value="set('identifier', Boolean($event))"
+          >{{ t("schema.field.identifierShort") }}</ElCheckbox
+        >
+        <ElCheckbox
           v-if="features.private"
           :model-value="field.private ?? false"
           :title="t('schema.field.private')"

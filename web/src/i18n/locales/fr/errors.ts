@@ -69,5 +69,16 @@ export default {
     last_admin: "L'instance doit garder au moins un admin actif.",
     invitation_used:
       "Cette invitation a déjà servi : elle ne peut plus être retirée.",
+    proposal_state:
+      "Cette proposition a changé d'état entre-temps : rechargez la page.",
+    proposal_quota:
+      "Trop de propositions en attente : patientez jusqu'à leur relecture.",
+    proposal_invalid:
+      "La proposition ne passe pas les contrôles du catalogue (champs invalides).",
+    proposal_conflict:
+      "Des fiches ont changé depuis la proposition : tranchez les conflits.",
+    proposal_meta_types:
+      "Une proposition ne modifie que des items et des relations.",
+    own_proposal: "On ne relit pas ses propres propositions.",
   },
 };

@@ -152,6 +152,17 @@ const router = createRouter({
           component: () => import("@/views/OfflineView.vue"),
         },
         {
+          path: "proposals",
+          name: "proposals",
+          component: () => import("@/views/ProposalsView.vue"),
+        },
+        {
+          path: "proposals/:id",
+          name: "proposal",
+          component: () => import("@/views/ProposalDetailView.vue"),
+          props: true,
+        },
+        {
           path: "members",
           name: "members",
           component: () => import("@/views/MembersView.vue"),
@@ -187,8 +198,8 @@ const router = createRouter({
         {
           path: "admin/external-import",
           name: "external-import",
+          // Membres aussi (P4-3b) : ils proposent la sélection au lieu de l'importer.
           component: () => import("@/views/admin/ExternalImportView.vue"),
-          meta: { catalog: true },
         },
       ],
     },

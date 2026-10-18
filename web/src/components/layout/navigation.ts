@@ -12,6 +12,7 @@ export const NAV_ICONS = {
   relationTypes: "M4 12h16M14 6l6 6-6 6M10 6l-6 6 6 6",
   collectionTypes: "M3 12V4h8l10 10-8 8zM7.5 7.5h.01",
   stats: "M4 20V10M10 20V4M16 20v-7M22 20H2",
+  proposals: "M4 4h16v12H8l-4 4zM8 9h8M8 12h5",
   members:
     "M12 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1",
   offline:
@@ -48,6 +49,7 @@ export function isMoreActive(path: string): boolean {
     path.startsWith("/admin") ||
     isNavActive("/stats", path) ||
     isNavActive("/members", path) ||
+    isNavActive("/proposals", path) ||
     isNavActive("/offline", path)
   );
 }
@@ -65,6 +67,7 @@ export function useNavigation() {
       icon: "collections",
     },
     { to: "/stats", label: t("layout.nav.stats"), icon: "stats" },
+    { to: "/proposals", label: t("layout.nav.proposals"), icon: "proposals" },
     { to: "/members", label: t("layout.nav.members"), icon: "members" },
     { to: "/offline", label: t("layout.nav.offline"), icon: "offline" },
   ]);
@@ -72,6 +75,7 @@ export function useNavigation() {
   /** Liens de la feuille « Plus » (mobile), avant l'administration. */
   const sheetLinks = computed<NavLink[]>(() => [
     { to: "/stats", label: t("layout.nav.stats"), icon: "stats" },
+    { to: "/proposals", label: t("layout.nav.proposals"), icon: "proposals" },
     { to: "/members", label: t("layout.nav.members"), icon: "members" },
     { to: "/offline", label: t("layout.nav.offline"), icon: "offline" },
   ]);

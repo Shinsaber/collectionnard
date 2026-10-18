@@ -168,6 +168,7 @@ une abstraction de ce schéma ; elle n'existe pas dans l'implémentation.
 | `x-widget`           | propriété | Widget dédié : `i18n-text` (objet `{fr, en, …}` : une chaîne par langue, codes supplémentaires acceptés), `image-gallery` (objet de catégories), `links` (tableau de `{label?, url}`, URL http(s) en format `uri` : liens cliquables sur la fiche, libellé facultatif, nom du site à défaut)                                                          |
 | `x-image-categories` | propriété | Catégories d'images et ratios : `{ "poster": { "ratio": "2/3" } }` (avec `image-gallery`). Contrôles facultatifs à l'envoi, dans le navigateur : `tolerance` (écart de ratio permis, %), `min_width` / `min_height` (px), `strict` (refuser ; sinon avertissement) |
 | `x-private`          | propriété | CollectionType : champ caché par défaut à tout autre lecteur que le propriétaire (prix payé, budget max), même dans une collection publique ; le propriétaire peut remplacer ce défaut par collection (`hidden_fields`). Retiré **par le serveur** des pages publiques, liens de partage et statistiques, administrateurs compris |
+| `x-identifier`       | propriété | ItemType : identifiant (ISBN, EAN, QID Wikidata, ARK BnF, MBID…), au premier niveau ou dans un objet (`external_ids.wikidata`). Un autre item du même type portant la même valeur est signalé comme doublon possible avant l'enregistrement ou la proposition (`POST /items/duplicates`) |
 | `x-completeness`     | racine    | RelationType seulement : `true` marque une relation de composition (la cible fait partie de la source : `contains_volume`, `contains_track`, `contains_episode`, `includes_episode`, `contains_work`). Les statistiques d'une collection comptent, pour chaque source, les cibles présentes sur le total (« 30 tomes sur 42 ») |
 | `x-label`            | racine    | Gabarit du libellé des instances : `"{title}"`, `"{number}. {title}"`, `"{last_name} {first_name}"` ; sans gabarit, repli sur `title`, `name`, `label` (Go `internal/label`, TS `web/src/lib/schema.ts`) |
 
@@ -458,7 +459,7 @@ propositions modérées **et** rôle contributeur ; échanges reportés.
       sensibles (prix payé) ; annuaire des membres ; listes de souhaits partageables.
 - [ ] **P4-3 — Contributions** (raffiné le 2026-10-18) : P4-3a (livré) historique des items et relations (origine, retour à
       une version, attribution selon la visibilité actuelle) + rôle contributeur (écriture directe, sans suppression) ;
-      P4-3b propositions au format de l'import avec version de départ et conflits, brouillons, discussion, modération par
+      P4-3b (livré) propositions au format de l'import avec version de départ et conflits, brouillons, discussion, modération par
       admins et contributeurs, doublons, quota ; P4-3c notifications dans l'application, signalements, suggestions de
       champ. Plus tard : résumé e-mail, contributeur par domaine, fusion de doublons, gamification.
 - [ ] Système d'échange : reporté (exemplaires « à échanger », correspondances avec les listes de souhaits, messagerie),

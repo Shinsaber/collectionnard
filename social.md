@@ -221,6 +221,18 @@ grandit avec les propositions acceptées.
   actuel). Auteur résolu à chaque lecture : `user` / `member` / `system`. `create-user … --contributor`. Correctif
   au passage : `POST /uploads` ouvert à tout compte connecté (avatar de P4-0, images des propositions).
 
+- **P4-3b (2026-10-18)** : migration 011 (`proposals`, `proposal_comments`). Le serveur prend l'instantané de départ à
+  chaque soumission (`EntitySnapshot`) ; une soumission passe par une simulation d'import (422 `proposal_invalid` avec
+  le rapport). Acceptation : `importCatalog` et changement d'état **dans la même transaction**, écritures créditées à
+  l'**auteur** (origine `proposal`), relecteur noté sur la proposition ; une entité changée depuis la soumission est un
+  conflit (409 `proposal_conflict`) que le modérateur tranche champ par champ (fusion à trois volets côté client,
+  `lib/proposals.ts`), puis renvoie avec `conflicts_resolved`. Une proposition ne fait que créer ou modifier (le format
+  de l'import ne supprime pas) : retirer un lien passe par un signalement. Doublons : nouvelle extension
+  **`x-identifier`** (ISBN, EAN, code-barres, sous-clés de `external_ids`), `POST /items/duplicates`, avertissement
+  dans le formulaire d'item (un second clic enregistre). Sources externes : recherche et aperçu ouverts aux membres,
+  `POST /external/{connector}/propose` ; l'import direct reste aux contributeurs. Quota : `PROPOSAL_QUOTA` (5) + 1 par
+  acceptée, plafond 50, 20 créations par 24 h ; contributeurs et admins sans quota.
+
 ### Reporté
 
 - Contributeur **par domaine** et **promotion suggérée** (« Camille pourrait devenir contributrice » après N propositions

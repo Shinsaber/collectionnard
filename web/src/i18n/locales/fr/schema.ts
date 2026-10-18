@@ -77,6 +77,9 @@ export default {
     private:
       "Privé : caché à tout autre que le propriétaire de la collection (prix payé…), même publique",
     privateShort: "Privé",
+    identifier:
+      "Identifiant (ISBN, EAN, QID…) : un autre item portant la même valeur est signalé comme doublon possible",
+    identifierShort: "Identifiant",
     remove: "Supprimer le champ",
     addAfter: "Ajouter un champ après",
   },

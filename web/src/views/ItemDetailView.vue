@@ -101,13 +101,16 @@
               class="grid auto-cols-fr grid-flow-col gap-2 sm:flex sm:flex-wrap"
             >
               <button
-                v-if="auth.canEditCatalog"
                 type="button"
                 :class="secondaryClass"
                 @click="editDialogVisible = true"
               >
                 <i class="pi pi-pencil text-sm" aria-hidden="true"></i>
-                {{ t("common.edit") }}
+                {{
+                  auth.canEditCatalog
+                    ? t("common.edit")
+                    : t("proposals.suggest")
+                }}
               </button>
               <RouterLink
                 :to="{ path: '/items', query: { related_to: item.id } }"
@@ -195,6 +198,7 @@
       v-model:visible="editDialogVisible"
       :item="item"
       :item-types="[]"
+      :propose="!auth.canEditCatalog"
       @saved="loadItem(item!.id)"
     />
   </div>

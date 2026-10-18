@@ -242,6 +242,7 @@ function parseSchema(schema: Record<string, unknown>): SchemaField[] {
             ? parseImageCategories(prop["x-image-categories"])
             : null,
         private: prop["x-private"] === true,
+        identifier: prop["x-identifier"] === true,
         extra: preservedKeys(prop, type),
         itemsExtra:
           type === "array"
@@ -273,6 +274,7 @@ function buildProperty(f: SchemaField): Record<string, unknown> {
   const prop: Record<string, unknown> = { ...(f.extra ?? {}), type: f.type };
   if (f.description) prop.description = f.description;
   if (f.private) prop["x-private"] = true;
+  if (f.identifier) prop["x-identifier"] = true;
 
   if (f.type === "string") {
     if (f.minLength != null && f.minLength > 0) prop.minLength = f.minLength;

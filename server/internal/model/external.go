@@ -67,6 +67,8 @@ type ExternalImportRequest struct {
 	// Overrides replaces the attributes of selected nodes (corrections made in
 	// the preview, import only): node key → complete attributes.
 	Overrides map[string]json.RawMessage `json:"overrides,omitempty"`
+	// Title of the proposal (POST /external/{connector}/propose only, P4-3b).
+	Title string `json:"title,omitempty"`
 }
 
 // Roles of the nodes of a plan (vocabulary of the connector, translated by the client).

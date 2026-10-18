@@ -40,6 +40,7 @@
       :features="{
         completeness: kind === 'relation',
         private: kind === 'collection',
+        identifier: kind === 'item',
       }"
     >
       <template #aside>

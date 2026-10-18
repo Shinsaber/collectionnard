@@ -48,6 +48,12 @@ import type {
   GraphResponse,
   Stats,
   MeStats,
+  Duplicate,
+  Proposal,
+  ProposalComment,
+  ProposalConflict,
+  ProposalInput,
+  ProposalPayload,
   ItemHistory,
   CollectionStats,
   PublicCollection,
@@ -324,7 +330,72 @@ export const collectionTypeApi = {
 };
 
 // ── Items ─────────────────────────────────────────────────────────────
+/** Propositions et modération (P4-3b). */
+export const proposalApi = {
+  list: (
+    params: PaginationParams & { scope?: "mine" | "review"; status?: string },
+  ) =>
+    http
+      .get<PaginatedResponse<Proposal>>("/proposals", { params })
+      .then((r) => r.data),
+  create: (data: ProposalInput) =>
+    http.post<Proposal>("/proposals", data).then((r) => r.data),
+  get: (id: string) =>
+    http.get<Proposal>(`/proposals/${id}`).then((r) => r.data),
+  update: (id: string, data: ProposalInput) =>
+    http.put<Proposal>(`/proposals/${id}`, data).then((r) => r.data),
+  submit: (id: string) =>
+    http.post<Proposal>(`/proposals/${id}/submit`).then((r) => r.data),
+  withdraw: (id: string) =>
+    http.post<Proposal>(`/proposals/${id}/withdraw`).then((r) => r.data),
+  conflicts: (id: string) =>
+    http
+      .get<ProposalConflict[]>(`/proposals/${id}/conflicts`)
+      .then((r) => r.data),
+  accept: (
+    id: string,
+    body: {
+      payload?: ProposalPayload;
+      conflicts_resolved?: boolean;
+      comment?: string;
+    } = {},
+  ) => http.post<Proposal>(`/proposals/${id}/accept`, body).then((r) => r.data),
+  reject: (id: string, comment: string) =>
+    http
+      .post<Proposal>(`/proposals/${id}/reject`, { comment })
+      .then((r) => r.data),
+  requestChanges: (id: string, comment: string) =>
+    http
+      .post<Proposal>(`/proposals/${id}/request-changes`, { comment })
+      .then((r) => r.data),
+  comments: (id: string) =>
+    http
+      .get<ProposalComment[]>(`/proposals/${id}/comments`)
+      .then((r) => r.data),
+  comment: (id: string, body: string) =>
+    http
+      .post<ProposalComment>(`/proposals/${id}/comments`, { body })
+      .then((r) => r.data),
+  reviewCount: () =>
+    http
+      .get<{ count: number }>("/proposals/review-count")
+      .then((r) => r.data.count),
+};
+
 export const itemApi = {
+  /** Items du même type portant déjà un identifiant (`x-identifier`) des attributs (P4-3b). */
+  duplicates: (
+    itemTypeId: string,
+    attributes: Record<string, unknown>,
+    excludeId?: string,
+  ) =>
+    http
+      .post<Duplicate[]>("/items/duplicates", {
+        item_type_id: itemTypeId,
+        attributes,
+        exclude_id: excludeId,
+      })
+      .then((r) => r.data),
   /** Historique de l'item et de ses relations (P4-3a). */
   history: (id: string) =>
     http.get<ItemHistory>(`/items/${id}/history`).then((r) => r.data),
@@ -681,5 +752,10 @@ export const externalApi = {
         params: { dry_run: dryRun },
         validateStatus: (s) => s === 200 || s === 422,
       })
+      .then((r) => r.data),
+  /** Membre (P4-3b) : la sélection devient une proposition soumise. */
+  propose: (connector: string, req: ExternalImportRequest) =>
+    http
+      .post<Proposal>(`${external(connector)}/propose`, req)
       .then((r) => r.data),
 };

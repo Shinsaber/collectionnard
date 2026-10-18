@@ -30,6 +30,7 @@ export interface SchemaBuilderFeatures {
   // racine
   completeness: boolean; // x-completeness (types de relation : composition)
   private: boolean; // x-private par champ (types de collection : caché aux autres lecteurs)
+  identifier: boolean; // x-identifier par champ (types d'item : ISBN, EAN… pour les doublons)
 }
 
 export const defaultFeatures: SchemaBuilderFeatures = {
@@ -55,6 +56,7 @@ export const defaultFeatures: SchemaBuilderFeatures = {
   links: true,
   completeness: false,
   private: false,
+  identifier: false,
 };
 
 /** Un champ du schéma tel qu'édité dans le builder. */
@@ -66,6 +68,8 @@ export interface SchemaField {
   required: boolean;
   /** `x-private` : caché à tout autre lecteur que le propriétaire (CollectionType, P4-2). */
   private?: boolean;
+  /** `x-identifier` : identifiant (ISBN, EAN, QID…) cherché pour signaler les doublons (P4-3b). */
+  identifier?: boolean;
   description?: string | null;
   defaultValue?: unknown;
   // string
@@ -197,6 +201,7 @@ export const MANAGED_PROPERTY_KEYS = new Set([
   "x-image-categories",
   "x-enum-labels",
   "x-private",
+  "x-identifier",
 ]);
 
 /** Mots-clés racine pilotés par le builder ; le reste est conservé à l'identique. */

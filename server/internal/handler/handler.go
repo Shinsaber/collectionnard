@@ -162,6 +162,30 @@ func (h *Handler) Router() chi.Router {
 		r.Delete("/api/v1/collections/{collectionId}/items/{itemId}", h.RemoveItemFromCollection)
 
 		r.Get("/api/v1/items/{id}/history", h.GetItemHistory)
+		r.Post("/api/v1/items/duplicates", h.FindDuplicates)
+
+		// Sources externes (Wikidata, BnF, MusicBrainz, TVmaze) : recherche et aperçu pour tous ;
+		// un membre en fait une proposition (P4-3b), un contributeur importe directement.
+		r.Get("/api/v1/external/connectors", h.ListConnectors)
+		r.Get("/api/v1/external/{connector}/works", h.SearchExternalWorks)
+		r.Get("/api/v1/external/{connector}/editions", h.SearchExternalEditions)
+		r.Post("/api/v1/external/{connector}/preview", h.PreviewExternal)
+		r.Post("/api/v1/external/{connector}/propose", h.ProposeExternal)
+
+		// Propositions (P4-3b) : membres ; modération (admins, contributeurs) contrôlée par le handler.
+		r.Get("/api/v1/proposals", h.ListProposals)
+		r.Post("/api/v1/proposals", h.CreateProposal)
+		r.Get("/api/v1/proposals/review-count", h.CountProposalsToReview)
+		r.Get("/api/v1/proposals/{id}", h.GetProposal)
+		r.Put("/api/v1/proposals/{id}", h.UpdateProposal)
+		r.Post("/api/v1/proposals/{id}/submit", h.SubmitProposal)
+		r.Post("/api/v1/proposals/{id}/withdraw", h.WithdrawProposal)
+		r.Get("/api/v1/proposals/{id}/conflicts", h.GetProposalConflicts)
+		r.Post("/api/v1/proposals/{id}/accept", h.AcceptProposal)
+		r.Post("/api/v1/proposals/{id}/reject", h.RejectProposal)
+		r.Post("/api/v1/proposals/{id}/request-changes", h.RequestProposalChanges)
+		r.Get("/api/v1/proposals/{id}/comments", h.ListProposalComments)
+		r.Post("/api/v1/proposals/{id}/comments", h.CreateProposalComment)
 
 		// Écriture du catalogue : admins et contributeurs (P4-3a), sans suppression d'item.
 		r.Group(func(r chi.Router) {
@@ -175,11 +199,7 @@ func (h *Handler) Router() chi.Router {
 			r.Put("/api/v1/relations/{id}", h.UpdateRelation)
 			r.Delete("/api/v1/relations/{id}", h.DeleteRelation)
 
-			// External sources (Wikidata, BnF, MusicBrainz, TVmaze)
-			r.Get("/api/v1/external/connectors", h.ListConnectors)
-			r.Get("/api/v1/external/{connector}/works", h.SearchExternalWorks)
-			r.Get("/api/v1/external/{connector}/editions", h.SearchExternalEditions)
-			r.Post("/api/v1/external/{connector}/preview", h.PreviewExternal)
+			// Sources externes : import direct (les membres proposent, ci-dessus).
 			r.Post("/api/v1/external/{connector}/import", h.ImportExternal)
 		})
 

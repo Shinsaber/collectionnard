@@ -66,6 +66,14 @@ const en: typeof fr = {
     last_admin: "The instance must keep at least one active admin.",
     invitation_used:
       "This invitation has been used: it can no longer be withdrawn.",
+    proposal_state: "This proposal changed state meanwhile: reload the page.",
+    proposal_quota: "Too many proposals waiting: wait for their review.",
+    proposal_invalid:
+      "The proposal fails the catalogue checks (invalid fields).",
+    proposal_conflict:
+      "Records changed since the proposal: resolve the conflicts.",
+    proposal_meta_types: "A proposal changes items and relations only.",
+    own_proposal: "Nobody reviews their own proposals.",
   },
 };
 

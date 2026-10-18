@@ -23,6 +23,7 @@ type Config struct {
 	LoginRateLimit  int           // max calls per minute and per IP on /auth/*
 	TrustedProxy    bool          // trust X-Real-IP set by a reverse proxy (nginx)
 	MemberInvites   bool          // members (not only admins) may create invitations (MEMBER_INVITES)
+	ProposalQuota   int           // proposals a member may have waiting, +1 per accepted one (PROPOSAL_QUOTA, P4-3b)
 	GraphMaxNodes   int           // max nodes returned by GET /items/{id}/graph
 	UploadDir       string
 	MaxUploadSize   int64 // bytes
@@ -82,6 +83,15 @@ func Load() (*Config, error) {
 		graphMaxNodes = n
 	}
 
+	proposalQuota := 5
+	if v := os.Getenv("PROPOSAL_QUOTA"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 1 {
+			return nil, fmt.Errorf("invalid PROPOSAL_QUOTA: %q (positive integer expected)", v)
+		}
+		proposalQuota = n
+	}
+
 	trustedProxy := false
 	if v := os.Getenv("TRUSTED_PROXY"); v != "" {
 		b, err := strconv.ParseBool(v)
@@ -138,6 +148,7 @@ func Load() (*Config, error) {
 		TrustedProxy:      trustedProxy,
 		MemberInvites:     memberInvites,
 		GraphMaxNodes:     graphMaxNodes,
+		ProposalQuota:     proposalQuota,
 		UploadDir:         uploadDir,
 		MaxUploadSize:     maxUploadSize,
 		MaxImportSize:     maxImportSize,

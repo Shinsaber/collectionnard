@@ -77,6 +77,9 @@ const en: typeof fr = {
     private:
       "Private: hidden from anyone but the collection owner (price paid…), even when public",
     privateShort: "Private",
+    identifier:
+      "Identifier (ISBN, EAN, QID…): another item with the same value is reported as a possible duplicate",
+    identifierShort: "Identifier",
     remove: "Remove field",
     addAfter: "Add a field after",
   },

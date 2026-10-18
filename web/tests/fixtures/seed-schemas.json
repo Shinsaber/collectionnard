@@ -158,19 +158,23 @@
           "properties": {
             "wikidata": {
               "type": "string",
-              "pattern": "^Q[1-9][0-9]*$"
+              "pattern": "^Q[1-9][0-9]*$",
+              "x-identifier": true
             },
             "imdb": {
               "type": "string",
-              "pattern": "^tt[0-9]{7,9}$"
+              "pattern": "^tt[0-9]{7,9}$",
+              "x-identifier": true
             },
             "tvmaze": {
               "type": "string",
-              "pattern": "^[0-9]+$"
+              "pattern": "^[0-9]+$",
+              "x-identifier": true
             },
             "bnf_ark": {
               "type": "string",
-              "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$"
+              "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$",
+              "x-identifier": true
             }
           }
         },
@@ -379,11 +383,13 @@
           "properties": {
             "wikidata": {
               "type": "string",
-              "pattern": "^Q[1-9][0-9]*$"
+              "pattern": "^Q[1-9][0-9]*$",
+              "x-identifier": true
             },
             "tvmaze": {
               "type": "string",
-              "pattern": "^[0-9]+$"
+              "pattern": "^[0-9]+$",
+              "x-identifier": true
             }
           }
         },
@@ -522,15 +528,18 @@
           "properties": {
             "wikidata": {
               "type": "string",
-              "pattern": "^Q[1-9][0-9]*$"
+              "pattern": "^Q[1-9][0-9]*$",
+              "x-identifier": true
             },
             "imdb": {
               "type": "string",
-              "pattern": "^tt[0-9]{7,9}$"
+              "pattern": "^tt[0-9]{7,9}$",
+              "x-identifier": true
             },
             "tvmaze": {
               "type": "string",
-              "pattern": "^[0-9]+$"
+              "pattern": "^[0-9]+$",
+              "x-identifier": true
             }
           }
         },
@@ -725,7 +734,8 @@
         },
         "ean": {
           "type": "string",
-          "pattern": "^[0-9]{8,14}$"
+          "pattern": "^[0-9]{8,14}$",
+          "x-identifier": true
         },
         "runtime": {
           "type": "integer",
@@ -802,7 +812,8 @@
           "properties": {
             "bnf_ark": {
               "type": "string",
-              "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$"
+              "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$",
+              "x-identifier": true
             }
           }
         },
@@ -981,11 +992,13 @@
           "properties": {
             "bnf_ark": {
               "type": "string",
-              "pattern": "^ark:/12148/[a-z0-9]+$"
+              "pattern": "^ark:/12148/[a-z0-9]+$",
+              "x-identifier": true
             },
             "wikidata": {
               "type": "string",
-              "pattern": "^Q[1-9][0-9]*$"
+              "pattern": "^Q[1-9][0-9]*$",
+              "x-identifier": true
             }
           },
           "additionalProperties": false
@@ -1141,11 +1154,13 @@
           "properties": {
             "bnf_ark": {
               "type": "string",
-              "pattern": "^ark:/12148/[a-z0-9]+$"
+              "pattern": "^ark:/12148/[a-z0-9]+$",
+              "x-identifier": true
             },
             "wikidata": {
               "type": "string",
-              "pattern": "^Q[1-9][0-9]*$"
+              "pattern": "^Q[1-9][0-9]*$",
+              "x-identifier": true
             }
           },
           "additionalProperties": false
@@ -1401,11 +1416,13 @@
           "properties": {
             "bnf_ark": {
               "type": "string",
-              "pattern": "^ark:/12148/[a-z0-9]+$"
+              "pattern": "^ark:/12148/[a-z0-9]+$",
+              "x-identifier": true
             },
             "wikidata": {
               "type": "string",
-              "pattern": "^Q[1-9][0-9]*$"
+              "pattern": "^Q[1-9][0-9]*$",
+              "x-identifier": true
             }
           },
           "additionalProperties": false
@@ -1641,11 +1658,13 @@
           "properties": {
             "bnf_ark": {
               "type": "string",
-              "pattern": "^ark:/12148/[a-z0-9]+$"
+              "pattern": "^ark:/12148/[a-z0-9]+$",
+              "x-identifier": true
             },
             "wikidata": {
               "type": "string",
-              "pattern": "^Q[1-9][0-9]*$"
+              "pattern": "^Q[1-9][0-9]*$",
+              "x-identifier": true
             }
           },
           "additionalProperties": false
@@ -1914,11 +1933,13 @@
           "properties": {
             "bnf_ark": {
               "type": "string",
-              "pattern": "^ark:/12148/[a-z0-9]+$"
+              "pattern": "^ark:/12148/[a-z0-9]+$",
+              "x-identifier": true
             },
             "wikidata": {
               "type": "string",
-              "pattern": "^Q[1-9][0-9]*$"
+              "pattern": "^Q[1-9][0-9]*$",
+              "x-identifier": true
             }
           },
           "additionalProperties": false
@@ -1930,7 +1951,8 @@
         "isbn": {
           "type": "string",
           "pattern": "^97[89][0-9]{10}$",
-          "description": "ISBN-13, chiffres seuls"
+          "description": "ISBN-13, chiffres seuls",
+          "x-identifier": true
         },
         "publication_date": {
           "type": "string",
@@ -2033,7 +2055,8 @@
         "isbn": {
           "type": "string",
           "pattern": "^97[89][0-9]{10}$",
-          "description": "ISBN-13, chiffres seuls"
+          "description": "ISBN-13, chiffres seuls",
+          "x-identifier": true
         },
         "title": {
           "type": "object",
@@ -2126,11 +2149,13 @@
           "properties": {
             "bnf_ark": {
               "type": "string",
-              "pattern": "^ark:/12148/[a-z0-9]+$"
+              "pattern": "^ark:/12148/[a-z0-9]+$",
+              "x-identifier": true
             },
             "wikidata": {
               "type": "string",
-              "pattern": "^Q[1-9][0-9]*$"
+              "pattern": "^Q[1-9][0-9]*$",
+              "x-identifier": true
             }
           },
           "additionalProperties": false
@@ -2300,11 +2325,13 @@
           "properties": {
             "bnf_ark": {
               "type": "string",
-              "pattern": "^ark:/12148/[a-z0-9]+$"
+              "pattern": "^ark:/12148/[a-z0-9]+$",
+              "x-identifier": true
             },
             "wikidata": {
               "type": "string",
-              "pattern": "^Q[1-9][0-9]*$"
+              "pattern": "^Q[1-9][0-9]*$",
+              "x-identifier": true
             }
           },
           "additionalProperties": false
@@ -2454,11 +2481,13 @@
           "properties": {
             "bnf_ark": {
               "type": "string",
-              "pattern": "^ark:/12148/[a-z0-9]+$"
+              "pattern": "^ark:/12148/[a-z0-9]+$",
+              "x-identifier": true
             },
             "wikidata": {
               "type": "string",
-              "pattern": "^Q[1-9][0-9]*$"
+              "pattern": "^Q[1-9][0-9]*$",
+              "x-identifier": true
             }
           },
           "additionalProperties": false
@@ -2697,11 +2726,13 @@
           "properties": {
             "bnf_ark": {
               "type": "string",
-              "pattern": "^ark:/12148/[a-z0-9]+$"
+              "pattern": "^ark:/12148/[a-z0-9]+$",
+              "x-identifier": true
             },
             "wikidata": {
               "type": "string",
-              "pattern": "^Q[1-9][0-9]*$"
+              "pattern": "^Q[1-9][0-9]*$",
+              "x-identifier": true
             }
           },
           "additionalProperties": false
@@ -2880,11 +2911,13 @@
           "properties": {
             "musicbrainz": {
               "type": "string",
-              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "x-identifier": true
             },
             "wikidata": {
               "type": "string",
-              "pattern": "^Q[1-9][0-9]*$"
+              "pattern": "^Q[1-9][0-9]*$",
+              "x-identifier": true
             }
           }
         },
@@ -3075,11 +3108,13 @@
           "properties": {
             "musicbrainz": {
               "type": "string",
-              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "x-identifier": true
             },
             "wikidata": {
               "type": "string",
-              "pattern": "^Q[1-9][0-9]*$"
+              "pattern": "^Q[1-9][0-9]*$",
+              "x-identifier": true
             }
           }
         },
@@ -3246,7 +3281,8 @@
         },
         "barcode": {
           "type": "string",
-          "pattern": "^[0-9]{8,14}$"
+          "pattern": "^[0-9]{8,14}$",
+          "x-identifier": true
         },
         "catalog_number": {
           "type": "string"
@@ -3317,7 +3353,8 @@
           "properties": {
             "musicbrainz": {
               "type": "string",
-              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "x-identifier": true
             }
           }
         },
@@ -3421,7 +3458,8 @@
           "properties": {
             "musicbrainz": {
               "type": "string",
-              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "x-identifier": true
             }
           }
         },
@@ -3525,7 +3563,8 @@
           "properties": {
             "musicbrainz": {
               "type": "string",
-              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "x-identifier": true
             }
           }
         },
@@ -3843,15 +3882,18 @@
           "properties": {
             "wikidata": {
               "type": "string",
-              "pattern": "^Q[1-9][0-9]*$"
+              "pattern": "^Q[1-9][0-9]*$",
+              "x-identifier": true
             },
             "bnf_ark": {
               "type": "string",
-              "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$"
+              "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$",
+              "x-identifier": true
             },
             "imdb": {
               "type": "string",
-              "pattern": "^tt[0-9]{7,9}$"
+              "pattern": "^tt[0-9]{7,9}$",
+              "x-identifier": true
             }
           }
         },
@@ -4177,11 +4219,13 @@
           "properties": {
             "wikidata": {
               "type": "string",
-              "pattern": "^Q[1-9][0-9]*$"
+              "pattern": "^Q[1-9][0-9]*$",
+              "x-identifier": true
             },
             "bnf_ark": {
               "type": "string",
-              "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$"
+              "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$",
+              "x-identifier": true
             }
           }
         },
@@ -4348,7 +4392,8 @@
         },
         "ean": {
           "type": "string",
-          "pattern": "^[0-9]{8,14}$"
+          "pattern": "^[0-9]{8,14}$",
+          "x-identifier": true
         },
         "languages": {
           "type": "array",
@@ -4407,7 +4452,8 @@
           "properties": {
             "bnf_ark": {
               "type": "string",
-              "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$"
+              "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$",
+              "x-identifier": true
             }
           }
         },
@@ -4570,7 +4616,8 @@
           "properties": {
             "wikidata": {
               "type": "string",
-              "pattern": "^Q[1-9][0-9]*$"
+              "pattern": "^Q[1-9][0-9]*$",
+              "x-identifier": true
             }
           }
         },

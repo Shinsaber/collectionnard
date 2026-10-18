@@ -155,6 +155,10 @@ tags:
       Lectures sans compte ou par d'autres membres (P4-2) : profils, collections visibles, liens de partage.
       Les champs cachés d'une collection (`x-private` du type ou `hidden_fields` du propriétaire) sont retirés
       par le serveur pour tout autre lecteur que le propriétaire, admins compris.
+  - name: Proposals
+    description: |
+      Propositions des membres (P4-3b) : ajouts et corrections du catalogue au format de l'import, suggestions de
+      champ, signalements ; modération par les admins et contributeurs, discussion.
   - name: Stats
     description: |
       Statistiques globales sur le catalogue et les collections :
@@ -172,7 +176,8 @@ tags:
       utilisateurs ne font pas partie de l'export du catalogue.
   - name: External
     description: |
-      **Admin ou contributeur.** Récupération depuis des sources ouvertes, un connecteur par sorte de
+      Recherche et aperçu : tout compte connecté ; import direct : admins et contributeurs ; un membre propose
+      la sélection (`/propose`, P4-3b). Récupération depuis des sources ouvertes, un connecteur par sorte de
       collection (`/external/{connector}/…`, liste : `GET /external/connectors`) : `bd-manga` (manga, BD) et
       `novels` (romans : roman, cycle et auteurs sur Wikidata ; éditions BnF de sa notice d'œuvre, traducteurs,
       illustrateurs et préfaciers) et `music` (CD, vinyles : album, éditions, pistes, artistes et labels sur
@@ -1598,6 +1603,118 @@ components:
           minimum: 1
           description: Version de l'item dont les attributs sont restaurés.
 
+    Proposal:
+      type: object
+      description: |
+        Proposition d'un membre (P4-3b). `catalog` : items et relations au format de l'import du catalogue ;
+        `schema_suggestion` / `report` : un texte (`description`), un signalement visant un item.
+      required: [id, kind, status, title, author, comment_count, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        kind: { type: string, enum: [catalog, schema_suggestion, report] }
+        status:
+          type: string
+          enum: [draft, pending, changes_requested, accepted, rejected, withdrawn]
+        title: { type: string, maxLength: 200 }
+        description: { type: string }
+        payload:
+          $ref: "#/components/schemas/CatalogExport"
+        base:
+          type: object
+          description: "Instantané des entités existantes modifiées, à la soumission (`items`, `relations` : id → attributs)."
+          additionalProperties: true
+        item_id: { type: string, format: uuid }
+        author:
+          $ref: "#/components/schemas/Owner"
+        author_disabled:
+          type: boolean
+          description: Compte de l'auteur désactivé (proposition gardée pour la modération).
+        reviewer:
+          $ref: "#/components/schemas/Owner"
+        review_comment: { type: string }
+        comment_count: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        submitted_at: { type: string, format: date-time }
+        decided_at: { type: string, format: date-time }
+
+    ProposalInput:
+      type: object
+      description: Création (`kind` requis) ou modification d'une proposition en brouillon ou à corriger.
+      required: [title]
+      properties:
+        kind: { type: string, enum: [catalog, schema_suggestion, report] }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: string, maxLength: 10000 }
+        payload:
+          $ref: "#/components/schemas/CatalogExport"
+        item_id: { type: string, format: uuid }
+        submit:
+          type: boolean
+          description: Création seulement — soumettre aussitôt (sinon brouillon).
+
+    ProposalDecision:
+      type: object
+      description: Refus ou demande de modifications ; le commentaire est obligatoire.
+      required: [comment]
+      properties:
+        comment: { type: string, minLength: 1, maxLength: 10000 }
+
+    ProposalAccept:
+      type: object
+      properties:
+        payload:
+          $ref: "#/components/schemas/CatalogExport"
+          description: Charge corrigée par le modérateur (sinon celle de l'auteur).
+        conflicts_resolved:
+          type: boolean
+          description: Le modérateur a tranché les conflits (sinon 409 `proposal_conflict` s'il y en a).
+        comment: { type: string, maxLength: 10000 }
+
+    ProposalConflict:
+      type: object
+      description: Entité modifiée par la proposition et changée depuis sa soumission (départ / actuel / proposé).
+      required: [kind, id]
+      properties:
+        kind: { type: string, enum: [item, relation] }
+        id: { type: string, format: uuid }
+        base: { type: [object, "null"], additionalProperties: true }
+        current: { type: [object, "null"], additionalProperties: true, description: "`null` : supprimée depuis." }
+        proposed: { type: [object, "null"], additionalProperties: true }
+
+    ProposalComment:
+      type: object
+      required: [id, author, body, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        author:
+          $ref: "#/components/schemas/Owner"
+        body: { type: string }
+        created_at: { type: string, format: date-time }
+
+    DuplicateCheck:
+      type: object
+      required: [item_type_id, attributes]
+      properties:
+        item_type_id: { type: string, format: uuid }
+        attributes: { type: object, additionalProperties: true }
+        exclude_id:
+          type: string
+          format: uuid
+          description: Item en cours de modification (ignoré).
+
+    Duplicate:
+      type: object
+      description: Item existant qui porte la même valeur pour un champ `x-identifier`.
+      required: [field, value, item]
+      properties:
+        field:
+          type: string
+          description: Chemin du champ, `isbn` ou `external_ids.wikidata`.
+        value: { type: string }
+        item:
+          $ref: "#/components/schemas/Item"
+
     Error:
       type: object
       description: |
@@ -2022,6 +2139,10 @@ components:
           type: array
           items: { type: string }
           description: Import seulement — clés (`key`) des nœuds de l'aperçu à écrire.
+        title:
+          type: string
+          maxLength: 200
+          description: Titre de la proposition (`propose` seulement ; à défaut, le connecteur).
         overrides:
           type: object
           description: |
@@ -4999,7 +5120,7 @@ paths:
       tags: [External]
       summary: Connecteurs disponibles
       description: |
-        **Admin ou contributeur.** Un connecteur par sorte de collection (`bd-manga`, `novels`…) et le paquet de
+        Tout compte connecté. Un connecteur par sorte de collection (`bd-manga`, `novels`…) et le paquet de
         domaine (`GET /domains`) qui porte les types qu'il écrit.
       operationId: listConnectors
       responses:
@@ -5142,6 +5263,49 @@ paths:
         "409": { $ref: "#/components/responses/ConnectorUnavailable" }
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
         "502": { $ref: "#/components/responses/ExternalUnavailable" }
+  /external/{connector}/propose:
+    parameters:
+      - $ref: "#/components/parameters/connector"
+    post:
+      tags: [External]
+      summary: Proposer la sélection
+      description: |
+        Tout compte connecté (P4-3b). Même requête que `import` (avec `title`) : la sélection devient une
+        proposition `catalog` soumise à la modération (mêmes contrôles : quota, simulation d'import, instantané
+        de départ) au lieu d'être importée.
+      operationId: proposeExternal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExternalImportRequest"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "502":
+          description: Source externe injoignable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "201":
+          description: Proposition créée et soumise.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proposal"
+
   /external/{connector}/import:
     parameters:
       - $ref: "#/components/parameters/connector"
@@ -5543,3 +5707,432 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Item"
+
+  # ===========================================================================
+  # Propositions et modération (P4-3b)
+  # ===========================================================================
+
+  /items/duplicates:
+    post:
+      tags: [Items]
+      summary: Chercher des doublons
+      description: Items du même type qui portent déjà une valeur d'un champ `x-identifier` (ISBN, EAN, QID…) de `attributes`.
+      operationId: findDuplicates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DuplicateCheck"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Doublons (vide s'il n'y en a pas).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Duplicate"
+
+  /proposals:
+    get:
+      tags: [Proposals]
+      summary: Lister des propositions
+      description: |
+        `scope=mine` (défaut) : les miennes, brouillons compris. `scope=review` (admins, contributeurs) : les
+        propositions soumises des autres (jamais les brouillons), les plus anciennes en attente d'abord.
+      operationId: listProposals
+      parameters:
+        - name: scope
+          in: query
+          schema: { type: string, enum: [mine, review], default: mine }
+        - name: status
+          in: query
+          schema: { type: string, enum: [draft, pending, changes_requested, accepted, rejected, withdrawn] }
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Propositions.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Proposal"
+    post:
+      tags: [Proposals]
+      summary: Créer une proposition
+      description: |
+        Brouillon, ou soumise si `submit`. Une charge `catalog` ne contient que des items et des relations
+        (422 `proposal_meta_types` sinon) ; elle est vérifiée par une simulation d'import à la soumission
+        (422 `proposal_invalid` avec le rapport). Quota de propositions en attente (409 `proposal_quota`).
+      operationId: createProposal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProposalInput"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Proposition créée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proposal"
+
+  /proposals/review-count:
+    get:
+      tags: [Proposals]
+      summary: Nombre de propositions à relire
+      description: Admins et contributeurs (pastille) ; propositions des autres en attente.
+      operationId: countProposalsToReview
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Nombre.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count]
+                properties:
+                  count: { type: integer }
+
+  /proposals/{id}:
+    get:
+      tags: [Proposals]
+      summary: Lire une proposition
+      description: Auteur, ou modérateur (sauf brouillon). 404 sinon.
+      operationId: getProposal
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Proposition.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proposal"
+    put:
+      tags: [Proposals]
+      summary: Modifier une proposition
+      description: Auteur, en brouillon ou à corriger (409 `proposal_state` sinon).
+      operationId: updateProposal
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProposalInput"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Proposition modifiée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proposal"
+
+  /proposals/{id}/submit:
+    post:
+      tags: [Proposals]
+      summary: Soumettre une proposition
+      description: Auteur, depuis brouillon ou à corriger ; l'instantané de départ est (re)pris à ce moment.
+      operationId: submitProposal
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Proposition soumise.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proposal"
+
+  /proposals/{id}/withdraw:
+    post:
+      tags: [Proposals]
+      summary: Retirer une proposition
+      description: Auteur, avant décision.
+      operationId: withdrawProposal
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Proposition retirée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proposal"
+
+  /proposals/{id}/conflicts:
+    get:
+      tags: [Proposals]
+      summary: Conflits d'une proposition
+      description: Modérateurs ; entités changées depuis la soumission (vide sinon).
+      operationId: getProposalConflicts
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Conflits.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProposalConflict"
+
+  /proposals/{id}/accept:
+    post:
+      tags: [Proposals]
+      summary: Accepter une proposition
+      description: |
+        Modérateurs (admins, contributeurs), jamais sur leurs propres propositions (403 `own_proposal`), en attente
+        seulement. `catalog` : application tout ou rien par l'import, historisée avec l'origine `proposal` et
+        l'auteur de la proposition ; 409 `proposal_conflict` (avec les conflits) si une entité a changé et que
+        `conflicts_resolved` n'est pas vrai.
+      operationId: acceptProposal
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProposalAccept"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Proposition acceptée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proposal"
+
+  /proposals/{id}/reject:
+    post:
+      tags: [Proposals]
+      summary: Refuser une proposition
+      description: Modérateurs, en attente seulement ; commentaire obligatoire.
+      operationId: rejectProposal
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProposalDecision"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Proposition refusée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proposal"
+
+  /proposals/{id}/request-changes:
+    post:
+      tags: [Proposals]
+      summary: Demander des modifications
+      description: Modérateurs, en attente seulement ; la proposition revient à l'auteur (`changes_requested`).
+      operationId: requestProposalChanges
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProposalDecision"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Modifications demandées.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proposal"
+
+  /proposals/{id}/comments:
+    get:
+      tags: [Proposals]
+      summary: Discussion d'une proposition
+      operationId: listProposalComments
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Commentaires, du plus ancien au plus récent.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProposalComment"
+    post:
+      tags: [Proposals]
+      summary: Commenter une proposition
+      description: Auteur ou modérateur, tant que la proposition n'est pas acceptée, refusée ni retirée.
+      operationId: createProposalComment
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { type: string, minLength: 1, maxLength: 10000 }
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Commentaire ajouté.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposalComment"

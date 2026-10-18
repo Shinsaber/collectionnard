@@ -88,6 +88,7 @@ go run .
 | `UPLOAD_DIR`        | `uploads`  | Dossier des images uploadées                                                                           |
 | `MAX_UPLOAD_SIZE`   | `10485760` | Taille max d'un upload (octets) ; les corps JSON sont limités à 1 Mio                                  |
 | `EXTERNAL_USER_AGENT` | `Collectionnard/1.0 (+URL du dépôt)` | User-Agent envoyé à Wikidata et à la BnF (leurs règles demandent un nom et un contact) |
+| `PROPOSAL_QUOTA`    | `5`        | Propositions en attente par membre (+1 par proposition acceptée, plafond 50) ; contributeurs et admins sans quota |
 | `MEMBER_INVITES`    | `false`    | `true` : les membres peuvent aussi créer des invitations (sinon les admins seulement)                  |
 
 **Frontend** :
@@ -291,6 +292,7 @@ Le projet utilise des extensions custom dans les JSON Schemas pour piloter le fr
 | `x-enum-labels`      | (propriété) Libellés des valeurs d'enum par langue (`{fr: {tv: "Télévision"}, en: {tv: "TV"}}`)          |
 | `x-widget`           | Widget spécifique : `image-gallery`, `i18n-text` (une chaîne par langue), `links` (liste de liens libellé + URL)                                                         |
 | `x-private`          | (propriété, CollectionType) Champ caché aux autres lecteurs (prix payé) ; retiré par le serveur des pages publiques et liens de partage |
+| `x-identifier`       | (propriété, ItemType) Identifiant (ISBN, EAN, QID…) : doublons signalés avant l'enregistrement |
 | `x-completeness`     | (racine, RelationType) Relation de composition : « 30 tomes sur 42 » dans les statistiques d'une collection |
 | `x-image-categories` | Catégories d'images avec ratios (`{poster: {ratio: "2/3"}}`) et contrôles facultatifs à l'envoi : `tolerance` (écart de ratio en %), `min_width` / `min_height` (px), `strict` (refuser plutôt qu'avertir) |
 

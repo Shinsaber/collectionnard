@@ -17,6 +17,7 @@ export default {
     offline: "Hors ligne",
     stats: "Statistiques",
     members: "Membres",
+    proposals: "Propositions",
   },
   mainNav: "Navigation principale",
   skipToContent: "Aller au contenu",

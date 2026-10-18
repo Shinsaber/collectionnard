@@ -13,9 +13,13 @@
           :disabled="!selectedType"
           :title="selectedType ? undefined : t('items.export.chooseTypeFirst')"
         />
-        <ElButton v-if="auth.canEditCatalog" type="primary" @click="openCreate">
+        <ElButton type="primary" @click="openCreate">
           <i class="pi pi-plus mr-2" aria-hidden="true"></i>
-          {{ t("items.list.newItem") }}
+          {{
+            auth.canEditCatalog
+              ? t("items.list.newItem")
+              : t("proposals.proposeItem")
+          }}
         </ElButton>
       </template>
     </PageHeader>
@@ -187,6 +191,7 @@
       v-model:visible="dialogVisible"
       :item="editing"
       :item-types="itemTypes"
+      :propose="!auth.canEditCatalog"
       @saved="load"
     />
   </div>

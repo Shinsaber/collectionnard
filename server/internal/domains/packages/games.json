@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "games",
-  "package_version": 2,
+  "package_version": 3,
   "title": {
     "fr": "Jeux vidéo",
     "en": "Video games"
@@ -308,11 +308,13 @@
             "properties": {
               "wikidata": {
                 "type": "string",
-                "pattern": "^Q[1-9][0-9]*$"
+                "pattern": "^Q[1-9][0-9]*$",
+                "x-identifier": true
               },
               "bnf_ark": {
                 "type": "string",
-                "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$"
+                "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$",
+                "x-identifier": true
               }
             }
           },
@@ -497,7 +499,8 @@
           },
           "ean": {
             "type": "string",
-            "pattern": "^[0-9]{8,14}$"
+            "pattern": "^[0-9]{8,14}$",
+            "x-identifier": true
           },
           "languages": {
             "type": "array",
@@ -556,7 +559,8 @@
             "properties": {
               "bnf_ark": {
                 "type": "string",
-                "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$"
+                "pattern": "^ark:/12148/cb[0-9]{8,9}[0-9bcdfghjkmnpqrstvwxz]$",
+                "x-identifier": true
               }
             }
           },
@@ -731,7 +735,8 @@
             "properties": {
               "wikidata": {
                 "type": "string",
-                "pattern": "^Q[1-9][0-9]*$"
+                "pattern": "^Q[1-9][0-9]*$",
+                "x-identifier": true
               }
             }
           },

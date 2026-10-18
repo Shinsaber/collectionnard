@@ -2,12 +2,30 @@
   <ElDialog
     :model-value="visible"
     :title="
-      item ? t('items.editDialog.editTitle') : t('items.editDialog.createTitle')
+      propose
+        ? item
+          ? t('proposals.suggest')
+          : t('proposals.proposeItem')
+        : item
+          ? t('items.editDialog.editTitle')
+          : t('items.editDialog.createTitle')
     "
     width="34rem"
     @update:model-value="$emit('update:visible', $event)"
   >
     <div class="flex flex-col gap-4">
+      <!-- Proposition (membre, P4-3b) : un titre, relu par un contributeur -->
+      <div v-if="propose" class="flex flex-col gap-1">
+        <label for="proposal-title" class="text-sm font-medium">{{
+          t("proposals.proposalTitle")
+        }}</label>
+        <ElInput
+          id="proposal-title"
+          v-model="proposalTitle"
+          maxlength="200"
+          :placeholder="defaultTitle"
+        />
+      </div>
       <!-- Type selector (create mode only) -->
       <div v-if="!item" class="flex flex-col gap-1">
         <label for="item-type" class="text-sm font-medium">{{
@@ -39,6 +57,30 @@
         :schema="currentSchema"
       />
 
+      <ElAlert
+        v-if="duplicates.length"
+        type="warning"
+        :closable="false"
+        show-icon
+        :title="t('proposals.duplicates.title')"
+        data-test="duplicates"
+      >
+        <p>{{ t("proposals.duplicates.help") }}</p>
+        <ul class="mt-1 list-disc pl-5">
+          <li v-for="d in duplicates" :key="d.item.id">
+            <RouterLink
+              :to="`/items/${d.item.id}`"
+              target="_blank"
+              class="font-semibold text-link"
+              >{{ itemLabel(d.item, lang) }}</RouterLink
+            >
+            <span class="font-mono text-xs">
+              · {{ d.field }} {{ d.value }}</span
+            >
+          </li>
+        </ul>
+      </ElAlert>
+
       <div class="flex flex-col gap-1">
         <label for="item-tags" class="text-sm font-medium">{{
           t("items.editDialog.tags")
@@ -58,10 +100,19 @@
         type="primary"
         :loading="saving"
         :disabled="!!item && !dirty"
+        data-test="item-save"
         @click="save"
       >
         <i class="pi pi-check mr-2" aria-hidden="true"></i>
-        {{ item ? t("common.save") : t("common.create") }}
+        {{
+          duplicates.length
+            ? t("proposals.duplicates.confirm")
+            : propose
+              ? t("proposals.propose")
+              : item
+                ? t("common.save")
+                : t("common.create")
+        }}
       </ElButton>
     </template>
   </ElDialog>
@@ -70,18 +121,21 @@
 <script setup lang="ts">
 import { reactive, computed, watch, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { itemApi, extractApiError } from "@/api/client";
+import { itemApi, proposalApi, extractApiError } from "@/api/client";
 import { useLang } from "@/composables/useLang";
 import { useDirty } from "@/composables/useDirty";
 import { useNotify } from "@/composables/useNotify";
-import { typeTitle } from "@/lib/schema";
+import { itemLabel, typeTitle } from "@/lib/schema";
+import { itemPayload } from "@/lib/proposals";
 import DynamicForm from "@/components/common/DynamicForm.vue";
-import type { Item, ItemType } from "@/api/types";
+import type { Duplicate, Item, ItemType } from "@/api/types";
 
 const props = defineProps<{
   visible: boolean;
   item?: Item | null;
   itemTypes: ItemType[];
+  /** Membre (P4-3b) : envoie une proposition au lieu d'écrire dans le catalogue. */
+  propose?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -94,6 +148,26 @@ const { lang } = useLang();
 const { notifyError, notifySuccess } = useNotify();
 const saving = ref(false);
 const dynamicFormRef = ref<InstanceType<typeof DynamicForm> | null>(null);
+
+const proposalTitle = ref("");
+/** Doublons trouvés au premier clic : un second clic enregistre quand même. */
+const duplicates = ref<Duplicate[]>([]);
+const checkedFor = ref("");
+const defaultTitle = computed(() => {
+  const label = itemLabel(
+    {
+      id: props.item?.id ?? "",
+      attributes: form.attributes,
+      item_type:
+        props.item?.item_type ??
+        props.itemTypes.find((it) => it.id === form.item_type_id),
+    },
+    lang.value,
+  );
+  return props.item
+    ? t("proposals.correctionTitle", { label })
+    : t("proposals.newTitle", { label });
+});
 
 const form = reactive({
   item_type_id: "",
@@ -136,17 +210,47 @@ watch(
       form.attributes = {};
       form.tagsText = "";
     }
+    proposalTitle.value = "";
+    duplicates.value = [];
+    checkedFor.value = "";
     markClean();
   },
 );
+
+/** Vérifie les identifiants (x-identifier) une fois par contenu ; vrai s'il faut s'arrêter. */
+async function hasDuplicates(): Promise<boolean> {
+  const key = JSON.stringify([form.item_type_id, form.attributes]);
+  if (checkedFor.value === key) return false;
+  checkedFor.value = key;
+  duplicates.value = await itemApi.duplicates(
+    form.item_type_id,
+    form.attributes,
+    props.item?.id,
+  );
+  return duplicates.value.length > 0;
+}
 
 async function save() {
   if (dynamicFormRef.value && !dynamicFormRef.value.validate()) return;
   saving.value = true;
   try {
     const tags = tagList(form.tagsText);
+    if (await hasDuplicates()) return;
 
-    if (props.item) {
+    if (props.propose) {
+      await proposalApi.create({
+        kind: "catalog",
+        title: proposalTitle.value.trim() || defaultTitle.value,
+        payload: itemPayload({
+          id: props.item?.id,
+          item_type_id: form.item_type_id,
+          attributes: form.attributes,
+          tags,
+        }),
+        submit: true,
+      });
+      notifySuccess(t("proposals.sent"));
+    } else if (props.item) {
       await itemApi.update(props.item.id, {
         attributes: form.attributes,
         tags,
