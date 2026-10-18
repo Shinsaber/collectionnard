@@ -270,3 +270,24 @@ func TestFindDuplicates(t *testing.T) {
 		t.Errorf("the edited item is not its own duplicate: %s", raw)
 	}
 }
+
+func TestProposalQuota(t *testing.T) {
+	mock := &testutil.MockStore{
+		ProposalQuotaUsageFn: func(_ context.Context, _ uuid.UUID) (int, int, int, error) { return 2, 3, 4, nil },
+	}
+	srv := testutil.NewTestServer(mock)
+	defer srv.Close()
+	status, _, raw := callJSON(t, srv, http.MethodGet, "/api/v1/proposals/quota", testutil.UserToken(), nil)
+	var q model.ProposalQuota
+	if status != http.StatusOK || json.Unmarshal(raw, &q) != nil {
+		t.Fatalf("quota: %d %s", status, raw)
+	}
+	want := model.ProposalQuota{Waiting: 2, Limit: 8, Accepted: 3, Base: 5, Max: 50, Today: 4, DailyLimit: 20}
+	if q != want {
+		t.Errorf("member quota: %+v", q)
+	}
+	_, _, raw = callJSON(t, srv, http.MethodGet, "/api/v1/proposals/quota", testutil.ContributorToken(), nil)
+	if json.Unmarshal(raw, &q) != nil || !q.Unlimited {
+		t.Errorf("contributor: %s", raw)
+	}
+}

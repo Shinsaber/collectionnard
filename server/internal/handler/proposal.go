@@ -259,7 +259,7 @@ func (h *Handler) submit(w http.ResponseWriter, r *http.Request, p *model.Propos
 		if p.Status == model.ProposalChangesRequested {
 			waiting-- // already counted
 		}
-		if waiting >= min(h.Config.ProposalQuota+accepted, maxProposalQuota) {
+		if waiting >= h.quotaLimit(accepted) {
 			respondError(w, http.StatusConflict, "proposal_quota", "too many proposals waiting for review")
 			return
 		}
@@ -318,6 +318,25 @@ func (h *Handler) WithdrawProposal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondJSON(w, http.StatusOK, updated)
+}
+
+// quotaLimit: proposals a member may have waiting.
+func (h *Handler) quotaLimit(accepted int) int {
+	return min(h.Config.ProposalQuota+accepted, maxProposalQuota)
+}
+
+// GetProposalQuota tells a member where they stand (P4-3b): waiting proposals
+// against their limit, creations of the last 24 h.
+func (h *Handler) GetProposalQuota(w http.ResponseWriter, r *http.Request) {
+	waiting, accepted, today, err := h.Store.ProposalQuotaUsage(r.Context(), middleware.GetUserID(r.Context()))
+	if err != nil {
+		handleStoreError(w, r, err)
+		return
+	}
+	respondJSON(w, http.StatusOK, model.ProposalQuota{
+		Unlimited: isModerator(r), Waiting: waiting, Limit: h.quotaLimit(accepted), Accepted: accepted,
+		Base: h.Config.ProposalQuota, Max: maxProposalQuota, Today: today, DailyLimit: maxProposalsPerDay,
+	})
 }
 
 // --- Modération ---

@@ -37,6 +37,8 @@
       </ElTabPane>
     </ElTabs>
 
+    <ProposalQuotaCard v-if="scope === 'mine'" :version="quotaVersion" />
+
     <AppSpinner v-if="list.loading.value && list.data.value.length === 0" />
     <p
       v-else-if="list.data.value.length === 0"
@@ -102,6 +104,7 @@ import { statusClass } from "@/lib/proposals";
 import AppSpinner from "@/components/common/AppSpinner.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
 import TextProposalDialog from "@/components/proposals/TextProposalDialog.vue";
+import ProposalQuotaCard from "@/components/proposals/ProposalQuotaCard.vue";
 
 const { t } = useI18n();
 const { lang } = useLang();
@@ -113,6 +116,8 @@ const scope = ref<"mine" | "review">(
   route.query.scope === "review" && auth.canEditCatalog ? "review" : "mine",
 );
 const suggestOpen = ref(false);
+// Incrémenté à chaque rechargement : le quota est relu.
+const quotaVersion = ref(0);
 const toReview = ref(0);
 const list = usePagination((params: Record<string, unknown>) =>
   proposalApi.list({ ...params, scope: scope.value }),
@@ -123,6 +128,7 @@ function date(iso: string): string {
 }
 
 async function reload() {
+  quotaVersion.value++;
   list.goToPage(1);
   await list.load().catch((e) => notifyError(e));
   if (auth.canEditCatalog) {

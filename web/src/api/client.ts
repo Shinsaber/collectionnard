@@ -55,6 +55,7 @@ import type {
   ProposalConflict,
   ProposalInput,
   ProposalPayload,
+  ProposalQuota,
   ItemHistory,
   CollectionStats,
   PublicCollection,
@@ -388,6 +389,8 @@ export const proposalApi = {
     http
       .post<ProposalComment>(`/proposals/${id}/comments`, { body })
       .then((r) => r.data),
+  /** Mon quota : en attente / limite, créations des 24 dernières heures. */
+  quota: () => http.get<ProposalQuota>("/proposals/quota").then((r) => r.data),
   reviewCount: () =>
     http
       .get<{ count: number }>("/proposals/review-count")

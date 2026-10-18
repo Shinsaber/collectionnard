@@ -71,6 +71,13 @@ const en: typeof fr = {
     confirm: "Save anyway",
   },
   notFound: "This proposal does not exist or is not visible.",
+  quota: {
+    title: "My quota",
+    waiting: "{waiting} of {limit} proposals waiting for review",
+    rule: "{base} to start with, +1 per accepted proposal ({accepted} so far), up to {max}.",
+    today: "{today} of {limit} created in the last 24 h",
+    full: "Quota reached: wait for a proposal to be reviewed before submitting another.",
+  },
   reportButton: "Report",
   suggestField: "Suggest a field",
   report: {

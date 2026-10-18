@@ -231,7 +231,8 @@ grandit avec les propositions acceptées.
   **`x-identifier`** (ISBN, EAN, code-barres, sous-clés de `external_ids`), `POST /items/duplicates`, avertissement
   dans le formulaire d'item (un second clic enregistre). Sources externes : recherche et aperçu ouverts aux membres,
   `POST /external/{connector}/propose` ; l'import direct reste aux contributeurs. Quota : `PROPOSAL_QUOTA` (5) + 1 par
-  acceptée, plafond 50, 20 créations par 24 h ; contributeurs et admins sans quota.
+  acceptée, plafond 50, 20 créations par 24 h ; contributeurs et admins sans quota. Le membre voit son quota
+  (`GET /proposals/quota`) en tête de « Mes propositions ».
 
 - **P4-3c (2026-10-18)** : migration 012 (`notifications`). Événements : décision sur une de mes propositions
   (acceptée, refusée, modifications demandées) et message dans une discussion (auteur, relecteur et participants, jamais

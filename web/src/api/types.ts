@@ -547,6 +547,18 @@ export interface Proposal {
   decided_at?: string;
 }
 
+export interface ProposalQuota {
+  /** Admin ou contributeur : aucun quota. */
+  unlimited: boolean;
+  waiting: number;
+  limit: number;
+  accepted: number;
+  base: number;
+  max: number;
+  today: number;
+  daily_limit: number;
+}
+
 export interface ProposalInput {
   kind?: ProposalKind;
   title: string;

@@ -118,3 +118,15 @@ type Duplicate struct {
 	Value string `json:"value"`
 	Item  Item   `json:"item"`
 }
+
+// ProposalQuota is the response of GET /proposals/quota.
+type ProposalQuota struct {
+	Unlimited  bool `json:"unlimited"`
+	Waiting    int  `json:"waiting"`
+	Limit      int  `json:"limit"`
+	Accepted   int  `json:"accepted"`
+	Base       int  `json:"base"`
+	Max        int  `json:"max"`
+	Today      int  `json:"today"`
+	DailyLimit int  `json:"daily_limit"`
+}

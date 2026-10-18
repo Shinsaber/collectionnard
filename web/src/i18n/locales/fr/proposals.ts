@@ -69,6 +69,13 @@ export default {
     confirm: "Enregistrer quand même",
   },
   notFound: "Cette proposition n'existe pas ou n'est pas visible.",
+  quota: {
+    title: "Mon quota",
+    waiting: "{waiting} sur {limit} propositions en attente de relecture",
+    rule: "{base} de base, +1 par proposition acceptée ({accepted} pour l'instant), jusqu'à {max}.",
+    today: "{today} sur {limit} créées ces dernières 24 h",
+    full: "Quota atteint : attendez qu'une proposition soit relue pour en soumettre une autre.",
+  },
   reportButton: "Signaler",
   suggestField: "Suggérer un champ",
   report: {

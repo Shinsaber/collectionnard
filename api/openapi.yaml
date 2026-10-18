@@ -1638,6 +1638,29 @@ components:
         submitted_at: { type: string, format: date-time }
         decided_at: { type: string, format: date-time }
 
+    ProposalQuota:
+      type: object
+      required: [unlimited, waiting, limit, accepted, base, max, today, daily_limit]
+      properties:
+        unlimited:
+          type: boolean
+          description: Admin ou contributeur, sans quota.
+        waiting:
+          type: integer
+          description: Propositions en attente ou à corriger.
+        limit:
+          type: integer
+          description: Propositions en attente permises (base + acceptées, plafonnée à `max`).
+        accepted: { type: integer }
+        base:
+          type: integer
+          description: "`PROPOSAL_QUOTA`."
+        max: { type: integer }
+        today:
+          type: integer
+          description: Propositions créées dans les dernières 24 h.
+        daily_limit: { type: integer }
+
     ProposalInput:
       type: object
       description: Création (`kind` requis) ou modification d'une proposition en brouillon ou à corriger.
@@ -5829,6 +5852,27 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Proposal"
+
+  /proposals/quota:
+    get:
+      tags: [Proposals]
+      summary: Mon quota de propositions
+      description: |
+        Propositions en attente (en attente ou à corriger) et limite : `PROPOSAL_QUOTA` + 1 par proposition
+        acceptée, plafonnée ; créations des dernières 24 h et leur limite. `unlimited` pour un admin ou un
+        contributeur (aucun quota).
+      operationId: getProposalQuota
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Quota.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProposalQuota"
 
   /proposals/review-count:
     get:

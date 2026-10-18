@@ -178,6 +178,7 @@ func (h *Handler) Router() chi.Router {
 		r.Get("/api/v1/proposals", h.ListProposals)
 		r.Post("/api/v1/proposals", h.CreateProposal)
 		r.Get("/api/v1/proposals/review-count", h.CountProposalsToReview)
+		r.Get("/api/v1/proposals/quota", h.GetProposalQuota)
 		r.Get("/api/v1/proposals/{id}", h.GetProposal)
 		r.Put("/api/v1/proposals/{id}", h.UpdateProposal)
 		r.Post("/api/v1/proposals/{id}/submit", h.SubmitProposal)
