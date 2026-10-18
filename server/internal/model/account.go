@@ -26,6 +26,8 @@ type ProfileUpdate struct {
 	DisplayName string `json:"display_name"`
 	Bio         string `json:"bio"`
 	Avatar      string `json:"avatar"`
+	// ProfileVisibility: empty = private.
+	ProfileVisibility string `json:"profile_visibility"`
 }
 
 // PasswordChange is the body of PUT /me/password.

@@ -6,6 +6,8 @@ import {
 import { useAuthStore } from "@/stores/auth";
 import { useOfflineStore } from "@/stores/offline";
 
+const PublicLayout = () => import("@/components/layout/PublicLayout.vue");
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -26,6 +28,48 @@ const router = createRouter({
       name: "reset-password",
       component: () => import("@/views/ResetPasswordView.vue"),
       meta: { public: true },
+    },
+    // Pages publiques (P4-2) : sans compte, hors de la coquille de l'application.
+    {
+      path: "/u/:username",
+      component: PublicLayout,
+      meta: { public: true },
+      children: [
+        {
+          path: "",
+          name: "public-profile",
+          component: () => import("@/views/public/PublicProfileView.vue"),
+          props: true,
+          meta: { public: true },
+        },
+      ],
+    },
+    {
+      path: "/c/:id",
+      component: PublicLayout,
+      meta: { public: true },
+      children: [
+        {
+          path: "",
+          name: "public-collection",
+          component: () => import("@/views/public/PublicCollectionView.vue"),
+          props: true,
+          meta: { public: true },
+        },
+      ],
+    },
+    {
+      path: "/share",
+      component: PublicLayout,
+      meta: { public: true },
+      children: [
+        {
+          path: "",
+          name: "shared-collection",
+          component: () => import("@/views/public/SharedCollectionView.vue"),
+          meta: { public: true },
+        },
+      ],
     },
     {
       path: "/",
@@ -106,6 +150,11 @@ const router = createRouter({
           path: "offline",
           name: "offline",
           component: () => import("@/views/OfflineView.vue"),
+        },
+        {
+          path: "members",
+          name: "members",
+          component: () => import("@/views/MembersView.vue"),
         },
         {
           path: "stats",

@@ -16,6 +16,7 @@ export default {
     users: "Utilisateurs",
     offline: "Hors ligne",
     stats: "Statistiques",
+    members: "Membres",
   },
   mainNav: "Navigation principale",
   skipToContent: "Aller au contenu",

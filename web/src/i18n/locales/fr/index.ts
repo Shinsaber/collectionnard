@@ -12,6 +12,7 @@ import items from "./items";
 import layout from "./layout";
 import offline from "./offline";
 import schema from "./schema";
+import sharing from "./sharing";
 import stats from "./stats";
 
 const fr = {
@@ -27,6 +28,7 @@ const fr = {
   layout,
   offline,
   schema,
+  sharing,
   stats,
 };
 

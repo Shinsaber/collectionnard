@@ -11,6 +11,7 @@ import items from "./items";
 import layout from "./layout";
 import offline from "./offline";
 import schema from "./schema";
+import sharing from "./sharing";
 import stats from "./stats";
 
 const en: Messages = {
@@ -26,6 +27,7 @@ const en: Messages = {
   layout,
   offline,
   schema,
+  sharing,
   stats,
 };
 

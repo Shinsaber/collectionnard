@@ -49,6 +49,10 @@ import type {
   Stats,
   MeStats,
   CollectionStats,
+  PublicCollection,
+  PublicProfile,
+  ShareLink,
+  ShareLinkCreated,
   Tag,
   PaginatedResponse,
   PaginationParams,
@@ -73,10 +77,21 @@ const http = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+// Lectures publiques (P4-2) : servies aussi sans compte. Un jeton refusé et non
+// renouvelable ne renvoie pas vers /login : la requête est rejouée en anonyme.
+declare module "axios" {
+  interface AxiosRequestConfig {
+    /** Lecture publique : rejouée sans jeton si la session ne se renouvelle pas. */
+    publicRead?: boolean;
+    _anonymous?: boolean;
+  }
+}
+const publicRead = { publicRead: true };
+
 // Inject the access token
 http.interceptors.request.use((config) => {
   const token = getAccessToken();
-  if (token) {
+  if (token && !config._anonymous) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
@@ -141,6 +156,12 @@ http.interceptors.response.use(
       refreshing = null;
     });
     const newToken = await refreshing;
+    if (!newToken && config.publicRead) {
+      clearTokens();
+      config._anonymous = true;
+      delete config.headers.Authorization;
+      return http(config);
+    }
     if (!newToken) {
       redirectToLogin();
       return Promise.reject(error);
@@ -149,6 +170,9 @@ http.interceptors.response.use(
     return http(config);
   },
 );
+
+/** Instance HTTP, exposée aux seuls tests (adaptateur simulé) : les vues passent par les `*Api`. */
+export const httpForTests = http;
 
 // ── API Error Helper ──────────────────────────────────────────────────
 /**
@@ -394,6 +418,86 @@ export const tagApi = {
 };
 
 // ── Stats ─────────────────────────────────────────────────────────────
+/** Liens de partage d'une de mes collections (P4-2). */
+export const shareLinkApi = {
+  list: (collectionId: string) =>
+    http
+      .get<ShareLink[]>(`/collections/${collectionId}/share-links`)
+      .then((r) => r.data),
+  create: (collectionId: string) =>
+    http
+      .post<ShareLinkCreated>(`/collections/${collectionId}/share-links`)
+      .then((r) => r.data),
+  revoke: (collectionId: string, linkId: string) =>
+    http.delete(`/collections/${collectionId}/share-links/${linkId}`),
+};
+
+/** Lectures publiques (P4-2) : champs cachés déjà retirés par le serveur. */
+export const publicApi = {
+  profile: (username: string) =>
+    http
+      .get<PublicProfile>(
+        `/public/users/${encodeURIComponent(username)}`,
+        publicRead,
+      )
+      .then((r) => r.data),
+  collections: (username: string) =>
+    http
+      .get<PublicCollection[]>(
+        `/public/users/${encodeURIComponent(username)}/collections`,
+        publicRead,
+      )
+      .then((r) => r.data),
+  collection: (id: string) =>
+    http
+      .get<PublicCollection>(`/public/collections/${id}`, publicRead)
+      .then((r) => r.data),
+  items: (id: string, params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<CollectionItem>>(
+        `/public/collections/${id}/items`,
+        {
+          ...publicRead,
+          params,
+        },
+      )
+      .then((r) => r.data),
+  stats: (id: string) =>
+    http
+      .get<CollectionStats>(`/public/collections/${id}/stats`, publicRead)
+      .then((r) => r.data),
+};
+
+/** Collection ouverte par un lien de partage (jeton en paramètre de requête). */
+export const sharedApi = {
+  collection: (token: string) =>
+    http
+      .get<PublicCollection>("/share", { ...publicRead, params: { token } })
+      .then((r) => r.data),
+  items: (token: string, params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<CollectionItem>>("/share/items", {
+        ...publicRead,
+        params: { ...params, token },
+      })
+      .then((r) => r.data),
+  stats: (token: string) =>
+    http
+      .get<CollectionStats>("/share/stats", {
+        ...publicRead,
+        params: { token },
+      })
+      .then((r) => r.data),
+};
+
+/** Annuaire des membres (profils visibles des membres ou publics). */
+export const memberApi = {
+  list: (params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<PublicProfile>>("/members", { params })
+      .then((r) => r.data),
+};
+
 export const statsApi = {
   get: () => http.get<Stats>("/stats").then((r) => r.data),
   /** Synthèse de mes collections (P4-1). */

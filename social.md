@@ -114,6 +114,28 @@ Toujours génériques : aucune clé d'attribut codée en dur, tout se déduit de
   (`noindex`).
 - Les listes de souhaits partagées viennent de là : une Wishlist publique ou partagée par lien.
 
+**Livré le 2026-10-18.** Choix faits à la réalisation :
+
+- Migration 009 : `collections.visibility`, `collections.hidden_fields`, `users.profile_visibility`, table `share_links`.
+- `server/internal/privacy` (Go pur, testé seul) : `CanView`, `HiddenFields`, `StripAttributes`, `StripSchema` (propriété,
+  `required`, `x-order`, `x-labels` : même le libellé du champ caché ne sort pas). Les statistiques reçoivent la liste
+  des champs cachés et les retirent du schéma avant tout calcul.
+- Les routes publiques appliquent le filtre à **tout** lecteur, propriétaire compris : il y voit sa page telle que les
+  autres la voient (sa vue complète reste `GET /collections/{id}`). Réponses 404 (jamais 403) pour ce qui n'est pas
+  visible, compte du propriétaire désactivé compris. Authentification facultative : sans jeton = anonyme, jeton
+  invalide = 401 ; le client rejoue alors en anonyme si la session ne se renouvelle pas (pas de renvoi vers /login).
+- Routes : `GET /public/users/{username}` (+ `/collections`), `GET /public/collections/{id}` (+ `/items`, `/stats`),
+  `GET /share?token=…` (+ `/share/items`, `/share/stats`, jeton en paramètre de requête comme pour les invitations),
+  `GET|POST /collections/{id}/share-links`, `DELETE /collections/{id}/share-links/{linkId}`, `GET /members`. La liste
+  d'un profil exige que le profil soit visible ; une collection publique reste ouverte par son lien même si le profil
+  est privé. Les statistiques portent les ItemTypes cités (`item_types`) pour un lecteur anonyme.
+- `collections` v2 : `x-private` sur `purchase_price` (Possession) et `max_budget` (Liste de souhaits). Une instance
+  existante le reçoit en mettant à jour ce paquet (page « Domaines ») ; d'ici là, rien n'est public (tout est privé
+  par défaut).
+- Front : bouton « Partager » d'une collection (visibilité, champs cachés, liens), visibilité du profil, pages
+  `/u/:username`, `/c/:id`, `/share` (coquille `PublicLayout`, lecture seule), annuaire `/members`, case « Privé »
+  par champ dans l'éditeur de types de collection ; `<meta name="robots" content="noindex, nofollow">`.
+
 ## P4-3 — Contributions au catalogue
 
 - **Rôle contributeur** : migration du `CHECK` (`admin` | `contributor` | `user`) ; le contributeur écrit dans le

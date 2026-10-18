@@ -37,7 +37,10 @@
     <SchemaBuilder
       ref="builderRef"
       v-model="form.attributes_schema"
-      :features="{ completeness: kind === 'relation' }"
+      :features="{
+        completeness: kind === 'relation',
+        private: kind === 'collection',
+      }"
     >
       <template #aside>
         <!-- Identité : identifiant technique, description, extrémités (relations) -->

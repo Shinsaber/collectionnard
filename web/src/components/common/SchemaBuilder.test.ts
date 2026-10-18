@@ -285,3 +285,37 @@ describe("SchemaBuilder — x-completeness", () => {
     expect((e[e.length - 1]![0] as Schema)["x-completeness"]).toBe(true);
   });
 });
+
+// Champ privé (x-private) : case proposée aux seuls types de collection, valeur conservée.
+describe("SchemaBuilder — x-private", () => {
+  it("marque et démarque un champ privé", async () => {
+    const w = mount(SchemaBuilder, {
+      props: {
+        modelValue: {
+          type: "object",
+          properties: { purchase_price: { type: "number", "x-private": true } },
+        },
+        features: { private: true },
+      },
+      global: { plugins: [ElementPlus] },
+    });
+    await w.vm.$nextTick();
+    const last = () => {
+      const e = w.emitted("update:modelValue")!;
+      const s = e[e.length - 1]![0] as Schema;
+      return (s.properties as Props).purchase_price!;
+    };
+    expect(last()["x-private"]).toBe(true);
+    await w.find("button").trigger("click"); // déplie le champ
+    await w.find('[data-test="x-private"] input').setValue(false);
+    expect(last()["x-private"]).toBeUndefined();
+  });
+
+  it("conserve x-private même sans la case (autres sortes de type)", async () => {
+    const out = await roundTrip({
+      type: "object",
+      properties: { price: { type: "number", "x-private": true } },
+    });
+    expect(((out.properties as Props).price as Schema)["x-private"]).toBe(true);
+  });
+});

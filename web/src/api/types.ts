@@ -30,6 +30,7 @@ export interface User {
   /** Compte désactivé depuis cette date. */
   disabled_at?: string;
   /** GET /auth/me seulement : peut créer des invitations. */
+  profile_visibility?: Visibility;
   can_invite?: boolean;
   created_at: string;
   updated_at: string;
@@ -45,6 +46,7 @@ export interface ProfileUpdate {
   display_name: string;
   bio: string;
   avatar: string;
+  profile_visibility: Visibility;
 }
 
 export interface PasswordChange {
@@ -241,6 +243,9 @@ export interface Collection {
   name: string;
   description?: string;
   item_count: number;
+  visibility: Visibility;
+  /** Champs cachés aux autres lecteurs ; `null` = les propriétés `x-private` du type. */
+  hidden_fields: string[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -254,6 +259,52 @@ export interface CollectionCreate {
 export interface CollectionUpdate {
   name?: string;
   description?: string;
+  visibility?: Visibility;
+  /** Absent : inchangé ; `null` : défaut du type (`x-private`). */
+  hidden_fields?: string[] | null;
+}
+
+// ---------- Visibilité et partage (P4-2) : miroir de server/internal/model/sharing.go ----------
+
+export type Visibility = "private" | "members" | "public";
+
+export interface Owner {
+  username: string;
+  display_name?: string;
+  avatar?: string;
+}
+
+/** Collection lue par un autre que son propriétaire : schéma du type sans les champs cachés. */
+export interface PublicCollection {
+  id: string;
+  name: string;
+  description?: string;
+  collection_type: CollectionType;
+  item_count: number;
+  owner: Owner;
+  visibility: Visibility;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PublicProfile {
+  username: string;
+  display_name?: string;
+  bio?: string;
+  avatar?: string;
+  profile_visibility: Visibility;
+  created_at: string;
+}
+
+export interface ShareLink {
+  id: string;
+  collection_id: string;
+  created_at: string;
+}
+
+export interface ShareLinkCreated {
+  share_link: ShareLink;
+  token: string;
 }
 
 // ---------- CollectionItem ----------
@@ -381,6 +432,8 @@ export interface CollectionStats {
   added: MonthCount[];
   completeness: Completeness[];
   completeness_truncated: boolean;
+  /** Types d'item cités (libellés, y compris pour un lecteur anonyme). */
+  item_types: ItemType[];
 }
 
 export interface CollectionSummary {

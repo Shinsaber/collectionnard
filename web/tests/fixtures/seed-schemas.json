@@ -5332,7 +5332,8 @@
         },
         "purchase_price": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "x-private": true
         },
         "acquisition_date": {
           "type": "string",
@@ -5420,7 +5421,8 @@
         },
         "max_budget": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "x-private": true
         }
       },
       "x-description": {

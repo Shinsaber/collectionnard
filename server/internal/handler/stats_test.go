@@ -27,7 +27,7 @@ func TestGetCollectionStats(t *testing.T) {
 			}
 			return nil, store.ErrNotFound
 		},
-		GetCollectionStatsFn: func(_ context.Context, id uuid.UUID) (*model.CollectionStats, error) {
+		GetCollectionStatsFn: func(_ context.Context, id uuid.UUID, _ []string) (*model.CollectionStats, error) {
 			asked = id
 			return &model.CollectionStats{CollectionID: id, TotalItems: 3}, nil
 		},

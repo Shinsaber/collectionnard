@@ -67,6 +67,7 @@ function sample(over: Partial<CollectionStats> = {}): CollectionStats {
       },
     ],
     completeness_truncated: false,
+    item_types: [],
     ...over,
   };
 }
@@ -77,7 +78,7 @@ async function mountPanel() {
     routes: [{ path: "/:any(.*)*", component: { template: "<div />" } }],
   });
   const w = mount(CollectionStatsPanel, {
-    props: { collectionId: "c1", schema },
+    props: { load: () => api.collection("c1"), schema },
     global: {
       plugins: [ElementPlus, router],
       stubs: {

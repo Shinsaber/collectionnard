@@ -74,6 +74,9 @@ const en: typeof fr = {
     type: "Field type",
     required: "Required field",
     requiredShort: "Req.",
+    private:
+      "Private: hidden from anyone but the collection owner (price paid…), even when public",
+    privateShort: "Private",
     remove: "Remove field",
     addAfter: "Add a field after",
   },

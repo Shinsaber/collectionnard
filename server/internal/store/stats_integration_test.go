@@ -62,7 +62,7 @@ func TestCollectionStats(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stats, err := st.GetCollectionStats(ctx, col.ID)
+	stats, err := st.GetCollectionStats(ctx, col.ID, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

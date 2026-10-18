@@ -2,12 +2,39 @@ package store
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/shinsaber/colec/internal/model"
 )
+
+// collectionColumns / scanCollection: every collection read (with its CollectionType and item count).
+var collectionColumns = `c.id, c.user_id, c.collection_type_id, c.name, c.description, c.visibility, c.hidden_fields,
+		c.created_at, c.updated_at,
+		ct.id, ct.name, ct.description, ct.attributes_schema, ` + ctItemTypeIDs("ct") + `, ct.created_at, ct.updated_at,
+		(SELECT count(*) FROM collection_items ci WHERE ci.collection_id = c.id)`
+
+const collectionFrom = ` FROM collections c JOIN collection_types ct ON ct.id = c.collection_type_id`
+
+func scanCollection(row pgx.Row) (*model.Collection, error) {
+	var col model.Collection
+	var ct model.CollectionType
+	if err := row.Scan(
+		&col.ID, &col.UserID, &col.CollectionTypeID, &col.Name, &col.Description, &col.Visibility, &col.HiddenFields,
+		&col.CreatedAt, &col.UpdatedAt,
+		&ct.ID, &ct.Name, &ct.Description, &ct.AttributesSchema, &ct.ItemTypeIDs, &ct.CreatedAt, &ct.UpdatedAt,
+		&col.ItemCount,
+	); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	col.CollectionType = &ct
+	return &col, nil
+}
 
 func (s *PgStore) ListCollections(ctx context.Context, userID uuid.UUID, pg model.Pagination, collectionTypeID *uuid.UUID) ([]model.Collection, int, error) {
 	where := "c.user_id = $1"
@@ -32,66 +59,43 @@ func (s *PgStore) ListCollections(ctx context.Context, userID uuid.UUID, pg mode
 	}
 
 	args = append(args, pg.PerPage, pg.Offset())
-	query := fmt.Sprintf(`
-		SELECT c.id, c.user_id, c.collection_type_id, c.name, c.description,
-		       c.created_at, c.updated_at,
-		       ct.id, ct.name, ct.description, ct.attributes_schema, `+ctItemTypeIDs("ct")+`, ct.created_at, ct.updated_at,
-		       (SELECT count(*) FROM collection_items ci WHERE ci.collection_id = c.id) AS item_count
-		FROM collections c
-		JOIN collection_types ct ON ct.id = c.collection_type_id
-		WHERE %s
-		ORDER BY c.name
-		LIMIT $%d OFFSET $%d`, where, argN, argN+1)
-
-	rows, err := s.pool.Query(ctx, query, args...)
+	rows, err := s.pool.Query(ctx, fmt.Sprintf(`SELECT %s%s WHERE %s ORDER BY c.name LIMIT $%d OFFSET $%d`,
+		collectionColumns, collectionFrom, where, argN, argN+1), args...)
 	if err != nil {
 		return nil, 0, err
 	}
-	defer rows.Close()
+	result, err := collectCollections(rows)
+	return result, total, err
+}
 
-	var result []model.Collection
+func collectCollections(rows pgx.Rows) ([]model.Collection, error) {
+	defer rows.Close()
+	result := []model.Collection{}
 	for rows.Next() {
-		var col model.Collection
-		var ct model.CollectionType
-		if err := rows.Scan(
-			&col.ID, &col.UserID, &col.CollectionTypeID, &col.Name, &col.Description,
-			&col.CreatedAt, &col.UpdatedAt,
-			&ct.ID, &ct.Name, &ct.Description, &ct.AttributesSchema, &ct.ItemTypeIDs, &ct.CreatedAt, &ct.UpdatedAt,
-			&col.ItemCount,
-		); err != nil {
-			return nil, 0, err
+		col, err := scanCollection(rows)
+		if err != nil {
+			return nil, err
 		}
-		col.CollectionType = &ct
-		result = append(result, col)
+		result = append(result, *col)
 	}
-	return result, total, rows.Err()
+	return result, rows.Err()
 }
 
 func (s *PgStore) GetCollection(ctx context.Context, id uuid.UUID) (*model.Collection, error) {
-	var col model.Collection
-	var ct model.CollectionType
-	err := s.pool.QueryRow(ctx,
-		`SELECT c.id, c.user_id, c.collection_type_id, c.name, c.description,
-		        c.created_at, c.updated_at,
-		        ct.id, ct.name, ct.description, ct.attributes_schema, `+ctItemTypeIDs("ct")+`, ct.created_at, ct.updated_at,
-		        (SELECT count(*) FROM collection_items ci WHERE ci.collection_id = c.id)
-		 FROM collections c
-		 JOIN collection_types ct ON ct.id = c.collection_type_id
-		 WHERE c.id = $1`, id,
-	).Scan(
-		&col.ID, &col.UserID, &col.CollectionTypeID, &col.Name, &col.Description,
-		&col.CreatedAt, &col.UpdatedAt,
-		&ct.ID, &ct.Name, &ct.Description, &ct.AttributesSchema, &ct.ItemTypeIDs, &ct.CreatedAt, &ct.UpdatedAt,
-		&col.ItemCount,
-	)
+	return scanCollection(s.pool.QueryRow(ctx, `SELECT `+collectionColumns+collectionFrom+` WHERE c.id = $1`, id))
+}
+
+// ListVisibleCollections lists the collections of owner whose visibility is in
+// levels (P4-2), the largest first.
+func (s *PgStore) ListVisibleCollections(ctx context.Context, ownerID uuid.UUID, levels []string) ([]model.Collection, error) {
+	rows, err := s.pool.Query(ctx, `SELECT `+collectionColumns+collectionFrom+`
+		WHERE c.user_id = $1 AND c.visibility = ANY($2)
+		ORDER BY (SELECT count(*) FROM collection_items ci WHERE ci.collection_id = c.id) DESC, c.name
+		LIMIT 500`, ownerID, levels)
 	if err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, ErrNotFound
-		}
 		return nil, err
 	}
-	col.CollectionType = &ct
-	return &col, nil
+	return collectCollections(rows)
 }
 
 func (s *PgStore) CreateCollection(ctx context.Context, userID uuid.UUID, in model.CollectionCreate) (*model.Collection, error) {
@@ -117,9 +121,12 @@ func (s *PgStore) UpdateCollection(ctx context.Context, id uuid.UUID, in model.C
 	ct, err := s.pool.Exec(ctx,
 		`UPDATE collections SET
 			name = COALESCE($2, name),
-			description = COALESCE($3, description)
+			description = COALESCE($3, description),
+			visibility = COALESCE($4, visibility),
+			hidden_fields = CASE WHEN $5 THEN $6::text[] ELSE hidden_fields END,
+			updated_at = now()
 		 WHERE id = $1`,
-		id, in.Name, in.Description,
+		id, in.Name, in.Description, in.Visibility, in.HiddenFields.Set, in.HiddenFields.Value,
 	)
 	if err != nil {
 		if isUniqueViolation(err) {

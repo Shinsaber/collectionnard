@@ -70,6 +70,8 @@ type CollectionStats struct {
 	Added                 []MonthCount   `json:"added"`
 	Completeness          []Completeness `json:"completeness"`
 	CompletenessTruncated bool           `json:"completeness_truncated"`
+	// ItemTypes cited by ItemsByType and Completeness (labels for anonymous readers).
+	ItemTypes []ItemType `json:"item_types"`
 }
 
 // CollectionSummary is one collection in MeStats.

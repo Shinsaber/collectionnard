@@ -84,7 +84,13 @@ type MockStore struct {
 	ListItemCollectionsFn        func(ctx context.Context, userID, itemID uuid.UUID) ([]model.ItemCollectionMembership, error)
 	ListTagsFn                   func(ctx context.Context, search string) ([]model.Tag, error)
 	GetStatsFn                   func(ctx context.Context) (*model.Stats, error)
-	GetCollectionStatsFn         func(ctx context.Context, collectionID uuid.UUID) (*model.CollectionStats, error)
+	GetCollectionStatsFn         func(ctx context.Context, collectionID uuid.UUID, hidden []string) (*model.CollectionStats, error)
+	ListVisibleCollectionsFn     func(ctx context.Context, ownerID uuid.UUID, levels []string) ([]model.Collection, error)
+	CreateShareLinkFn            func(ctx context.Context, collectionID uuid.UUID, tokenHash string) (*model.ShareLink, error)
+	ListShareLinksFn             func(ctx context.Context, collectionID uuid.UUID) ([]model.ShareLink, error)
+	RevokeShareLinkFn            func(ctx context.Context, collectionID, linkID uuid.UUID) error
+	GetSharedCollectionIDFn      func(ctx context.Context, tokenHash string) (uuid.UUID, error)
+	ListMembersFn                func(ctx context.Context, pg model.Pagination) ([]model.User, int, error)
 	GetUserStatsFn               func(ctx context.Context, userID uuid.UUID) (*model.MeStats, error)
 	ExportCatalogFn              func(ctx context.Context) (*model.CatalogExport, error)
 	ImportCatalogFn              func(ctx context.Context, cat *model.CatalogExport, dryRun bool) (*model.ImportReport, error)
@@ -370,9 +376,9 @@ func (m *MockStore) GetStats(ctx context.Context) (*model.Stats, error) {
 	return &model.Stats{}, nil
 }
 
-func (m *MockStore) GetCollectionStats(ctx context.Context, collectionID uuid.UUID) (*model.CollectionStats, error) {
+func (m *MockStore) GetCollectionStats(ctx context.Context, collectionID uuid.UUID, hidden []string) (*model.CollectionStats, error) {
 	if m.GetCollectionStatsFn != nil {
-		return m.GetCollectionStatsFn(ctx, collectionID)
+		return m.GetCollectionStatsFn(ctx, collectionID, hidden)
 	}
 	return nil, store.ErrNotFound
 }

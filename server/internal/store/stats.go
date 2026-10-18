@@ -10,6 +10,7 @@ import (
 
 	"github.com/shinsaber/colec/internal/collstats"
 	"github.com/shinsaber/colec/internal/model"
+	"github.com/shinsaber/colec/internal/privacy"
 )
 
 func (s *PgStore) GetStats(ctx context.Context) (*model.Stats, error) {
@@ -58,8 +59,10 @@ func (s *PgStore) GetStats(ctx context.Context) (*model.Stats, error) {
 
 // GetCollectionStats computes the statistics of a collection (P4-1): attribute
 // aggregates from the CollectionType schema (collstats), items per type and
-// completeness through the relations marked `x-completeness`.
-func (s *PgStore) GetCollectionStats(ctx context.Context, collectionID uuid.UUID) (*model.CollectionStats, error) {
+// completeness through the relations marked `x-completeness`. The hidden fields
+// (P4-2, reader other than the owner) are removed from the schema first, so
+// that no aggregate is computed on them.
+func (s *PgStore) GetCollectionStats(ctx context.Context, collectionID uuid.UUID, hidden []string) (*model.CollectionStats, error) {
 	var schema json.RawMessage
 	err := s.pool.QueryRow(ctx,
 		`SELECT ct.attributes_schema FROM collections c
@@ -84,7 +87,7 @@ func (s *PgStore) GetCollectionStats(ctx context.Context, collectionID uuid.UUID
 	if err != nil {
 		return nil, err
 	}
-	agg := collstats.Aggregate(schema, entries)
+	agg := collstats.Aggregate(privacy.StripSchema(schema, hidden), entries)
 	st := &model.CollectionStats{
 		CollectionID:  collectionID,
 		TotalItems:    len(entries),
@@ -138,6 +141,32 @@ func (s *PgStore) GetCollectionStats(ctx context.Context, collectionID uuid.UUID
 	if len(st.Completeness) > model.MaxCompleteness {
 		st.Completeness = st.Completeness[:model.MaxCompleteness]
 		st.CompletenessTruncated = true
+	}
+
+	// ItemTypes cited, for the labels of a reader who cannot list /item-types.
+	var typeIDs []uuid.UUID
+	for _, b := range st.ItemsByType {
+		typeIDs = append(typeIDs, b.TypeID)
+	}
+	for _, c := range st.Completeness {
+		typeIDs = append(typeIDs, c.Item.ItemTypeID)
+	}
+	rows, err = s.pool.Query(ctx,
+		`SELECT id, name, description, attributes_schema, display_order, created_at, updated_at
+		 FROM item_types WHERE id = ANY($1) ORDER BY display_order, name`, typeIDs)
+	if err != nil {
+		return nil, err
+	}
+	st.ItemTypes, err = pgx.CollectRows(rows, func(row pgx.CollectableRow) (model.ItemType, error) {
+		var it model.ItemType
+		err := row.Scan(&it.ID, &it.Name, &it.Description, &it.AttributesSchema, &it.DisplayOrder, &it.CreatedAt, &it.UpdatedAt)
+		return it, err
+	})
+	if err != nil {
+		return nil, err
+	}
+	if st.ItemTypes == nil {
+		st.ItemTypes = []model.ItemType{}
 	}
 	return st, nil
 }

@@ -14,35 +14,13 @@
     </div>
 
     <!-- Sélecteur de langue (la coquille de l'application n'est pas visible ici) -->
-    <div class="flex gap-1.5" role="group" :aria-label="t('auth.language')">
-      <button
-        v-for="l in langs"
-        :key="l"
-        type="button"
-        class="h-9 rounded-full px-3.5 font-mono text-xs font-medium"
-        :class="
-          l === lang
-            ? 'bg-tint text-tint-ink shadow-tint'
-            : 'text-muted hover:bg-surface'
-        "
-        :title="langNames[l]"
-        :aria-label="langNames[l]"
-        :aria-pressed="l === lang"
-        :lang="l"
-        @click="setLang(l)"
-      >
-        {{ l.toUpperCase() }}
-      </button>
-    </div>
+    <LangSwitch />
   </main>
 </template>
 
 <script setup lang="ts">
-import { useI18n } from "vue-i18n";
-import { useLang } from "@/composables/useLang";
 import AppLogo from "@/components/layout/AppLogo.vue";
+import LangSwitch from "@/components/layout/LangSwitch.vue";
 
 defineProps<{ subtitle: string }>();
-const { t } = useI18n();
-const { lang, setLang, langs, langNames } = useLang();
 </script>

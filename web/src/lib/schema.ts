@@ -128,6 +128,13 @@ export function isCompleteness(schema: unknown): boolean {
   );
 }
 
+/** Champs `x-private` d'un CollectionType : cachés aux autres lecteurs par défaut (P4-2). */
+export function privateKeys(schema: Schema | null | undefined): string[] {
+  return Object.entries(properties(schema))
+    .filter(([, p]) => p?.["x-private"] === true)
+    .map(([k]) => k);
+}
+
 /** Libellé d'un champ via `x-labels`, repli sur la clé mise en forme. */
 export function fieldLabel(
   schema: Schema | null | undefined,

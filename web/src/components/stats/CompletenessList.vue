@@ -18,10 +18,14 @@
       >
         <div class="flex items-baseline justify-between gap-3">
           <RouterLink
+            v-if="linkItems"
             :to="`/items/${c.item.id}`"
             class="min-w-0 truncate font-semibold text-link"
             >{{ label(c) }}</RouterLink
           >
+          <span v-else class="min-w-0 truncate font-semibold">{{
+            label(c)
+          }}</span>
           <span class="shrink-0 font-mono text-xs text-muted">
             <template v-if="c.owned >= c.total">{{
               t("stats.completeness.complete")
@@ -65,18 +69,25 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useLang } from "@/composables/useLang";
-import { useMetaTypes } from "@/stores/metaTypes";
 import { itemLabel } from "@/lib/schema";
 import { percent } from "@/lib/stats";
-import type { Completeness } from "@/api/types";
+import type { Completeness, ItemType } from "@/api/types";
 
 /** Nombre d'ensembles montrés avant « Tout afficher ». */
 const LIMIT = 10;
 
-const props = defineProps<{ entries: Completeness[]; truncated?: boolean }>();
+const props = withDefaults(
+  defineProps<{
+    entries: Completeness[];
+    /** Types d'item cités (`CollectionStats.item_types`) : libellés `x-label`. */
+    itemTypes: ItemType[];
+    truncated?: boolean;
+    linkItems?: boolean;
+  }>(),
+  { truncated: false, linkItems: true },
+);
 const { t } = useI18n();
 const { lang } = useLang();
-const metaTypes = useMetaTypes();
 const all = ref(false);
 
 const shown = computed(() =>
@@ -84,7 +95,7 @@ const shown = computed(() =>
 );
 
 function label(c: Completeness): string {
-  const type = metaTypes.itemTypes.find((it) => it.id === c.item.item_type_id);
+  const type = props.itemTypes.find((it) => it.id === c.item.item_type_id);
   return itemLabel({ ...c.item, item_type: type }, lang.value);
 }
 </script>

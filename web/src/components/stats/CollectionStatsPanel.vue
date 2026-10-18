@@ -26,7 +26,9 @@
     <CompletenessList
       v-if="stats.completeness.length > 0"
       :entries="stats.completeness"
+      :item-types="stats.item_types ?? []"
       :truncated="stats.completeness_truncated"
+      :link-items="linkItems"
     />
 
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -63,12 +65,12 @@
 
 <script setup lang="ts">
 // Statistiques d'une collection (P4-1) : tout se déduit du schéma de son CollectionType.
+// `load` choisit la source : la mienne, une page publique ou un lien de partage (P4-2) ;
+// les types d'item viennent de la réponse (un lecteur anonyme ne lit pas /item-types).
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { statsApi } from "@/api/client";
 import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";
-import { useMetaTypes } from "@/stores/metaTypes";
 import { fieldLabel, typeTitle, type Schema } from "@/lib/schema";
 import {
   distributionSeries,
@@ -82,16 +84,19 @@ import CompletenessList from "./CompletenessList.vue";
 import StatTile from "./StatTile.vue";
 import type { CollectionStats, NumberStat } from "@/api/types";
 
-const props = defineProps<{
-  collectionId: string;
-  schema?: Schema;
-  /** Change à chaque ajout / retrait : les statistiques sont relues. */
-  version?: number;
-}>();
+const props = withDefaults(
+  defineProps<{
+    load: () => Promise<CollectionStats>;
+    schema?: Schema;
+    /** Change à chaque ajout / retrait : les statistiques sont relues. */
+    version?: number;
+    linkItems?: boolean;
+  }>(),
+  { schema: undefined, version: 0, linkItems: true },
+);
 const { t } = useI18n();
 const { lang } = useLang();
 const { notifyError } = useNotify();
-const metaTypes = useMetaTypes();
 
 const stats = ref<CollectionStats | null>(null);
 const loading = ref(true);
@@ -108,7 +113,7 @@ const byType = computed<Series>(() => {
     labels: list.map(
       (b) =>
         typeTitle(
-          metaTypes.itemTypes.find((it) => it.id === b.type_id),
+          stats.value?.item_types?.find((it) => it.id === b.type_id),
           lang.value,
         ) || b.type_name,
     ),
@@ -131,13 +136,9 @@ function numberDetail(n: NumberStat): string {
   })}`;
 }
 
-async function load() {
+async function refresh() {
   try {
-    const [s] = await Promise.all([
-      statsApi.collection(props.collectionId),
-      metaTypes.loadItemTypes(),
-    ]);
-    stats.value = s;
+    stats.value = await props.load();
   } catch (e) {
     notifyError(e, t("stats.loadFailed"));
   } finally {
@@ -145,6 +146,6 @@ async function load() {
   }
 }
 
-onMounted(load);
-watch(() => props.version, load);
+onMounted(refresh);
+watch(() => props.version, refresh);
 </script>

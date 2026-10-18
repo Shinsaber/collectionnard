@@ -11,6 +11,8 @@ export const NAV_ICONS = {
   relationTypes: "M4 12h16M14 6l6 6-6 6M10 6l-6 6 6 6",
   collectionTypes: "M3 12V4h8l10 10-8 8zM7.5 7.5h.01",
   stats: "M4 20V10M10 20V4M16 20v-7M22 20H2",
+  members:
+    "M12 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1",
   offline:
     "M3 3l18 18M8.6 8.6A5 5 0 0 0 7 18h10.6M20.4 16.4A4 4 0 0 0 18 9a6 6 0 0 0-7.7-3.8",
   importExport: "M12 3v12M7 10l5 5 5-5M4 21h16",
@@ -44,6 +46,7 @@ export function isMoreActive(path: string): boolean {
   return (
     path.startsWith("/admin") ||
     isNavActive("/stats", path) ||
+    isNavActive("/members", path) ||
     isNavActive("/offline", path)
   );
 }
@@ -60,12 +63,14 @@ export function useNavigation() {
       icon: "collections",
     },
     { to: "/stats", label: t("layout.nav.stats"), icon: "stats" },
+    { to: "/members", label: t("layout.nav.members"), icon: "members" },
     { to: "/offline", label: t("layout.nav.offline"), icon: "offline" },
   ]);
 
   /** Liens de la feuille « Plus » (mobile), avant l'administration. */
   const sheetLinks = computed<NavLink[]>(() => [
     { to: "/stats", label: t("layout.nav.stats"), icon: "stats" },
+    { to: "/members", label: t("layout.nav.members"), icon: "members" },
     { to: "/offline", label: t("layout.nav.offline"), icon: "offline" },
   ]);
 

@@ -7,6 +7,7 @@ import (
 
 	"github.com/shinsaber/colec/internal/middleware"
 	"github.com/shinsaber/colec/internal/model"
+	"github.com/shinsaber/colec/internal/privacy"
 	"github.com/shinsaber/colec/internal/store"
 	"github.com/shinsaber/colec/internal/validator"
 )
@@ -86,6 +87,21 @@ func (h *Handler) UpdateCollection(w http.ResponseWriter, r *http.Request) {
 	if err := decodeJSON(w, r, &in); err != nil {
 		respondDecodeError(w, err)
 		return
+	}
+	if in.Visibility != nil && !privacy.Valid(*in.Visibility) {
+		respondError(w, http.StatusBadRequest, "bad_request", "visibility: private, members or public")
+		return
+	}
+	if in.HiddenFields.Set && in.HiddenFields.Value != nil {
+		var schema []byte
+		if col.CollectionType != nil {
+			schema = col.CollectionType.AttributesSchema
+		}
+		if unknown := privacy.UnknownFields(schema, in.HiddenFields.Value); len(unknown) > 0 {
+			respondValidationError(w, "hidden_fields: unknown fields", map[string]any{"unknown": unknown})
+			return
+		}
+		in.HiddenFields.Value = slices.Compact(slices.Sorted(slices.Values(in.HiddenFields.Value)))
 	}
 	updated, err := h.Store.UpdateCollection(r.Context(), id, in)
 	if err != nil {

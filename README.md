@@ -290,6 +290,7 @@ Le projet utilise des extensions custom dans les JSON Schemas pour piloter le fr
 | `x-description`      | Description du type par langue ; repli sur `description`                                                 |
 | `x-enum-labels`      | (propriété) Libellés des valeurs d'enum par langue (`{fr: {tv: "Télévision"}, en: {tv: "TV"}}`)          |
 | `x-widget`           | Widget spécifique : `image-gallery`, `i18n-text` (une chaîne par langue), `links` (liste de liens libellé + URL)                                                         |
+| `x-private`          | (propriété, CollectionType) Champ caché aux autres lecteurs (prix payé) ; retiré par le serveur des pages publiques et liens de partage |
 | `x-completeness`     | (racine, RelationType) Relation de composition : « 30 tomes sur 42 » dans les statistiques d'une collection |
 | `x-image-categories` | Catégories d'images avec ratios (`{poster: {ratio: "2/3"}}`) et contrôles facultatifs à l'envoi : `tolerance` (écart de ratio en %), `min_width` / `min_height` (px), `strict` (refuser plutôt qu'avertir) |
 

@@ -29,6 +29,7 @@ export interface SchemaBuilderFeatures {
   links: boolean;
   // racine
   completeness: boolean; // x-completeness (types de relation : composition)
+  private: boolean; // x-private par champ (types de collection : caché aux autres lecteurs)
 }
 
 export const defaultFeatures: SchemaBuilderFeatures = {
@@ -53,6 +54,7 @@ export const defaultFeatures: SchemaBuilderFeatures = {
   imageGallery: true,
   links: true,
   completeness: false,
+  private: false,
 };
 
 /** Un champ du schéma tel qu'édité dans le builder. */
@@ -62,6 +64,8 @@ export interface SchemaField {
   /** Libellé par code de langue (`x-labels`) ; les langues hors `LANGS` sont conservées. */
   labels: Record<string, string>;
   required: boolean;
+  /** `x-private` : caché à tout autre lecteur que le propriétaire (CollectionType, P4-2). */
+  private?: boolean;
   description?: string | null;
   defaultValue?: unknown;
   // string
@@ -192,6 +196,7 @@ export const MANAGED_PROPERTY_KEYS = new Set([
   "x-widget",
   "x-image-categories",
   "x-enum-labels",
+  "x-private",
 ]);
 
 /** Mots-clés racine pilotés par le builder ; le reste est conservé à l'identique. */

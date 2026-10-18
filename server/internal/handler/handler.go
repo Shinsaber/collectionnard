@@ -94,6 +94,20 @@ func (h *Handler) Router() chi.Router {
 		http.ServeFile(w, r, filepath.Join(string(uploadsDir), name)) //nolint:gosec // name sans "/" ni "..", extension en liste blanche (ci-dessus)
 	})
 
+	// Lectures publiques (P4-2) : authentification facultative, un jeton invalide répond 401.
+	// Champs cachés d'une collection retirés pour tout lecteur (handler/sharing.go).
+	r.Group(func(r chi.Router) {
+		r.Use(h.Auth.OptionalAuthenticate)
+		r.Get("/api/v1/public/users/{username}", h.GetPublicProfile)
+		r.Get("/api/v1/public/users/{username}/collections", h.ListPublicCollections)
+		r.Get("/api/v1/public/collections/{id}", h.GetPublicCollection)
+		r.Get("/api/v1/public/collections/{id}/items", h.ListPublicCollectionItems)
+		r.Get("/api/v1/public/collections/{id}/stats", h.GetPublicCollectionStats)
+		r.Get("/api/v1/share", h.GetSharedCollection)
+		r.Get("/api/v1/share/items", h.ListSharedCollectionItems)
+		r.Get("/api/v1/share/stats", h.GetSharedCollectionStats)
+	})
+
 	// Authenticated
 	r.Group(func(r chi.Router) {
 		r.Use(h.Auth.Authenticate)
@@ -107,6 +121,7 @@ func (h *Handler) Router() chi.Router {
 		r.Delete("/api/v1/invitations/{id}", h.DeleteInvitation)
 		r.Get("/api/v1/me/offline", h.GetOfflineSnapshot)
 		r.Get("/api/v1/me/stats", h.GetMyStats)
+		r.Get("/api/v1/members", h.ListMembers)
 
 		// Read endpoints (all authenticated users)
 		r.Get("/api/v1/item-types", h.ListItemTypes)
@@ -135,6 +150,9 @@ func (h *Handler) Router() chi.Router {
 		r.Delete("/api/v1/collections/{id}", h.DeleteCollection)
 		r.Get("/api/v1/collections/{id}/export", h.ExportCollection)
 		r.Get("/api/v1/collections/{id}/stats", h.GetCollectionStats)
+		r.Get("/api/v1/collections/{id}/share-links", h.ListShareLinks)
+		r.Post("/api/v1/collections/{id}/share-links", h.CreateShareLink)
+		r.Delete("/api/v1/collections/{id}/share-links/{linkId}", h.RevokeShareLink)
 		r.Get("/api/v1/collections/{id}/items", h.ListCollectionItems)
 		r.Post("/api/v1/collections/{id}/items", h.AddItemToCollection)
 		r.Put("/api/v1/collections/{collectionId}/items/{itemId}", h.UpdateCollectionItem)

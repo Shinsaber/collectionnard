@@ -152,3 +152,18 @@ func writeError(w http.ResponseWriter, status int, code, message string) {
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(model.APIError{Error: code, Message: message})
 }
+
+// OptionalAuthenticate lets anonymous requests through (no user in the
+// context, GetUserID returns uuid.Nil) but still rejects an invalid token with
+// 401, so that a client with an expired token refreshes it instead of being
+// silently served the anonymous view (public routes, P4-2).
+func (a *Auth) OptionalAuthenticate(next http.Handler) http.Handler {
+	strict := a.Authenticate(next)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+		strict.ServeHTTP(w, r)
+	})
+}

@@ -74,6 +74,9 @@ export default {
     type: "Type du champ",
     required: "Champ requis",
     requiredShort: "Req.",
+    private:
+      "Privé : caché à tout autre que le propriétaire de la collection (prix payé…), même publique",
+    privateShort: "Privé",
     remove: "Supprimer le champ",
     addAfter: "Ajouter un champ après",
   },

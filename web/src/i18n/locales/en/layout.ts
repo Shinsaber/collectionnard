@@ -17,6 +17,7 @@ const en: typeof fr = {
     users: "Users",
     offline: "Offline",
     stats: "Statistics",
+    members: "Members",
   },
   mainNav: "Main navigation",
   skipToContent: "Skip to content",

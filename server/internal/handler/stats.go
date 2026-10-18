@@ -41,7 +41,7 @@ func (h *Handler) GetCollectionStats(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusNotFound, "not_found", "resource not found")
 		return
 	}
-	stats, err := h.Store.GetCollectionStats(r.Context(), id)
+	stats, err := h.Store.GetCollectionStats(r.Context(), id, nil)
 	if err != nil {
 		handleStoreError(w, r, err)
 		return

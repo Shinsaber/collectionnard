@@ -130,7 +130,15 @@ type Store interface {
 
 	// Stats
 	GetStats(ctx context.Context) (*model.Stats, error)
-	GetCollectionStats(ctx context.Context, collectionID uuid.UUID) (*model.CollectionStats, error)
+	GetCollectionStats(ctx context.Context, collectionID uuid.UUID, hidden []string) (*model.CollectionStats, error)
+
+	// Visibilité et partage (P4-2)
+	ListVisibleCollections(ctx context.Context, ownerID uuid.UUID, levels []string) ([]model.Collection, error)
+	CreateShareLink(ctx context.Context, collectionID uuid.UUID, tokenHash string) (*model.ShareLink, error)
+	ListShareLinks(ctx context.Context, collectionID uuid.UUID) ([]model.ShareLink, error)
+	RevokeShareLink(ctx context.Context, collectionID, linkID uuid.UUID) error
+	GetSharedCollectionID(ctx context.Context, tokenHash string) (uuid.UUID, error)
+	ListMembers(ctx context.Context, pg model.Pagination) ([]model.User, int, error)
 	GetUserStats(ctx context.Context, userID uuid.UUID) (*model.MeStats, error)
 
 	// Import / export (catalogue only: meta-types, items, relations, tags)

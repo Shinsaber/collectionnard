@@ -150,6 +150,11 @@ tags:
       Étiquettes libres associées aux items pour faciliter la recherche et le filtrage.
       Les tags sont créés automatiquement lors de la création d'un item si le nom
       n'existe pas encore. Ils sont partagés globalement (pas par utilisateur).
+  - name: Public
+    description: |
+      Lectures sans compte ou par d'autres membres (P4-2) : profils, collections visibles, liens de partage.
+      Les champs cachés d'une collection (`x-private` du type ou `hidden_fields` du propriétaire) sont retirés
+      par le serveur pour tout autre lecteur que le propriétaire, admins compris.
   - name: Stats
     description: |
       Statistiques globales sur le catalogue et les collections :
@@ -319,6 +324,8 @@ components:
           type: string
           format: date-time
           description: Compte désactivé depuis cette date (connexion et rafraîchissement refusés).
+        profile_visibility:
+          $ref: "#/components/schemas/Visibility"
         can_invite:
           type: boolean
           description: |
@@ -352,6 +359,10 @@ components:
           type: string
           pattern: "^/api/v1/uploads/[^/]+$"
           description: URL d'une image envoyée (`url` de `POST /uploads`) ; gardée par la purge des images.
+        profile_visibility:
+          allOf:
+            - $ref: "#/components/schemas/Visibility"
+          description: Qui voit le profil et la liste des collections visibles ; absent ou vide = `private`.
 
     PasswordChange:
       type: object
@@ -934,6 +945,14 @@ components:
           type: integer
           description: Nombre d'items dans la collection (calculé automatiquement).
           example: 42
+        visibility:
+          $ref: "#/components/schemas/Visibility"
+        hidden_fields:
+          type: [array, "null"]
+          items: { type: string }
+          description: |
+            Champs du CollectionType cachés aux autres lecteurs. `null` : les propriétés `x-private` du schéma ;
+            sinon la liste complète, qui remplace ce défaut (`[]` montre tout).
         created_at:
           type: string
           format: date-time
@@ -967,6 +986,14 @@ components:
           description: Nouveau nom (doit rester unique pour cet utilisateur).
         description:
           type: string
+        visibility:
+          $ref: "#/components/schemas/Visibility"
+        hidden_fields:
+          type: [array, "null"]
+          items: { type: string }
+          description: |
+            Absent : inchangé. `null` : retour au défaut du type (`x-private`). Liste : champs cachés (clés du
+            schéma du CollectionType, sinon 422).
 
     # -------------------------------------------------------------------------
     # CollectionItem
@@ -1346,7 +1373,7 @@ components:
       type: object
       description: |
         Statistiques d'une collection, déduites du schéma de son CollectionType (aucune clé codée en dur).
-      required: [collection_id, total_items, items_by_type, numbers, distributions, timelines, added, completeness, completeness_truncated]
+      required: [collection_id, total_items, items_by_type, numbers, distributions, timelines, added, completeness, completeness_truncated, item_types]
       properties:
         collection_id: { type: string, format: uuid }
         total_items:
@@ -1387,6 +1414,13 @@ components:
         completeness_truncated:
           type: boolean
           description: Vrai si la liste `completeness` a été coupée à 200 éléments.
+        item_types:
+          type: array
+          description: |
+            ItemTypes cités par `items_by_type` et `completeness` (libellés calculés par le client, y compris pour un
+            lecteur anonyme qui ne peut pas lire `/item-types`).
+          items:
+            $ref: "#/components/schemas/ItemType"
 
     CollectionSummary:
       type: object
@@ -1424,6 +1458,74 @@ components:
           description: Ajouts par mois, toutes collections confondues.
           items:
             $ref: "#/components/schemas/MonthCount"
+
+    Visibility:
+      type: string
+      enum: [private, members, public]
+      description: |
+        `private` : le propriétaire seul ; `members` : tout compte connecté ; `public` : tout le monde,
+        connecté ou non.
+
+    Owner:
+      type: object
+      description: Propriétaire d'une collection publique, tel que les autres le voient.
+      required: [username]
+      properties:
+        username: { type: string }
+        display_name: { type: string }
+        avatar: { type: string }
+
+    PublicCollection:
+      type: object
+      description: |
+        Collection lue par un autre que son propriétaire (page publique, lien de partage). Le schéma du
+        CollectionType a perdu ses champs cachés (propriétés, `x-order`, `required`, `x-labels`).
+      required: [id, name, collection_type, item_count, owner, visibility, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        collection_type:
+          $ref: "#/components/schemas/CollectionType"
+        item_count: { type: integer }
+        owner:
+          $ref: "#/components/schemas/Owner"
+        visibility:
+          $ref: "#/components/schemas/Visibility"
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    PublicProfile:
+      type: object
+      description: Profil d'un membre tel que les autres le voient (ni e-mail ni rôle).
+      required: [username, profile_visibility, created_at]
+      properties:
+        username: { type: string }
+        display_name: { type: string }
+        bio: { type: string }
+        avatar: { type: string }
+        profile_visibility:
+          $ref: "#/components/schemas/Visibility"
+        created_at: { type: string, format: date-time }
+
+    ShareLink:
+      type: object
+      description: Lien de partage secret d'une collection (lecture seule). Le jeton n'est jamais renvoyé après sa création.
+      required: [id, collection_id, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        collection_id: { type: string, format: uuid }
+        created_at: { type: string, format: date-time }
+
+    ShareLinkCreated:
+      type: object
+      required: [share_link, token]
+      properties:
+        share_link:
+          $ref: "#/components/schemas/ShareLink"
+        token:
+          type: string
+          description: Jeton à transmettre (montré une seule fois) ; le client construit le lien `…/share?token=…`.
 
     Error:
       type: object
@@ -1975,6 +2077,22 @@ components:
   # Paramètres réutilisables
   # ===========================================================================
   parameters:
+    username:
+      name: username
+      in: path
+      required: true
+      schema: { type: string }
+    collectionId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    shareToken:
+      name: token
+      in: query
+      required: true
+      description: Jeton d'un lien de partage.
+      schema: { type: string }
     connector:
       name: connector
       in: path
@@ -2030,6 +2148,17 @@ components:
   # Réponses réutilisables
   # ===========================================================================
   responses:
+    CollectionItemPage:
+      description: Exemplaires paginés, attributs cachés retirés pour tout autre lecteur que le propriétaire.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: "#/components/schemas/PaginatedResponse"
+              - properties:
+                  data:
+                    items:
+                      $ref: "#/components/schemas/CollectionItem"
     NotFound:
       description: |
         Ressource non trouvée. L'ID spécifié ne correspond à aucun élément existant,
@@ -4982,3 +5111,301 @@ paths:
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
         "500": { $ref: "#/components/responses/InternalError" }
         "502": { $ref: "#/components/responses/ExternalUnavailable" }
+
+  # ===========================================================================
+  # Visibilité et partage (P4-2)
+  # ===========================================================================
+
+  /members:
+    get:
+      tags: [Users]
+      summary: Annuaire des membres
+      description: Comptes actifs dont le profil est visible des membres ou public, par nom d'utilisateur.
+      operationId: listMembers
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Profils visibles.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, total, page, per_page]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PublicProfile"
+                  total: { type: integer }
+                  page: { type: integer }
+                  per_page: { type: integer }
+
+  /public/users/{username}:
+    get:
+      tags: [Public]
+      summary: Profil d'un membre
+      description: |
+        Authentification facultative. 404 si le profil n'est pas visible du lecteur (privé, réservé aux membres
+        pour un anonyme, compte désactivé). Un jeton invalide répond 401.
+      operationId: getPublicProfile
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/username"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Profil.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicProfile"
+
+  /public/users/{username}/collections:
+    get:
+      tags: [Public]
+      summary: Collections visibles d'un membre
+      description: |
+        Authentification facultative. Le profil doit être visible du lecteur (sinon 404) ; seules les collections
+        visibles du lecteur sont listées, la plus grande en premier.
+      operationId: listPublicCollections
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/username"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Collections.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PublicCollection"
+
+  /public/collections/{id}:
+    get:
+      tags: [Public]
+      summary: Collection visible
+      description: |
+        Authentification facultative. 404 si la collection n'est pas visible du lecteur ou si son propriétaire est
+        désactivé. Pour tout autre que le propriétaire, les champs cachés sont retirés (admins compris).
+      operationId: getPublicCollection
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Collection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicCollection"
+
+  /public/collections/{id}/items:
+    get:
+      tags: [Public]
+      summary: Items d'une collection visible
+      description: Mêmes règles que `GET /public/collections/{id}` ; attributs cachés retirés de chaque exemplaire.
+      operationId: listPublicCollectionItems
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          $ref: "#/components/responses/CollectionItemPage"
+
+  /public/collections/{id}/stats:
+    get:
+      tags: [Public]
+      summary: Statistiques d'une collection visible
+      description: Mêmes règles ; un champ caché n'entre dans aucun agrégat.
+      operationId: getPublicCollectionStats
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Statistiques.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectionStats"
+
+  /share:
+    get:
+      tags: [Public]
+      summary: Collection partagée par lien
+      description: |
+        Anonyme, lecture seule. Le lien vaut quelle que soit la visibilité de la collection, jusqu'à sa
+        révocation (404 ensuite). Champs cachés retirés. Le jeton passe en paramètre de requête.
+      operationId: getSharedCollection
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/shareToken"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Collection.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicCollection"
+
+  /share/items:
+    get:
+      tags: [Public]
+      summary: Items d'une collection partagée
+      operationId: listSharedCollectionItems
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/shareToken"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          $ref: "#/components/responses/CollectionItemPage"
+
+  /share/stats:
+    get:
+      tags: [Public]
+      summary: Statistiques d'une collection partagée
+      operationId: getSharedCollectionStats
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/shareToken"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Statistiques.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectionStats"
+
+  /collections/{id}/share-links:
+    get:
+      tags: [Collections]
+      summary: Liens de partage actifs d'une collection
+      description: Collection de l'utilisateur connecté (404 pour celle d'un autre).
+      operationId: listShareLinks
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liens actifs, le plus récent en premier.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ShareLink"
+    post:
+      tags: [Collections]
+      summary: Créer un lien de partage
+      operationId: createShareLink
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Lien créé ; le jeton n'est montré qu'ici.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShareLinkCreated"
+
+  /collections/{id}/share-links/{linkId}:
+    delete:
+      tags: [Collections]
+      summary: Révoquer un lien de partage
+      operationId: revokeShareLink
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+        - name: linkId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Lien révoqué.

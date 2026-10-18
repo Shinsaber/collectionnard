@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/shinsaber/colec/internal/middleware"
 	"github.com/shinsaber/colec/internal/model"
+	"github.com/shinsaber/colec/internal/privacy"
 	"github.com/shinsaber/colec/internal/store"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -182,6 +183,9 @@ func (h *Handler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	case in.Avatar != "" && (!avatarRE.MatchString(in.Avatar) || strings.Contains(in.Avatar, "..")):
 		respondError(w, http.StatusBadRequest, "bad_request", "avatar must be the url of an upload (/api/v1/uploads/…)")
+		return
+	case in.ProfileVisibility != "" && !privacy.Valid(in.ProfileVisibility):
+		respondError(w, http.StatusBadRequest, "bad_request", "profile_visibility: private, members or public")
 		return
 	}
 	user, err := h.Store.UpdateProfile(r.Context(), middleware.GetUserID(r.Context()), in)

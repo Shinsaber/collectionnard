@@ -69,6 +69,22 @@
             show-word-limit
           />
         </div>
+        <div class="flex flex-col gap-1.5" data-test="profile-visibility">
+          <span :class="labelClass">{{ t("sharing.profile.title") }}</span>
+          <p class="text-sm text-muted">{{ t("sharing.profile.help") }}</p>
+          <VisibilitySelect
+            v-model="profileVisibility"
+            :label="t('sharing.profile.title')"
+          />
+          <RouterLink
+            v-if="auth.user && auth.user.profile_visibility !== 'private'"
+            :to="`/u/${auth.user.username}`"
+            class="text-sm font-semibold text-link"
+          >
+            <i class="pi pi-external-link mr-1 text-xs" aria-hidden="true"></i>
+            {{ t("sharing.profile.view") }}
+          </RouterLink>
+        </div>
         <ElButton
           type="primary"
           native-type="submit"
@@ -129,6 +145,8 @@ import PageHeader from "@/components/common/PageHeader.vue";
 import InvitationsCard from "@/components/account/InvitationsCard.vue";
 import PasswordFields from "@/components/account/PasswordFields.vue";
 import UserAvatar from "@/components/account/UserAvatar.vue";
+import VisibilitySelect from "@/components/sharing/VisibilitySelect.vue";
+import type { Visibility } from "@/api/types";
 
 const { t } = useI18n();
 const auth = useAuthStore();
@@ -139,12 +157,14 @@ const labelClass = "font-mono text-[11px] uppercase tracking-wider text-muted";
 const displayName = ref("");
 const bio = ref("");
 const avatar = ref("");
+const profileVisibility = ref<Visibility>("private");
 watch(
   () => auth.user,
   (u) => {
     displayName.value = u?.display_name ?? "";
     bio.value = u?.bio ?? "";
     avatar.value = u?.avatar ?? "";
+    profileVisibility.value = u?.profile_visibility ?? "private";
   },
   { immediate: true },
 );
@@ -180,6 +200,7 @@ async function saveProfile() {
       display_name: displayName.value.trim(),
       bio: bio.value.trim(),
       avatar: avatar.value,
+      profile_visibility: profileVisibility.value,
     });
     auth.user.can_invite = canInvite;
     notifySuccess(t("account.profile.saved"));

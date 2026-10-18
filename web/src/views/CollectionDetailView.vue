@@ -25,6 +25,16 @@
         </div>
       </template>
       <template #actions>
+        <ElButton data-test="share-button" @click="shareVisible = true">
+          <i
+            class="pi mr-2"
+            :class="
+              collection.visibility === 'private' ? 'pi-lock' : 'pi-globe'
+            "
+            aria-hidden="true"
+          ></i>
+          {{ t("sharing.share.button") }}
+        </ElButton>
         <ExportButton
           :label="t('collections.detail.export')"
           :formats="['json', 'csv']"
@@ -64,7 +74,7 @@
       </ElTabPane>
       <ElTabPane :label="t('stats.tab')" name="stats" lazy>
         <CollectionStatsPanel
-          :collection-id="id"
+          :load="loadStats"
           :schema="schema"
           :version="statsVersion"
         />
@@ -80,6 +90,12 @@
       <i class="pi pi-plus" aria-hidden="true"></i>
       {{ t("collections.detail.addItem") }}
     </button>
+
+    <CollectionShareDialog
+      v-model:visible="shareVisible"
+      :collection="collection"
+      @saved="(c) => (collection = c)"
+    />
 
     <CollectionAddItemDialog
       v-model:visible="addVisible"
@@ -122,7 +138,7 @@
 <script setup lang="ts">
 import { ref, computed, defineAsyncComponent, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
-import { collectionApi, importExportApi } from "@/api/client";
+import { collectionApi, importExportApi, statsApi } from "@/api/client";
 import { usePagination } from "@/composables/usePagination";
 import { useLang } from "@/composables/useLang";
 import { useDirty } from "@/composables/useDirty";
@@ -138,6 +154,7 @@ import ExportButton, {
 } from "@/components/common/ExportButton.vue";
 import CollectionAddItemDialog from "@/components/collection/CollectionAddItemDialog.vue";
 import CollectionItemList from "@/components/collection/CollectionItemList.vue";
+import CollectionShareDialog from "@/components/sharing/CollectionShareDialog.vue";
 import { defaultDelimiter } from "@/lib/csv";
 import type { Collection, CollectionItem } from "@/api/types";
 
@@ -171,7 +188,9 @@ const exportCollection = (format: ExportFormat) =>
     lang: lang.value,
   });
 
+const loadStats = () => statsApi.collection(props.id);
 const addVisible = ref(false);
+const shareVisible = ref(false);
 const tab = ref<"items" | "stats">("items");
 // Incrémenté à chaque modification : l'onglet Statistiques se recharge.
 const statsVersion = ref(0);

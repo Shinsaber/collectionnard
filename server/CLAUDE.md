@@ -18,6 +18,7 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 | `label`      | `Render(schema, attrs, lang)` : libellé d'un item via `x-label` (pendant de `web/src/lib/schema.ts`) |
 | `itemquery`  | Recherche avancée de `GET /items` : filtres `attr.<clé>[.<op>]`, tri `attr.<clé>`, requête plein texte — validés contre le schéma du type (pendant de `web/src/lib/itemSearch.ts`) |
 | `collstats`  | Statistiques d'une collection (P4-1) déduites du schéma du CollectionType : nombres, répartitions (enum, booléen), mois des dates, ajouts par mois ; la complétude (relations `x-completeness`) est calculée en SQL dans `store/stats.go` |
+| `privacy`    | Visibilité et champs cachés (P4-2) : `CanView`, `Levels`, `HiddenFields` (`x-private` ou `hidden_fields`), `StripAttributes`, `StripSchema`. **Toute lecture faite pour un autre que le propriétaire** (routes `/public/…`, `/share`, statistiques) passe par ce filtre, admins compris |
 | `csvexport`  | Mise à plat CSV des attributs (colonnes depuis le schéma, i18n-text → `clé.langue`, BOM, anti-injection de formules) |
 | `dbmigrate`  | Migrations tern (`db/migrations`) + seeds de démonstration (`SEED_FILE` : liste séparée par des virgules ; défaut `seed.sql`, `seed_bd_manga.sql`, `seed_music.sql`, `seed_video.sql` puis `seed_games.sql`), précédés de l'installation des paquets de domaine : sous-commandes `colec-server migrate` / `seed` / `install-domain` (`cmd.go`) |
 | `domains`    | Paquets de domaine embarqués (`packages/*.json`, types au format de l'import) et plan d'installation : `Merge3` (référence / local / paquet ; les modifications locales sont gardées, seuls les ajouts du paquet sont fusionnés). `requires` : paquets requis (ex. `books` → `people`, qui porte Person et Publisher), installés d'abord dans la même transaction (`Requirements`, rapport `required`). Le store écrit par l'import et garde les copies de référence (`meta_type_origins`, migration 007) |
@@ -62,6 +63,10 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
   passe révoque ses refresh tokens ; `Login` / `Refresh` refusent un compte désactivé (401 `account_disabled`).
   `UpdateUser` verrouille les admins et refuse de retirer le dernier actif (`store.ErrLastAdmin` → 409 `last_admin`).
   Toute colonne qui référence un envoi (comme `users.avatar`) doit figurer dans `ReferencedUploads` (purge des images).
+- Visibilité et partage (`handler/sharing.go`, `store/sharing.go`, P4-2) : routes publiques derrière
+  `Auth.OptionalAuthenticate` (sans jeton : anonyme, `GetUserID` = `uuid.Nil` ; jeton invalide : 401) ; `loadReadable`
+  vérifie visibilité et compte actif (404 sinon) et calcule les champs cachés ; une nouvelle lecture publique doit
+  passer par lui et par `privacy.Strip*`. Liens de partage : même principe que les invitations (hash seul).
 
 ## Ajouter / modifier un endpoint — checklist
 
