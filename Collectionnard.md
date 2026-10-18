@@ -453,7 +453,7 @@ propositions modérées **et** rôle contributeur ; échanges reportés.
       des enums, courbe des dates ; **complétude** par le graphe (« 30 tomes sur 42 ») via une extension
       `x-completeness` des relations de composition ; graphiques ECharts ; `GET /me/stats`, `/collections/{id}/stats`.
 - [ ] **P4-2 — Visibilité et partage** : collection et profil privés, visibles des membres ou publics ; pages publiques
-      en lecture seule ; liens de partage secrets et révocables ; extension `x-private` pour cacher les attributs
+      en lecture seule ; liens de partage secrets et révocables ; extension `x-private` (défaut du type) et `hidden_fields` (choix du propriétaire par collection) pour retirer, côté serveur, les attributs
       sensibles (prix payé) ; annuaire des membres ; listes de souhaits partageables.
 - [ ] **P4-3 — Contributions** : rôle contributeur (écriture directe du catalogue) ; propositions d'items et de
       corrections au format de l'import, file de modération (acceptation, correction, refus commenté) ; historique des

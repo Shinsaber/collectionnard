@@ -90,9 +90,21 @@ Toujours génériques : aucune clé d'attribut codée en dur, tout se déduit de
 
 - **Modèle** (migration) : `collections.visibility` et `users.profile_visibility` (`private` | `members` | `public`,
   défaut `private`) ; `share_links` (`collection_id`, `token_hash`, `created_at`, `revoked_at`) pour un lien secret.
-- **Attributs sensibles** : une nouvelle extension **`x-private: true`** sur une propriété d'un CollectionType (prix payé,
-  budget max…) la cache à tout autre que le propriétaire, même dans une collection publique. Posée dans le paquet
-  `collections` sur `purchase_price` et `max_budget`.
+- **Attributs sensibles** (décision du 2026-10-18) :
+  - **Défaut du type** : une nouvelle extension **`x-private: true`** sur une propriété d'un CollectionType (prix payé,
+    budget max…), réglée par l'admin (SchemaBuilder) ; posée dans le paquet `collections` sur `purchase_price` et
+    `max_budget`.
+  - **Choix du propriétaire, par collection** : `collections.hidden_fields` (`TEXT[]`, NULL par défaut). NULL : les
+    champs `x-private` du type sont cachés. Renseignée : c'est la liste complète des champs cachés, qui remplace le
+    défaut (cacher un champ de plus, ou montrer un champ privé par défaut, comme le budget d'une liste de souhaits). Clés
+    vérifiées contre le schéma du CollectionType ; réglage dans les paramètres de la collection.
+  - **Filtrage par le serveur, jamais par l'interface** : pour tout lecteur autre que le propriétaire, les champs cachés
+    sont **retirés des réponses** de l'API, sans exception pour les admins (un admin qui lit la collection d'un autre
+    est un lecteur comme un autre). Un seul filtre Go (schéma + `hidden_fields` + lecteur → attributs nettoyés), testé
+    seul, appelé par toutes les lectures non propriétaires : routes `/public/…` (collection, items), `/share/{token}`,
+    et **statistiques** (un champ caché n'entre dans aucun agrégat : un total ou une moyenne du prix payé le révélerait).
+    Export et copie hors ligne restent réservés au propriétaire. Tests : chaque route publique est vérifiée sans la
+    valeur cachée dans le JSON brut, y compris avec un jeton admin.
 - **API** : authentification facultative sur des routes de lecture `GET /public/users/{username}`,
   `GET /public/users/{username}/collections`, `GET /public/collections/{id}` (+ items, statistiques) — `public` pour tous,
   `members` pour les connectés ; `GET /share/{token}` (anonyme, lecture seule) ; `POST` / `DELETE
