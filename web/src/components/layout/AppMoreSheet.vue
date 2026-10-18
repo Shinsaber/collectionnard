@@ -25,7 +25,7 @@
         <i class="pi pi-angle-right text-muted" aria-hidden="true"></i>
       </RouterLink>
       <nav
-        v-if="auth.isAdmin"
+        v-if="adminLinks.length > 0"
         :aria-labelledby="adminTitleId"
         class="flex flex-col"
       >
@@ -62,7 +62,6 @@
 import { useId, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
-import { useAuthStore } from "@/stores/auth";
 import AppUserCard from "./AppUserCard.vue";
 import NavIcon from "./NavIcon.vue";
 import { isNavActive, useNavigation } from "./navigation";
@@ -70,7 +69,6 @@ import { isNavActive, useNavigation } from "./navigation";
 const open = defineModel<boolean>({ required: true });
 const { t } = useI18n();
 const route = useRoute();
-const auth = useAuthStore();
 const { sheetLinks, adminLinks } = useNavigation();
 const adminTitleId = useId();
 

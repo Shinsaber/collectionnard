@@ -101,7 +101,7 @@
               class="grid auto-cols-fr grid-flow-col gap-2 sm:flex sm:flex-wrap"
             >
               <button
-                v-if="auth.isAdmin"
+                v-if="auth.canEditCatalog"
                 type="button"
                 :class="secondaryClass"
                 @click="editDialogVisible = true"
@@ -141,7 +141,10 @@
         <h2 class="text-xl font-extrabold tracking-tight sm:text-[22px]">
           {{ t("items.detail.relations") }}
         </h2>
-        <ElButton v-if="auth.isAdmin" @click="createRelationVisible = true">
+        <ElButton
+          v-if="auth.canEditCatalog"
+          @click="createRelationVisible = true"
+        >
           <i class="pi pi-plus mr-2" aria-hidden="true"></i>
           {{ t("items.detail.createRelation") }}
         </ElButton>
@@ -156,13 +159,19 @@
         v-else
         :relations="relations"
         :context-item-id="item.id"
-        :show-delete="auth.isAdmin"
+        :show-delete="auth.canEditCatalog"
         @delete="confirmDeleteRelation"
         @edit="openEditRelation"
       />
     </section>
 
     <ItemGallery :attributes="item.attributes" :schema="schema" />
+
+    <ItemHistoryCard
+      :item="item"
+      :version="historyVersion"
+      @reverted="(i) => (item = i)"
+    />
 
     <AddToCollectionDialog
       v-model:visible="addToCollectionVisible"
@@ -220,6 +229,7 @@ import ItemCover from "@/components/item/ItemCover.vue";
 import ItemCollectionsCard from "@/components/item/ItemCollectionsCard.vue";
 import ItemEditDialog from "@/components/item/ItemEditDialog.vue";
 import ItemGallery from "@/components/item/ItemGallery.vue";
+import ItemHistoryCard from "@/components/item/ItemHistoryCard.vue";
 import AddToCollectionDialog from "@/components/item/AddToCollectionDialog.vue";
 import RelationCreateDialog from "@/components/item/RelationCreateDialog.vue";
 import RelationEditDialog from "@/components/item/RelationEditDialog.vue";
@@ -236,6 +246,8 @@ const { notifyError, notifySuccess } = useNotify();
 const isMobile = useMediaQuery(MOBILE_QUERY);
 
 const item = ref<Item | null>(null);
+// Incrémenté après chaque écriture (fiche, relations) : l'historique est relu.
+const historyVersion = ref(0);
 const relations = ref<ItemRelation[]>([]);
 const itemCollections = ref<ItemCollectionMembership[]>([]);
 const loading = ref(true);
@@ -334,6 +346,7 @@ async function confirmDeleteRelation(rel: ItemRelation) {
     await relationApi.delete(rel.id);
     notifySuccess(t("items.detail.relationDeleted"));
     relations.value = relations.value.filter((r) => r.id !== rel.id);
+    historyVersion.value++;
   } catch (e) {
     notifyError(e);
   }
@@ -343,6 +356,7 @@ async function reloadRelations() {
   if (!item.value) return;
   try {
     relations.value = (await itemApi.relations(item.value.id)) ?? [];
+    historyVersion.value++;
   } catch (e) {
     notifyError(e, t("items.detail.relationsUnavailable"));
   }
@@ -366,6 +380,7 @@ async function loadItem(id: string) {
     ]);
     item.value = i;
     relations.value = rels ?? [];
+    historyVersion.value++;
     loadCollections(id);
   } catch (e) {
     notifyError(e, t("items.detail.notFound"));

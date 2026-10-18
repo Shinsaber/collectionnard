@@ -109,7 +109,7 @@ func (s *PgStore) GetItem(ctx context.Context, id uuid.UUID) (*model.Item, error
 }
 
 func (s *PgStore) CreateItem(ctx context.Context, in model.ItemCreate) (*model.Item, error) {
-	tx, err := s.pool.Begin(ctx)
+	tx, err := s.begin(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +149,7 @@ func (s *PgStore) CreateItem(ctx context.Context, in model.ItemCreate) (*model.I
 }
 
 func (s *PgStore) UpdateItem(ctx context.Context, id uuid.UUID, in model.ItemUpdate) (*model.Item, error) {
-	tx, err := s.pool.Begin(ctx)
+	tx, err := s.begin(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func (s *PgStore) UpdateItem(ctx context.Context, id uuid.UUID, in model.ItemUpd
 }
 
 func (s *PgStore) DeleteItem(ctx context.Context, id uuid.UUID) error {
-	tx, err := s.pool.Begin(ctx)
+	tx, err := s.begin(ctx)
 	if err != nil {
 		return err
 	}

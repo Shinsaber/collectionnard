@@ -26,6 +26,10 @@ export const useAuthStore = defineStore("auth", () => {
   // renouvelle l'access token à la première requête si nécessaire.
   const isAuthenticated = computed(() => !!token.value || !!getRefreshToken());
   const isAdmin = computed(() => user.value?.role === "admin");
+  /** Écriture directe du catalogue (P4-3) : admins et contributeurs, sans suppression d'item. */
+  const canEditCatalog = computed(
+    () => user.value?.role === "admin" || user.value?.role === "contributor",
+  );
 
   // Session ouverte (connexion, inscription, nouveau mot de passe) : jetons et profil.
   function openSession(res: LoginResponse) {
@@ -95,6 +99,7 @@ export const useAuthStore = defineStore("auth", () => {
     token,
     isAuthenticated,
     isAdmin,
+    canEditCatalog,
     login,
     register,
     changePassword,

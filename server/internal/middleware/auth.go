@@ -167,3 +167,19 @@ func (a *Auth) OptionalAuthenticate(next http.Handler) http.Handler {
 		strict.ServeHTTP(w, r)
 	})
 }
+
+// RequireRole rejects users whose role is not among roles with 403.
+func (a *Auth) RequireRole(roles ...string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			role := GetRole(r.Context())
+			for _, ok := range roles {
+				if role == ok {
+					next.ServeHTTP(w, r)
+					return
+				}
+			}
+			writeError(w, http.StatusForbidden, "forbidden", "role not allowed")
+		})
+	}
+}

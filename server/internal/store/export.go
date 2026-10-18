@@ -246,7 +246,7 @@ func (s *PgStore) ImportCatalog(ctx context.Context, cat *model.CatalogExport, d
 		return rep, nil
 	}
 
-	tx, err := s.pool.Begin(ctx)
+	tx, err := s.begin(ctx)
 	if err != nil {
 		return nil, err
 	}

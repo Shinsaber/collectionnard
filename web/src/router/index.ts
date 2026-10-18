@@ -188,7 +188,7 @@ const router = createRouter({
           path: "admin/external-import",
           name: "external-import",
           component: () => import("@/views/admin/ExternalImportView.vue"),
-          meta: { admin: true },
+          meta: { catalog: true },
         },
       ],
     },
@@ -213,6 +213,10 @@ router.beforeEach(async (to) => {
   // Serveur injoignable : seule la copie hors ligne des collections est consultable (lot E5c).
   if (!useOfflineStore().reachable && to.name !== "offline") {
     return { name: "offline" };
+  }
+
+  if (to.meta.catalog && !auth.canEditCatalog) {
+    return { name: "dashboard" };
   }
 
   if (to.meta.admin && !auth.isAdmin) {

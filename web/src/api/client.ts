@@ -48,6 +48,7 @@ import type {
   GraphResponse,
   Stats,
   MeStats,
+  ItemHistory,
   CollectionStats,
   PublicCollection,
   PublicProfile,
@@ -324,6 +325,12 @@ export const collectionTypeApi = {
 
 // ── Items ─────────────────────────────────────────────────────────────
 export const itemApi = {
+  /** Historique de l'item et de ses relations (P4-3a). */
+  history: (id: string) =>
+    http.get<ItemHistory>(`/items/${id}/history`).then((r) => r.data),
+  /** Retour à une version (admins, contributeurs). */
+  revert: (id: string, version: number) =>
+    http.post<Item>(`/items/${id}/revert`, { version }).then((r) => r.data),
   /** Recherche avancée : `attr.<clé>[.<op>]`, `related_to`, `sort=attr.<clé>` (voir lib/itemSearch). */
   list: (params?: ItemListParams) =>
     http

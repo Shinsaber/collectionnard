@@ -2,6 +2,7 @@ package testutil
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/google/uuid"
 	"github.com/shinsaber/colec/internal/model"
@@ -48,4 +49,18 @@ func (m *MockStore) ListMembers(ctx context.Context, pg model.Pagination) ([]mod
 		return m.ListMembersFn(ctx, pg)
 	}
 	return []model.User{}, 0, nil
+}
+
+func (m *MockStore) GetItemHistory(ctx context.Context, itemID uuid.UUID) (*model.ItemHistory, error) {
+	if m.GetItemHistoryFn != nil {
+		return m.GetItemHistoryFn(ctx, itemID)
+	}
+	return &model.ItemHistory{Entries: []model.HistoryEntry{}}, nil
+}
+
+func (m *MockStore) GetItemVersion(ctx context.Context, itemID uuid.UUID, version int) (json.RawMessage, error) {
+	if m.GetItemVersionFn != nil {
+		return m.GetItemVersionFn(ctx, itemID, version)
+	}
+	return nil, store.ErrNotFound
 }

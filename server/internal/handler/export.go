@@ -50,7 +50,7 @@ func (h *Handler) ImportCatalog(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	rep, err := h.Store.ImportCatalog(r.Context(), &cat, dryRun)
+	rep, err := h.Store.ImportCatalog(store.WithOrigin(r.Context(), store.OriginImport, ""), &cat, dryRun)
 	respondImport(w, r, rep, err)
 }
 

@@ -23,8 +23,6 @@ const en: typeof fr = {
   skipToContent: "Skip to content",
   account: "Account and settings",
   adminSection: "Administration",
-  adminBadge: "Administrator",
-  userBadge: "User",
   language: "Language",
   theme: "Theme",
   lightMode: "Light mode",

@@ -456,7 +456,7 @@ propositions modérées **et** rôle contributeur ; échanges reportés.
 - [x] **P4-2 — Visibilité et partage** : collection et profil privés, visibles des membres ou publics ; pages publiques
       en lecture seule ; liens de partage secrets et révocables ; extension `x-private` (défaut du type) et `hidden_fields` (choix du propriétaire par collection) pour retirer, côté serveur, les attributs
       sensibles (prix payé) ; annuaire des membres ; listes de souhaits partageables.
-- [ ] **P4-3 — Contributions** (raffiné le 2026-10-18) : P4-3a historique des items et relations (origine, retour à
+- [ ] **P4-3 — Contributions** (raffiné le 2026-10-18) : P4-3a (livré) historique des items et relations (origine, retour à
       une version, attribution selon la visibilité actuelle) + rôle contributeur (écriture directe, sans suppression) ;
       P4-3b propositions au format de l'import avec version de départ et conflits, brouillons, discussion, modération par
       admins et contributeurs, doublons, quota ; P4-3c notifications dans l'application, signalements, suggestions de

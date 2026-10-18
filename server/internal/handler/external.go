@@ -12,6 +12,7 @@ import (
 	"github.com/shinsaber/colec/internal/external"
 	"github.com/shinsaber/colec/internal/external/bnf"
 	"github.com/shinsaber/colec/internal/model"
+	"github.com/shinsaber/colec/internal/store"
 )
 
 // externalTimeout bounds one request to the external sources (a preview may
@@ -169,7 +170,7 @@ func (h *Handler) ImportExternal(w http.ResponseWriter, r *http.Request) {
 		respondExternalError(w, r, err)
 		return
 	}
-	rep, err := h.Store.ImportCatalog(ctx, cat, dryRun)
+	rep, err := h.Store.ImportCatalog(store.WithOrigin(ctx, store.OriginExternal, conn.ID()), cat, dryRun)
 	if err != nil {
 		respondInternal(w, r, err, "internal error")
 		return

@@ -18,11 +18,14 @@ export interface RefreshRequest {
 }
 
 // ---------- User ----------
+/** `contributor` (P4-3) : écrit dans le catalogue sans supprimer d'item, modère les propositions. */
+export type Role = "admin" | "contributor" | "user";
+
 export interface User {
   id: string;
   username: string;
   email: string;
-  role: "admin" | "user";
+  role: Role;
   /** Profil (P4-0) : nom affiché (repli sur username), présentation, avatar (URL d'un envoi). */
   display_name?: string;
   bio?: string;
@@ -38,7 +41,7 @@ export interface User {
 
 // ---------- Comptes, invitations, profils (P4-0, social.md) ----------
 export interface UserUpdate {
-  role?: "admin" | "user";
+  role?: Role;
   disabled?: boolean;
 }
 
@@ -58,7 +61,7 @@ export type InvitationStatus = "pending" | "used" | "expired";
 
 export interface Invitation {
   id: string;
-  role: "admin" | "user";
+  role: Role;
   note?: string;
   created_by?: string;
   created_by_username?: string;
@@ -70,7 +73,7 @@ export interface Invitation {
 }
 
 export interface InvitationCreate {
-  role?: "admin" | "user";
+  role?: Role;
   note?: string;
   expires_in_days?: number;
 }
@@ -450,6 +453,40 @@ export interface MeStats {
   items_by_type: ItemsByType[];
   collections: CollectionSummary[];
   added: MonthCount[];
+}
+
+// ---------- Historique du catalogue (P4-3a) : miroir de server/internal/model/history.go ----------
+
+export interface HistoryAuthor {
+  /** `user` : profil visible ; `member` : « un membre » ; `system` : seed, SQL. */
+  kind: "user" | "member" | "system";
+  user?: Owner;
+}
+
+export type HistoryOrigin =
+  "direct" | "import" | "external" | "proposal" | "revert" | "system";
+
+export interface HistoryEntry {
+  kind: "item" | "relation";
+  entity_id: string;
+  version: number;
+  origin: HistoryOrigin;
+  origin_ref?: string;
+  author: HistoryAuthor;
+  before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null;
+  relation?: {
+    relation_type_id: string;
+    source_item_id: string;
+    target_item_id: string;
+  };
+  created_at: string;
+}
+
+export interface ItemHistory {
+  entries: HistoryEntry[];
+  truncated: boolean;
+  created?: HistoryEntry;
 }
 
 export interface Stats {

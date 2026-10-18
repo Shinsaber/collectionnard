@@ -114,7 +114,7 @@ tags:
       **Écriture** : admin uniquement (MVP). **Lecture** : tous les utilisateurs authentifiés.
   - name: Relations
     description: |
-      **Admin uniquement.** Gestion des relations entre items (les arêtes du graphe).
+      **Admin ou contributeur.** Gestion des relations entre items (les arêtes du graphe).
       Chaque relation relie un item source à un item target via un RelationType.
 
       Le système valide automatiquement que :
@@ -172,7 +172,7 @@ tags:
       utilisateurs ne font pas partie de l'export du catalogue.
   - name: External
     description: |
-      **Admin uniquement.** Récupération depuis des sources ouvertes, un connecteur par sorte de
+      **Admin ou contributeur.** Récupération depuis des sources ouvertes, un connecteur par sorte de
       collection (`/external/{connector}/…`, liste : `GET /external/connectors`) : `bd-manga` (manga, BD) et
       `novels` (romans : roman, cycle et auteurs sur Wikidata ; éditions BnF de sa notice d'œuvre, traducteurs,
       illustrateurs et préfaciers) et `music` (CD, vinyles : album, éditions, pistes, artistes et labels sur
@@ -307,10 +307,11 @@ components:
           example: shinsaber@colec.local
         role:
           type: string
-          enum: [admin, user]
+          enum: [admin, contributor, user]
           description: |
             Rôle de l'utilisateur :
             - `admin` : peut créer/modifier types, items, relations
+            - `contributor` : écrit directement dans le catalogue (sans supprimer d'item) et modère les propositions
             - `user` : peut gérer ses collections et consulter le catalogue
         display_name:
           type: string
@@ -342,7 +343,7 @@ components:
       type: object
       description: Modification d'un compte par un admin (champs absents inchangés).
       properties:
-        role: { type: string, enum: [admin, user] }
+        role: { type: string, enum: [admin, contributor, user] }
         disabled:
           type: boolean
           description: |
@@ -377,7 +378,7 @@ components:
       required: [id, role, expires_at, status, created_at]
       properties:
         id: { type: string, format: uuid }
-        role: { type: string, enum: [admin, user] }
+        role: { type: string, enum: [admin, contributor, user] }
         note: { type: string, maxLength: 255, description: "Mémo de l'auteur (« pour Camille »)." }
         created_by: { type: string, format: uuid }
         created_by_username: { type: string }
@@ -394,7 +395,7 @@ components:
       properties:
         role:
           type: string
-          enum: [admin, user]
+          enum: [admin, contributor, user]
           default: user
           description: Rôle du compte créé ; `admin` réservé aux admins.
         note: { type: string, maxLength: 255 }
@@ -1526,6 +1527,76 @@ components:
         token:
           type: string
           description: Jeton à transmettre (montré une seule fois) ; le client construit le lien `…/share?token=…`.
+
+    HistoryAuthor:
+      type: object
+      description: |
+        Auteur d'une écriture du catalogue. `kind` : `user` (profil visible du lecteur, `user` renseigné),
+        `member` (profil non visible du lecteur, ou compte désactivé : « un membre »), `system` (seed, SQL).
+        Calculé à chaque lecture selon la visibilité **actuelle** du profil ; les admins voient toujours l'auteur.
+      required: [kind]
+      properties:
+        kind: { type: string, enum: [user, member, system] }
+        user:
+          $ref: "#/components/schemas/Owner"
+
+    HistoryEntry:
+      type: object
+      description: Une écriture d'un item ou d'une relation qui le touche (instantanés des attributs).
+      required: [kind, entity_id, version, origin, author, created_at]
+      properties:
+        kind: { type: string, enum: [item, relation] }
+        entity_id: { type: string, format: uuid }
+        version:
+          type: integer
+          description: Version de l'entité (1 = création).
+        origin:
+          type: string
+          enum: [direct, import, external, proposal, revert, system]
+        origin_ref:
+          type: string
+          description: Connecteur (`external`), proposition (`proposal`), version restaurée (`revert`).
+        author:
+          $ref: "#/components/schemas/HistoryAuthor"
+        before:
+          type: [object, "null"]
+          additionalProperties: true
+          description: Attributs avant (`null` à la création).
+        after:
+          type: [object, "null"]
+          additionalProperties: true
+          description: Attributs après (`null` à la suppression).
+        relation:
+          type: object
+          description: Relation concernée (`kind` = `relation`).
+          properties:
+            relation_type_id: { type: string, format: uuid }
+            source_item_id: { type: string, format: uuid }
+            target_item_id: { type: string, format: uuid }
+        created_at: { type: string, format: date-time }
+
+    ItemHistory:
+      type: object
+      required: [entries, truncated]
+      properties:
+        entries:
+          type: array
+          description: Écritures de l'item et de ses relations, la plus récente en premier (500 au plus).
+          items:
+            $ref: "#/components/schemas/HistoryEntry"
+        truncated: { type: boolean }
+        created:
+          $ref: "#/components/schemas/HistoryEntry"
+          description: Création de l'item (version 1), même hors de `entries` ; absente pour un item antérieur à l'historique.
+
+    RevertRequest:
+      type: object
+      required: [version]
+      properties:
+        version:
+          type: integer
+          minimum: 1
+          description: Version de l'item dont les attributs sont restaurés.
 
     Error:
       type: object
@@ -3477,7 +3548,7 @@ paths:
       tags: [Items]
       summary: Créer un item
       description: |
-        **Admin uniquement (MVP).**
+        **Admin ou contributeur.**
 
         Crée un nouvel item dans le catalogue. Les attributs sont **validés contre le
         JSON Schema** du ItemType référencé. En cas de non-conformité, une erreur 422
@@ -3554,7 +3625,7 @@ paths:
       tags: [Items]
       summary: Modifier un item
       description: |
-        **Admin uniquement.**
+        **Admin ou contributeur.**
 
         Modifie les attributs et/ou tags d'un item. Les attributs sont **revalidés**
         contre le JSON Schema du ItemType.
@@ -3747,7 +3818,7 @@ paths:
       tags: [Relations]
       summary: Créer une relation entre deux items
       description: |
-        **Admin uniquement.**
+        **Admin ou contributeur.**
 
         Crée une relation (arête orientée) entre deux items existants.
 
@@ -3828,7 +3899,7 @@ paths:
       tags: [Relations]
       summary: Modifier les attributs d'une relation
       description: |
-        **Admin uniquement.**
+        **Admin ou contributeur.**
 
         Modifie les attributs d'une relation existante. Les items source et target
         **ne peuvent pas être changés** — pour cela, supprimer et recréer la relation.
@@ -3866,7 +3937,7 @@ paths:
       tags: [Relations]
       summary: Supprimer une relation
       description: |
-        **Admin uniquement.** Supprime la relation. Les items source et cible
+        **Admin ou contributeur.** Supprime la relation. Les items source et cible
         ne sont pas affectés.
       operationId: deleteRelation
       responses:
@@ -4928,7 +4999,7 @@ paths:
       tags: [External]
       summary: Connecteurs disponibles
       description: |
-        **Admin uniquement.** Un connecteur par sorte de collection (`bd-manga`, `novels`…) et le paquet de
+        **Admin ou contributeur.** Un connecteur par sorte de collection (`bd-manga`, `novels`…) et le paquet de
         domaine (`GET /domains`) qui porte les types qu'il écrit.
       operationId: listConnectors
       responses:
@@ -5410,3 +5481,65 @@ paths:
           $ref: "#/components/responses/InternalError"
         "204":
           description: Lien révoqué.
+
+  # ===========================================================================
+  # Historique du catalogue (P4-3a)
+  # ===========================================================================
+
+  /items/{id}/history:
+    get:
+      tags: [Items]
+      summary: Historique d'un item
+      description: Écritures de l'item et des relations dont il est la source ou la cible, avec leur auteur et leur origine.
+      operationId: getItemHistory
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Historique.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemHistory"
+
+  /items/{id}/revert:
+    post:
+      tags: [Items]
+      summary: Revenir à une version
+      description: |
+        **Admin ou contributeur.** Restaure les attributs d'une version (validés contre le schéma actuel du type, 422
+        sinon) ; l'écriture est historisée avec l'origine `revert`. 400 pour une version de suppression.
+      operationId: revertItem
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RevertRequest"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Item restauré.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"

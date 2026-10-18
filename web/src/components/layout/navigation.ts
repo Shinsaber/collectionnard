@@ -1,5 +1,6 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
+import { useAuthStore } from "@/stores/auth";
 
 /** Icônes de navigation (tracés au trait des maquettes, viewBox 24). */
 export const NAV_ICONS = {
@@ -53,6 +54,7 @@ export function isMoreActive(path: string): boolean {
 
 export function useNavigation() {
   const { t } = useI18n();
+  const auth = useAuthStore();
 
   const mainLinks = computed<NavLink[]>(() => [
     { to: "/", label: t("layout.nav.dashboard"), icon: "home" },
@@ -85,36 +87,48 @@ export function useNavigation() {
     },
   ]);
 
-  const adminLinks = computed<NavLink[]>(() => [
-    { to: "/admin/users", label: t("layout.nav.users"), icon: "users" },
-    { to: "/admin/domains", label: t("layout.nav.domains"), icon: "domains" },
-    {
-      to: "/admin/item-types",
-      label: t("layout.nav.itemTypes"),
-      icon: "itemTypes",
-    },
-    {
-      to: "/admin/relation-types",
-      label: t("layout.nav.relationTypes"),
-      icon: "relationTypes",
-    },
-    {
-      to: "/admin/collection-types",
-      label: t("layout.nav.collectionTypes"),
-      icon: "collectionTypes",
-    },
-    {
-      to: "/admin/import-export",
-      label: t("layout.nav.importExport"),
-      icon: "importExport",
-    },
-    {
-      to: "/admin/external-import",
-      label: t("layout.nav.externalImport"),
-      icon: "external",
-    },
-    { to: "/admin/images", label: t("layout.nav.images"), icon: "images" },
-  ]);
+  /** Section « Administration » : tout pour un admin, les sources externes pour un contributeur. */
+  const allAdminLinks = computed<(NavLink & { contributor?: boolean })[]>(
+    () => [
+      { to: "/admin/users", label: t("layout.nav.users"), icon: "users" },
+      { to: "/admin/domains", label: t("layout.nav.domains"), icon: "domains" },
+      {
+        to: "/admin/item-types",
+        label: t("layout.nav.itemTypes"),
+        icon: "itemTypes",
+      },
+      {
+        to: "/admin/relation-types",
+        label: t("layout.nav.relationTypes"),
+        icon: "relationTypes",
+      },
+      {
+        to: "/admin/collection-types",
+        label: t("layout.nav.collectionTypes"),
+        icon: "collectionTypes",
+      },
+      {
+        to: "/admin/import-export",
+        label: t("layout.nav.importExport"),
+        icon: "importExport",
+      },
+      {
+        to: "/admin/external-import",
+        label: t("layout.nav.externalImport"),
+        icon: "external",
+        contributor: true,
+      },
+      { to: "/admin/images", label: t("layout.nav.images"), icon: "images" },
+    ],
+  );
+
+  const adminLinks = computed<NavLink[]>(() =>
+    auth.isAdmin
+      ? allAdminLinks.value
+      : auth.canEditCatalog
+        ? allAdminLinks.value.filter((l) => l.contributor)
+        : [],
+  );
 
   return { mainLinks, tabLinks, sheetLinks, adminLinks };
 }

@@ -91,6 +91,8 @@ type MockStore struct {
 	RevokeShareLinkFn            func(ctx context.Context, collectionID, linkID uuid.UUID) error
 	GetSharedCollectionIDFn      func(ctx context.Context, tokenHash string) (uuid.UUID, error)
 	ListMembersFn                func(ctx context.Context, pg model.Pagination) ([]model.User, int, error)
+	GetItemHistoryFn             func(ctx context.Context, itemID uuid.UUID) (*model.ItemHistory, error)
+	GetItemVersionFn             func(ctx context.Context, itemID uuid.UUID, version int) (json.RawMessage, error)
 	GetUserStatsFn               func(ctx context.Context, userID uuid.UUID) (*model.MeStats, error)
 	ExportCatalogFn              func(ctx context.Context) (*model.CatalogExport, error)
 	ImportCatalogFn              func(ctx context.Context, cat *model.CatalogExport, dryRun bool) (*model.ImportReport, error)
@@ -458,6 +460,8 @@ func (m *MockStore) RefreshInstalledDomains(ctx context.Context, except string) 
 var (
 	AdminID = uuid.MustParse("a0000000-0000-0000-0000-000000000001")
 	UserID  = uuid.MustParse("a0000000-0000-0000-0000-000000000002")
+	// ContributorID : rôle contributor (P4-3).
+	ContributorID = uuid.MustParse("a0000000-0000-0000-0000-000000000003")
 )
 
 func AdminUser() *model.User {
@@ -506,6 +510,13 @@ func NewTestServer(mockStore *MockStore) *httptest.Server {
 func AdminToken() string {
 	auth := middleware.NewAuth(TestSecret, TestAccessTTL)
 	t, _ := auth.GenerateToken(AdminID, "admin")
+	return t
+}
+
+// ContributorToken : jeton d'un contributeur (écrit dans le catalogue, modère).
+func ContributorToken() string {
+	auth := middleware.NewAuth(TestSecret, TestAccessTTL)
+	t, _ := auth.GenerateToken(ContributorID, "contributor")
 	return t
 }
 

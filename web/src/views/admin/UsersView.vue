@@ -38,6 +38,10 @@
               "
             >
               <ElOption :label="t('account.roles.user')" value="user" />
+              <ElOption
+                :label="t('account.roles.contributor')"
+                value="contributor"
+              />
               <ElOption :label="t('account.roles.admin')" value="admin" />
             </ElSelect>
           </template>

@@ -20,7 +20,7 @@
     </nav>
 
     <nav
-      v-if="auth.isAdmin"
+      v-if="adminLinks.length > 0"
       :aria-labelledby="adminTitleId"
       class="flex flex-col gap-1"
     >
@@ -50,13 +50,11 @@
 import { useId } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
-import { useAuthStore } from "@/stores/auth";
 import AppLogo from "./AppLogo.vue";
 import AppUserCard from "./AppUserCard.vue";
 import NavIcon from "./NavIcon.vue";
 import { isNavActive, useNavigation } from "./navigation";
 
-const auth = useAuthStore();
 const route = useRoute();
 const { t } = useI18n();
 const { mainLinks, adminLinks } = useNavigation();

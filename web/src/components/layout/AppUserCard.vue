@@ -14,9 +14,7 @@
         }}</span>
         <span
           class="font-mono text-[11px] uppercase tracking-wider text-muted"
-          >{{
-            auth.isAdmin ? t("layout.adminBadge") : t("layout.userBadge")
-          }}</span
+          >{{ t(`account.roles.${auth.user?.role ?? "user"}`) }}</span
         >
       </div>
     </RouterLink>

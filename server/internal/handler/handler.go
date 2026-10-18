@@ -110,7 +110,7 @@ func (h *Handler) Router() chi.Router {
 
 	// Authenticated
 	r.Group(func(r chi.Router) {
-		r.Use(h.Auth.Authenticate)
+		r.Use(h.Auth.Authenticate, withActor)
 
 		r.Get("/api/v1/auth/me", h.GetCurrentUser)
 		r.Put("/api/v1/me/profile", h.UpdateProfile)
@@ -161,6 +161,28 @@ func (h *Handler) Router() chi.Router {
 		r.Put("/api/v1/collections/{collectionId}/items/{itemId}", h.UpdateCollectionItem)
 		r.Delete("/api/v1/collections/{collectionId}/items/{itemId}", h.RemoveItemFromCollection)
 
+		r.Get("/api/v1/items/{id}/history", h.GetItemHistory)
+
+		// Écriture du catalogue : admins et contributeurs (P4-3a), sans suppression d'item.
+		r.Group(func(r chi.Router) {
+			r.Use(h.Auth.RequireRole(model.RoleAdmin, model.RoleContributor))
+
+			r.Post("/api/v1/items", h.CreateItem)
+			r.Put("/api/v1/items/{id}", h.UpdateItem)
+			r.Post("/api/v1/items/{id}/revert", h.RevertItem)
+
+			r.Post("/api/v1/relations", h.CreateRelation)
+			r.Put("/api/v1/relations/{id}", h.UpdateRelation)
+			r.Delete("/api/v1/relations/{id}", h.DeleteRelation)
+
+			// External sources (Wikidata, BnF, MusicBrainz, TVmaze)
+			r.Get("/api/v1/external/connectors", h.ListConnectors)
+			r.Get("/api/v1/external/{connector}/works", h.SearchExternalWorks)
+			r.Get("/api/v1/external/{connector}/editions", h.SearchExternalEditions)
+			r.Post("/api/v1/external/{connector}/preview", h.PreviewExternal)
+			r.Post("/api/v1/external/{connector}/import", h.ImportExternal)
+		})
+
 		// Admin-only endpoints
 		r.Group(func(r chi.Router) {
 			r.Use(h.Auth.RequireAdmin)
@@ -171,13 +193,6 @@ func (h *Handler) Router() chi.Router {
 
 			r.Get("/api/v1/export", h.ExportCatalog)
 			r.Post("/api/v1/import", h.ImportCatalog)
-
-			// External sources (BD / Manga: Wikidata, BnF)
-			r.Get("/api/v1/external/connectors", h.ListConnectors)
-			r.Get("/api/v1/external/{connector}/works", h.SearchExternalWorks)
-			r.Get("/api/v1/external/{connector}/editions", h.SearchExternalEditions)
-			r.Post("/api/v1/external/{connector}/preview", h.PreviewExternal)
-			r.Post("/api/v1/external/{connector}/import", h.ImportExternal)
 
 			r.Post("/api/v1/item-types", h.CreateItemType)
 			r.Put("/api/v1/item-types/{id}", h.UpdateItemType)
@@ -191,13 +206,7 @@ func (h *Handler) Router() chi.Router {
 			r.Put("/api/v1/collection-types/{id}", h.UpdateCollectionType)
 			r.Delete("/api/v1/collection-types/{id}", h.DeleteCollectionType)
 
-			r.Post("/api/v1/items", h.CreateItem)
-			r.Put("/api/v1/items/{id}", h.UpdateItem)
 			r.Delete("/api/v1/items/{id}", h.DeleteItem)
-
-			r.Post("/api/v1/relations", h.CreateRelation)
-			r.Put("/api/v1/relations/{id}", h.UpdateRelation)
-			r.Delete("/api/v1/relations/{id}", h.DeleteRelation)
 
 			r.Post("/api/v1/uploads/purge", h.PurgeUploads)
 			r.Get("/api/v1/domains", h.ListDomains)

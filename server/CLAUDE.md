@@ -63,6 +63,13 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
   passe révoque ses refresh tokens ; `Login` / `Refresh` refusent un compte désactivé (401 `account_disabled`).
   `UpdateUser` verrouille les admins et refuse de retirer le dernier actif (`store.ErrLastAdmin` → 409 `last_admin`).
   Toute colonne qui référence un envoi (comme `users.avatar`) doit figurer dans `ReferencedUploads` (purge des images).
+- Historique du catalogue (P4-3a, migration 010) : des déclencheurs PostgreSQL écrivent `item_history` /
+  `relation_history` à chaque écriture d'un item ou d'une relation. Toute transaction qui écrit dans le catalogue
+  s'ouvre par `s.begin(ctx)` (pas `s.pool.Begin`) pour transmettre l'acteur du contexte (`store.WithActor`, posé
+  par le middleware `withActor` ; `store.WithOrigin(ctx, store.OriginImport…)` pour préciser l'origine). Rôles :
+  `RequireRole(model.RoleAdmin, model.RoleContributor)` pour l'écriture du catalogue, `RequireAdmin` pour la
+  suppression d'item, les méta-types et l'administration. Auteurs d'historique résolus par `authors`
+  (`handler/history.go`) selon la visibilité **actuelle** du profil ; les admins voient toujours l'auteur.
 - Visibilité et partage (`handler/sharing.go`, `store/sharing.go`, P4-2) : routes publiques derrière
   `Auth.OptionalAuthenticate` (sans jeton : anonyme, `GetUserID` = `uuid.Nil` ; jeton invalide : 401) ; `loadReadable`
   vérifie visibilité et compte actif (404 sinon) et calcule les champs cachés ; une nouvelle lecture publique doit

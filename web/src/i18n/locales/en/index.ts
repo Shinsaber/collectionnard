@@ -7,6 +7,7 @@ import common from "./common";
 import dashboard from "./dashboard";
 import errors from "./errors";
 import graph from "./graph";
+import history from "./history";
 import items from "./items";
 import layout from "./layout";
 import offline from "./offline";
@@ -23,6 +24,7 @@ const en: Messages = {
   dashboard,
   errors,
   graph,
+  history,
   items,
   layout,
   offline,

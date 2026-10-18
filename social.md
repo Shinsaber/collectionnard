@@ -210,6 +210,17 @@ grandit avec les propositions acceptées.
    modération, discussion, doublons, images gardées, quota.
 3. **P4-3c — Notifications, signalements, suggestions** : table et cloche, `report` et `schema_suggestion`.
 
+### Livré
+
+- **P4-3a (2026-10-18)** : migration 010 (rôle `contributor`, `item_history`, `relation_history`, déclencheurs). Les
+  déclencheurs historisent toute écriture d'`items` / `item_relations` (une écriture sans changement n'ajoute rien) ;
+  auteur et origine lus dans les réglages de transaction posés par `store.begin` depuis l'acteur du contexte
+  (`store.WithActor`, middleware `withActor` ; `store.WithOrigin` pour l'import et les sources externes). Sans acteur :
+  `system` (seeds). Le contributeur peut aussi supprimer une **relation** (corriger un lien), historisée ; jamais un item.
+  `GET /items/{id}/history` (500 dernières écritures + la création), `POST /items/{id}/revert` (validé contre le schéma
+  actuel). Auteur résolu à chaque lecture : `user` / `member` / `system`. `create-user … --contributor`. Correctif
+  au passage : `POST /uploads` ouvert à tout compte connecté (avatar de P4-0, images des propositions).
+
 ### Reporté
 
 - Contributeur **par domaine** et **promotion suggérée** (« Camille pourrait devenir contributrice » après N propositions

@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { createPinia, setActivePinia } from "pinia";
 import { mount } from "@vue/test-utils";
 import ElementPlus from "element-plus";
 import { createMemoryHistory, createRouter } from "vue-router";
@@ -27,6 +28,7 @@ describe("isNavActive", () => {
 });
 
 describe("AppTabBar", () => {
+  beforeEach(() => setActivePinia(createPinia()));
   const Empty = defineComponent({ template: "<div />" });
 
   async function mountAt(path: string, moreOpen = false) {

@@ -18,6 +18,10 @@
         }}</label>
         <ElSelect :id="`${id}-role`" v-model="role" class="w-36!">
           <ElOption :label="t('account.roles.user')" value="user" />
+          <ElOption
+            :label="t('account.roles.contributor')"
+            value="contributor"
+          />
           <ElOption :label="t('account.roles.admin')" value="admin" />
         </ElSelect>
       </div>
@@ -113,7 +117,7 @@ import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";
 import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import OneTimeLinkDialog from "./OneTimeLinkDialog.vue";
-import type { Invitation } from "@/api/types";
+import type { Invitation, Role } from "@/api/types";
 
 /** admin : choix du rôle, toutes les invitations (avec leur auteur). */
 defineProps<{ admin?: boolean }>();
@@ -125,7 +129,7 @@ const id = useId();
 const labelClass = "font-mono text-[11px] uppercase tracking-wider text-muted";
 
 const list = ref<Invitation[]>([]);
-const role = ref<"user" | "admin">("user");
+const role = ref<Role>("user");
 const days = ref(7);
 const note = ref("");
 const creating = ref(false);

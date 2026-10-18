@@ -127,7 +127,7 @@ docker compose down -v && docker compose up --build   # repart d'une base vide (
 ```
 
 Comptes de dev (seed) : `admin` / `admin` (rôle admin), `shinsaber` / `shinsaber` (rôle user).
-Nouveau compte : `go run . create-user <nom> <email> [--admin]` (mot de passe demandé).
+Nouveau compte : `go run . create-user <nom> <email> [--admin|--contributor]` (mot de passe demandé).
 Production : images publiées par la CI sur ghcr.io (job `images`, tags `v*` et `main`), `docker-compose.prod.yml`
 (sans seed) — voir README « Mise en production ».
 
@@ -166,4 +166,4 @@ Phase 2 livrée : multilingue, recherche avancée (lot 14), import/export (lot 1
 `les.collection.md`, sources Wikidata / BnF). Phase 3 (récupération automatique externe) terminée, branche `phase3-sources` fusionnée dans `main` : domaines installables (P3-0), connecteurs
 BD / Manga, Romans, Musique, Films, Séries et Jeux vidéo (`server/internal/external/connectors`, profils `bd-manga` / `novels` / `music` / `films` / `series` / `games`, clients `wikidata`, `bnf`, `musicbrainz`, `tvmaze`, page admin « Sources externes ») ;
 domaines P3-0 à P3-7 (jeux vidéo, V1 française) livrés et fusionnés dans `main`. Phase 4 (social) raffinée, branche `phase4-social` : lots P4-0 à P4-3 dans `social.md` ; P4-0 (comptes, invitations,
-profils), P4-1 (statistiques personnelles) et P4-2 (visibilité et partage) livrés.
+profils), P4-1 (statistiques personnelles), P4-2 (visibilité et partage) et P4-3a (historique, contributeur) livrés.

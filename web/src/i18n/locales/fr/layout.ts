@@ -22,8 +22,6 @@ export default {
   skipToContent: "Aller au contenu",
   account: "Compte et réglages",
   adminSection: "Administration",
-  adminBadge: "Administrateur",
-  userBadge: "Utilisateur",
   language: "Langue",
   theme: "Thème",
   lightMode: "Mode clair",

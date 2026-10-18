@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -139,6 +140,10 @@ type Store interface {
 	RevokeShareLink(ctx context.Context, collectionID, linkID uuid.UUID) error
 	GetSharedCollectionID(ctx context.Context, tokenHash string) (uuid.UUID, error)
 	ListMembers(ctx context.Context, pg model.Pagination) ([]model.User, int, error)
+
+	// Historique du catalogue (P4-3a)
+	GetItemHistory(ctx context.Context, itemID uuid.UUID) (*model.ItemHistory, error)
+	GetItemVersion(ctx context.Context, itemID uuid.UUID, version int) (json.RawMessage, error)
 	GetUserStats(ctx context.Context, userID uuid.UUID) (*model.MeStats, error)
 
 	// Import / export (catalogue only: meta-types, items, relations, tags)
