@@ -294,7 +294,7 @@ Le projet utilise des extensions custom dans les JSON Schemas pour piloter le fr
 | `x-private`          | (propriété, CollectionType) Champ caché aux autres lecteurs (prix payé) ; retiré par le serveur des pages publiques et liens de partage |
 | `x-identifier`       | (propriété, ItemType) Identifiant (ISBN, EAN, QID…) : doublons signalés avant l'enregistrement |
 | `x-completeness`     | (racine, RelationType) Relation de composition : « 30 tomes sur 42 » dans les statistiques d'une collection |
-| `x-image-categories` | Catégories d'images avec ratios (`{poster: {ratio: "2/3"}}`) et contrôles facultatifs à l'envoi : `tolerance` (écart de ratio en %), `min_width` / `min_height` (px), `strict` (refuser plutôt qu'avertir) |
+| `x-image-categories` | Catégories d'images avec ratios (`{poster: {ratio: "2/3"}}`) et contrôles facultatifs à l'envoi : `tolerance` (écart de ratio en %), `min_width` / `min_height` (px), `strict` (recadrage proposé plutôt qu'avertissement). Sur écran tactile, une photo peut être prise puis recadrée au ratio ; les photos sont réduites à 2000 px |
 
 Sans extension, le widget découle du schéma : `enum` → liste déroulante, `integer`/`number` avec `minimum`
 **et** `maximum` → curseur, `format: date` / `uri` → champ dédié. Référence complète : `Collectionnard.md` § 3.

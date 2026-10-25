@@ -41,6 +41,21 @@ const en: typeof fr = {
     ratioOff:
       "ratio {actual} instead of {expected} ({deviation} % off, {tolerance} % allowed)",
     tooSmall: "{width} × {height} px, minimum {min} px",
+    // Photo and cropping (lot M1)
+    photo: "Photo",
+    photoLabel: "Take a photo for {category}",
+    cropTitle: "Crop – {category}",
+    cropHint:
+      "Frame at ratio {ratio}: move it or drag its handles; drag the image to move it, pinch (or scroll) to zoom.",
+    cropHintFree:
+      "Free frame: move it or drag its handles; drag the image to move it, pinch (or scroll) to zoom.",
+    cropOffer: "Image out of format ({details}): crop it to keep it.",
+    rotateLeft: "Rotate a quarter turn left",
+    rotateRight: "Rotate a quarter turn right",
+    fitImage: "Fit",
+    asIs: "Without cropping",
+    applyCrop: "Crop",
+    cropFailed: "Cropping failed",
   },
   builder: {
     empty: "No field defined. Click “Add a field” to start.",

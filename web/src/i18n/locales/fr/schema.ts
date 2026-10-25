@@ -40,6 +40,21 @@ export default {
     ratioOff:
       "ratio {actual} au lieu de {expected} (écart {deviation} %, toléré {tolerance} %)",
     tooSmall: "{width} × {height} px, minimum {min} px",
+    // Photo et recadrage (lot M1)
+    photo: "Photo",
+    photoLabel: "Prendre une photo pour {category}",
+    cropTitle: "Recadrer – {category}",
+    cropHint:
+      "Cadre au ratio {ratio} : déplacez-le ou tirez ses poignées ; faites glisser l'image pour la déplacer, pincez (ou molette) pour zoomer.",
+    cropHintFree:
+      "Cadre libre : déplacez-le ou tirez ses poignées ; faites glisser l'image pour la déplacer, pincez (ou molette) pour zoomer.",
+    cropOffer: "Image hors format ({details}) : recadrez-la pour la garder.",
+    rotateLeft: "Pivoter d'un quart de tour vers la gauche",
+    rotateRight: "Pivoter d'un quart de tour vers la droite",
+    fitImage: "Ajuster",
+    asIs: "Sans recadrage",
+    applyCrop: "Recadrer",
+    cropFailed: "Recadrage impossible",
   },
   builder: {
     empty:

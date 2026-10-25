@@ -34,6 +34,7 @@ des messages techniques en anglais. Ajouter une langue : `Collectionnard.md` § 
 | [docs/audit/](docs/audit/BRIEF.md)     | Brief et résultats de l'audit approfondi (`/audit`)              |
 | [docs/sources-externes.md](docs/sources-externes.md) | Bases ouvertes BD / Manga : licences, accès (Wikidata, BnF retenues), constats du connecteur |
 | [social.md](social.md)                 | Phase 4 (social) : décisions, modèle et API visés — comptes et invitations, statistiques, visibilité, contributions |
+| [mobile.md](mobile.md)                 | Phase 5 (mobile) : cas d'usage et décisions — photo de couverture et recadrage, scanner de codes-barres, page « Scanner » |
 
 ## Modèle en une table
 
