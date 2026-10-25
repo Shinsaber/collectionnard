@@ -23,8 +23,10 @@ import {
   FORMATS,
   ScanConfirmer,
   createDetector,
+  identifierPrefill,
   resetDetector,
 } from "./barcode";
+import fixtures from "../../tests/fixtures/seed-schemas.json";
 
 type G = typeof globalThis & { BarcodeDetector?: unknown };
 
@@ -75,6 +77,46 @@ describe("createDetector", () => {
     const b = await createDetector();
     expect(a).toBe(b);
     expect(ponyfill.ctor).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("identifierPrefill", () => {
+  const schemaOf = (name: string) =>
+    fixtures.find((f) => f.name === name)!.schema as Record<string, unknown>;
+
+  it("remplit l'ISBN d'un tome avec un EAN-13 en 978, pas avec un autre code", () => {
+    expect(identifierPrefill(schemaOf("Volume"), "9782505000945")).toEqual({
+      isbn: "9782505000945",
+    });
+    expect(identifierPrefill(schemaOf("Volume"), "5099902988216")).toEqual({});
+  });
+
+  it("remplit le code-barres d'une édition musicale et l'EAN d'un jeu", () => {
+    expect(identifierPrefill(schemaOf("Release"), "5099902988216")).toEqual({
+      barcode: "5099902988216",
+    });
+    expect(identifierPrefill(schemaOf("GameRelease"), "045496590475")).toEqual({
+      ean: "045496590475",
+    });
+  });
+
+  it("ignore les identifiants imbriqués, typés autrement ou avec un format, et les schémas vides", () => {
+    const schema = {
+      properties: {
+        qid: { type: "string", "x-identifier": true, pattern: "^Q[0-9]+$" },
+        url: { type: "string", "x-identifier": true, format: "uri" },
+        free: { type: "string", "x-identifier": true },
+        n: { type: "integer", "x-identifier": true },
+        bad: { type: "string", "x-identifier": true, pattern: "(" },
+        external_ids: {
+          type: "object",
+          properties: { wikidata: { type: "string", "x-identifier": true } },
+        },
+      },
+    };
+    expect(identifierPrefill(schema, "123")).toEqual({ free: "123" });
+    expect(identifierPrefill(null, "123")).toEqual({});
+    expect(identifierPrefill(schema, "")).toEqual({});
   });
 });
 

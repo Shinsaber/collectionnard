@@ -77,4 +77,21 @@ Raffinage du 2026-10-25, branche `phase5-mobile`, un commit par lot. Les lots et
 - `components/common/ScanButton.vue` : bouton icône `pi-barcode` qui ouvre le dialogue, utilisé par les points
   d'intégration ci-dessus. Visible partout (une webcam convient aussi) ; le dialogue explique quand rien n'est
   disponible.
-- `vite.config.ts` : `**/*.wasm` précaché (Workbox, limite de taille relevée à 3 Mio).
+- `vite.config.ts` : `**/*.wasm` précaché par Workbox (≈ 0,9 Mo, sous la limite par défaut de 2 Mio).
+- nginx (`web/nginx-security-headers.conf`) : `Permissions-Policy: camera=(self)` (était `camera=()`, ce qui
+  interdisait la caméra), CSP `script-src 'self' 'wasm-unsafe-eval'` (sans quoi Chrome refuse de compiler le wasm),
+  `img-src blob:` déjà présent pour l'aperçu du recadrage ; `gzip_types application/wasm`.
+
+## M3 — Page « Scanner »
+
+- `views/ScanView.vue` (`/scan`, liens « Scanner » dans le menu latéral et la feuille « Plus ») : `BarcodeScannerDialog`
+  en mode `continuous` ; chaque code lu devient une entrée (le plus récent en premier ; un code déjà lu remonte sans
+  nouvelle requête) cherchée par `GET /items?search=<code>` puis, pour chaque item trouvé, `GET /items/{id}/collections`
+  (« Dans N de mes collections » / « Dans aucune de mes collections »). Le dernier résultat s'affiche aussi sous
+  l'aperçu de la caméra (slot par défaut du dialogue) : on enchaîne les codes sans quitter le scanner.
+- Actions : ouvrir la fiche, « Ajouter à une collection » (`AddToCollectionDialog`, collections déjà présentes
+  exclues) ; code inconnu : « Chercher dans les sources externes » (`/admin/external-import?code=…`, la recherche
+  d'édition se lance d'office en mode code, `?connector=` facultatif) ou « Créer l'item » / « Proposer l'item »
+  (`ItemEditDialog` avec `prefill-code` : au choix du type, les propriétés `x-identifier` de premier niveau dont le
+  `pattern` accepte le code sont préremplies — `lib/barcode.ts` `identifierPrefill`, rien de métier).
+- Après création ou proposition, le code est recherché à nouveau pour refléter le catalogue.

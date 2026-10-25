@@ -477,8 +477,9 @@ barcode-detector / zxing-wasm (MIT, `.wasm` servi localement) pour les codes-bar
 - [x] **M2 — Scanner de codes-barres** : lecture par la caméra (ou dans une photo), bouton scanner dans la recherche du
       catalogue, l'ajout à une collection, la consultation hors ligne, les champs `x-identifier` des formulaires et la
       recherche d'éditions des sources externes ; nginx autorise la caméra et le WebAssembly (`Permissions-Policy`, CSP).
-- [ ] **M3 — Page « Scanner »** : « est-ce que je l'ai déjà ? » (fiche, collections, ajout), raccourcis vers les
-      sources externes et la création avec le code prérempli, mode continu pour inventorier une pile.
+- [x] **M3 — Page « Scanner »** (`/scan`) : « est-ce que je l'ai déjà ? » (fiche, « dans N de mes collections », ajout),
+      raccourcis vers les sources externes (`?code=`) et la création avec les identifiants préremplis, mode continu
+      pour inventorier une pile (résultat affiché sous la caméra).
 - [ ] Plus tard (voir `mobile.md`) : détection des bords, recadrage d'une image déjà en galerie, OCR, QR code des liens
       de partage, scan d'étagère.
 

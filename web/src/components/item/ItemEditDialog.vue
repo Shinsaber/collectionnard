@@ -35,7 +35,7 @@
           id="item-type"
           v-model="form.item_type_id"
           :placeholder="t('items.editDialog.chooseType')"
-          @change="form.attributes = {}"
+          @change="onTypeChange"
         >
           <ElOption
             v-for="type in itemTypes"
@@ -127,6 +127,7 @@ import { useDirty } from "@/composables/useDirty";
 import { useNotify } from "@/composables/useNotify";
 import { itemLabel, typeTitle } from "@/lib/schema";
 import { itemPayload } from "@/lib/proposals";
+import { identifierPrefill } from "@/lib/barcode";
 import DynamicForm from "@/components/common/DynamicForm.vue";
 import type { Duplicate, Item, ItemType } from "@/api/types";
 
@@ -136,6 +137,8 @@ const props = defineProps<{
   itemTypes: ItemType[];
   /** Membre (P4-3b) : envoie une proposition au lieu d'écrire dans le catalogue. */
   propose?: boolean;
+  /** Code-barres scanné (M3) : préremplit, au choix du type, ses identifiants qui l'acceptent. */
+  prefillCode?: string;
 }>();
 
 const emit = defineEmits<{
@@ -195,6 +198,13 @@ const currentSchema = computed(() => {
   const found = props.itemTypes.find((it) => it.id === form.item_type_id);
   return found?.attributes_schema ?? null;
 });
+
+/** Nouveau type choisi : attributs vides, sauf les identifiants préremplis par un code scanné. */
+function onTypeChange() {
+  form.attributes = props.prefillCode
+    ? identifierPrefill(currentSchema.value, props.prefillCode)
+    : {};
+}
 
 // Reset form when dialog opens or item changes
 watch(

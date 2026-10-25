@@ -35,6 +35,11 @@ const page = <T>(data: T[]) => ({
   per_page: 100,
   total_pages: 1,
 });
+// Pas de routeur monté : la page lit `?code=` / `?connector=` (M3) et pousse vers la fiche importée.
+vi.mock("vue-router", () => ({
+  useRoute: () => ({ query: {} }),
+  useRouter: () => ({ push: vi.fn() }),
+}));
 vi.mock("@/api/client", () => ({
   externalApi: api,
   extractApiError: () => ({ message: "" }),

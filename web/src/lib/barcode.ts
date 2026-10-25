@@ -72,6 +72,35 @@ async function build(): Promise<BarcodeReader> {
   return new BarcodeDetector({ formats: [...FORMATS] });
 }
 
+/**
+ * Préremplissage d'un item créé depuis un code scanné (page « Scanner », M3) : les propriétés
+ * `x-identifier` de premier niveau, de type chaîne, dont le `pattern` accepte le code (`isbn`, `ean`,
+ * `barcode`…) ; sans `pattern`, seulement les chaînes sans `format`. Rien de métier : tout vient du schéma.
+ */
+export function identifierPrefill(
+  schema: Record<string, unknown> | null | undefined,
+  code: string,
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  const properties = schema?.properties as
+    Record<string, Record<string, unknown>> | undefined;
+  if (!properties || !code) return out;
+  for (const [key, prop] of Object.entries(properties)) {
+    if (prop["x-identifier"] !== true || prop.type !== "string") continue;
+    if (typeof prop.pattern === "string") {
+      try {
+        if (!new RegExp(prop.pattern).test(code)) continue;
+      } catch {
+        continue; // pattern invalide : on ne devine pas
+      }
+    } else if (prop.format) {
+      continue;
+    }
+    out[key] = code;
+  }
+  return out;
+}
+
 /** Réinitialise le lecteur partagé (tests). */
 export function resetDetector() {
   cached = null;

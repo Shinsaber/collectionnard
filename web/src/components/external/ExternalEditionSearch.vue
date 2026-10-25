@@ -169,6 +169,8 @@ const props = defineProps<{
   /** Code de recherche d'une édition : ISBN (livres) ou code-barres (musique). */
   code?: "isbn" | "barcode";
   connector: string;
+  /** Code-barres venu de la page « Scanner » (`?code=`, M3) : cherché dès qu'il est fourni. */
+  initialCode?: string;
 }>();
 const emit = defineEmits<{
   "update:modelValue": [editions: ExternalEditionHit[]];
@@ -267,6 +269,14 @@ function onScanned(code: string) {
   query.value = code;
   void search();
 }
+
+watch(
+  () => props.initialCode,
+  (code) => {
+    if (code) onScanned(code);
+  },
+  { immediate: true },
+);
 
 function isChosen(e: ExternalEditionHit): boolean {
   return props.modelValue.some((c) => c.id === e.id);

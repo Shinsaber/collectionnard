@@ -52,6 +52,8 @@
     >
       {{ t("common.scan.detected", { code: lastCode }) }}
     </p>
+    <!-- Résultat du dernier code (page « Scanner ») sans quitter la caméra. -->
+    <slot />
     <p class="mt-3 text-sm text-muted">{{ t("common.scan.hint") }}</p>
     <div class="mt-3 flex flex-wrap items-center gap-2">
       <ElButton

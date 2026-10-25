@@ -72,6 +72,7 @@
         :work="work?.id"
         :by-work="info?.editions_by_work"
         :code="info?.edition_code"
+        :initial-code="info ? initialCode : undefined"
       />
       <div class="flex items-center gap-3">
         <ElButton
@@ -156,7 +157,7 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 // Import depuis les sources externes (admin, un connecteur par sorte de collection) : recherche d'une œuvre
 // (Wikidata, MusicBrainz…) et d'éditions (BnF, MusicBrainz…), aperçu à cocher, simulation, import (tout ou rien).
@@ -200,6 +201,11 @@ const STEP_KEYS = ["search", "selection", "simulation", "done"] as const;
 
 const auth = useAuthStore();
 const router = useRouter();
+const route = useRoute();
+/** Code-barres venu de la page « Scanner » (`?code=…`, M3) : recherche d'édition lancée d'office. */
+const initialCode = ref<string | undefined>(
+  typeof route.query.code === "string" ? route.query.code : undefined,
+);
 const step = ref(0);
 /** Change à chaque « Nouvel import » : remonte la recherche (résultats et saisie vidés). */
 const searchKey = ref(0);
@@ -223,7 +229,10 @@ onMounted(() => {
     .connectors()
     .then((list) => {
       connectors.value = list;
-      if (list.length && !list.some((c) => c.id === connector.value))
+      const wanted = route.query.connector;
+      if (typeof wanted === "string" && list.some((c) => c.id === wanted))
+        connector.value = wanted;
+      else if (list.length && !list.some((c) => c.id === connector.value))
         connector.value = list[0]!.id;
     })
     .catch((e: unknown) => notifyError(e));
@@ -326,6 +335,9 @@ const workItemId = computed(() => {
 });
 
 function restart() {
+  // « Nouvel import » après un import : le code scanné ne se relance pas (un changement de connecteur
+  // à la première étape le garde et le cherche dans la nouvelle source).
+  if (step.value !== 0) initialCode.value = undefined;
   searchKey.value++;
   step.value = 0;
   work.value = null;
