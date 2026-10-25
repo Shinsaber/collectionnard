@@ -26,6 +26,8 @@
         "
         clearable
       />
+      <!-- Code-barres (lot M2) : passe en mode code et lance la recherche. -->
+      <ScanButton @detected="onScanned" />
       <ElButton
         native-type="submit"
         type="primary"
@@ -153,6 +155,7 @@ import { useI18n } from "vue-i18n";
 import { externalApi } from "@/api/client";
 import { useNotify } from "@/composables/useNotify";
 import type { ExternalEditionHit } from "@/api/types";
+import ScanButton from "@/components/common/ScanButton.vue";
 
 const MAX = 10;
 
@@ -256,6 +259,13 @@ async function search() {
   } finally {
     loading.value = false;
   }
+}
+
+function onScanned(code: string) {
+  mode.value = "code";
+  hits.value = null;
+  query.value = code;
+  void search();
 }
 
 function isChosen(e: ExternalEditionHit): boolean {

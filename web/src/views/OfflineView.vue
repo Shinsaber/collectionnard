@@ -31,18 +31,21 @@
     </p>
 
     <template v-else>
-      <ElInput
-        v-model="query"
-        size="large"
-        clearable
-        :placeholder="t('offline.search')"
-        :aria-label="t('offline.searchLabel')"
-        class="mb-3"
-      >
-        <template #prefix
-          ><i class="pi pi-search" aria-hidden="true"></i
-        ></template>
-      </ElInput>
+      <div class="mb-3 flex gap-2">
+        <ElInput
+          v-model="query"
+          size="large"
+          clearable
+          :placeholder="t('offline.search')"
+          :aria-label="t('offline.searchLabel')"
+        >
+          <template #prefix
+            ><i class="pi pi-search" aria-hidden="true"></i
+          ></template>
+        </ElInput>
+        <!-- Scanner (lot M2) : le lecteur et son wasm sont précachés, donc disponibles sans réseau. -->
+        <ScanButton size="large" @detected="(code) => (query = code)" />
+      </div>
 
       <!-- Filtre par collection : pastilles qui défilent sur mobile -->
       <div class="mb-4 flex gap-2 overflow-x-auto pb-1" role="group">
@@ -110,6 +113,7 @@ import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";
 import { useOfflineStore } from "@/stores/offline";
 import { buildRows, searchRows } from "@/lib/offlineSearch";
+import ScanButton from "@/components/common/ScanButton.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
 import OfflineItemRow from "@/components/offline/OfflineItemRow.vue";
 import OfflineCover from "@/components/offline/OfflineCover.vue";

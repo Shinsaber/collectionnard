@@ -24,4 +24,22 @@ export default {
   created: "Créé",
   updated: "Mis à jour",
   deleted: "Supprimé",
+  // Scanner de codes-barres (lot M2)
+  scan: {
+    button: "Scanner un code-barres",
+    title: "Scanner un code-barres",
+    preview: "Aperçu de la caméra",
+    hint: "Visez le code-barres (ISBN, EAN…) : la lecture est automatique. Si le code reste illisible, prenez-le en photo.",
+    detected: "Code lu : {code}",
+    torchOn: "Allumer la lampe",
+    torchOff: "Éteindre la lampe",
+    fromPhoto: "Depuis une photo",
+    noCamera: "Aucune caméra disponible : utilisez « Depuis une photo ».",
+    denied:
+      "Accès à la caméra refusé : autorisez-le dans le navigateur, ou utilisez « Depuis une photo ».",
+    unsupported:
+      "La lecture des codes-barres est indisponible sur ce navigateur.",
+    failed: "Lecture du code-barres impossible",
+    nothingFound: "Aucun code-barres lisible dans cette image.",
+  },
 };

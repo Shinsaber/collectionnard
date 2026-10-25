@@ -40,6 +40,8 @@
           <i class="pi pi-search" aria-hidden="true"></i>
         </template>
       </ElInput>
+      <!-- Code-barres (lot M2) : les identifiants sont indexés par la recherche plein texte. -->
+      <ScanButton size="large" @detected="onScanned" />
       <ElSelect
         :model-value="currentSort"
         size="large"
@@ -233,6 +235,7 @@ import RelatedToTag from "@/components/item/RelatedToTag.vue";
 import ExportButton from "@/components/common/ExportButton.vue";
 import FilterChip from "@/components/common/FilterChip.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
+import ScanButton from "@/components/common/ScanButton.vue";
 import { defaultDelimiter } from "@/lib/csv";
 import type { Item, ItemListParams } from "@/api/types";
 
@@ -281,6 +284,11 @@ function applyText() {
       ? undefined
       : state.value.sort;
   update({ search, sort });
+}
+
+function onScanned(code: string) {
+  searchDraft.value = code;
+  applyText();
 }
 
 const selectedType = computed(() =>

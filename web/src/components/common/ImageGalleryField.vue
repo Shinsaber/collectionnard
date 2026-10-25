@@ -112,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { computed, defineAsyncComponent, reactive, ref } from "vue";
 import { uploadApi } from "@/api/client";
 import { useI18n } from "vue-i18n";
 import { useNotify } from "@/composables/useNotify";
@@ -123,7 +123,10 @@ import {
 } from "@/composables/useMediaQuery";
 import { checkImage, type ImageCategory, type ImageIssue } from "@/lib/schema";
 import { imageSize, type Size } from "@/lib/images";
-import ImageCropDialog from "./ImageCropDialog.vue";
+// cropperjs n'est chargé qu'au premier recadrage (hors du paquet de DynamicForm).
+const ImageCropDialog = defineAsyncComponent(
+  () => import("./ImageCropDialog.vue"),
+);
 
 // Widget `x-widget: image-gallery` : un tableau d'URLs par catégorie
 // (`x-image-categories`) et une `default_image`. Les erreurs d'upload (type refusé,
