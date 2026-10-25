@@ -406,7 +406,13 @@ onMounted(async () => {
     .loadItemTypes()
     .catch((e) => notifyError(e, t("items.list.typesUnavailable")));
   load();
-  watch(() => route.query, load);
+  // Seulement tant que le catalogue est la page courante (pas en la quittant).
+  watch(
+    () => route.query,
+    () => {
+      if (route.name === "items") load();
+    },
+  );
 });
 
 // Export CSV : recherche courante sans pagination, séparateur selon la langue.

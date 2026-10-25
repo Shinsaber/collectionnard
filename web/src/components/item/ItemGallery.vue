@@ -1,6 +1,9 @@
 <template>
   <section v-if="gallery" class="flex flex-col gap-3.5">
-    <h2 class="text-xl font-extrabold tracking-tight sm:text-[22px]">
+    <h2
+      v-if="!bare"
+      class="text-xl font-extrabold tracking-tight sm:text-[22px]"
+    >
       {{ fieldLabel(schema, gallery.key, lang) }}
     </h2>
     <div
@@ -74,6 +77,8 @@ import {
 const props = defineProps<{
   attributes: Record<string, unknown>;
   schema: Schema | null | undefined;
+  /** Sans titre (onglet « Images » de la fiche). */
+  bare?: boolean;
 }>();
 
 const { t } = useI18n();

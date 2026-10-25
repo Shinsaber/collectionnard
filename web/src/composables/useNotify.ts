@@ -1,5 +1,6 @@
 import { ElMessage } from "element-plus";
 import { extractApiError } from "@/api/client";
+import { isSessionExpired } from "@/api/session";
 import { i18n } from "@/i18n";
 
 /**
@@ -9,6 +10,8 @@ import { i18n } from "@/i18n";
  */
 export function useNotify() {
   function notifyError(e: unknown, summary?: string) {
+    // Session perdue : l'utilisateur est renvoyé vers la connexion, un message serait du bruit.
+    if (isSessionExpired(e)) return;
     const title = summary ?? i18n.global.t("common.error");
     const { message } = extractApiError(e);
     ElMessage({

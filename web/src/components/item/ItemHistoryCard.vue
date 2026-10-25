@@ -1,7 +1,10 @@
 <template>
   <section class="flex flex-col gap-3.5" data-test="item-history">
     <div class="flex flex-col gap-1">
-      <h2 class="text-xl font-extrabold tracking-tight sm:text-[22px]">
+      <h2
+        v-if="!bare"
+        class="text-xl font-extrabold tracking-tight sm:text-[22px]"
+      >
         {{ t("history.title") }}
       </h2>
       <p
@@ -126,6 +129,8 @@ const props = defineProps<{
   item: Item;
   /** Change après une modification de la fiche : l'historique est relu. */
   version?: number;
+  /** Sans titre (onglet « Historique » de la fiche). */
+  bare?: boolean;
 }>();
 const emit = defineEmits<{ reverted: [item: Item] }>();
 const { t } = useI18n();

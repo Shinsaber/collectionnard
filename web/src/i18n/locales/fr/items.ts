@@ -75,6 +75,14 @@ export default {
     relationsUnavailable: "Relations indisponibles",
     collectionsUnavailable: "Collections indisponibles",
     notFound: "Item introuvable",
+    information: "Informations",
+    partOf: "Fait partie de",
+    inCollections: "Dans {n} de mes collections | Dans {n} de mes collections",
+    inNoCollection: "Dans aucune de mes collections",
+    images: "Images",
+    more: "Plus",
+    moreActions: "Plus d'actions : modifier, items liés, graphe, signaler",
+    editItem: "Modifier la fiche",
   },
   // Galerie d'images (ItemGallery) — les noms de catégories restent des clés de schéma
   gallery: {

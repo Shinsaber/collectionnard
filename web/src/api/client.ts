@@ -78,6 +78,7 @@ import type {
   UploadResponse,
 } from "./types";
 import { i18n } from "@/i18n";
+import { markSessionExpired } from "./session";
 
 const BASE_URL = "/api/v1";
 
@@ -135,6 +136,12 @@ async function refreshAccessToken(): Promise<string | null> {
   }
 }
 
+function sessionExpired(error: unknown): Promise<never> {
+  markSessionExpired(error);
+  redirectToLogin();
+  return Promise.reject(error);
+}
+
 function redirectToLogin(): void {
   clearTokens();
   if (window.location.pathname !== "/login") {
@@ -155,10 +162,7 @@ http.interceptors.response.use(
       if (!url.startsWith("/auth/login")) redirectToLogin();
       return Promise.reject(error);
     }
-    if (!config || config._retried) {
-      redirectToLogin();
-      return Promise.reject(error);
-    }
+    if (!config || config._retried) return sessionExpired(error);
     config._retried = true;
 
     refreshing ??= refreshAccessToken().finally(() => {
@@ -171,10 +175,7 @@ http.interceptors.response.use(
       delete config.headers.Authorization;
       return http(config);
     }
-    if (!newToken) {
-      redirectToLogin();
-      return Promise.reject(error);
-    }
+    if (!newToken) return sessionExpired(error);
     config.headers.Authorization = `Bearer ${newToken}`;
     return http(config);
   },
