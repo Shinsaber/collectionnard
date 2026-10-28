@@ -55,6 +55,19 @@ export default {
     asIs: "Sans recadrage",
     applyCrop: "Recadrer",
     cropFailed: "Recadrage impossible",
+    // Redressement de la perspective (lot M4)
+    straightenTitle: "Redresser – {category}",
+    straightenStep: "Redresser",
+    straightenHint:
+      "Placez les quatre coins sur ceux de la couverture (détectés d'office quand le fond contraste), puis redressez. Flèches au clavier : 1 % par appui, 10 % avec Maj.",
+    detectEdges: "Détecter les bords",
+    wholeImage: "Image entière",
+    skipStraighten: "Passer",
+    straighten: "Redresser",
+    noEdges: "Bords non détectés : placez les coins à la main, ou passez.",
+    roughEdges: "Bords détectés approximativement : vérifiez les coins.",
+    corner: "Coin {n}",
+    straightenFailed: "Redressement impossible",
   },
   builder: {
     empty:

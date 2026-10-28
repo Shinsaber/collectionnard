@@ -106,6 +106,7 @@
       :file="cropFile"
       :category="cropCategory"
       :reason="cropReason"
+      :straighten="cropStraighten"
       @done="onCropped"
     />
   </div>
@@ -177,8 +178,16 @@ const cropVisible = ref(false);
 const cropFile = ref<File | null>(null);
 const cropCategory = ref<ImageCategory | null>(null);
 const cropReason = ref<string>();
+/** Photo prise à l'instant : commencer par redresser la perspective (lot M4). */
+const cropStraighten = ref(false);
 
-function openCrop(cat: ImageCategory, file: File, reason?: string) {
+function openCrop(
+  cat: ImageCategory,
+  file: File,
+  reason?: string,
+  straighten = false,
+) {
+  cropStraighten.value = straighten;
   cropFile.value = file;
   cropCategory.value = cat;
   cropReason.value = reason;
@@ -207,7 +216,7 @@ async function onFile(cat: ImageCategory, event: Event, fromCamera: boolean) {
   input.value = "";
   if (!file) return;
   if (fromCamera) {
-    openCrop(cat, file);
+    openCrop(cat, file, undefined, true);
     return;
   }
   const size = await imageSize(file);

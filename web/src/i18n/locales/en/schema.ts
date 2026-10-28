@@ -56,6 +56,19 @@ const en: typeof fr = {
     asIs: "Without cropping",
     applyCrop: "Crop",
     cropFailed: "Cropping failed",
+    // Perspective straightening (lot M4)
+    straightenTitle: "Straighten – {category}",
+    straightenStep: "Straighten",
+    straightenHint:
+      "Put the four corners on those of the cover (detected automatically when the background contrasts), then straighten. Arrow keys: 1% per press, 10% with Shift.",
+    detectEdges: "Detect edges",
+    wholeImage: "Whole image",
+    skipStraighten: "Skip",
+    straighten: "Straighten",
+    noEdges: "Edges not detected: place the corners by hand, or skip.",
+    roughEdges: "Edges detected roughly: check the corners.",
+    corner: "Corner {n}",
+    straightenFailed: "Straightening failed",
   },
   builder: {
     empty: "No field defined. Click “Add a field” to start.",

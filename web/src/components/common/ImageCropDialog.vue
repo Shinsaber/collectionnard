@@ -3,10 +3,19 @@
     Recadrage d'une image avant son envoi (lot M1) : cadre au ratio de la catégorie, image
     déplaçable et zoomable (doigts ou molette), rotation par quarts de tour. Rendu par cropperjs 2
     (MIT, composants web) ; la sortie est encodée et réduite par lib/images.
+    Étape préalable « Redresser » (lot M4, PerspectiveEditor) : d'office pour une photo, sur demande
+    pour un fichier ; le recadrage porte alors sur l'image redressée.
   -->
   <ElDialog
     v-model="visible"
-    :title="t('schema.gallery.cropTitle', { category: category?.name ?? '' })"
+    :title="
+      t(
+        step === 'straighten'
+          ? 'schema.gallery.straightenTitle'
+          : 'schema.gallery.cropTitle',
+        { category: category?.name ?? '' },
+      )
+    "
     width="40rem"
     append-to-body
     @opened="setup"
@@ -15,60 +24,78 @@
     <p v-if="reason" class="mb-3 text-sm text-muted" data-test="crop-reason">
       {{ reason }}
     </p>
-    <div
-      ref="container"
-      class="h-[60vh] max-h-128 overflow-hidden rounded-lg bg-ink shadow-cover"
-      data-test="crop-container"
-    ></div>
-    <div class="mt-3 flex flex-wrap items-center gap-2">
-      <ElButton
-        :aria-label="t('schema.gallery.rotateLeft')"
-        :disabled="!ready"
-        @click="rotate(-90)"
-      >
-        <i class="pi pi-replay" aria-hidden="true"></i>
-      </ElButton>
-      <ElButton
-        :aria-label="t('schema.gallery.rotateRight')"
-        :disabled="!ready"
-        @click="rotate(90)"
-      >
-        <i class="pi pi-refresh" aria-hidden="true"></i>
-      </ElButton>
-      <ElButton :disabled="!ready" @click="fit">
-        <i class="pi pi-expand mr-2" aria-hidden="true"></i>
-        {{ t("schema.gallery.fitImage") }}
-      </ElButton>
-      <span class="ml-auto text-xs text-muted">
-        {{
-          aspect
-            ? t("schema.gallery.cropHint", { ratio: category?.ratio })
-            : t("schema.gallery.cropHintFree")
-        }}
-      </span>
+    <PerspectiveEditor
+      v-if="step === 'straighten' && file"
+      :file="file"
+      @done="onStraightened"
+      @skip="toCrop(file)"
+    />
+    <div v-show="step === 'crop'">
+      <div
+        ref="container"
+        class="h-[60vh] max-h-128 overflow-hidden rounded-lg bg-ink shadow-cover"
+        data-test="crop-container"
+      ></div>
+      <div class="mt-3 flex flex-wrap items-center gap-2">
+        <ElButton
+          :aria-label="t('schema.gallery.rotateLeft')"
+          :disabled="!ready"
+          @click="rotate(-90)"
+        >
+          <i class="pi pi-replay" aria-hidden="true"></i>
+        </ElButton>
+        <ElButton
+          :aria-label="t('schema.gallery.rotateRight')"
+          :disabled="!ready"
+          @click="rotate(90)"
+        >
+          <i class="pi pi-refresh" aria-hidden="true"></i>
+        </ElButton>
+        <ElButton :disabled="!ready" @click="fit">
+          <i class="pi pi-expand mr-2" aria-hidden="true"></i>
+          {{ t("schema.gallery.fitImage") }}
+        </ElButton>
+        <ElButton
+          :disabled="!ready"
+          data-test="crop-straighten"
+          @click="toStraighten"
+        >
+          <i class="pi pi-objects-column mr-2" aria-hidden="true"></i>
+          {{ t("schema.gallery.straightenStep") }}
+        </ElButton>
+        <span class="ml-auto text-xs text-muted">
+          {{
+            aspect
+              ? t("schema.gallery.cropHint", { ratio: category?.ratio })
+              : t("schema.gallery.cropHintFree")
+          }}
+        </span>
+      </div>
     </div>
     <template #footer>
       <ElButton text @click="visible = false">{{
         t("common.cancel")
       }}</ElButton>
-      <ElButton :loading="busy" @click="asIs">
-        {{ t("schema.gallery.asIs") }}
-      </ElButton>
-      <ElButton
-        type="primary"
-        :loading="busy"
-        :disabled="!ready"
-        @click="apply"
-      >
-        <i v-if="!busy" class="pi pi-check mr-2" aria-hidden="true"></i>
-        {{ t("schema.gallery.applyCrop") }}
-      </ElButton>
+      <template v-if="step === 'crop'">
+        <ElButton :loading="busy" @click="asIs">
+          {{ t("schema.gallery.asIs") }}
+        </ElButton>
+        <ElButton
+          type="primary"
+          :loading="busy"
+          :disabled="!ready"
+          @click="apply"
+        >
+          <i v-if="!busy" class="pi pi-check mr-2" aria-hidden="true"></i>
+          {{ t("schema.gallery.applyCrop") }}
+        </ElButton>
+      </template>
     </template>
   </ElDialog>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import Cropper from "cropperjs";
 import { useNotify } from "@/composables/useNotify";
@@ -79,6 +106,7 @@ import {
   outputType,
   shrinkIfNeeded,
 } from "@/lib/images";
+import PerspectiveEditor from "./PerspectiveEditor.vue";
 
 const props = defineProps<{
   /** Image à recadrer (fichier choisi ou photo prise). */
@@ -87,6 +115,8 @@ const props = defineProps<{
   category: ImageCategory | null;
   /** Pourquoi le recadrage est proposé (image hors format…), affiché au-dessus. */
   reason?: string;
+  /** Commencer par le redressement de la perspective (photo prise à l'instant). */
+  straighten?: boolean;
 }>();
 const emit = defineEmits<{ done: [file: File] }>();
 const visible = defineModel<boolean>("visible", { required: true });
@@ -95,6 +125,9 @@ const { t } = useI18n();
 const { notifyError } = useNotify();
 
 const container = ref<HTMLDivElement | null>(null);
+const step = ref<"straighten" | "crop">("crop");
+/** Image recadrée : l'originale, ou son redressement. */
+const workFile = ref<File | null>(null);
 const ready = ref(false);
 const busy = ref(false);
 
@@ -129,11 +162,37 @@ const TEMPLATE = `
 let cropper: Cropper | null = null;
 let objectUrl = "";
 
-async function setup() {
+function setup() {
+  if (!props.file) return;
+  if (props.straighten) {
+    step.value = "straighten";
+    return;
+  }
+  toCrop(props.file);
+}
+
+function toCrop(file: File) {
+  workFile.value = file;
+  step.value = "crop";
+  void nextTick(mountCropper);
+}
+
+function onStraightened(file: File) {
+  toCrop(file);
+}
+
+/** Retour au redressement : depuis la photo d'origine. */
+function toStraighten() {
+  unmountCropper();
+  step.value = "straighten";
+}
+
+async function mountCropper() {
   const host = container.value;
-  if (!host || !props.file) return;
-  teardown();
-  objectUrl = URL.createObjectURL(props.file);
+  const file = workFile.value;
+  if (!host || !file) return;
+  unmountCropper();
+  objectUrl = URL.createObjectURL(file);
   const img = document.createElement("img");
   img.src = objectUrl;
   img.alt = props.category?.name ?? "";
@@ -151,12 +210,18 @@ async function setup() {
   }
 }
 
-function teardown() {
+function unmountCropper() {
   ready.value = false;
   cropper = null;
   if (container.value) container.value.replaceChildren();
   if (objectUrl) URL.revokeObjectURL(objectUrl);
   objectUrl = "";
+}
+
+function teardown() {
+  unmountCropper();
+  workFile.value = null;
+  step.value = "crop";
 }
 
 /** Image entière visible, cadre au ratio sur la plus grande zone de l'image. */
@@ -192,16 +257,17 @@ function rotate(deg: number) {
   fit();
 }
 
-/** Zone du cadre, en pixels de l'image d'origine, réduite et encodée. */
+/** Zone du cadre, en pixels de l'image recadrée, réduite et encodée. */
 async function apply() {
   const selection = cropper?.getCropperSelection();
-  if (!selection || !props.file) return;
+  const file = workFile.value;
+  if (!selection || !file) return;
   busy.value = true;
   try {
     const canvas = await selection.$toCanvas();
-    const type = outputType(props.file.type);
+    const type = outputType(file.type);
     const blob = await encodeImage(canvas, type);
-    emit("done", new File([blob], outputName(props.file.name, type), { type }));
+    emit("done", new File([blob], outputName(file.name, type), { type }));
     visible.value = false;
   } catch (e) {
     notifyError(e, t("schema.gallery.cropFailed"));
@@ -210,12 +276,13 @@ async function apply() {
   }
 }
 
-/** Sans recadrage : la photo est seulement réduite si elle est très grande. */
+/** Sans recadrage : l'image (redressée ou non) est seulement réduite si elle est très grande. */
 async function asIs() {
-  if (!props.file) return;
+  const file = workFile.value;
+  if (!file) return;
   busy.value = true;
   try {
-    emit("done", await shrinkIfNeeded(props.file));
+    emit("done", await shrinkIfNeeded(file));
     visible.value = false;
   } catch (e) {
     notifyError(e, t("schema.gallery.cropFailed"));

@@ -3,8 +3,13 @@
 // MAX_UPLOAD_SIZE), encodage d'un canvas recadré. Tout est fait dans le navigateur ; le serveur
 // garde ses contrôles (type, taille).
 
+import type { Raster } from "./perspective";
+
 /** Plus grand côté conservé, en pixels : une couverture n'a pas besoin de plus. */
 export const MAX_EDGE = 2000;
+
+/** Côté maximal de la source d'un redressement : un peu plus que la sortie, pour l'interpolation. */
+export const WARP_SOURCE_EDGE = 2500;
 
 /** Qualité JPEG des images réduites ou recadrées. */
 export const JPEG_QUALITY = 0.9;
@@ -110,4 +115,33 @@ export async function shrinkIfNeeded(
   } finally {
     bmp.close();
   }
+}
+
+// ── Pixels (redressement, lot M4) ──────────────────────────────────────
+
+/** Pixels d'un bitmap, réduit à `max` px de côté (copie dessinée dans un canvas). */
+export function rasterOf(bmp: ImageBitmap, max: number): Raster {
+  const { width, height } = fitWithin(bmp.width, bmp.height, max);
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("canvas unavailable");
+  ctx.drawImage(bmp, 0, 0, width, height);
+  return { width, height, data: ctx.getImageData(0, 0, width, height).data };
+}
+
+/** Canvas portant les pixels d'un raster (pour l'encoder avec `encodeImage`). */
+export function canvasOf(raster: Raster): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = raster.width;
+  canvas.height = raster.height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("canvas unavailable");
+  ctx.putImageData(
+    new ImageData(raster.data, raster.width, raster.height),
+    0,
+    0,
+  );
+  return canvas;
 }
