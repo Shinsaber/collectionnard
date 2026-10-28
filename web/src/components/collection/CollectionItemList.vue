@@ -50,6 +50,20 @@
             }}</span>
           </template>
         </ElTableColumn>
+        <!-- Galeries (photos de l'exemplaire, lot M5) : vignettes cliquables -->
+        <ElTableColumn
+          v-for="key in galleryKeys"
+          :key="key"
+          :label="fieldLabel(schema, key, lang)"
+          min-width="150"
+        >
+          <template #default="{ row }">
+            <GalleryThumbs
+              :urls="urlsOf(row as CollectionItem, key)"
+              :label="fieldLabel(schema, key, lang)"
+            />
+          </template>
+        </ElTableColumn>
         <ElTableColumn v-if="!readonly" width="104" align="right">
           <template #default="{ row }">
             <div class="flex justify-end gap-1">
@@ -108,6 +122,13 @@
               <dd class="font-medium">{{ valueOf(ci, key) }}</dd>
             </div>
           </dl>
+          <GalleryThumbs
+            v-for="key in galleryKeys"
+            :key="key"
+            :urls="urlsOf(ci, key)"
+            :label="fieldLabel(schema, key, lang)"
+            :size="48"
+          />
         </div>
         <ElDropdown
           v-if="!readonly"
@@ -155,6 +176,7 @@ import { useLang } from "@/composables/useLang";
 import {
   fieldLabel,
   fieldValue,
+  galleryUrls,
   isImageGallery,
   itemLabel,
   orderedKeys,
@@ -162,6 +184,7 @@ import {
   type Schema,
 } from "@/lib/schema";
 import ItemCover from "@/components/item/ItemCover.vue";
+import GalleryThumbs from "@/components/common/GalleryThumbs.vue";
 import type { CollectionItem } from "@/api/types";
 
 // Items d'une collection : colonnes / attributs tirés du schéma du CollectionType.
@@ -190,6 +213,14 @@ const { lang } = useLang();
 const attrKeys = computed(() =>
   orderedKeys(props.schema, {}).filter((k) => !isImageGallery(props.schema, k)),
 );
+/** Galeries du type de collection (photos de l'exemplaire), en vignettes. */
+const galleryKeys = computed(() =>
+  orderedKeys(props.schema, {}).filter((k) => isImageGallery(props.schema, k)),
+);
+
+function urlsOf(ci: CollectionItem, key: string): string[] {
+  return galleryUrls(props.schema, ci.attributes, key);
+}
 
 function labelOf(ci: CollectionItem): string {
   return itemLabel(ci.item, lang.value);

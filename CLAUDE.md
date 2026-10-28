@@ -170,5 +170,6 @@ BD / Manga, Romans, Musique, Films, Séries et Jeux vidéo (`server/internal/ext
 domaines P3-0 à P3-7 (jeux vidéo, V1 française) livrés et fusionnés dans `main`. Phase 4 (social) raffinée, branche `phase4-social` : lots P4-0 à P4-3 dans `social.md` ; P4-0 (comptes, invitations,
 profils), P4-1 (statistiques personnelles), P4-2 (visibilité et partage) et P4-3 (historique, contributeur, propositions, modération,
 notifications) livrés : Phase 4 terminée hors échanges (reportés). Phase 5 (mobile, `mobile.md`), branche `phase5-mobile` :
-M1 (photo de couverture et recadrage), M2 (scanner de codes-barres) et M3 (page « Scanner ») livrés ; pistes tracées
-pour plus tard dans `mobile.md`.
+M1 (photo de couverture et recadrage), M2 (scanner de codes-barres), M3 (page « Scanner »), M4 (redressement de la
+perspective) et M5 (photos de l'état d'un exemplaire, paquet `collections` v3) livrés ; pistes tracées pour plus tard
+dans `mobile.md`.

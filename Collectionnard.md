@@ -480,8 +480,12 @@ barcode-detector / zxing-wasm (MIT, `.wasm` servi localement) pour les codes-bar
 - [x] **M3 — Page « Scanner »** (`/scan`) : « est-ce que je l'ai déjà ? » (fiche, « dans N de mes collections », ajout),
       raccourcis vers les sources externes (`?code=`) et la création avec les identifiants préremplis, mode continu
       pour inventorier une pile (résultat affiché sous la caméra).
-- [ ] Plus tard (voir `mobile.md`) : détection des bords, recadrage d'une image déjà en galerie, OCR, QR code des liens
-      de partage, scan d'étagère.
+- [x] **M4 — Redressement de la perspective** : bords d'une couverture photographiée de biais détectés d'office (fond
+      contrasté), quatre coins ajustables, homographie en JavaScript pur (sans OpenCV) ; étape avant le recadrage.
+- [x] **M5 — Photos de l'état d'un exemplaire** : propriété `photos` (galerie, ratio 3/4) du type « Possession »
+      (paquet `collections` v3) ; vignettes dans les collections, la fiche d'un item et les pages publiques.
+- [ ] Plus tard (voir `mobile.md`) : recadrage d'une image déjà en galerie, OCR, QR code des liens de partage, scan
+      d'étagère.
 
 ---
 

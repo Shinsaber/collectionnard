@@ -3,6 +3,7 @@ import fixtures from "../../tests/fixtures/seed-schemas.json";
 import {
   checkImage,
   defaultImage,
+  galleryUrls,
   displayValue,
   enumLabel,
   fieldLabel,
@@ -299,5 +300,35 @@ describe("liens (x-widget: links)", () => {
     expect(linksProperty()).toEqual(
       (publisher.properties as Record<string, unknown>).links,
     );
+  });
+});
+
+describe("galleryUrls", () => {
+  const ownership = fixtures.find((f) => f.name === "Ownership")!
+    .schema as Record<string, unknown>;
+
+  it("liste les images de toutes les catégories d'une galerie, sans default_image", () => {
+    const attrs = {
+      condition: "good",
+      photos: {
+        condition: ["/api/v1/uploads/a.jpg", "/api/v1/uploads/b.jpg"],
+        default_image: "/api/v1/uploads/a.jpg",
+      },
+    };
+    expect(galleryUrls(ownership, attrs)).toEqual([
+      "/api/v1/uploads/a.jpg",
+      "/api/v1/uploads/b.jpg",
+    ]);
+    expect(galleryUrls(ownership, attrs, "photos")).toHaveLength(2);
+    expect(galleryUrls(ownership, attrs, "condition")).toEqual([]);
+  });
+
+  it("ignore les galeries absentes ou mal formées", () => {
+    expect(galleryUrls(ownership, { condition: "good" })).toEqual([]);
+    expect(galleryUrls(ownership, { photos: "x" })).toEqual([]);
+    expect(galleryUrls(ownership, { photos: { condition: [1, ""] } })).toEqual(
+      [],
+    );
+    expect(galleryUrls(ownership, null)).toEqual([]);
   });
 });

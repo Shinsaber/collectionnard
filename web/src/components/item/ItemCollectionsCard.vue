@@ -31,6 +31,20 @@
           </dd>
         </div>
       </dl>
+      <!-- Photos de l'exemplaire (galeries du type de collection, lot M5) -->
+      <div
+        v-for="key in galleryKeysOf(m)"
+        :key="key"
+        class="flex flex-col gap-1.5 text-sm"
+      >
+        <span class="text-muted">{{ fieldLabel(schemaOf(m), key, lang) }}</span>
+        <GalleryThumbs
+          :urls="galleryUrls(schemaOf(m), m.attributes, key)"
+          :label="fieldLabel(schemaOf(m), key, lang)"
+          :size="56"
+          :max="6"
+        />
+      </div>
     </article>
     <button
       type="button"
@@ -50,8 +64,16 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 import { useLang } from "@/composables/useLang";
-import { fieldLabel, fieldValue, orderedKeys, typeTitle } from "@/lib/schema";
+import {
+  fieldLabel,
+  fieldValue,
+  galleryUrls,
+  isImageGallery,
+  orderedKeys,
+  typeTitle,
+} from "@/lib/schema";
 import type { Schema } from "@/lib/schema";
+import GalleryThumbs from "@/components/common/GalleryThumbs.vue";
 import type { ItemCollectionMembership } from "@/api/types";
 
 /** `bare` : sans titre (dans l'onglet « Dans mes collections » de la fiche). */
@@ -65,10 +87,19 @@ function schemaOf(m: ItemCollectionMembership): Schema | undefined {
   return m.collection.collection_type?.attributes_schema as Schema | undefined;
 }
 
-/** Attributs renseignés, dans l'ordre du schéma du type de collection. */
+/** Attributs renseignés (hors galeries), dans l'ordre du schéma du type de collection. */
 function keysOf(m: ItemCollectionMembership): string[] {
   return orderedKeys(schemaOf(m), m.attributes).filter(
-    (k) => k in m.attributes,
+    (k) => k in m.attributes && !isImageGallery(schemaOf(m), k),
+  );
+}
+
+/** Galeries qui ont au moins une image. */
+function galleryKeysOf(m: ItemCollectionMembership): string[] {
+  return orderedKeys(schemaOf(m), m.attributes).filter(
+    (k) =>
+      isImageGallery(schemaOf(m), k) &&
+      galleryUrls(schemaOf(m), m.attributes, k).length > 0,
   );
 }
 </script>

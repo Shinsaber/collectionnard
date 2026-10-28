@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "collections",
-  "package_version": 2,
+  "package_version": 3,
   "title": {
     "fr": "Collections",
     "en": "Collections"
@@ -24,7 +24,8 @@
         "x-order": [
           "condition",
           "purchase_price",
-          "acquisition_date"
+          "acquisition_date",
+          "photos"
         ],
         "x-title": {
           "en": "Ownership",
@@ -34,12 +35,14 @@
           "en": {
             "condition": "Physical Condition",
             "purchase_price": "Purchase Price",
-            "acquisition_date": "Acquisition Date"
+            "acquisition_date": "Acquisition Date",
+            "photos": "Photos of the copy"
           },
           "fr": {
             "condition": "État physique",
             "purchase_price": "Prix d'achat",
-            "acquisition_date": "Date d'acquisition"
+            "acquisition_date": "Date d'acquisition",
+            "photos": "Photos de l'exemplaire"
           }
         },
         "properties": {
@@ -77,6 +80,26 @@
           "acquisition_date": {
             "type": "string",
             "format": "date"
+          },
+          "photos": {
+            "type": "object",
+            "x-widget": "image-gallery",
+            "properties": {
+              "condition": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "default_image": {
+                "type": "string"
+              }
+            },
+            "x-image-categories": {
+              "condition": {
+                "ratio": "3/4"
+              }
+            }
           }
         },
         "x-description": {

@@ -35,19 +35,17 @@ Raffinage du 2026-10-25, branche `phase5-mobile`, un commit par lot. Les lots et
 | Chercher un item du catalogue par son code | **M2** | Bouton scanner dans la barre de recherche du catalogue (`?search=<code>`), dans le dialogue d'ajout à une collection et dans la consultation hors ligne. |
 | Enregistrer un code à la création d'un item | **M2** | Bouton scanner dans tout champ `x-identifier` de `DynamicForm` (création, modification, proposition, correction d'un nœud externe). Les doublons restent signalés. |
 | Importer depuis les sources externes par le code | **M2** | Bouton scanner dans `ExternalEditionSearch` (mode code : ISBN ou code-barres selon le connecteur). |
+| Redresser une couverture photographiée de biais | **M4** | Étape « Redresser » avant le recadrage : bords détectés automatiquement (fond contrasté), quatre coins ajustables, homographie en JavaScript pur (pas d'OpenCV). D'office pour une photo, sur demande pour un fichier. |
+| Photographier l'état d'un exemplaire | **M5** | Propriété `photos` (galerie, catégorie `condition`, ratio 3/4) du type de collection « Possession » (paquet `collections` v3) ; vignettes dans la liste d'une collection, la fiche d'un item et les pages publiques. |
 | « Est-ce que je l'ai déjà ? » | **M3** | Page `/scan` : caméra permanente, chaque code lu interroge le catalogue ; résultat avec « Dans N de mes collections », ouverture de la fiche, ajout à une collection ; sinon raccourcis vers les sources externes (code prérempli) ou la création. Mode continu : les codes lus s'empilent dans une liste pour inventorier une pile de livres. |
 
 ### Plus tard (tracés, non planifiés)
 
-- **Détection automatique des bords** d'une couverture photographiée de biais (correction de perspective) : demande
-  OpenCV.js (≈ 8 Mo) ou un modèle maison ; écarté tant que le recadrage manuel suffit.
 - **Recadrer une image déjà dans la galerie** (re-téléchargement puis nouvel envoi) : simple à ajouter sur M1.
 - **OCR** du titre ou du dos (Tesseract.js, Apache 2.0, ≈ 2 Mo + données de langue) pour préremplir la recherche quand il
   n'y a pas de code-barres (BD anciennes, vinyles).
 - **QR code des liens de partage** (P4-2) affiché sur la page de partage, pour passer une collection d'un écran à
   l'autre (lib `qrcode`, MIT, ≈ 20 ko).
-- **Photo de l'état d'un exemplaire** : déjà possible sans code, il suffit à un `CollectionType` d'avoir une propriété
-  `image-gallery` (l'envoi est ouvert à tout utilisateur connecté) ; à documenter dans un paquet de domaine.
 - **Scan d'étagère** : plusieurs codes dans une même image (`BarcodeDetector.detect` en rend déjà plusieurs) ;
   dépend du mode continu de M3.
 
@@ -95,3 +93,33 @@ Raffinage du 2026-10-25, branche `phase5-mobile`, un commit par lot. Les lots et
   (`ItemEditDialog` avec `prefill-code` : au choix du type, les propriétés `x-identifier` de premier niveau dont le
   `pattern` accepte le code sont préremplies — `lib/barcode.ts` `identifierPrefill`, rien de métier).
 - Après création ou proposition, le code est recherché à nouveau pour refléter le catalogue.
+
+## M4 — Redressement de la perspective
+
+- `lib/perspective.ts` (JavaScript pur, sans OpenCV ni WebAssembly supplémentaire, testé sur des images de synthèse) :
+  `detectQuad` cherche sur une copie de 320 px l'objet le plus grand qui se distingue du fond (couleur médiane de la
+  bordure, seuil d'Otsu sur l'écart RVB, plus grande composante connexe), prend les quatre coins extrêmes de son
+  enveloppe convexe et valide la forme (convexe, côtés francs, ≥ 85 % de l'enveloppe, ≥ 70 % de remplissage) ; sinon
+  null (fond uniforme, couverture pleine image, objet trop petit, disque). `homography` (huit équations, Gauss à pivot
+  partiel) et `warpPerspective` (correspondance inverse, bilinéaire, blanc hors champ) redressent le quadrilatère vers
+  un rectangle de la taille moyenne de ses côtés, borné à 2000 px (source ramenée à 2500 px).
+- `components/common/PerspectiveEditor.vue` : aperçu + SVG par-dessus (polygone, quatre poignées déplaçables au
+  pointeur ou aux flèches, 1 % par appui, 10 % avec Maj) ; « Détecter les bords », « Image entière », « Passer »,
+  « Redresser » → fichier redressé rendu au dialogue.
+- `ImageCropDialog.vue` : étape `straighten` avant `crop` (prop `straighten`, posée par `ImageGalleryField` pour une
+  photo prise à l'instant) ; bouton « Redresser » dans la barre du recadrage pour un fichier ; le recadrage au ratio
+  porte sur l'image redressée. Limites connues : le fond doit contraster avec la couverture et celle-ci ne doit pas
+  toucher les bords du cadre ; sinon les coins se posent à la main.
+
+## M5 — Photos de l'état d'un exemplaire
+
+- Paquet `collections` **v3** : le `CollectionType` « Possession » (`Ownership`) gagne `photos` (`image-gallery`,
+  catégorie `condition`, ratio 3/4, sans contrôle de tolérance : cadre 3/4 au recadrage, photo libre sinon), libellés
+  fr / en, en dernier dans `x-order`. Mise à jour par fusion (page « Domaines » ou `install-domain collections`) : les
+  instances modifiées localement gardent leurs champs, `photos` s'ajoute. Pas `x-private` : le propriétaire peut le
+  cacher par collection (`hidden_fields`).
+- Affichage : `lib/schema.ts` `galleryUrls(schema, attrs, key?)` ; `components/common/GalleryThumbs.vue` (vignettes
+  `?w=240` cliquables, « +n ») dans `CollectionItemList` (colonne par galerie sur bureau, ligne de vignettes sur
+  mobile ; donc aussi pages publiques et liens de partage) et `ItemCollectionsCard` (onglet « Dans vos collections »).
+- Rien de métier : tout `CollectionType` portant une propriété `image-gallery` a le même rendu ; l'envoi d'images est
+  déjà ouvert à tout compte connecté et la purge garde les images référencées par `collection_items`.
