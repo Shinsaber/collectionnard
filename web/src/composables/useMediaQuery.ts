@@ -3,6 +3,8 @@ import { onBeforeUnmount, readonly, ref, type Ref } from "vue";
 /** Points de rupture de la coquille (alignés sur Tailwind : md 768, lg 1024, xl 1280). */
 export const MOBILE_QUERY = "(max-width: 767.98px)";
 export const WIDE_QUERY = "(min-width: 1280px)";
+/** Écran tactile (téléphone, tablette) : appareil photo proposé dans la galerie. */
+export const COARSE_POINTER_QUERY = "(pointer: coarse)";
 
 /**
  * Suit une media query CSS. Réservé aux cas où le rendu change de composant (panneau ↔

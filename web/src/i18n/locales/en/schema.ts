@@ -41,6 +41,34 @@ const en: typeof fr = {
     ratioOff:
       "ratio {actual} instead of {expected} ({deviation} % off, {tolerance} % allowed)",
     tooSmall: "{width} × {height} px, minimum {min} px",
+    // Photo and cropping (lot M1)
+    photo: "Photo",
+    photoLabel: "Take a photo for {category}",
+    cropTitle: "Crop – {category}",
+    cropHint:
+      "Frame at ratio {ratio}: move it or drag its handles; drag the image to move it, pinch (or scroll) to zoom.",
+    cropHintFree:
+      "Free frame: move it or drag its handles; drag the image to move it, pinch (or scroll) to zoom.",
+    cropOffer: "Image out of format ({details}): crop it to keep it.",
+    rotateLeft: "Rotate a quarter turn left",
+    rotateRight: "Rotate a quarter turn right",
+    fitImage: "Fit",
+    asIs: "Without cropping",
+    applyCrop: "Crop",
+    cropFailed: "Cropping failed",
+    // Perspective straightening (lot M4)
+    straightenTitle: "Straighten – {category}",
+    straightenStep: "Straighten",
+    straightenHint:
+      "Put the four corners on those of the cover (detected automatically when the background contrasts), then straighten. Arrow keys: 1% per press, 10% with Shift.",
+    detectEdges: "Detect edges",
+    wholeImage: "Whole image",
+    skipStraighten: "Skip",
+    straighten: "Straighten",
+    noEdges: "Edges not detected: place the corners by hand, or skip.",
+    roughEdges: "Edges detected roughly: check the corners.",
+    corner: "Corner {n}",
+    straightenFailed: "Straightening failed",
   },
   builder: {
     empty: "No field defined. Click “Add a field” to start.",

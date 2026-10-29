@@ -166,9 +166,9 @@ une abstraction de ce schéma ; elle n'existe pas dans l'implémentation.
 | `x-description`      | racine    | Description du méta-type par langue ; repli sur la colonne `description`                                                                                                                                 |
 | `x-enum-labels`      | propriété | Libellés des valeurs d'un `enum` par langue : `{ "fr": { "tv": "Télévision" }, "en": { "tv": "TV" } }` ; repli sur la valeur brute                                                                       |
 | `x-widget`           | propriété | Widget dédié : `i18n-text` (objet `{fr, en, …}` : une chaîne par langue, codes supplémentaires acceptés), `image-gallery` (objet de catégories), `links` (tableau de `{label?, url}`, URL http(s) en format `uri` : liens cliquables sur la fiche, libellé facultatif, nom du site à défaut)                                                          |
-| `x-image-categories` | propriété | Catégories d'images et ratios : `{ "poster": { "ratio": "2/3" } }` (avec `image-gallery`). Contrôles facultatifs à l'envoi, dans le navigateur : `tolerance` (écart de ratio permis, %), `min_width` / `min_height` (px), `strict` (refuser ; sinon avertissement) |
+| `x-image-categories` | propriété | Catégories d'images et ratios : `{ "poster": { "ratio": "2/3" } }` (avec `image-gallery`). Contrôles facultatifs à l'envoi, dans le navigateur : `tolerance` (écart de ratio permis, %), `min_width` / `min_height` (px), `strict` (proposer le recadrage ; sinon avertissement). Le ratio contraint aussi le cadre du recadrage (photo prise sur écran tactile, ou fichier hors format), `mobile.md` M1 |
 | `x-private`          | propriété | CollectionType : champ caché par défaut à tout autre lecteur que le propriétaire (prix payé, budget max), même dans une collection publique ; le propriétaire peut remplacer ce défaut par collection (`hidden_fields`). Retiré **par le serveur** des pages publiques, liens de partage et statistiques, administrateurs compris |
-| `x-identifier`       | propriété | ItemType : identifiant (ISBN, EAN, QID Wikidata, ARK BnF, MBID…), au premier niveau ou dans un objet (`external_ids.wikidata`). Un autre item du même type portant la même valeur est signalé comme doublon possible avant l'enregistrement ou la proposition (`POST /items/duplicates`) |
+| `x-identifier`       | propriété | ItemType : identifiant (ISBN, EAN, QID Wikidata, ARK BnF, MBID…), au premier niveau ou dans un objet (`external_ids.wikidata`). Un autre item du même type portant la même valeur est signalé comme doublon possible avant l'enregistrement ou la proposition (`POST /items/duplicates`). Dans les formulaires, un champ `x-identifier` de premier niveau a un bouton « scanner un code-barres » (`mobile.md` M2) |
 | `x-completeness`     | racine    | RelationType seulement : `true` marque une relation de composition (la cible fait partie de la source : `contains_volume`, `contains_track`, `contains_episode`, `includes_episode`, `contains_work`). Les statistiques d'une collection comptent, pour chaque source, les cibles présentes sur le total (« 30 tomes sur 42 ») |
 | `x-label`            | racine    | Gabarit du libellé des instances : `"{title}"`, `"{number}. {title}"`, `"{last_name} {first_name}"` ; sans gabarit, repli sur `title`, `name`, `label` (Go `internal/label`, TS `web/src/lib/schema.ts`) |
 
@@ -465,9 +465,27 @@ propositions modérées **et** rôle contributeur ; échanges reportés.
 - [ ] Système d'échange : reporté (exemplaires « à échanger », correspondances avec les listes de souhaits, messagerie),
       à raffiner après P4-2.
 
-### Phase 5 : Intégrations, …
+### Phase 5 : Mobile — appareil photo et scanner
 
-- [ ] App mobile avec scan de codes-barres
+Raffinée le 2026-10-25 (conception : `mobile.md`), branche `phase5-mobile`, un commit par lot. Décisions : l'application
+installable existante (pas d'app native), cropperjs (MIT) pour le recadrage, `BarcodeDetector` natif sinon
+barcode-detector / zxing-wasm (MIT, `.wasm` servi localement) pour les codes-barres ; HTTPS requis par l'appareil photo.
+
+- [x] **M1 — Photo de couverture et recadrage** : tuile « Photo » sur écran tactile, dialogue de recadrage au ratio de
+      la catégorie (rotation, zoom, « sans recadrage »), photos réduites à 2000 px ; un fichier hors format est
+      recadré au lieu d'être refusé.
+- [x] **M2 — Scanner de codes-barres** : lecture par la caméra (ou dans une photo), bouton scanner dans la recherche du
+      catalogue, l'ajout à une collection, la consultation hors ligne, les champs `x-identifier` des formulaires et la
+      recherche d'éditions des sources externes ; nginx autorise la caméra et le WebAssembly (`Permissions-Policy`, CSP).
+- [x] **M3 — Page « Scanner »** (`/scan`) : « est-ce que je l'ai déjà ? » (fiche, « dans N de mes collections », ajout),
+      raccourcis vers les sources externes (`?code=`) et la création avec les identifiants préremplis, mode continu
+      pour inventorier une pile (résultat affiché sous la caméra).
+- [x] **M4 — Redressement de la perspective** : bords d'une couverture photographiée de biais détectés d'office (fond
+      contrasté), quatre coins ajustables, homographie en JavaScript pur (sans OpenCV) ; étape avant le recadrage.
+- [x] **M5 — Photos de l'état d'un exemplaire** : propriété `photos` (galerie, ratio 3/4) du type « Possession »
+      (paquet `collections` v3) ; vignettes dans les collections, la fiche d'un item et les pages publiques.
+- [ ] Plus tard (voir `mobile.md`) : recadrage d'une image déjà en galerie, OCR, QR code des liens de partage, scan
+      d'étagère.
 
 ---
 

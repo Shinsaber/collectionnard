@@ -40,6 +40,34 @@ export default {
     ratioOff:
       "ratio {actual} au lieu de {expected} (écart {deviation} %, toléré {tolerance} %)",
     tooSmall: "{width} × {height} px, minimum {min} px",
+    // Photo et recadrage (lot M1)
+    photo: "Photo",
+    photoLabel: "Prendre une photo pour {category}",
+    cropTitle: "Recadrer – {category}",
+    cropHint:
+      "Cadre au ratio {ratio} : déplacez-le ou tirez ses poignées ; faites glisser l'image pour la déplacer, pincez (ou molette) pour zoomer.",
+    cropHintFree:
+      "Cadre libre : déplacez-le ou tirez ses poignées ; faites glisser l'image pour la déplacer, pincez (ou molette) pour zoomer.",
+    cropOffer: "Image hors format ({details}) : recadrez-la pour la garder.",
+    rotateLeft: "Pivoter d'un quart de tour vers la gauche",
+    rotateRight: "Pivoter d'un quart de tour vers la droite",
+    fitImage: "Ajuster",
+    asIs: "Sans recadrage",
+    applyCrop: "Recadrer",
+    cropFailed: "Recadrage impossible",
+    // Redressement de la perspective (lot M4)
+    straightenTitle: "Redresser – {category}",
+    straightenStep: "Redresser",
+    straightenHint:
+      "Placez les quatre coins sur ceux de la couverture (détectés d'office quand le fond contraste), puis redressez. Flèches au clavier : 1 % par appui, 10 % avec Maj.",
+    detectEdges: "Détecter les bords",
+    wholeImage: "Image entière",
+    skipStraighten: "Passer",
+    straighten: "Redresser",
+    noEdges: "Bords non détectés : placez les coins à la main, ou passez.",
+    roughEdges: "Bords détectés approximativement : vérifiez les coins.",
+    corner: "Coin {n}",
+    straightenFailed: "Redressement impossible",
   },
   builder: {
     empty:

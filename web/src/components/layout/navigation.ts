@@ -18,6 +18,7 @@ export const NAV_ICONS = {
   offline:
     "M3 3l18 18M8.6 8.6A5 5 0 0 0 7 18h10.6M20.4 16.4A4 4 0 0 0 18 9a6 6 0 0 0-7.7-3.8",
   importExport: "M12 3v12M7 10l5 5 5-5M4 21h16",
+  scan: "M4 5v14M8 5v14M12 5v9M16 5v14M20 5v9M12 17v2M20 17v2",
   images: "M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15.5 9a1.5 1.5 0 1 0 0 .01",
   domains: "M12 3l9 5-9 5-9-5zM3 12.5l9 5 9-5M3 16.5l9 5 9-5",
   users:
@@ -47,6 +48,7 @@ export function isNavActive(to: string, path: string): boolean {
 export function isMoreActive(path: string): boolean {
   return (
     path.startsWith("/admin") ||
+    isNavActive("/scan", path) ||
     isNavActive("/stats", path) ||
     isNavActive("/members", path) ||
     isNavActive("/proposals", path) ||
@@ -66,6 +68,7 @@ export function useNavigation() {
       label: t("layout.nav.collections"),
       icon: "collections",
     },
+    { to: "/scan", label: t("layout.nav.scan"), icon: "scan" },
     { to: "/stats", label: t("layout.nav.stats"), icon: "stats" },
     { to: "/proposals", label: t("layout.nav.proposals"), icon: "proposals" },
     { to: "/members", label: t("layout.nav.members"), icon: "members" },
@@ -74,6 +77,7 @@ export function useNavigation() {
 
   /** Liens de la feuille « Plus » (mobile), avant l'administration. */
   const sheetLinks = computed<NavLink[]>(() => [
+    { to: "/scan", label: t("layout.nav.scan"), icon: "scan" },
     { to: "/stats", label: t("layout.nav.stats"), icon: "stats" },
     { to: "/proposals", label: t("layout.nav.proposals"), icon: "proposals" },
     { to: "/members", label: t("layout.nav.members"), icon: "members" },

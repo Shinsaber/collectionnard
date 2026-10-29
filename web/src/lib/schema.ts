@@ -495,3 +495,30 @@ export function typeDescription(
     (type.description ?? "")
   );
 }
+
+/**
+ * Toutes les URLs d'images d'un enregistrement (toutes catégories de toutes ses galeries
+ * `image-gallery`, dans l'ordre des champs ; `onlyKey` : une seule galerie) : vignettes des photos
+ * d'un exemplaire (lot M5).
+ */
+export function galleryUrls(
+  schema: Schema | null | undefined,
+  attrs: Record<string, unknown> | null | undefined,
+  onlyKey?: string,
+): string[] {
+  const out: string[] = [];
+  if (!attrs) return out;
+  for (const key of orderedKeys(schema, attrs)) {
+    if (!isImageGallery(schema, key)) continue;
+    if (onlyKey !== undefined && key !== onlyKey) continue;
+    const value = attrs[key];
+    if (!value || typeof value !== "object" || Array.isArray(value)) continue;
+    for (const [cat, urls] of Object.entries(
+      value as Record<string, unknown>,
+    )) {
+      if (cat === "default_image" || !Array.isArray(urls)) continue;
+      for (const u of urls) if (typeof u === "string" && u) out.push(u);
+    }
+  }
+  return out;
+}

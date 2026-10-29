@@ -34,6 +34,7 @@ des messages techniques en anglais. Ajouter une langue : `Collectionnard.md` § 
 | [docs/audit/](docs/audit/BRIEF.md)     | Brief et résultats de l'audit approfondi (`/audit`)              |
 | [docs/sources-externes.md](docs/sources-externes.md) | Bases ouvertes BD / Manga : licences, accès (Wikidata, BnF retenues), constats du connecteur |
 | [social.md](social.md)                 | Phase 4 (social) : décisions, modèle et API visés — comptes et invitations, statistiques, visibilité, contributions |
+| [mobile.md](mobile.md)                 | Phase 5 (mobile) : cas d'usage et décisions — photo de couverture et recadrage, scanner de codes-barres, page « Scanner » |
 
 ## Modèle en une table
 
@@ -168,4 +169,7 @@ Phase 2 livrée : multilingue, recherche avancée (lot 14), import/export (lot 1
 BD / Manga, Romans, Musique, Films, Séries et Jeux vidéo (`server/internal/external/connectors`, profils `bd-manga` / `novels` / `music` / `films` / `series` / `games`, clients `wikidata`, `bnf`, `musicbrainz`, `tvmaze`, page admin « Sources externes ») ;
 domaines P3-0 à P3-7 (jeux vidéo, V1 française) livrés et fusionnés dans `main`. Phase 4 (social) raffinée, branche `phase4-social` : lots P4-0 à P4-3 dans `social.md` ; P4-0 (comptes, invitations,
 profils), P4-1 (statistiques personnelles), P4-2 (visibilité et partage) et P4-3 (historique, contributeur, propositions, modération,
-notifications) livrés : Phase 4 terminée hors échanges (reportés).
+notifications) livrés : Phase 4 terminée hors échanges (reportés). Phase 5 (mobile, `mobile.md`), branche `phase5-mobile` :
+M1 (photo de couverture et recadrage), M2 (scanner de codes-barres), M3 (page « Scanner »), M4 (redressement de la
+perspective) et M5 (photos de l'état d'un exemplaire, paquet `collections` v3) livrés ; pistes tracées pour plus tard
+dans `mobile.md`.

@@ -14,6 +14,7 @@ import layout from "./layout";
 import notifications from "./notifications";
 import offline from "./offline";
 import proposals from "./proposals";
+import scan from "./scan";
 import schema from "./schema";
 import sharing from "./sharing";
 import stats from "./stats";
@@ -33,6 +34,7 @@ const fr = {
   notifications,
   offline,
   proposals,
+  scan,
   schema,
   sharing,
   stats,

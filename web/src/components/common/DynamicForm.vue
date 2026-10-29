@@ -29,7 +29,12 @@
           :class="{ 'is-error': !!errors[field.name] }"
           @update:model-value="update(field.name, $event)"
           @blur="touch(field.name)"
-        />
+        >
+          <!-- Identifiant (x-identifier) : code-barres lu par la caméra (lot M2) -->
+          <template v-if="field.identifier" #append>
+            <ScanButton @detected="(code) => update(field.name, code)" />
+          </template>
+        </ElInput>
 
         <!-- Enum (tableau d'enum : choix multiples, ex. rôles) -->
         <ElSelect
@@ -174,6 +179,7 @@ import {
 import ImageGalleryField from "./ImageGalleryField.vue";
 import LinksField from "./LinksField.vue";
 import I18nTextField from "./I18nTextField.vue";
+import ScanButton from "./ScanButton.vue";
 
 interface SchemaField {
   name: string;
@@ -188,6 +194,8 @@ interface SchemaField {
   maximum?: number;
   widget?: string;
   imageCategories?: ImageCategory[];
+  /** `x-identifier` (ISBN, EAN…) : bouton scanner à côté du champ (lot M2). */
+  identifier?: boolean;
 }
 
 const props = defineProps<{
@@ -232,6 +240,7 @@ const fields = computed<SchemaField[]>(() => {
         maximum: prop.maximum as number | undefined,
         widget: widgetOf(props.schema, name),
         imageCategories: imageCategories(props.schema, name),
+        identifier: prop["x-identifier"] === true,
       };
     });
 });

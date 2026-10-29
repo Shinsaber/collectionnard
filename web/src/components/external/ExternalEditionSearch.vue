@@ -26,6 +26,8 @@
         "
         clearable
       />
+      <!-- Code-barres (lot M2) : passe en mode code et lance la recherche. -->
+      <ScanButton @detected="onScanned" />
       <ElButton
         native-type="submit"
         type="primary"
@@ -153,6 +155,7 @@ import { useI18n } from "vue-i18n";
 import { externalApi } from "@/api/client";
 import { useNotify } from "@/composables/useNotify";
 import type { ExternalEditionHit } from "@/api/types";
+import ScanButton from "@/components/common/ScanButton.vue";
 
 const MAX = 10;
 
@@ -166,6 +169,8 @@ const props = defineProps<{
   /** Code de recherche d'une édition : ISBN (livres) ou code-barres (musique). */
   code?: "isbn" | "barcode";
   connector: string;
+  /** Code-barres venu de la page « Scanner » (`?code=`, M3) : cherché dès qu'il est fourni. */
+  initialCode?: string;
 }>();
 const emit = defineEmits<{
   "update:modelValue": [editions: ExternalEditionHit[]];
@@ -257,6 +262,21 @@ async function search() {
     loading.value = false;
   }
 }
+
+function onScanned(code: string) {
+  mode.value = "code";
+  hits.value = null;
+  query.value = code;
+  void search();
+}
+
+watch(
+  () => props.initialCode,
+  (code) => {
+    if (code) onScanned(code);
+  },
+  { immediate: true },
+);
 
 function isChosen(e: ExternalEditionHit): boolean {
   return props.modelValue.some((c) => c.id === e.id);

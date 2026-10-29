@@ -20,14 +20,17 @@
     "@fontsource-variable/schibsted-grotesk": "^5.3.0",
     "@fontsource/ibm-plex-mono": "^5.3.0",
     "axios": "^1.20.0",
+    "barcode-detector": "^3.2.3",
+    "cropperjs": "^2.3.1",
     "cytoscape": "^3.34.3",
     "echarts": "6.1.0",
     "element-plus": "^2.14.7",
     "pinia": "^4.0.3",
     "primeicons": "^7.0.0",
     "vue": "^3.5.43",
-    "vue-i18n": "~11.4.12",
-    "vue-router": "^5.4.0"
+    "vue-i18n": "~11.4.14",
+    "vue-router": "^5.4.0",
+    "zxing-wasm": "^3.1.6"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

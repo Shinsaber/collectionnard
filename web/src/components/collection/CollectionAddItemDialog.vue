@@ -36,6 +36,7 @@
           <ElButton :aria-label="t('common.search')" @click="searchItems">
             <i class="pi pi-search" aria-hidden="true"></i>
           </ElButton>
+          <ScanButton @detected="onScanned" />
         </div>
       </div>
 
@@ -93,6 +94,7 @@ import { useNotify } from "@/composables/useNotify";
 import { useMetaTypes } from "@/stores/metaTypes";
 import { itemLabel, typeTitle, type Schema } from "@/lib/schema";
 import DynamicForm from "@/components/common/DynamicForm.vue";
+import ScanButton from "@/components/common/ScanButton.vue";
 import type { Item } from "@/api/types";
 
 const props = defineProps<{
@@ -147,6 +149,12 @@ async function searchItems() {
   } catch (e) {
     notifyError(e, t("collections.detail.searchFailed"));
   }
+}
+
+/** Code-barres lu (lot M2) : cherché comme du texte, les identifiants sont indexés. */
+function onScanned(code: string) {
+  searchText.value = code;
+  void searchItems();
 }
 
 async function addItem() {

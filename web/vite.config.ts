@@ -44,6 +44,8 @@ export default defineConfig({
           "**/*-latin-*.woff2",
           "**/*-latin-ext-*.woff2",
           "**/primeicons-*.woff2",
+          // Lecteur de codes-barres (lot M2) : le wasm de zxing est servi et précaché ici, pas par un CDN.
+          "**/*.wasm",
         ],
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api\//],

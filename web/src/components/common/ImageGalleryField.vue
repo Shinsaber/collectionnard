@@ -51,21 +51,21 @@
           </button>
         </div>
 
-        <!-- Ajout : tuile au format de la catégorie (appareil photo ou galerie sur mobile). -->
+        <!-- Ajout depuis un fichier (ou la galerie du téléphone) : tuile au format de la catégorie. -->
         <input
-          :ref="(el) => setFileRef(cat.name, el)"
+          :ref="(el) => setInput(cat.name, 'file', el)"
           type="file"
           accept="image/jpeg,image/png,image/gif,image/webp"
           class="hidden"
           :aria-label="t('schema.gallery.file', { category: cat.name })"
-          @change="handleUpload(cat, $event)"
+          @change="onFile(cat, $event, false)"
         />
         <button
           type="button"
           class="flex w-20 flex-col items-center justify-center gap-1 rounded-lg border-[1.5px] border-dashed border-dash text-xs font-semibold text-link disabled:opacity-60"
           :style="{ aspectRatio: cat.ratio || '1/1' }"
           :disabled="uploading[cat.name] ?? false"
-          @click="fileInputs[cat.name]?.click()"
+          @click="inputs[`${cat.name}/file`]?.click()"
         >
           <i
             class="pi text-base"
@@ -74,22 +74,65 @@
           ></i>
           {{ t("common.add") }}
         </button>
+
+        <!-- Photo (lot M1, écrans tactiles) : appareil photo arrière, puis recadrage au ratio. -->
+        <template v-if="coarsePointer">
+          <input
+            :ref="(el) => setInput(cat.name, 'camera', el)"
+            type="file"
+            accept="image/*"
+            capture="environment"
+            class="hidden"
+            :aria-label="t('schema.gallery.photoLabel', { category: cat.name })"
+            @change="onFile(cat, $event, true)"
+          />
+          <button
+            type="button"
+            class="flex w-20 flex-col items-center justify-center gap-1 rounded-lg border-[1.5px] border-dashed border-dash text-xs font-semibold text-link disabled:opacity-60"
+            :style="{ aspectRatio: cat.ratio || '1/1' }"
+            :disabled="uploading[cat.name] ?? false"
+            data-test="gallery-photo"
+            @click="inputs[`${cat.name}/camera`]?.click()"
+          >
+            <i class="pi pi-camera text-base" aria-hidden="true"></i>
+            {{ t("schema.gallery.photo") }}
+          </button>
+        </template>
       </div>
     </div>
+
+    <ImageCropDialog
+      v-model:visible="cropVisible"
+      :file="cropFile"
+      :category="cropCategory"
+      :reason="cropReason"
+      :straighten="cropStraighten"
+      @done="onCropped"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { computed, defineAsyncComponent, reactive, ref } from "vue";
 import { uploadApi } from "@/api/client";
 import { useI18n } from "vue-i18n";
 import { useNotify } from "@/composables/useNotify";
 import { useLang } from "@/composables/useLang";
+import {
+  COARSE_POINTER_QUERY,
+  useMediaQuery,
+} from "@/composables/useMediaQuery";
 import { checkImage, type ImageCategory, type ImageIssue } from "@/lib/schema";
+import { imageSize, type Size } from "@/lib/images";
+// cropperjs n'est chargé qu'au premier recadrage (hors du paquet de DynamicForm).
+const ImageCropDialog = defineAsyncComponent(
+  () => import("./ImageCropDialog.vue"),
+);
 
 // Widget `x-widget: image-gallery` : un tableau d'URLs par catégorie
 // (`x-image-categories`) et une `default_image`. Les erreurs d'upload (type refusé,
-// 413 au-delà de MAX_UPLOAD_SIZE…) sont notifiées.
+// 413 au-delà de MAX_UPLOAD_SIZE…) sont notifiées. Une photo passe toujours par le
+// recadrage ; un fichier hors format (catégorie `strict`) y est envoyé au lieu d'être refusé.
 const props = defineProps<{
   categories: ImageCategory[];
   modelValue: Record<string, unknown> | null | undefined;
@@ -102,14 +145,15 @@ const emit = defineEmits<{
 const { notifyError, notifyWarning } = useNotify();
 const { lang } = useLang();
 const { t } = useI18n();
+const coarsePointer = useMediaQuery(COARSE_POINTER_QUERY);
 
 const data = computed(() => props.modelValue ?? {});
 const defaultUrl = computed(() => (data.value.default_image as string) ?? "");
 const uploading = reactive<Record<string, boolean>>({});
-const fileInputs = ref<Record<string, HTMLInputElement | null>>({});
+const inputs = ref<Record<string, HTMLInputElement | null>>({});
 
-function setFileRef(cat: string, el: unknown) {
-  fileInputs.value[cat] = el as HTMLInputElement | null;
+function setInput(cat: string, kind: "file" | "camera", el: unknown) {
+  inputs.value[`${cat}/${kind}`] = el as HTMLInputElement | null;
 }
 
 function urlsOf(cat: string): string[] {
@@ -129,25 +173,70 @@ function removeImage(cat: string, imgIdx: number) {
   emit("update:modelValue", next);
 }
 
-async function handleUpload(cat: ImageCategory, event: Event) {
+// ── Recadrage ────────────────────────────────────────────────────────
+const cropVisible = ref(false);
+const cropFile = ref<File | null>(null);
+const cropCategory = ref<ImageCategory | null>(null);
+const cropReason = ref<string>();
+/** Photo prise à l'instant : commencer par redresser la perspective (lot M4). */
+const cropStraighten = ref(false);
+
+function openCrop(
+  cat: ImageCategory,
+  file: File,
+  reason?: string,
+  straighten = false,
+) {
+  cropStraighten.value = straighten;
+  cropFile.value = file;
+  cropCategory.value = cat;
+  cropReason.value = reason;
+  cropVisible.value = true;
+}
+
+async function onCropped(file: File) {
+  const cat = cropCategory.value;
+  if (!cat) return;
+  // Le cadre impose le ratio ; la taille minimale, elle, peut encore manquer.
+  const size = await imageSize(file);
+  const verdict = size ? verdictOf(cat, size) : undefined;
+  if (verdict?.block) {
+    notifyError(new Error(verdict.details), t("schema.gallery.refused"));
+    return;
+  }
+  if (verdict?.details)
+    notifyWarning(t("schema.gallery.warned", { details: verdict.details }));
+  await send(cat, file);
+}
+
+// ── Envoi ────────────────────────────────────────────────────────────
+async function onFile(cat: ImageCategory, event: Event, fromCamera: boolean) {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
+  input.value = "";
   if (!file) return;
+  if (fromCamera) {
+    openCrop(cat, file, undefined, true);
+    return;
+  }
+  const size = await imageSize(file);
+  const verdict = size ? verdictOf(cat, size) : undefined;
+  if (verdict?.block) {
+    openCrop(
+      cat,
+      file,
+      t("schema.gallery.cropOffer", { details: verdict.details }),
+    );
+    return;
+  }
+  if (verdict?.details)
+    notifyWarning(t("schema.gallery.warned", { details: verdict.details }));
+  await send(cat, file);
+}
+
+async function send(cat: ImageCategory, file: File) {
   uploading[cat.name] = true;
   try {
-    // Contrôles de la catégorie (ratio, taille minimale) avant l'envoi.
-    const size = await imageSize(file);
-    if (size) {
-      const { issues, block } = checkImage(cat, size.width, size.height);
-      if (issues.length) {
-        const details = issues.map((i) => describe(i, size)).join(" ; ");
-        if (block) {
-          notifyError(new Error(details), t("schema.gallery.refused"));
-          return;
-        }
-        notifyWarning(t("schema.gallery.warned", { details }));
-      }
-    }
     const resp = await uploadApi.upload(file);
     const next = {
       ...data.value,
@@ -159,29 +248,20 @@ async function handleUpload(cat: ImageCategory, event: Event) {
     notifyError(e, t("schema.gallery.uploadFailed"));
   } finally {
     uploading[cat.name] = false;
-    input.value = "";
   }
 }
 
-/** Dimensions de l'image ; null si le navigateur ne sait pas la décoder (le serveur contrôle le type). */
-async function imageSize(
-  file: File,
-): Promise<{ width: number; height: number } | null> {
-  if (typeof createImageBitmap !== "function") return null;
-  try {
-    const bmp = await createImageBitmap(file);
-    const size = { width: bmp.width, height: bmp.height };
-    bmp.close();
-    return size;
-  } catch {
-    return null; // format non décodable ici : pas de contrôle, l'envoi décide
-  }
+/** Contrôles de la catégorie (ratio, taille minimale) : défauts décrits, et s'ils bloquent. */
+function verdictOf(
+  cat: ImageCategory,
+  size: Size,
+): { details: string; block: boolean } | undefined {
+  const { issues, block } = checkImage(cat, size.width, size.height);
+  if (!issues.length) return undefined;
+  return { details: issues.map((i) => describe(i, size)).join(" ; "), block };
 }
 
-function describe(
-  issue: ImageIssue,
-  size: { width: number; height: number },
-): string {
+function describe(issue: ImageIssue, size: Size): string {
   const n = (v: number, digits = 0) =>
     v.toLocaleString(lang.value, { maximumFractionDigits: digits });
   return issue.kind === "ratio"

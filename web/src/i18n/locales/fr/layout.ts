@@ -18,6 +18,7 @@ export default {
     stats: "Statistiques",
     members: "Membres",
     proposals: "Propositions",
+    scan: "Scanner",
   },
   mainNav: "Navigation principale",
   skipToContent: "Aller au contenu",

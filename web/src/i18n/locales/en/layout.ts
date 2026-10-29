@@ -19,6 +19,7 @@ const en: typeof fr = {
     stats: "Statistics",
     members: "Members",
     proposals: "Proposals",
+    scan: "Scan",
   },
   mainNav: "Main navigation",
   skipToContent: "Skip to content",
