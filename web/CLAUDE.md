@@ -73,6 +73,10 @@ Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
   reste permise (ignorée sur mobile). Actions dans `#footer` : bouton texte « Annuler » puis bouton principal.
   `DynamicForm` passe en deux colonnes (container query) dès que son conteneur le permet.
 - Taille : un fichier `.vue` ne dépasse pas ~400 lignes ; extraire un composant au-delà.
+- `npm audit --audit-level=high` (CI) : un avis **faible** sans correctif publié est accepté — deepmerge ≤ 4.3.1
+  (GHSA-gcqx-w48m-w2h4, empoisonnement de prototype) via vite-plugin-pwa → workbox-build → @rollup/plugin-node-resolve,
+  outil de compilation qui ne fusionne que notre configuration. À réévaluer quand deepmerge publie une version corrigée
+  (`npm audit`), sans `npm audit fix --force` (il rétrograderait vite-plugin-pwa à 0.2.1).
 - Après modification : `npm run lint && npm run format:check && npm run type-check && npm test`
   (`npm run lint:fix` et `npm run format` corrigent automatiquement). Tests unitaires : `vitest`,
   fichiers `src/**/*.test.ts` (environnement jsdom, stubs `matchMedia` et `ResizeObserver` dans
