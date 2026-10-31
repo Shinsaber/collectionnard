@@ -66,22 +66,23 @@
               col.collection_type ? typeTitle(col.collection_type, lang) : "?"
             }}</span>
           </div>
+          <!-- Compteur à droite du titre, en grand, avec son unité dessous. -->
+          <div
+            class="flex shrink-0 flex-col items-end"
+            data-test="collection-count"
+          >
+            <span class="font-mono text-2xl font-bold leading-none text-ink">{{
+              col.item_count
+            }}</span>
+            <span
+              class="mt-1 font-mono text-[11px] uppercase tracking-wider text-muted"
+              >{{ t("collections.list.unit", col.item_count) }}</span
+            >
+          </div>
         </div>
         <p v-if="col.description" class="line-clamp-2 text-sm text-muted">
           {{ col.description }}
         </p>
-        <div
-          class="mt-auto flex items-baseline justify-end gap-1.5"
-          data-test="collection-count"
-        >
-          <span class="font-mono text-2xl font-bold leading-none text-ink">{{
-            col.item_count
-          }}</span>
-          <span
-            class="font-mono text-[11px] uppercase tracking-wider text-muted"
-            >{{ t("collections.list.unit", col.item_count) }}</span
-          >
-        </div>
       </li>
     </ul>
 
