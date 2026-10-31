@@ -27,24 +27,35 @@
               :key="imgIdx"
               class="relative"
             >
-              <img
-                :src="url"
-                :alt="
-                  t('items.gallery.imageAlt', {
-                    category: cat.name,
-                    n: imgIdx + 1,
-                  })
-                "
-                class="w-28 rounded-lg object-cover shadow-cover sm:w-32"
-                :style="{ aspectRatio: cat.ratio || '1/1' }"
+              <!-- Chaque image ouvre la visionneuse sur sa catégorie (retour v0.4.0). -->
+              <button
+                type="button"
+                class="block w-28 overflow-hidden rounded-lg shadow-cover sm:w-32"
                 :class="{
                   'ring-2 ring-primary ring-offset-2 ring-offset-surface':
                     defaultUrl === url,
                 }"
-              />
+                :aria-label="
+                  t('common.enlarge', { name: `${cat.name} ${imgIdx + 1}` })
+                "
+                data-test="gallery-image"
+                @click="open(cat.name, imgIdx)"
+              >
+                <img
+                  :src="url"
+                  :alt="
+                    t('items.gallery.imageAlt', {
+                      category: cat.name,
+                      n: imgIdx + 1,
+                    })
+                  "
+                  class="w-full object-cover"
+                  :style="{ aspectRatio: cat.ratio || '1/1' }"
+                />
+              </button>
               <span
                 v-if="defaultUrl === url"
-                class="absolute top-1.5 left-1.5 rounded-sm bg-primary px-1.5 py-0.5 font-mono text-[10px] uppercase text-primary-ink"
+                class="pointer-events-none absolute top-1.5 left-1.5 rounded-sm bg-primary px-1.5 py-0.5 font-mono text-[10px] uppercase text-primary-ink"
                 >{{ t("items.gallery.default") }}</span
               >
             </div>
@@ -58,6 +69,11 @@
         </ElTabPane>
       </ElTabs>
     </div>
+    <ImageLightbox
+      v-model:visible="viewerOpen"
+      :urls="viewerUrls"
+      :index="viewerIndex"
+    />
   </section>
 </template>
 
@@ -71,6 +87,7 @@ import {
   isImageGallery,
   type Schema,
 } from "@/lib/schema";
+import ImageLightbox from "@/components/common/ImageLightbox.vue";
 
 // Galerie d'images d'un item : premier champ `x-widget: image-gallery` du schéma,
 // un onglet par catégorie (`x-image-categories`).
@@ -112,4 +129,15 @@ function urlsOf(cat: string): string[] {
 }
 
 const defaultUrl = computed(() => (data.value.default_image as string) ?? "");
+
+// ── Visionneuse ──────────────────────────────────────────────────────
+const viewerOpen = ref(false);
+const viewerUrls = ref<string[]>([]);
+const viewerIndex = ref(0);
+
+function open(cat: string, idx: number) {
+  viewerUrls.value = urlsOf(cat);
+  viewerIndex.value = idx;
+  viewerOpen.value = true;
+}
 </script>

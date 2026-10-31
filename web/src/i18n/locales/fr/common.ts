@@ -24,6 +24,7 @@ export default {
   created: "Créé",
   updated: "Mis à jour",
   deleted: "Supprimé",
+  enlarge: "Agrandir : {name}",
   // Scanner de codes-barres (lot M2)
   scan: {
     button: "Scanner un code-barres",
