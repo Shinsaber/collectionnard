@@ -39,22 +39,39 @@ describe("GalleryThumbs", () => {
 
   it("ouvre la visionneuse sur toute la galerie à partir de la vignette cliquée", async () => {
     const w = mountThumbs();
-    expect(document.body.querySelector(".el-image-viewer__wrapper")).toBeNull();
+    expect(document.body.querySelector("[data-test=lightbox]")).toBeNull();
     await w.findAll("button")[1]!.trigger("click");
-    const viewer = document.body.querySelector(".el-image-viewer__wrapper");
+    await w.vm.$nextTick();
+    const viewer = document.body.querySelector("[data-test=lightbox]");
     expect(viewer).not.toBeNull();
-    // Image d'origine (pas la vignette) : la deuxième, seule rendue.
-    const shown = [...viewer!.querySelectorAll("img")];
-    expect(shown.map((i) => i.getAttribute("src"))).toEqual([
-      "/api/v1/uploads/b.jpg",
-    ]);
+    // Image d'origine (pas la vignette) : la deuxième ; compteur sur les cinq.
+    expect(
+      viewer!.querySelector("[data-test=lightbox-image]")?.getAttribute("src"),
+    ).toBe("/api/v1/uploads/b.jpg");
+    expect(
+      viewer!.querySelector("[data-test=lightbox-counter]")?.textContent,
+    ).toBe("2 / 5");
+    // Suivante, puis fermeture.
+    (
+      viewer!.querySelector("[data-test=lightbox-next]") as HTMLButtonElement
+    ).click();
+    await w.vm.$nextTick();
+    expect(
+      viewer!.querySelector("[data-test=lightbox-image]")?.getAttribute("src"),
+    ).toBe("/x/c.jpg");
+    (
+      viewer!.querySelector("[data-test=lightbox-close]") as HTMLButtonElement
+    ).click();
+    await w.vm.$nextTick();
+    expect(document.body.querySelector("[data-test=lightbox]")).toBeNull();
     w.unmount();
   });
 
   it("« +n » ouvre la visionneuse sur la première image cachée", async () => {
     const w = mountThumbs();
     await w.findAll("button")[4]!.trigger("click");
-    const shown = document.body.querySelector(".el-image-viewer__wrapper img");
+    await w.vm.$nextTick();
+    const shown = document.body.querySelector("[data-test=lightbox-image]");
     expect(shown?.getAttribute("src")).toBe("/x/e.jpg");
     w.unmount();
   });

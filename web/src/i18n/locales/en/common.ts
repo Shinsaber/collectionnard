@@ -43,6 +43,19 @@ const en: typeof fr = {
     failed: "Barcode reading failed",
     nothingFound: "No readable barcode in this image.",
   },
+  // Full-screen viewer (v0.4.0 feedback)
+  viewer: {
+    title: "Image in full",
+    tools: "Viewer tools",
+    counter: "{n} / {total}",
+    zoomIn: "Zoom in",
+    zoomOut: "Zoom out",
+    fit: "Fit to screen",
+    rotateLeft: "Rotate left",
+    rotateRight: "Rotate right",
+    previous: "Previous image",
+    next: "Next image",
+  },
 };
 
 export default en;

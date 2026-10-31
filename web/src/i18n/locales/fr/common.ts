@@ -43,4 +43,17 @@ export default {
     failed: "Lecture du code-barres impossible",
     nothingFound: "Aucun code-barres lisible dans cette image.",
   },
+  // Visionneuse plein écran (retours v0.4.0)
+  viewer: {
+    title: "Image en grand",
+    tools: "Outils de la visionneuse",
+    counter: "{n} / {total}",
+    zoomIn: "Agrandir",
+    zoomOut: "Réduire",
+    fit: "Ajuster à l'écran",
+    rotateLeft: "Pivoter vers la gauche",
+    rotateRight: "Pivoter vers la droite",
+    previous: "Image précédente",
+    next: "Image suivante",
+  },
 };
