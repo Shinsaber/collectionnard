@@ -14,6 +14,14 @@ export const WARP_SOURCE_EDGE = 2500;
 /** Qualité JPEG des images réduites ou recadrées. */
 export const JPEG_QUALITY = 0.9;
 
+/** Types acceptés par le serveur (`POST /uploads`) ; tout autre format décodable est réencodé avant l'envoi. */
+export const UPLOAD_TYPES: ReadonlySet<string> = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+]);
+
 export interface Size {
   width: number;
   height: number;
@@ -93,7 +101,8 @@ export async function encodeImage(
 }
 
 /**
- * Photo gardée telle quelle : réduite à `max` px de côté si elle le dépasse (et réencodée),
+ * Photo gardée telle quelle : réduite à `max` px de côté si elle le dépasse (et réencodée), ou
+ * réencodée si son format n'est pas accepté par le serveur (HEIC, AVIF, BMP… décodables ici) ;
  * sinon rendue inchangée. Un fichier non décodable est rendu tel quel : le serveur tranchera.
  */
 export async function shrinkIfNeeded(
@@ -108,13 +117,26 @@ export async function shrinkIfNeeded(
     return file;
   }
   try {
-    if (Math.max(bmp.width, bmp.height) <= max) return file;
+    if (Math.max(bmp.width, bmp.height) <= max && UPLOAD_TYPES.has(file.type))
+      return file;
     const type = outputType(file.type);
     const blob = await encodeImage(bmp, type, max);
     return new File([blob], outputName(file.name, type), { type });
   } finally {
     bmp.close();
   }
+}
+
+/** Image courante d'un flux vidéo (prise de vue sans `ImageCapture`), en JPEG, sans réduction. */
+export function frameOf(video: HTMLVideoElement): Promise<Blob> {
+  const canvas = document.createElement("canvas");
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  if (!canvas.width || !canvas.height) throw new Error("no video frame");
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("canvas unavailable");
+  ctx.drawImage(video, 0, 0);
+  return canvasToBlob(canvas, "image/jpeg", JPEG_QUALITY);
 }
 
 // ── Pixels (redressement, lot M4) ──────────────────────────────────────

@@ -69,6 +69,18 @@ const en: typeof fr = {
     roughEdges: "Edges detected roughly: check the corners.",
     corner: "Corner {n}",
     straightenFailed: "Straightening failed",
+    // In-app camera (v0.4.0 feedback)
+    cameraTitle: "Photo – {category}",
+    cameraHint:
+      "Frame the cover, then shoot: it will be straightened and cropped next.",
+    shutter: "Take the photo",
+    nativeCamera: "Phone camera app",
+    cameraNone: "No camera reachable here: use the phone camera app.",
+    cameraDenied:
+      "Camera access denied: allow it in the browser, or use the phone camera app.",
+    captureFailed: "Could not take the photo",
+    convertOffer:
+      "Format {type} is not accepted as is: the image will be converted to JPEG on upload.",
   },
   builder: {
     empty: "No field defined. Click “Add a field” to start.",

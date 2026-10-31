@@ -51,14 +51,16 @@
           </button>
         </div>
 
-        <!-- Ajout depuis un fichier (ou la galerie du téléphone) : tuile au format de la catégorie. -->
+        <!-- Ajout depuis un fichier ou la galerie du téléphone : `image/*` pour qu'Android propose
+             ses photos et non le seul gestionnaire de fichiers ; un format non accepté par le
+             serveur (HEIC…) mais décodable ici est converti par le recadrage. -->
         <input
           :ref="(el) => setInput(cat.name, 'file', el)"
           type="file"
-          accept="image/jpeg,image/png,image/gif,image/webp"
+          accept="image/*"
           class="hidden"
           :aria-label="t('schema.gallery.file', { category: cat.name })"
-          @change="onFile(cat, $event, false)"
+          @change="onFile(cat, $event)"
         />
         <button
           type="button"
@@ -75,7 +77,8 @@
           {{ t("common.add") }}
         </button>
 
-        <!-- Photo (lot M1, écrans tactiles) : appareil photo arrière, puis recadrage au ratio. -->
+        <!-- Photo (lot M1, écrans tactiles) : caméra dans l'application (CameraCaptureDialog), ou
+             l'appareil du téléphone quand getUserMedia manque ; puis redressement et recadrage. -->
         <template v-if="coarsePointer">
           <input
             :ref="(el) => setInput(cat.name, 'camera', el)"
@@ -84,7 +87,7 @@
             capture="environment"
             class="hidden"
             :aria-label="t('schema.gallery.photoLabel', { category: cat.name })"
-            @change="onFile(cat, $event, true)"
+            @change="onNativePhoto(cat, $event)"
           />
           <button
             type="button"
@@ -92,7 +95,7 @@
             :style="{ aspectRatio: cat.ratio || '1/1' }"
             :disabled="uploading[cat.name] ?? false"
             data-test="gallery-photo"
-            @click="inputs[`${cat.name}/camera`]?.click()"
+            @click="openCamera(cat)"
           >
             <i class="pi pi-camera text-base" aria-hidden="true"></i>
             {{ t("schema.gallery.photo") }}
@@ -101,6 +104,12 @@
       </div>
     </div>
 
+    <CameraCaptureDialog
+      v-if="cameraCategory"
+      v-model:visible="cameraVisible"
+      :category="cameraCategory.name"
+      @done="(file) => openCrop(cameraCategory!, file, undefined, true)"
+    />
     <ImageCropDialog
       v-model:visible="cropVisible"
       :file="cropFile"
@@ -123,10 +132,13 @@ import {
   useMediaQuery,
 } from "@/composables/useMediaQuery";
 import { checkImage, type ImageCategory, type ImageIssue } from "@/lib/schema";
-import { imageSize, type Size } from "@/lib/images";
-// cropperjs n'est chargé qu'au premier recadrage (hors du paquet de DynamicForm).
+import { imageSize, UPLOAD_TYPES, type Size } from "@/lib/images";
+// cropperjs et la caméra ne sont chargés qu'au premier usage (hors du paquet de DynamicForm).
 const ImageCropDialog = defineAsyncComponent(
   () => import("./ImageCropDialog.vue"),
+);
+const CameraCaptureDialog = defineAsyncComponent(
+  () => import("./CameraCaptureDialog.vue"),
 );
 
 // Widget `x-widget: image-gallery` : un tableau d'URLs par catégorie
@@ -173,6 +185,25 @@ function removeImage(cat: string, imgIdx: number) {
   emit("update:modelValue", next);
 }
 
+// ── Prise de vue ─────────────────────────────────────────────────────
+const cameraVisible = ref(false);
+const cameraCategory = ref<ImageCategory | null>(null);
+
+/** Caméra dans l'application si le navigateur l'offre, sinon l'appareil du téléphone. */
+function openCamera(cat: ImageCategory) {
+  if (typeof navigator.mediaDevices?.getUserMedia === "function") {
+    cameraCategory.value = cat;
+    cameraVisible.value = true;
+  } else {
+    inputs.value[`${cat.name}/camera`]?.click();
+  }
+}
+
+function onNativePhoto(cat: ImageCategory, event: Event) {
+  const file = takeFile(event);
+  if (file) openCrop(cat, file, undefined, true);
+}
+
 // ── Recadrage ────────────────────────────────────────────────────────
 const cropVisible = ref(false);
 const cropFile = ref<File | null>(null);
@@ -210,13 +241,22 @@ async function onCropped(file: File) {
 }
 
 // ── Envoi ────────────────────────────────────────────────────────────
-async function onFile(cat: ImageCategory, event: Event, fromCamera: boolean) {
+function takeFile(event: Event): File | undefined {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
   input.value = "";
+  return file;
+}
+
+async function onFile(cat: ImageCategory, event: Event) {
+  const file = takeFile(event);
   if (!file) return;
-  if (fromCamera) {
-    openCrop(cat, file, undefined, true);
+  if (!UPLOAD_TYPES.has(file.type)) {
+    openCrop(
+      cat,
+      file,
+      t("schema.gallery.convertOffer", { type: file.type || "?" }),
+    );
     return;
   }
   const size = await imageSize(file);

@@ -68,6 +68,19 @@ export default {
     roughEdges: "Bords détectés approximativement : vérifiez les coins.",
     corner: "Coin {n}",
     straightenFailed: "Redressement impossible",
+    // Prise de vue dans l'application (retours v0.4.0)
+    cameraTitle: "Photo – {category}",
+    cameraHint:
+      "Cadrez la couverture, puis déclenchez : elle sera ensuite redressée et recadrée.",
+    shutter: "Prendre la photo",
+    nativeCamera: "Appareil photo du téléphone",
+    cameraNone:
+      "Aucune caméra accessible ici : utilisez l'appareil photo du téléphone.",
+    cameraDenied:
+      "Accès à la caméra refusé : autorisez-le dans le navigateur, ou utilisez l'appareil photo du téléphone.",
+    captureFailed: "Prise de vue impossible",
+    convertOffer:
+      "Format {type} non accepté tel quel : l'image sera convertie en JPEG à l'envoi.",
   },
   builder: {
     empty:
