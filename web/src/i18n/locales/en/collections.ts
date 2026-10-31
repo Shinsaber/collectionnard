@@ -21,10 +21,10 @@ const en: typeof fr = {
     allTypes: "All types",
     filterByType: "Filter by collection type",
     empty: "No collections yet. Create one to get started!",
-    editTitle: "Edit collection",
     collectionType: "Collection type",
     choose: "Choose…",
     namePlaceholder: "My collection of…",
+    unit: "item | item | items",
     created: "Collection created",
   },
   detail: {

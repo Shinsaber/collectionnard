@@ -21,10 +21,10 @@ export default {
     allTypes: "Tous les types",
     filterByType: "Filtrer par type de collection",
     empty: "Aucune collection. Créez-en une pour commencer !",
-    editTitle: "Modifier la collection",
     collectionType: "Type de collection",
     choose: "Choisir…",
     namePlaceholder: "Ma collection de…",
+    unit: "item | item | items",
     created: "Collection créée",
   },
   detail: {

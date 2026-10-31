@@ -39,7 +39,8 @@
 
     <AppSpinner v-if="pag.loading.value" />
 
-    <!-- Cartes : le titre est un lien étendu à toute la carte ; les actions restent cliquables. -->
+    <!-- Cartes : le titre est un lien étendu à toute la carte ; modifier et supprimer sont dans la page
+         de la collection, la place libérée va au compteur d'items (retours v0.4.0). -->
     <ul
       v-else-if="pag.data.value.length"
       class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
@@ -65,13 +66,22 @@
               col.collection_type ? typeTitle(col.collection_type, lang) : "?"
             }}</span>
           </div>
-          <span class="shrink-0 font-mono text-[13px]">{{
-            col.item_count
-          }}</span>
         </div>
         <p v-if="col.description" class="line-clamp-2 text-sm text-muted">
           {{ col.description }}
         </p>
+        <div
+          class="mt-auto flex items-baseline justify-end gap-1.5"
+          data-test="collection-count"
+        >
+          <span class="font-mono text-2xl font-bold leading-none text-ink">{{
+            col.item_count
+          }}</span>
+          <span
+            class="font-mono text-[11px] uppercase tracking-wider text-muted"
+            >{{ t("collections.list.unit", col.item_count) }}</span
+          >
+        </div>
       </li>
     </ul>
 
