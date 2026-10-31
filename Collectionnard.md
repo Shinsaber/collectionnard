@@ -484,6 +484,9 @@ barcode-detector / zxing-wasm (MIT, `.wasm` servi localement) pour les codes-bar
       contrasté), quatre coins ajustables, homographie en JavaScript pur (sans OpenCV) ; étape avant le recadrage.
 - [x] **M5 — Photos de l'état d'un exemplaire** : propriété `photos` (galerie, ratio 3/4) du type « Possession »
       (paquet `collections` v3) ; vignettes dans les collections, la fiche d'un item et les pages publiques.
+- [x] **Retours de la v0.4.0** (essais sur téléphone, `mobile.md`) : prise de vue dans l'application (caméra dans la
+      page, `ImageCapture`, repli sur l'appareil du téléphone), loupe et prise élargie des coins au redressement,
+      rotation à l'étape de redressement, visionneuse plein écran (couverture, onglet « Images », vignettes).
 - [ ] Plus tard (voir `mobile.md`) : recadrage d'une image déjà en galerie, OCR, QR code des liens de partage, scan
       d'étagère.
 

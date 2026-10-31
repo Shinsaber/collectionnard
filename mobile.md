@@ -8,7 +8,9 @@ Raffinage du 2026-10-25, branche `phase5-mobile`, un commit par lot. Les lots et
 | Sujet            | Décision |
 | ---------------- | -------- |
 | Support          | **L'application installable (PWA) existante**, pas d'application native : l'appareil photo et le scanner passent par les API du navigateur (`<input capture>`, `getUserMedia`, `BarcodeDetector`). Rien à publier sur un store, une seule base de code. |
-| Recadrage        | **cropperjs 2** (MIT, composants web, gestes tactiles) ; cadre contraint au ratio de la catégorie (`x-image-categories`), rotation par quarts de tour, image déplaçable et zoomable. Pas de correction de perspective (voir « Plus tard »). |
+| Recadrage        | **cropperjs 2** (MIT, composants web, gestes tactiles) ; cadre contraint au ratio de la catégorie (`x-image-categories`), rotation par quarts de tour, image déplaçable et zoomable. Correction de perspective en amont (M4, JavaScript pur). |
+| Prise de vue     | **Dans l'application** (`getUserMedia` + `ImageCapture.takePhoto` quand il existe) plutôt que `<input capture>` : sur Android, ce dernier peut n'ouvrir que le gestionnaire de fichiers (retour v0.4.0). L'appareil du téléphone reste proposé en repli. |
+| Images en grand  | Visionneuse d'Element Plus (`ElImageViewer` : zoom, rotation, suivante / précédente), pas de dépendance supplémentaire. |
 | Lecture des codes | **`BarcodeDetector` natif** quand le navigateur l'offre (Chrome Android), sinon le ponyfill **barcode-detector** (MIT) sur **zxing-wasm** (MIT). Le `.wasm` (≈ 0,9 Mo) est servi par l'application elle-même (jamais depuis un CDN) et précaché par le service worker : le scanner marche aussi hors ligne. |
 | Taille des photos | Réduites dans le navigateur à **2000 px** de côté (JPEG qualité 0,9 ; le PNG garde sa transparence) : une couverture n'a pas besoin de 12 Mpx, et `MAX_UPLOAD_SIZE` (10 Mo) n'est plus atteint. |
 | Où scanner       | Partout où l'on saisit ou cherche un code : recherche du catalogue, ajout à une collection, consultation hors ligne, champ `x-identifier` d'un formulaire, recherche d'éditions dans les sources externes ; plus une page « Scanner » dédiée au geste « je suis en boutique, est-ce que je l'ai déjà ? ». |
@@ -123,3 +125,30 @@ Raffinage du 2026-10-25, branche `phase5-mobile`, un commit par lot. Les lots et
   mobile ; donc aussi pages publiques et liens de partage) et `ItemCollectionsCard` (onglet « Dans vos collections »).
 - Rien de métier : tout `CollectionType` portant une propriété `image-gallery` a le même rendu ; l'envoi d'images est
   déjà ouvert à tout compte connecté et la purge garde les images référencées par `collection_items`.
+
+## Retours de la v0.4.0 (essais sur téléphone, 2026-10-31)
+
+Branche `retours-mobile`. Quatre retours du mainteneur après une version de test sur Android.
+
+- **Le sélecteur photo n'ouvrait que le gestionnaire de fichiers.** `<input type="file" capture="environment">` est
+  laissé au navigateur, qui sur certains Android (application installée, permission caméra non déléguée) ignore `capture`.
+  La tuile « Photo » ouvre désormais `components/common/CameraCaptureDialog.vue` : caméra arrière dans la page
+  (`composables/useCamera.ts`, partagé avec le scanner : démarrage, lampe torche, arrêt), « Prendre la photo » via
+  `ImageCapture.takePhoto()` (pleine résolution, Chrome Android) sinon l'image vidéo courante (`lib/images.ts`
+  `frameOf`, aperçu demandé en 2048 × 1536) ; puis redressement et recadrage comme avant. Le bouton « Appareil photo du
+  téléphone » garde l'ancien chemin (et c'est le seul quand `getUserMedia` manque ou que l'accès est refusé). La tuile
+  « Ajouter » accepte `image/*` (Android propose alors ses photos) ; un format non accepté par le serveur mais décodable
+  par le navigateur (HEIC sur iPhone, AVIF…) passe par le recadrage et ressort en JPEG (`UPLOAD_TYPES`, « Sans
+  recadrage » réencode aussi).
+- **Le doigt cache le coin dans l'outil de redressement.** Chaque coin a une zone de prise invisible 2,6 fois plus
+  large que la poignée (plus grande elle aussi) et, pendant le déplacement, une **loupe** (128 px, grossissement ×3)
+  montre le voisinage du coin avec le polygone et une croisée, dans l'angle supérieur gauche de la scène ou à droite
+  quand le coin s'y trouve. Le point reste donc visible et précis sans déporter la poignée.
+- **Tourner la photo avant de recadrer.** Les boutons de rotation par quarts de tour existaient à l'étape de recadrage
+  ; ils sont ajoutés à l'étape de redressement : l'image est redessinée tournée (bitmap et aperçu remplacés) et les
+  coins suivent (`lib/perspective.ts` `rotateQuad`), sans relancer la détection.
+- **Voir les images en grand.** `components/common/ImageLightbox.vue` (ElImageViewer : zoom, rotation, précédente /
+  suivante, fermeture au clic hors image) ouvert depuis la couverture de la fiche (toutes les images de la fiche, la
+  couverture en premier), l'onglet « Images » (les images de la catégorie) et les vignettes `GalleryThumbs` (toute la
+  galerie, « +n » ouvre la première image cachée). Dans le formulaire d'édition, le clic garde son rôle : choisir
+  l'image par défaut.

@@ -1,17 +1,18 @@
 <template>
-  <!-- Vignettes d'une galerie (photos d'un exemplaire, lot M5) : les premières, puis « +n ». -->
+  <!-- Vignettes d'une galerie (photos d'un exemplaire, lot M5) : les premières, puis « +n » ;
+       chacune ouvre la visionneuse sur toute la galerie. -->
   <div
     v-if="urls.length"
     class="flex flex-wrap items-center gap-1.5"
     data-test="gallery-thumbs"
   >
-    <a
+    <button
       v-for="(url, i) in shown"
       :key="url"
-      :href="url"
-      target="_blank"
-      rel="noopener noreferrer"
+      type="button"
       class="block overflow-hidden rounded-md shadow-cover"
+      :aria-label="t('common.enlarge', { name: `${label} ${i + 1}` })"
+      @click.stop="open(i)"
     >
       <img
         :src="thumb(url)"
@@ -23,15 +24,30 @@
         }"
         loading="lazy"
       />
-    </a>
-    <span v-if="urls.length > shown.length" class="font-mono text-xs text-muted"
-      >+{{ urls.length - shown.length }}</span
+    </button>
+    <button
+      v-if="urls.length > shown.length"
+      type="button"
+      class="font-mono text-xs text-muted"
+      :aria-label="
+        t('common.enlarge', { name: `${label} ${shown.length + 1}` })
+      "
+      @click.stop="open(shown.length)"
     >
+      +{{ urls.length - shown.length }}
+    </button>
+    <ImageLightbox
+      v-model:visible="viewerOpen"
+      :urls="urls"
+      :index="viewerIndex"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
+import { useI18n } from "vue-i18n";
+import ImageLightbox from "./ImageLightbox.vue";
 
 const props = withDefaults(
   defineProps<{
@@ -46,7 +62,15 @@ const props = withDefaults(
   { size: 40, max: 4 },
 );
 
+const { t } = useI18n();
 const shown = computed(() => props.urls.slice(0, props.max));
+const viewerOpen = ref(false);
+const viewerIndex = ref(0);
+
+function open(i: number) {
+  viewerIndex.value = i;
+  viewerOpen.value = true;
+}
 
 /** Vignette servie par le serveur pour les envois ; image telle quelle sinon. */
 function thumb(url: string): string {

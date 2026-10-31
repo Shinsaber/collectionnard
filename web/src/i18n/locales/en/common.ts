@@ -25,6 +25,7 @@ const en: typeof fr = {
   created: "Created",
   updated: "Updated",
   deleted: "Deleted",
+  enlarge: "Enlarge: {name}",
   // Barcode scanner (lot M2)
   scan: {
     button: "Scan a barcode",
