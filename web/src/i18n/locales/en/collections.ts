@@ -25,14 +25,20 @@ const en: typeof fr = {
     collectionType: "Collection type",
     choose: "Choose…",
     namePlaceholder: "My collection of…",
-    updated: "Collection updated",
     created: "Collection created",
-    deleted: "Collection deleted",
-    confirmDelete:
-      "Delete the collection “{name}”? Its items will not be deleted.",
   },
   detail: {
     backToList: "Back to collections",
+    // "More" menu (v0.4.0 feedback): export, edit, delete
+    more: "More",
+    moreActions: "More actions on the collection",
+    exportFormat: "Export as {format}",
+    editTitle: "Edit collection",
+    delete: "Delete collection",
+    updated: "Collection updated",
+    deleted: "Collection deleted",
+    confirmDelete:
+      "Delete the collection “{name}”? Its items will not be deleted.",
     addItem: "Add an item",
     item: "Item",
     contextAttributes: "Contextual attributes",

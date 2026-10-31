@@ -72,25 +72,6 @@
         <p v-if="col.description" class="line-clamp-2 text-sm text-muted">
           {{ col.description }}
         </p>
-        <div class="relative z-10 mt-auto flex justify-end gap-1">
-          <ElButton
-            text
-            circle
-            :aria-label="`${t('common.edit')} : ${col.name}`"
-            @click="openEdit(col)"
-          >
-            <i class="pi pi-pencil" aria-hidden="true"></i>
-          </ElButton>
-          <ElButton
-            text
-            circle
-            type="danger"
-            :aria-label="`${t('common.delete')} : ${col.name}`"
-            @click="confirmDelete(col)"
-          >
-            <i class="pi pi-trash" aria-hidden="true"></i>
-          </ElButton>
-        </div>
       </li>
     </ul>
 
@@ -106,12 +87,10 @@
       </ElButton>
     </div>
 
-    <!-- Create / Edit Dialog -->
+    <!-- Création (la modification et la suppression sont dans la page de la collection, retours v0.4.0) -->
     <ElDialog
       v-model="dialogVisible"
-      :title="
-        editing ? t('collections.list.editTitle') : t('collections.list.new')
-      "
+      :title="t('collections.list.new')"
       width="28rem"
     >
       <div class="flex flex-col gap-4">
@@ -123,7 +102,6 @@
             id="col-type"
             v-model="form.collection_type_id"
             :placeholder="t('collections.list.choose')"
-            :disabled="!!editing"
           >
             <ElOption
               v-for="ct in collectionTypes"
@@ -159,14 +137,9 @@
         <ElButton text @click="dialogVisible = false">{{
           t("common.cancel")
         }}</ElButton>
-        <ElButton
-          type="primary"
-          :loading="saving"
-          :disabled="!!editing && !dirty"
-          @click="save"
-        >
+        <ElButton type="primary" :loading="saving" @click="save">
           <i class="pi pi-check mr-2" aria-hidden="true"></i>
-          {{ editing ? t("common.save") : t("common.create") }}
+          {{ t("common.create") }}
         </ElButton>
       </template>
     </ElDialog>
@@ -185,34 +158,27 @@ import { useRouter } from "vue-router";
 import { collectionApi } from "@/api/client";
 import { usePagination } from "@/composables/usePagination";
 import { useLang } from "@/composables/useLang";
-import { useDirty } from "@/composables/useDirty";
 import { useNotify } from "@/composables/useNotify";
-import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import { useMetaTypes } from "@/stores/metaTypes";
 import { typeTitle } from "@/lib/schema";
 import AppSpinner from "@/components/common/AppSpinner.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
 import NavIcon from "@/components/layout/NavIcon.vue";
 import CollectionImportDialog from "@/components/collection/CollectionImportDialog.vue";
-import type { Collection } from "@/api/types";
 
 const router = useRouter();
 const importVisible = ref(false);
 const { t } = useI18n();
 const { lang } = useLang();
 const { notifyError, notifySuccess } = useNotify();
-const { confirm } = useConfirmDialog();
 const pag = usePagination(collectionApi.list);
 const metaTypes = useMetaTypes();
 const collectionTypes = computed(() => metaTypes.collectionTypes);
 const filterTypeId = ref<string>();
 
 const dialogVisible = ref(false);
-const editing = ref<Collection | null>(null);
 const saving = ref(false);
 const form = ref({ collection_type_id: "", name: "", description: "" });
-// En modification, « Enregistrer » reste grisé tant que rien n'a changé.
-const { dirty, markClean } = useDirty(() => form.value);
 
 onMounted(async () => {
   await metaTypes
@@ -229,57 +195,21 @@ function reload() {
 }
 
 function openCreate() {
-  editing.value = null;
   form.value = { collection_type_id: "", name: "", description: "" };
-  dialogVisible.value = true;
-}
-
-function openEdit(col: Collection) {
-  editing.value = col;
-  form.value = {
-    collection_type_id: col.collection_type_id,
-    name: col.name,
-    description: col.description ?? "",
-  };
-  markClean();
   dialogVisible.value = true;
 }
 
 async function save() {
   saving.value = true;
   try {
-    if (editing.value) {
-      await collectionApi.update(editing.value.id, {
-        name: form.value.name,
-        description: form.value.description,
-      });
-      notifySuccess(t("collections.list.updated"));
-    } else {
-      await collectionApi.create(form.value);
-      notifySuccess(t("collections.list.created"));
-    }
+    await collectionApi.create(form.value);
+    notifySuccess(t("collections.list.created"));
     dialogVisible.value = false;
     reload();
   } catch (e) {
     notifyError(e);
   } finally {
     saving.value = false;
-  }
-}
-
-async function confirmDelete(col: Collection) {
-  const ok = await confirm({
-    message: t("collections.list.confirmDelete", { name: col.name }),
-    confirmText: t("common.delete"),
-    danger: true,
-  });
-  if (!ok) return;
-  try {
-    await collectionApi.delete(col.id);
-    notifySuccess(t("collections.list.deleted"));
-    reload();
-  } catch (e) {
-    notifyError(e);
   }
 }
 </script>

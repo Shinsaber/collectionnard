@@ -25,14 +25,20 @@ export default {
     collectionType: "Type de collection",
     choose: "Choisir…",
     namePlaceholder: "Ma collection de…",
-    updated: "Collection modifiée",
     created: "Collection créée",
-    deleted: "Collection supprimée",
-    confirmDelete:
-      "Supprimer la collection « {name} » ? Les items ne seront pas supprimés.",
   },
   detail: {
     backToList: "Retour aux collections",
+    // Menu « Plus » (retours v0.4.0) : export, modification, suppression
+    more: "Plus",
+    moreActions: "Autres actions sur la collection",
+    exportFormat: "Exporter en {format}",
+    editTitle: "Modifier la collection",
+    delete: "Supprimer la collection",
+    updated: "Collection modifiée",
+    deleted: "Collection supprimée",
+    confirmDelete:
+      "Supprimer la collection « {name} » ? Les items ne seront pas supprimés.",
     addItem: "Ajouter un item",
     item: "Item",
     contextAttributes: "Attributs contextuels",

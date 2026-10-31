@@ -35,12 +35,6 @@
           ></i>
           {{ t("sharing.share.button") }}
         </ElButton>
-        <ExportButton
-          :label="t('collections.detail.export')"
-          :formats="['json', 'csv']"
-          :run="exportCollection"
-          :error-summary="t('collections.detail.exportFailed')"
-        />
         <ElButton
           type="primary"
           class="max-md:hidden!"
@@ -49,6 +43,12 @@
           <i class="pi pi-plus mr-2" aria-hidden="true"></i>
           {{ t("collections.detail.addItem") }}
         </ElButton>
+        <!-- Export, modification et suppression regroupés (retours v0.4.0). -->
+        <CollectionMoreMenu
+          :export-run="exportCollection"
+          @edit="openEditCollection"
+          @delete="confirmDeleteCollection"
+        />
       </template>
     </PageHeader>
 
@@ -105,6 +105,52 @@
       @added="afterChange"
     />
 
+    <!-- Nom et description de la collection (le type ne change pas). -->
+    <ElDialog
+      v-model="colDialogVisible"
+      :title="t('collections.detail.editTitle')"
+      width="28rem"
+    >
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-1">
+          <label for="col-name" class="text-sm font-medium">{{
+            t("common.name")
+          }}</label>
+          <ElInput
+            id="col-name"
+            v-model="colForm.name"
+            :placeholder="t('collections.list.namePlaceholder')"
+          />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label for="col-desc" class="text-sm font-medium">{{
+            t("common.description")
+          }}</label>
+          <ElInput
+            id="col-desc"
+            v-model="colForm.description"
+            type="textarea"
+            :rows="2"
+          />
+        </div>
+      </div>
+      <template #footer>
+        <ElButton text @click="colDialogVisible = false">{{
+          t("common.cancel")
+        }}</ElButton>
+        <ElButton
+          type="primary"
+          :loading="saving"
+          :disabled="!colDirty || !colForm.name.trim()"
+          data-test="collection-save"
+          @click="saveCollection"
+        >
+          <i class="pi pi-check mr-2" aria-hidden="true"></i>
+          {{ t("common.save") }}
+        </ElButton>
+      </template>
+    </ElDialog>
+
     <!-- Edit item attributes dialog -->
     <ElDialog
       v-model="editDialogVisible"
@@ -138,6 +184,7 @@
 <script setup lang="ts">
 import { ref, computed, defineAsyncComponent, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
+import { useRouter } from "vue-router";
 import { collectionApi, importExportApi, statsApi } from "@/api/client";
 import { usePagination } from "@/composables/usePagination";
 import { useLang } from "@/composables/useLang";
@@ -149,9 +196,8 @@ import { itemLabel, typeTitle, type Schema } from "@/lib/schema";
 import AppSpinner from "@/components/common/AppSpinner.vue";
 import DynamicForm from "@/components/common/DynamicForm.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
-import ExportButton, {
-  type ExportFormat,
-} from "@/components/common/ExportButton.vue";
+import type { ExportFormat } from "@/components/common/ExportButton.vue";
+import CollectionMoreMenu from "@/components/collection/CollectionMoreMenu.vue";
 import CollectionAddItemDialog from "@/components/collection/CollectionAddItemDialog.vue";
 import CollectionItemList from "@/components/collection/CollectionItemList.vue";
 import CollectionShareDialog from "@/components/sharing/CollectionShareDialog.vue";
@@ -165,6 +211,7 @@ const CollectionStatsPanel = defineAsyncComponent(
 
 const props = defineProps<{ id: string }>();
 const { t } = useI18n();
+const router = useRouter();
 const { lang } = useLang();
 const { notifyError, notifySuccess } = useNotify();
 const { confirm } = useConfirmDialog();
@@ -205,6 +252,58 @@ const editFormRef = ref<InstanceType<typeof DynamicForm> | null>(null);
 const { dirty: editDirty, markClean: markEditClean } = useDirty(
   () => editAttributes.value,
 );
+
+// ── Collection elle-même : nom et description, suppression (menu « Plus ») ──
+const colDialogVisible = ref(false);
+const colForm = ref({ name: "", description: "" });
+const { dirty: colDirty, markClean: markColClean } = useDirty(
+  () => colForm.value,
+);
+
+function openEditCollection() {
+  if (!collection.value) return;
+  colForm.value = {
+    name: collection.value.name,
+    description: collection.value.description ?? "",
+  };
+  markColClean();
+  colDialogVisible.value = true;
+}
+
+async function saveCollection() {
+  saving.value = true;
+  try {
+    collection.value = await collectionApi.update(props.id, {
+      name: colForm.value.name.trim(),
+      description: colForm.value.description,
+    });
+    notifySuccess(t("collections.detail.updated"));
+    colDialogVisible.value = false;
+  } catch (e) {
+    notifyError(e);
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function confirmDeleteCollection() {
+  if (!collection.value) return;
+  const ok = await confirm({
+    message: t("collections.detail.confirmDelete", {
+      name: collection.value.name,
+    }),
+    confirmText: t("common.delete"),
+    danger: true,
+  });
+  if (!ok) return;
+  try {
+    await collectionApi.delete(props.id);
+    notifySuccess(t("collections.detail.deleted"));
+    await router.push("/collections");
+  } catch (e) {
+    notifyError(e);
+  }
+}
 
 onMounted(async () => {
   try {
