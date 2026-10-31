@@ -10,6 +10,9 @@ import App from "./App.vue";
 import router from "./router";
 import { i18n } from "./i18n";
 import { setupPwa } from "./pwa";
+// Thème mémorisé (ou du système) posé dès le démarrage : les pages publiques, sans carte
+// utilisateur, l'oubliaient au rechargement (retours v0.4.0).
+import "./composables/useTheme";
 
 const app = createApp(App);
 

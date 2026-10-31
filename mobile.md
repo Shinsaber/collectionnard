@@ -152,3 +152,23 @@ Branche `retours-mobile`. Quatre retours du mainteneur après une version de tes
   couverture en premier), l'onglet « Images » (les images de la catégorie) et les vignettes `GalleryThumbs` (toute la
   galerie, « +n » ouvre la première image cachée). Dans le formulaire d'édition, le clic garde son rôle : choisir
   l'image par défaut.
+
+### Seconde série (même jour)
+
+- **Relations d'une fiche** : vignette de l'item lié (`ItemCover`, image par défaut sinon initiales) devant le libellé ;
+  modifier et supprimer regroupés dans un menu « ⋮ » par ligne (deux boutons tenaient trop de place sur mobile), la
+  flèche des sous-relations reste seule à côté.
+- **Visionneuse** : la barre d'Element Plus héritait de nos variables sombres (boutons clairs à icônes claires) et rien ne
+  bornait le déplacement. Remplacée par une visionneuse maison (`components/common/ImageLightbox.vue`, géométrie testée
+  dans `lib/lightbox.ts`) : fond noir profond et commandes sombres dans les deux thèmes, pincer ou molette pour zoomer
+  autour du point visé (×1 à ×6), double-tap ajusté / ×2,5, déplacement **borné** (les bords de l'image ne rentrent
+  jamais dans l'écran ; une image qui tient reste centrée), balayage horizontal pour l'image voisine, rotation par
+  quarts de tour, clavier (Échap, flèches, +, −, 0), compteur « 2 / 5 », fermeture au tap hors image.
+- **Mes collections** : les cartes de la liste n'ont plus modifier / supprimer ; la page d'une collection gagne un menu
+  « Plus » (`components/collection/CollectionMoreMenu.vue`) avec Exporter en JSON / CSV, Modifier la collection (nom,
+  description) et Supprimer (confirmation, retour à la liste). En-tête : Partager + Plus (+ Ajouter sur bureau ; sur
+  mobile le bouton d'ajout reste en bas de page).
+- **Mode sombre oublié sur les pages publiques** (`/u/…`, `/c/…`, `/share/…`) : le thème n'était appliqué qu'au
+  chargement du composable par la carte utilisateur, absente de la coquille publique. `main.ts` importe `useTheme` dès
+  le démarrage ; et une bascule clair / sombre (`layout/ThemeToggle.vue`) rejoint le sélecteur de langue de l'en-tête
+  public, pour les visiteurs sans compte.
