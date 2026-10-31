@@ -98,6 +98,7 @@ export default {
     collapse: "Replier les sous-relations",
     editRelation: "Modifier la relation",
     deleteRelation: "Supprimer la relation",
+    moreActions: "Actions sur la relation",
     noSubRelations: "Aucune sous-relation sortante.",
     subRelationsUnavailable: "Sous-relations indisponibles",
     inCollections: "Dans {n} collection | Dans {n} collections",

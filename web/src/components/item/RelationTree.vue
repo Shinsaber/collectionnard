@@ -66,6 +66,14 @@
               >#{{ orderVal(rel) }}</span
             >
 
+            <!-- Vignette de l'item lié (retours v0.4.0) : image par défaut, sinon initiales. -->
+            <ItemCover
+              v-if="linkedItem(rel)"
+              :item="linkedItem(rel)!"
+              :label="linkedLabel(rel)"
+              :width="30"
+            />
+
             <div class="flex min-w-0 flex-1 flex-col">
               <RouterLink
                 :to="`/items/${linkedId(rel)}`"
@@ -123,29 +131,37 @@
                   aria-hidden="true"
                 ></i>
               </ElButton>
-              <ElButton
+              <!-- Modifier et supprimer dans un menu (retours v0.4.0) : deux boutons tenaient trop de place sur mobile. -->
+              <ElDropdown
                 v-if="showDelete"
-                text
-                circle
-                :title="t('common.edit')"
-                :aria-label="t('items.relations.editRelation')"
-                class="transition-opacity lg:opacity-0 lg:group-hover/rel:opacity-100 lg:focus:opacity-100"
-                @click.stop="$emit('edit', rel)"
+                trigger="click"
+                class="self-center"
+                @command="
+                  (cmd: 'edit' | 'delete') =>
+                    cmd === 'edit' ? $emit('edit', rel) : $emit('delete', rel)
+                "
               >
-                <i class="pi pi-pencil" aria-hidden="true"></i>
-              </ElButton>
-              <ElButton
-                v-if="showDelete"
-                text
-                circle
-                type="danger"
-                :title="t('common.delete')"
-                :aria-label="t('items.relations.deleteRelation')"
-                class="transition-opacity lg:opacity-0 lg:group-hover/rel:opacity-100 lg:focus:opacity-100"
-                @click.stop="$emit('delete', rel)"
-              >
-                <i class="pi pi-trash" aria-hidden="true"></i>
-              </ElButton>
+                <button
+                  type="button"
+                  class="flex size-8 items-center justify-center rounded-md text-muted hover:bg-soft hover:text-ink"
+                  :aria-label="t('items.relations.moreActions')"
+                  data-test="relation-more"
+                >
+                  <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
+                </button>
+                <template #dropdown>
+                  <ElDropdownMenu>
+                    <ElDropdownItem command="edit">
+                      <i class="pi pi-pencil mr-2" aria-hidden="true"></i>
+                      {{ t("items.relations.editRelation") }}
+                    </ElDropdownItem>
+                    <ElDropdownItem command="delete" class="text-danger!">
+                      <i class="pi pi-trash mr-2" aria-hidden="true"></i>
+                      {{ t("items.relations.deleteRelation") }}
+                    </ElDropdownItem>
+                  </ElDropdownMenu>
+                </template>
+              </ElDropdown>
             </div>
           </div>
 
@@ -193,6 +209,7 @@ import {
   typeTitle,
   type Schema,
 } from "@/lib/schema";
+import ItemCover from "./ItemCover.vue";
 import RelationCollectionsBadge from "./RelationCollectionsBadge.vue";
 import type { RelatedCollection, Item, ItemRelation } from "@/api/types";
 
@@ -247,6 +264,10 @@ function isOutgoing(rel: ItemRelation): boolean {
 
 function linkedId(rel: ItemRelation): string {
   return isOutgoing(rel) ? rel.target_item_id : rel.source_item_id;
+}
+
+function linkedItem(rel: ItemRelation): Item | undefined {
+  return isOutgoing(rel) ? rel.target_item : rel.source_item;
 }
 
 function linkedTypeName(rel: ItemRelation): string {
