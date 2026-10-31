@@ -9,6 +9,7 @@ import {
   otsu,
   polygonArea,
   quadOutputSize,
+  rotateQuad,
   scaleQuad,
   warpPerspective,
   type Point,
@@ -237,5 +238,32 @@ describe("homography / warpPerspective", () => {
       4,
     );
     expect(Array.from(outside.data.slice(0, 4))).toEqual([255, 255, 255, 255]);
+  });
+});
+
+describe("rotateQuad", () => {
+  it("un quart de tour horaire : l'image entière reste l'image entière, dans l'ordre", () => {
+    expect(rotateQuad(fullQuad(100, 50), 100, 50, 1)).toEqual(
+      fullQuad(50, 100),
+    );
+    expect(rotateQuad(fullQuad(100, 50), 100, 50, -1)).toEqual(
+      fullQuad(50, 100),
+    );
+  });
+
+  it("tourne les coins avec l'image et revient au départ après quatre quarts", () => {
+    const q: Quad = [
+      { x: 10, y: 5 },
+      { x: 90, y: 8 },
+      { x: 85, y: 45 },
+      { x: 12, y: 40 },
+    ];
+    // Horaire : l'ancien bas-gauche (12, 40) devient le haut-gauche (50 − 40, 12).
+    const once = rotateQuad(q, 100, 50, 1);
+    expect(once[0]).toEqual({ x: 10, y: 12 });
+    expect(once[1]).toEqual({ x: 45, y: 10 });
+    expect(rotateQuad(once, 50, 100, 3)).toEqual(q);
+    expect(rotateQuad(q, 100, 50, 4)).toEqual(q);
+    expect(rotateQuad(q, 100, 50, -1)).toEqual(rotateQuad(q, 100, 50, 3));
   });
 });

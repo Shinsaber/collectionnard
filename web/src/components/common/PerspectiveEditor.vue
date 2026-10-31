@@ -3,7 +3,8 @@
     Redressement d'une couverture photographiée de biais (lot M4) : quatre coins posés sur la photo
     (détectés automatiquement quand le fond contraste, sinon l'image entière), déplaçables au doigt,
     à la souris ou au clavier ; « Redresser » applique l'homographie (lib/perspective) et rend un
-    fichier prêt pour le recadrage.
+    fichier prêt pour le recadrage. Retours v0.4.0 : zone de prise élargie autour de chaque coin,
+    loupe pendant le déplacement (le doigt cache le coin), rotation par quarts de tour.
   -->
   <div class="flex flex-col gap-3">
     <p class="text-sm text-muted">{{ t("schema.gallery.straightenHint") }}</p>
@@ -28,23 +29,68 @@
         @pointercancel="onUp"
       >
         <polygon
-          :points="quad.map((p) => `${p.x},${p.y}`).join(' ')"
+          :points="points"
           class="fill-surface/15 stroke-surface"
           :stroke-width="stroke"
         />
-        <circle
-          v-for="(p, i) in quad"
-          :key="i"
-          :cx="p.x"
-          :cy="p.y"
-          :r="handleRadius"
-          class="cursor-move fill-surface stroke-primary outline-none focus-visible:fill-tint"
-          :stroke-width="stroke"
-          role="button"
-          tabindex="0"
-          :aria-label="t('schema.gallery.corner', { n: i + 1 })"
-          @pointerdown="onDown(i, $event)"
-          @keydown="onKey(i, $event)"
+        <!-- Poignée visible, et par-dessus un disque transparent bien plus large pour la saisir. -->
+        <g v-for="(p, i) in quad" :key="i" class="group">
+          <circle
+            :cx="p.x"
+            :cy="p.y"
+            :r="handleRadius"
+            class="pointer-events-none fill-surface stroke-primary group-focus-within:fill-tint"
+            :stroke-width="stroke"
+          />
+          <circle
+            :cx="p.x"
+            :cy="p.y"
+            :r="handleRadius * HIT_FACTOR"
+            class="cursor-move fill-transparent outline-none"
+            role="button"
+            tabindex="0"
+            :aria-label="t('schema.gallery.corner', { n: i + 1 })"
+            data-test="perspective-handle"
+            @pointerdown="onDown(i, $event)"
+            @keydown="onKey(i, $event)"
+          />
+        </g>
+      </svg>
+      <!-- Loupe : le voisinage du coin déplacé, agrandi, dans l'angle opposé au doigt. -->
+      <svg
+        v-if="loupe && previewUrl && size"
+        :viewBox="loupe.viewBox"
+        class="pointer-events-none absolute top-2 size-32 rounded-lg bg-ink shadow-cover ring-2 ring-surface"
+        :class="loupe.right ? 'right-2' : 'left-2'"
+        aria-hidden="true"
+        data-test="perspective-loupe"
+      >
+        <image
+          :href="previewUrl"
+          :width="size.width"
+          :height="size.height"
+          preserveAspectRatio="none"
+        />
+        <polygon
+          :points="points"
+          class="fill-none stroke-surface"
+          :stroke-width="loupe.stroke"
+        />
+        <line
+          :x1="loupe.x - loupe.arm"
+          :y1="loupe.y"
+          :x2="loupe.x + loupe.arm"
+          :y2="loupe.y"
+          class="stroke-primary"
+          :stroke-width="loupe.stroke"
+        />
+        <line
+          :x1="loupe.x"
+          :y1="loupe.y - loupe.arm"
+          :x2="loupe.x"
+          :y2="loupe.y + loupe.arm"
+          class="stroke-primary"
+          :stroke-width="loupe.stroke"
         />
       </svg>
       <div v-if="busy" class="absolute inset-0 grid place-items-center">
@@ -60,6 +106,22 @@
       {{ message }}
     </p>
     <div class="flex flex-wrap items-center gap-2">
+      <ElButton
+        :aria-label="t('schema.gallery.rotateLeft')"
+        :disabled="busy || !bitmap"
+        data-test="perspective-rotate-left"
+        @click="rotate(-1)"
+      >
+        <i class="pi pi-replay" aria-hidden="true"></i>
+      </ElButton>
+      <ElButton
+        :aria-label="t('schema.gallery.rotateRight')"
+        :disabled="busy || !bitmap"
+        data-test="perspective-rotate-right"
+        @click="rotate(1)"
+      >
+        <i class="pi pi-refresh" aria-hidden="true"></i>
+      </ElButton>
       <ElButton :disabled="busy || !bitmap" @click="detect">
         <i class="pi pi-objects-column mr-2" aria-hidden="true"></i>
         {{ t("schema.gallery.detectEdges") }}
@@ -103,6 +165,7 @@ import {
   detectQuad,
   fullQuad,
   quadOutputSize,
+  rotateQuad,
   scaleQuad,
   warpPerspective,
   type Point,
@@ -124,11 +187,20 @@ const busy = ref(false);
 const message = ref("");
 const bitmap = ref<ImageBitmap | null>(null);
 
+/** Rayon du disque transparent qui saisit un coin, en multiples de la poignée visible. */
+const HIT_FACTOR = 2.6;
+/** Côté de la loupe à l'écran (px) et grossissement par rapport à l'aperçu. */
+const LOUPE_PX = 128;
+const LOUPE_ZOOM = 3;
+
 /** Rayon des poignées et épaisseur des traits, en pixels de l'image (constants à l'écran). */
 const handleRadius = computed(() =>
-  size.value ? Math.max(size.value.width, size.value.height) / 40 : 1,
+  size.value ? Math.max(size.value.width, size.value.height) / 36 : 1,
 );
 const stroke = computed(() => handleRadius.value / 6);
+const points = computed(
+  () => quad.value?.map((p) => `${p.x},${p.y}`).join(" ") ?? "",
+);
 
 onMounted(load);
 watch(() => props.file, load);
@@ -191,6 +263,45 @@ function reset() {
   message.value = "";
 }
 
+/**
+ * Quart de tour (horaire si `turns` = 1) : l'image est redessinée tournée (bitmap et aperçu
+ * remplacés), les coins suivent sans nouvelle détection.
+ */
+async function rotate(turns: 1 | -1) {
+  const bmp = bitmap.value;
+  const q = quad.value;
+  if (!bmp || !q) return;
+  busy.value = true;
+  try {
+    await nextFrame();
+    const canvas = document.createElement("canvas");
+    canvas.width = bmp.height;
+    canvas.height = bmp.width;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("canvas unavailable");
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate((turns * Math.PI) / 2);
+    ctx.drawImage(bmp, -bmp.width / 2, -bmp.height / 2);
+    const rotated = await createImageBitmap(canvas);
+    // Aperçu : une copie réduite suffit à l'affichage et à la loupe.
+    const preview = await encodeImage(
+      canvas,
+      outputType(props.file.type),
+      WARP_SOURCE_EDGE,
+    );
+    bmp.close();
+    bitmap.value = rotated;
+    if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
+    previewUrl.value = URL.createObjectURL(preview);
+    quad.value = rotateQuad(q, bmp.width, bmp.height, turns);
+    size.value = { width: rotated.width, height: rotated.height };
+  } catch (e) {
+    notifyError(e, t("schema.gallery.straightenFailed"));
+  } finally {
+    busy.value = false;
+  }
+}
+
 /** Homographie du quadrilatère vers un rectangle, à la résolution de sortie, puis encodage. */
 async function apply() {
   const bmp = bitmap.value;
@@ -220,21 +331,21 @@ function nextFrame(): Promise<void> {
 }
 
 // ── Déplacement des coins ────────────────────────────────────────────
-let dragging = -1;
+const dragging = ref(-1);
 
 function onDown(i: number, e: PointerEvent) {
-  dragging = i;
+  dragging.value = i;
   (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
   e.preventDefault();
 }
 
 function onMove(e: PointerEvent) {
-  if (dragging < 0) return;
-  moveCorner(dragging, toImage(e));
+  if (dragging.value < 0) return;
+  moveCorner(dragging.value, toImage(e));
 }
 
 function onUp() {
-  dragging = -1;
+  dragging.value = -1;
 }
 
 /** Flèches : un pour cent de l'image par appui (dix avec Maj). */
@@ -274,4 +385,34 @@ function toImage(e: PointerEvent): Point {
   const pt = new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse());
   return { x: pt.x, y: pt.y };
 }
+
+// ── Loupe ────────────────────────────────────────────────────────────
+/**
+ * Fenêtre de la loupe (en pixels de l'image) autour du coin déplacé, et son placement : en haut à
+ * gauche de la scène, sauf si le coin s'y trouve (alors en haut à droite). Recalculée à chaque
+ * déplacement puisqu'elle dépend du coin ; la taille de la scène est relue à ce moment-là.
+ */
+const loupe = computed(() => {
+  const i = dragging.value;
+  const q = quad.value;
+  const el = svg.value;
+  const s = size.value;
+  if (i < 0 || !q || !el || !s) return null;
+  const p = q[i]!;
+  const rect = el.getBoundingClientRect();
+  const scale = Math.min(rect.width / s.width, rect.height / s.height);
+  if (!scale || !Number.isFinite(scale)) return null;
+  const side = LOUPE_PX / (scale * LOUPE_ZOOM);
+  const screenX = (rect.width - s.width * scale) / 2 + p.x * scale;
+  const screenY = (rect.height - s.height * scale) / 2 + p.y * scale;
+  const margin = LOUPE_PX + 24;
+  return {
+    viewBox: `${p.x - side / 2} ${p.y - side / 2} ${side} ${side}`,
+    x: p.x,
+    y: p.y,
+    arm: side / 8,
+    stroke: side / 80,
+    right: screenX < margin && screenY < margin,
+  };
+});
 </script>
