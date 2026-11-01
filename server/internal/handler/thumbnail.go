@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"image"
 	"image/color"
@@ -9,6 +10,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"time"
 
 	// Formats lus pour les vignettes (en plus de JPEG) : ceux qu'accepte l'envoi.
 	_ "image/gif"
@@ -22,8 +25,43 @@ import (
 // cannot make the server generate and store arbitrary sizes.
 var thumbWidths = map[string]int{"240": 240}
 
-// maxThumbSourcePixels caps the decoded size of an original (decompression bombs).
-const maxThumbSourcePixels = 50_000_000
+// maxImagePixels caps the decoded size of an uploaded image (decompression
+// bombs): refused at upload time when the format can be read (UploadFile), and
+// never decoded for a thumbnail. A cover needs far less; 25 Mpx is ~100 MiB in RGBA.
+const maxImagePixels = 25_000_000
+
+// maxConcurrentThumbnails bounds the decodings in flight: each may hold up to
+// ~100 MiB and the originals are sent by any account (audit S-001).
+const maxConcurrentThumbnails = 2
+
+// thumbnailWait is how long a request waits for a decoding slot before the
+// original is served instead (sendfile, no decoding).
+const thumbnailWait = 5 * time.Second
+
+// thumbGate is the semaphore of thumbnail generation; the zero value is ready.
+type thumbGate struct {
+	once sync.Once
+	sem  chan struct{}
+}
+
+// acquire takes a decoding slot, or reports false when none frees up before
+// wait expires or the request is cancelled.
+func (g *thumbGate) acquire(ctx context.Context, wait time.Duration) bool {
+	g.once.Do(func() { g.sem = make(chan struct{}, maxConcurrentThumbnails) })
+	timer := time.NewTimer(wait)
+	defer timer.Stop()
+	select {
+	case g.sem <- struct{}{}:
+		return true
+	case <-ctx.Done():
+		return false
+	case <-timer.C:
+		return false
+	}
+}
+
+// release gives back a slot taken by acquire.
+func (g *thumbGate) release() { <-g.sem }
 
 // thumbDir holds the generated thumbnails, inside UPLOAD_DIR but hidden: the
 // purge only lists the regular files at the top of UPLOAD_DIR.
@@ -36,7 +74,8 @@ func (h *Handler) thumbPath(width, name string) string {
 
 // serveThumbnail answers GET /uploads/<name>?w=240: a JPEG at most `w` pixels
 // wide (offline covers of the mobile app, lot E5d), generated on first request
-// and kept on disk. An original that cannot be decoded is served as is.
+// and kept on disk. An original that cannot be decoded, or asked for while
+// maxConcurrentThumbnails decodings are already running, is served as is.
 func (h *Handler) serveThumbnail(w http.ResponseWriter, r *http.Request, name, width string) {
 	px, ok := thumbWidths[width]
 	if !ok {
@@ -53,7 +92,13 @@ func (h *Handler) serveThumbnail(w http.ResponseWriter, r *http.Request, name, w
 		http.NotFound(w, r)
 		return
 	}
-	if err := writeThumbnail(src, dst, px); err != nil {
+	if !h.thumbs.acquire(r.Context(), thumbnailWait) {
+		http.ServeFile(w, r, src) //nolint:gosec // idem ; saturé : l'original reste affichable sans décodage
+		return
+	}
+	err := writeThumbnail(src, dst, px)
+	h.thumbs.release()
+	if err != nil {
 		http.ServeFile(w, r, src) //nolint:gosec // idem ; format non décodable ici : l'original reste affichable
 		return
 	}
@@ -70,7 +115,7 @@ func writeThumbnail(src, dst string, width int) error {
 	if err != nil {
 		return err
 	}
-	if cfg.Width <= 0 || cfg.Height <= 0 || cfg.Width*cfg.Height > maxThumbSourcePixels {
+	if imageTooLarge(cfg) {
 		return errors.New("image too large or empty")
 	}
 	if _, err := f.Seek(0, 0); err != nil {
@@ -110,6 +155,12 @@ func writeThumbnail(src, dst string, width int) error {
 		return err
 	}
 	return os.Rename(tmp.Name(), dst)
+}
+
+// imageTooLarge reports whether an image header describes an empty image or
+// one above maxImagePixels.
+func imageTooLarge(cfg image.Config) bool {
+	return cfg.Width <= 0 || cfg.Height <= 0 || cfg.Width > maxImagePixels || cfg.Width*cfg.Height > maxImagePixels
 }
 
 // removeThumbnails deletes the thumbnails of an original (purge of unused images).

@@ -5,13 +5,16 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"image"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/shinsaber/colec/internal/middleware"
 	"github.com/shinsaber/colec/internal/model"
 )
 
@@ -23,8 +26,13 @@ var allowedMimeTypes = map[string]string{
 	"image/webp": ".webp",
 }
 
-// UploadFile handles POST /api/v1/uploads (admin only).
-// Accepts a multipart file upload and saves it to the configured upload dir.
+// UploadFile handles POST /api/v1/uploads (any authenticated account: covers,
+// profile avatar, images of a proposal). Accepts a multipart file upload and
+// saves it to the configured upload dir. Besides MAX_UPLOAD_SIZE, two guards
+// keep a member from exhausting the server (audit S-001, S-004): an image whose
+// header announces more than maxImagePixels is refused (400 image_too_large),
+// and each account, admins excepted, has an hourly quota of files and bytes
+// (429 upload_quota, UPLOAD_RATE_LIMIT / UPLOAD_RATE_BYTES).
 func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 	maxSize := h.Config.MaxUploadSize
 	r.Body = http.MaxBytesReader(w, r.Body, maxSize)
@@ -64,10 +72,35 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Dimensions announced by the header: an image the thumbnail code would
+	// refuse to decode is not worth storing. A header this package cannot
+	// read is let through (the original is then served as is).
+	if _, err := file.Seek(0, io.SeekStart); err != nil {
+		respondInternal(w, r, err, "internal error")
+		return
+	}
+	if cfg, _, err := image.DecodeConfig(file); err == nil && imageTooLarge(cfg) {
+		respondError(w, http.StatusBadRequest, "image_too_large",
+			fmt.Sprintf("image larger than %d megapixels (%dx%d)", maxImagePixels/1_000_000, cfg.Width, cfg.Height))
+		return
+	}
+
 	// Reset reader to beginning
 	if _, err := file.Seek(0, io.SeekStart); err != nil {
 		respondInternal(w, r, err, "internal error")
 		return
+	}
+
+	userID, quota := middleware.GetUserID(r.Context()), middleware.GetRole(r.Context()) != model.RoleAdmin
+	if quota {
+		if ok, retry := h.uploads.allow(userID, h.Config.UploadRateLimit, h.Config.UploadRateBytes); !ok {
+			seconds := int(retry.Seconds()) + 1
+			w.Header().Set("Retry-After", strconv.Itoa(seconds))
+			respondError(w, http.StatusTooManyRequests, "upload_quota",
+				fmt.Sprintf("upload quota reached (%d files or %d MiB per hour), retry in %d s",
+					h.Config.UploadRateLimit, h.Config.UploadRateBytes/(1<<20), seconds))
+			return
+		}
 	}
 
 	// Ensure upload directory exists
@@ -80,6 +113,9 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		respondInternal(w, r, err, "cannot save file")
 		return
+	}
+	if quota {
+		h.uploads.add(userID, written)
 	}
 	respondJSON(w, http.StatusCreated, model.UploadResponse{
 		URL:      "/api/v1/uploads/" + filename,

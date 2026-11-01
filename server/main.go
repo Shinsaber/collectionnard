@@ -121,6 +121,10 @@ func serve() {
 
 	// Periodic purge of expired refresh tokens
 	go purgeRefreshTokens(ctx, pgStore)
+	// Periodic purge of the uploads nothing references (UPLOAD_PURGE_INTERVAL ; 0 : admin button only)
+	if cfg.UploadPurgeInterval > 0 {
+		go h.RunUploadPurge(ctx, cfg.UploadPurgeInterval)
+	}
 
 	// Graceful shutdown
 	go func() {

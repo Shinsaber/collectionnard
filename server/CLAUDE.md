@@ -3,7 +3,7 @@
 Module : `github.com/shinsaber/colec` · Entrée : `main.go` · Config par variables
 d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 caractères) sont
 **obligatoires** (le serveur refuse de démarrer sinon) ; `PORT`, `ACCESS_TOKEN_TTL` (15m),
-`REFRESH_TOKEN_TTL` (720h), `LOGIN_RATE_LIMIT` (10/min/IP), `UPLOAD_DIR`, `MAX_UPLOAD_SIZE`, `MAX_IMPORT_SIZE` (20 Mio), `TRUSTED_PROXY` (false), `EXTERNAL_USER_AGENT` (User-Agent envoyé à Wikidata / BnF), `MEMBER_INVITES` (false : seuls les admins invitent), `PROPOSAL_QUOTA` (5) ont un défaut.
+`REFRESH_TOKEN_TTL` (720h), `LOGIN_RATE_LIMIT` (10/min/IP, deux compteurs : identifiants / session), `UPLOAD_DIR`, `MAX_UPLOAD_SIZE`, `UPLOAD_RATE_LIMIT` (60 fichiers/h/compte, admins exemptés), `UPLOAD_RATE_BYTES` (300 Mio/h/compte), `UPLOAD_PURGE_INTERVAL` (24h, `0` désactive la purge automatique), `MAX_IMPORT_SIZE` (20 Mio), `GRAPH_MAX_NODES` (500), `TRUSTED_PROXY` (false), `EXTERNAL_USER_AGENT` (User-Agent envoyé à Wikidata / BnF), `MEMBER_INVITES` (false : seuls les admins invitent), `PROPOSAL_QUOTA` (5), `LOG_FORMAT` (json), `LOG_LEVEL` (info) ont un défaut.
 
 ## Couches (`internal/`)
 
@@ -55,7 +55,12 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 - Logs : `log/slog` (JSON par défaut, `LOG_FORMAT=text` en dev) ; `respondInternal(w, r, err, msg)` et
   `handleStoreError(w, r, err)` loguent la cause des 500 avec le `request_id` — ne jamais renvoyer `err` au client.
 - `GET /api/v1/healthz` (public) ping la base : 200 `{"status":"ok"}` ou 503.
-- Images : `/api/v1/uploads/<nom>?w=240` sert une vignette JPEG (liste blanche `thumbWidths`, garde-fou 50 Mpx), générée une fois dans `UPLOAD_DIR/.thumbs/` et supprimée avec l'original par la purge (`handler/thumbnail.go`).
+- Images : `/api/v1/uploads/<nom>?w=240` sert une vignette JPEG (liste blanche `thumbWidths`), générée une fois dans
+  `UPLOAD_DIR/.thumbs/` et supprimée avec l'original par la purge (`handler/thumbnail.go`). Garde-fous (audit S-001, S-004) :
+  `maxImagePixels` (25 Mpx, refusé à l'envoi `image_too_large` et jamais décodé en vignette), `thumbGate` (au plus
+  `maxConcurrentThumbnails` décodages en vol, sinon l'original est servi), `uploadQuota` (fichiers et octets par heure et
+  par compte, admins exemptés, 429 `upload_quota`), purge automatique `RunUploadPurge` (`UPLOAD_PURGE_INTERVAL`) en plus
+  du bouton admin ; `purgeUploads` est la logique commune.
 - Auth : access token JWT court (`Auth.GenerateToken`) + refresh token opaque dont seul le hash
   SHA-256 est stocké (`store/refresh_token.go`, rotation à chaque `/auth/refresh`).
 - Comptes (`handler/account.go`, `store/account.go`, P4-0) : invitations et liens de réinitialisation suivent le même

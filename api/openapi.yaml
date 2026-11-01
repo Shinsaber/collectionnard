@@ -1775,7 +1775,9 @@ components:
             `validation_error` (422), `rate_limited` (429), `internal` (500),
             `timeout` (503, exploration du graphe trop longue), `connector_unavailable` (409, types d'un
             connecteur absents du catalogue), `external_unavailable` (502, source externe injoignable),
-            `item_type_not_allowed` (422, type d'item non permis par le type de collection).
+            `item_type_not_allowed` (422, type d'item non permis par le type de collection),
+            `image_too_large` (400, image de plus de 25 mégapixels), `upload_quota` (429, quota horaire
+            d'envoi d'images du compte).
             Un client doit prévoir un libellé générique pour un code inconnu.
           example: validation_error
         message:
@@ -2457,8 +2459,10 @@ components:
     TooManyRequests:
       description: |
         Trop de requêtes depuis cette adresse IP sur les endpoints `/auth/*`
-        (limite `LOGIN_RATE_LIMIT` par minute, défaut 10). Le header `Retry-After`
-        indique le délai d'attente en secondes.
+        (limite `LOGIN_RATE_LIMIT` par minute, défaut 10). Deux compteurs distincts :
+        l'un pour `login`, `register`, `reset-password` et `invitation` (identifiants et jetons à
+        usage unique), l'autre pour `refresh` et `logout` (appelés par chaque appareil toutes les
+        `ACCESS_TOKEN_TTL`). Le header `Retry-After` indique le délai d'attente en secondes.
       headers:
         Retry-After:
           schema:
@@ -4622,9 +4626,9 @@ paths:
       tags: [Tags]
       summary: Lister / rechercher les tags
       description: |
-        Retourne la liste de tous les tags existants. Utilisez `search` pour
-        filtrer par préfixe (auto-complétion côté frontend).
-        Les tags sont triés par nom.
+        Retourne au plus 100 tags, triés par nom. Utilisez `search` pour
+        filtrer par préfixe (auto-complétion côté frontend) : la liste n'est
+        pas paginée, c'est le préfixe qui l'affine.
       operationId: listTags
       parameters:
         - name: search
@@ -4665,7 +4669,11 @@ paths:
         URL (`reused: true`) sans dupliquer le fichier.
 
         **Formats acceptés** : JPEG, PNG, GIF, WebP.
-        **Taille maximale** : configurable via `MAX_UPLOAD_SIZE` (défaut 10 Mo).
+        **Taille maximale** : configurable via `MAX_UPLOAD_SIZE` (défaut 10 Mo) ; au plus
+        25 mégapixels d'après l'en-tête de l'image (`image_too_large`, une image plus grande ne
+        pourrait pas être décodée pour ses vignettes).
+        **Quota** : par compte et par heure, `UPLOAD_RATE_LIMIT` fichiers (défaut 60) et
+        `UPLOAD_RATE_BYTES` octets (défaut 300 Mio) ; les admins n'y sont pas soumis (`upload_quota`, 429).
       operationId: uploadFile
       requestBody:
         required: true
@@ -4690,15 +4698,42 @@ paths:
                 $ref: "#/components/schemas/UploadResponse"
         "400":
           description: |
-            Requête invalide : fichier manquant, formulaire multipart invalide ou type non autorisé.
+            Requête invalide : fichier manquant, formulaire multipart invalide ou type non autorisé
+            (`bad_request`) ; image de plus de 25 mégapixels d'après son en-tête (`image_too_large`).
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              examples:
+                type:
+                  value:
+                    error: bad_request
+                    message: "file type not allowed: text/plain; charset=utf-8 (accepted: image/jpeg, image/png, image/gif, image/webp)"
+                pixels:
+                  value:
+                    error: image_too_large
+                    message: image larger than 25 megapixels (7000x7000)
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+        "429":
+          description: |
+            Quota horaire d'envoi du compte atteint (`UPLOAD_RATE_LIMIT` fichiers ou `UPLOAD_RATE_BYTES`
+            octets) ; le header `Retry-After` indique le délai avant la fenêtre suivante. Les admins n'ont
+            pas de quota.
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+              description: Secondes à attendre avant de réessayer.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: upload_quota
+                message: upload quota reached (60 files or 300 MiB per hour), retry in 1800 s
         "413":
           description: "Fichier plus grand que `MAX_UPLOAD_SIZE` (nginx applique la même limite : `client_max_body_size 10m`)."
           content:

@@ -110,12 +110,15 @@ npm run dev
 | `JWT_SECRET`        | **requis** | Clé HS256 des access tokens, 32 caractères minimum                                                     |
 | `ACCESS_TOKEN_TTL`  | `15m`      | Durée de vie des access tokens JWT (format Go)                                                         |
 | `REFRESH_TOKEN_TTL` | `720h`     | Durée de vie des refresh tokens (rotation à chaque utilisation)                                        |
-| `LOGIN_RATE_LIMIT`  | `10`       | Appels par minute et par IP sur `/auth/login`, `/auth/refresh`, `/auth/logout` et les routes publiques d'inscription / réinitialisation |
+| `LOGIN_RATE_LIMIT`  | `10`       | Appels par minute et par IP sur `/auth/*`, en deux compteurs : identifiants et jetons à usage unique (`login`, `register`, `reset-password`, `invitation`) d'une part, session (`refresh`, `logout`) de l'autre |
 | `TRUSTED_PROXY`     | `false`    | `true` derrière un reverse-proxy qui pose `X-Real-IP` (nginx du compose) ; sinon l'IP serait usurpable |
 | `GRAPH_MAX_NODES`   | `500`      | Nombre max de nœuds renvoyés par `GET /items/{id}/graph` (au-delà : `truncated: true`)                 |
 | `PORT`              | `8080`     | Port HTTP                                                                                              |
 | `UPLOAD_DIR`        | `uploads`  | Dossier des images uploadées (vignettes générées dans `.thumbs/`)                                      |
-| `MAX_UPLOAD_SIZE`   | `10485760` | Taille max d'un upload (octets) ; les corps JSON sont limités à 1 Mio                                  |
+| `MAX_UPLOAD_SIZE`   | `10485760` | Taille max d'un upload (octets) ; les corps JSON sont limités à 1 Mio ; une image de plus de 25 mégapixels est refusée (`image_too_large`) |
+| `UPLOAD_RATE_LIMIT` | `60`       | Fichiers qu'un compte (hors admin) peut envoyer par heure (`429 upload_quota` au-delà)                 |
+| `UPLOAD_RATE_BYTES` | `314572800` | Octets qu'un compte (hors admin) peut envoyer par heure (300 Mio)                                     |
+| `UPLOAD_PURGE_INTERVAL` | `24h`  | Période de la purge automatique des images que rien ne référence (délai de grâce 24 h) ; `0` : seulement le bouton Administration → Images |
 | `MAX_IMPORT_SIZE`   | `20971520` | Taille max d'un fichier d'import du catalogue ou d'une collection (octets)                             |
 | `EXTERNAL_USER_AGENT` | `Collectionnard/1.0 (+URL du dépôt)` | User-Agent envoyé à Wikidata, à la BnF, à MusicBrainz et à TVmaze (leurs règles demandent un nom et un contact) |
 | `PROPOSAL_QUOTA`    | `5`        | Propositions en attente par membre (+1 par proposition acceptée, plafond 50) ; contributeurs et admins sans quota |

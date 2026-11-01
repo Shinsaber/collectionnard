@@ -507,6 +507,8 @@ func TestConfig() *config.Config {
 		UploadDir:       os.TempDir(),
 		MaxUploadSize:   10 << 20,
 		MaxImportSize:   1 << 20,
+		UploadRateLimit: 1000,
+		UploadRateBytes: 1 << 30,
 	}
 }
 

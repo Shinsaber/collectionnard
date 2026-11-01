@@ -19,10 +19,10 @@ dans un timer systemd ou une crontab ; le rapport et ce tableau sont alors à re
 
 | Id | Gravité | Titre | Où | Ouvert le | État | Suite |
 | -- | ------- | ----- | -- | --------- | ---- | ----- |
-| S-001 | haute | Vignettes : décodage jusqu'à 50 Mpx sans borne de concurrence | [handler/thumbnail.go:26](../../server/internal/handler/thumbnail.go#L26) | 2026-11-01 | ouvert | |
-| S-002 | moyenne | Limiteur `/auth/*` par IP inopérant derrière un reverse-proxy | [web/nginx.conf:43](../../web/nginx.conf#L43) | 2026-11-01 | ouvert | |
+| S-001 | haute | Vignettes : décodage jusqu'à 50 Mpx sans borne de concurrence | [handler/thumbnail.go:26](../../server/internal/handler/thumbnail.go#L26) | 2026-11-01 | corrigé | lot A (sémaphore de 2 décodages, cap 25 Mpx à l'envoi et à la vignette) |
+| S-002 | moyenne | Limiteur `/auth/*` par IP inopérant derrière un reverse-proxy | [web/nginx.conf:43](../../web/nginx.conf#L43) | 2026-11-01 | ouvert | partie Go faite au lot A (compteurs login / session séparés) ; reste nginx `real_ip` (lot B) |
 | S-003 | moyenne | Jetons de partage et d'invitation en query string dans les journaux nginx | [handler/sharing.go:132](../../server/internal/handler/sharing.go#L132) | 2026-11-01 | ouvert | |
-| S-004 | moyenne | Aucun quota d'envoi d'images par compte | [handler/upload.go:28](../../server/internal/handler/upload.go#L28) | 2026-11-01 | ouvert | |
+| S-004 | moyenne | Aucun quota d'envoi d'images par compte | [handler/upload.go:28](../../server/internal/handler/upload.go#L28) | 2026-11-01 | corrigé | lot A (quota horaire par compte `UPLOAD_RATE_LIMIT` / `UPLOAD_RATE_BYTES`, purge périodique `UPLOAD_PURGE_INTERVAL`) |
 | S-005 | basse | Jetons d'accès et de rafraîchissement en `localStorage` | [web/src/api/tokens.ts:1](../../web/src/api/tokens.ts#L1) | 2026-11-01 | ouvert | |
 | S-006 | basse | Images publiques en cache un an, photos d'exemplaires comprises | [handler/handler.go:75](../../server/internal/handler/handler.go#L75) | 2026-11-01 | ouvert | |
 | S-007 | basse | Hygiène du dépôt et de la chaîne d'approvisionnement | [.gitignore:14](../../.gitignore#L14) | 2026-11-01 | ouvert | |
@@ -31,7 +31,7 @@ dans un timer systemd ou une crontab ; le rapport et ce tableau sont alors à re
 | Q-003 | moyenne | Six routes sans test de handler (succès, 403, 404) | [handler/handler.go:178](../../server/internal/handler/handler.go#L178) | 2026-11-01 | ouvert | |
 | Q-004 | moyenne | Recherche d'éditions BnF dupliquée dans quatre connecteurs | [connectors/films.go:230](../../server/internal/external/connectors/films.go#L230) | 2026-11-01 | ouvert | |
 | Q-005 | moyenne | 18 vues sur 28 et six composants d'interaction sans test | [views/ItemsView.vue](../../web/src/views/ItemsView.vue) | 2026-11-01 | ouvert | |
-| Q-006 | basse | `GET /tags` renvoie toute la table sans borne | [store/tag.go:9](../../server/internal/store/tag.go#L9) | 2026-11-01 | ouvert | |
+| Q-006 | basse | `GET /tags` renvoie toute la table sans borne | [store/tag.go:9](../../server/internal/store/tag.go#L9) | 2026-11-01 | corrigé | lot A (`LIMIT 100`) |
 | Q-007 | basse | Neuf clés i18n orphelines | [locales/fr/common.ts:3](../../web/src/i18n/locales/fr/common.ts#L3) | 2026-11-01 | ouvert | |
 | Q-008 | basse | Six fichiers `.vue` au-dessus de 400 lignes, roadmap qui affirme le contraire | [web/CLAUDE.md:76](../../web/CLAUDE.md#L76) | 2026-11-01 | ouvert | |
 | Q-009 | basse | Sept paquets Go sans commentaire de paquet | [store/store.go:1](../../server/internal/store/store.go#L1) | 2026-11-01 | ouvert | |

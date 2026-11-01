@@ -39,6 +39,9 @@ const en: typeof fr = {
     not_found: "Not found",
     conflict: "Conflict: this element already exists or is still in use",
     payload_too_large: "File or request too large",
+    image_too_large:
+      "Image too large (25 megapixels at most): shrink it before sending.",
+    upload_quota: "Image upload quota reached for this hour: try again later.",
     validation_error: "Invalid data",
     rate_limited: "Too many attempts, please retry in a moment",
     timeout: "The server took too long to respond",

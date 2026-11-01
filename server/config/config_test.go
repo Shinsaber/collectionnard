@@ -87,3 +87,32 @@ func TestLoad_ExternalUserAgent(t *testing.T) {
 		t.Errorf("override: %q", cfg.ExternalUserAgent)
 	}
 }
+
+func TestLoad_UploadGuards(t *testing.T) {
+	setBaseEnv(t)
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.UploadRateLimit != 60 || cfg.UploadRateBytes != 300<<20 || cfg.UploadPurgeInterval != 24*time.Hour {
+		t.Errorf("defaults: %d files, %d bytes, purge %s", cfg.UploadRateLimit, cfg.UploadRateBytes, cfg.UploadPurgeInterval)
+	}
+	t.Setenv("UPLOAD_RATE_LIMIT", "5")
+	t.Setenv("UPLOAD_RATE_BYTES", "1048576")
+	t.Setenv("UPLOAD_PURGE_INTERVAL", "0")
+	cfg, err = Load()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.UploadRateLimit != 5 || cfg.UploadRateBytes != 1<<20 || cfg.UploadPurgeInterval != 0 {
+		t.Errorf("custom: %d files, %d bytes, purge %s", cfg.UploadRateLimit, cfg.UploadRateBytes, cfg.UploadPurgeInterval)
+	}
+	for name, bad := range map[string]string{"UPLOAD_RATE_LIMIT": "0", "UPLOAD_RATE_BYTES": "lots", "UPLOAD_PURGE_INTERVAL": "-1h"} {
+		setBaseEnv(t)
+		t.Setenv(name, bad)
+		if _, err := Load(); err == nil {
+			t.Errorf("%s=%q: expected an error", name, bad)
+		}
+		t.Setenv(name, "")
+	}
+}

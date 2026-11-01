@@ -1,14 +1,20 @@
 package handler_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/binary"
+	"fmt"
+	"hash/crc32"
 	"image"
 	"image/color"
 	"image/jpeg"
 	"image/png"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 	"time"
 
@@ -84,4 +90,92 @@ func mustOpen(t *testing.T, path string) *os.File {
 	}
 	t.Cleanup(func() { _ = f.Close() })
 	return f
+}
+
+// S-001 : des demandes simultanées de vignettes répondent toutes (vignette ou
+// original), le nombre de décodages en vol étant borné par le handler.
+func TestServeThumbnail_Concurrent(t *testing.T) {
+	cfg := testutil.TestConfig()
+	cfg.UploadDir = t.TempDir()
+	const n = 8
+	for i := 0; i < n; i++ {
+		img := image.NewRGBA(image.Rect(0, 0, 400, 300))
+		img.Set(i, 0, color.RGBA{R: 255, A: 255}) // contenu distinct : fichiers distincts
+		f, err := os.Create(filepath.Join(cfg.UploadDir, fmt.Sprintf("c%d.png", i)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			t.Fatal(err)
+		}
+		_ = f.Close()
+	}
+	srv := testutil.NewTestServerFromHandler(testutil.NewTestHandlerWithConfig(&testutil.MockStore{}, cfg))
+	defer srv.Close()
+
+	var wg sync.WaitGroup
+	codes := make([]int, n)
+	for i := 0; i < n; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			resp, err := http.Get(fmt.Sprintf("%s/api/v1/uploads/c%d.png?w=240", srv.URL, i))
+			if err != nil {
+				return
+			}
+			_, _, decErr := image.Decode(resp.Body)
+			_ = resp.Body.Close()
+			if decErr == nil {
+				codes[i] = resp.StatusCode
+			}
+		}(i)
+	}
+	wg.Wait()
+	for i, c := range codes {
+		if c != http.StatusOK {
+			t.Errorf("request %d: no decodable image (status %d)", i, c)
+		}
+	}
+}
+
+// S-001 : un en-tête PNG qui annonce plus de maxImagePixels n'est jamais décodé :
+// l'original est servi tel quel à la place de la vignette.
+func TestServeThumbnail_TooLargeHeader(t *testing.T) {
+	cfg := testutil.TestConfig()
+	cfg.UploadDir = t.TempDir()
+	raw := fakePNGHeader(7000, 7000)
+	if err := os.WriteFile(filepath.Join(cfg.UploadDir, "bomb.png"), raw, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	srv := testutil.NewTestServerFromHandler(testutil.NewTestHandlerWithConfig(&testutil.MockStore{}, cfg))
+	defer srv.Close()
+
+	resp, err := http.Get(srv.URL + "/api/v1/uploads/bomb.png?w=240")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusOK || !bytes.Equal(body, raw) {
+		t.Errorf("expected the original served as is, got %d (%d bytes)", resp.StatusCode, len(body))
+	}
+	if _, err := os.Stat(filepath.Join(cfg.UploadDir, ".thumbs", "240", "bomb.jpg")); !os.IsNotExist(err) {
+		t.Error("a thumbnail was written for an image above the cap")
+	}
+}
+
+// fakePNGHeader builds the signature and IHDR chunk of a PNG of the given size,
+// without pixel data: enough for image.DecodeConfig, nothing to decode.
+func fakePNGHeader(width, height int) []byte {
+	ihdr := make([]byte, 13)
+	binary.BigEndian.PutUint32(ihdr[0:], uint32(width))
+	binary.BigEndian.PutUint32(ihdr[4:], uint32(height))
+	ihdr[8], ihdr[9] = 8, 2 // 8 bits, truecolor
+	chunk := append([]byte("IHDR"), ihdr...)
+	var out bytes.Buffer
+	out.Write([]byte{0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n'})
+	_ = binary.Write(&out, binary.BigEndian, uint32(13))
+	out.Write(chunk)
+	_ = binary.Write(&out, binary.BigEndian, crc32.ChecksumIEEE(chunk))
+	return out.Bytes()
 }

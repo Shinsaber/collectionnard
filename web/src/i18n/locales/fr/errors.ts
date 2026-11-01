@@ -40,6 +40,10 @@ export default {
     not_found: "Élément introuvable",
     conflict: "Conflit : cet élément existe déjà ou est encore utilisé",
     payload_too_large: "Fichier ou requête trop volumineux",
+    image_too_large:
+      "Image trop grande (25 mégapixels au plus) : réduisez-la avant de l'envoyer.",
+    upload_quota:
+      "Quota d'envoi d'images atteint pour cette heure : réessayez plus tard.",
     validation_error: "Données invalides",
     rate_limited: "Trop de tentatives, réessayez dans un instant",
     timeout: "Le serveur a mis trop de temps à répondre",

@@ -742,3 +742,27 @@ func TestCreateUser(t *testing.T) {
 		t.Errorf("email duplicate: %v", err)
 	}
 }
+
+// Q-006 : GET /tags est borné (100), la recherche par préfixe sert à affiner.
+func TestListTags_Limit(t *testing.T) {
+	u, _ := url.Parse(baseURL)
+	u.Path = "/" + testDBName
+	conn, err := pgx.Connect(ctx, u.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = conn.Close(ctx) }()
+	if _, err := conn.Exec(ctx,
+		`INSERT INTO tags (name) SELECT 'zz-limit-' || lpad(g::text, 3, '0') FROM generate_series(1, 120) g`); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _, _ = conn.Exec(ctx, `DELETE FROM tags WHERE name LIKE 'zz-limit-%'`) })
+
+	tags, err := s.ListTags(ctx, "zz-limit-")
+	if err != nil || len(tags) != 100 || tags[0].Name != "zz-limit-001" || tags[99].Name != "zz-limit-100" {
+		t.Errorf("tags limit: %d results, err %v", len(tags), err)
+	}
+	if all, err := s.ListTags(ctx, ""); err != nil || len(all) != 100 {
+		t.Errorf("unfiltered list must be capped too: %d, err %v", len(all), err)
+	}
+}
