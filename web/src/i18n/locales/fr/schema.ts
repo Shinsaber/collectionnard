@@ -63,6 +63,8 @@ export default {
     // Redressement de la perspective (lot M4)
     straightenTitle: "Redresser – {category}",
     straightenStep: "Redresser",
+    cropStep: "Recadrer",
+    steps: "Étapes : redresser la perspective, puis recadrer",
     straightenHint:
       "Placez les quatre coins sur ceux de la couverture (détectés d'office quand le fond contraste), puis redressez. Flèches au clavier : 1 % par appui, 10 % avec Maj.",
     detectEdges: "Détecter les bords",

@@ -63,6 +63,8 @@ const en: typeof fr = {
     // Perspective straightening (lot M4)
     straightenTitle: "Straighten – {category}",
     straightenStep: "Straighten",
+    cropStep: "Crop",
+    steps: "Steps: straighten the perspective, then crop",
     straightenHint:
       "Put the four corners on those of the cover (detected automatically when the background contrasts), then straighten. Arrow keys: 1% per press, 10% with Shift.",
     detectEdges: "Detect edges",
