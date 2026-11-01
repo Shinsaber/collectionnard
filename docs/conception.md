@@ -8,9 +8,11 @@ Il sera maintenu à jour au fil des échanges et itérations.
 
 > **Voir aussi** :
 >
-> - [README.md](README.md) — Démarrage rapide, stack, structure du projet
-> - [api/openapi.yaml](api/openapi.yaml) — Spécification complète de l'API REST
-> - [db/migrations/001_init.sql](db/migrations/001_init.sql) — Schéma de base de données commenté (migrations tern)
+> - [README.md](../README.md) — Démarrage rapide, stack, structure du projet, index de la documentation
+> - [docs/domaines/](domaines/) — Modèles de données : livres, musique, vidéo, jeux vidéo ; [sources-externes.md](sources-externes.md) — bases ouvertes
+> - [docs/phases/](phases/) — Notes de conception des lots : évolutions du socle, social (Phase 4), mobile (Phase 5)
+> - [api/openapi.yaml](../api/openapi.yaml) — Spécification complète de l'API REST
+> - [db/migrations/001_init.sql](../db/migrations/001_init.sql) — Schéma de base de données commenté (migrations tern)
 
 ---
 
@@ -27,7 +29,7 @@ Le **concept clé** est le dynamisme : le système doit permettre de créer des 
 - **API-first** : backend exposant une API REST, les interfaces (web, mobile, CLI) s'y connectent
 - **Multi-utilisateur** dès le MVP avec authentification
 - **Self-hosted** (pour usage personnel et entre amis) V0
-- **Stack envisagée** : Go (backend), PostgreSQL (BDD), Docker (déploiement test), frontend web à définir
+- **Stack** : Go (API REST), PostgreSQL (JSONB), SPA Vue 3 installable (PWA), Docker Compose — détail en § 9
 
 ### Objectifs Principaux
 
@@ -166,9 +168,9 @@ une abstraction de ce schéma ; elle n'existe pas dans l'implémentation.
 | `x-description`      | racine    | Description du méta-type par langue ; repli sur la colonne `description`                                                                                                                                 |
 | `x-enum-labels`      | propriété | Libellés des valeurs d'un `enum` par langue : `{ "fr": { "tv": "Télévision" }, "en": { "tv": "TV" } }` ; repli sur la valeur brute                                                                       |
 | `x-widget`           | propriété | Widget dédié : `i18n-text` (objet `{fr, en, …}` : une chaîne par langue, codes supplémentaires acceptés), `image-gallery` (objet de catégories), `links` (tableau de `{label?, url}`, URL http(s) en format `uri` : liens cliquables sur la fiche, libellé facultatif, nom du site à défaut)                                                          |
-| `x-image-categories` | propriété | Catégories d'images et ratios : `{ "poster": { "ratio": "2/3" } }` (avec `image-gallery`). Contrôles facultatifs à l'envoi, dans le navigateur : `tolerance` (écart de ratio permis, %), `min_width` / `min_height` (px), `strict` (proposer le recadrage ; sinon avertissement). Le ratio contraint aussi le cadre du recadrage (photo prise sur écran tactile, ou fichier hors format), `mobile.md` M1 |
+| `x-image-categories` | propriété | Catégories d'images et ratios : `{ "poster": { "ratio": "2/3" } }` (avec `image-gallery`). Contrôles facultatifs à l'envoi, dans le navigateur : `tolerance` (écart de ratio permis, %), `min_width` / `min_height` (px), `strict` (proposer le recadrage ; sinon avertissement). Le ratio contraint aussi le cadre du recadrage (photo prise sur écran tactile, ou fichier hors format), `docs/phases/mobile.md` M1 |
 | `x-private`          | propriété | CollectionType : champ caché par défaut à tout autre lecteur que le propriétaire (prix payé, budget max), même dans une collection publique ; le propriétaire peut remplacer ce défaut par collection (`hidden_fields`). Retiré **par le serveur** des pages publiques, liens de partage et statistiques, administrateurs compris |
-| `x-identifier`       | propriété | ItemType : identifiant (ISBN, EAN, QID Wikidata, ARK BnF, MBID…), au premier niveau ou dans un objet (`external_ids.wikidata`). Un autre item du même type portant la même valeur est signalé comme doublon possible avant l'enregistrement ou la proposition (`POST /items/duplicates`). Dans les formulaires, un champ `x-identifier` de premier niveau a un bouton « scanner un code-barres » (`mobile.md` M2) |
+| `x-identifier`       | propriété | ItemType : identifiant (ISBN, EAN, QID Wikidata, ARK BnF, MBID…), au premier niveau ou dans un objet (`external_ids.wikidata`). Un autre item du même type portant la même valeur est signalé comme doublon possible avant l'enregistrement ou la proposition (`POST /items/duplicates`). Dans les formulaires, un champ `x-identifier` de premier niveau a un bouton « scanner un code-barres » (`docs/phases/mobile.md` M2) |
 | `x-completeness`     | racine    | RelationType seulement : `true` marque une relation de composition (la cible fait partie de la source : `contains_volume`, `contains_track`, `contains_episode`, `includes_episode`, `contains_work`). Les statistiques d'une collection comptent, pour chaque source, les cibles présentes sur le total (« 30 tomes sur 42 ») |
 | `x-label`            | racine    | Gabarit du libellé des instances : `"{title}"`, `"{number}. {title}"`, `"{last_name} {first_name}"` ; sans gabarit, repli sur `title`, `name`, `label` (Go `internal/label`, TS `web/src/lib/schema.ts`) |
 
@@ -264,9 +266,10 @@ User "shinsaber" :
 
 | Rôle             | Droits                                                                                                                  |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| **Admin**        | Crée/modifie les ItemTypes, RelationTypes, CollectionTypes. Crée/modifie les Items et relations. Gère les utilisateurs. |
-| **User**         | Crée ses collections, y ajoute des items existants. Consulte le catalogue.                                              |
-| **User (futur)** | Soumet de nouveaux items ou types, validés par un admin.                                                                |
+| **Admin**        | Crée / modifie les ItemTypes, RelationTypes, CollectionTypes et installe les paquets de domaine. Écrit et supprime dans le catalogue. Gère les comptes, les invitations, l'import / export et les images. Modère les propositions. |
+| **Contributeur** | (Phase 4, P4-3) Écrit directement dans le catalogue (items, relations, images, sources externes), sans supprimer d'item ; modère les propositions des autres. Ni méta-types ni administration. |
+| **Membre** (`user`) | Crée ses collections (visibilité au choix), y ajoute des items existants, consulte le catalogue ; propose des créations ou corrections, modérées ; signale ; invite si `MEMBER_INVITES`. |
+| **Visiteur**     | Sans compte : profils et collections publics (`/u/…`, `/c/…`) et liens de partage (`/share`), en lecture seule ; les champs `x-private` sont retirés par le serveur. |
 
 ---
 
@@ -300,18 +303,20 @@ La table unique d'items avec attributs dynamiques nécessite une attention parti
 - Statistiques sur les collections (valeur totale, tendances, complétude…)
 - Graphiques et visualisations
 
-### Fonctionnalités Sociales (post-MVP)
+### Fonctionnalités sociales (Phase 4, livrée — `docs/phases/social.md`)
 
-- Profils utilisateurs publics/privés
-- Partage de collections
-- Listes de souhaits
-- Système d'échange entre collectionneurs
+- Comptes sur invitation, profils (nom affiché, avatar, présentation), rôles admin / contributeur / membre
+- Visibilité par collection et pour le profil (privé, membres, public), liens de partage secrets, champs privés retirés par le serveur
+- Listes de souhaits partageables ; statistiques personnelles et complétude (« 30 tomes sur 42 »)
+- Contributions : propositions modérées, rôle contributeur, historique des fiches, notifications
+- _Reporté_ : système d'échange entre collectionneurs (exemplaires « à échanger », correspondances avec les listes de souhaits, messagerie)
 
-### Sources de données externes (long terme)
+### Sources de données externes (Phase 3, livrée — `docs/sources-externes.md`)
 
-- BD / manga : Wikidata (œuvres, auteurs) et BnF (éditions françaises, tomes), connecteur livré en Phase 3 (`server/internal/external/connectors`, page admin « Sources externes »)
-- Intégration d'APIs tierces : TMDB (films/séries), OpenLibrary (livres), Scryfall (Magic), TCGdex (Pokémon)…
-- Scan de codes-barres / ISBN avec auto-complétion (app mobile)
+- Sources **ouvertes uniquement** : Wikidata (CC0), BnF (Licence Ouverte), MusicBrainz (CC0), TVmaze (CC BY-SA) ; TMDB, IGDB, AniList… écartés (conditions non ouvertes)
+- Connecteurs par domaine (page admin « Sources externes », `server/internal/external/connectors`) : BD / manga, romans, musique, films, séries, jeux vidéo ; aperçu à cocher, rapprochement du catalogue, simulation puis import
+- Scan de codes-barres / ISBN (Phase 5, livrée) : recherche du catalogue, champs identifiants, sources externes, page « Scanner »
+- _Pistes, non planifiées_ : cartes à collectionner (Scryfall pour Magic, TCGdex pour Pokémon, licences à vérifier), Open Library, GCD et libretro-database (CC BY-SA)
 
 ---
 
@@ -325,7 +330,7 @@ La table unique d'items avec attributs dynamiques nécessite une attention parti
 - [x] API REST (CRUD sur tous les objets) — spécification OpenAPI 3.1 dans `api/openapi.yaml`
 - [x] Authentification utilisateur (admin/user) — JWT Bearer
 - [x] Jeu de données de test : Séries TV (multi-chemin Série→Diffusion→Saison→Épisode + Série→DVD→Épisode)
-- [x] Interface web de visualisation (SPA Vue 3 + PrimeVue)
+- [x] Interface web de visualisation (SPA Vue 3 ; PrimeVue, remplacé par Element Plus au lot 10 de la Phase 1.5)
 - [x] Upload d'images (galerie, catégories avec ratios, onglets)
 - [x] Visualisation de graphe (Cytoscape.js, traversée récursive avec profondeur configurable)
 - [x] Gestion des collections utilisateur (CRUD, ajout/retrait d'items, attributs contextuels)
@@ -337,9 +342,9 @@ La table unique d'items avec attributs dynamiques nécessite une attention parti
 - [x] Tags libres sur les items
 - [x] Déploiement Docker Compose (4 services : postgres, migrate, server, web)
 
-### Phase 1.5 : Remise à niveau (audit du 2026-10-11, `docs/audit/`)
+### Phase 1.5 : Remise à niveau (audit du 2026-10-11)
 
-Lots de `docs/audit/03-feuille-de-route.md`, branche `remise-a-niveau` :
+Lots de la feuille de route de l'audit (documents retirés du dépôt une fois la remise à niveau terminée), branche `remise-a-niveau` :
 
 - [x] Lot 0 — sécurité : JWT courts + refresh tokens à rotation, secrets obligatoires, limites de corps,
       rate limit `/auth/*`, 422 sur PUT sans `attributes`
@@ -364,6 +369,16 @@ Lots de `docs/audit/03-feuille-de-route.md`, branche `remise-a-niveau` :
 - [x] Domaine BD / Manga (lot 13) : 8 ItemTypes et 7 RelationTypes (`db/seed_bd_manga.sql`), exemples réels Dragon Ball et Astérix tirés de Wikidata (CC0) et de la BnF (Licence Ouverte) avec `external_ids` / `sources` ; rôles multiples (`roles` en tableau d'enum, sélection multiple dans les formulaires) ; seeds chargés en liste (`SEED_FILE`)
 - [x] Refonte graphique et responsive (branche `refonte-graphique`, lots R0 à R8) : identité « Étiquette » (pétrole, ambre, ombres légères ; thème sombre à halos pétrole), menu latéral sur bureau et barre d'onglets sur mobile, catalogue à filtres latéraux ou en feuille, tableaux en cartes sur mobile, dialogues en feuille du bas, éditeur de schéma en page dédiée, nombres et dates mis en forme selon la langue
 
+### Évolutions du socle (entre les phases 2 et 3)
+
+Branche `evolutions-socle`, fusionnée le 2026-10-16 ; détail des lots dans `docs/phases/evolutions-socle.md`.
+
+- [x] **E1 — Identifiants insensibles à la casse** : index unique sur `lower(username)` (migration 004), connexion sans casse
+- [x] **E2 — Ordre d'affichage des types d'item** : `display_order` (migration 005), listes et répartition par type dans cet ordre, lignes de l'accueil menant au catalogue filtré
+- [x] **E3 — Type de collection limité à des types d'item** : `item_type_ids` (migration 006, jonction `collection_type_item_types`) ; seuls les nouveaux ajouts sont contrôlés, les items déjà présents sont conservés
+- [x] **E4 — Images** : fichiers nommés par SHA-256 (doublons), purge des images non référencées (page admin « Images », simulation puis suppression), contrôles à l'envoi (`tolerance`, `strict`, `min_width` / `min_height`)
+- [x] **E5 — Mobile hors ligne (lecture seule)** : application installable (vite-plugin-pwa), copie locale des collections (`GET /me/offline`, IndexedDB), mode hors ligne (collections, détail, recherche), vignettes serveur `?w=240` et espace borné
+
 ### Phase 3 : Récupération automatique externe
 
 Décisions du 2026-10-16 : sources **ouvertes uniquement** (une clé d'API est acceptable si elle est gratuite) ;
@@ -382,7 +397,7 @@ ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries 
 - [x] **P3-1 — Modèle Romans** : paquet `books` v2 — type `Novel` (b…18), Édition = le livre quand il n'y a qu'un
       volume (ISBN, date, pages, prix, collection, n°, formats relié / broché), `created_by` ouvert aux romans et aux
       éditions (rôles `illustrator`, `preface`), `contains_work` et `published_as` ouverts aux romans (voir
-      `les.collection.md` § « Romans »). Mise à jour v1 → v2 vérifiée : 1 type créé, 4 mis à jour. L'exemple du seed
+      `docs/domaines/livres.md` § « Romans »). Mise à jour v1 → v2 vérifiée : 1 type créé, 4 mis à jour. L'exemple du seed
       viendra du connecteur (P3-3), avec des données réelles.
 - [x] **P3-2 — Connecteurs génériques** : interface `external.Connector` (œuvres, éditions par titre ou ISBN / EAN,
       aperçu, import), registre (`GET /external/connectors`), routes `/external/{connector}/*` (les chemins
@@ -395,7 +410,7 @@ ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries 
       rapprochement, import partagés). Exemples réels dans le seed (L'Étranger, Les Misérables en Pocket 3 tomes).
 - [x] **P3-4 — Musique (CD / vinyles)** : étude des sources (`docs/sources-externes.md` : MusicBrainz retenu, données
       de base CC0, sans genres ni tags sous licence non commerciale ; Cover Art Archive écarté, sans licence ; Discogs à
-      revoir), modèle (`musique.md`), paquet `music` (Album, Édition musicale, Piste, Artiste, Label), connecteur `music` :
+      revoir), modèle (`docs/domaines/musique.md`), paquet `music` (Album, Édition musicale, Piste, Artiste, Label), connecteur `music` :
       album cherché par titre et artiste, ses éditions listées des plus anciennes aux rééditions, ou cherchées par titre /
       code-barres ; supports, pays, label et référence, pistes (enregistrements partagés entre éditions), artistes crédités
       quand ils diffèrent ; client MusicBrainz espacé d'une seconde par requête. Exemple réel dans `db/seed_music.sql`
@@ -408,7 +423,7 @@ ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries 
         `required`) ; sur une instance existante, la mise à jour de `books` transfère les deux types à « people » en
         gardant leurs modifications locales. Page « Domaines » : paquets requis affichés.
   - [x] **P3-5b — Modèle et paquet vidéo** : étude des sources (`docs/sources-externes.md` : Wikidata pour le film,
-        BnF pour les vidéogrammes — notice d'œuvre `bib.work2bib`, EAN `bib.ean` ; TMDB écarté), modèle `video.md`, paquet
+        BnF pour les vidéogrammes — notice d'œuvre `bib.work2bib`, EAN `bib.ean` ; TMDB écarté), modèle `docs/domaines/video.md`, paquet
         `video` : `Film` (b…30) et l'édition vidéo partagée avec les séries (`VideoRelease`, ancien `DVD` b…05 enrichi :
         support, disques, zone, EAN, langues, sous-titres, collection, contenu) ; relations `released_as` (films et séries),
         `credited` (générique, rôles et personnage), `published_by` (éditeur, distributeur) ; `tv` v2 requiert `video`
@@ -422,7 +437,7 @@ ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries 
       en réutilisant le modèle TV existant (Series, Season, Episode) et l'édition vidéo partagée (`VideoRelease`), connecteur.
   - [x] **P3-6a — Étude et modèle** : sources (`docs/sources-externes.md` : Wikidata pour la série, ses saisons et
         épisodes ; TVmaze, CC BY-SA sans clé, à défaut ; BnF pour les coffrets, par titre ou EAN, saisons lues en 200 `$h`),
-        modèle (`video.md` § Séries) ; `tv` v3 (identifiants, sources, titres originaux, date de diffusion, nombres de
+        modèle (`docs/domaines/video.md` § Séries) ; `tv` v3 (identifiants, sources, titres originaux, date de diffusion, nombres de
         saisons et d'épisodes ; ajouts seulement) et `video` v2 (`credited` ouvert aux séries, rôle `creator`).
   - [x] **P3-6b — Connecteur Séries** (`series`) : série, diffusion, saisons et épisodes sur Wikidata (titres français),
         TVmaze pour les saisons sans épisodes ; créateurs et interprètes ; coffrets BnF par titre ou EAN, saisons lues dans
@@ -431,7 +446,7 @@ ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries 
 
 - [x] **P3-7 — Jeux vidéo** (demande des utilisateurs, V1 centrée sur les éditions françaises) : sources libres
       (Wikidata, BnF ; libretro-database pour la suite), modèle, paquet, connecteur.
-  - [x] **P3-7a — Étude et modèle** : `docs/sources-externes.md` § Jeux vidéo, modèle `jeux-video.md`, paquet `games`
+  - [x] **P3-7a — Étude et modèle** : `docs/sources-externes.md` § Jeux vidéo, modèle `docs/domaines/jeux-video.md`, paquet `games`
         (`Game`, `GameRelease`, `Platform` rattachée à son constructeur ; `game_released_as`, `on_platform`,
         `produced_by`) ; `people` v2 : `Publisher` affiché « Société » (éditeur, studio, constructeur).
   - [x] **P3-7b — Connecteur Jeux vidéo** (`games`, Wikidata + BnF) : jeu, sociétés, plateformes rattachées à leur
@@ -444,7 +459,7 @@ ordre des domaines : romans, puis CD / vinyles, films en DVD / Blu-ray, séries 
 
 ### Phase 4 : Social
 
-Raffinée le 2026-10-17 (conception : `social.md`), branche `phase4-social`, un commit par lot. Décisions : visibilité
+Raffinée le 2026-10-17 (conception : `docs/phases/social.md`), branche `phase4-social`, un commit par lot. Décisions : visibilité
 au choix (privé, membres, public) par collection et pour le profil ; inscription sur invitation ; contributions par
 propositions modérées **et** rôle contributeur ; échanges reportés.
 
@@ -467,7 +482,7 @@ propositions modérées **et** rôle contributeur ; échanges reportés.
 
 ### Phase 5 : Mobile — appareil photo et scanner
 
-Raffinée le 2026-10-25 (conception : `mobile.md`), branche `phase5-mobile`, un commit par lot. Décisions : l'application
+Raffinée le 2026-10-25 (conception : `docs/phases/mobile.md`), branche `phase5-mobile`, un commit par lot. Décisions : l'application
 installable existante (pas d'app native), cropperjs (MIT) pour le recadrage, `BarcodeDetector` natif sinon
 barcode-detector / zxing-wasm (MIT, `.wasm` servi localement) pour les codes-barres ; HTTPS requis par l'appareil photo.
 
@@ -484,12 +499,13 @@ barcode-detector / zxing-wasm (MIT, `.wasm` servi localement) pour les codes-bar
       contrasté), quatre coins ajustables, homographie en JavaScript pur (sans OpenCV) ; étape avant le recadrage.
 - [x] **M5 — Photos de l'état d'un exemplaire** : propriété `photos` (galerie, ratio 3/4) du type « Possession »
       (paquet `collections` v3) ; vignettes dans les collections, la fiche d'un item et les pages publiques.
-- [x] **Retours de la v0.4.0** (essais sur téléphone, `mobile.md`) : prise de vue dans l'application (caméra dans la
+- [x] **Retours de la v0.4.0** (essais sur téléphone, `docs/phases/mobile.md`) : prise de vue dans l'application (caméra dans la
       page, `ImageCapture`, repli sur l'appareil du téléphone), loupe et prise élargie des coins au redressement,
       rotation à l'étape de redressement, visionneuse plein écran maison (zoom borné, balayage, rotation ; couverture,
       onglet « Images », vignettes) ; vignette et menu « ⋮ » dans les relations, menu « Plus » d'une collection (export,
-      modifier, supprimer), thème appliqué dès le démarrage et bascule sur les pages publiques.
-- [ ] Plus tard (voir `mobile.md`) : recadrage d'une image déjà en galerie, OCR, QR code des liens de partage, scan
+      modifier, supprimer) et compteur d'items agrandi sur les cartes de « Mes collections », thème appliqué dès le démarrage et
+      bascule sur les pages publiques. Fusionnés dans `main` (v0.4.1).
+- [ ] Plus tard (voir `docs/phases/mobile.md`) : recadrage d'une image déjà en galerie, OCR, QR code des liens de partage, scan
       d'étagère.
 
 ---
@@ -503,6 +519,9 @@ barcode-detector / zxing-wasm (MIT, `.wasm` servi localement) pour les codes-bar
 | Frontend        | Vue 3 + TypeScript                                                                            | 3.5 / 6.0            |
 | UI              | Element Plus (MIT) + Tailwind CSS ; identité « Étiquette » (Schibsted Grotesk, IBM Plex Mono) | 2.14 / 4.3           |
 | Graphes         | Cytoscape.js                                                                                  | 3.34                 |
+| Statistiques    | Apache ECharts (Apache 2.0), modules à la carte, rendu SVG, chargé à la demande                | 6.1                  |
+| Langues         | vue-i18n (fr / en, registre `web/src/i18n/langs.ts`)                                          | 11.4                 |
+| Mobile          | vite-plugin-pwa (Workbox), cropperjs (recadrage), barcode-detector + zxing-wasm (codes-barres) | 1.3 / 2.3 / 3.1      |
 | Build           | Vite (Rolldown), vue-tsc 3, Pinia 4, vue-router 5                                             | 8.3                  |
 | Déploiement     | Docker Compose (4 services : postgres, migrate, server, web)                                  | —                    |
 | Dev             | Nix flake (Go, Node, PostgreSQL, golangci-lint) + direnv                                      | flake.lock           |
@@ -511,8 +530,9 @@ barcode-detector / zxing-wasm (MIT, `.wasm` servi localement) pour les codes-bar
 
 ## Contribuer
 
-Ce projet est en phase de conception. Vos retours et suggestions sont les bienvenus !
+Phases 1 à 5 livrées (voir § 8) ; le projet évolue par lots, une branche et une pull request par lot, avec la CI
+(`.github/workflows/ci.yml`) comme garde-fou. Retours, questions et suggestions : issues du dépôt. Licence MIT (`LICENSE`).
 
 ---
 
-**Dernière mise à jour** : 22/04/2026
+**Dernière mise à jour** : 2026-11-01

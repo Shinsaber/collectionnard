@@ -39,7 +39,7 @@ export interface User {
   updated_at: string;
 }
 
-// ---------- Comptes, invitations, profils (P4-0, social.md) ----------
+// ---------- Comptes, invitations, profils (P4-0, docs/phases/social.md) ----------
 export interface UserUpdate {
   role?: Role;
   disabled?: boolean;

@@ -43,7 +43,7 @@ const (
 	InvitationExpired = "expired"
 )
 
-// Invitation lets someone create an account (social.md, P4-0). Its token is
+// Invitation lets someone create an account (docs/phases/social.md, P4-0). Its token is
 // only returned once, at creation (InvitationCreated).
 type Invitation struct {
 	ID                uuid.UUID  `json:"id"`

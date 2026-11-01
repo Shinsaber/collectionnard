@@ -1,4 +1,8 @@
-# Lots — branche `evolutions-socle`
+# Évolutions du socle — lots E1 à E5
+
+Branche `evolutions-socle`, fusionnée dans `main` le 2026-10-16 (PR #3). Tous les lots sont livrés ; le résumé et les cases
+à cocher sont dans [`docs/conception.md`](../conception.md) § 8 « Évolutions du socle ». Ce document garde le détail de
+chaque lot.
 
 Un commit par lot ; contrat d'API d'abord (`api/openapi.yaml` → model → store → handler + test →
 `types.ts` / `client.ts` → vues). Ordre : du plus petit au plus gros.
@@ -43,7 +47,7 @@ Un commit par lot ; contrat d'API d'abord (`api/openapi.yaml` → model → stor
       `tolerance` (écart de ratio permis, en %), `strict` (bloquer ou seulement avertir),
       `min_width` / `min_height` (pixels). Contrôle dans le formulaire (ImageGalleryField) ;
       extension gérée par `DynamicForm`, `SchemaBuilder`, `lib/schema.ts`, documentée (README,
-      `Collectionnard.md` § 3). Éditeur extrait dans `SchemaImageCategories.vue`, contrôle pur `checkImage` (`lib/schema.ts`).
+      `docs/conception.md` § 3). Éditeur extrait dans `SchemaImageCategories.vue`, contrôle pur `checkImage` (`lib/schema.ts`).
 
 ## Lot E5 — Mobile hors ligne (lecture seule)
 

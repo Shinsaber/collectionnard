@@ -14,7 +14,7 @@ import (
 	"github.com/shinsaber/colec/internal/model"
 )
 
-// Series profile (P3-6, video.md § Séries): a TV series on Wikidata, its
+// Series profile (P3-6, docs/domaines/video.md § Séries): a TV series on Wikidata, its
 // broadcaster, seasons and episodes (TVmaze for the seasons Wikidata leaves
 // without episodes); its box sets at the BnF (video records found by title or
 // EAN), linked to the episodes of the seasons they contain (200 $h).

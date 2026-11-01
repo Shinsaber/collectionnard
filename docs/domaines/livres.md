@@ -9,7 +9,7 @@
   cumuler plusieurs rôles sur une œuvre (ex. scénariste et dessinateur) sans violer l'unicité
   `(relation_type_id, source_item_id, target_item_id)` d'`item_relations`
 - **Saga** : ItemType dédié (arcs narratifs)
-- **CollectionType "Lecture"** : à définir plus tard
+- **CollectionType « Lecture »** (tome en cours, progression, relecture) : piste, non planifiée ; Possession, Wishlist et Visionnage suffisent aujourd'hui
 - ✅ **Traité** : `relation_types` accepte plusieurs types source et cible (tables de jonction
   `relation_type_sources` / `relation_type_targets`, champs `source_item_type_ids` / `target_item_type_ids`)
 - **Convention** : clés JSON, noms de RelationTypes et valeurs d'enum en anglais snake_case ; les libellés
@@ -19,8 +19,8 @@
 
 ## Implémentation (lot 13)
 
-Types : paquet de domaine « books » ([`server/internal/domains/packages/books.json`](server/internal/domains/packages/books.json),
-page « Domaines » ou `colec-server install-domain books`) ; données de démonstration : [`db/seed_bd_manga.sql`](db/seed_bd_manga.sql)
+Types : paquet de domaine « books » ([`server/internal/domains/packages/books.json`](../../server/internal/domains/packages/books.json),
+page « Domaines » ou `colec-server install-domain books`) ; données de démonstration : [`db/seed_bd_manga.sql`](../../db/seed_bd_manga.sql)
 (chargé après `db/seed.sql`). Noms techniques des ItemTypes :
 `Universe`, `Saga`, `Manga`, `Comic` (BD), `Edition`, `Volume` (Tome), `Person`, `Publisher` ; noms affichés via `x-title`.
 Depuis la v3 du paquet (P3-5), `Person` et `Publisher` vivent dans le paquet commun « people » (mêmes UUID), requis par
@@ -183,7 +183,7 @@ Créateur : auteur, scénariste, dessinateur, coloriste, traducteur…
 
 Décision (2026-10-11) : le domaine s'appuie sur deux bases ouvertes, à licence compatible avec la reprise des
 données dans le catalogue. Le détail des licences, des accès et des sources écartées ou gardées pour plus
-tard (GCD, Open Library, AniList…) est dans [`docs/sources-externes.md`](docs/sources-externes.md).
+tard (GCD, Open Library, AniList…) est dans [`docs/sources-externes.md`](../sources-externes.md).
 
 | Niveau du graphe                                   | Source       | Licence                                         |
 | -------------------------------------------------- | ------------ | ----------------------------------------------- |
@@ -203,7 +203,7 @@ retrouver sa fiche d'origine : c'est la clé de rapprochement du connecteur (Pha
 - Motifs de validation : `wikidata` → `^Q[1-9][0-9]*$` ; `bnf_ark` → `^ark:/12148/[a-z0-9]+$`.
 - Les identifiants d'autres bases (MangaUpdates `P11149`, MyAnimeList `P4087`, AniList `P8731`, Comic Vine
   `P5905`) ne sont **pas** stockés : ils se retrouvent à la demande via le QID Wikidata.
-- `isbn` reste un attribut propre du Tome (identifiant métier, recherche par code-barres en Phase 5).
+- `isbn` reste un attribut propre du Tome (identifiant métier `x-identifier` ; lu au scanner depuis la Phase 5, lot M2).
 - Ni les textes Wikipédia (CC BY-SA) ni les images (licences propres, couvertures protégées) ne sont repris :
   `description` / `biography` sont écrites à la main ou reprises des **descriptions** Wikidata (CC0) ; les
   images restent des uploads.
@@ -248,7 +248,7 @@ légalement réutilisables et au format du connecteur (section suivante).
 
 ### Import depuis les sources (Phase 3)
 
-Connecteur [`server/internal/external/connectors`](server/internal/external/connectors) (identifiant `bd-manga`), page admin
+Connecteur [`server/internal/external/connectors`](../../server/internal/external/connectors) (identifiant `bd-manga`), page admin
 « Sources externes » (`/admin/external-import`, choix de la sorte de collection), API `/external/bd-manga/*` (voir `api/openapi.yaml`, tag `External`). Le connecteur
 trouve les types du domaine par **identifiant du paquet `books`**, à défaut par **nom technique** (`Manga`, `Comic`, `Universe`, `Edition`, `Volume`, `Person`,
 `Publisher` ; `contains_work`, `created_by`, `published_as`, `edited_by`, `contains_volume`) et répond 409
@@ -341,9 +341,8 @@ Les mêmes que pour la BD, licences vérifiées le 2026-10-11 (`docs/sources-ext
 | Roman, Saga (cycle), Personne, Éditeur | **Wikidata** | Classes `Q7725634` œuvre littéraire, `Q8261` roman, `Q1667921` série de romans (→ Saga) ; `P50` auteur, `P577` date, `P407` langue, `P136` genre, `P179` partie de la série (→ Saga, ordre `P1545`) |
 | Édition, Tome, traducteur              | **BnF**      | Notice bibliographique d'une monographie (une Édition) ; ensemble multivolume (zone 461) → Édition + Tomes ; zones 700-702 `$4` (code de fonction : traducteur 730…) → `created_by` de l'Édition ; 225 → `collection` / `collection_number` |
 
-À valider en codant le connecteur, comme pour la BD : les classes Wikidata utiles (les romans sont souvent
-déclarés `Q7725634` + `P7937` forme littéraire), et les zones UNIMARC des notices de romans depuis le
-changement de modèle de la BnF (juin 2026).
+Validé en codant le connecteur (P3-3, 2026-10-17) : classes Wikidata (`Q7725634` + `P7937`), index `bib.work2bib`, codes de
+fonction des contributeurs et pièges rencontrés sont consignés dans [`docs/sources-externes.md`](../sources-externes.md) § « Romans ».
 
 ---
 

@@ -74,7 +74,7 @@ tags:
     description: |
       Comptes et profils (Phase 4, P4-0) : profil et mot de passe de l'utilisateur courant, invitations à usage
       unique (admin, ou membre si `MEMBER_INVITES`), gestion des comptes et liens de réinitialisation par un admin
-      (sans envoi d'e-mail). Voir `social.md`.
+      (sans envoi d'e-mail). Voir `docs/phases/social.md`.
   - name: ItemTypes
     description: |
       **Admin uniquement.** Gestion des types d'items. Un ItemType définit le schéma

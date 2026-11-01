@@ -1,13 +1,20 @@
-# Sources de données externes — BD / Manga / Comics
+# Sources de données externes
 
-Recherche du 2026-10-11 (licences et conditions d'utilisation vérifiées ce jour-là ; elles évoluent :
-**les revérifier avant tout import massif ou toute intégration**). Ce document n'est pas un avis juridique.
+Licences et conditions d'utilisation vérifiées aux dates indiquées (BD / manga le 2026-10-11, les autres domaines le
+2026-10-17) ; elles évoluent : **les revérifier avant tout import massif ou toute intégration**. Ce document n'est pas
+un avis juridique.
 
-**Décision actuelle** : seules **Wikidata** et la **BnF** sont retenues pour le domaine BD / Manga
-(voir [`les.collection.md`](../les.collection.md) § « Sources de référence »). Les autres sources sont
-documentées ici pour plus tard (Phase 3 : récupération automatique externe).
+**Règle du projet** (décision du 2026-10-16) : sources **ouvertes uniquement** ; une clé d'API gratuite est acceptable,
+pas des conditions propriétaires ou non commerciales. Retenues : **Wikidata** (CC0) et **BnF** (Licence Ouverte) pour
+les livres, la vidéo et les jeux vidéo, **MusicBrainz** (CC0) pour la musique, **TVmaze** (CC BY-SA) en complément pour
+les séries. Les connecteurs correspondants sont livrés (Phase 3) ; chaque section « Connecteur » consigne les constats
+faits en les codant. Modèles de données : [`docs/domaines/`](domaines/).
 
-## Synthèse
+## Livres : BD, manga, comics (2026-10-11) et romans (2026-10-17)
+
+Modèle : [`docs/domaines/livres.md`](domaines/livres.md) § « Sources de référence ».
+
+### Synthèse
 
 | Source                       | Licence / conditions                                          | Couverture                                                                  | Statut                  |
 | ---------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------- |
@@ -20,9 +27,9 @@ documentées ici pour plus tard (Phase 3 : récupération automatique externe).
 | MangaUpdates (Baka-Updates)  | Conditions non trouvées                                       | Manga                                                                       | ❌ Pas de base légale   |
 | MyAnimeList                  | CGU propriétaires                                             | Manga / anime                                                               | ❌ Non étudié en détail |
 
-## Sources retenues
+### Sources retenues
 
-### Wikidata
+#### Wikidata
 
 - **Licence** : les données structurées (espaces principal, Property, Lexeme) sont sous CC0 ; le texte
   libre des autres espaces est sous CC BY-SA 4.0.
@@ -35,7 +42,7 @@ documentées ici pour plus tard (Phase 3 : récupération automatique externe).
   leurs données : `P268` (BnF), `P11149` (MangaUpdates), `P4087` (MyAnimeList manga), `P8731` (AniList manga),
   `P5905` (Comic Vine). Un seul QID par item suffit pour retrouver les autres identifiants à la demande.
 
-### BnF — catalogue général et data.bnf.fr
+#### BnF — catalogue général et data.bnf.fr
 
 - **Licence** : métadonnées descriptives (bibliographiques et d'autorité) sous Licence Ouverte de l'État
   (Etalab) depuis le 1er janvier 2014 ; réutilisation gratuite en mentionnant la source et la date de
@@ -58,10 +65,10 @@ documentées ici pour plus tard (Phase 3 : récupération automatique externe).
   encore les index et formats ci-dessus le 2026-10-11 ; les zones UNIMARC lues par le connecteur ont été
   vérifiées ce jour-là sur des notices réelles (voir « Connecteur implémenté »).
 
-## Connecteur implémenté (Phase 3)
+### Connecteur `bd-manga` (2026-10-11)
 
 Code : `server/internal/external/` (client HTTP commun, `wikidata/`, `bnf/`, connecteur `connectors/`) ; usage et limites
-dans [`les.collection.md`](../les.collection.md) § « Import depuis les sources ». Le serveur interroge les sources
+dans [`docs/domaines/livres.md`](domaines/livres.md) § « Import depuis les sources ». Le serveur interroge les sources
 lui-même (pas le navigateur) : User-Agent identifié (`EXTERNAL_USER_AGENT`, nom + contact comme le demandent les
 règles de Wikimedia), délai de 20 s par appel, réponses limitées à 20 Mio et gardées 15 min en mémoire (l'aperçu
 puis l'import d'une même sélection n'interrogent les sources qu'une fois).
@@ -139,7 +146,7 @@ Constats faits en codant le connecteur (2026-10-11), utiles pour les prochains :
 ## Films (P3-5, recherche du 2026-10-17)
 
 Mêmes sources que les romans, mêmes licences (Wikidata CC0, BnF Licence Ouverte) ; **TMDB écarté** (données non ouvertes,
-choix du mainteneur). Modèle : `video.md`.
+choix du mainteneur). Modèle : [`docs/domaines/video.md`](domaines/video.md).
 
 - **Wikidata** : un film est `P31` film (`Q11424`), film d'animation (`Q202866`), long métrage d'animation (`Q29168811`),
   documentaire (`Q93204`), court métrage (`Q24862`) ou téléfilm (`Q506240`). Générique : `P57` réalisation, `P58`

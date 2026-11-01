@@ -18,7 +18,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Accounts, invitations and profiles (Phase 4, P4-0 — social.md).
+// Accounts, invitations and profiles (Phase 4, P4-0 — docs/phases/social.md).
 
 const (
 	defaultInvitationDays = 7

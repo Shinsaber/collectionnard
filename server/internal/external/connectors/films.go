@@ -14,7 +14,7 @@ import (
 	"github.com/shinsaber/colec/internal/model"
 )
 
-// Films profile (P3-5, video.md): a film on Wikidata and its credits; its
+// Films profile (P3-5, docs/domaines/video.md): a film on Wikidata and its credits; its
 // video releases at the BnF (DVD, Blu-ray, VHS of the legal deposit), listed
 // from the BnF work record of the film (bib.work2bib) or found by EAN. A
 // release found alone (barcode) brings its film: the Wikidata film carrying

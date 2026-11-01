@@ -51,7 +51,7 @@ Tous portent `external_ids` (`musicbrainz` : MBID ; `wikidata` pour Artiste et A
 
 ## Source : MusicBrainz
 
-Vérifié le 2026-10-17 (voir `docs/sources-externes.md`) : les **données de base** (artistes, groupes de parutions,
+Vérifié le 2026-10-17 (voir [`docs/sources-externes.md`](../sources-externes.md)) : les **données de base** (artistes, groupes de parutions,
 parutions, enregistrements, labels, relations) sont sous **CC0** ; les **tags, associations de genres, notes et
 annotations** des utilisateurs sont sous CC BY-NC-SA 3.0 (non commercial) : **non repris** (pas de genre importé). API
 sans clé, User-Agent avec contact obligatoire, 1 requête par seconde.

@@ -1,4 +1,4 @@
-// Redressement d'une couverture photographiée de biais (lot M4, mobile.md) : détection des bords
+// Redressement d'une couverture photographiée de biais (lot M4, docs/phases/mobile.md) : détection des bords
 // sur une petite copie de la photo, puis transformation perspective (homographie) du quadrilatère
 // vers un rectangle. JavaScript pur sur des tableaux de pixels, sans OpenCV (8 Mo) : les fonctions
 // travaillent sur un `Raster` (le contenu d'un ImageData, sans dépendre du DOM) et sont testables.

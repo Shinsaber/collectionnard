@@ -14,7 +14,7 @@ import (
 	"github.com/shinsaber/colec/internal/model"
 )
 
-// Music profile (musique.md): an album is a MusicBrainz release group, an
+// Music profile (docs/domaines/musique.md): an album is a MusicBrainz release group, an
 // edition a release (the object one owns), a track a recording (the same item
 // on every release that carries it). Artists and labels are matched by their
 // MusicBrainz identifier; labels also by name, like the publishers of books.
