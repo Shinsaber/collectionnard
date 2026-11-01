@@ -1,0 +1,29 @@
+# Suivi des épinglages (audit S-007) : actions GitHub par SHA de commit et images Docker par digest.
+# Dependabot propose les mises à jour ; Go (go.mod) et npm restent suivis à la main (audits CVE avant
+# chaque dernier commit, CLAUDE.md § Règles 4).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "CI"
+  - package-ecosystem: docker
+    directory: /server
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "Docker"
+  - package-ecosystem: docker
+    directory: /web
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "Docker"
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "Docker"

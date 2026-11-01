@@ -20,12 +20,12 @@ dans un timer systemd ou une crontab ; le rapport et ce tableau sont alors à re
 | Id | Gravité | Titre | Où | Ouvert le | État | Suite |
 | -- | ------- | ----- | -- | --------- | ---- | ----- |
 | S-001 | haute | Vignettes : décodage jusqu'à 50 Mpx sans borne de concurrence | [handler/thumbnail.go:26](../../server/internal/handler/thumbnail.go#L26) | 2026-11-01 | corrigé | lot A (sémaphore de 2 décodages, cap 25 Mpx à l'envoi et à la vignette) |
-| S-002 | moyenne | Limiteur `/auth/*` par IP inopérant derrière un reverse-proxy | [web/nginx.conf:43](../../web/nginx.conf#L43) | 2026-11-01 | ouvert | partie Go faite au lot A (compteurs login / session séparés) ; reste nginx `real_ip` (lot B) |
-| S-003 | moyenne | Jetons de partage et d'invitation en query string dans les journaux nginx | [handler/sharing.go:132](../../server/internal/handler/sharing.go#L132) | 2026-11-01 | ouvert | |
+| S-002 | moyenne | Limiteur `/auth/*` par IP inopérant derrière un reverse-proxy | [web/nginx.conf:43](../../web/nginx.conf#L43) | 2026-11-01 | corrigé | lot A (compteurs login / session séparés) + lot B (`REAL_IP_FROM` → `real_ip` nginx) |
+| S-003 | moyenne | Jetons de partage et d'invitation en query string dans les journaux nginx | [handler/sharing.go:132](../../server/internal/handler/sharing.go#L132) | 2026-11-01 | corrigé | lot B (`log_format colec` avec `$uri`, sans query string) |
 | S-004 | moyenne | Aucun quota d'envoi d'images par compte | [handler/upload.go:28](../../server/internal/handler/upload.go#L28) | 2026-11-01 | corrigé | lot A (quota horaire par compte `UPLOAD_RATE_LIMIT` / `UPLOAD_RATE_BYTES`, purge périodique `UPLOAD_PURGE_INTERVAL`) |
 | S-005 | basse | Jetons d'accès et de rafraîchissement en `localStorage` | [web/src/api/tokens.ts:1](../../web/src/api/tokens.ts#L1) | 2026-11-01 | ouvert | |
 | S-006 | basse | Images publiques en cache un an, photos d'exemplaires comprises | [handler/handler.go:75](../../server/internal/handler/handler.go#L75) | 2026-11-01 | ouvert | |
-| S-007 | basse | Hygiène du dépôt et de la chaîne d'approvisionnement | [.gitignore:14](../../.gitignore#L14) | 2026-11-01 | ouvert | |
+| S-007 | basse | Hygiène du dépôt et de la chaîne d'approvisionnement | [.gitignore:14](../../.gitignore#L14) | 2026-11-01 | corrigé | lot B (`.env*` ignoré, mot de passe sans défaut, actions par SHA et images par digest + Dependabot, `seed` refusé sans `SEED_ON_EMPTY=true`) |
 | Q-001 | moyenne | `GET /items/{id}/relations` sans borne, schémas répétés par ligne | [store/relation.go:12](../../server/internal/store/relation.go#L12) | 2026-11-01 | ouvert | |
 | Q-002 | moyenne | Element Plus importé en entier dans le chunk d'entrée | [web/src/main.ts:3](../../web/src/main.ts#L3) | 2026-11-01 | ouvert | |
 | Q-003 | moyenne | Six routes sans test de handler (succès, 403, 404) | [handler/handler.go:178](../../server/internal/handler/handler.go#L178) | 2026-11-01 | ouvert | |
@@ -38,7 +38,7 @@ dans un timer systemd ou une crontab ; le rapport et ce tableau sont alors à re
 | Q-010 | basse | Suite Vitest : 52 environnements jsdom, 54 s, bruit canvas | [web/vite.config.ts:76](../../web/vite.config.ts#L76) | 2026-11-01 | ouvert | |
 | Q-011 | basse | `outils.sh` : tableau de `RESUME.md` illisible (accents graves dans `printf`) | [outils.sh:31](../../.claude/skills/audit/scripts/outils.sh#L31) | 2026-11-01 | ouvert | |
 | C-001 | moyenne | Sept codes d'erreur des comptes absents d'`openapi.yaml` | [handler/account.go:104](../../server/internal/handler/account.go#L104) | 2026-11-01 | ouvert | |
-| C-002 | basse | Variables d'environnement : documentation et compose désalignés | [server/CLAUDE.md:5](../../server/CLAUDE.md#L5) | 2026-11-01 | ouvert | |
+| C-002 | basse | Variables d'environnement : documentation et compose désalignés | [server/CLAUDE.md:5](../../server/CLAUDE.md#L5) | 2026-11-01 | corrigé | lot A (variables dans `server/CLAUDE.md`) + lot B (`LOG_LEVEL` transmis par compose, `MIGRATIONS_DIR` et `LOG_LEVEL` documentés, route `/relations/collections`) |
 | C-003 | basse | Les seeds citent les anciens noms des documents | [db/seed_bd_manga.sql:2](../../db/seed_bd_manga.sql#L2) | 2026-11-01 | ouvert | |
 | C-004 | basse | Exceptions légitimes à `respondJSON` / `decodeJSON` non consignées | [handler/export.go:41](../../server/internal/handler/export.go#L41) | 2026-11-01 | ouvert | |
 | C-005 | basse | `forbidden` traduit « Droits administrateur requis » pour d'autres refus | [locales/fr/errors.ts:39](../../web/src/i18n/locales/fr/errors.ts#L39) | 2026-11-01 | ouvert | |

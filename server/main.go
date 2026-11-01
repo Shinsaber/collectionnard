@@ -26,7 +26,8 @@ const usage = `usage: colec-server [serve|migrate|seed|install-domain|create-use
   migrate  apply pending SQL migrations (MIGRATIONS_DIR), then the seed if
            SEED_ON_EMPTY=true and the users table is empty (SEED_FILE)
   seed     install every domain package, then apply the seed files
-           unconditionally (development only)
+           unconditionally (development only: demonstration accounts, requires
+           SEED_ON_EMPTY=true as confirmation)
   install-domain [--dry-run] <domain>… | --all
            install or update domain packages (types); no argument: list them
   create-user <username> <email> [--admin]

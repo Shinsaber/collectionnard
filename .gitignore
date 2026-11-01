@@ -11,8 +11,9 @@ Thumbs.db
 # ── Docker ─────────────────────────────────────────────────────────────
 pgdata/
 uploads/
-.env
-.env.local
+# Tout fichier d'environnement (secrets), sauf le modèle commité.
+.env*
+!.env.example
 
 # ── Go (server) ────────────────────────────────────────────────────────
 server/colec

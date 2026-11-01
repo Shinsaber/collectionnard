@@ -2,7 +2,7 @@
 # Seul le service web est publié (port 3000) ; l'API et PostgreSQL restent sur le réseau interne.
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
     container_name: colec-postgres
     environment:
       POSTGRES_USER: colec
@@ -57,6 +57,7 @@ services:
       MEMBER_INVITES: ${MEMBER_INVITES:-false}
       PROPOSAL_QUOTA: ${PROPOSAL_QUOTA:-5}
       LOG_FORMAT: ${LOG_FORMAT:-json}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
     volumes:
       - uploads:/data/uploads
     healthcheck:
@@ -77,6 +78,10 @@ services:
     container_name: colec-web
     ports:
       - "3000:8080"
+    environment:
+      # Adresse ou réseau du reverse-proxy TLS placé devant (web/nginx-real-ip.conf.template) ;
+      # 127.0.0.1 : aucun X-Forwarded-For relu.
+      REAL_IP_FROM: ${REAL_IP_FROM:-127.0.0.1}
     depends_on:
       server:
         condition: service_healthy
