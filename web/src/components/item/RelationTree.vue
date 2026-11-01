@@ -201,6 +201,8 @@ import { useI18n } from "vue-i18n";
 import { itemApi } from "@/api/client";
 import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";
+import { useMetaTypes } from "@/stores/metaTypes";
+import { byId, withTypes } from "@/lib/relations";
 import {
   fieldLabel,
   fieldValue,
@@ -238,6 +240,8 @@ defineEmits<{
 const { t } = useI18n();
 const { lang } = useLang();
 const { notifyError } = useNotify();
+// Méta-types des sous-relations (l'API ne les joint plus) : lus dans le cache, chargé par la page.
+const metaTypes = useMetaTypes();
 const expanded = ref(new Set<string>());
 const children = ref<Record<string, ItemRelation[]>>({});
 const loading = ref(new Set<string>());
@@ -366,11 +370,15 @@ async function toggle(rel: ItemRelation) {
   loading.value.add(rel.id);
   loading.value = new Set(loading.value);
   try {
-    const rels = await itemApi.relations(lid);
-    children.value[rel.id] = (rels ?? []).filter(
-      (r) =>
-        r.source_item_id === lid && r.target_item_id !== props.contextItemId,
-    );
+    const res = await itemApi.relations(lid);
+    const itemTypes = byId(metaTypes.itemTypes);
+    const relationTypes = byId(metaTypes.relationTypes);
+    children.value[rel.id] = (res.data ?? [])
+      .map((r) => withTypes(r, itemTypes, relationTypes))
+      .filter(
+        (r) =>
+          r.source_item_id === lid && r.target_item_id !== props.contextItemId,
+      );
   } catch (e) {
     children.value[rel.id] = [];
     notifyError(e, t("items.relations.subRelationsUnavailable"));

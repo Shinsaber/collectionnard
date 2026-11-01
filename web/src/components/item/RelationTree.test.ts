@@ -1,5 +1,6 @@
 import { flushPromises, mount } from "@vue/test-utils";
 import ElementPlus, { ElDropdown } from "element-plus";
+import { createPinia, setActivePinia } from "pinia";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMemoryHistory, createRouter } from "vue-router";
 import type { Item, ItemRelation } from "@/api/types";
@@ -17,6 +18,11 @@ vi.mock("@/api/client", () => ({
 }));
 
 const ME = "e0000000-0000-0000-0000-000000000001";
+
+/** Réponse paginée de `GET /items/{id}/relations` (une page). */
+function page<T>(data: T[]) {
+  return { data, total: data.length, page: 1, per_page: 100, total_pages: 1 };
+}
 
 function relationType(name: string, fr: string) {
   return {
@@ -98,7 +104,8 @@ function mountTree(
 
 describe("RelationTree", () => {
   beforeEach(() => {
-    api.relations.mockReset().mockResolvedValue([]);
+    setActivePinia(createPinia()); // cache des méta-types lu par le composant (vide ici)
+    api.relations.mockReset().mockResolvedValue(page([]));
     api.relatedCollections.mockReset().mockResolvedValue([]);
   });
 
@@ -144,17 +151,19 @@ describe("RelationTree", () => {
   });
 
   it("déplie les sous-relations de l'item lié à la demande", async () => {
-    api.relations.mockResolvedValue([
-      rel(
-        "r-sub",
-        credited,
-        item("ep-1", "Cat's in the Bag"),
-        item("p-2", "Anna Gunn", "Person", "Personne"),
-        {
-          role: "actor",
-        },
-      ),
-    ]);
+    api.relations.mockResolvedValue(
+      page([
+        rel(
+          "r-sub",
+          credited,
+          item("ep-1", "Cat's in the Bag"),
+          item("p-2", "Anna Gunn", "Person", "Personne"),
+          {
+            role: "actor",
+          },
+        ),
+      ]),
+    );
     const w = mountTree();
     await flushPromises();
     const toggle = w.find(
@@ -174,7 +183,7 @@ describe("RelationTree", () => {
     expect(w.text()).toContain("Anna Gunn");
 
     // Une relation sans sous-relation sortante : message dédié.
-    api.relations.mockResolvedValue([]);
+    api.relations.mockResolvedValue(page([]));
     const other = mountTree({ relations: [pilot] });
     await flushPromises();
     await other.find('li button[aria-expanded="false"]').trigger("click");

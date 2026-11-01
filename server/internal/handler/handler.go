@@ -351,13 +351,19 @@ func parseUUID(w http.ResponseWriter, r *http.Request, param string) (uuid.UUID,
 }
 
 func parsePagination(r *http.Request) model.Pagination {
+	return parsePaginationDefault(r, defaultPerPage)
+}
+
+// parsePaginationDefault reads page and per_page, with the given page size when per_page
+// is absent; per_page never exceeds maxPerPage.
+func parsePaginationDefault(r *http.Request, def int) model.Pagination {
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	if page < 1 {
 		page = 1
 	}
 	perPage, _ := strconv.Atoi(r.URL.Query().Get("per_page"))
 	if perPage < 1 {
-		perPage = defaultPerPage
+		perPage = def
 	}
 	if perPage > maxPerPage {
 		perPage = maxPerPage

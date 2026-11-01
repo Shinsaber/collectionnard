@@ -318,11 +318,14 @@ func TestItemTypesAndItems_Coverage(t *testing.T) {
 func TestRelations_Coverage(t *testing.T) {
 	rel := sampleRelation()
 	mock := &testutil.MockStore{
-		ListItemRelationsFn: func(_ context.Context, itemID uuid.UUID, rtID *uuid.UUID) ([]model.ItemRelation, error) {
+		ListItemRelationsPageFn: func(_ context.Context, itemID uuid.UUID, rtID *uuid.UUID, pg model.Pagination) ([]model.ItemRelation, int, error) {
 			if rtID != nil && *rtID != otherID {
 				t.Errorf("relation_type_id filter not forwarded: %v", rtID)
 			}
-			return []model.ItemRelation{*rel}, nil
+			if pg.Page != 1 || pg.PerPage != 100 {
+				t.Errorf("default page expected (1, 100), got %+v", pg)
+			}
+			return []model.ItemRelation{*rel}, 1, nil
 		},
 		GetRelationFn: func(_ context.Context, id uuid.UUID) (*model.ItemRelation, error) {
 			if id == someID {
@@ -341,10 +344,14 @@ func TestRelations_Coverage(t *testing.T) {
 	runRouteCases(t, []routeCase{
 		{"list item relations ok", "GET", "/items/" + uuid.New().String() + "/relations?relation_type_id=" + otherID.String(), testutil.UserToken(), "", mock, 200,
 			func(t *testing.T, b []byte) {
-				var rels []model.ItemRelation
-				_ = json.Unmarshal(b, &rels)
-				if len(rels) != 1 {
-					t.Errorf("expected 1 relation, got %d", len(rels))
+				var out struct {
+					Data    []model.ItemRelation `json:"data"`
+					Total   int                  `json:"total"`
+					PerPage int                  `json:"per_page"`
+				}
+				_ = json.Unmarshal(b, &out)
+				if len(out.Data) != 1 || out.Total != 1 || out.PerPage != 100 {
+					t.Errorf("expected a page of 1 relation (per_page 100), got %s", b)
 				}
 			}},
 		{"list item relations bad filter", "GET", "/items/" + uuid.New().String() + "/relations?relation_type_id=nope", testutil.UserToken(), "", mock, 400, nil},

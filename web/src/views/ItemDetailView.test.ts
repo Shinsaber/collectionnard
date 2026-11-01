@@ -12,12 +12,21 @@ const api = vi.hoisted(() => ({
   get: vi.fn(),
   relations: vi.fn(),
   collections: vi.fn(),
+  listTypes: vi.fn(),
 }));
 vi.mock("@/api/client", () => ({
   itemApi: api,
   relationApi: { delete: vi.fn() },
+  // Cache des méta-types (useMetaTypes) : vide, les fixtures portent déjà leurs types.
+  itemTypeApi: { list: api.listTypes },
+  relationTypeApi: { list: api.listTypes },
   extractApiError: () => ({ message: "" }),
 }));
+
+/** Réponse paginée de `GET /items/{id}/relations` (une page). */
+function page<T>(data: T[]) {
+  return { data, total: data.length, page: 1, per_page: 100, total_pages: 1 };
+}
 
 const publisherType = fixtures.find((f) => f.name === "Publisher")!;
 
@@ -80,8 +89,9 @@ describe("ItemDetailView", () => {
   beforeEach(async () => {
     setActivePinia(createPinia());
     Object.values(api).forEach((m) => m.mockReset());
-    api.relations.mockResolvedValue([]);
+    api.relations.mockResolvedValue(page([]));
     api.collections.mockResolvedValue([]);
+    api.listTypes.mockResolvedValue(page([]));
     useLang().setLang("fr");
     await nextTick();
   });
@@ -171,47 +181,50 @@ describe("ItemDetailView — en-tête A2", () => {
     api.collections.mockResolvedValue([
       { collection: { id: "c1", name: "Mes mangas" }, attributes: {} },
     ]);
+    api.listTypes.mockResolvedValue(page([]));
     useLang().setLang("fr");
     await nextTick();
   });
 
   it("déduit l'appartenance des relations x-completeness et ouvre l'onglet des collections", async () => {
-    api.relations.mockResolvedValue([
-      {
-        id: "r1",
-        relation_type_id: "rt",
-        relation_type: {
-          id: "rt",
-          name: "contains_volume",
-          attributes_schema: { type: "object", "x-completeness": true },
+    api.relations.mockResolvedValue(
+      page([
+        {
+          id: "r1",
+          relation_type_id: "rt",
+          relation_type: {
+            id: "rt",
+            name: "contains_volume",
+            attributes_schema: { type: "object", "x-completeness": true },
+          },
+          source_item_id: "ed1",
+          source_item: {
+            id: "ed1",
+            item_type_id: "x",
+            attributes: { name: "Glénat" },
+          },
+          target_item_id: "e0000000-0000-0000-0000-000000000501",
+          attributes: { order: 3 },
         },
-        source_item_id: "ed1",
-        source_item: {
-          id: "ed1",
-          item_type_id: "x",
-          attributes: { name: "Glénat" },
+        {
+          id: "r2",
+          relation_type_id: "other",
+          relation_type: {
+            id: "other",
+            name: "published_by",
+            attributes_schema: { type: "object" },
+          },
+          source_item_id: "p1",
+          source_item: {
+            id: "p1",
+            item_type_id: "x",
+            attributes: { name: "Autre" },
+          },
+          target_item_id: "e0000000-0000-0000-0000-000000000501",
+          attributes: {},
         },
-        target_item_id: "e0000000-0000-0000-0000-000000000501",
-        attributes: { order: 3 },
-      },
-      {
-        id: "r2",
-        relation_type_id: "other",
-        relation_type: {
-          id: "other",
-          name: "published_by",
-          attributes_schema: { type: "object" },
-        },
-        source_item_id: "p1",
-        source_item: {
-          id: "p1",
-          item_type_id: "x",
-          attributes: { name: "Autre" },
-        },
-        target_item_id: "e0000000-0000-0000-0000-000000000501",
-        attributes: {},
-      },
-    ]);
+      ]),
+    );
     const w = await mountDetail({ name: "Tome 3" });
     const partOf = w.find('[data-test="part-of"]');
     expect(partOf.text()).toContain("Fait partie de");

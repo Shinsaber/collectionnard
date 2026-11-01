@@ -433,9 +433,18 @@ export const itemApi = {
   update: (id: string, data: ItemUpdate) =>
     http.put<Item>(`/items/${id}`, data).then((r) => r.data),
   delete: (id: string) => http.delete(`/items/${id}`),
-  relations: (id: string, params?: { relation_type_id?: string }) =>
+  /**
+   * Relations d'un item, paginées (100 par page par défaut), sans les méta-types joints :
+   * les compléter avec `lib/relations.ts` (`withTypes`) depuis le cache `useMetaTypes`.
+   */
+  relations: (
+    id: string,
+    params?: { relation_type_id?: string; page?: number; per_page?: number },
+  ) =>
     http
-      .get<ItemRelation[]>(`/items/${id}/relations`, { params })
+      .get<PaginatedResponse<ItemRelation>>(`/items/${id}/relations`, {
+        params,
+      })
       .then((r) => r.data),
   /** Items liés présents dans mes collections (indicateur de la liste des relations). */
   relatedCollections: (id: string) =>

@@ -128,7 +128,7 @@
       <ElTabs v-model="tab">
         <ElTabPane
           name="relations"
-          :label="`${t('items.detail.relations')} · ${relations.length}`"
+          :label="`${t('items.detail.relations')} · ${relationsTotal}`"
         >
           <div class="flex flex-col gap-3.5">
             <ElButton
@@ -152,6 +152,16 @@
               :show-delete="auth.canEditCatalog"
               @delete="confirmDeleteRelation"
               @edit="openEditRelation"
+            />
+            <!-- Au-delà d'une page (nœud très lié : personne, éditeur), pagination serveur. -->
+            <ElPagination
+              v-if="relationsTotal > RELATIONS_PER_PAGE"
+              class="justify-end"
+              layout="prev, pager, next"
+              :total="relationsTotal"
+              :page-size="RELATIONS_PER_PAGE"
+              :current-page="relationsPage"
+              @current-change="onRelationsPage"
             />
           </div>
         </ElTabPane>
@@ -221,6 +231,8 @@ import { useAuthStore } from "@/stores/auth";
 import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";
 import { MOBILE_QUERY, useMediaQuery } from "@/composables/useMediaQuery";
+import { useMetaTypes } from "@/stores/metaTypes";
+import { byId, withTypes } from "@/lib/relations";
 import {
   defaultImage,
   galleryUrls,
@@ -257,6 +269,11 @@ const item = ref<Item | null>(null);
 // Incrémenté après chaque écriture (fiche, relations) : l'historique est relu.
 const historyVersion = ref(0);
 const relations = ref<ItemRelation[]>([]);
+// Relations paginées par l'API (audit Q-001) : total pour l'onglet, page courante.
+const RELATIONS_PER_PAGE = 100;
+const relationsTotal = ref(0);
+const relationsPage = ref(1);
+const metaTypes = useMetaTypes();
 const itemCollections = ref<ItemCollectionMembership[]>([]);
 const loading = ref(true);
 
@@ -368,16 +385,45 @@ async function confirmDeleteRelation(rel: ItemRelation) {
     await relationApi.delete(rel.id);
     notifySuccess(t("items.detail.relationDeleted"));
     relations.value = relations.value.filter((r) => r.id !== rel.id);
+    relationsTotal.value = Math.max(0, relationsTotal.value - 1);
     historyVersion.value++;
   } catch (e) {
     notifyError(e);
   }
 }
 
+/**
+ * Une page de relations, complétées avec leurs méta-types (l'API ne les joint plus ;
+ * le cache les fournit, chargé une fois).
+ */
+async function fetchRelations(id: string, page: number) {
+  await Promise.all([metaTypes.loadItemTypes(), metaTypes.loadRelationTypes()]);
+  const res = await itemApi.relations(id, {
+    page,
+    per_page: RELATIONS_PER_PAGE,
+  });
+  const itemTypes = byId(metaTypes.itemTypes);
+  const relationTypes = byId(metaTypes.relationTypes);
+  relations.value = (res.data ?? []).map((r) =>
+    withTypes(r, itemTypes, relationTypes),
+  );
+  relationsTotal.value = res.total ?? relations.value.length;
+  relationsPage.value = res.page ?? page;
+}
+
+async function onRelationsPage(page: number) {
+  if (!item.value) return;
+  try {
+    await fetchRelations(item.value.id, page);
+  } catch (e) {
+    notifyError(e, t("items.detail.relationsUnavailable"));
+  }
+}
+
 async function reloadRelations() {
   if (!item.value) return;
   try {
-    relations.value = (await itemApi.relations(item.value.id)) ?? [];
+    await fetchRelations(item.value.id, relationsPage.value);
     historyVersion.value++;
   } catch (e) {
     notifyError(e, t("items.detail.relationsUnavailable"));
@@ -396,12 +442,8 @@ async function loadCollections(itemId: string) {
 async function loadItem(id: string) {
   loading.value = true;
   try {
-    const [i, rels] = await Promise.all([
-      itemApi.get(id),
-      itemApi.relations(id),
-    ]);
+    const [i] = await Promise.all([itemApi.get(id), fetchRelations(id, 1)]);
     item.value = i;
-    relations.value = rels ?? [];
     historyVersion.value++;
     loadCollections(id);
   } catch (e) {

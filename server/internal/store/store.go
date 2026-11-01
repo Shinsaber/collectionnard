@@ -95,6 +95,8 @@ type Store interface {
 
 	// Relation
 	ListItemRelations(ctx context.Context, itemID uuid.UUID, relationTypeID *uuid.UUID) ([]model.ItemRelation, error)
+	// ListItemRelationsPage: one page of the relations of an item (GET /items/{id}/relations), with their total.
+	ListItemRelationsPage(ctx context.Context, itemID uuid.UUID, relationTypeID *uuid.UUID, pg model.Pagination) ([]model.ItemRelation, int, error)
 	GetRelation(ctx context.Context, id uuid.UUID) (*model.ItemRelation, error)
 	CreateRelation(ctx context.Context, in model.ItemRelationCreate) (*model.ItemRelation, error)
 	UpdateRelation(ctx context.Context, id uuid.UUID, in model.ItemRelationUpdate) (*model.ItemRelation, error)

@@ -110,7 +110,10 @@
       :category="cameraCategory.name"
       @done="(file) => openCrop(cameraCategory!, file, undefined, true)"
     />
+    <!-- Chargé (cropperjs, redressement) à la première ouverture seulement, comme la caméra :
+         chaque formulaire à galerie téléchargeait ce chunk pour rien. -->
     <ImageCropDialog
+      v-if="cropCategory"
       v-model:visible="cropVisible"
       :file="cropFile"
       :category="cropCategory"

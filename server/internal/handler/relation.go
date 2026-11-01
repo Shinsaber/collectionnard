@@ -8,6 +8,13 @@ import (
 	"github.com/shinsaber/colec/internal/validator"
 )
 
+// relationsPerPage is the default page size of GET /items/{id}/relations: the item page
+// shows every relation of an ordinary item at once, a hub (person, publisher) is paged.
+const relationsPerPage = 100
+
+// ListItemRelations answers GET /items/{id}/relations: one page of the relations of the
+// item (source or target), sorted by relation type then `order`, without the embedded
+// meta-types (audit Q-001: the schemas were repeated on every row, without a bound).
 func (h *Handler) ListItemRelations(w http.ResponseWriter, r *http.Request) {
 	itemID, ok := parseUUID(w, r, "id")
 	if !ok {
@@ -17,12 +24,13 @@ func (h *Handler) ListItemRelations(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	relations, err := h.Store.ListItemRelations(r.Context(), itemID, relationTypeID)
+	pg := parsePaginationDefault(r, relationsPerPage)
+	relations, total, err := h.Store.ListItemRelationsPage(r.Context(), itemID, relationTypeID, pg)
 	if err != nil {
 		handleStoreError(w, r, err)
 		return
 	}
-	respondJSON(w, http.StatusOK, relations)
+	respondJSON(w, http.StatusOK, model.NewPaginatedResponse(relations, total, pg))
 }
 
 func (h *Handler) GetRelation(w http.ResponseWriter, r *http.Request) {
