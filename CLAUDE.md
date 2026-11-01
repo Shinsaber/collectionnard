@@ -38,6 +38,7 @@ leur emplacement par Claude Code). Un nouveau document va dans `docs/`, avec une
 | [docs/sources-externes.md](docs/sources-externes.md) | Bases ouvertes par domaine (Wikidata, BnF, MusicBrainz, TVmaze retenues) : licences, accès, constats de chaque connecteur, sources écartées |
 | [docs/phases/evolutions-socle.md](docs/phases/evolutions-socle.md) | Lots E1–E5 (socle, livrés) : identifiants sans casse, ordre des types, types d'item permis par collection, images (doublons, purge, contrôles), hors ligne |
 | [docs/phases/social.md](docs/phases/social.md)                 | Phase 4 (social) : décisions, modèle et API visés — comptes et invitations, statistiques, visibilité, contributions |
+| [docs/audits/suivi.md](docs/audits/suivi.md) | Audits récurrents (`/audit`, skill `.claude/skills/audit/`, agent lecture seule `.claude/agents/auditeur.md`) : constats S-/Q-/C-nnn, états, rapports datés — ne jamais y corriger le code, proposer un lot |
 | [docs/phases/mobile.md](docs/phases/mobile.md)                 | Phase 5 (mobile) : cas d'usage et décisions — photo de couverture et recadrage, scanner de codes-barres, page « Scanner » |
 
 ## Modèle en une table
@@ -163,7 +164,10 @@ Production : images publiées par la CI sur ghcr.io (job `images`, tags `v*` et 
    exactement ces étapes.
 5. Mettre à jour les cases à cocher de la section « Phases » de `docs/conception.md`
    quand une fonctionnalité de la roadmap est livrée.
-6. Ne jamais committer de secrets : `JWT_SECRET` et `POSTGRES_PASSWORD` viennent de `.env`
+6. **Audits** : `/audit [securite|qualite|conformite|tout] [--depuis <ref>]` mesure (CI, govulncheck, npm audit, métriques) puis
+   fait relire le code par des agents en lecture seule ; il n'écrit que `docs/audits/AAAA-MM-DD.md` et `docs/audits/suivi.md`.
+   Les correctifs sont un lot à part, choisi par le mainteneur ; un constat accepté se marque `accepté` dans le suivi.
+7. Ne jamais committer de secrets : `JWT_SECRET` et `POSTGRES_PASSWORD` viennent de `.env`
    (ignoré par git, modèle dans `.env.example`) ; le serveur refuse un `JWT_SECRET` < 32 caractères.
 
 ## Où en est le projet

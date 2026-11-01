@@ -191,6 +191,7 @@ emplacement).
 | [docs/phases/evolutions-socle.md](docs/phases/evolutions-socle.md) | Lots E1–E5 : identifiants insensibles à la casse, ordre des types, types d'item permis, images, hors ligne |
 | [docs/phases/social.md](docs/phases/social.md)                 | Phase 4 : comptes et invitations, statistiques personnelles, visibilité et partage, contributions              |
 | [docs/phases/mobile.md](docs/phases/mobile.md)                 | Phase 5 : photo de couverture, redressement et recadrage, scanner de codes-barres, page « Scanner », retours v0.4.0 |
+| [docs/audits/suivi.md](docs/audits/suivi.md)                   | Audits récurrents (`/audit`, lecture seule) : suivi des constats à identifiant stable et rapports datés `AAAA-MM-DD.md` |
 | [api/openapi.yaml](api/openapi.yaml)                           | Spécification OpenAPI 3.1, **source de vérité de l'API**                                                       |
 | [db/migrations/001_init.sql](db/migrations/001_init.sql)       | Schéma de base de données commenté (puis `002` à `012`)                                                        |
 | [CLAUDE.md](CLAUDE.md), [server/CLAUDE.md](server/CLAUDE.md), [web/CLAUDE.md](web/CLAUDE.md) | Règles de travail, checklists et organisation du code (backend Go, frontend Vue)       |
@@ -208,13 +209,14 @@ collectionnard/
 │   ├── conception.md       # Vision, modèle conceptuel, extensions x-*, roadmap (§ 8)
 │   ├── sources-externes.md # Bases ouvertes : licences, accès, constats des connecteurs
 │   ├── domaines/           # Modèles de données : livres, musique, video, jeux-video
+│   ├── audits/             # Audits récurrents : suivi.md (constats) et rapports datés
 │   └── phases/             # Notes de conception : evolutions-socle, social, mobile
 ├── docker-compose.yml      # Développement : 4 services (postgres, migrate, server, web)
 ├── docker-compose.prod.yml # Production : images ghcr.io, sans seed
 ├── .env.example            # Variables de déploiement (copier en .env)
 ├── flake.nix, flake.lock   # Environnement de développement Nix (+ .envrc pour direnv)
 ├── .github/workflows/      # CI : Go (fmt, vet, lint, tests, govulncheck, intégration PG), web (lint, OpenAPI, tests, build, audit), images Docker
-├── .claude/                # Commandes Claude Code (/verif, /endpoint, /roadmap, /modele-vers-seed) et permissions
+├── .claude/                # Claude Code : commandes (/verif, /endpoint, /roadmap, /modele-vers-seed), skill /audit, agent « auditeur », permissions
 ├── api/
 │   └── openapi.yaml        # Spécification OpenAPI 3.1 (référence API)
 ├── db/
