@@ -433,9 +433,18 @@ export const itemApi = {
   update: (id: string, data: ItemUpdate) =>
     http.put<Item>(`/items/${id}`, data).then((r) => r.data),
   delete: (id: string) => http.delete(`/items/${id}`),
-  relations: (id: string, params?: { relation_type_id?: string }) =>
+  /**
+   * Relations d'un item, paginées (100 par page par défaut), sans les méta-types joints :
+   * les compléter avec `lib/relations.ts` (`withTypes`) depuis le cache `useMetaTypes`.
+   */
+  relations: (
+    id: string,
+    params?: { relation_type_id?: string; page?: number; per_page?: number },
+  ) =>
     http
-      .get<ItemRelation[]>(`/items/${id}/relations`, { params })
+      .get<PaginatedResponse<ItemRelation>>(`/items/${id}/relations`, {
+        params,
+      })
       .then((r) => r.data),
   /** Items liés présents dans mes collections (indicateur de la liste des relations). */
   relatedCollections: (id: string) =>
@@ -630,6 +639,16 @@ export const uploadApi = {
         headers: { "Content-Type": "multipart/form-data" },
       })
       .then((r) => r.data);
+  },
+  /**
+   * Contenu d'une image déjà envoyée (`/api/v1/uploads/<nom>`), en fichier : point de départ
+   * d'un nouveau recadrage. L'original n'est pas modifié ; le résultat est un nouvel envoi.
+   */
+  file: (url: string) => {
+    const name = url.split("/").pop() || "image";
+    return http
+      .get<Blob>(url.replace(/^\/api\/v1/, ""), { responseType: "blob" })
+      .then((r) => new File([r.data], name, { type: r.data.type }));
   },
   /** Images qu'aucun attribut ne référence (admin) ; `dryRun` liste sans supprimer. */
   purge: (dryRun: boolean) =>

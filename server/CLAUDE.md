@@ -3,7 +3,7 @@
 Module : `github.com/shinsaber/colec` · Entrée : `main.go` · Config par variables
 d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 caractères) sont
 **obligatoires** (le serveur refuse de démarrer sinon) ; `PORT`, `ACCESS_TOKEN_TTL` (15m),
-`REFRESH_TOKEN_TTL` (720h), `LOGIN_RATE_LIMIT` (10/min/IP), `UPLOAD_DIR`, `MAX_UPLOAD_SIZE`, `MAX_IMPORT_SIZE` (20 Mio), `TRUSTED_PROXY` (false), `EXTERNAL_USER_AGENT` (User-Agent envoyé à Wikidata / BnF), `MEMBER_INVITES` (false : seuls les admins invitent), `PROPOSAL_QUOTA` (5) ont un défaut.
+`REFRESH_TOKEN_TTL` (720h), `LOGIN_RATE_LIMIT` (10/min/IP, deux compteurs : identifiants / session), `UPLOAD_DIR`, `MAX_UPLOAD_SIZE`, `UPLOAD_RATE_LIMIT` (60 fichiers/h/compte, admins exemptés), `UPLOAD_RATE_BYTES` (300 Mio/h/compte), `UPLOAD_PURGE_INTERVAL` (24h, `0` désactive la purge automatique), `MAX_IMPORT_SIZE` (20 Mio), `GRAPH_MAX_NODES` (500), `TRUSTED_PROXY` (false), `EXTERNAL_USER_AGENT` (User-Agent envoyé à Wikidata / BnF), `MEMBER_INVITES` (false : seuls les admins invitent), `PROPOSAL_QUOTA` (5), `LOG_FORMAT` (json), `LOG_LEVEL` (info) ont un défaut.
 
 ## Couches (`internal/`)
 
@@ -12,7 +12,7 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 | `model`      | Structs JSON (entités, `*Create`, `*Update`, `Pagination`, `APIError`)                               |
 | `store`      | Interface `Store` (`store.go`) + implémentation pgx (1 fichier/domaine)                              |
 | `handler`    | Handlers HTTP, 1 fichier/domaine ; **toutes les routes** dans `handler.go` → `Router()`              |
-| `middleware` | `Authenticate` (JWT HS256, `exp` obligatoire), `RequireAdmin`, `RateLimiter` (`/auth/*`)             |
+| `middleware` | Cinq niveaux d'accès du `Router()` : public ; `OptionalAuthenticate` (routes `/public/…`, `/share` : anonyme ou jeton valide) ; `Authenticate` (JWT HS256, `exp` obligatoire) ; `RequireRole(admin, contributor)` (écriture du catalogue, modération, import externe) ; `RequireAdmin` (méta-types, administration, suppression d'item). Plus `RateLimiter` (`/auth/*`, deux compteurs), `TrustedProxyRealIP`, `RequestLogger` |
 | `validator`  | `ValidateAttributes(schema, data)` + `FormatValidationError`                                         |
 | `testutil`   | `MockStore` (champs `XxxFn`), `NewTestServer`, `AdminToken`/`UserToken`, `AuthHeader`                |
 | `label`      | `Render(schema, attrs, lang)` : libellé d'un item via `x-label` (pendant de `web/src/lib/schema.ts`) |
@@ -23,13 +23,16 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 | `csvexport`  | Mise à plat CSV des attributs (colonnes depuis le schéma, i18n-text → `clé.langue`, BOM, anti-injection de formules) |
 | `dbmigrate`  | Migrations tern (`db/migrations`) + seeds de démonstration (`SEED_FILE` : liste séparée par des virgules ; défaut `seed.sql`, `seed_bd_manga.sql`, `seed_music.sql`, `seed_video.sql` puis `seed_games.sql`), précédés de l'installation des paquets de domaine : sous-commandes `colec-server migrate` / `seed` / `install-domain` (`cmd.go`) |
 | `domains`    | Paquets de domaine embarqués (`packages/*.json`, types au format de l'import) et plan d'installation : `Merge3` (référence / local / paquet ; les modifications locales sont gardées, seuls les ajouts du paquet sont fusionnés). `requires` : paquets requis (ex. `books` → `people`, qui porte Person et Publisher), installés d'abord dans la même transaction (`Requirements`, rapport `required`). Le store écrit par l'import et garde les copies de référence (`meta_type_origins`, migration 007) |
-| `external`   | Sources ouvertes : client HTTP commun (User-Agent, délai, taille max, cache 15 min, espacement par hôte `Throttle`, 404 → `ErrNotFound`, `StatusError`), `wikidata/` (recherche par classe, entités, `wbgetclaims`), `bnf/` (SRU UNIMARC, ARK + caractère de contrôle, ISBN), `musicbrainz/` (JSON `ws/2`, 1,1 s entre deux requêtes, 503 retenté une fois, jamais tags ni genres), `tvmaze/` (CC BY-SA, 0,55 s entre deux requêtes, 429 retenté une fois, ni résumés ni images), `NormalizeBarcode` (EAN / UPC) ; connecteurs `connectors/` (un profil par sorte : `bd-manga`, `novels`, `music`, `films`, `series`, `games` ; correspondance par identifiant, ou par relation depuis le parent (`via` : la diffusion d'une série) ; liens des fiches sources ajoutés à chaque item (`links.go` : Wikidata, Wikipédia fr / en, BnF, MusicBrainz, TVmaze, IMDb ; fusion par URL) ; types du domaine trouvés par identifiant du paquet puis nom technique, rapprochement du catalogue, champs vides seulement, sortie au format de `POST /import`) ; `connectors/connectorstest` = sources simulées (réponses enregistrées dans `testdata/`) + catalogue en mémoire |
+| `external`   | Sources ouvertes : client HTTP commun (User-Agent, délai, taille max, cache 15 min, espacement par hôte `Throttle`, 404 → `ErrNotFound`, `StatusError`), `wikidata/` (recherche par classe, entités, `wbgetclaims`), `bnf/` (SRU UNIMARC, ARK + caractère de contrôle, ISBN), `musicbrainz/` (JSON `ws/2`, 1,1 s entre deux requêtes, 503 retenté une fois, jamais tags ni genres), `tvmaze/` (CC BY-SA, 0,55 s entre deux requêtes, 429 retenté une fois, ni résumés ni images), `NormalizeBarcode` (EAN / UPC) ; connecteurs `connectors/` (un profil par sorte : `bd-manga`, `novels`, `music`, `films`, `series`, `games` ; recherche d'éditions BnF des films, séries et jeux par le squelette commun `editions.go` (`editionSearch`) ; correspondance par identifiant, ou par relation depuis le parent (`via` : la diffusion d'une série) ; liens des fiches sources ajoutés à chaque item (`links.go` : Wikidata, Wikipédia fr / en, BnF, MusicBrainz, TVmaze, IMDb ; fusion par URL) ; types du domaine trouvés par identifiant du paquet puis nom technique, rapprochement du catalogue, champs vides seulement, sortie au format de `POST /import`) ; `connectors/connectorstest` = sources simulées (réponses enregistrées dans `testdata/`) + catalogue en mémoire |
 
 ## Erreurs et réponses
 
 - Store : renvoyer `store.ErrNotFound` / `store.ErrConflict` ; le handler les traduit en 404 / 409.
 - Handler : utiliser `respondJSON`, `respondError(w, status, code, message)` et
-  `respondValidationError` (422) — pas de `w.Write` à la main.
+  `respondValidationError` (422) — pas de `w.Write` à la main. Seules exceptions : les pièces jointes d'export
+  (`handler/export.go`, `attachment` + `csv.Writer` ou corps JSON en flux) et `readImport`, qui lit le corps avec sa
+  propre limite `MAX_IMPORT_SIZE` au lieu de `decodeJSON` (1 Mio). Tout code d'erreur émis par `respondError` est nommé
+  dans la réponse correspondante d'`api/openapi.yaml` et traduit dans `web/src/i18n/locales/*/errors.ts`.
 - Toute écriture d'attributs dynamiques (item, relation, collection item) doit passer par
   `validator.ValidateAttributes` avec le schéma du méta-type correspondant.
 - Tout `attributes_schema` écrit sur un méta-type passe par `checkAttributesSchema` (→ `validator.CheckSchema` :
@@ -55,7 +58,12 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 - Logs : `log/slog` (JSON par défaut, `LOG_FORMAT=text` en dev) ; `respondInternal(w, r, err, msg)` et
   `handleStoreError(w, r, err)` loguent la cause des 500 avec le `request_id` — ne jamais renvoyer `err` au client.
 - `GET /api/v1/healthz` (public) ping la base : 200 `{"status":"ok"}` ou 503.
-- Images : `/api/v1/uploads/<nom>?w=240` sert une vignette JPEG (liste blanche `thumbWidths`, garde-fou 50 Mpx), générée une fois dans `UPLOAD_DIR/.thumbs/` et supprimée avec l'original par la purge (`handler/thumbnail.go`).
+- Images : `/api/v1/uploads/<nom>?w=240` sert une vignette JPEG (liste blanche `thumbWidths`), générée une fois dans
+  `UPLOAD_DIR/.thumbs/` et supprimée avec l'original par la purge (`handler/thumbnail.go`). Garde-fous (audit S-001, S-004) :
+  `maxImagePixels` (25 Mpx, refusé à l'envoi `image_too_large` et jamais décodé en vignette), `thumbGate` (au plus
+  `maxConcurrentThumbnails` décodages en vol, sinon l'original est servi), `uploadQuota` (fichiers et octets par heure et
+  par compte, admins exemptés, 429 `upload_quota`), purge automatique `RunUploadPurge` (`UPLOAD_PURGE_INTERVAL`) en plus
+  du bouton admin ; `purgeUploads` est la logique commune.
 - Auth : access token JWT court (`Auth.GenerateToken`) + refresh token opaque dont seul le hash
   SHA-256 est stocké (`store/refresh_token.go`, rotation à chaque `/auth/refresh`).
 - Comptes (`handler/account.go`, `store/account.go`, P4-0) : invitations et liens de réinitialisation suivent le même

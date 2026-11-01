@@ -1,8 +1,6 @@
 import type fr from "../fr/common";
 
 const en: typeof fr = {
-  appName: "Collectionnard",
-  actions: "Actions",
   add: "Add",
   back: "Back",
   cancel: "Cancel",
@@ -22,9 +20,6 @@ const en: typeof fr = {
   type: "Type",
   yes: "Yes",
   error: "Error",
-  created: "Created",
-  updated: "Updated",
-  deleted: "Deleted",
   enlarge: "Enlarge: {name}",
   // Barcode scanner (lot M2)
   scan: {

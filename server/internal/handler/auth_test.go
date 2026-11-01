@@ -345,3 +345,46 @@ func TestLogin_RateLimited(t *testing.T) {
 		t.Error("expected Retry-After header on 429")
 	}
 }
+
+// S-002 : le compteur des identifiants (login) et celui des sessions (refresh, logout)
+// sont distincts : épuiser l'un ne bloque pas l'autre.
+func TestRateLimit_SeparateCounters(t *testing.T) {
+	cfg := testutil.TestConfig()
+	cfg.LoginRateLimit = 2
+	srv := testutil.NewTestServerFromHandler(testutil.NewTestHandlerWithConfig(&testutil.MockStore{}, cfg))
+	defer srv.Close()
+
+	login, _ := json.Marshal(model.LoginRequest{Username: "ghost", Password: "x"})
+	for i := 0; i < 3; i++ {
+		resp, err := http.Post(srv.URL+"/api/v1/auth/login", "application/json", bytes.NewReader(login))
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		want := http.StatusUnauthorized
+		if i == 2 {
+			want = http.StatusTooManyRequests
+		}
+		if resp.StatusCode != want {
+			t.Fatalf("login %d: %d, want %d", i+1, resp.StatusCode, want)
+		}
+	}
+	refresh, _ := json.Marshal(model.RefreshRequest{RefreshToken: "unknown"})
+	resp, err := http.Post(srv.URL+"/api/v1/auth/refresh", "application/json", bytes.NewReader(refresh))
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode == http.StatusTooManyRequests {
+		t.Error("refresh blocked by the login counter")
+	}
+	for i := 0; i < 2; i++ {
+		resp, _ := http.Post(srv.URL+"/api/v1/auth/refresh", "application/json", bytes.NewReader(refresh))
+		resp.Body.Close()
+	}
+	resp, _ = http.Post(srv.URL+"/api/v1/auth/refresh", "application/json", bytes.NewReader(refresh))
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusTooManyRequests {
+		t.Errorf("refresh keeps its own limit: %d, want 429", resp.StatusCode)
+	}
+}

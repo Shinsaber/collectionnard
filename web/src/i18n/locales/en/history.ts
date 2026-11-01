@@ -3,7 +3,6 @@ import type fr from "../fr/history";
 
 const en: typeof fr = {
   title: "History",
-  help: "Every change of the record and of its relations, with its author.",
   created: "Added by {author} on {date}",
   updated: "Last changed by {author} on {date}",
   member: "a member",
@@ -12,7 +11,6 @@ const en: typeof fr = {
   truncated: "Only the last 500 changes are listed.",
   showAll: "Show all ({n})",
   showLess: "Show less",
-  version: "v{n}",
   item: "Record",
   relation: "Relation",
   kinds: {

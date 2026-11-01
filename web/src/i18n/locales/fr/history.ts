@@ -1,7 +1,6 @@
 // Catalogue « history » (français) : historique du catalogue (P4-3a).
 export default {
   title: "Historique",
-  help: "Toutes les modifications de la fiche et de ses relations, avec leur auteur.",
   created: "Ajouté par {author} le {date}",
   updated: "Modifié en dernier par {author} le {date}",
   member: "un membre",
@@ -10,7 +9,6 @@ export default {
   truncated: "Seules les 500 dernières modifications sont listées.",
   showAll: "Tout afficher ({n})",
   showLess: "Réduire",
-  version: "v{n}",
   item: "Fiche",
   relation: "Relation",
   kinds: {

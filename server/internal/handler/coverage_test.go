@@ -318,11 +318,14 @@ func TestItemTypesAndItems_Coverage(t *testing.T) {
 func TestRelations_Coverage(t *testing.T) {
 	rel := sampleRelation()
 	mock := &testutil.MockStore{
-		ListItemRelationsFn: func(_ context.Context, itemID uuid.UUID, rtID *uuid.UUID) ([]model.ItemRelation, error) {
+		ListItemRelationsPageFn: func(_ context.Context, itemID uuid.UUID, rtID *uuid.UUID, pg model.Pagination) ([]model.ItemRelation, int, error) {
 			if rtID != nil && *rtID != otherID {
 				t.Errorf("relation_type_id filter not forwarded: %v", rtID)
 			}
-			return []model.ItemRelation{*rel}, nil
+			if pg.Page != 1 || pg.PerPage != 100 {
+				t.Errorf("default page expected (1, 100), got %+v", pg)
+			}
+			return []model.ItemRelation{*rel}, 1, nil
 		},
 		GetRelationFn: func(_ context.Context, id uuid.UUID) (*model.ItemRelation, error) {
 			if id == someID {
@@ -341,10 +344,14 @@ func TestRelations_Coverage(t *testing.T) {
 	runRouteCases(t, []routeCase{
 		{"list item relations ok", "GET", "/items/" + uuid.New().String() + "/relations?relation_type_id=" + otherID.String(), testutil.UserToken(), "", mock, 200,
 			func(t *testing.T, b []byte) {
-				var rels []model.ItemRelation
-				_ = json.Unmarshal(b, &rels)
-				if len(rels) != 1 {
-					t.Errorf("expected 1 relation, got %d", len(rels))
+				var out struct {
+					Data    []model.ItemRelation `json:"data"`
+					Total   int                  `json:"total"`
+					PerPage int                  `json:"per_page"`
+				}
+				_ = json.Unmarshal(b, &out)
+				if len(out.Data) != 1 || out.Total != 1 || out.PerPage != 100 {
+					t.Errorf("expected a page of 1 relation (per_page 100), got %s", b)
 				}
 			}},
 		{"list item relations bad filter", "GET", "/items/" + uuid.New().String() + "/relations?relation_type_id=nope", testutil.UserToken(), "", mock, 400, nil},
@@ -456,5 +463,165 @@ func TestListTags_Coverage(t *testing.T) {
 				}
 			}},
 		{"list tags anonymous", "GET", "/tags", "", "", mock, 401, nil},
+	})
+}
+
+// --- Audit Q-003 : routes qui n'avaient aucun test de handler ---------------
+
+// sampleProposal is a catalog proposal of the regular user in the given status.
+func sampleProposal(status string) *model.Proposal {
+	return &model.Proposal{ID: someID, Kind: model.ProposalCatalog, Status: status, Title: "Corriger un tome",
+		AuthorID: testutil.UserID, CreatedAt: time.Now(), UpdatedAt: time.Now()}
+}
+
+func TestProposalRoutes_Coverage(t *testing.T) {
+	draft := &testutil.MockStore{
+		GetProposalFn: func(_ context.Context, id uuid.UUID) (*model.Proposal, error) {
+			if id != someID {
+				return nil, store.ErrNotFound
+			}
+			return sampleProposal(model.ProposalDraft), nil
+		},
+		UpdateProposalFn: func(_ context.Context, id uuid.UUID, in model.ProposalInput) (*model.Proposal, error) {
+			p := sampleProposal(model.ProposalDraft)
+			p.Title = in.Title
+			return p, nil
+		},
+	}
+	submitted := &testutil.MockStore{
+		GetProposalFn: func(context.Context, uuid.UUID) (*model.Proposal, error) {
+			return sampleProposal(model.ProposalPending), nil
+		},
+		UpdateProposalFn: func(context.Context, uuid.UUID, model.ProposalInput) (*model.Proposal, error) {
+			return nil, store.ErrConflict // changement d'état gardé en SQL
+		},
+	}
+	lists := &testutil.MockStore{
+		ListProposalsFn: func(_ context.Context, f model.ProposalFilter, pg model.Pagination) ([]model.Proposal, int, error) {
+			switch {
+			case f.AuthorID != nil && *f.AuthorID == testutil.UserID && !f.Review:
+			case f.Review && f.ExcludeAuthor != nil && *f.ExcludeAuthor == testutil.ContributorID && f.AuthorID == nil:
+			default:
+				t.Errorf("unexpected filter %+v", f)
+			}
+			return []model.Proposal{*sampleProposal(model.ProposalPending)}, 1, nil
+		},
+		CountProposalsToReviewFn: func(_ context.Context, reviewer uuid.UUID) (int, error) {
+			if reviewer != testutil.ContributorID {
+				t.Errorf("reviewer %s", reviewer)
+			}
+			return 3, nil
+		},
+	}
+	runRouteCases(t, []routeCase{
+		{"list mine (member)", "GET", "/proposals", testutil.UserToken(), "", lists, 200,
+			func(t *testing.T, b []byte) {
+				var out struct {
+					Data  []model.Proposal `json:"data"`
+					Total int              `json:"total"`
+				}
+				if json.Unmarshal(b, &out) != nil || out.Total != 1 || len(out.Data) != 1 {
+					t.Errorf("unexpected list: %s", b)
+				}
+			}},
+		{"list review queue (contributor)", "GET", "/proposals?scope=review", testutil.ContributorToken(), "", lists, 200, nil},
+		{"list review queue (member)", "GET", "/proposals?scope=review", testutil.UserToken(), "", lists, 403, nil},
+		{"list unknown scope", "GET", "/proposals?scope=all", testutil.UserToken(), "", lists, 400, nil},
+		{"list anonymous", "GET", "/proposals", "", "", lists, 401, nil},
+
+		{"update own draft", "PUT", "/proposals/" + someID.String(), testutil.UserToken(), `{"title":"Nouveau titre"}`, draft, 200,
+			func(t *testing.T, b []byte) {
+				var p model.Proposal
+				if json.Unmarshal(b, &p) != nil || p.Title != "Nouveau titre" {
+					t.Errorf("unexpected proposal: %s", b)
+				}
+			}},
+		{"update draft of someone else (moderator): invisible", "PUT", "/proposals/" + someID.String(), testutil.ContributorToken(), `{"title":"x"}`, draft, 404, nil},
+		{"update unknown", "PUT", "/proposals/" + otherID.String(), testutil.UserToken(), `{"title":"x"}`, draft, 404, nil},
+		{"update empty title", "PUT", "/proposals/" + someID.String(), testutil.UserToken(), `{"title":"  "}`, draft, 400, nil},
+		{"update submitted: state guarded", "PUT", "/proposals/" + someID.String(), testutil.UserToken(), `{"title":"x"}`, submitted, 409,
+			func(t *testing.T, b []byte) {
+				if !bytes.Contains(b, []byte(`"proposal_state"`)) {
+					t.Errorf("expected proposal_state: %s", b)
+				}
+			}},
+		{"update anonymous", "PUT", "/proposals/" + someID.String(), "", `{"title":"x"}`, draft, 401, nil},
+
+		{"review count (contributor)", "GET", "/proposals/review-count", testutil.ContributorToken(), "", lists, 200,
+			func(t *testing.T, b []byte) {
+				if !bytes.Contains(b, []byte(`"count":3`)) {
+					t.Errorf("unexpected count: %s", b)
+				}
+			}},
+		{"review count (member)", "GET", "/proposals/review-count", testutil.UserToken(), "", lists, 403, nil},
+		{"review count anonymous", "GET", "/proposals/review-count", "", "", lists, 401, nil},
+
+		{"conflicts (moderator, submitted, no base)", "GET", "/proposals/" + someID.String() + "/conflicts", testutil.ContributorToken(), "", submitted, 200,
+			func(t *testing.T, b []byte) {
+				if string(bytes.TrimSpace(b)) != "[]" {
+					t.Errorf("expected an empty list: %s", b)
+				}
+			}},
+		{"conflicts (moderator, draft): invisible", "GET", "/proposals/" + someID.String() + "/conflicts", testutil.ContributorToken(), "", draft, 404, nil},
+		{"conflicts (member)", "GET", "/proposals/" + someID.String() + "/conflicts", testutil.UserToken(), "", submitted, 403, nil},
+		{"conflicts unknown", "GET", "/proposals/" + otherID.String() + "/conflicts", testutil.AdminToken(), "", draft, 404, nil},
+	})
+}
+
+func TestShareLinks_Coverage(t *testing.T) {
+	mock := &testutil.MockStore{
+		GetCollectionFn: func(_ context.Context, id uuid.UUID) (*model.Collection, error) {
+			if id != someID {
+				return nil, store.ErrNotFound
+			}
+			return &model.Collection{ID: someID, UserID: testutil.UserID, CollectionTypeID: otherID, Name: "Mes BD"}, nil
+		},
+		ListShareLinksFn: func(_ context.Context, collectionID uuid.UUID) ([]model.ShareLink, error) {
+			return []model.ShareLink{{ID: otherID, CollectionID: collectionID, CreatedAt: time.Now()}}, nil
+		},
+	}
+	runRouteCases(t, []routeCase{
+		{"list share links (owner)", "GET", "/collections/" + someID.String() + "/share-links", testutil.UserToken(), "", mock, 200,
+			func(t *testing.T, b []byte) {
+				var links []model.ShareLink
+				if json.Unmarshal(b, &links) != nil || len(links) != 1 || links[0].CollectionID != someID {
+					t.Errorf("unexpected links: %s", b)
+				}
+			}},
+		{"list share links (someone else, admin included): 404", "GET", "/collections/" + someID.String() + "/share-links", testutil.AdminToken(), "", mock, 404, nil},
+		{"list share links unknown collection", "GET", "/collections/" + otherID.String() + "/share-links", testutil.UserToken(), "", mock, 404, nil},
+		{"list share links anonymous", "GET", "/collections/" + someID.String() + "/share-links", "", "", mock, 401, nil},
+	})
+}
+
+func TestUpdateCollectionType_Coverage(t *testing.T) {
+	ok := &testutil.MockStore{
+		UpdateCollectionTypeFn: func(_ context.Context, id uuid.UUID, in model.CollectionTypeUpdate) (*model.CollectionType, error) {
+			if in.Name == nil || *in.Name != "Possession" {
+				t.Errorf("name not forwarded: %+v", in)
+			}
+			return &model.CollectionType{ID: id, Name: *in.Name, AttributesSchema: emptyJSON, ItemTypeIDs: []uuid.UUID{}}, nil
+		},
+	}
+	missing := &testutil.MockStore{}
+	taken := &testutil.MockStore{
+		UpdateCollectionTypeFn: func(context.Context, uuid.UUID, model.CollectionTypeUpdate) (*model.CollectionType, error) {
+			return nil, store.ErrConflict
+		},
+	}
+	path := "/collection-types/" + someID.String()
+	runRouteCases(t, []routeCase{
+		{"update collection type ok", "PUT", path, testutil.AdminToken(), `{"name":"Possession"}`, ok, 200,
+			func(t *testing.T, b []byte) {
+				var ct model.CollectionType
+				if json.Unmarshal(b, &ct) != nil || ct.Name != "Possession" {
+					t.Errorf("unexpected type: %s", b)
+				}
+			}},
+		{"update collection type contributor", "PUT", path, testutil.ContributorToken(), `{"name":"x"}`, ok, 403, nil},
+		{"update collection type anonymous", "PUT", path, "", `{"name":"x"}`, ok, 401, nil},
+		{"update collection type unknown", "PUT", path, testutil.AdminToken(), `{"name":"x"}`, missing, 404, nil},
+		{"update collection type name taken", "PUT", path, testutil.AdminToken(), `{"name":"x"}`, taken, 409, nil},
+		{"update collection type bad json", "PUT", path, testutil.AdminToken(), `{`, ok, 400, nil},
 	})
 }

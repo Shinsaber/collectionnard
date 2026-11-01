@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/shinsaber/colec/internal/external/bnf"
 	"github.com/shinsaber/colec/internal/external/tvmaze"
 	"github.com/shinsaber/colec/internal/external/wikidata"
@@ -457,75 +456,30 @@ func firstN(s string, n int) string {
 
 // ── Box sets ────────────────────────────────────────────────────────
 
-// searchSeriesEditions searches box sets at the BnF by title or EAN, or those
-// of a series (titled like it: box sets have no BnF work record).
+// searchSeriesEditions searches box sets at the BnF by title or EAN, or those of
+// a series (titled like it: box sets have no BnF work record) (searchEditions).
 func (c *Connector) searchSeriesEditions(ctx context.Context, q model.ExternalEditionQuery) ([]model.ExternalEditionHit, error) {
-	if q.ISBN != "" {
-		return nil, InputError("this connector searches editions by title, barcode or series")
-	}
-	if q.Work != "" && !wikidata.IsQID(q.Work) {
-		return nil, InputError("work must be a Wikidata identifier (Q…)")
-	}
-	d, err := c.domain(ctx)
-	if err != nil {
-		return nil, err
-	}
-	var recs []bnf.Record
-	var titles []string // a box set of the series is titled like it (200 $a)
-	switch {
-	case q.Work != "":
-		ents, err := c.WD.Entities(ctx, []string{q.Work}, fetchLangs, true)
-		if err != nil {
-			return nil, err
-		}
-		e := ents[q.Work]
-		if e == nil {
-			return nil, notFound("wikidata entity %s", q.Work)
-		}
-		titles = compactNonEmpty([]string{fold(e.Label("fr")), fold(e.Label("en"))})
-		if recs, _, err = c.BnF.Search(ctx, videoQuery("bib.title all "+bnf.Quote(e.Label("fr", "en"))), maxFilmEditionHits); err != nil {
-			return nil, err
-		}
-	case q.Barcode != "":
-		if recs, _, err = c.BnF.Search(ctx, "bib.ean all "+bnf.Quote(q.Barcode), maxEditionHits); err != nil {
-			return nil, err
-		}
-	default:
-		if recs, _, err = c.BnF.Search(ctx, videoQuery("bib.title all "+bnf.Quote(q.Title)), maxEditionHits); err != nil {
-			return nil, err
-		}
-	}
-	hits := []model.ExternalEditionHit{}
-	var arks []string
-	for i := range recs {
-		r := &recs[i]
-		if r.ARK == "" || !isVideo(r) || slicesContains(arks, r.ARK) {
-			continue
-		}
-		if len(titles) > 0 && !slicesContains(titles, fold(r.Get("200", "a"))) {
-			continue // another work found by the title search (« El Camino »)
-		}
-		v := parseVideo(r)
-		h := model.ExternalEditionHit{
-			ID: r.ARK, BnfArk: r.ARK, Title: boxSetTitle(r), Publishers: videoPublisherNames(r),
-			Format: v.label(), Barcode: v.ean, Collection: collectionOf(r), SourceURL: bnf.RecordURL(r.ARK),
-		}
-		if v.year > 0 {
-			h.StartYear = &v.year
-		}
-		hits = append(hits, h)
-		arks = append(arks, r.ARK)
-	}
-	// By title: the seasons in order, then the complete sets.
-	sort.SliceStable(hits, func(i, j int) bool { return hits[i].Title < hits[j].Title })
-	existing, err := c.existing(ctx, map[uuid.UUID][]string{d.typeID(typeVideoRelease): arks}, []string{"external_ids", "bnf_ark"})
-	if err != nil {
-		return nil, err
-	}
-	for i := range hits {
-		hits[i].ExistingItemID = existing[hits[i].ID]
-	}
-	return hits, nil
+	return c.searchEditions(ctx, q, editionSearch{
+		refused:  "this connector searches editions by title, barcode or series",
+		typeName: typeVideoRelease,
+		byWork: func(ctx context.Context, e *wikidata.Entity) ([]bnf.Record, []string, error) {
+			// A box set of the series is titled like it (200 $a).
+			titles := compactNonEmpty([]string{fold(e.Label("fr")), fold(e.Label("en"))})
+			recs, _, err := c.BnF.Search(ctx, videoQuery("bib.title all "+bnf.Quote(e.Label("fr", "en"))), maxFilmEditionHits)
+			return recs, titles, err
+		},
+		barcodeQuery: eanCQL,
+		titleQuery: func(title string) (string, int) {
+			return videoQuery("bib.title all " + bnf.Quote(title)), maxEditionHits
+		},
+		accept: func(r *bnf.Record, titles []string) bool {
+			// With titles: another work found by the title search (« El Camino ») is skipped.
+			return isVideo(r) && (len(titles) == 0 || slicesContains(titles, fold(r.Get("200", "a"))))
+		},
+		hit: func(r *bnf.Record) model.ExternalEditionHit { return videoHit(r, boxSetTitle(r)) },
+		// By title: the seasons in order, then the complete sets.
+		less: func(a, b model.ExternalEditionHit) bool { return a.Title < b.Title },
+	})
 }
 
 // boxSetTitle: « Breaking bad — Intégrale de la saison 1 » (200 $a, $h, $i, $e).

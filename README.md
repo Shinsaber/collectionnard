@@ -110,12 +110,15 @@ npm run dev
 | `JWT_SECRET`        | **requis** | Clé HS256 des access tokens, 32 caractères minimum                                                     |
 | `ACCESS_TOKEN_TTL`  | `15m`      | Durée de vie des access tokens JWT (format Go)                                                         |
 | `REFRESH_TOKEN_TTL` | `720h`     | Durée de vie des refresh tokens (rotation à chaque utilisation)                                        |
-| `LOGIN_RATE_LIMIT`  | `10`       | Appels par minute et par IP sur `/auth/login`, `/auth/refresh`, `/auth/logout` et les routes publiques d'inscription / réinitialisation |
+| `LOGIN_RATE_LIMIT`  | `10`       | Appels par minute et par IP sur `/auth/*`, en deux compteurs : identifiants et jetons à usage unique (`login`, `register`, `reset-password`, `invitation`) d'une part, session (`refresh`, `logout`) de l'autre |
 | `TRUSTED_PROXY`     | `false`    | `true` derrière un reverse-proxy qui pose `X-Real-IP` (nginx du compose) ; sinon l'IP serait usurpable |
 | `GRAPH_MAX_NODES`   | `500`      | Nombre max de nœuds renvoyés par `GET /items/{id}/graph` (au-delà : `truncated: true`)                 |
 | `PORT`              | `8080`     | Port HTTP                                                                                              |
 | `UPLOAD_DIR`        | `uploads`  | Dossier des images uploadées (vignettes générées dans `.thumbs/`)                                      |
-| `MAX_UPLOAD_SIZE`   | `10485760` | Taille max d'un upload (octets) ; les corps JSON sont limités à 1 Mio                                  |
+| `MAX_UPLOAD_SIZE`   | `10485760` | Taille max d'un upload (octets) ; les corps JSON sont limités à 1 Mio ; une image de plus de 25 mégapixels est refusée (`image_too_large`) |
+| `UPLOAD_RATE_LIMIT` | `60`       | Fichiers qu'un compte (hors admin) peut envoyer par heure (`429 upload_quota` au-delà)                 |
+| `UPLOAD_RATE_BYTES` | `314572800` | Octets qu'un compte (hors admin) peut envoyer par heure (300 Mio)                                     |
+| `UPLOAD_PURGE_INTERVAL` | `24h`  | Période de la purge automatique des images que rien ne référence (délai de grâce 24 h) ; `0` : seulement le bouton Administration → Images |
 | `MAX_IMPORT_SIZE`   | `20971520` | Taille max d'un fichier d'import du catalogue ou d'une collection (octets)                             |
 | `EXTERNAL_USER_AGENT` | `Collectionnard/1.0 (+URL du dépôt)` | User-Agent envoyé à Wikidata, à la BnF, à MusicBrainz et à TVmaze (leurs règles demandent un nom et un contact) |
 | `PROPOSAL_QUOTA`    | `5`        | Propositions en attente par membre (+1 par proposition acceptée, plafond 50) ; contributeurs et admins sans quota |
@@ -123,8 +126,10 @@ npm run dev
 | `LOG_FORMAT`        | `json`     | `text` pour des logs lisibles en développement                                                         |
 | `LOG_LEVEL`         | `info`     | `debug`, `info`, `warn` ou `error`                                                                     |
 
-Sous-commande `migrate` : `SEED_ON_EMPTY` (`true` : charge les seeds si la table `users` est vide) et `SEED_FILE`
-(liste de fichiers séparés par des virgules, sinon les seeds par défaut, voir ci-dessous).
+Sous-commandes `migrate` et `seed` : `MIGRATIONS_DIR` (dossier des migrations ; défaut : le premier `db/migrations`
+trouvé en remontant depuis le dossier courant), `SEED_ON_EMPTY` (`true` : `migrate` charge les seeds si la table `users`
+est vide ; exigé aussi par `seed`, qui refuse sinon) et `SEED_FILE` (liste de fichiers séparés par des virgules, sinon les
+seeds par défaut, voir ci-dessous).
 
 ### Vérifier avant un commit
 
@@ -160,7 +165,7 @@ lui-même :
 cd server                             # préfixer par `nix develop -c` hors du shell Nix
 go run . migrate                      # applique les migrations en attente (table schema_version)
 SEED_ON_EMPTY=true go run . migrate   # idem, puis les seeds si la table users est vide
-go run . seed                         # applique les seeds sans condition (dev)
+SEED_ON_EMPTY=true go run . seed      # applique les seeds sans condition (dev ; refusé sans la variable : admin/admin)
 # Seeds : db/seed.sql, db/seed_bd_manga.sql, db/seed_music.sql, db/seed_video.sql puis db/seed_games.sql ; SEED_FILE=a.sql,b.sql pour une autre liste
 go run . install-domain               # état des paquets de domaine ; --all ou <domaine> pour installer / mettre à jour
 nix develop -c sh -c 'cd server && go run . migrate'          # la même chose, depuis la racine, sans entrer dans le shell
@@ -204,14 +209,21 @@ les ajouts du paquet (champs, valeurs, libellés) sont appliqués.
   Traefik, nginx) : l'API suppose HTTPS pour les mots de passe et les tokens, et l'application
   installable (mode hors ligne) l'exige, comme l'accès à la caméra (photo de couverture, scanner de
   codes-barres ; `Permissions-Policy: camera=(self)` et CSP `'wasm-unsafe-eval'` dans `web/nginx-security-headers.conf`).
-- `.env` : `JWT_SECRET` aléatoire (≥ 32 caractères), `POSTGRES_PASSWORD` fort,
-  `SEED_ON_EMPTY=false` avec `docker-compose.yml` (sinon le compte `admin/admin` est créé sur une base
-  vide) ; `docker-compose.prod.yml` l'impose.
-- Les conteneurs tournent sans privilèges (uid 10001 pour l'API, 101 pour nginx) ; les images
-  sont épinglées (`golang:1.27-alpine`, `alpine:3.22`, `node:22-alpine`,
-  `nginxinc/nginx-unprivileged:1.28-alpine`, `postgres:16-alpine`).
+- `REAL_IP_FROM` (`.env`) : adresse ou réseau CIDR du reverse-proxy (ex. `172.18.0.0/16`). Sans elle, nginx
+  ne voit que l'adresse du proxy : le limiteur de débit par IP de `/auth/*` deviendrait global à l'instance
+  et les journaux inutilisables. Avec elle, nginx relit l'adresse du client dans `X-Forwarded-For` (dernier
+  saut non fiable) et la transmet au serveur en `X-Real-IP` (`web/nginx-real-ip.conf.template`).
+- `.env` : `JWT_SECRET` aléatoire (≥ 32 caractères), `POSTGRES_PASSWORD` aléatoire (le modèle
+  `.env.example` ne fournit plus de valeur), `SEED_ON_EMPTY=false` avec `docker-compose.yml` (sinon le compte
+  `admin/admin` est créé sur une base vide) ; `docker-compose.prod.yml` l'impose, et `colec-server seed` refuse de
+  s'exécuter sans `SEED_ON_EMPTY=true`. `.gitignore` exclut tout `.env*` sauf `.env.example`.
+- Les conteneurs tournent sans privilèges (uid 10001 pour l'API, 101 pour nginx) ; les images de base
+  (`golang:1.27-alpine`, `alpine:3.22`, `node:22-alpine`, `nginxinc/nginx-unprivileged:1.28-alpine`,
+  `postgres:16-alpine`) et les actions de la CI sont épinglées par digest / SHA de commit, suivis par Dependabot
+  (`.github/dependabot.yml`).
 - Santé : `GET /api/v1/healthz` (utilisé par le healthcheck compose) ; logs JSON sur stdout
-  (`LOG_FORMAT=text` pour du lisible, `LOG_LEVEL=debug|info|warn|error`).
+  (`LOG_FORMAT=text` pour du lisible, `LOG_LEVEL=debug|info|warn|error`). Le journal d'accès nginx
+  n'écrit pas la query string (les jetons de partage et d'invitation y passent).
 - Pour accéder à PostgreSQL depuis l'hôte : `docker compose exec postgres psql -U colec colec`
   (ou publier le port dans un `docker-compose.override.yml` local, jamais commité).
 - Si le build de `web` échoue sur « Cannot find native binding » (rolldown / Tailwind), une dépendance
@@ -338,7 +350,7 @@ sont lisibles sans compte.
 | Invitations, membres   | `GET` / `POST /invitations`, `DELETE /invitations/{id}` ; `GET /members`                                        | JWT (invitations : admin, ou membre si `MEMBER_INVITES`) |
 | Utilisateurs           | `GET /users`, `PUT /users/{id}`, `POST /users/{id}/reset-link`                                                  | Admin                                     |
 | Méta-types             | `GET /item-types`, `/relation-types`, `/collection-types` (+ `/{id}`) ; `POST` / `PUT` / `DELETE`               | JWT (lecture) / Admin (écriture)          |
-| Items                  | `GET /items` (plein texte, filtres et tri par attribut, `related_to`), `GET /items/{id}` (+ `/relations`, `/graph`, `/collections`, `/history`), `GET /items/export` (CSV), `POST /items/duplicates` ; `POST /items`, `PUT /items/{id}`, `POST /items/{id}/revert` ; `DELETE /items/{id}` | JWT / Admin ou contributeur / Admin |
+| Items                  | `GET /items` (plein texte, filtres et tri par attribut, `related_to`), `GET /items/{id}` (+ `/relations`, `/relations/collections`, `/graph`, `/collections`, `/history`), `GET /items/export` (CSV), `POST /items/duplicates` ; `POST /items`, `PUT /items/{id}`, `POST /items/{id}/revert` ; `DELETE /items/{id}` | JWT / Admin ou contributeur / Admin |
 | Relations              | `GET /relations/{id}` ; `POST /relations`, `PUT` / `DELETE /relations/{id}`                                    | JWT / Admin ou contributeur               |
 | Collections            | CRUD `/collections`, `/collections/{id}/items`, `/export` (JSON, CSV), `POST /collections/import`, `/stats`, `/share-links` | JWT (propriétaire)              |
 | Pages publiques        | `GET /public/users/{username}` (+ `/collections`), `GET /public/collections/{id}` (+ `/items`, `/stats`), `GET /share?token=…` (+ `/items`, `/stats`) | Anonyme ou JWT (selon la visibilité) |

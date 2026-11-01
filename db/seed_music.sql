@@ -1,5 +1,5 @@
 -- =============================================================================
--- Collectionnard — Domaine Musique (P3-4, musique.md)
+-- Collectionnard — Domaine Musique (P3-4, docs/domaines/musique.md)
 -- Chargé après seed.sql (utilisateurs) ; les types viennent du paquet de domaine
 -- « music » (server/internal/domains/packages/music.json), installé avant les seeds.
 --

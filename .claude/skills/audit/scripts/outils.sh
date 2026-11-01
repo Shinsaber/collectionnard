@@ -28,7 +28,7 @@ run() {
   local nom=$1 dir=$2; shift 2
   ( cd "$dir" && "$@" ) > "$OUT/$nom.txt" 2>&1
   local rc=$?
-  printf "| `%s` | %s | %s | %s lignes |\n" "$(printf "%s" "$*" | tr "\n" " " | cut -c1-80)" "$dir" "$([ $rc = 0 ] && echo OK || echo "code $rc")" "$(wc -l < "$OUT/$nom.txt")" >> "$RESUME.cmds"
+  printf '| `%s` | %s | %s | %s lignes |\n' "$(printf "%s" "$*" | tr "\n" " " | cut -c1-80)" "$dir" "$([ $rc = 0 ] && echo OK || echo "code $rc")" "$(wc -l < "$OUT/$nom.txt")" >> "$RESUME.cmds"
   return $rc
 }
 : > "$RESUME.cmds"

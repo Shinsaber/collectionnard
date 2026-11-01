@@ -3,10 +3,8 @@ package connectors
 import (
 	"context"
 	"regexp"
-	"sort"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/shinsaber/colec/internal/external"
 	"github.com/shinsaber/colec/internal/external/bnf"
 	"github.com/shinsaber/colec/internal/external/wikidata"
@@ -259,83 +257,40 @@ func (p *planner) platform(ctx context.Context, e *wikidata.Entity, parent strin
 // ── Releases ────────────────────────────────────────────────────────
 
 // searchGameEditions searches French releases at the BnF by EAN, by title, or
-// those titled like a Wikidata game; game records only.
+// those titled like a Wikidata game; game records only (searchEditions).
 func (c *Connector) searchGameEditions(ctx context.Context, q model.ExternalEditionQuery) ([]model.ExternalEditionHit, error) {
-	if q.ISBN != "" {
-		return nil, InputError("this connector searches editions by title, barcode or game")
-	}
-	if q.Work != "" && !wikidata.IsQID(q.Work) {
-		return nil, InputError("work must be a Wikidata identifier (Q…)")
-	}
-	d, err := c.domain(ctx)
-	if err != nil {
-		return nil, err
-	}
-	var recs []bnf.Record
-	var titles []string
-	switch {
-	case q.Work != "":
-		ents, err := c.WD.Entities(ctx, []string{q.Work}, fetchLangs, true)
-		if err != nil {
-			return nil, err
-		}
-		e := ents[q.Work]
-		if e == nil {
-			return nil, notFound("wikidata entity %s", q.Work)
-		}
-		titles = compactNonEmpty([]string{fold(e.Label("fr", "mul")), fold(e.Label("en", "mul"))})
-		if recs, _, err = c.BnF.Search(ctx, "bib.title all "+bnf.Quote(e.Label("fr", "en", "mul")), maxGameEditionHits); err != nil {
-			return nil, err
-		}
-	case q.Barcode != "":
-		if recs, _, err = c.BnF.Search(ctx, eanQuery(q.Barcode), maxEditionHits); err != nil {
-			return nil, err
-		}
-	default:
-		if recs, _, err = c.BnF.Search(ctx, "bib.title all "+bnf.Quote(q.Title), maxGameEditionHits); err != nil {
-			return nil, err
-		}
-	}
-	hits := []model.ExternalEditionHit{}
-	var arks []string
-	for i := range recs {
-		r := &recs[i]
-		if r.ARK == "" || !isGame(r) || slicesContains(arks, r.ARK) {
-			continue
-		}
-		if len(titles) > 0 && !titledLike(fold(gameTitle(r)), titles) {
-			continue // another work found by the title search
-		}
-		g := parseGame(r)
-		h := model.ExternalEditionHit{
-			ID: r.ARK, BnfArk: r.ARK, Title: gameTitle(r), Publishers: gameCompanyNames(r),
-			Format: g.label(), Barcode: g.ean, SourceURL: bnf.RecordURL(r.ARK),
-		}
-		if g.year > 0 {
-			h.StartYear = &g.year
-		}
-		hits = append(hits, h)
-		arks = append(arks, r.ARK)
-	}
-	// Most recent first.
-	sort.SliceStable(hits, func(i, j int) bool {
-		yi, yj := 0, 0
-		if hits[i].StartYear != nil {
-			yi = *hits[i].StartYear
-		}
-		if hits[j].StartYear != nil {
-			yj = *hits[j].StartYear
-		}
-		return yi > yj
+	return c.searchEditions(ctx, q, editionSearch{
+		refused:  "this connector searches editions by title, barcode or game",
+		typeName: typeGameRelease,
+		byWork: func(ctx context.Context, e *wikidata.Entity) ([]bnf.Record, []string, error) {
+			titles := compactNonEmpty([]string{fold(e.Label("fr", "mul")), fold(e.Label("en", "mul"))})
+			recs, _, err := c.BnF.Search(ctx, "bib.title all "+bnf.Quote(e.Label("fr", "en", "mul")), maxGameEditionHits)
+			return recs, titles, err
+		},
+		barcodeQuery: eanQuery,
+		titleQuery: func(title string) (string, int) {
+			return "bib.title all " + bnf.Quote(title), maxGameEditionHits
+		},
+		accept: func(r *bnf.Record, titles []string) bool {
+			// With titles: another work found by the title search is skipped.
+			return isGame(r) && (len(titles) == 0 || titledLike(fold(gameTitle(r)), titles))
+		},
+		hit:  gameHit,
+		less: newestFirst,
 	})
-	existing, err := c.existing(ctx, map[uuid.UUID][]string{d.typeID(typeGameRelease): arks}, []string{"external_ids", "bnf_ark"})
-	if err != nil {
-		return nil, err
+}
+
+// gameHit describes a game release record.
+func gameHit(r *bnf.Record) model.ExternalEditionHit {
+	g := parseGame(r)
+	h := model.ExternalEditionHit{
+		ID: r.ARK, BnfArk: r.ARK, Title: gameTitle(r), Publishers: gameCompanyNames(r),
+		Format: g.label(), Barcode: g.ean, SourceURL: bnf.RecordURL(r.ARK),
 	}
-	for i := range hits {
-		hits[i].ExistingItemID = existing[hits[i].ID]
+	if g.year > 0 {
+		h.StartYear = &g.year
 	}
-	return hits, nil
+	return h
 }
 
 // gameTitle: 200 $a, its part ($i : « The legend of Zelda : Breath of the wild ») and

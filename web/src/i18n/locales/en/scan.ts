@@ -17,5 +17,4 @@ export default {
   external: "Search external sources",
   create: "Create the item",
   propose: "Propose the item",
-  codeLabel: "Code {code}",
 };

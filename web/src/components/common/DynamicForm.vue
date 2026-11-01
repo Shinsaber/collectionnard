@@ -173,6 +173,7 @@ import {
   fieldLabel,
   imageCategories,
   type ImageCategory,
+  isIdentifier,
   orderedKeys,
   widgetOf,
 } from "@/lib/schema";
@@ -240,7 +241,7 @@ const fields = computed<SchemaField[]>(() => {
         maximum: prop.maximum as number | undefined,
         widget: widgetOf(props.schema, name),
         imageCategories: imageCategories(props.schema, name),
-        identifier: prop["x-identifier"] === true,
+        identifier: isIdentifier(prop),
       };
     });
 });

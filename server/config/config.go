@@ -1,3 +1,6 @@
+// Package config reads the server configuration from the environment: DATABASE_URL
+// and JWT_SECRET are required, everything else has a safe default (see Load and the
+// variables table of the README).
 package config
 
 import (
@@ -28,6 +31,13 @@ type Config struct {
 	UploadDir       string
 	MaxUploadSize   int64 // bytes
 	MaxImportSize   int64 // bytes, body of POST /import
+	// Hourly upload quota of one account, admins excepted (UPLOAD_RATE_LIMIT files,
+	// UPLOAD_RATE_BYTES bytes): a member must not be able to fill the volume.
+	UploadRateLimit int
+	UploadRateBytes int64
+	// UploadPurgeInterval is the period of the automatic purge of the uploads
+	// nothing references (UPLOAD_PURGE_INTERVAL); 0 leaves only the admin button.
+	UploadPurgeInterval time.Duration
 	// ExternalUserAgent identifies the server to the external sources (Wikidata, BnF):
 	// their policies ask for a name and a contact (URL or e-mail).
 	ExternalUserAgent string
@@ -133,6 +143,33 @@ func Load() (*Config, error) {
 		maxImportSize = s
 	}
 
+	uploadRateLimit := 60
+	if v := os.Getenv("UPLOAD_RATE_LIMIT"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 1 {
+			return nil, fmt.Errorf("invalid UPLOAD_RATE_LIMIT: %q (positive integer expected)", v)
+		}
+		uploadRateLimit = n
+	}
+
+	uploadRateBytes := int64(300 << 20) // 300 MiB per hour and per account
+	if v := os.Getenv("UPLOAD_RATE_BYTES"); v != "" {
+		s, err := strconv.ParseInt(v, 10, 64)
+		if err != nil || s <= 0 {
+			return nil, fmt.Errorf("invalid UPLOAD_RATE_BYTES: %q (positive integer expected)", v)
+		}
+		uploadRateBytes = s
+	}
+
+	uploadPurgeInterval := 24 * time.Hour
+	if v := os.Getenv("UPLOAD_PURGE_INTERVAL"); v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil || d < 0 {
+			return nil, fmt.Errorf("invalid UPLOAD_PURGE_INTERVAL: %q (Go duration expected, e.g. 24h ; 0 disables)", v)
+		}
+		uploadPurgeInterval = d
+	}
+
 	externalUA := os.Getenv("EXTERNAL_USER_AGENT")
 	if externalUA == "" {
 		externalUA = DefaultExternalUserAgent
@@ -153,6 +190,10 @@ func Load() (*Config, error) {
 		MaxUploadSize:     maxUploadSize,
 		MaxImportSize:     maxImportSize,
 		ExternalUserAgent: externalUA,
+
+		UploadRateLimit:     uploadRateLimit,
+		UploadRateBytes:     uploadRateBytes,
+		UploadPurgeInterval: uploadPurgeInterval,
 	}, nil
 }
 

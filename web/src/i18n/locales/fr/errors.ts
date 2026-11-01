@@ -4,7 +4,6 @@ export default {
   unknown: "Erreur inconnue",
   network: "Serveur injoignable",
   required: "Ce champ est requis",
-  invalidUrl: "URL invalide",
   // Vérification d'un champ contre son schéma avant l'envoi (lib/validateValue.ts).
   check: {
     type: "Type attendu : {type}",
@@ -36,10 +35,14 @@ export default {
   api: {
     bad_request: "Requête invalide",
     unauthorized: "Authentification requise ou identifiants incorrects",
-    forbidden: "Droits administrateur requis",
+    forbidden: "Action non autorisée pour votre rôle",
     not_found: "Élément introuvable",
     conflict: "Conflit : cet élément existe déjà ou est encore utilisé",
     payload_too_large: "Fichier ou requête trop volumineux",
+    image_too_large:
+      "Image trop grande (25 mégapixels au plus) : réduisez-la avant de l'envoyer.",
+    upload_quota:
+      "Quota d'envoi d'images atteint pour cette heure : réessayez plus tard.",
     validation_error: "Données invalides",
     rate_limited: "Trop de tentatives, réessayez dans un instant",
     timeout: "Le serveur a mis trop de temps à répondre",

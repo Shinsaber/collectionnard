@@ -34,3 +34,36 @@ describe("catalogues i18n", () => {
     expect(matchLang(["de"])).toBeUndefined();
   });
 });
+
+// Audit Q-007 : aucune clé orpheline. Une feuille du catalogue est « employée » si le code la
+// cite littéralement (« ns.a.b »), ou par un préfixe dynamique (`ns.a.${x}`, "ns.a." + x), ou
+// par un suffixe dynamique (`${ns}.title`).
+const sources = import.meta.glob(
+  [
+    "/src/**/*.vue",
+    "/src/**/*.ts",
+    "!/src/**/*.test.ts",
+    "!/src/i18n/locales/**",
+  ],
+  { query: "?raw", import: "default", eager: true },
+) as Record<string, string>;
+
+describe("clés i18n employées", () => {
+  it("chaque clé du catalogue français est citée par le code", () => {
+    const code = Object.values(sources).join("\n");
+    const prefixes = [
+      ...code.matchAll(/`([a-zA-Z]\w*(?:\.\w+)*\.)\$\{/g),
+      ...code.matchAll(/"([a-zA-Z]\w*(?:\.\w+)*\.)"\s*\+/g),
+    ].map((m) => m[1]!);
+    const suffixes = [...code.matchAll(/\$\{[^}]+\}((?:\.\w+)+)`/g)].map(
+      (m) => m[1]!,
+    );
+    const orphans = leaves(fr).filter(
+      (key) =>
+        !code.includes(key) &&
+        !prefixes.some((p) => key.startsWith(p)) &&
+        !suffixes.some((s) => key.endsWith(s)),
+    );
+    expect(orphans).toEqual([]);
+  });
+});

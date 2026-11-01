@@ -25,7 +25,6 @@ export default {
   account: "Compte et réglages",
   adminSection: "Administration",
   language: "Langue",
-  theme: "Thème",
   lightMode: "Mode clair",
   darkMode: "Mode sombre",
   logout: "Se déconnecter",

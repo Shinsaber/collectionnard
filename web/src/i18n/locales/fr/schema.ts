@@ -33,6 +33,11 @@ export default {
     setDefault: "Définir comme image par défaut",
     setDefaultN: "Définir l'image {n} de {category} comme image par défaut",
     removeN: "Supprimer l'image {n} de {category}",
+    recrop: "Recadrer (nouvelle image)",
+    recropN:
+      "Recadrer l'image {n} de {category} : le résultat est ajouté comme nouvelle image",
+    recropFailed: "Image introuvable, impossible de la recadrer",
+    cropBeforeUpload: "Recadrer avant l'envoi",
     file: "Fichier image pour {category}",
     uploadFailed: "Envoi de l'image impossible",
     refused: "Image refusée",
@@ -58,6 +63,8 @@ export default {
     // Redressement de la perspective (lot M4)
     straightenTitle: "Redresser – {category}",
     straightenStep: "Redresser",
+    cropStep: "Recadrer",
+    steps: "Étapes : redresser la perspective, puis recadrer",
     straightenHint:
       "Placez les quatre coins sur ceux de la couverture (détectés d'office quand le fond contraste), puis redressez. Flèches au clavier : 1 % par appui, 10 % avec Maj.",
     detectEdges: "Détecter les bords",

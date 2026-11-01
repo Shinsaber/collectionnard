@@ -1,6 +1,6 @@
 # Multi-architecture (CI : linux/amd64 et linux/arm64) : le build Vite produit des fichiers
 # statiques, identiques pour toutes les cibles : il tourne sur la plateforme de build (sans émulation).
-FROM --platform=$BUILDPLATFORM node:22-alpine AS builder
+FROM --platform=$BUILDPLATFORM node:22-alpine@sha256:fe4f6d74e20370acb04ad889077d14d0f64a9c8ea6a42bc60cddf1e844699914 AS builder
 
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -14,8 +14,12 @@ COPY . .
 RUN npm run build
 
 # Image nginx non-root (uid 101), écoute sur 8080.
-FROM nginxinc/nginx-unprivileged:1.28-alpine
+FROM nginxinc/nginx-unprivileged:1.28-alpine@sha256:7377697a821c131a924a7105fafbe7414db4e9fcc77a6f08f776f33f141ec3f8
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY nginx-security-headers.conf /etc/nginx/conf.d/security-headers.inc
+# Rendu au démarrage (envsubst de l'entrypoint) en /etc/nginx/conf.d/real-ip.conf : adresse réelle du
+# client derrière un reverse-proxy (REAL_IP_FROM = adresse ou réseau du proxy ; défaut : rien n'est relu).
+COPY nginx-real-ip.conf.template /etc/nginx/templates/real-ip.conf.template
+ENV REAL_IP_FROM=127.0.0.1
 EXPOSE 8080

@@ -74,3 +74,45 @@ func TestPurgeUploads(t *testing.T) {
 		t.Errorf("left after purge: %v (only orphan.png must go)", left)
 	}
 }
+
+// S-004 : la purge tourne aussi d'elle-même (UPLOAD_PURGE_INTERVAL), avec les
+// mêmes règles que le bouton admin.
+func TestRunUploadPurge(t *testing.T) {
+	cfg := testutil.TestConfig()
+	cfg.UploadDir = t.TempDir()
+	old := time.Now().Add(-48 * time.Hour)
+	for _, name := range []string{"used.jpg", "orphan.png"} {
+		path := filepath.Join(cfg.UploadDir, name)
+		if err := os.WriteFile(path, []byte("x"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		_ = os.Chtimes(path, old, old)
+	}
+	mock := &testutil.MockStore{
+		ReferencedUploadsFn: func(context.Context) ([]string, error) { return []string{"used.jpg"}, nil },
+	}
+	h := testutil.NewTestHandlerWithConfig(mock, cfg)
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	go func() { h.RunUploadPurge(ctx, 10*time.Millisecond); close(done) }()
+
+	deadline := time.Now().Add(3 * time.Second)
+	for {
+		if _, err := os.Stat(filepath.Join(cfg.UploadDir, "orphan.png")); os.IsNotExist(err) {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("orphan.png not purged")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	cancel()
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Error("RunUploadPurge did not stop with the context")
+	}
+	if _, err := os.Stat(filepath.Join(cfg.UploadDir, "used.jpg")); err != nil {
+		t.Errorf("referenced file removed: %v", err)
+	}
+}

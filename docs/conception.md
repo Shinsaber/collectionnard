@@ -271,6 +271,22 @@ User "shinsaber" :
 | **Membre** (`user`) | Crée ses collections (visibilité au choix), y ajoute des items existants, consulte le catalogue ; propose des créations ou corrections, modérées ; signale ; invite si `MEMBER_INVITES`. |
 | **Visiteur**     | Sans compte : profils et collections publics (`/u/…`, `/c/…`) et liens de partage (`/share`), en lecture seule ; les champs `x-private` sont retirés par le serveur. |
 
+### Décisions de sécurité consignées (audit du 2026-11-01)
+
+- **Jetons côté client** (S-005) : l'access token (15 min) et le refresh token (30 jours, à usage unique) sont gardés en
+  `localStorage` (`web/src/api/tokens.ts`), lisibles par tout script de l'origine. Compromis assumé : la CSP de nginx
+  n'autorise que les scripts de l'application (`script-src 'self' 'wasm-unsafe-eval'`, aucun `unsafe-inline`), les
+  gabarits n'emploient pas `v-html` et les liens externes sont filtrés (`http(s)` seulement, `rel="noopener noreferrer"`).
+  Durcissement possible si le besoin apparaît : refresh token en cookie `HttpOnly; SameSite=Strict` posé par `/auth/login`
+  et relu par `/auth/refresh` (touche `client.ts`, `stores/auth.ts`, `handler/auth.go`, OpenAPI).
+- **Images servies sans authentification** (S-006) : `/api/v1/uploads/<sha256>.<ext>` est public, car une balise `<img>`
+  n'envoie pas d'en-tête `Authorization`, et nginx le met en cache un an (`immutable`). La protection tient au nom
+  (empreinte du contenu, non devinable). Conséquence acceptée : une URL connue (page publique un temps, lien de partage
+  révoqué, journal, capture) reste valable jusqu'à la purge de l'image, caches intermédiaires compris ; cela vaut aussi
+  pour les photos de l'état d'un exemplaire (lot M5), qui sont des données personnelles. Piste si nécessaire : servir les
+  galeries des `collection_items` par une route authentifiée (`fetch` + `blob:`, déjà permis par la CSP) ou en
+  `Cache-Control: private`.
+
 ---
 
 ## 6. Performance et optimisation

@@ -1,5 +1,5 @@
 -- =============================================================================
--- Collectionnard — Jeu de données BD / Manga (lot 13, modèle : les.collection.md)
+-- Collectionnard — Jeu de données BD / Manga (lot 13, modèle : docs/domaines/livres.md)
 -- =============================================================================
 -- Prérequis : migrations appliquées, paquets de domaine installés (books, tv, collections) et
 -- db/seed.sql chargé (utilisateur shinsaber a…02).
@@ -23,7 +23,7 @@
 -- =============================================================================
 -- Les types du domaine (ItemTypes b…0010-0017, RelationTypes c…0010-0016) sont le paquet de domaine
 -- « books » (server/internal/domains/packages/books.json), installé avant ce seed avec « tv » et
--- « collections ». Attributs communs (les.collection.md § « Sources de référence ») :
+-- « collections ». Attributs communs (docs/domaines/livres.md § « Sources de référence ») :
 --   external_ids : { wikidata: "Q…", bnf_ark: "ark:/12148/…" }
 --   sources      : [{ source: wikidata|bnf|manual, retrieved_at: date }]
 

@@ -49,6 +49,22 @@
           >
             <i class="pi pi-times text-[10px]" aria-hidden="true"></i>
           </button>
+          <!-- Recadrer à nouveau : le résultat s'ajoute en fin de liste, l'original reste
+               (à supprimer à la main s'il ne sert plus). -->
+          <button
+            v-if="isUpload(url)"
+            type="button"
+            class="absolute -right-2 -bottom-2 flex size-6 items-center justify-center rounded-full bg-surface text-xs text-link shadow-control transition-opacity disabled:opacity-60 lg:opacity-0 lg:group-hover:opacity-100 lg:focus:opacity-100"
+            :aria-label="
+              t('schema.gallery.recropN', { n: imgIdx + 1, category: cat.name })
+            "
+            :title="t('schema.gallery.recrop')"
+            :disabled="uploading[cat.name] ?? false"
+            data-test="gallery-recrop"
+            @click="recrop(cat, url)"
+          >
+            <i class="pi pi-pencil text-[10px]" aria-hidden="true"></i>
+          </button>
         </div>
 
         <!-- Ajout depuis un fichier ou la galerie du téléphone : `image/*` pour qu'Android propose
@@ -104,13 +120,23 @@
       </div>
     </div>
 
+    <!-- Recadrer chaque fichier choisi (ordinateur surtout : la photo passe déjà par le
+         recadrage). Choix mémorisé dans le navigateur. -->
+    <label class="flex items-center gap-2 text-sm text-muted">
+      <ElSwitch v-model="cropBeforeUpload" data-test="gallery-crop-toggle" />
+      {{ t("schema.gallery.cropBeforeUpload") }}
+    </label>
+
     <CameraCaptureDialog
       v-if="cameraCategory"
       v-model:visible="cameraVisible"
       :category="cameraCategory.name"
       @done="(file) => openCrop(cameraCategory!, file, undefined, true)"
     />
+    <!-- Chargé (cropperjs, redressement) à la première ouverture seulement, comme la caméra :
+         chaque formulaire à galerie téléchargeait ce chunk pour rien. -->
     <ImageCropDialog
+      v-if="cropCategory"
       v-model:visible="cropVisible"
       :file="cropFile"
       :category="cropCategory"
@@ -122,7 +148,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, reactive, ref } from "vue";
+import { computed, defineAsyncComponent, reactive, ref, watch } from "vue";
 import { uploadApi } from "@/api/client";
 import { useI18n } from "vue-i18n";
 import { useNotify } from "@/composables/useNotify";
@@ -183,6 +209,42 @@ function removeImage(cat: string, imgIdx: number) {
   next[cat] = arr;
   if (next.default_image === removed) next.default_image = "";
   emit("update:modelValue", next);
+}
+
+// ── Recadrage volontaire (ordinateur) ────────────────────────────────
+const CROP_KEY = "colec-crop-before-upload";
+function readCropChoice(): boolean {
+  try {
+    return localStorage.getItem(CROP_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+/** « Recadrer avant l'envoi » : chaque fichier choisi passe par le recadrage. */
+const cropBeforeUpload = ref(readCropChoice());
+watch(cropBeforeUpload, (on) => {
+  try {
+    localStorage.setItem(CROP_KEY, on ? "1" : "0");
+  } catch {
+    /* stockage indisponible : le choix vaut pour la page */
+  }
+});
+
+/** Image envoyée sur ce serveur (seule source rechargeable pour un nouveau recadrage). */
+function isUpload(url: string): boolean {
+  return url.startsWith("/api/v1/uploads/");
+}
+
+/** Recadre de nouveau une image de la galerie ; le résultat est ajouté comme une nouvelle image. */
+async function recrop(cat: ImageCategory, url: string) {
+  uploading[cat.name] = true;
+  try {
+    openCrop(cat, await uploadApi.file(url));
+  } catch (e) {
+    notifyError(e, t("schema.gallery.recropFailed"));
+  } finally {
+    uploading[cat.name] = false;
+  }
 }
 
 // ── Prise de vue ─────────────────────────────────────────────────────
@@ -267,6 +329,10 @@ async function onFile(cat: ImageCategory, event: Event) {
       file,
       t("schema.gallery.cropOffer", { details: verdict.details }),
     );
+    return;
+  }
+  if (cropBeforeUpload.value) {
+    openCrop(cat, file); // contrôles refaits sur le résultat (onCropped)
     return;
   }
   if (verdict?.details)

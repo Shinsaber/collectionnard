@@ -1,3 +1,6 @@
+// Package middleware holds the chi middlewares of the API: JWT authentication
+// (Authenticate, OptionalAuthenticate), role checks (RequireAdmin, RequireRole),
+// the per-IP rate limiter of /auth/*, the trusted-proxy real IP and the request logger.
 package middleware
 
 import (

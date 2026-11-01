@@ -1,3 +1,8 @@
+// Package handler holds the HTTP handlers of the API (one file per domain) and the
+// router that mounts every route with its middleware group (Router, handler.go):
+// public, optional authentication, authenticated, admin or contributor, admin.
+// Handlers talk to the database only through store.Store and answer with
+// respondJSON / respondError (stable error codes, api/openapi.yaml).
 package handler
 
 import (
@@ -30,6 +35,9 @@ type Handler struct {
 	Config *config.Config
 	// Connectors to the external sources, one per kind of collection (/external/{id}/…).
 	Connectors []external.Connector
+
+	uploads uploadQuota // hourly quota of POST /uploads per account (upload_quota.go)
+	thumbs  thumbGate   // decodings of thumbnails in flight (thumbnail.go)
 }
 
 func New(s store.Store, auth *middleware.Auth, cfg *config.Config) *Handler {
@@ -60,16 +68,24 @@ func (h *Handler) Router() chi.Router {
 	// Public: liveness/readiness (compose healthcheck, monitoring)
 	r.Get("/api/v1/healthz", h.Healthz)
 
-	// Public, rate-limited per IP (credential stuffing, token guessing)
-	authLimiter := middleware.NewRateLimiter(h.Config.LoginRateLimit, time.Minute)
+	// Public, rate-limited per IP (LOGIN_RATE_LIMIT per minute), with two separate
+	// counters: the routes that take credentials or one-time tokens (credential
+	// stuffing, token guessing), and the session routes every device calls each
+	// ACCESS_TOKEN_TTL — so that refreshes never eat the login budget, nor the
+	// reverse (audit S-002).
+	credentialLimiter := middleware.NewRateLimiter(h.Config.LoginRateLimit, time.Minute)
 	r.Group(func(r chi.Router) {
-		r.Use(authLimiter.Handler)
+		r.Use(credentialLimiter.Handler)
 		r.Post("/api/v1/auth/login", h.Login)
-		r.Post("/api/v1/auth/refresh", h.Refresh)
-		r.Post("/api/v1/auth/logout", h.Logout)
 		r.Get("/api/v1/auth/invitation", h.CheckInvitation)
 		r.Post("/api/v1/auth/register", h.Register)
 		r.Post("/api/v1/auth/reset-password", h.ResetPassword)
+	})
+	sessionLimiter := middleware.NewRateLimiter(h.Config.LoginRateLimit, time.Minute)
+	r.Group(func(r chi.Router) {
+		r.Use(sessionLimiter.Handler)
+		r.Post("/api/v1/auth/refresh", h.Refresh)
+		r.Post("/api/v1/auth/logout", h.Logout)
 	})
 
 	// Serve uploaded files (public — img tags can't send Authorization headers)
@@ -335,13 +351,19 @@ func parseUUID(w http.ResponseWriter, r *http.Request, param string) (uuid.UUID,
 }
 
 func parsePagination(r *http.Request) model.Pagination {
+	return parsePaginationDefault(r, defaultPerPage)
+}
+
+// parsePaginationDefault reads page and per_page, with the given page size when per_page
+// is absent; per_page never exceeds maxPerPage.
+func parsePaginationDefault(r *http.Request, def int) model.Pagination {
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	if page < 1 {
 		page = 1
 	}
 	perPage, _ := strconv.Atoi(r.URL.Query().Get("per_page"))
 	if perPage < 1 {
-		perPage = defaultPerPage
+		perPage = def
 	}
 	if perPage > maxPerPage {
 		perPage = maxPerPage

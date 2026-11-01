@@ -34,6 +34,10 @@ const en: typeof fr = {
     setDefault: "Set as default image",
     setDefaultN: "Set image {n} of {category} as default image",
     removeN: "Remove image {n} of {category}",
+    recrop: "Crop (new image)",
+    recropN: "Crop image {n} of {category}: the result is added as a new image",
+    recropFailed: "Image not found, it cannot be cropped",
+    cropBeforeUpload: "Crop before upload",
     file: "Image file for {category}",
     uploadFailed: "Image upload failed",
     refused: "Image refused",
@@ -59,6 +63,8 @@ const en: typeof fr = {
     // Perspective straightening (lot M4)
     straightenTitle: "Straighten – {category}",
     straightenStep: "Straighten",
+    cropStep: "Crop",
+    steps: "Steps: straighten the perspective, then crop",
     straightenHint:
       "Put the four corners on those of the cover (detected automatically when the background contrasts), then straighten. Arrow keys: 1% per press, 10% with Shift.",
     detectEdges: "Detect edges",

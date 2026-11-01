@@ -3,11 +3,9 @@ package connectors
 import (
 	"context"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/shinsaber/colec/internal/external"
 	"github.com/shinsaber/colec/internal/external/bnf"
 	"github.com/shinsaber/colec/internal/external/wikidata"
@@ -226,88 +224,43 @@ func (p *planner) filmAttrs(ctx context.Context, e *wikidata.Entity) (map[string
 // ── Video releases ──────────────────────────────────────────────────
 
 // searchFilmEditions lists the video releases of a film (its BnF work record),
-// or searches them by EAN or title; video records only.
+// or searches them by EAN or title; video records only (searchEditions).
 func (c *Connector) searchFilmEditions(ctx context.Context, q model.ExternalEditionQuery) ([]model.ExternalEditionHit, error) {
-	if q.ISBN != "" {
-		return nil, InputError("this connector searches editions by title, barcode or film")
-	}
-	if q.Work != "" && !wikidata.IsQID(q.Work) {
-		return nil, InputError("work must be a Wikidata identifier (Q…)")
-	}
-	d, err := c.domain(ctx)
-	if err != nil {
-		return nil, err
-	}
-	var recs []bnf.Record
-	switch {
-	case q.Work != "":
-		ents, err := c.WD.Entities(ctx, []string{q.Work}, fetchLangs, true)
-		if err != nil {
-			return nil, err
-		}
-		e := ents[q.Work]
-		if e == nil {
-			return nil, notFound("wikidata entity %s", q.Work)
-		}
-		number := ""
-		if ark, _ := externalIDs(e)["bnf_ark"].(string); ark != "" {
-			number, _ = bnf.RecordNumber(ark)
-		}
-		if number != "" {
-			recs, _, err = c.BnF.Search(ctx, "bib.work2bib all "+bnf.Quote(number), maxFilmEditionHits)
-		} else {
+	return c.searchEditions(ctx, q, editionSearch{
+		refused:  "this connector searches editions by title, barcode or film",
+		typeName: typeVideoRelease,
+		byWork: func(ctx context.Context, e *wikidata.Entity) ([]bnf.Record, []string, error) {
+			if ark, _ := externalIDs(e)["bnf_ark"].(string); ark != "" {
+				if number, _ := bnf.RecordNumber(ark); number != "" {
+					recs, _, err := c.BnF.Search(ctx, "bib.work2bib all "+bnf.Quote(number), maxFilmEditionHits)
+					return recs, nil, err
+				}
+			}
 			// Film unknown to the BnF: search its French (or English) title.
-			recs, _, err = c.BnF.Search(ctx, videoQuery("bib.title all "+bnf.Quote(e.Label("fr", "en"))), maxEditionHits)
-		}
-		if err != nil {
-			return nil, err
-		}
-	case q.Barcode != "":
-		if recs, _, err = c.BnF.Search(ctx, "bib.ean all "+bnf.Quote(q.Barcode), maxEditionHits); err != nil {
-			return nil, err
-		}
-	default:
-		if recs, _, err = c.BnF.Search(ctx, videoQuery("bib.title all "+bnf.Quote(q.Title)), maxEditionHits); err != nil {
-			return nil, err
-		}
-	}
-	hits := []model.ExternalEditionHit{}
-	var arks []string
-	for i := range recs {
-		r := &recs[i]
-		if r.ARK == "" || !isVideo(r) || slicesContains(arks, r.ARK) {
-			continue
-		}
-		v := parseVideo(r)
-		h := model.ExternalEditionHit{
-			ID: r.ARK, BnfArk: r.ARK, Title: editionTitle(r), Publishers: videoPublisherNames(r),
-			Format: v.label(), Barcode: v.ean, Collection: collectionOf(r), SourceURL: bnf.RecordURL(r.ARK),
-		}
-		if v.year > 0 {
-			h.StartYear = &v.year
-		}
-		hits = append(hits, h)
-		arks = append(arks, r.ARK)
-	}
-	// Most recent first (DVD and Blu-ray before the VHS of the same film).
-	sort.SliceStable(hits, func(i, j int) bool {
-		yi, yj := 0, 0
-		if hits[i].StartYear != nil {
-			yi = *hits[i].StartYear
-		}
-		if hits[j].StartYear != nil {
-			yj = *hits[j].StartYear
-		}
-		return yi > yj
+			recs, _, err := c.BnF.Search(ctx, videoQuery("bib.title all "+bnf.Quote(e.Label("fr", "en"))), maxEditionHits)
+			return recs, nil, err
+		},
+		barcodeQuery: eanCQL,
+		titleQuery: func(title string) (string, int) {
+			return videoQuery("bib.title all " + bnf.Quote(title)), maxEditionHits
+		},
+		accept: func(r *bnf.Record, _ []string) bool { return isVideo(r) },
+		hit:    func(r *bnf.Record) model.ExternalEditionHit { return videoHit(r, editionTitle(r)) },
+		less:   newestFirst,
 	})
-	existing, err := c.existing(ctx, map[uuid.UUID][]string{d.typeID(typeVideoRelease): arks}, []string{"external_ids", "bnf_ark"})
-	if err != nil {
-		return nil, err
+}
+
+// videoHit describes a video release record (DVD, Blu-ray, VHS) under the given title.
+func videoHit(r *bnf.Record, title string) model.ExternalEditionHit {
+	v := parseVideo(r)
+	h := model.ExternalEditionHit{
+		ID: r.ARK, BnfArk: r.ARK, Title: title, Publishers: videoPublisherNames(r),
+		Format: v.label(), Barcode: v.ean, Collection: collectionOf(r), SourceURL: bnf.RecordURL(r.ARK),
 	}
-	for i := range hits {
-		hits[i].ExistingItemID = existing[hits[i].ID]
+	if v.year > 0 {
+		h.StartYear = &v.year
 	}
-	return hits, nil
+	return h
 }
 
 // videoQuery restricts a CQL query to the video records (BnF document type « h »).

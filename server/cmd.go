@@ -60,8 +60,16 @@ func runMigrate() int {
 	return applySeed(ctx, databaseURL)
 }
 
-// runSeed implements `colec-server seed` (unconditional, development only).
+// runSeed implements `colec-server seed` (unconditional, development only). The
+// seeds create the demonstration accounts (admin/admin): the command refuses to
+// run unless SEED_ON_EMPTY=true, the same confirmation `migrate` relies on, so
+// that an image deployed with docker-compose.prod.yml (SEED_ON_EMPTY=false, or
+// unset) cannot seed a production database by mistake (audit S-007).
 func runSeed() int {
+	if !seedConfirmed() {
+		slog.Error("seed refused: the seeds create demonstration accounts (admin/admin); set SEED_ON_EMPTY=true to confirm")
+		return 2
+	}
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
 		slog.Error("DATABASE_URL is required")
@@ -323,4 +331,11 @@ func logDomainReport(rep *model.DomainInstallReport) bool {
 	slog.Info("domain", "domain", rep.Domain, "version", rep.ToVersion, "dry_run", rep.DryRun,
 		"applied", rep.Applied, "outcomes", counts)
 	return ok && len(rep.Errors) == 0
+}
+
+// seedConfirmed reports whether SEED_ON_EMPTY=true, the explicit consent the
+// `seed` subcommand requires (see runSeed).
+func seedConfirmed() bool {
+	ok, _ := strconv.ParseBool(os.Getenv("SEED_ON_EMPTY"))
+	return ok
 }

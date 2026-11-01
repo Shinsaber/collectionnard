@@ -1,7 +1,5 @@
 // Vocabulaire partagé par toutes les vues (boutons, états, confirmations).
 export default {
-  appName: "Collectionnard",
-  actions: "Actions",
   add: "Ajouter",
   back: "Retour",
   cancel: "Annuler",
@@ -21,9 +19,6 @@ export default {
   type: "Type",
   yes: "Oui",
   error: "Erreur",
-  created: "Créé",
-  updated: "Mis à jour",
-  deleted: "Supprimé",
   enlarge: "Agrandir : {name}",
   // Scanner de codes-barres (lot M2)
   scan: {

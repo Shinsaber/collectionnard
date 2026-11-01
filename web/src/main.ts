@@ -1,7 +1,6 @@
 import { createApp } from "vue";
 import { createPinia } from "pinia";
-import ElementPlus from "element-plus";
-import "element-plus/dist/index.css";
+import { installElementPlus } from "./plugins/elementPlus";
 import "element-plus/theme-chalk/dark/css-vars.css";
 import "primeicons/primeicons.css";
 import "@/assets/main.css";
@@ -19,10 +18,10 @@ const app = createApp(App);
 app.use(createPinia());
 app.use(router);
 app.use(i18n);
-// Element Plus (MIT) : composants globaux ; la locale suit la langue de l'app
-// (ElConfigProvider dans App.vue). Le mode sombre suit la classe `html.dark`
-// posée par useTheme (dark/css-vars.css).
-app.use(ElementPlus);
+// Element Plus (MIT) : seuls les composants utilisés, enregistrés globalement par
+// plugins/elementPlus.ts ; la locale suit la langue de l'app (ElConfigProvider dans
+// App.vue). Le mode sombre suit la classe `html.dark` posée par useTheme (dark/css-vars.css).
+installElementPlus(app);
 
 app.mount("#app");
 setupPwa();

@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"context"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -20,22 +23,53 @@ const uploadPurgeGrace = 24 * time.Hour
 // lists them; otherwise they are deleted. Only image files (served extensions)
 // are considered: temporary files and anything else are left alone.
 func (h *Handler) PurgeUploads(w http.ResponseWriter, r *http.Request) {
-	dryRun := r.URL.Query().Get("dry_run") == "true"
-	refs, err := h.Store.ReferencedUploads(r.Context())
+	rep, err := h.purgeUploads(r.Context(), r.URL.Query().Get("dry_run") == "true")
 	if err != nil {
 		handleStoreError(w, r, err)
 		return
+	}
+	respondJSON(w, http.StatusOK, rep)
+}
+
+// RunUploadPurge deletes the unreferenced uploads now, then every interval,
+// until ctx ends (UPLOAD_PURGE_INTERVAL ; the admin button does the same on
+// demand). Without it, a member could fill the volume faster than an admin
+// notices (audit S-004).
+func (h *Handler) RunUploadPurge(ctx context.Context, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	for {
+		if rep, err := h.purgeUploads(ctx, false); err != nil {
+			if ctx.Err() == nil {
+				slog.Error("upload purge", "err", err)
+			}
+		} else if len(rep.Files) > 0 {
+			slog.Info("upload purge", "removed", len(rep.Files), "bytes", rep.TotalSize)
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
+	}
+}
+
+// purgeUploads builds the purge report and, unless dryRun, deletes the listed
+// files with their thumbnails.
+func (h *Handler) purgeUploads(ctx context.Context, dryRun bool) (model.UploadPurgeReport, error) {
+	rep := model.UploadPurgeReport{DryRun: dryRun, Files: []model.UploadFileInfo{}, GraceHours: int(uploadPurgeGrace.Hours())}
+	refs, err := h.Store.ReferencedUploads(ctx)
+	if err != nil {
+		return rep, err
 	}
 	referenced := make(map[string]bool, len(refs))
 	for _, n := range refs {
 		referenced[n] = true
 	}
 
-	rep := model.UploadPurgeReport{DryRun: dryRun, Files: []model.UploadFileInfo{}, GraceHours: int(uploadPurgeGrace.Hours())}
 	entries, err := os.ReadDir(h.Config.UploadDir)
 	if err != nil && !os.IsNotExist(err) {
-		respondInternal(w, r, err, "cannot read upload directory")
-		return
+		return rep, fmt.Errorf("cannot read upload directory: %w", err)
 	}
 	limit := time.Now().Add(-uploadPurgeGrace)
 	for _, e := range entries {
@@ -62,14 +96,13 @@ func (h *Handler) PurgeUploads(w http.ResponseWriter, r *http.Request) {
 		for _, f := range rep.Files {
 			// Nom lu dans UPLOAD_DIR (pas de « / »), extension en liste blanche.
 			if err := os.Remove(filepath.Join(h.Config.UploadDir, f.Filename)); err != nil && !os.IsNotExist(err) {
-				respondInternal(w, r, err, "cannot delete "+f.Filename)
-				return
+				return rep, fmt.Errorf("cannot delete %s: %w", f.Filename, err)
 			}
 			h.removeThumbnails(f.Filename)
 		}
 		rep.Applied = true
 	}
-	respondJSON(w, http.StatusOK, rep)
+	return rep, nil
 }
 
 // servedImageExt reports whether the file name has an extension served under /api/v1/uploads/.

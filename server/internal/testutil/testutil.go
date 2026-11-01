@@ -1,3 +1,6 @@
+// Package testutil provides the handler test kit: MockStore (one XxxFn field per
+// Store method, ErrNotFound by default), test servers, tokens and fixtures. No
+// PostgreSQL needed.
 package testutil
 
 import (
@@ -67,6 +70,7 @@ type MockStore struct {
 	UpdateItemFn                 func(ctx context.Context, id uuid.UUID, in model.ItemUpdate) (*model.Item, error)
 	DeleteItemFn                 func(ctx context.Context, id uuid.UUID) error
 	ListItemRelationsFn          func(ctx context.Context, itemID uuid.UUID, rtID *uuid.UUID) ([]model.ItemRelation, error)
+	ListItemRelationsPageFn      func(ctx context.Context, itemID uuid.UUID, rtID *uuid.UUID, pg model.Pagination) ([]model.ItemRelation, int, error)
 	GetRelationFn                func(ctx context.Context, id uuid.UUID) (*model.ItemRelation, error)
 	CreateRelationFn             func(ctx context.Context, in model.ItemRelationCreate) (*model.ItemRelation, error)
 	UpdateRelationFn             func(ctx context.Context, id uuid.UUID, in model.ItemRelationUpdate) (*model.ItemRelation, error)
@@ -507,6 +511,8 @@ func TestConfig() *config.Config {
 		UploadDir:       os.TempDir(),
 		MaxUploadSize:   10 << 20,
 		MaxImportSize:   1 << 20,
+		UploadRateLimit: 1000,
+		UploadRateBytes: 1 << 30,
 	}
 }
 
@@ -607,4 +613,12 @@ func (m *MockStore) ListRelationsBetween(ctx context.Context, ids []uuid.UUID) (
 		return m.ListRelationsBetweenFn(ctx, ids)
 	}
 	return nil, nil
+}
+
+// ListItemRelationsPage returns the page given by ListItemRelationsPageFn, or nothing (empty, 0).
+func (m *MockStore) ListItemRelationsPage(ctx context.Context, itemID uuid.UUID, rtID *uuid.UUID, pg model.Pagination) ([]model.ItemRelation, int, error) {
+	if m.ListItemRelationsPageFn != nil {
+		return m.ListItemRelationsPageFn(ctx, itemID, rtID, pg)
+	}
+	return []model.ItemRelation{}, 0, nil
 }

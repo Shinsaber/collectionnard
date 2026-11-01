@@ -1,0 +1,12 @@
+# Adresse réelle du client derrière un reverse-proxy (audit S-002). Rendu au démarrage par
+# l'entrypoint de l'image nginx (envsubst) en /etc/nginx/conf.d/real-ip.conf, contexte http.
+#
+# Derrière le reverse-proxy TLS que la mise en production impose, nginx voit l'adresse du proxy :
+# le limiteur de débit par IP du serveur Go (X-Real-IP) deviendrait global et les journaux
+# inutilisables. Avec REAL_IP_FROM = adresse ou réseau CIDR du proxy (ex. 172.18.0.0/16, ou
+# 10.0.0.5), l'adresse du client est relue dans X-Forwarded-For (dernier saut non fiable, grâce à
+# real_ip_recursive) puis transmise telle quelle au serveur Go. Défaut 127.0.0.1 : rien n'est relu.
+# Plusieurs proxys : monter un fichier /etc/nginx/conf.d/real-ip-extra.conf avec d'autres set_real_ip_from.
+set_real_ip_from ${REAL_IP_FROM};
+real_ip_header X-Forwarded-For;
+real_ip_recursive on;

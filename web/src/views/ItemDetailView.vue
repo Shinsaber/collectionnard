@@ -128,7 +128,7 @@
       <ElTabs v-model="tab">
         <ElTabPane
           name="relations"
-          :label="`${t('items.detail.relations')} · ${relations.length}`"
+          :label="`${t('items.detail.relations')} · ${relationsTotal}`"
         >
           <div class="flex flex-col gap-3.5">
             <ElButton
@@ -152,6 +152,16 @@
               :show-delete="auth.canEditCatalog"
               @delete="confirmDeleteRelation"
               @edit="openEditRelation"
+            />
+            <!-- Au-delà d'une page (nœud très lié : personne, éditeur), pagination serveur. -->
+            <ElPagination
+              v-if="relationsTotal > RELATIONS_PER_PAGE"
+              class="justify-end"
+              layout="prev, pager, next"
+              :total="relationsTotal"
+              :page-size="RELATIONS_PER_PAGE"
+              :current-page="relationsPage"
+              @current-change="onRelationsPage"
             />
           </div>
         </ElTabPane>
@@ -222,15 +232,12 @@ import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";
 import { MOBILE_QUERY, useMediaQuery } from "@/composables/useMediaQuery";
 import {
-  defaultImage,
-  galleryUrls,
-  imageCategories,
-  isCompleteness,
-  isImageGallery,
-  itemLabel,
-  typeTitle,
-  type Schema,
-} from "@/lib/schema";
+  RELATIONS_PER_PAGE,
+  useItemRelations,
+} from "@/composables/useItemRelations";
+import { useItemImages } from "@/composables/useItemImages";
+import { partOf as partOfRelations } from "@/lib/relations";
+import { itemLabel, typeTitle, type Schema } from "@/lib/schema";
 import ImageLightbox from "@/components/common/ImageLightbox.vue";
 import ItemCover from "@/components/item/ItemCover.vue";
 import ItemCollectionsCard from "@/components/item/ItemCollectionsCard.vue";
@@ -256,7 +263,14 @@ const isMobile = useMediaQuery(MOBILE_QUERY);
 const item = ref<Item | null>(null);
 // Incrémenté après chaque écriture (fiche, relations) : l'historique est relu.
 const historyVersion = ref(0);
-const relations = ref<ItemRelation[]>([]);
+// Relations paginées par l'API (audit Q-001) : total pour l'onglet, page courante.
+const {
+  relations,
+  total: relationsTotal,
+  page: relationsPage,
+  load: fetchRelations,
+  remove: forgetRelation,
+} = useItemRelations();
 const itemCollections = ref<ItemCollectionMembership[]>([]);
 const loading = ref(true);
 
@@ -286,67 +300,20 @@ async function openTab(name: Tab) {
   tabsRef.value?.scrollIntoView?.({ behavior: "smooth", block: "start" });
 }
 
-/**
- * Appartenance : sources des relations entrantes marquées `x-completeness` (tome d'une
- * édition, épisode d'une saison…), avec le numéro d'ordre de la relation s'il existe.
- */
+/** Appartenance : relations entrantes `x-completeness` (lib/relations). */
 const partOf = computed(() =>
-  relations.value
-    .filter(
-      (r) =>
-        r.target_item_id === item.value?.id &&
-        isCompleteness(r.relation_type?.attributes_schema),
-    )
-    .map((r) => ({
-      id: r.source_item_id,
-      label: itemLabel(r.source_item, lang.value),
-      order: (r.attributes?.order as number | undefined) ?? null,
-    })),
+  partOfRelations(relations.value, item.value?.id, lang.value),
 );
 
-/** Images de la galerie (toutes catégories) : l'onglet n'apparaît que s'il y en a. */
-const imageCount = computed(() => {
-  const it = item.value;
-  if (!it) return 0;
-  let n = 0;
-  for (const key of Object.keys(it.attributes)) {
-    if (!isImageGallery(schema.value, key)) continue;
-    for (const cat of imageCategories(schema.value, key))
-      n +=
-        (
-          (it.attributes[key] as Record<string, unknown>)?.[cat.name] as
-            unknown[] | undefined
-        )?.length ?? 0;
-  }
-  return n;
-});
-
-const defaultImageUrl = computed(() =>
-  item.value ? defaultImage(schema.value, item.value.attributes) : "",
-);
-
-/** Toutes les images de la fiche, pour la visionneuse ouverte depuis la couverture. */
-const allImageUrls = computed(() =>
-  item.value ? galleryUrls(schema.value, item.value.attributes) : [],
-);
-const coverViewerOpen = ref(false);
-function openCover() {
-  coverViewerOpen.value = true;
-}
-
-// Ratio de la catégorie qui contient l'image par défaut (sinon portrait 2/3).
-const defaultImageRatio = computed(() => {
-  const url = defaultImageUrl.value;
-  if (!item.value || !url) return "2 / 3";
-  for (const key of Object.keys(item.value.attributes)) {
-    if (!isImageGallery(schema.value, key)) continue;
-    const data = item.value.attributes[key] as Record<string, unknown>;
-    for (const cat of imageCategories(schema.value, key)) {
-      if (((data[cat.name] as string[]) ?? []).includes(url)) return cat.ratio;
-    }
-  }
-  return "2 / 3";
-});
+// Couverture, visionneuse et compteur de l'onglet « Images » (composables/useItemImages).
+const {
+  imageCount,
+  defaultImageUrl,
+  allImageUrls,
+  defaultImageRatio,
+  coverViewerOpen,
+  openCover,
+} = useItemImages(item, schema);
 
 function openEditRelation(rel: ItemRelation) {
   editingRelation.value = rel;
@@ -367,17 +334,26 @@ async function confirmDeleteRelation(rel: ItemRelation) {
   try {
     await relationApi.delete(rel.id);
     notifySuccess(t("items.detail.relationDeleted"));
-    relations.value = relations.value.filter((r) => r.id !== rel.id);
+    forgetRelation(rel.id);
     historyVersion.value++;
   } catch (e) {
     notifyError(e);
   }
 }
 
+async function onRelationsPage(page: number) {
+  if (!item.value) return;
+  try {
+    await fetchRelations(item.value.id, page);
+  } catch (e) {
+    notifyError(e, t("items.detail.relationsUnavailable"));
+  }
+}
+
 async function reloadRelations() {
   if (!item.value) return;
   try {
-    relations.value = (await itemApi.relations(item.value.id)) ?? [];
+    await fetchRelations(item.value.id, relationsPage.value);
     historyVersion.value++;
   } catch (e) {
     notifyError(e, t("items.detail.relationsUnavailable"));
@@ -396,12 +372,8 @@ async function loadCollections(itemId: string) {
 async function loadItem(id: string) {
   loading.value = true;
   try {
-    const [i, rels] = await Promise.all([
-      itemApi.get(id),
-      itemApi.relations(id),
-    ]);
+    const [i] = await Promise.all([itemApi.get(id), fetchRelations(id, 1)]);
     item.value = i;
-    relations.value = rels ?? [];
     historyVersion.value++;
     loadCollections(id);
   } catch (e) {

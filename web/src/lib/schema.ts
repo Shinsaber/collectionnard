@@ -135,6 +135,22 @@ export function privateKeys(schema: Schema | null | undefined): string[] {
     .map(([k]) => k);
 }
 
+/**
+ * Propriété `x-identifier` (ISBN, EAN, QID… — Go `internal/identifier`) : identifiant cherché pour
+ * signaler les doublons (P4-3b), affiché en chasse fixe, rempli par le scanner de codes-barres (M2).
+ * Seul lecteur de l'extension côté front ; `prop` peut être absent.
+ */
+export function isIdentifier(prop: Schema | null | undefined): boolean {
+  return prop?.["x-identifier"] === true;
+}
+
+/** Clés `x-identifier` de premier niveau d'un schéma. */
+export function identifierKeys(schema: Schema | null | undefined): string[] {
+  return Object.entries(properties(schema))
+    .filter(([, p]) => isIdentifier(p))
+    .map(([k]) => k);
+}
+
 /** Libellé d'un champ via `x-labels`, repli sur la clé mise en forme. */
 export function fieldLabel(
   schema: Schema | null | undefined,

@@ -24,6 +24,26 @@
     <p v-if="reason" class="mb-3 text-sm text-muted" data-test="crop-reason">
       {{ reason }}
     </p>
+    <!-- Étapes : redresser (perspective) puis recadrer ; on passe librement de l'une à l'autre.
+         Revenir au redressement repart de l'image d'origine ; aller au recadrage sans « Redresser »
+         garde l'image telle quelle. -->
+    <ElRadioGroup
+      :model-value="step"
+      size="small"
+      class="mb-3"
+      :aria-label="t('schema.gallery.steps')"
+      data-test="crop-steps"
+      @update:model-value="goTo($event as Step)"
+    >
+      <ElRadioButton value="straighten" data-test="crop-straighten">
+        <i class="pi pi-objects-column mr-1.5" aria-hidden="true"></i>
+        {{ t("schema.gallery.straightenStep") }}
+      </ElRadioButton>
+      <ElRadioButton value="crop" data-test="crop-step">
+        <i class="pi pi-stop mr-1.5" aria-hidden="true"></i>
+        {{ t("schema.gallery.cropStep") }}
+      </ElRadioButton>
+    </ElRadioGroup>
     <PerspectiveEditor
       v-if="step === 'straighten' && file"
       :file="file"
@@ -54,14 +74,6 @@
         <ElButton :disabled="!ready" @click="fit">
           <i class="pi pi-expand mr-2" aria-hidden="true"></i>
           {{ t("schema.gallery.fitImage") }}
-        </ElButton>
-        <ElButton
-          :disabled="!ready"
-          data-test="crop-straighten"
-          @click="toStraighten"
-        >
-          <i class="pi pi-objects-column mr-2" aria-hidden="true"></i>
-          {{ t("schema.gallery.straightenStep") }}
         </ElButton>
         <span class="ml-auto text-xs text-muted">
           {{
@@ -125,7 +137,8 @@ const { t } = useI18n();
 const { notifyError } = useNotify();
 
 const container = ref<HTMLDivElement | null>(null);
-const step = ref<"straighten" | "crop">("crop");
+type Step = "straighten" | "crop";
+const step = ref<Step>("crop");
 /** Image recadrée : l'originale, ou son redressement. */
 const workFile = ref<File | null>(null);
 const ready = ref(false);
@@ -185,6 +198,13 @@ function onStraightened(file: File) {
 function toStraighten() {
   unmountCropper();
   step.value = "straighten";
+}
+
+/** Sélecteur d'étapes : le recadrage sans redresser part de l'image d'origine. */
+function goTo(target: Step) {
+  if (target === step.value || !props.file) return;
+  if (target === "straighten") toStraighten();
+  else toCrop(props.file);
 }
 
 async function mountCropper() {

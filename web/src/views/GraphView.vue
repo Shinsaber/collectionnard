@@ -98,6 +98,12 @@ import {
   renderLabel,
   typeTitle,
 } from "@/lib/schema";
+import {
+  createTypeColors,
+  graphStyle,
+  makeTypeSvg,
+  nodeWidth,
+} from "@/lib/graphStyle";
 import GraphNodeDialog from "@/components/graph/GraphNodeDialog.vue";
 import type { GraphNode, GraphEdge, GraphResponse } from "@/api/types";
 
@@ -120,31 +126,9 @@ const nodeDialogVisible = ref(false);
 
 let cy: Core | null = null;
 
-// ── Couleurs des types (identité « Étiquette ») ──
-// Tons sourds et distincts, tous lisibles sous un texte blanc gras (contraste ≥ 4,5:1),
-// sur fond clair comme sombre ; le pétrole de l'identité en premier.
-const typeColors: Record<string, string> = {};
-const palette = [
-  "#1d5c63", // pétrole
-  "#a2342b", // brique
-  "#2b5aa8", // bleu
-  "#8a5300", // ambre brûlé
-  "#6b3f7a", // prune
-  "#4f6420", // olive
-  "#8a3b5c", // framboise
-  "#3b4552", // graphite
-];
-/** Contour du nœud racine : l'ambre de l'identité. */
-const ROOT_BORDER = "#e09a2c";
-let colorIdx = 0;
-
-function getColor(type: string): string {
-  if (!typeColors[type]) {
-    typeColors[type] = palette[colorIdx % palette.length]!;
-    colorIdx++;
-  }
-  return typeColors[type]!;
-}
+// ── Couleurs des types (identité « Étiquette », lib/graphStyle) ──
+const types = createTypeColors();
+const typeColors = types.colors;
 
 // ── Schémas des méta-types (par nom), depuis le cache partagé ──
 const metaTypes = useMetaTypes();
@@ -181,41 +165,12 @@ function nodeTitle(n: GraphNode): string {
 
 // Données d'affichage d'un nœud dépendant de la langue (titre, badge du type).
 function nodeVisual(n: GraphNode, isRoot: boolean) {
-  const color = getColor(n.type);
   const typeLabel = typeDisplay(n.type);
   return {
     title: nodeTitle(n),
-    typeSvg: makeTypeSvg(typeLabel, color, isRoot),
-    nodeWidth: Math.max(typeLabel.length * 7.5 + 24, 50),
+    typeSvg: makeTypeSvg(typeLabel, types.colorOf(n.type), isRoot),
+    nodeWidth: nodeWidth(typeLabel),
   };
-}
-
-// ── SVG badge for type label inside node ──
-function makeTypeSvg(type: string, color: string, isRoot: boolean): string {
-  const charWidth = 7.5;
-  const padding = 24;
-  const w = Math.max(type.length * charWidth + padding, 50);
-  const h = 30;
-  const rx = 8;
-  const borderWidth = isRoot ? 3 : 0;
-  const borderColor = ROOT_BORDER;
-
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
-    <rect rx="${rx}" ry="${rx}" width="${w}" height="${h}" fill="${color}"
-      ${borderWidth ? `stroke="${borderColor}" stroke-width="${borderWidth}"` : ""} />
-    <text x="${w / 2}" y="${h / 2}" text-anchor="middle" dominant-baseline="central"
-      fill="white" font-family="system-ui, sans-serif" font-size="12"
-      font-weight="bold">${escapeXml(type)}</text>
-  </svg>`;
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
-}
-
-function escapeXml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 // ── Edge label formatting ──
@@ -265,67 +220,8 @@ async function loadGraph() {
   }
 }
 
-/** Styles Cytoscape aux couleurs du thème courant (réappliqués au changement de thème). */
-function graphStyle(): cytoscape.StylesheetJson {
-  const isDark = theme.value === "dark";
-  const font = '"Schibsted Grotesk Variable", system-ui, sans-serif';
-  const ink = isDark ? "#e8ecea" : "#17202b";
-  const muted = isDark ? "#9aa7b0" : "#586270";
-  const line = isDark ? "#3a4d58" : "#c9cec6";
-  const surface = isDark ? "#17232c" : "#ffffff";
-  return [
-    {
-      selector: "node",
-      style: {
-        shape: "roundrectangle",
-        "background-image": "data(typeSvg)",
-        "background-fit": "cover",
-        "background-opacity": 0,
-        "border-width": 0,
-        width: "data(nodeWidth)",
-        height: 30,
-        // Titre sous le badge du type
-        label: "data(title)",
-        "text-valign": "bottom",
-        "text-halign": "center",
-        "text-margin-y": 6,
-        "font-family": font,
-        "font-size": "11px",
-        "font-weight": 600,
-        color: ink,
-        "text-wrap": "wrap",
-        "text-max-width": "140px",
-      },
-    },
-    {
-      selector: "node[?isRoot]",
-      style: { "font-weight": 800, "font-size": "12px" },
-    },
-    {
-      selector: "edge",
-      style: {
-        width: 1.5,
-        "line-color": line,
-        "target-arrow-color": line,
-        "target-arrow-shape": "triangle",
-        "arrow-scale": 1.1,
-        "curve-style": "bezier",
-        label: "data(label)",
-        "font-family": font,
-        "font-size": "9px",
-        color: muted,
-        "text-wrap": "wrap",
-        "text-max-width": "120px",
-        "text-rotation": "autorotate",
-        "text-margin-y": -10,
-        "text-background-color": surface,
-        "text-background-opacity": 0.9,
-        "text-background-padding": "3px",
-        "text-background-shape": "roundrectangle",
-      },
-    },
-  ];
-}
+/** Styles Cytoscape du thème courant (lib/graphStyle), réappliqués au changement de thème. */
+const currentStyle = () => graphStyle(theme.value === "dark");
 
 function renderGraph(graph: GraphResponse) {
   if (!cyContainer.value) return;
@@ -339,7 +235,7 @@ function renderGraph(graph: GraphResponse) {
         data: {
           id: n.id,
           type: n.type,
-          color: getColor(n.type),
+          color: types.colorOf(n.type),
           isRoot,
           nodeData: n,
           ...nodeVisual(n, isRoot),
@@ -363,7 +259,7 @@ function renderGraph(graph: GraphResponse) {
   cy = cytoscape({
     container: cyContainer.value,
     elements,
-    style: graphStyle(),
+    style: currentStyle(),
     layout: {
       name: "cose",
       animate: true,
@@ -393,7 +289,7 @@ function renderGraph(graph: GraphResponse) {
 }
 
 // Changement de thème : styles réappliqués sans recharger le graphe.
-watch(theme, () => cy?.style(graphStyle()));
+watch(theme, () => cy?.style(currentStyle()));
 
 // Changement de langue : libellés des nœuds et arêtes recalculés sans recharger le graphe.
 watch(lang, () => {

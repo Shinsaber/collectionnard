@@ -26,7 +26,6 @@ const en: typeof fr = {
   account: "Account and settings",
   adminSection: "Administration",
   language: "Language",
-  theme: "Theme",
   lightMode: "Light mode",
   darkMode: "Dark mode",
   logout: "Log out",
