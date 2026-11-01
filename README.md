@@ -31,7 +31,8 @@ Séries TV, DVD, livres, cartes à collectionner, vinyles… tout type de collec
 - ou **Nix** (avec `direnv` conseillé) pour le développement : `flake.nix` fournit Go, Node 22, PostgreSQL 16,
   golangci-lint et les commandes `pg-start` / `pg-stop` / `pg-reset`. Sans direnv : `nix develop`, ou préfixer
   chaque commande par `nix develop -c`. Les variables de dev (`DATABASE_URL`, `JWT_SECRET`, `UPLOAD_DIR`,
-  `LOG_FORMAT=text`) sont exportées par le shell.
+  `LOG_FORMAT=text`) sont exportées par le shell. Toutes les commandes de ce fichier sont données avec la variante
+  `nix develop -c` quand elle s'applique.
 
 ### Lancer le projet
 
@@ -64,7 +65,27 @@ ensuite depuis l'application, sur invitation (page « Utilisateurs », ou « Mon
 
 ### Développement local (sans Docker)
 
-**Backend** :
+Deux façons d'avoir les outils : entrer dans le shell Nix (`nix develop`, automatique avec direnv), ou préfixer chaque
+commande par `nix develop -c`. Dans les deux cas `DATABASE_URL`, `JWT_SECRET` et `UPLOAD_DIR` sont déjà exportés avec des
+valeurs de développement. Sans Nix, exporter ces variables à la main (voir le tableau ci-dessous).
+
+**Avec Nix** (depuis la racine) :
+
+```bash
+nix develop -c pg-start                      # PostgreSQL local dans ./.pgdata, migrations + seed à la création (pg-stop, pg-reset)
+nix develop -c sh -c 'cd server && go run .'  # API sur :8080
+nix develop -c sh -c 'cd web && npm install && npm run dev'   # Vite sur :5173, proxy vers l'API
+```
+
+Dans le shell (`nix develop` une fois, puis les commandes nues) :
+
+```bash
+pg-start
+(cd server && go run .)
+(cd web && npm install && npm run dev)
+```
+
+**Sans Nix, backend** (Go 1.27 et PostgreSQL 16 installés par ailleurs) :
 
 ```bash
 cd server
@@ -73,7 +94,13 @@ export JWT_SECRET="dev-secret-dev-secret-dev-secret-0000"   # 32 caractères min
 go run .
 ```
 
-(Le shell Nix du dépôt exporte déjà ces variables.)
+**Sans Nix, frontend** (Node 22) :
+
+```bash
+cd web
+npm install
+npm run dev
+```
 
 ### Variables d'environnement du serveur
 
@@ -99,12 +126,28 @@ go run .
 Sous-commande `migrate` : `SEED_ON_EMPTY` (`true` : charge les seeds si la table `users` est vide) et `SEED_FILE`
 (liste de fichiers séparés par des virgules, sinon les seeds par défaut, voir ci-dessous).
 
-**Frontend** :
+### Vérifier avant un commit
+
+Les mêmes étapes que la CI (`.github/workflows/ci.yml`), ici en variante `nix develop -c` ; dans le shell Nix, retirer le
+préfixe.
 
 ```bash
-cd web
-npm install
-npm run dev
+# Backend (depuis server/)
+nix develop -c gofmt -l .                 # ne doit rien afficher
+nix develop -c go vet ./...
+nix develop -c golangci-lint run ./...
+nix develop -c go test ./...
+nix develop -c go test -tags integration ./internal/store/   # SQL réel : PostgreSQL requis (pg-start)
+nix develop -c govulncheck ./...
+
+# Frontend (depuis web/)
+nix develop -c npm run lint
+nix develop -c npm run lint:openapi       # dès que api/openapi.yaml change
+nix develop -c npm run format:check       # `npm run format` pour réécrire
+nix develop -c npm run type-check
+nix develop -c npm test
+nix develop -c npm run build
+nix develop -c npm audit --audit-level=high
 ```
 
 ### Base de données et migrations
@@ -114,12 +157,13 @@ dans `db/migrations/` (`001_init.sql` = schéma complet). Elles sont appliquées
 lui-même :
 
 ```bash
-cd server
+cd server                             # préfixer par `nix develop -c` hors du shell Nix
 go run . migrate                      # applique les migrations en attente (table schema_version)
 SEED_ON_EMPTY=true go run . migrate   # idem, puis les seeds si la table users est vide
 go run . seed                         # applique les seeds sans condition (dev)
 # Seeds : db/seed.sql, db/seed_bd_manga.sql, db/seed_music.sql, db/seed_video.sql puis db/seed_games.sql ; SEED_FILE=a.sql,b.sql pour une autre liste
 go run . install-domain               # état des paquets de domaine ; --all ou <domaine> pour installer / mettre à jour
+nix develop -c sh -c 'cd server && go run . migrate'          # la même chose, depuis la racine, sans entrer dans le shell
 ```
 
 `pg-start` (shell Nix) et le service `migrate` de docker-compose les lancent automatiquement.
