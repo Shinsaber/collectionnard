@@ -640,6 +640,16 @@ export const uploadApi = {
       })
       .then((r) => r.data);
   },
+  /**
+   * Contenu d'une image déjà envoyée (`/api/v1/uploads/<nom>`), en fichier : point de départ
+   * d'un nouveau recadrage. L'original n'est pas modifié ; le résultat est un nouvel envoi.
+   */
+  file: (url: string) => {
+    const name = url.split("/").pop() || "image";
+    return http
+      .get<Blob>(url.replace(/^\/api\/v1/, ""), { responseType: "blob" })
+      .then((r) => new File([r.data], name, { type: r.data.type }));
+  },
   /** Images qu'aucun attribut ne référence (admin) ; `dryRun` liste sans supprimer. */
   purge: (dryRun: boolean) =>
     http

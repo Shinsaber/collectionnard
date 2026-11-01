@@ -33,6 +33,11 @@ export default {
     setDefault: "Définir comme image par défaut",
     setDefaultN: "Définir l'image {n} de {category} comme image par défaut",
     removeN: "Supprimer l'image {n} de {category}",
+    recrop: "Recadrer (nouvelle image)",
+    recropN:
+      "Recadrer l'image {n} de {category} : le résultat est ajouté comme nouvelle image",
+    recropFailed: "Image introuvable, impossible de la recadrer",
+    cropBeforeUpload: "Recadrer avant l'envoi",
     file: "Fichier image pour {category}",
     uploadFailed: "Envoi de l'image impossible",
     refused: "Image refusée",
