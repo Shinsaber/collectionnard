@@ -18,6 +18,17 @@ if (typeof window !== "undefined" && !window.matchMedia) {
   });
 }
 
+// jsdom n'implémente pas le canvas 2D : il renvoie null en le signalant sur la console à chaque
+// appel (« Not implemented: HTMLCanvasElement's getContext() »). Même résultat, sans le bruit :
+// lib/images.ts traite déjà l'absence de contexte.
+if (typeof HTMLCanvasElement !== "undefined") {
+  HTMLCanvasElement.prototype.getContext = vi
+    .fn()
+    .mockReturnValue(
+      null,
+    ) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+}
+
 // ElTable / ElSelect observent la taille de leurs conteneurs.
 if (typeof window !== "undefined" && !("ResizeObserver" in window)) {
   class ResizeObserverStub {

@@ -83,6 +83,6 @@ Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
   `npm audit fix` seul reste permis (le 2026-10-31 : follow-redirects 1.16.2 sous axios, avis élevé).
 - Après modification : `npm run lint && npm run format:check && npm run type-check && npm test`
   (`npm run lint:fix` et `npm run format` corrigent automatiquement). Tests unitaires : `vitest`,
-  fichiers `src/**/*.test.ts` (environnement jsdom, stubs `matchMedia` et `ResizeObserver` dans
+  fichiers `src/**/*.test.ts` (environnement jsdom partagé par worker — `pool: "vmThreads"` —, stubs `matchMedia`, `ResizeObserver` et canvas 2D (`getContext` → `null`, sans bruit) dans
   `tests/setup.ts`). Les composants se montent avec `global.plugins: [ElementPlus]` (vue-i18n est ajouté globalement par `tests/setup.ts`) ; les 47 schémas des paquets de domaine sont disponibles dans
   `tests/fixtures/seed-schemas.json` (régénérer si un paquet de domaine change : `node scripts/seed-fixtures.mjs tests/fixtures/seed-schemas.json ../server/internal/domains/packages/{collections,tv,people,video,books,music,games}.json`, puis `npx prettier --write tests/fixtures/seed-schemas.json`).

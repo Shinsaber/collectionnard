@@ -75,6 +75,9 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
+    // Un jsdom par worker plutôt que par fichier (52 créations ≈ la moitié du temps de la suite),
+    // en gardant l'isolation par fichier (audit Q-010).
+    pool: "vmThreads",
     include: ["src/**/*.test.ts"],
     setupFiles: ["tests/setup.ts"],
   },
