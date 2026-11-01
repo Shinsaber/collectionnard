@@ -52,7 +52,6 @@ const en: typeof fr = {
     noCollections: "No visible collection.",
     memberSince: "Member since {date}",
     shared: "Collection shared by link, read-only",
-    readonly: "Read-only",
   },
   members: {
     title: "Members",

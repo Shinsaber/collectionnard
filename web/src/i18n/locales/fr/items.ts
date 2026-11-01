@@ -5,7 +5,6 @@ export default {
     title: "Catalogue",
     newItem: "Nouvel item",
     allTypes: "Tous les types",
-    filterByType: "Filtrer par type",
     searchPlaceholder: "Rechercher…",
     tag: "Tag",
     tagPlaceholder: "Tag…",
@@ -62,7 +61,6 @@ export default {
   detail: {
     addToCollection: "Ajouter à une collection",
     graph: "Graphe",
-    attributes: "Attributs",
     defaultImageAlt: "Image par défaut : {title}",
     relations: "Relations",
     createRelation: "Créer une relation",

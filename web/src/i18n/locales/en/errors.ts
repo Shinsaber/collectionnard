@@ -4,7 +4,6 @@ const en: typeof fr = {
   unknown: "Unknown error",
   network: "Server unreachable",
   required: "This field is required",
-  invalidUrl: "Invalid URL",
   check: {
     type: "Expected type: {type}",
     enum: "Value not allowed",

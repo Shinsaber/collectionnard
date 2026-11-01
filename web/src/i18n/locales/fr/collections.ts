@@ -28,7 +28,6 @@ export default {
     created: "Collection créée",
   },
   detail: {
-    backToList: "Retour aux collections",
     // Menu « Plus » (retours v0.4.0) : export, modification, suppression
     more: "Plus",
     moreActions: "Autres actions sur la collection",

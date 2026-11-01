@@ -50,7 +50,6 @@ export default {
     noCollections: "Aucune collection visible.",
     memberSince: "Membre depuis {date}",
     shared: "Collection partagée par lien, en lecture seule",
-    readonly: "Lecture seule",
   },
   members: {
     title: "Membres",

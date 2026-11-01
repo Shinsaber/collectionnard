@@ -25,97 +25,34 @@
     </PageHeader>
 
     <!-- Recherche et tri : l'état vit dans l'URL (partageable, bouton retour). -->
-    <div class="mb-4 flex flex-wrap items-center gap-2.5">
-      <ElInput
-        v-model="searchDraft"
-        :placeholder="t('items.list.searchPlaceholder')"
-        clearable
-        size="large"
-        class="min-w-0 flex-[1_1_280px]"
-        :aria-label="t('common.search')"
-        @keyup.enter="applyText"
-        @clear="applyText"
-      >
-        <template #prefix>
-          <i class="pi pi-search" aria-hidden="true"></i>
-        </template>
-      </ElInput>
-      <!-- Code-barres (lot M2) : les identifiants sont indexés par la recherche plein texte. -->
-      <ScanButton size="large" @detected="onScanned" />
-      <ElSelect
-        :model-value="currentSort"
-        size="large"
-        class="w-full! sm:w-64!"
-        :aria-label="t('items.search.sortBy')"
-        @update:model-value="update({ sort: $event || undefined })"
-      >
-        <ElOption
-          v-for="o in sortOptions"
-          :key="o.value"
-          :label="o.label"
-          :value="o.value"
-        />
-      </ElSelect>
-    </div>
+    <ItemsSearchBar
+      v-model="searchDraft"
+      :sort="currentSort"
+      :sort-options="sortOptions"
+      @apply="applyText"
+      @scanned="onScanned"
+      @update:sort="update({ sort: $event })"
+    />
 
     <!-- Filtres actifs + interrupteur du panneau (à droite) -->
-    <div
-      class="mb-4 flex min-h-10 flex-wrap items-center justify-between gap-3"
-    >
-      <div class="flex flex-wrap items-center gap-2">
-        <FilterChip
-          v-if="selectedType"
-          :label="
-            t('items.search.typeChip', { type: typeTitle(selectedType, lang) })
-          "
-          @remove="onTypeChange(undefined)"
-        />
-        <FilterChip
-          v-if="state.tag"
-          :label="t('items.search.tagChip', { tag: state.tag })"
-          @remove="update({ tag: undefined })"
-        />
-        <FilterChip
-          v-if="attrCount > 0"
-          :label="t('items.search.attrChip', attrCount)"
-          @remove="update({ attrs: {} })"
-        />
-        <RelatedToTag
-          v-if="state.related_to"
-          :item-id="state.related_to"
-          :relation-type-id="state.relation_type_id"
-          @close="
-            update({ related_to: undefined, relation_type_id: undefined })
-          "
-        />
-      </div>
-      <button
-        type="button"
-        class="ml-auto flex h-10 items-center gap-2.5 rounded-full bg-surface pr-2 pl-3.5 text-sm font-semibold text-ink shadow-control"
-        v-bind="filterToggleAttrs"
-        @click="toggleFilters"
-      >
-        <i class="pi pi-sliders-h text-sm" aria-hidden="true"></i>
-        {{ t("items.search.filters") }}
-        <span
-          v-if="activeCount > 0"
-          class="rounded-full bg-accent px-1.5 font-mono text-[11px] text-accent-ink"
-          >{{ activeCount }}</span
-        >
-        <span
-          v-if="isWide"
-          aria-hidden="true"
-          class="relative block h-5.5 w-9.5 rounded-full transition-colors"
-          :class="panelOpen ? 'bg-primary' : 'bg-dash'"
-        >
-          <span
-            class="absolute top-0.75 size-4 rounded-full bg-surface shadow-control transition-[left]"
-            :class="panelOpen ? 'left-4.75' : 'left-0.75'"
-          ></span>
-        </span>
-        <span v-else class="w-1.5"></span>
-      </button>
-    </div>
+    <ItemsFilterBar
+      :selected-type="selectedType"
+      :tag="state.tag"
+      :attr-count="attrCount"
+      :related-to="state.related_to"
+      :relation-type-id="state.relation_type_id"
+      :active-count="activeCount"
+      :is-wide="isWide"
+      :panel-open="panelOpen"
+      :sheet-open="sheetOpen"
+      @remove-type="onTypeChange(undefined)"
+      @remove-tag="update({ tag: undefined })"
+      @remove-attrs="update({ attrs: {} })"
+      @remove-related="
+        update({ related_to: undefined, relation_type_id: undefined })
+      "
+      @toggle="toggleFilters"
+    />
 
     <div class="flex items-start gap-5">
       <section class="min-w-0 flex-1">
@@ -218,7 +155,6 @@ import { useLang } from "@/composables/useLang";
 import {
   fieldLabel,
   itemLabel as renderItemLabel,
-  typeTitle,
   type Schema,
 } from "@/lib/schema";
 import {
@@ -230,12 +166,11 @@ import {
 } from "@/lib/itemSearch";
 import ItemEditDialog from "@/components/item/ItemEditDialog.vue";
 import ItemList from "@/components/item/ItemList.vue";
+import ItemsFilterBar from "@/components/item/ItemsFilterBar.vue";
+import ItemsSearchBar from "@/components/item/ItemsSearchBar.vue";
 import CatalogFilters from "@/components/item/CatalogFilters.vue";
-import RelatedToTag from "@/components/item/RelatedToTag.vue";
 import ExportButton from "@/components/common/ExportButton.vue";
-import FilterChip from "@/components/common/FilterChip.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
-import ScanButton from "@/components/common/ScanButton.vue";
 import { defaultDelimiter } from "@/lib/csv";
 import type { Item, ItemListParams } from "@/api/types";
 
@@ -346,21 +281,6 @@ function toggleFilters() {
   if (isWide.value) panelOpen.value = !panelOpen.value;
   else sheetOpen.value = true;
 }
-
-/** Interrupteur sur grand écran (panneau), ouverture d'une feuille sinon. */
-const filterToggleAttrs = computed(() =>
-  isWide.value
-    ? {
-        role: "switch",
-        "aria-checked": panelOpen.value,
-        "aria-controls": "panneau-filtres",
-      }
-    : {
-        "aria-haspopup": "dialog" as const,
-        "aria-expanded": sheetOpen.value,
-        "aria-label": t("items.search.showFilters"),
-      },
-);
 
 const filterProps = computed(() => ({
   itemTypes: itemTypes.value,

@@ -2,6 +2,8 @@
 // extrémités sont incluses avec leurs attributs, mais ni le RelationType ni les ItemTypes (leurs
 // schémas se répétaient à chaque ligne). Le front les retrouve dans le cache des méta-types.
 import type { ItemRelation, ItemType, RelationType } from "@/api/types";
+import type { Lang } from "@/i18n/langs";
+import { isCompleteness, itemLabel } from "./schema";
 
 /** Index par identifiant. */
 export function byId<T extends { id: string }>(list: T[]): Record<string, T> {
@@ -27,4 +29,26 @@ export function withTypes(
     source_item: end(rel.source_item),
     target_item: end(rel.target_item),
   };
+}
+
+/**
+ * Appartenance d'un item : les sources des relations entrantes marquées `x-completeness`
+ * (tome d'une édition, épisode d'une saison…), avec le numéro d'ordre de la relation s'il existe.
+ */
+export function partOf(
+  relations: ItemRelation[],
+  itemId: string | undefined,
+  lang: Lang,
+): { id: string; label: string; order: number | null }[] {
+  return relations
+    .filter(
+      (r) =>
+        r.target_item_id === itemId &&
+        isCompleteness(r.relation_type?.attributes_schema),
+    )
+    .map((r) => ({
+      id: r.source_item_id,
+      label: itemLabel(r.source_item, lang),
+      order: (r.attributes?.order as number | undefined) ?? null,
+    }));
 }

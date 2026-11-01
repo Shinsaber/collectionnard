@@ -76,7 +76,6 @@ export default {
     today: "{today} sur {limit} créées ces dernières 24 h",
     full: "Quota atteint : attendez qu'une proposition soit relue pour en soumettre une autre.",
   },
-  reportButton: "Signaler",
   suggestField: "Suggérer un champ",
   report: {
     title: "Signaler une erreur",

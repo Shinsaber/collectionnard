@@ -105,45 +105,17 @@
     >
       {{ message }}
     </p>
-    <div class="flex flex-wrap items-center gap-2">
-      <ElButton
-        :aria-label="t('schema.gallery.rotateLeft')"
-        :disabled="busy || !bitmap"
-        data-test="perspective-rotate-left"
-        @click="rotate(-1)"
-      >
-        <i class="pi pi-replay" aria-hidden="true"></i>
-      </ElButton>
-      <ElButton
-        :aria-label="t('schema.gallery.rotateRight')"
-        :disabled="busy || !bitmap"
-        data-test="perspective-rotate-right"
-        @click="rotate(1)"
-      >
-        <i class="pi pi-refresh" aria-hidden="true"></i>
-      </ElButton>
-      <ElButton :disabled="busy || !bitmap" @click="detect">
-        <i class="pi pi-objects-column mr-2" aria-hidden="true"></i>
-        {{ t("schema.gallery.detectEdges") }}
-      </ElButton>
-      <ElButton :disabled="busy || !size" @click="reset">
-        {{ t("schema.gallery.wholeImage") }}
-      </ElButton>
-      <span class="flex-1"></span>
-      <ElButton :disabled="busy" @click="emit('skip')">
-        {{ t("schema.gallery.skipStraighten") }}
-      </ElButton>
-      <ElButton
-        type="primary"
-        :loading="busy"
-        :disabled="!size || !quad"
-        data-test="perspective-apply"
-        @click="apply"
-      >
-        <i v-if="!busy" class="pi pi-check mr-2" aria-hidden="true"></i>
-        {{ t("schema.gallery.straighten") }}
-      </ElButton>
-    </div>
+    <PerspectiveToolbar
+      :busy="busy"
+      :has-image="!!bitmap"
+      :has-size="!!size"
+      :has-quad="!!quad"
+      @rotate="rotate"
+      @detect="detect"
+      @reset="reset"
+      @skip="emit('skip')"
+      @apply="apply"
+    />
   </div>
 </template>
 
@@ -172,6 +144,7 @@ import {
   type Quad,
 } from "@/lib/perspective";
 import AppSpinner from "./AppSpinner.vue";
+import PerspectiveToolbar from "./PerspectiveToolbar.vue";
 
 const props = defineProps<{ file: File }>();
 const emit = defineEmits<{ done: [file: File]; skip: [] }>();

@@ -28,7 +28,6 @@ const en: typeof fr = {
     created: "Collection created",
   },
   detail: {
-    backToList: "Back to collections",
     // "More" menu (v0.4.0 feedback): export, edit, delete
     more: "More",
     moreActions: "More actions on the collection",

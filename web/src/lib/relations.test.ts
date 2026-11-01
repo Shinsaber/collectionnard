@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ItemRelation, ItemType, RelationType } from "@/api/types";
-import { byId, withTypes } from "./relations";
+import { byId, partOf, withTypes } from "./relations";
 
 const volume = {
   id: "b1",
@@ -47,5 +47,62 @@ describe("lib/relations", () => {
     } as unknown as RelationType;
     const joined = { ...rel, relation_type: other };
     expect(withTypes(joined, {}, byId([contains])).relation_type).toBe(other);
+  });
+});
+
+describe("lib/relations — partOf", () => {
+  it("retient les relations entrantes x-completeness, avec leur ordre, libellées par l'item source", () => {
+    const edition = {
+      id: "ed1",
+      item_type_id: "b2",
+      attributes: { name: "Glénat" },
+      item_type: {
+        id: "b2",
+        name: "Edition",
+        attributes_schema: { "x-label": "{name}" },
+      },
+    } as unknown as ItemRelation["source_item"];
+    const composition = {
+      id: "c1",
+      name: "contains_volume",
+      attributes_schema: { type: "object", "x-completeness": true },
+    } as unknown as RelationType;
+    const other = {
+      id: "c2",
+      name: "published_by",
+      attributes_schema: { type: "object" },
+    } as unknown as RelationType;
+    const rels = [
+      {
+        ...rel,
+        id: "r1",
+        relation_type: composition,
+        source_item: edition,
+        source_item_id: "ed1",
+        target_item_id: "e2",
+        attributes: { order: 3 },
+      },
+      {
+        ...rel,
+        id: "r2",
+        relation_type: other,
+        source_item: edition,
+        source_item_id: "ed1",
+        target_item_id: "e2",
+        attributes: {},
+      },
+      {
+        ...rel,
+        id: "r3",
+        relation_type: composition,
+        source_item_id: "e2",
+        target_item_id: "ed1",
+        attributes: {},
+      }, // sortante
+    ] as ItemRelation[];
+    expect(partOf(rels, "e2", "fr")).toEqual([
+      { id: "ed1", label: "Glénat", order: 3 },
+    ]);
+    expect(partOf(rels, undefined, "fr")).toEqual([]);
   });
 });

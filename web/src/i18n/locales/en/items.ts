@@ -5,7 +5,6 @@ const en: typeof fr = {
     title: "Catalog",
     newItem: "New item",
     allTypes: "All types",
-    filterByType: "Filter by type",
     searchPlaceholder: "Search…",
     tag: "Tag",
     tagPlaceholder: "Tag…",
@@ -59,7 +58,6 @@ const en: typeof fr = {
   detail: {
     addToCollection: "Add to a collection",
     graph: "Graph",
-    attributes: "Attributes",
     defaultImageAlt: "Default image: {title}",
     relations: "Relations",
     createRelation: "Create a relation",

@@ -4,7 +4,6 @@ export default {
   unknown: "Erreur inconnue",
   network: "Serveur injoignable",
   required: "Ce champ est requis",
-  invalidUrl: "URL invalide",
   // Vérification d'un champ contre son schéma avant l'envoi (lib/validateValue.ts).
   check: {
     type: "Type attendu : {type}",

@@ -115,6 +115,10 @@ Raffinage du 2026-10-25, branche `phase5-mobile`, un commit par lot. Les lots et
 
 ## M5 — Photos de l'état d'un exemplaire
 
+> Les photos d'exemplaire sont servies comme toutes les images : sans connexion, sous un nom non devinable (empreinte du
+> contenu), mises en cache un an. Une adresse divulguée reste valable jusqu'à la purge de l'image, même si la collection
+> repasse en privé (décision consignée dans `docs/conception.md` § 5, audit S-006).
+
 - Paquet `collections` **v3** : le `CollectionType` « Possession » (`Ownership`) gagne `photos` (`image-gallery`,
   catégorie `condition`, ratio 3/4, sans contrôle de tolérance : cadre 3/4 au recadrage, photo libre sinon), libellés
   fr / en, en dernier dans `x-order`. Mise à jour par fusion (page « Domaines » ou `install-domain collections`) : les

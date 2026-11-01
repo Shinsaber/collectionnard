@@ -231,18 +231,13 @@ import { useAuthStore } from "@/stores/auth";
 import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";
 import { MOBILE_QUERY, useMediaQuery } from "@/composables/useMediaQuery";
-import { useMetaTypes } from "@/stores/metaTypes";
-import { byId, withTypes } from "@/lib/relations";
 import {
-  defaultImage,
-  galleryUrls,
-  imageCategories,
-  isCompleteness,
-  isImageGallery,
-  itemLabel,
-  typeTitle,
-  type Schema,
-} from "@/lib/schema";
+  RELATIONS_PER_PAGE,
+  useItemRelations,
+} from "@/composables/useItemRelations";
+import { useItemImages } from "@/composables/useItemImages";
+import { partOf as partOfRelations } from "@/lib/relations";
+import { itemLabel, typeTitle, type Schema } from "@/lib/schema";
 import ImageLightbox from "@/components/common/ImageLightbox.vue";
 import ItemCover from "@/components/item/ItemCover.vue";
 import ItemCollectionsCard from "@/components/item/ItemCollectionsCard.vue";
@@ -268,12 +263,14 @@ const isMobile = useMediaQuery(MOBILE_QUERY);
 const item = ref<Item | null>(null);
 // Incrémenté après chaque écriture (fiche, relations) : l'historique est relu.
 const historyVersion = ref(0);
-const relations = ref<ItemRelation[]>([]);
 // Relations paginées par l'API (audit Q-001) : total pour l'onglet, page courante.
-const RELATIONS_PER_PAGE = 100;
-const relationsTotal = ref(0);
-const relationsPage = ref(1);
-const metaTypes = useMetaTypes();
+const {
+  relations,
+  total: relationsTotal,
+  page: relationsPage,
+  load: fetchRelations,
+  remove: forgetRelation,
+} = useItemRelations();
 const itemCollections = ref<ItemCollectionMembership[]>([]);
 const loading = ref(true);
 
@@ -303,67 +300,20 @@ async function openTab(name: Tab) {
   tabsRef.value?.scrollIntoView?.({ behavior: "smooth", block: "start" });
 }
 
-/**
- * Appartenance : sources des relations entrantes marquées `x-completeness` (tome d'une
- * édition, épisode d'une saison…), avec le numéro d'ordre de la relation s'il existe.
- */
+/** Appartenance : relations entrantes `x-completeness` (lib/relations). */
 const partOf = computed(() =>
-  relations.value
-    .filter(
-      (r) =>
-        r.target_item_id === item.value?.id &&
-        isCompleteness(r.relation_type?.attributes_schema),
-    )
-    .map((r) => ({
-      id: r.source_item_id,
-      label: itemLabel(r.source_item, lang.value),
-      order: (r.attributes?.order as number | undefined) ?? null,
-    })),
+  partOfRelations(relations.value, item.value?.id, lang.value),
 );
 
-/** Images de la galerie (toutes catégories) : l'onglet n'apparaît que s'il y en a. */
-const imageCount = computed(() => {
-  const it = item.value;
-  if (!it) return 0;
-  let n = 0;
-  for (const key of Object.keys(it.attributes)) {
-    if (!isImageGallery(schema.value, key)) continue;
-    for (const cat of imageCategories(schema.value, key))
-      n +=
-        (
-          (it.attributes[key] as Record<string, unknown>)?.[cat.name] as
-            unknown[] | undefined
-        )?.length ?? 0;
-  }
-  return n;
-});
-
-const defaultImageUrl = computed(() =>
-  item.value ? defaultImage(schema.value, item.value.attributes) : "",
-);
-
-/** Toutes les images de la fiche, pour la visionneuse ouverte depuis la couverture. */
-const allImageUrls = computed(() =>
-  item.value ? galleryUrls(schema.value, item.value.attributes) : [],
-);
-const coverViewerOpen = ref(false);
-function openCover() {
-  coverViewerOpen.value = true;
-}
-
-// Ratio de la catégorie qui contient l'image par défaut (sinon portrait 2/3).
-const defaultImageRatio = computed(() => {
-  const url = defaultImageUrl.value;
-  if (!item.value || !url) return "2 / 3";
-  for (const key of Object.keys(item.value.attributes)) {
-    if (!isImageGallery(schema.value, key)) continue;
-    const data = item.value.attributes[key] as Record<string, unknown>;
-    for (const cat of imageCategories(schema.value, key)) {
-      if (((data[cat.name] as string[]) ?? []).includes(url)) return cat.ratio;
-    }
-  }
-  return "2 / 3";
-});
+// Couverture, visionneuse et compteur de l'onglet « Images » (composables/useItemImages).
+const {
+  imageCount,
+  defaultImageUrl,
+  allImageUrls,
+  defaultImageRatio,
+  coverViewerOpen,
+  openCover,
+} = useItemImages(item, schema);
 
 function openEditRelation(rel: ItemRelation) {
   editingRelation.value = rel;
@@ -384,31 +334,11 @@ async function confirmDeleteRelation(rel: ItemRelation) {
   try {
     await relationApi.delete(rel.id);
     notifySuccess(t("items.detail.relationDeleted"));
-    relations.value = relations.value.filter((r) => r.id !== rel.id);
-    relationsTotal.value = Math.max(0, relationsTotal.value - 1);
+    forgetRelation(rel.id);
     historyVersion.value++;
   } catch (e) {
     notifyError(e);
   }
-}
-
-/**
- * Une page de relations, complétées avec leurs méta-types (l'API ne les joint plus ;
- * le cache les fournit, chargé une fois).
- */
-async function fetchRelations(id: string, page: number) {
-  await Promise.all([metaTypes.loadItemTypes(), metaTypes.loadRelationTypes()]);
-  const res = await itemApi.relations(id, {
-    page,
-    per_page: RELATIONS_PER_PAGE,
-  });
-  const itemTypes = byId(metaTypes.itemTypes);
-  const relationTypes = byId(metaTypes.relationTypes);
-  relations.value = (res.data ?? []).map((r) =>
-    withTypes(r, itemTypes, relationTypes),
-  );
-  relationsTotal.value = res.total ?? relations.value.length;
-  relationsPage.value = res.page ?? page;
 }
 
 async function onRelationsPage(page: number) {
