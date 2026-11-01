@@ -45,6 +45,29 @@ export function scaleQuad(quad: Quad, sx: number, sy: number): Quad {
 }
 
 /**
+ * Coins après rotation de l'image de `turns` quarts de tour horaires (négatif : antihoraires) ;
+ * `width` × `height` sont les dimensions de l'image avant rotation. L'ordre haut-gauche, haut-droit,
+ * bas-droit, bas-gauche est conservé : l'ancien bas-gauche devient le haut-gauche après un quart
+ * de tour horaire.
+ */
+export function rotateQuad(
+  quad: Quad,
+  width: number,
+  height: number,
+  turns: number,
+): Quad {
+  let q = quad;
+  let w = width;
+  let h = height;
+  for (let i = 0; i < ((turns % 4) + 4) % 4; i++) {
+    const rot = (p: Point): Point => ({ x: h - p.y, y: p.x });
+    q = [rot(q[3]), rot(q[0]), rot(q[1]), rot(q[2])];
+    [w, h] = [h, w];
+  }
+  return q;
+}
+
+/**
  * Cherche la couverture : l'objet le plus grand qui se distingue du fond (couleur médiane de la
  * bordure de l'image), puis les quatre coins de son enveloppe convexe. Null quand rien ne ressemble
  * à un quadrilatère plein (fond uniforme, couverture occupant tout le cadre, objet trop petit).

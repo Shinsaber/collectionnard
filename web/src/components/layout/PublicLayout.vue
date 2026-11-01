@@ -8,6 +8,7 @@
       </RouterLink>
       <div class="flex items-center gap-3">
         <LangSwitch />
+        <ThemeToggle />
         <RouterLink
           :to="auth.isAuthenticated ? '/' : '/login'"
           class="el-button el-button--primary"
@@ -33,6 +34,7 @@ import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/stores/auth";
 import AppLogo from "./AppLogo.vue";
 import LangSwitch from "./LangSwitch.vue";
+import ThemeToggle from "./ThemeToggle.vue";
 
 const { t } = useI18n();
 const auth = useAuthStore();

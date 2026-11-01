@@ -22,12 +22,35 @@
     <section
       class="flex flex-wrap gap-5 rounded-2xl bg-surface p-4.5 shadow-card sm:gap-8 sm:p-7"
     >
+      <!-- La couverture s'agrandit (visionneuse sur toutes les images de la fiche). -->
+      <button
+        v-if="defaultImageUrl"
+        type="button"
+        class="shrink-0 self-start"
+        :aria-label="t('common.enlarge', { name: title })"
+        data-test="cover-enlarge"
+        @click="openCover"
+      >
+        <ItemCover
+          :item="item"
+          :label="title"
+          :width="coverWidth"
+          :ratio="defaultImageRatio"
+          :alt="t('items.detail.defaultImageAlt', { title })"
+        />
+      </button>
       <ItemCover
+        v-else
         :item="item"
         :label="title"
         :width="coverWidth"
         :ratio="defaultImageRatio"
         :alt="t('items.detail.defaultImageAlt', { title })"
+      />
+      <ImageLightbox
+        v-model:visible="coverViewerOpen"
+        :urls="allImageUrls"
+        :index="Math.max(0, allImageUrls.indexOf(defaultImageUrl))"
       />
       <div class="flex min-w-0 flex-[1_1_300px] flex-col gap-3.5">
         <div class="flex flex-wrap items-center justify-between gap-3">
@@ -200,6 +223,7 @@ import { useNotify } from "@/composables/useNotify";
 import { MOBILE_QUERY, useMediaQuery } from "@/composables/useMediaQuery";
 import {
   defaultImage,
+  galleryUrls,
   imageCategories,
   isCompleteness,
   isImageGallery,
@@ -207,6 +231,7 @@ import {
   typeTitle,
   type Schema,
 } from "@/lib/schema";
+import ImageLightbox from "@/components/common/ImageLightbox.vue";
 import ItemCover from "@/components/item/ItemCover.vue";
 import ItemCollectionsCard from "@/components/item/ItemCollectionsCard.vue";
 import ItemEditDialog from "@/components/item/ItemEditDialog.vue";
@@ -299,6 +324,15 @@ const imageCount = computed(() => {
 const defaultImageUrl = computed(() =>
   item.value ? defaultImage(schema.value, item.value.attributes) : "",
 );
+
+/** Toutes les images de la fiche, pour la visionneuse ouverte depuis la couverture. */
+const allImageUrls = computed(() =>
+  item.value ? galleryUrls(schema.value, item.value.attributes) : [],
+);
+const coverViewerOpen = ref(false);
+function openCover() {
+  coverViewerOpen.value = true;
+}
 
 // Ratio de la catégorie qui contient l'image par défaut (sinon portrait 2/3).
 const defaultImageRatio = computed(() => {

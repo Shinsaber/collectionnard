@@ -1,8 +1,9 @@
 <template>
   <!--
-    Scanner de codes-barres (lot M2) : caméra arrière, détection en continu (lib/barcode : natif
-    ou ponyfill), lampe torche si la piste l'offre ; sans caméra ou accès refusé, lecture dans une
-    photo. Émet `detected` et se ferme ; en mode `continuous`, reste ouvert et émet chaque code.
+    Scanner de codes-barres (lot M2) : caméra arrière (composable useCamera), détection en continu
+    (lib/barcode : natif ou ponyfill), lampe torche si la piste l'offre ; sans caméra ou accès
+    refusé, lecture dans une photo. Émet `detected` et se ferme ; en mode `continuous`, reste
+    ouvert et émet chaque code.
   -->
   <ElDialog
     v-model="visible"
@@ -26,18 +27,18 @@
       ></video>
       <!-- Viseur : simple repère, la détection porte sur toute l'image. -->
       <div
-        v-if="state === 'scanning'"
+        v-if="camera.state.value === 'ready'"
         class="pointer-events-none absolute inset-x-[12%] inset-y-[32%] rounded-md border-2 border-surface/80"
         aria-hidden="true"
       ></div>
       <div
-        v-if="state === 'starting'"
+        v-if="camera.state.value === 'starting'"
         class="absolute inset-0 grid place-items-center"
       >
         <AppSpinner />
       </div>
       <p
-        v-else-if="state === 'unavailable'"
+        v-else-if="camera.state.value === 'unavailable'"
         class="absolute inset-0 grid place-items-center p-6 text-center text-sm text-surface"
         role="status"
         data-test="scan-message"
@@ -57,12 +58,16 @@
     <p class="mt-3 text-sm text-muted">{{ t("common.scan.hint") }}</p>
     <div class="mt-3 flex flex-wrap items-center gap-2">
       <ElButton
-        v-if="torchAvailable"
-        :aria-pressed="torchOn"
+        v-if="camera.torchAvailable.value"
+        :aria-pressed="camera.torchOn.value"
         @click="toggleTorch"
       >
         <i class="pi pi-lightbulb mr-2" aria-hidden="true"></i>
-        {{ torchOn ? t("common.scan.torchOff") : t("common.scan.torchOn") }}
+        {{
+          camera.torchOn.value
+            ? t("common.scan.torchOff")
+            : t("common.scan.torchOn")
+        }}
       </ElButton>
       <input
         ref="photoInput"
@@ -88,6 +93,7 @@
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useNotify } from "@/composables/useNotify";
+import { useCamera } from "@/composables/useCamera";
 import {
   createDetector,
   ScanConfirmer,
@@ -107,17 +113,14 @@ const { notifyError, notifyWarning } = useNotify();
 
 const video = ref<HTMLVideoElement | null>(null);
 const photoInput = ref<HTMLInputElement | null>(null);
-const state = ref<"idle" | "starting" | "scanning" | "unavailable">("idle");
+const camera = useCamera(video);
 const message = ref("");
 const busy = ref(false);
 const lastCode = ref("");
-const torchAvailable = ref(false);
-const torchOn = ref(false);
 
 /** Intervalle minimal entre deux détections : le wasm n'a pas besoin de chaque image. */
 const MIN_INTERVAL_MS = 120;
 
-let stream: MediaStream | null = null;
 let detector: BarcodeReader | null = null;
 let stopped = true;
 let timer = 0;
@@ -130,53 +133,25 @@ async function start() {
   failures = 0;
   lastCode.value = "";
   confirmer.reset();
-  state.value = "starting";
   try {
     detector = await createDetector();
   } catch (e) {
-    unavailable(t("common.scan.unsupported"));
+    camera.state.value = "unavailable";
+    message.value = t("common.scan.unsupported");
     notifyError(e, t("common.scan.failed"));
     return;
   }
-  const media = navigator.mediaDevices;
-  if (!media?.getUserMedia) {
-    unavailable(t("common.scan.noCamera"));
+  const failure = await camera.start(1280, 720);
+  if (failure) {
+    message.value = t(
+      failure.reason === "denied"
+        ? "common.scan.denied"
+        : "common.scan.noCamera",
+    );
+    if (failure.error) notifyError(failure.error, t("common.scan.failed"));
     return;
   }
-  try {
-    stream = await media.getUserMedia({
-      audio: false,
-      video: {
-        facingMode: { ideal: "environment" },
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
-      },
-    });
-  } catch (e) {
-    const denied = e instanceof DOMException && e.name === "NotAllowedError";
-    unavailable(t(denied ? "common.scan.denied" : "common.scan.noCamera"));
-    return;
-  }
-  if (stopped || !video.value) {
-    release();
-    return;
-  }
-  video.value.srcObject = stream;
-  try {
-    await video.value.play();
-  } catch (e) {
-    unavailable(t("common.scan.noCamera"));
-    notifyError(e, t("common.scan.failed"));
-    return;
-  }
-  setupTorch(stream);
-  state.value = "scanning";
   schedule();
-}
-
-function unavailable(text: string) {
-  state.value = "unavailable";
-  message.value = text;
 }
 
 function schedule() {
@@ -210,7 +185,9 @@ async function tick() {
       }
     } catch (e) {
       if (++failures > 5) {
-        unavailable(t("common.scan.failed"));
+        camera.stop();
+        camera.state.value = "unavailable";
+        message.value = t("common.scan.failed");
         notifyError(e, t("common.scan.failed"));
         return;
       }
@@ -226,23 +203,9 @@ function onCode(code: string, format: string) {
   if (!props.continuous) visible.value = false;
 }
 
-// ── Lampe torche ─────────────────────────────────────────────────────
-// `torch` n'est pas dans les types du DOM (capacité propre aux caméras de téléphone).
-function setupTorch(s: MediaStream) {
-  const track = s.getVideoTracks()[0];
-  const caps = track?.getCapabilities?.() as { torch?: boolean } | undefined;
-  torchAvailable.value = !!caps?.torch;
-  torchOn.value = false;
-}
-
 async function toggleTorch() {
-  const track = stream?.getVideoTracks()[0];
-  if (!track) return;
   try {
-    await track.applyConstraints({
-      advanced: [{ torch: !torchOn.value }],
-    } as unknown as Parameters<MediaStreamTrack["applyConstraints"]>[0]);
-    torchOn.value = !torchOn.value;
+    await camera.toggleTorch();
   } catch (e) {
     notifyError(e, t("common.scan.failed"));
   }
@@ -276,19 +239,9 @@ async function fromPhoto(event: Event) {
   }
 }
 
-// ── Arrêt ────────────────────────────────────────────────────────────
-function release() {
-  stream?.getTracks().forEach((track) => track.stop());
-  stream = null;
-}
-
 function stop() {
   stopped = true;
   window.clearTimeout(timer);
-  release();
-  if (video.value) video.value.srcObject = null;
-  torchAvailable.value = false;
-  torchOn.value = false;
-  state.value = "idle";
+  camera.stop();
 }
 </script>

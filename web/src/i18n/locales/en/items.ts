@@ -93,6 +93,7 @@ const en: typeof fr = {
     collapse: "Collapse sub-relations",
     editRelation: "Edit relation",
     deleteRelation: "Delete relation",
+    moreActions: "Relation actions",
     noSubRelations: "No outgoing sub-relations.",
     subRelationsUnavailable: "Sub-relations unavailable",
     inCollections: "In {n} collection | In {n} collections",

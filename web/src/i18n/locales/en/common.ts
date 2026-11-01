@@ -25,6 +25,7 @@ const en: typeof fr = {
   created: "Created",
   updated: "Updated",
   deleted: "Deleted",
+  enlarge: "Enlarge: {name}",
   // Barcode scanner (lot M2)
   scan: {
     button: "Scan a barcode",
@@ -41,6 +42,19 @@ const en: typeof fr = {
     unsupported: "Barcode reading is not available in this browser.",
     failed: "Barcode reading failed",
     nothingFound: "No readable barcode in this image.",
+  },
+  // Full-screen viewer (v0.4.0 feedback)
+  viewer: {
+    title: "Image in full",
+    tools: "Viewer tools",
+    counter: "{n} / {total}",
+    zoomIn: "Zoom in",
+    zoomOut: "Zoom out",
+    fit: "Fit to screen",
+    rotateLeft: "Rotate left",
+    rotateRight: "Rotate right",
+    previous: "Previous image",
+    next: "Next image",
   },
 };
 
