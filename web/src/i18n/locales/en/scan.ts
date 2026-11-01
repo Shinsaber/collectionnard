@@ -1,4 +1,4 @@
-// "Scan" page (lot M3, mobile.md): "do I already own it?".
+// "Scan" page (lot M3, docs/phases/mobile.md): "do I already own it?".
 export default {
   title: "Scan",
   subtitle:

@@ -9,18 +9,22 @@ Langue du projet : **français** (docs, commits, échanges). Le socle de donnée
 snake_case ASCII : identifiants, clés JSON des attributs, noms de RelationTypes, valeurs d'enum ;
 l'affichage traduit via `x-labels`, `x-title`, `x-enum-labels` (fr/en, sélecteur dans l'en-tête). L'interface passe par
 vue-i18n (`web/src/i18n/`, registre des langues `langs.ts`) ; l'API renvoie des codes d'erreur traduits par le front et
-des messages techniques en anglais. Ajouter une langue : `Collectionnard.md` § 3 « Langues ». Les types suivent cette convention
+des messages techniques en anglais. Ajouter une langue : `docs/conception.md` § 3 « Langues ». Les types suivent cette convention
 (`title`, `start_year`, `broadcast_on`, `Ownership`…) ; un changement de clé = nouvelle version du paquet de domaine.
 
 ## Documents de référence (à lire selon le besoin, ne pas tout charger d'office)
 
+Toute la documentation vit dans `docs/` (`conception.md`, `domaines/`, `phases/`, `sources-externes.md`) ; à la racine ne
+restent que le README (index de la documentation), `LICENSE` et ce fichier (+ `server/CLAUDE.md`, `web/CLAUDE.md`, lus à
+leur emplacement par Claude Code). Un nouveau document va dans `docs/`, avec une ligne dans le tableau du README et ici.
+
 | Fichier                                | Contenu                                                          |
 | -------------------------------------- | ---------------------------------------------------------------- |
-| [Collectionnard.md](Collectionnard.md) | Vision, modèle conceptuel, phases de développement (roadmap)     |
-| [les.collection.md](les.collection.md) | Modèle de données livres : BD, manga, romans                     |
-| [musique.md](musique.md)               | Modèle de données musique : albums, éditions (CD, vinyles), pistes |
-| [video.md](video.md)                   | Modèle de données vidéo : films, éditions vidéo (DVD, Blu-ray, VHS), partagées avec les séries |
-| [jeux-video.md](jeux-video.md)         | Modèle de données jeux vidéo : jeux, éditions, plateformes rattachées à leur constructeur |
+| [docs/conception.md](docs/conception.md) | Vision, modèle conceptuel, extensions `x-*`, langues, rôles, **roadmap** (§ 8) |
+| [docs/domaines/livres.md](docs/domaines/livres.md) | Modèle de données livres : BD, manga, romans                     |
+| [docs/domaines/musique.md](docs/domaines/musique.md)               | Modèle de données musique : albums, éditions (CD, vinyles), pistes |
+| [docs/domaines/video.md](docs/domaines/video.md)                   | Modèle de données vidéo : films, éditions vidéo (DVD, Blu-ray, VHS), partagées avec les séries |
+| [docs/domaines/jeux-video.md](docs/domaines/jeux-video.md)         | Modèle de données jeux vidéo : jeux, éditions, plateformes rattachées à leur constructeur |
 | [api/openapi.yaml](api/openapi.yaml)   | Spécification OpenAPI 3.1 — **source de vérité de l'API**        |
 | [db/migrations/](db/migrations/)       | Migrations SQL (tern) ; `001_init.sql` = schéma complet commenté |
 | [server/internal/domains/packages/](server/internal/domains/packages/) | **Paquets de domaine** (types : `collections`, `tv`, `people`, `video`, `books`, `music`, `games` ; `requires` : paquets installés avant) — installés par la page « Domaines » ou `install-domain`, mis à jour par fusion |
@@ -31,10 +35,10 @@ des messages techniques en anglais. Ajouter une langue : `Collectionnard.md` § 
 | [db/seed_games.sql](db/seed_games.sql) | Données de démo Jeux vidéo (P3-7, Mario Kart 8 Deluxe), chargé après `seed_video.sql` |
 | [server/CLAUDE.md](server/CLAUDE.md)   | Conventions backend Go                                           |
 | [web/CLAUDE.md](web/CLAUDE.md)         | Conventions frontend Vue                                         |
-| [docs/audit/](docs/audit/BRIEF.md)     | Brief et résultats de l'audit approfondi (`/audit`)              |
-| [docs/sources-externes.md](docs/sources-externes.md) | Bases ouvertes BD / Manga : licences, accès (Wikidata, BnF retenues), constats du connecteur |
-| [social.md](social.md)                 | Phase 4 (social) : décisions, modèle et API visés — comptes et invitations, statistiques, visibilité, contributions |
-| [mobile.md](mobile.md)                 | Phase 5 (mobile) : cas d'usage et décisions — photo de couverture et recadrage, scanner de codes-barres, page « Scanner » |
+| [docs/sources-externes.md](docs/sources-externes.md) | Bases ouvertes par domaine (Wikidata, BnF, MusicBrainz, TVmaze retenues) : licences, accès, constats de chaque connecteur, sources écartées |
+| [docs/phases/evolutions-socle.md](docs/phases/evolutions-socle.md) | Lots E1–E5 (socle, livrés) : identifiants sans casse, ordre des types, types d'item permis par collection, images (doublons, purge, contrôles), hors ligne |
+| [docs/phases/social.md](docs/phases/social.md)                 | Phase 4 (social) : décisions, modèle et API visés — comptes et invitations, statistiques, visibilité, contributions |
+| [docs/phases/mobile.md](docs/phases/mobile.md)                 | Phase 5 (mobile) : cas d'usage et décisions — photo de couverture et recadrage, scanner de codes-barres, page « Scanner » |
 
 ## Modèle en une table
 
@@ -50,10 +54,10 @@ des messages techniques en anglais. Ajouter une langue : `Collectionnard.md` § 
   `collection_type_item_types` ; vide = tous). Seuls les nouveaux ajouts sont contrôlés.
 - Un `RelationType` a **plusieurs** types source et cible possibles (tables de jonction
   `relation_type_sources` / `relation_type_targets`, champs `source_item_type_ids` /
-  `target_item_type_ids`). Le TODO « arrays » de `les.collection.md` est donc déjà traité.
+  `target_item_type_ids`). Le TODO « arrays » de `docs/domaines/livres.md` est donc déjà traité.
 - Les données propres à un utilisateur (état, prix payé, note) vont sur `CollectionItem`,
   **jamais** sur `Item`.
-- `Collectionnard.md` parle d'`AttributeDefinition` : c'est le concept historique.
+- `docs/conception.md` parle d'`AttributeDefinition` : c'est le concept historique.
   **L'implémentation réelle est le JSON Schema** (`attributes_schema` JSONB).
 
 ### Extensions JSON Schema maison (pilotent le front)
@@ -69,7 +73,7 @@ sur 42 » dans les statistiques — Go `internal/collstats` et `store/stats.go`,
 `slider` : le curseur est automatique quand `minimum` **et** `maximum` sont définis.
 Toute nouvelle extension doit être gérée dans `DynamicForm.vue` **et** `SchemaBuilder.vue` (qui conserve
 les mots-clés qu'il ne connaît pas), lue via `lib/schema.ts`, et documentée dans le README et
-`Collectionnard.md` § 3.
+`docs/conception.md` § 3.
 
 ## Stack
 
@@ -157,7 +161,7 @@ Production : images publiées par la CI sur ghcr.io (job `images`, tags `v*` et 
    `npm audit --audit-level=high` dans `web/` ; corriger ce qui a un correctif non cassant (`npm audit fix`, `go get
    -u <module>`), consigner dans `web/CLAUDE.md` ce qui est accepté. La CI (`.github/workflows/ci.yml`) rejoue
    exactement ces étapes.
-5. Mettre à jour les cases à cocher de la section « Phases » de `Collectionnard.md`
+5. Mettre à jour les cases à cocher de la section « Phases » de `docs/conception.md`
    quand une fonctionnalité de la roadmap est livrée.
 6. Ne jamais committer de secrets : `JWT_SECRET` et `POSTGRES_PASSWORD` viennent de `.env`
    (ignoré par git, modèle dans `.env.example`) ; le serveur refuse un `JWT_SECRET` < 32 caractères.
@@ -165,14 +169,16 @@ Production : images publiées par la CI sur ghcr.io (job `images`, tags `v*` et 
 ## Où en est le projet
 
 Phase 1 (MVP) : terminée. Phase 1.5 (remise à niveau issue de l'audit, branche `remise-a-niveau`,
-lots 0 à 11 livrés, voir `Collectionnard.md` §8 et `docs/audit/03-feuille-de-route.md`) : terminée, fusionnée dans `main`.
+lots 0 à 11 livrés, voir `docs/conception.md` §8 ; documents d'audit retirés du dépôt) : terminée, fusionnée dans `main`.
 Phase 2 livrée : multilingue, recherche avancée (lot 14), import/export (lot 12), refonte graphique responsive
 (identité « Étiquette », lots R0–R8, branche `refonte-graphique`), domaine BD / Manga (lot 13,
-`les.collection.md`, sources Wikidata / BnF). Phase 3 (récupération automatique externe) terminée, branche `phase3-sources` fusionnée dans `main` : domaines installables (P3-0), connecteurs
+`docs/domaines/livres.md`, sources Wikidata / BnF). Phase 3 (récupération automatique externe) terminée, branche `phase3-sources` fusionnée dans `main` : domaines installables (P3-0), connecteurs
 BD / Manga, Romans, Musique, Films, Séries et Jeux vidéo (`server/internal/external/connectors`, profils `bd-manga` / `novels` / `music` / `films` / `series` / `games`, clients `wikidata`, `bnf`, `musicbrainz`, `tvmaze`, page admin « Sources externes ») ;
-domaines P3-0 à P3-7 (jeux vidéo, V1 française) livrés et fusionnés dans `main`. Phase 4 (social) raffinée, branche `phase4-social` : lots P4-0 à P4-3 dans `social.md` ; P4-0 (comptes, invitations,
+domaines P3-0 à P3-7 (jeux vidéo, V1 française) livrés et fusionnés dans `main`. Phase 4 (social) raffinée, branche `phase4-social` : lots P4-0 à P4-3 dans `docs/phases/social.md` ; P4-0 (comptes, invitations,
 profils), P4-1 (statistiques personnelles), P4-2 (visibilité et partage) et P4-3 (historique, contributeur, propositions, modération,
-notifications) livrés : Phase 4 terminée hors échanges (reportés). Phase 5 (mobile, `mobile.md`), branche `phase5-mobile` :
+notifications) livrés : Phase 4 terminée hors échanges (reportés). Phase 5 (mobile, `docs/phases/mobile.md`), branche `phase5-mobile` :
 M1 (photo de couverture et recadrage), M2 (scanner de codes-barres), M3 (page « Scanner »), M4 (redressement de la
 perspective) et M5 (photos de l'état d'un exemplaire, paquet `collections` v3) livrés ; pistes tracées pour plus tard
-dans `mobile.md`.
+dans `docs/phases/mobile.md`. Retours de la v0.4.0 (branche `retours-mobile`, fusionnée, v0.4.1) : caméra dans
+l'application, loupe et rotation au redressement, visionneuse maison, menus des relations et des collections, thème des
+pages publiques. Documentation restructurée le 2026-11-01 : tout dans `docs/`, README seul à la racine, `LICENSE` (MIT).

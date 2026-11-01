@@ -13,7 +13,7 @@ import (
 	"github.com/shinsaber/colec/internal/model"
 )
 
-// Games profile (P3-7, jeux-video.md): a video game on Wikidata, its platforms
+// Games profile (P3-7, docs/domaines/jeux-video.md): a video game on Wikidata, its platforms
 // (each linked to its manufacturer) and companies; its French releases at the
 // BnF (legal deposit), found by title or EAN. A release found alone brings its
 // game (Wikidata, same title) and its platform (215: « 1 cartouche (Nintendo Switch) »).

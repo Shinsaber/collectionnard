@@ -1,4 +1,4 @@
-// Page « Scanner » (lot M3, mobile.md) : « est-ce que je l'ai déjà ? ».
+// Page « Scanner » (lot M3, docs/phases/mobile.md) : « est-ce que je l'ai déjà ? ».
 export default {
   title: "Scanner",
   subtitle:

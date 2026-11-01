@@ -1,8 +1,8 @@
 ---
-description: Faire le point sur la roadmap (Collectionnard.md §8) et proposer la prochaine étape
+description: Faire le point sur la roadmap (docs/conception.md § 8) et proposer la prochaine étape
 ---
 
-Lis la section « Phases de développement » de `Collectionnard.md` et `les.collection.md`.
+Lis la section « Phases de développement » de `docs/conception.md` (§ 8) et, selon le sujet, les modèles de `docs/domaines/` et les notes de `docs/phases/`.
 Compare avec l'état réel du code (`api/openapi.yaml`, `server/internal/handler`, `web/src/views`) :
 
 1. Les cases cochées sont-elles vraiment livrées ? Y a-t-il du code livré non coché ?

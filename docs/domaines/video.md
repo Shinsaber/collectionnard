@@ -45,7 +45,7 @@ Mise à jour d'une instance en `tv` v1 : la v2 requiert `video`, installé d'abo
 
 ## Sources
 
-Vérifié le 2026-10-17 (voir `docs/sources-externes.md`).
+Vérifié le 2026-10-17 (voir [`docs/sources-externes.md`](../sources-externes.md)).
 
 | Attribut / relation         | Wikidata (CC0)                                               | BnF (Licence Ouverte), notice vidéo                    |
 | --------------------------- | ------------------------------------------------------------ | ------------------------------------------------------ |

@@ -1,7 +1,7 @@
 # Phase 4 — Social : conception
 
 Raffinage du 2026-10-17, branche `phase4-social`, un commit par lot. Les lots et leurs cases à cocher sont dans
-`Collectionnard.md` § Phase 4 ; ce document porte les décisions, le modèle et l'API visés.
+[`docs/conception.md`](../conception.md) § 8, Phase 4 ; ce document porte les décisions, le modèle et l'API visés.
 
 ## Décisions du mainteneur
 

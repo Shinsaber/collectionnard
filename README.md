@@ -3,7 +3,8 @@
 Application de gestion de collections générique et dynamique.
 Séries TV, DVD, livres, cartes à collectionner, vinyles… tout type de collection est supporté sans modification de code.
 
-> **Document de conception** : voir [Collectionnard.md](Collectionnard.md) pour la vision, le modèle conceptuel et les décisions de design.
+> **Documentation** : le document de conception, les modèles de données par domaine et les notes de phase sont
+> rassemblés dans [docs/](docs/) ; voir la section [Documentation](#documentation) ci-dessous.
 
 ---
 
@@ -56,9 +57,10 @@ Le fichier `db/seed.sql` crée deux comptes de développement (appliqué si `SEE
 | `admin`     | `admin`      | admin |
 | `shinsaber` | `shinsaber`  | user  |
 
-Pour créer un compte : `colec-server create-user <nom> <email> [--admin]` (mot de passe demandé sans
-écho, ou lu sur l'entrée standard ; 8 caractères minimum). Avec Docker :
-`docker compose run --rm server colec-server create-user <nom> <email> --admin`.
+Pour créer un compte : `colec-server create-user <nom> <email> [--admin|--contributor]` (mot de passe demandé
+sans écho, ou lu sur l'entrée standard ; 8 caractères minimum). Avec Docker :
+`docker compose run --rm server colec-server create-user <nom> <email> --admin`. Les autres comptes se créent
+ensuite depuis l'application, sur invitation (page « Utilisateurs », ou « Mon profil » si `MEMBER_INVITES=true`).
 
 ### Développement local (sans Docker)
 
@@ -81,15 +83,21 @@ go run .
 | `JWT_SECRET`        | **requis** | Clé HS256 des access tokens, 32 caractères minimum                                                     |
 | `ACCESS_TOKEN_TTL`  | `15m`      | Durée de vie des access tokens JWT (format Go)                                                         |
 | `REFRESH_TOKEN_TTL` | `720h`     | Durée de vie des refresh tokens (rotation à chaque utilisation)                                        |
-| `LOGIN_RATE_LIMIT`  | `10`       | Appels par minute et par IP sur `/auth/login`, `/auth/refresh`, `/auth/logout`                         |
+| `LOGIN_RATE_LIMIT`  | `10`       | Appels par minute et par IP sur `/auth/login`, `/auth/refresh`, `/auth/logout` et les routes publiques d'inscription / réinitialisation |
 | `TRUSTED_PROXY`     | `false`    | `true` derrière un reverse-proxy qui pose `X-Real-IP` (nginx du compose) ; sinon l'IP serait usurpable |
 | `GRAPH_MAX_NODES`   | `500`      | Nombre max de nœuds renvoyés par `GET /items/{id}/graph` (au-delà : `truncated: true`)                 |
 | `PORT`              | `8080`     | Port HTTP                                                                                              |
-| `UPLOAD_DIR`        | `uploads`  | Dossier des images uploadées                                                                           |
+| `UPLOAD_DIR`        | `uploads`  | Dossier des images uploadées (vignettes générées dans `.thumbs/`)                                      |
 | `MAX_UPLOAD_SIZE`   | `10485760` | Taille max d'un upload (octets) ; les corps JSON sont limités à 1 Mio                                  |
-| `EXTERNAL_USER_AGENT` | `Collectionnard/1.0 (+URL du dépôt)` | User-Agent envoyé à Wikidata et à la BnF (leurs règles demandent un nom et un contact) |
+| `MAX_IMPORT_SIZE`   | `20971520` | Taille max d'un fichier d'import du catalogue ou d'une collection (octets)                             |
+| `EXTERNAL_USER_AGENT` | `Collectionnard/1.0 (+URL du dépôt)` | User-Agent envoyé à Wikidata, à la BnF, à MusicBrainz et à TVmaze (leurs règles demandent un nom et un contact) |
 | `PROPOSAL_QUOTA`    | `5`        | Propositions en attente par membre (+1 par proposition acceptée, plafond 50) ; contributeurs et admins sans quota |
 | `MEMBER_INVITES`    | `false`    | `true` : les membres peuvent aussi créer des invitations (sinon les admins seulement)                  |
+| `LOG_FORMAT`        | `json`     | `text` pour des logs lisibles en développement                                                         |
+| `LOG_LEVEL`         | `info`     | `debug`, `info`, `warn` ou `error`                                                                     |
+
+Sous-commande `migrate` : `SEED_ON_EMPTY` (`true` : charge les seeds si la table `users` est vide) et `SEED_FILE`
+(liste de fichiers séparés par des virgules, sinon les seeds par défaut, voir ci-dessous).
 
 **Frontend** :
 
@@ -111,11 +119,13 @@ go run . migrate                      # applique les migrations en attente (tabl
 SEED_ON_EMPTY=true go run . migrate   # idem, puis les seeds si la table users est vide
 go run . seed                         # applique les seeds sans condition (dev)
 # Seeds : db/seed.sql, db/seed_bd_manga.sql, db/seed_music.sql, db/seed_video.sql puis db/seed_games.sql ; SEED_FILE=a.sql,b.sql pour une autre liste
+go run . install-domain               # état des paquets de domaine ; --all ou <domaine> pour installer / mettre à jour
 ```
 
 `pg-start` (shell Nix) et le service `migrate` de docker-compose les lancent automatiquement.
 Pour changer le schéma : ajouter `db/migrations/NNN_description.sql`, ne jamais modifier une
-migration déjà appliquée.
+migration déjà appliquée. Les types (séries TV, livres, musique…) ne sont pas dans les seeds : ce sont des
+**paquets de domaine** embarqués dans le serveur, installés avant les seeds (voir « Mise en production »).
 
 ### Mise en production
 
@@ -165,77 +175,85 @@ les ajouts du paquet (champs, valeurs, libellés) sont appliqués.
 
 ---
 
+## Documentation
+
+Tout est dans [docs/](docs/), sauf ce README et les fichiers `CLAUDE.md` (conventions pour Claude Code, lus à leur
+emplacement).
+
+| Document                                                       | Contenu                                                                                                        |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| [docs/conception.md](docs/conception.md)                       | Vision, modèle conceptuel, attributs dynamiques et extensions `x-*`, langues, permissions, **roadmap** (§ 8)    |
+| [docs/domaines/livres.md](docs/domaines/livres.md)             | Livres : BD, manga, romans (paquet `books`), sources Wikidata / BnF, connecteurs `bd-manga` et `novels`        |
+| [docs/domaines/musique.md](docs/domaines/musique.md)           | Musique : albums, éditions (CD, vinyles), pistes, artistes, labels (paquet `music`, MusicBrainz)               |
+| [docs/domaines/video.md](docs/domaines/video.md)               | Vidéo : films, éditions vidéo (DVD, Blu-ray) partagées avec les séries, séries en vidéo (paquets `video`, `tv`) |
+| [docs/domaines/jeux-video.md](docs/domaines/jeux-video.md)     | Jeux vidéo : jeux, éditions, plateformes rattachées à leur constructeur (paquet `games`)                       |
+| [docs/sources-externes.md](docs/sources-externes.md)           | Bases ouvertes : licences, accès, constats faits en codant chaque connecteur, sources écartées                 |
+| [docs/phases/evolutions-socle.md](docs/phases/evolutions-socle.md) | Lots E1–E5 : identifiants insensibles à la casse, ordre des types, types d'item permis, images, hors ligne |
+| [docs/phases/social.md](docs/phases/social.md)                 | Phase 4 : comptes et invitations, statistiques personnelles, visibilité et partage, contributions              |
+| [docs/phases/mobile.md](docs/phases/mobile.md)                 | Phase 5 : photo de couverture, redressement et recadrage, scanner de codes-barres, page « Scanner », retours v0.4.0 |
+| [api/openapi.yaml](api/openapi.yaml)                           | Spécification OpenAPI 3.1, **source de vérité de l'API**                                                       |
+| [db/migrations/001_init.sql](db/migrations/001_init.sql)       | Schéma de base de données commenté (puis `002` à `012`)                                                        |
+| [CLAUDE.md](CLAUDE.md), [server/CLAUDE.md](server/CLAUDE.md), [web/CLAUDE.md](web/CLAUDE.md) | Règles de travail, checklists et organisation du code (backend Go, frontend Vue)       |
+
+---
+
 ## Structure du projet
 
 ```
-colec/
-├── Collectionnard.md       # Document de conception (vision, modèle, phases)
-├── les.collection.md       # Modèle de données BD / Manga (prochain domaine)
+collectionnard/
 ├── README.md               # Ce fichier
-├── CLAUDE.md               # Contexte et règles de travail pour Claude Code (+ server/, web/)
-├── docker-compose.yml      # Orchestration des 4 services (postgres, migrate, server, web)
+├── LICENSE                 # MIT
+├── CLAUDE.md               # Contexte et règles de travail pour Claude Code (+ server/CLAUDE.md, web/CLAUDE.md)
+├── docs/                   # Documentation (voir ci-dessus)
+│   ├── conception.md       # Vision, modèle conceptuel, extensions x-*, roadmap (§ 8)
+│   ├── sources-externes.md # Bases ouvertes : licences, accès, constats des connecteurs
+│   ├── domaines/           # Modèles de données : livres, musique, video, jeux-video
+│   └── phases/             # Notes de conception : evolutions-socle, social, mobile
+├── docker-compose.yml      # Développement : 4 services (postgres, migrate, server, web)
+├── docker-compose.prod.yml # Production : images ghcr.io, sans seed
 ├── .env.example            # Variables de déploiement (copier en .env)
 ├── flake.nix, flake.lock   # Environnement de développement Nix (+ .envrc pour direnv)
-├── .github/workflows/      # CI : Go (fmt, vet, lint, tests, govulncheck, intégration PG), web, OpenAPI
-├── .claude/                # Commandes Claude Code (/verif, /endpoint, /audit…) et permissions
-├── docs/audit/             # Audit du 2026-10-11 : cohérence, qualité/sécurité, feuille de route
+├── .github/workflows/      # CI : Go (fmt, vet, lint, tests, govulncheck, intégration PG), web (lint, OpenAPI, tests, build, audit), images Docker
+├── .claude/                # Commandes Claude Code (/verif, /endpoint, /roadmap, /modele-vers-seed) et permissions
 ├── api/
 │   └── openapi.yaml        # Spécification OpenAPI 3.1 (référence API)
 ├── db/
-│   ├── migrations/         # Migrations SQL tern (001_init.sql = schéma complet)
-│   ├── seed.sql            # Données de test (admin, types, items, relations)
-│   ├── seed_bd_manga.sql   # Domaine BD / Manga (Dragon Ball, Astérix ; données Wikidata / BnF)
-│   ├── seed_music.sql      # Domaine Musique (Discovery de Daft Punk ; données MusicBrainz)
-│   ├── seed_video.sql      # Domaine Vidéo (Amélie, son Blu-ray ; données Wikidata / BnF)
-│   ├── seed_games.sql      # Domaine Jeux vidéo (Mario Kart 8 Deluxe ; données Wikidata / BnF)
+│   ├── migrations/         # Migrations SQL tern (001_init.sql = schéma complet, puis 002 à 012)
+│   ├── seed.sql            # Démo : comptes de dev, Breaking Bad (séries TV, multi-chemin Diffusion + DVD)
+│   ├── seed_bd_manga.sql   # Démo BD / Manga / Romans (Dragon Ball, Astérix, L'Étranger ; Wikidata / BnF)
+│   ├── seed_music.sql      # Démo Musique (Discovery de Daft Punk ; MusicBrainz)
+│   ├── seed_video.sql      # Démo Vidéo (Amélie, son Blu-ray ; Wikidata / BnF)
+│   ├── seed_games.sql      # Démo Jeux vidéo (Mario Kart 8 Deluxe ; Wikidata / BnF)
 │   └── queries_test.sql    # Requêtes SQL de test
 ├── server/                 # Backend Go
-│   ├── main.go
+│   ├── main.go, cmd.go     # Serveur HTTP et sous-commandes (migrate, seed, create-user, install-domain)
 │   ├── Dockerfile
-│   ├── config/             # Configuration (env vars)
+│   ├── config/             # Configuration (variables d'environnement)
 │   └── internal/
-│       ├── handler/        # Handlers HTTP (1 fichier par domaine)
-│       ├── middleware/     # Auth JWT, RequireAdmin, RateLimiter, RequestLogger
-│       ├── dbmigrate/      # Migrations (tern) + seed
-│       ├── external/       # Sources ouvertes : clients Wikidata, BnF (SRU), MusicBrainz et TVmaze, connecteurs (BD / manga, romans, musique, films, séries, jeux vidéo)
-│       ├── model/          # Structs Go (JSON tags)
-│       ├── store/          # Couche d'accès BDD (pgx)
+│       ├── handler/        # Handlers HTTP, un fichier par domaine ; toutes les routes dans handler.go
+│       ├── middleware/     # Auth JWT, rôles, rate limiter, proxy de confiance, journal des requêtes
+│       ├── model/          # Structs Go (tags JSON)
+│       ├── store/          # Accès BDD (pgx), import / export, historique, propositions
 │       ├── validator/      # Validation JSON Schema
-│       └── testutil/       # Mocks pour les tests
+│       ├── label/, identifier/, privacy/, collstats/, itemquery/, csvexport/
+│       │                   # Extensions x-* (libellés, identifiants, champs privés, complétude), recherche, CSV
+│       ├── domains/        # Paquets de domaine embarqués (packages/*.json) et fusion à trois versions
+│       ├── external/       # Sources ouvertes : clients Wikidata, BnF (SRU), MusicBrainz, TVmaze ; connecteurs
+│       ├── dbmigrate/      # Migrations (tern) + seeds
+│       └── testutil/       # MockStore et serveur de test
 └── web/                    # Frontend Vue 3
-    ├── Dockerfile
-    ├── nginx.conf
+    ├── Dockerfile, nginx.conf, nginx-security-headers.conf
+    ├── scripts/            # seed-fixtures.mjs : schémas des paquets de domaine pour les tests
+    ├── tests/              # Configuration Vitest et fixtures
     └── src/
-        ├── api/
-        │   ├── client.ts   # Client Axios (tous les appels API)
-        │   └── types.ts    # Types TypeScript (miroir des models Go)
-        ├── stores/
-        │   └── auth.ts     # Store Pinia (auth + JWT)
-        ├── router/
-        │   └── index.ts    # Routes Vue Router
-        ├── views/
-        │   ├── DashboardView.vue
-        │   ├── ItemsView.vue
-        │   ├── ItemDetailView.vue
-        │   ├── GraphView.vue
-        │   ├── CollectionsView.vue
-        │   ├── CollectionDetailView.vue
-        │   ├── LoginView.vue
-        │   └── admin/
-        │       ├── ItemTypesView.vue
-        │       ├── RelationTypesView.vue
-        │       ├── CollectionTypesView.vue
-        │       ├── ImportExportView.vue
-        │       └── ExternalImportView.vue   # Import depuis Wikidata / BnF (recherche, aperçu, simulation)
-        └── components/
-            ├── layout/
-            │   └── AppLayout.vue
-            ├── common/
-            │   ├── DynamicForm.vue      # Formulaire généré depuis JSON Schema
-            │   └── SchemaBuilder.vue    # Éditeur de JSON Schema (admin)
-            └── item/
-                ├── ItemEditDialog.vue
-                └── RelationTree.vue     # Arbre de relations groupé par type
+        ├── api/            # client.ts (axios, seul point d'appel HTTP), types.ts (miroir des models Go)
+        ├── stores/         # Pinia : auth, metaTypes, notifications, offline
+        ├── router/         # Routes Vue Router
+        ├── i18n/           # vue-i18n : registre des langues, catalogues fr / en
+        ├── lib/            # Logique pure testée : schema, itemSearch, csv, barcode, perspective, images, lightbox…
+        ├── composables/    # useLang, useTheme, useNotify, useCamera, usePagination…
+        ├── views/          # Pages (catalogue, fiche, graphe, collections, statistiques, scanner, propositions, profil), admin/, public/
+        └── components/     # common/ (DynamicForm, SchemaBuilder, scanner, recadrage), item/, collection/, external/, sharing/, stats/, proposals/, layout/…
 ```
 
 ---
@@ -252,30 +270,38 @@ Le système repose sur un **pattern unique à 3 niveaux** : des méta-types déf
 
 Les items forment un **graphe orienté libre** : un même épisode peut être atteint via une diffusion TV et un DVD. Voir l'endpoint `GET /items/{id}/graph`.
 
+Les méta-types sont livrés par **paquets de domaine** (`collections`, `tv`, `people`, `books`, `music`, `video`, `games`),
+installés depuis la page « Domaines » et mis à jour par fusion ; les connecteurs de la page « Sources externes » remplissent le
+catalogue depuis des bases ouvertes (Wikidata, BnF, MusicBrainz, TVmaze).
+
 ---
 
 ## API
 
-La spécification complète est dans [api/openapi.yaml](api/openapi.yaml).
+La spécification complète est dans [api/openapi.yaml](api/openapi.yaml). Trois rôles : **admin**, **contributeur**
+(écrit dans le catalogue, modère, ne supprime pas d'item) et **membre** ; les pages publiques et les liens de partage
+sont lisibles sans compte.
 
 ### Endpoints principaux
 
-| Domaine         | Endpoints                                                                     | Auth                              |
-| --------------- | ----------------------------------------------------------------------------- | --------------------------------- |
-| Auth            | `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me` | Public (rate-limited) / JWT       |
-| ItemTypes       | CRUD `/item-types`                                                            | Admin                             |
-| RelationTypes   | CRUD `/relation-types`                                                        | Admin                             |
-| CollectionTypes | CRUD `/collection-types`                                                      | Admin                             |
-| Items           | CRUD `/items` + recherche plein texte, filtres et tri par attribut, `related_to` | Admin (écriture)                  |
-| Import / export  | `GET /export`, `POST /import` (catalogue JSON, admin), `GET /items/export` (CSV), `GET /collections/{id}/export`, `POST /collections/import` | Admin / Authentifié |
-| Sources externes | `GET /external/bd-manga/works` (Wikidata), `GET /external/bd-manga/editions` (BnF, titre ou ISBN), `POST /external/bd-manga/preview`, `POST /external/bd-manga/import` (simulation `dry_run`) | Admin |
-| Relations       | CRUD `/relations` + `GET /items/{id}/relations`                               | Admin (écriture)                  |
-| Graph           | `GET /items/{id}/graph`                                                       | JWT                               |
-| Collections     | CRUD `/collections` + gestion items                                           | JWT (owner)                       |
-| Tags            | `GET /tags`                                                                   | JWT                               |
-| Stats           | `GET /stats`                                                                  | JWT                               |
-| Santé           | `GET /healthz`                                                                | Public                            |
-| Uploads         | `POST /uploads`, `GET /uploads/{filename}`                                    | Admin (upload) / Public (lecture) |
+| Domaine                | Endpoints                                                                                                      | Auth                                      |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| Santé                  | `GET /healthz`                                                                                                 | Public                                    |
+| Auth                   | `POST /auth/login`, `/auth/refresh`, `/auth/logout`, `GET /auth/invitation`, `POST /auth/register`, `POST /auth/reset-password` ; `GET /auth/me` | Public (rate-limited) / JWT |
+| Mon compte             | `PUT /me/profile`, `PUT /me/password`, `GET /me/stats`, `GET /me/offline` (copie hors ligne), `GET /me/notifications`, `POST /me/notifications/read` | JWT |
+| Invitations, membres   | `GET` / `POST /invitations`, `DELETE /invitations/{id}` ; `GET /members`                                        | JWT (invitations : admin, ou membre si `MEMBER_INVITES`) |
+| Utilisateurs           | `GET /users`, `PUT /users/{id}`, `POST /users/{id}/reset-link`                                                  | Admin                                     |
+| Méta-types             | `GET /item-types`, `/relation-types`, `/collection-types` (+ `/{id}`) ; `POST` / `PUT` / `DELETE`               | JWT (lecture) / Admin (écriture)          |
+| Items                  | `GET /items` (plein texte, filtres et tri par attribut, `related_to`), `GET /items/{id}` (+ `/relations`, `/graph`, `/collections`, `/history`), `GET /items/export` (CSV), `POST /items/duplicates` ; `POST /items`, `PUT /items/{id}`, `POST /items/{id}/revert` ; `DELETE /items/{id}` | JWT / Admin ou contributeur / Admin |
+| Relations              | `GET /relations/{id}` ; `POST /relations`, `PUT` / `DELETE /relations/{id}`                                    | JWT / Admin ou contributeur               |
+| Collections            | CRUD `/collections`, `/collections/{id}/items`, `/export` (JSON, CSV), `POST /collections/import`, `/stats`, `/share-links` | JWT (propriétaire)              |
+| Pages publiques        | `GET /public/users/{username}` (+ `/collections`), `GET /public/collections/{id}` (+ `/items`, `/stats`), `GET /share?token=…` (+ `/items`, `/stats`) | Anonyme ou JWT (selon la visibilité) |
+| Propositions           | `GET` / `POST /proposals`, `/proposals/{id}` (`submit`, `withdraw`, `conflicts`, `comments`), `/proposals/quota`, `/proposals/review-count` ; `accept`, `reject`, `request-changes` | JWT / modération : admin ou contributeur |
+| Sources externes       | `GET /external/connectors`, `GET /external/{connector}/works`, `/editions`, `POST /preview`, `POST /propose` ; `POST /external/{connector}/import` | JWT / Admin ou contributeur |
+| Import / export        | `GET /export`, `POST /import` (catalogue JSON, simulation `dry_run`)                                           | Admin                                     |
+| Domaines               | `GET /domains`, `POST /domains/{id}/install`                                                                   | Admin                                     |
+| Tags, statistiques     | `GET /tags`, `GET /stats`                                                                                      | JWT                                       |
+| Uploads                | `POST /uploads` ; `GET /uploads/{filename}` (`?w=240` : vignette) ; `POST /uploads/purge`                       | JWT / Public / Admin                      |
 
 ---
 
@@ -298,10 +324,11 @@ Le projet utilise des extensions custom dans les JSON Schemas pour piloter le fr
 | `x-image-categories` | Catégories d'images avec ratios (`{poster: {ratio: "2/3"}}`) et contrôles facultatifs à l'envoi : `tolerance` (écart de ratio en %), `min_width` / `min_height` (px), `strict` (recadrage proposé plutôt qu'avertissement). Sur écran tactile, une photo peut être prise dans l'application (ou avec l'appareil du téléphone), redressée (bords détectés, coins ajustables avec loupe, rotation) puis recadrée au ratio ; les photos sont réduites à 2000 px. Les images s'ouvrent en grand (zoom, rotation) depuis la fiche et les vignettes |
 
 Sans extension, le widget découle du schéma : `enum` → liste déroulante, `integer`/`number` avec `minimum`
-**et** `maximum` → curseur, `format: date` / `uri` → champ dédié. Référence complète : `Collectionnard.md` § 3.
+**et** `maximum` → curseur, `format: date` / `uri` → champ dédié. Référence complète :
+[docs/conception.md](docs/conception.md) § 3.
 
 ---
 
 ## Licence
 
-MIT
+[MIT](LICENSE)

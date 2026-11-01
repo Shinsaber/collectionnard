@@ -1,7 +1,7 @@
 # Phase 5 — Mobile : appareil photo et scanner : conception
 
 Raffinage du 2026-10-25, branche `phase5-mobile`, un commit par lot. Les lots et leurs cases à cocher sont dans
-`Collectionnard.md` § Phase 5 ; ce document porte les cas d'usage, les décisions et les détails techniques.
+[`docs/conception.md`](../conception.md) § 8, Phase 5 ; ce document porte les cas d'usage, les décisions et les détails techniques.
 
 ## Décisions du mainteneur
 
@@ -10,11 +10,11 @@ Raffinage du 2026-10-25, branche `phase5-mobile`, un commit par lot. Les lots et
 | Support          | **L'application installable (PWA) existante**, pas d'application native : l'appareil photo et le scanner passent par les API du navigateur (`<input capture>`, `getUserMedia`, `BarcodeDetector`). Rien à publier sur un store, une seule base de code. |
 | Recadrage        | **cropperjs 2** (MIT, composants web, gestes tactiles) ; cadre contraint au ratio de la catégorie (`x-image-categories`), rotation par quarts de tour, image déplaçable et zoomable. Correction de perspective en amont (M4, JavaScript pur). |
 | Prise de vue     | **Dans l'application** (`getUserMedia` + `ImageCapture.takePhoto` quand il existe) plutôt que `<input capture>` : sur Android, ce dernier peut n'ouvrir que le gestionnaire de fichiers (retour v0.4.0). L'appareil du téléphone reste proposé en repli. |
-| Images en grand  | Visionneuse d'Element Plus (`ElImageViewer` : zoom, rotation, suivante / précédente), pas de dépendance supplémentaire. |
+| Images en grand  | Visionneuse **maison** (`ImageLightbox` : zoom borné, balayage, rotation, clavier), après un essai d'`ElImageViewer` abandonné aux retours v0.4.0 (barre héritant du thème sombre, déplacement non borné). |
 | Lecture des codes | **`BarcodeDetector` natif** quand le navigateur l'offre (Chrome Android), sinon le ponyfill **barcode-detector** (MIT) sur **zxing-wasm** (MIT). Le `.wasm` (≈ 0,9 Mo) est servi par l'application elle-même (jamais depuis un CDN) et précaché par le service worker : le scanner marche aussi hors ligne. |
 | Taille des photos | Réduites dans le navigateur à **2000 px** de côté (JPEG qualité 0,9 ; le PNG garde sa transparence) : une couverture n'a pas besoin de 12 Mpx, et `MAX_UPLOAD_SIZE` (10 Mo) n'est plus atteint. |
 | Où scanner       | Partout où l'on saisit ou cherche un code : recherche du catalogue, ajout à une collection, consultation hors ligne, champ `x-identifier` d'un formulaire, recherche d'éditions dans les sources externes ; plus une page « Scanner » dédiée au geste « je suis en boutique, est-ce que je l'ai déjà ? ». |
-| HTTPS            | L'accès à l'appareil photo exige un **contexte sécurisé** (HTTPS, ou `localhost` en développement) : déjà requis par l'application installable (README « Mise en production »). |
+| HTTPS            | L'accès à l'appareil photo exige un **contexte sécurisé** (HTTPS, ou `localhost` en développement) : déjà requis par l'application installable ([README](../../README.md) « Mise en production »). |
 
 ## État de départ
 
@@ -128,7 +128,7 @@ Raffinage du 2026-10-25, branche `phase5-mobile`, un commit par lot. Les lots et
 
 ## Retours de la v0.4.0 (essais sur téléphone, 2026-10-31)
 
-Branche `retours-mobile`. Quatre retours du mainteneur après une version de test sur Android.
+Branche `retours-mobile`, fusionnée dans `main` (v0.4.1). Quatre retours du mainteneur après une version de test sur Android.
 
 - **Le sélecteur photo n'ouvrait que le gestionnaire de fichiers.** `<input type="file" capture="environment">` est
   laissé au navigateur, qui sur certains Android (application installée, permission caméra non déléguée) ignore `capture`.
@@ -167,7 +167,8 @@ Branche `retours-mobile`. Quatre retours du mainteneur après une version de tes
 - **Mes collections** : les cartes de la liste n'ont plus modifier / supprimer ; la page d'une collection gagne un menu
   « Plus » (`components/collection/CollectionMoreMenu.vue`) avec Exporter en JSON / CSV, Modifier la collection (nom,
   description) et Supprimer (confirmation, retour à la liste). En-tête : Partager + Plus (+ Ajouter sur bureau ; sur
-  mobile le bouton d'ajout reste en bas de page).
+  mobile le bouton d'ajout reste en bas de page). La place libérée sur les cartes va au nombre d'items, agrandi, à droite du
+  titre avec son unité dessous.
 - **Mode sombre oublié sur les pages publiques** (`/u/…`, `/c/…`, `/share/…`) : le thème n'était appliqué qu'au
   chargement du composable par la carte utilisateur, absente de la coquille publique. `main.ts` importe `useTheme` dès
   le démarrage ; et une bascule clair / sombre (`layout/ThemeToggle.vue`) rejoint le sélecteur de langue de l'en-tête

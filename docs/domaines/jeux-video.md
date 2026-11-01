@@ -43,7 +43,7 @@ Jeu ──game_released_as ──▶ Édition de jeu ──on_platform ──▶
 
 ## Sources
 
-Vérifié le 2026-10-17 (voir `docs/sources-externes.md`).
+Vérifié le 2026-10-17 (voir [`docs/sources-externes.md`](../sources-externes.md)).
 
 | Élément             | Wikidata (CC0)                                                                     | BnF (Licence Ouverte)                               |
 | ------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------- |

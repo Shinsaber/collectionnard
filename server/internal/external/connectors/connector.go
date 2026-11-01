@@ -1,7 +1,7 @@
 // Package connectors holds the connectors to the external sources, one profile
 // per kind of collection: BD / manga and novels (Wikidata + BnF, domain
-// « books », les.collection.md), music (MusicBrainz, domain « music »,
-// musique.md). They share the planner: the proposed items are matched against
+// « books », docs/domaines/livres.md), music (MusicBrainz, domain « music »,
+// docs/domaines/musique.md). They share the planner: the proposed items are matched against
 // the catalogue (existing items keep their values, the source only fills the
 // empty fields), then written through the catalogue import.
 //
@@ -115,7 +115,7 @@ const (
 	relEditedBy       = "edited_by"
 	relContainsVolume = "contains_volume"
 
-	// Package « music » (musique.md).
+	// Package « music » (docs/domaines/musique.md).
 	typeArtist  = "Artist"
 	typeAlbum   = "Album"
 	typeRelease = "Release"
@@ -127,7 +127,7 @@ const (
 	relContainsTrack = "contains_track"
 	relReleasedBy    = "released_by"
 
-	// Package « video » (video.md) ; people and publishers: package « people ».
+	// Package « video » (docs/domaines/video.md) ; people and publishers: package « people ».
 	typeFilm         = "Film"
 	typeVideoRelease = "VideoRelease"
 
@@ -146,7 +146,7 @@ const (
 	relContainsEpisode = "contains_episode"
 	relIncludesEpisode = "includes_episode"
 
-	// Package « games » (jeux-video.md) ; companies: Publisher of « people ».
+	// Package « games » (docs/domaines/jeux-video.md) ; companies: Publisher of « people ».
 	typeGame        = "Game"
 	typeGameRelease = "GameRelease"
 	typePlatform    = "Platform"

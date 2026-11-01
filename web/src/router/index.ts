@@ -98,7 +98,7 @@ const router = createRouter({
           component: () => import("@/views/GraphView.vue"),
           props: true,
         },
-        // ── Scanner (mobile.md, M3) ──
+        // ── Scanner (docs/phases/mobile.md, M3) ──
         {
           path: "scan",
           name: "scan",

@@ -41,7 +41,7 @@ type Store interface {
 	GetUserByID(ctx context.Context, id uuid.UUID) (*model.User, error)
 	GetUserPasswordHash(ctx context.Context, id uuid.UUID) (string, error)
 
-	// Accounts, invitations, password resets (P4-0, social.md)
+	// Accounts, invitations, password resets (P4-0, docs/phases/social.md)
 	ListUsers(ctx context.Context, pg model.Pagination) ([]model.User, int, error)
 	UpdateUser(ctx context.Context, id uuid.UUID, in model.UserUpdate) (*model.User, error)
 	UpdateProfile(ctx context.Context, id uuid.UUID, in model.ProfileUpdate) (*model.User, error)
