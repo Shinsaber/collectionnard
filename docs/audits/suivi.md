@@ -34,16 +34,16 @@ dans un timer systemd ou une crontab ; le rapport et ce tableau sont alors à re
 | Q-006 | basse | `GET /tags` renvoie toute la table sans borne | [store/tag.go:9](../../server/internal/store/tag.go#L9) | 2026-11-01 | corrigé | lot A (`LIMIT 100`) |
 | Q-007 | basse | Neuf clés i18n orphelines | [locales/fr/common.ts:3](../../web/src/i18n/locales/fr/common.ts#L3) | 2026-11-01 | ouvert | |
 | Q-008 | basse | Six fichiers `.vue` au-dessus de 400 lignes, roadmap qui affirme le contraire | [web/CLAUDE.md:76](../../web/CLAUDE.md#L76) | 2026-11-01 | ouvert | |
-| Q-009 | basse | Sept paquets Go sans commentaire de paquet | [store/store.go:1](../../server/internal/store/store.go#L1) | 2026-11-01 | ouvert | |
+| Q-009 | basse | Sept paquets Go sans commentaire de paquet | [store/store.go:1](../../server/internal/store/store.go#L1) | 2026-11-01 | corrigé | lot C (commentaires `// Package …` sur `main`, `config`, `handler`, `middleware`, `model`, `store`, `testutil`) |
 | Q-010 | basse | Suite Vitest : 52 environnements jsdom, 54 s, bruit canvas | [web/vite.config.ts:76](../../web/vite.config.ts#L76) | 2026-11-01 | ouvert | |
 | Q-011 | basse | `outils.sh` : tableau de `RESUME.md` illisible (accents graves dans `printf`) | [outils.sh:31](../../.claude/skills/audit/scripts/outils.sh#L31) | 2026-11-01 | ouvert | |
-| C-001 | moyenne | Sept codes d'erreur des comptes absents d'`openapi.yaml` | [handler/account.go:104](../../server/internal/handler/account.go#L104) | 2026-11-01 | ouvert | |
+| C-001 | moyenne | Sept codes d'erreur des comptes absents d'`openapi.yaml` | [handler/account.go:104](../../server/internal/handler/account.go#L104) | 2026-11-01 | corrigé | lot C (codes des comptes nommés dans chaque réponse d'`openapi.yaml`, liste du schéma `Error` complétée) |
 | C-002 | basse | Variables d'environnement : documentation et compose désalignés | [server/CLAUDE.md:5](../../server/CLAUDE.md#L5) | 2026-11-01 | corrigé | lot A (variables dans `server/CLAUDE.md`) + lot B (`LOG_LEVEL` transmis par compose, `MIGRATIONS_DIR` et `LOG_LEVEL` documentés, route `/relations/collections`) |
-| C-003 | basse | Les seeds citent les anciens noms des documents | [db/seed_bd_manga.sql:2](../../db/seed_bd_manga.sql#L2) | 2026-11-01 | ouvert | |
-| C-004 | basse | Exceptions légitimes à `respondJSON` / `decodeJSON` non consignées | [handler/export.go:41](../../server/internal/handler/export.go#L41) | 2026-11-01 | ouvert | |
-| C-005 | basse | `forbidden` traduit « Droits administrateur requis » pour d'autres refus | [locales/fr/errors.ts:39](../../web/src/i18n/locales/fr/errors.ts#L39) | 2026-11-01 | ouvert | |
-| C-006 | basse | `x-identifier` lu directement dans les composants, hors `lib/schema.ts` | [DynamicForm.vue:243](../../web/src/components/common/DynamicForm.vue#L243) | 2026-11-01 | ouvert | |
-| C-007 | basse | Commentaires périmés sur les droits des routes | [handler/upload.go:26](../../server/internal/handler/upload.go#L26) | 2026-11-01 | ouvert | |
+| C-003 | basse | Les seeds citent les anciens noms des documents | [db/seed_bd_manga.sql:2](../../db/seed_bd_manga.sql#L2) | 2026-11-01 | corrigé | lot C (commentaires des seeds → `docs/domaines/…`) |
+| C-004 | basse | Exceptions légitimes à `respondJSON` / `decodeJSON` non consignées | [handler/export.go:41](../../server/internal/handler/export.go#L41) | 2026-11-01 | corrigé | lot C (exceptions consignées dans `server/CLAUDE.md` § Erreurs et réponses) |
+| C-005 | basse | `forbidden` traduit « Droits administrateur requis » pour d'autres refus | [locales/fr/errors.ts:39](../../web/src/i18n/locales/fr/errors.ts#L39) | 2026-11-01 | corrigé | lot C (libellé neutre « Action non autorisée pour votre rôle », fr et en) |
+| C-006 | basse | `x-identifier` lu directement dans les composants, hors `lib/schema.ts` | [DynamicForm.vue:243](../../web/src/components/common/DynamicForm.vue#L243) | 2026-11-01 | corrigé | lot C (`isIdentifier` / `identifierKeys` dans `lib/schema.ts`, quatre lecteurs ramenés dessus) |
+| C-007 | basse | Commentaires périmés sur les droits des routes | [handler/upload.go:26](../../server/internal/handler/upload.go#L26) | 2026-11-01 | corrigé | lot A (`upload.go`) + lot C (`external.go`, `nginx.conf`, tableau des middlewares de `server/CLAUDE.md`) |
 
 ## Audits réalisés
 

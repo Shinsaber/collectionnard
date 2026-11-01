@@ -1,3 +1,7 @@
+// Package model defines the JSON structs exchanged by the API (entities, *Create /
+// *Update inputs, Pagination, APIError), mirrored by web/src/api/types.ts.
+// Dynamic attributes stay as json.RawMessage, validated against the JSON Schema of
+// their meta-type.
 package model
 
 import (

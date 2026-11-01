@@ -5,6 +5,7 @@ import type { Lang } from "@/i18n/langs";
 import {
   fieldLabel,
   fieldValue,
+  isIdentifier,
   isImageGallery,
   isLinks,
   linksOf,
@@ -100,7 +101,7 @@ export function attributeRows(
       key,
       label: fieldLabel(schema, key, lang, "pretty"),
       view: viewOf(schema, key, attrs[key], lang, depth),
-      mono: propOf(schema, key)?.["x-identifier"] === true,
+      mono: isIdentifier(propOf(schema, key)),
     }))
     .filter((r) => !isEmpty(r.view));
 }

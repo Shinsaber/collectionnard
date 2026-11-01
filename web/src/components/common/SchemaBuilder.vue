@@ -98,7 +98,7 @@
 import { computed, ref, watch, type PropType } from "vue";
 import { useI18n } from "vue-i18n";
 import { LANGS } from "@/i18n/langs";
-import { isCompleteness, linksProperty } from "@/lib/schema";
+import { isCompleteness, isIdentifier, linksProperty } from "@/lib/schema";
 import SchemaFieldCard from "./SchemaFieldCard.vue";
 import SchemaRootCard from "./SchemaRootCard.vue";
 import {
@@ -242,7 +242,7 @@ function parseSchema(schema: Record<string, unknown>): SchemaField[] {
             ? parseImageCategories(prop["x-image-categories"])
             : null,
         private: prop["x-private"] === true,
-        identifier: prop["x-identifier"] === true,
+        identifier: isIdentifier(prop),
         extra: preservedKeys(prop, type),
         itemsExtra:
           type === "array"

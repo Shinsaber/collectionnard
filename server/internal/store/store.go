@@ -1,3 +1,7 @@
+// Package store is the persistence layer: the Store interface (store.go) and its
+// PostgreSQL implementation on pgx (one file per domain). It returns ErrNotFound and
+// ErrConflict, never HTTP; every catalogue write opens its transaction with begin so
+// that the history triggers know the actor.
 package store
 
 import (

@@ -1,5 +1,5 @@
 -- =============================================================================
--- Collectionnard — Domaine Jeux vidéo (P3-7, jeux-video.md)
+-- Collectionnard — Domaine Jeux vidéo (P3-7, docs/domaines/jeux-video.md)
 -- Chargé après seed.sql (utilisateurs) ; les types viennent des paquets de domaine
 -- « games » et « people » (server/internal/domains/packages), installés avant les seeds.
 --

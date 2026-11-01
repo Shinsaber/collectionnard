@@ -2,6 +2,7 @@
 // lire l'EAN-13 (Chrome Android), sinon le ponyfill barcode-detector (MIT) sur zxing-wasm (MIT),
 // chargé à la demande avec le `.wasm` servi par l'application (jamais un CDN ; précaché par le
 // service worker, donc disponible hors ligne).
+import { isIdentifier } from "./schema";
 
 /** Formats lus : codes commerciaux (ISBN = EAN-13, EAN-8, UPC), codes industriels courants, QR. */
 export const FORMATS = [
@@ -86,7 +87,7 @@ export function identifierPrefill(
     Record<string, Record<string, unknown>> | undefined;
   if (!properties || !code) return out;
   for (const [key, prop] of Object.entries(properties)) {
-    if (prop["x-identifier"] !== true || prop.type !== "string") continue;
+    if (!isIdentifier(prop) || prop.type !== "string") continue;
     if (typeof prop.pattern === "string") {
       try {
         if (!new RegExp(prop.pattern).test(code)) continue;

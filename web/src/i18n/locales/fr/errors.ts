@@ -36,7 +36,7 @@ export default {
   api: {
     bad_request: "Requête invalide",
     unauthorized: "Authentification requise ou identifiants incorrects",
-    forbidden: "Droits administrateur requis",
+    forbidden: "Action non autorisée pour votre rôle",
     not_found: "Élément introuvable",
     conflict: "Conflit : cet élément existe déjà ou est encore utilisé",
     payload_too_large: "Fichier ou requête trop volumineux",

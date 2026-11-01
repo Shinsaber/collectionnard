@@ -1,3 +1,6 @@
+// Package config reads the server configuration from the environment: DATABASE_URL
+// and JWT_SECRET are required, everything else has a safe default (see Load and the
+// variables table of the README).
 package config
 
 import (

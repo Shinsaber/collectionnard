@@ -1777,8 +1777,12 @@ components:
             connecteur absents du catalogue), `external_unavailable` (502, source externe injoignable),
             `item_type_not_allowed` (422, type d'item non permis par le type de collection),
             `image_too_large` (400, image de plus de 25 mégapixels), `upload_quota` (429, quota horaire
-            d'envoi d'images du compte).
-            Un client doit prévoir un libellé générique pour un code inconnu.
+            d'envoi d'images du compte). Comptes (P4-0) : `account_disabled` (401), `invalid_invitation` (401),
+            `invalid_reset_link` (401), `invalid_username`, `invalid_email`, `weak_password` (400),
+            `account_exists`, `invitation_used`, `self_lockout`, `last_admin` (409), `wrong_password` (403).
+            Propositions (P4-3) : `proposal_state`, `proposal_quota`, `proposal_invalid`, `proposal_conflict`,
+            `proposal_meta_types`, `own_proposal`. Chaque réponse d'erreur d'une opération nomme les codes qu'elle
+            émet. Un client doit prévoir un libellé générique pour un code inconnu.
           example: validation_error
         message:
           type: string
@@ -2626,14 +2630,20 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "401":
-          description: Identifiants invalides.
+          description: Identifiants invalides (`unauthorized`) ou compte désactivé (`account_disabled`).
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-              example:
-                error: unauthorized
-                message: invalid username or password
+              examples:
+                credentials:
+                  value:
+                    error: unauthorized
+                    message: invalid username or password
+                disabled:
+                  value:
+                    error: account_disabled
+                    message: this account is disabled
         "429":
           $ref: "#/components/responses/TooManyRequests"
 
@@ -2676,7 +2686,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "401":
-          description: Refresh token inconnu, expiré, déjà utilisé ou utilisateur supprimé.
+          description: |
+            Refresh token inconnu, expiré, déjà utilisé ou utilisateur supprimé (`unauthorized`) ;
+            compte désactivé entre-temps (`account_disabled`).
           content:
             application/json:
               schema:
@@ -2780,17 +2792,26 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/LoginResponse" }
-        "400": { $ref: "#/components/responses/BadRequest" }
+        "400":
+          description: |
+            JSON invalide ou jeton manquant (`bad_request`) ; nom d'utilisateur hors format, 2 à 100 lettres,
+            chiffres, « _ », « . » ou « - » (`invalid_username`) ; adresse e-mail invalide (`invalid_email`) ;
+            mot de passe de moins de 8 caractères ou de plus de 72 octets (`weak_password`).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example: { error: weak_password, message: "password: 8 characters minimum" }
         "401":
           description: Invitation inconnue, utilisée, expirée ou retirée (`invalid_invitation`).
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
         "409":
-          description: Nom d'utilisateur (sans casse) ou adresse e-mail déjà utilisé.
+          description: Nom d'utilisateur (sans casse) ou adresse e-mail déjà utilisé (`account_exists`).
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
+              example: { error: account_exists, message: username or email already in use }
         "413": { $ref: "#/components/responses/PayloadTooLarge" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
         "500": { $ref: "#/components/responses/InternalError" }
@@ -2811,9 +2832,15 @@ paths:
             schema: { $ref: "#/components/schemas/ResetPasswordRequest" }
       responses:
         "204": { description: Mot de passe changé. }
-        "400": { $ref: "#/components/responses/BadRequest" }
+        "400":
+          description: |
+            JSON invalide ou jeton manquant (`bad_request`) ; mot de passe de moins de 8 caractères ou de plus
+            de 72 octets (`weak_password`).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
         "401":
-          description: Lien inconnu, utilisé ou expiré (`invalid_reset_link`), ou compte désactivé.
+          description: Lien inconnu, utilisé ou expiré (`invalid_reset_link`), ou compte désactivé (`account_disabled`).
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
@@ -2862,7 +2889,13 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/LoginResponse" }
-        "400": { $ref: "#/components/responses/BadRequest" }
+        "400":
+          description: |
+            JSON invalide ou champ manquant (`bad_request`) ; nouveau mot de passe de moins de 8 caractères ou
+            de plus de 72 octets (`weak_password`).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403":
           description: Mot de passe actuel incorrect (`wrong_password`).
@@ -2923,7 +2956,12 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Conflict" }
+        "409":
+          description: Invitation déjà utilisée (`invitation_used`).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example: { error: invitation_used, message: invitation already used }
         "500": { $ref: "#/components/responses/InternalError" }
 
   /users:
@@ -2977,7 +3015,18 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Conflict" }
+        "409":
+          description: |
+            L'admin tente de se désactiver ou de se retirer le rôle admin (`self_lockout`) ; le compte visé est
+            le dernier admin actif (`last_admin`).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              examples:
+                self:
+                  value: { error: self_lockout, message: an admin cannot disable or demote themself }
+                last:
+                  value: { error: last_admin, message: the last active admin cannot be disabled or demoted }
         "500": { $ref: "#/components/responses/InternalError" }
 
   /users/{id}/reset-link:

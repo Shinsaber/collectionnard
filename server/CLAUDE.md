@@ -12,7 +12,7 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 | `model`      | Structs JSON (entités, `*Create`, `*Update`, `Pagination`, `APIError`)                               |
 | `store`      | Interface `Store` (`store.go`) + implémentation pgx (1 fichier/domaine)                              |
 | `handler`    | Handlers HTTP, 1 fichier/domaine ; **toutes les routes** dans `handler.go` → `Router()`              |
-| `middleware` | `Authenticate` (JWT HS256, `exp` obligatoire), `RequireAdmin`, `RateLimiter` (`/auth/*`)             |
+| `middleware` | Cinq niveaux d'accès du `Router()` : public ; `OptionalAuthenticate` (routes `/public/…`, `/share` : anonyme ou jeton valide) ; `Authenticate` (JWT HS256, `exp` obligatoire) ; `RequireRole(admin, contributor)` (écriture du catalogue, modération, import externe) ; `RequireAdmin` (méta-types, administration, suppression d'item). Plus `RateLimiter` (`/auth/*`, deux compteurs), `TrustedProxyRealIP`, `RequestLogger` |
 | `validator`  | `ValidateAttributes(schema, data)` + `FormatValidationError`                                         |
 | `testutil`   | `MockStore` (champs `XxxFn`), `NewTestServer`, `AdminToken`/`UserToken`, `AuthHeader`                |
 | `label`      | `Render(schema, attrs, lang)` : libellé d'un item via `x-label` (pendant de `web/src/lib/schema.ts`) |
@@ -29,7 +29,10 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 
 - Store : renvoyer `store.ErrNotFound` / `store.ErrConflict` ; le handler les traduit en 404 / 409.
 - Handler : utiliser `respondJSON`, `respondError(w, status, code, message)` et
-  `respondValidationError` (422) — pas de `w.Write` à la main.
+  `respondValidationError` (422) — pas de `w.Write` à la main. Seules exceptions : les pièces jointes d'export
+  (`handler/export.go`, `attachment` + `csv.Writer` ou corps JSON en flux) et `readImport`, qui lit le corps avec sa
+  propre limite `MAX_IMPORT_SIZE` au lieu de `decodeJSON` (1 Mio). Tout code d'erreur émis par `respondError` est nommé
+  dans la réponse correspondante d'`api/openapi.yaml` et traduit dans `web/src/i18n/locales/*/errors.ts`.
 - Toute écriture d'attributs dynamiques (item, relation, collection item) doit passer par
   `validator.ValidateAttributes` avec le schéma du méta-type correspondant.
 - Tout `attributes_schema` écrit sur un méta-type passe par `checkAttributesSchema` (→ `validator.CheckSchema` :

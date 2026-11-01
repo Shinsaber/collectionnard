@@ -1,5 +1,5 @@
 -- =============================================================================
--- Collectionnard — Domaine Vidéo (P3-5, video.md)
+-- Collectionnard — Domaine Vidéo (P3-5, docs/domaines/video.md)
 -- Chargé après seed.sql (utilisateurs) ; les types viennent des paquets de domaine
 -- « video » et « people » (server/internal/domains/packages), installés avant les seeds.
 --

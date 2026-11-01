@@ -1,3 +1,6 @@
+// Package testutil provides the handler test kit: MockStore (one XxxFn field per
+// Store method, ErrNotFound by default), test servers, tokens and fixtures. No
+// PostgreSQL needed.
 package testutil
 
 import (

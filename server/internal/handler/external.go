@@ -27,7 +27,7 @@ func externalContext(w http.ResponseWriter, r *http.Request) (context.Context, c
 	return context.WithTimeout(r.Context(), externalTimeout)
 }
 
-// ListConnectors answers GET /external/connectors (admin): the connectors and the
+// ListConnectors answers GET /external/connectors (any authenticated account): the connectors and the
 // domain package each one writes into.
 func (h *Handler) ListConnectors(w http.ResponseWriter, r *http.Request) {
 	out := make([]model.ConnectorInfo, 0, len(h.Connectors))
@@ -57,7 +57,7 @@ func (h *Handler) connector(w http.ResponseWriter, r *http.Request) (external.Co
 	return nil, false
 }
 
-// SearchExternalWorks answers GET /external/{connector}/works?q= (admin).
+// SearchExternalWorks answers GET /external/{connector}/works?q= (any authenticated account).
 func (h *Handler) SearchExternalWorks(w http.ResponseWriter, r *http.Request) {
 	conn, ok := h.connector(w, r)
 	if !ok {
@@ -77,7 +77,7 @@ func (h *Handler) SearchExternalWorks(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, hits)
 }
 
-// SearchExternalEditions answers GET /external/{connector}/editions?q=|isbn=|barcode=|work= (admin).
+// SearchExternalEditions answers GET /external/{connector}/editions?q=|isbn=|barcode=|work= (any authenticated account).
 // The connector checks the work identifier (Wikidata, MusicBrainz…).
 func (h *Handler) SearchExternalEditions(w http.ResponseWriter, r *http.Request) {
 	conn, ok := h.connector(w, r)
@@ -126,7 +126,7 @@ func (h *Handler) SearchExternalEditions(w http.ResponseWriter, r *http.Request)
 	respondJSON(w, http.StatusOK, hits)
 }
 
-// PreviewExternal answers POST /external/{connector}/preview (admin): the items
+// PreviewExternal answers POST /external/{connector}/preview (any authenticated account): the items
 // and relations the sources propose, matched against the catalogue.
 func (h *Handler) PreviewExternal(w http.ResponseWriter, r *http.Request) {
 	conn, ok := h.connector(w, r)
@@ -148,7 +148,7 @@ func (h *Handler) PreviewExternal(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, plan)
 }
 
-// ImportExternal answers POST /external/{connector}/import (admin): the selected
+// ImportExternal answers POST /external/{connector}/import (admins and contributors, RequireRole): the selected
 // nodes go through the catalogue import (same report, 200 or 422, dry_run).
 func (h *Handler) ImportExternal(w http.ResponseWriter, r *http.Request) {
 	conn, ok := h.connector(w, r)

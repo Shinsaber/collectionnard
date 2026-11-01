@@ -35,7 +35,7 @@ const en: typeof fr = {
   api: {
     bad_request: "Invalid request",
     unauthorized: "Authentication required or invalid credentials",
-    forbidden: "Administrator rights required",
+    forbidden: "Action not allowed for your role",
     not_found: "Not found",
     conflict: "Conflict: this element already exists or is still in use",
     payload_too_large: "File or request too large",

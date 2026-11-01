@@ -1,3 +1,8 @@
+// Package handler holds the HTTP handlers of the API (one file per domain) and the
+// router that mounts every route with its middleware group (Router, handler.go):
+// public, optional authentication, authenticated, admin or contributor, admin.
+// Handlers talk to the database only through store.Store and answer with
+// respondJSON / respondError (stable error codes, api/openapi.yaml).
 package handler
 
 import (

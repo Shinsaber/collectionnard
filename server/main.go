@@ -1,3 +1,6 @@
+// Command colec-server is the Collectionnard API: `serve` (default) starts the HTTP
+// server; `migrate`, `seed`, `install-domain`, `create-user` and `hash-password` are
+// the operating subcommands (cmd.go). Configuration comes from the environment (config).
 package main
 
 import (
