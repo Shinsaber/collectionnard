@@ -66,7 +66,9 @@ const en: typeof fr = {
     cropStep: "Crop",
     steps: "Steps: straighten the perspective, then crop",
     straightenHint:
-      "Put the four corners on those of the cover (detected automatically when the background contrasts), then straighten. Arrow keys: 1% per press, 10% with Shift.",
+      "Put the four corners on those of the cover (detected automatically when the background contrasts), then straighten.",
+    straightenKeys: "Arrow keys: 1% per press, 10% with Shift.",
+    detect: "Detect",
     detectEdges: "Detect edges",
     wholeImage: "Whole image",
     skipStraighten: "Skip",

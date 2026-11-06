@@ -6,10 +6,15 @@
     fichier prêt pour le recadrage. Retours v0.4.0 : zone de prise élargie autour de chaque coin,
     loupe pendant le déplacement (le doigt cache le coin), rotation par quarts de tour.
   -->
-  <div class="flex flex-col gap-3">
-    <p class="text-sm text-muted">{{ t("schema.gallery.straightenHint") }}</p>
+  <div class="flex flex-1 flex-col gap-3">
+    <p class="text-sm text-muted">
+      {{ t("schema.gallery.straightenHint") }}
+      <span class="pointer-coarse:hidden">{{
+        t("schema.gallery.straightenKeys")
+      }}</span>
+    </p>
     <div
-      class="relative h-[55vh] max-h-120 w-full overflow-hidden rounded-lg bg-ink shadow-cover"
+      class="relative min-h-56 w-full flex-1 overflow-hidden rounded-lg bg-ink shadow-cover md:h-[55vh] md:max-h-120 md:flex-none"
       data-test="perspective-stage"
     >
       <img
@@ -109,12 +114,9 @@
       :busy="busy"
       :has-image="!!bitmap"
       :has-size="!!size"
-      :has-quad="!!quad"
       @rotate="rotate"
       @detect="detect"
       @reset="reset"
-      @skip="emit('skip')"
-      @apply="apply"
     />
   </div>
 </template>
@@ -147,7 +149,7 @@ import AppSpinner from "./AppSpinner.vue";
 import PerspectiveToolbar from "./PerspectiveToolbar.vue";
 
 const props = defineProps<{ file: File }>();
-const emit = defineEmits<{ done: [file: File]; skip: [] }>();
+const emit = defineEmits<{ done: [file: File] }>();
 
 const { t } = useI18n();
 const { notifyError } = useNotify();
@@ -174,6 +176,10 @@ const stroke = computed(() => handleRadius.value / 6);
 const points = computed(
   () => quad.value?.map((p) => `${p.x},${p.y}`).join(" ") ?? "",
 );
+
+// « Passer » et « Redresser » vivent dans le pied du dialogue (ImageCropDialog).
+const canApply = computed(() => !!size.value && !!quad.value);
+defineExpose({ apply, busy, canApply });
 
 onMounted(load);
 watch(() => props.file, load);

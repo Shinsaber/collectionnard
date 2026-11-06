@@ -380,6 +380,11 @@ html.dark .el-button--primary {
   margin-left: 0;
 }
 
+/* Rangée de boutons en flex : l'espacement vient de `gap`, sans la marge d'Element Plus qui décale les lignes repliées. */
+.btn-row .el-button + .el-button {
+  margin-left: 0;
+}
+
 /* Confirmations (ElMessageBox) */
 .el-message-box {
   --el-messagebox-border-radius: 16px;
@@ -432,6 +437,18 @@ html.dark .el-button--primary {
   .el-dialog__body {
     padding: 20px 16px;
     overscroll-behavior: contain;
+  }
+  /* Redressement et recadrage : l'image prend toute la hauteur laissée par les commandes. */
+  .image-crop-dialog.el-dialog:not(.is-fullscreen) {
+    height: 94dvh;
+  }
+  .image-crop-dialog .el-dialog__body {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 16px;
+  }
+  .image-crop-dialog .el-dialog__footer .el-button {
+    padding-inline: 8px;
   }
   .el-dialog__footer {
     position: relative;

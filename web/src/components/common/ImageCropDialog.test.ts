@@ -19,10 +19,14 @@ vi.mock("cropperjs", () => ({
   },
 }));
 
+const apply = vi.fn();
 const Perspective = defineComponent({
   name: "PerspectiveEditor",
   props: { file: { type: Object, default: null } },
-  emits: ["done", "skip"],
+  emits: ["done"],
+  setup(_, { expose }) {
+    expose({ apply, busy: false, canApply: true });
+  },
   template: '<div data-test="perspective-stub" />',
 });
 
@@ -81,6 +85,25 @@ describe("ImageCropDialog — étapes", () => {
     expect((stepInput(w, "crop").element as HTMLInputElement).checked).toBe(
       true,
     );
+    w.unmount();
+  });
+
+  it("le pied du dialogue commande le redressement : appliquer, ou passer au recadrage", async () => {
+    const w = mountDialog();
+    await flushPromises();
+    await stepInput(w, "straighten").setValue(true);
+    await flushPromises();
+
+    await w.find('[data-test="perspective-apply"]').trigger("click");
+    expect(apply).toHaveBeenCalledOnce();
+
+    const skip = w
+      .findAll(".el-dialog__footer button")
+      .find((b) => b.text() === "Passer");
+    await skip!.trigger("click");
+    await flushPromises();
+    expect(w.find('[data-test="perspective-stub"]').exists()).toBe(false);
+    expect(w.find('[data-test="perspective-apply"]').exists()).toBe(false);
     w.unmount();
   });
 });

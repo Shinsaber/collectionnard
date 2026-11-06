@@ -40,6 +40,8 @@ leur emplacement par Claude Code). Un nouveau document va dans `docs/`, avec une
 | [docs/phases/social.md](docs/phases/social.md)                 | Phase 4 (social) : décisions, modèle et API visés — comptes et invitations, statistiques, visibilité, contributions |
 | [docs/audits/suivi.md](docs/audits/suivi.md) | Audits récurrents (`/audit`, skill `.claude/skills/audit/`, agent lecture seule `.claude/agents/auditeur.md`) : constats S-/Q-/C-nnn, états, rapports datés — ne jamais y corriger le code, proposer un lot |
 | [docs/phases/mobile.md](docs/phases/mobile.md)                 | Phase 5 (mobile) : cas d'usage et décisions — photo de couverture et recadrage, scanner de codes-barres, page « Scanner » |
+| [docs/phases/interactions.md](docs/phases/interactions.md) | Phase 6 (en exploration) : avis à critères, modération et votes, échanges sur les avis, articles, recommandations |
+| [docs/idées.md](docs/idées.md)                               | Pistes notées mais non retenues : prêts, cadeaux, comparaison de collections, suivi, suppression du compte… |
 
 ## Modèle en une table
 

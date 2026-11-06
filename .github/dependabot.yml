@@ -23,3 +23,8 @@ updates:
     directory: /
     patterns: ["*"]
     multi-ecosystem-group: epinglages
+    # Une version majeure de PostgreSQL ne lit pas les données existantes (pg_upgrade requis) :
+    # cette montée se décide à la main, avec le CI et flake.nix.
+    ignore:
+      - dependency-name: postgres
+        update-types: ["version-update:semver-major"]

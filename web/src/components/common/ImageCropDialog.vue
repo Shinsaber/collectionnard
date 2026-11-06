@@ -17,6 +17,7 @@
       )
     "
     width="40rem"
+    class="image-crop-dialog"
     append-to-body
     @opened="setup"
     @closed="teardown"
@@ -30,7 +31,7 @@
     <ElRadioGroup
       :model-value="step"
       size="small"
-      class="mb-3"
+      class="mb-3 shrink-0 self-start"
       :aria-label="t('schema.gallery.steps')"
       data-test="crop-steps"
       @update:model-value="goTo($event as Step)"
@@ -46,17 +47,17 @@
     </ElRadioGroup>
     <PerspectiveEditor
       v-if="step === 'straighten' && file"
+      ref="editor"
       :file="file"
       @done="onStraightened"
-      @skip="toCrop(file)"
     />
-    <div v-show="step === 'crop'">
+    <div v-show="step === 'crop'" class="flex flex-1 flex-col">
       <div
         ref="container"
-        class="h-[60vh] max-h-128 overflow-hidden rounded-lg bg-ink shadow-cover"
+        class="min-h-56 flex-1 overflow-hidden rounded-lg bg-ink shadow-cover md:h-[60vh] md:max-h-128 md:flex-none"
         data-test="crop-container"
       ></div>
-      <div class="mt-3 flex flex-wrap items-center gap-2">
+      <div class="btn-row mt-3 flex flex-wrap items-center gap-2">
         <ElButton
           :aria-label="t('schema.gallery.rotateLeft')"
           :disabled="!ready"
@@ -88,7 +89,26 @@
       <ElButton text @click="visible = false">{{
         t("common.cancel")
       }}</ElButton>
-      <template v-if="step === 'crop'">
+      <template v-if="step === 'straighten'">
+        <ElButton :disabled="editor?.busy" @click="file && toCrop(file)">
+          {{ t("schema.gallery.skipStraighten") }}
+        </ElButton>
+        <ElButton
+          type="primary"
+          :loading="editor?.busy"
+          :disabled="!editor?.canApply"
+          data-test="perspective-apply"
+          @click="editor?.apply()"
+        >
+          <i
+            v-if="!editor?.busy"
+            class="pi pi-check mr-2"
+            aria-hidden="true"
+          ></i>
+          {{ t("schema.gallery.straighten") }}
+        </ElButton>
+      </template>
+      <template v-else>
         <ElButton :loading="busy" @click="asIs">
           {{ t("schema.gallery.asIs") }}
         </ElButton>
@@ -137,6 +157,7 @@ const { t } = useI18n();
 const { notifyError } = useNotify();
 
 const container = ref<HTMLDivElement | null>(null);
+const editor = ref<InstanceType<typeof PerspectiveEditor> | null>(null);
 type Step = "straighten" | "crop";
 const step = ref<Step>("crop");
 /** Image recadrée : l'originale, ou son redressement. */

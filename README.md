@@ -247,6 +247,8 @@ emplacement).
 | [docs/phases/evolutions-socle.md](docs/phases/evolutions-socle.md) | Lots E1–E5 : identifiants insensibles à la casse, ordre des types, types d'item permis, images, hors ligne |
 | [docs/phases/social.md](docs/phases/social.md)                 | Phase 4 : comptes et invitations, statistiques personnelles, visibilité et partage, contributions              |
 | [docs/phases/mobile.md](docs/phases/mobile.md)                 | Phase 5 : photo de couverture, redressement et recadrage, scanner de codes-barres, page « Scanner », retours v0.4.0 |
+| [docs/phases/interactions.md](docs/phases/interactions.md) | Phase 6 (en exploration) : avis à critères, modération et votes, échanges sur les avis, articles, recommandations |
+| [docs/idées.md](docs/idées.md)                               | Pistes notées mais non retenues : prêts, cadeaux, comparaison de collections, suivi, suppression du compte… |
 | [docs/audits/suivi.md](docs/audits/suivi.md)                   | Audits récurrents (`/audit`, lecture seule) : suivi des constats à identifiant stable et rapports datés `AAAA-MM-DD.md` |
 | [api/openapi.yaml](api/openapi.yaml)                           | Spécification OpenAPI 3.1, **source de vérité de l'API**                                                       |
 | [db/migrations/001_init.sql](db/migrations/001_init.sql)       | Schéma de base de données commenté (puis `002` à `012`)                                                        |

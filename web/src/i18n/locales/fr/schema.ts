@@ -66,7 +66,9 @@ export default {
     cropStep: "Recadrer",
     steps: "Étapes : redresser la perspective, puis recadrer",
     straightenHint:
-      "Placez les quatre coins sur ceux de la couverture (détectés d'office quand le fond contraste), puis redressez. Flèches au clavier : 1 % par appui, 10 % avec Maj.",
+      "Placez les quatre coins sur ceux de la couverture (détectés d'office quand le fond contraste), puis redressez.",
+    straightenKeys: "Flèches au clavier : 1 % par appui, 10 % avec Maj.",
+    detect: "Détecter",
     detectEdges: "Détecter les bords",
     wholeImage: "Image entière",
     skipStraighten: "Passer",

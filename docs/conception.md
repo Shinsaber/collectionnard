@@ -10,7 +10,7 @@ Il sera maintenu à jour au fil des échanges et itérations.
 >
 > - [README.md](../README.md) — Démarrage rapide, stack, structure du projet, index de la documentation
 > - [docs/domaines/](domaines/) — Modèles de données : livres, musique, vidéo, jeux vidéo ; [sources-externes.md](sources-externes.md) — bases ouvertes
-> - [docs/phases/](phases/) — Notes de conception des lots : évolutions du socle, social (Phase 4), mobile (Phase 5)
+> - [docs/phases/](phases/) — Notes de conception des lots : évolutions du socle, social (Phase 4), mobile (Phase 5), interactions (Phase 6) ; [idées.md](idées.md) — pistes futures
 > - [api/openapi.yaml](../api/openapi.yaml) — Spécification complète de l'API REST
 > - [db/migrations/001_init.sql](../db/migrations/001_init.sql) — Schéma de base de données commenté (migrations tern)
 
@@ -523,6 +523,21 @@ barcode-detector / zxing-wasm (MIT, `.wasm` servi localement) pour les codes-bar
       bascule sur les pages publiques. Fusionnés dans `main` (v0.4.1).
 - [ ] Plus tard (voir `docs/phases/mobile.md`) : recadrage d'une image déjà en galerie, OCR, QR code des liens de partage, scan
       d'étagère.
+
+### Phase 6 : Interactions entre utilisateurs (en exploration)
+
+Ouverte le 2026-11-02 (conception : `docs/phases/interactions.md`, pistes reportées : `docs/idées.md`). Cible : une
+instance publique à terme. Décisions : avis dans une entité dédiée (un par utilisateur et par item), critères génériques
+notés sur 10 portés par un méta-type, note de *Visionnage* supprimée, modération humaine
+par les admins et un rôle `moderator`.
+
+- [ ] **I-0 — Avis et critères** : méta-type `ReviewType` rattaché aux types d'item (fermé sur les personnes), note
+      globale ou moyenne des critères, en étoiles, texte, spoiler, langue, visibilité ; suppression de `Visionnage.rating`.
+- [ ] **I-1 — Signalements, modération et réactions** : rôle `moderator`, bouton « Signaler » (avis, commentaire, article),
+      file de modération, masquage, journal de modération et récapitulatif par membre, réactions (intention ou émotion).
+- [ ] **I-2 — Commentaires** : fil sur les avis, notifications.
+- [ ] **I-3 — Articles sur la fiche d'un item** : partage de nouvelles (titre, message, lien), fil de commentaires.
+- [ ] **I-4 — Recommandations** : envoyer une fiche à un membre avec un mot.
 
 ---
 
