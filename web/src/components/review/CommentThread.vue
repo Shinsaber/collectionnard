@@ -15,86 +15,115 @@
           class="flex flex-col gap-1.5 rounded-lg bg-surface px-3 py-2"
           data-test="comment"
         >
-          <div class="flex flex-wrap items-center gap-2 text-[13px]">
-            <span class="font-bold" data-test="comment-author">{{
-              c.author
-                ? c.author.display_name || c.author.username
-                : t("reviews.comments.reviewAuthor")
-            }}</span>
-            <span
-              v-if="c.review_author && c.author"
-              class="rounded-full bg-tint px-2 py-0.5 text-[11px] font-semibold text-tint-ink"
-              >{{ t("reviews.comments.reviewAuthor") }}</span
-            >
-            <time
-              class="font-mono text-[11px] text-muted"
-              :datetime="c.created_at"
-              >{{
-                new Date(c.created_at).toLocaleString(lang, {
-                  dateStyle: "short",
-                  timeStyle: "short",
-                })
-              }}</time
-            >
-            <span class="ml-auto flex gap-1">
-              <template v-if="c.mine">
-                <ElButton text size="small" @click="startEdit(c)">{{
-                  t("common.edit")
-                }}</ElButton>
-                <ElButton text size="small" type="danger" @click="remove(c)">{{
-                  t("common.delete")
-                }}</ElButton>
-              </template>
-              <ElButton
-                v-else-if="canWrite"
-                text
-                size="small"
-                class="text-muted!"
-                data-test="comment-report"
-                @click="reportingId = c.id"
-              >
-                <i class="pi pi-flag mr-1" aria-hidden="true"></i>
-                {{ t("reviews.report.action") }}
-              </ElButton>
-            </span>
-          </div>
           <p
-            v-if="c.hidden_at"
-            class="rounded bg-danger/12 px-2 py-1 text-[12px] text-danger"
+            v-if="isTrace(c)"
+            class="text-[13px] italic text-muted"
+            data-test="comment-trace"
           >
             {{
-              t("reviews.comments.hidden", { reason: c.hidden_reason ?? "" })
+              c.deleted_at
+                ? t("reviews.comments.deleted")
+                : t("reviews.comments.hiddenTrace")
             }}
+            <time class="ml-1 font-mono text-[11px] not-italic">{{
+              new Date(c.created_at).toLocaleDateString(lang)
+            }}</time>
           </p>
-          <form
-            v-if="editingId === c.id"
-            class="flex flex-col gap-2"
-            @submit.prevent="saveEdit(c)"
-          >
-            <ElInput
-              v-model="editBody"
-              type="textarea"
-              :autosize="{ minRows: 2, maxRows: 10 }"
-              maxlength="5000"
-            />
-            <div class="flex justify-end gap-2">
-              <ElButton size="small" @click="editingId = null">{{
-                t("common.cancel")
-              }}</ElButton>
-              <ElButton size="small" type="primary" native-type="submit">{{
-                t("common.save")
-              }}</ElButton>
+          <template v-else>
+            <div class="flex flex-wrap items-center gap-2 text-[13px]">
+              <span class="font-bold" data-test="comment-author">{{
+                c.author
+                  ? c.author.display_name || c.author.username
+                  : c.target_author
+                    ? authorLabel
+                    : t("reviews.comments.member")
+              }}</span>
+              <span
+                v-if="c.target_author && c.author"
+                class="rounded-full bg-tint px-2 py-0.5 text-[11px] font-semibold text-tint-ink"
+                >{{ authorLabel }}</span
+              >
+              <time
+                class="font-mono text-[11px] text-muted"
+                :datetime="c.created_at"
+                >{{
+                  new Date(c.created_at).toLocaleString(lang, {
+                    dateStyle: "short",
+                    timeStyle: "short",
+                  })
+                }}</time
+              >
+              <span
+                v-if="c.edited_at"
+                class="text-[11px] text-muted"
+                :title="new Date(c.edited_at).toLocaleString(lang)"
+                data-test="comment-edited"
+                >{{ t("reviews.comments.edited") }}</span
+              >
+              <span class="ml-auto flex gap-1">
+                <template v-if="c.mine">
+                  <ElButton text size="small" @click="startEdit(c)">{{
+                    t("common.edit")
+                  }}</ElButton>
+                  <ElButton
+                    text
+                    size="small"
+                    type="danger"
+                    @click="remove(c)"
+                    >{{ t("common.delete") }}</ElButton
+                  >
+                </template>
+                <ElButton
+                  v-else-if="canWrite"
+                  text
+                  size="small"
+                  class="text-muted!"
+                  data-test="comment-report"
+                  @click="reportingId = c.id"
+                >
+                  <i class="pi pi-flag mr-1" aria-hidden="true"></i>
+                  {{ t("reviews.report.action") }}
+                </ElButton>
+              </span>
             </div>
-          </form>
-          <!-- Markdown restreint, rendu puis assaini par lib/markdown.ts. -->
-          <!-- eslint-disable vue/no-v-html -->
-          <div
-            v-else
-            class="review-body text-sm"
-            data-test="comment-body"
-            v-html="renderMarkdown(c.body)"
-          />
-          <!-- eslint-enable vue/no-v-html -->
+            <p
+              v-if="c.hidden_at"
+              class="rounded bg-danger/12 px-2 py-1 text-[12px] text-danger"
+            >
+              {{
+                t("reviews.comments.hidden", { reason: c.hidden_reason ?? "" })
+              }}
+            </p>
+            <form
+              v-if="editingId === c.id"
+              class="flex flex-col gap-2"
+              @submit.prevent="saveEdit(c)"
+            >
+              <ElInput
+                v-model="editBody"
+                type="textarea"
+                :autosize="{ minRows: 2, maxRows: 10 }"
+                maxlength="5000"
+              />
+              <div class="flex justify-end gap-2">
+                <ElButton size="small" @click="editingId = null">{{
+                  t("common.cancel")
+                }}</ElButton>
+                <ElButton size="small" type="primary" native-type="submit">{{
+                  t("common.save")
+                }}</ElButton>
+              </div>
+            </form>
+            <!-- Markdown restreint, rendu puis assaini par lib/markdown.ts. -->
+            <!-- eslint-disable vue/no-v-html -->
+            <div
+              v-else
+              class="review-body text-sm"
+              data-test="comment-body"
+              v-html="renderMarkdown(c.body)"
+            />
+            <!-- eslint-enable vue/no-v-html -->
+          </template>
         </li>
       </ul>
       <ElPagination
@@ -108,7 +137,7 @@
       />
 
       <p v-if="closed" class="text-sm text-muted" data-test="comments-closed">
-        {{ t("reviews.comments.closed") }}
+        {{ closedLabel }}
       </p>
       <form
         v-else-if="canWrite"
@@ -136,7 +165,7 @@
           >
         </div>
       </form>
-      <div v-if="ownReview" class="flex justify-end">
+      <div v-if="ownTarget" class="flex justify-end">
         <ElButton
           text
           size="small"
@@ -159,9 +188,9 @@
 </template>
 
 <script setup lang="ts">
-// Fil d'un avis (I-2) : à plat, les plus anciens d'abord. L'auteur d'un avis anonyme y reste « l'auteur de
+// Fil d'un avis (I-2) ou d'un article (I-3) : à plat, les plus anciens d'abord. L'auteur d'un avis anonyme y reste « l'auteur de
 // l'avis », sans nom (le serveur ne l'envoie pas). L'auteur de l'avis ferme ou rouvre son fil.
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { commentApi } from "@/api/client";
 import { useConfirmDialog } from "@/composables/useConfirmDialog";
@@ -170,17 +199,22 @@ import { useNotify } from "@/composables/useNotify";
 import { renderMarkdown } from "@/lib/markdown";
 import AppSpinner from "@/components/common/AppSpinner.vue";
 import ReportDialog from "./ReportDialog.vue";
-import type { Comment, Review } from "@/api/types";
+import type { Comment } from "@/api/types";
 
 const PER_PAGE = 50;
 
-const props = defineProps<{
-  review: Review;
-  /** Lecteur connecté : écrire, signaler. */
-  canWrite: boolean;
-  /** Son propre avis : fermer ou rouvrir le fil. */
-  ownReview?: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    /** Contenu commenté : un avis, ou un article (`targetKind`). */
+    target: { id: string; comments_closed?: boolean };
+    targetKind?: "review" | "article";
+    /** Lecteur connecté : écrire, signaler. */
+    canWrite: boolean;
+    /** Son propre avis ou article : fermer ou rouvrir le fil. */
+    ownTarget?: boolean;
+  }>(),
+  { targetKind: "review", ownTarget: false },
+);
 const emit = defineEmits<{ count: [n: number] }>();
 
 const { t } = useI18n();
@@ -194,7 +228,21 @@ const page = ref(1);
 const loading = ref(true);
 const body = ref("");
 const sending = ref(false);
-const closed = ref(props.review.comments_closed ?? false);
+const closed = ref(props.target.comments_closed ?? false);
+const authorLabel = computed(() =>
+  t(
+    props.targetKind === "article"
+      ? "reviews.comments.articleAuthor"
+      : "reviews.comments.reviewAuthor",
+  ),
+);
+const closedLabel = computed(() =>
+  t(
+    props.targetKind === "article"
+      ? "reviews.comments.closedArticle"
+      : "reviews.comments.closed",
+  ),
+);
 const editingId = ref<string | null>(null);
 const editBody = ref("");
 const reportingId = ref<string | null>(null);
@@ -202,13 +250,13 @@ const reportingId = ref<string | null>(null);
 async function load() {
   loading.value = true;
   try {
-    const res = await commentApi.list(props.review.id, {
+    const res = await commentApi.list(props.targetKind, props.target.id, {
       page: page.value,
       per_page: PER_PAGE,
     });
     comments.value = res.data;
     total.value = res.total;
-    emit("count", res.data.filter((c) => !c.hidden_at).length);
+    emit("count", res.data.filter((c) => !c.hidden_at && !c.deleted_at).length);
   } catch (e) {
     notifyError(e);
   } finally {
@@ -219,7 +267,7 @@ async function load() {
 async function send() {
   sending.value = true;
   try {
-    await commentApi.create(props.review.id, body.value);
+    await commentApi.create(props.targetKind, props.target.id, body.value);
     body.value = "";
     page.value = Math.max(1, Math.ceil((total.value + 1) / PER_PAGE));
     await load();
@@ -230,6 +278,9 @@ async function send() {
   }
 }
 
+/** Commentaire supprimé, ou masqué pour un autre que son auteur : une trace. */
+const isTrace = (c: Comment) => !!c.deleted_at || (!!c.hidden_at && !c.mine);
+
 function startEdit(c: Comment) {
   editingId.value = c.id;
   editBody.value = c.body;
@@ -238,7 +289,11 @@ function startEdit(c: Comment) {
 async function saveEdit(c: Comment) {
   try {
     const updated = await commentApi.update(c.id, editBody.value);
-    Object.assign(c, { body: updated.body, updated_at: updated.updated_at });
+    Object.assign(c, {
+      body: updated.body,
+      updated_at: updated.updated_at,
+      edited_at: updated.edited_at,
+    });
     editingId.value = null;
   } catch (e) {
     notifyError(e);
@@ -262,7 +317,11 @@ async function remove(c: Comment) {
 
 async function toggleClosed() {
   try {
-    await commentApi.setClosed(props.review.id, !closed.value);
+    await commentApi.setClosed(
+      props.targetKind,
+      props.target.id,
+      !closed.value,
+    );
     closed.value = !closed.value;
   } catch (e) {
     notifyError(e);

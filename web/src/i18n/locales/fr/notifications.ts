@@ -20,7 +20,14 @@ export default {
     comment_hidden:
       "Un de vos commentaires a été masqué par la modération : {reason}",
     comment_restored: "Un de vos commentaires a été rétabli par la modération",
+    article_published: "Votre article a été publié",
+    article_rejected: "Votre article a été refusé : {reason}",
+    article_hidden:
+      "Un de vos articles a été masqué par la modération : {reason}",
+    article_restored: "Un de vos articles a été rétabli par la modération",
+    article_comment: "{by} a commenté un article",
   },
   someone: "Un modérateur",
   reviewAuthor: "L'auteur de l'avis",
+  member: "Un membre",
 };

@@ -200,6 +200,16 @@
             @changed="loadReviewSummary(item!.id)"
           />
         </ElTabPane>
+        <ElTabPane
+          name="articles"
+          :label="`${t('articles.tab')} · ${articleCount}`"
+          lazy
+        >
+          <ArticleSection
+            :item-id="item.id"
+            @count="(n) => (articleCount = n)"
+          />
+        </ElTabPane>
         <ElTabPane name="history" :label="t('history.title')" lazy>
           <ItemHistoryCard
             :item="item"
@@ -244,7 +254,7 @@ import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import AppSpinner from "@/components/common/AppSpinner.vue";
-import { itemApi, relationApi, reviewApi } from "@/api/client";
+import { articleApi, itemApi, relationApi, reviewApi } from "@/api/client";
 import { useAuthStore } from "@/stores/auth";
 import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";
@@ -269,6 +279,7 @@ import RelationCreateDialog from "@/components/item/RelationCreateDialog.vue";
 import RelationEditDialog from "@/components/item/RelationEditDialog.vue";
 import RelationTree from "@/components/item/RelationTree.vue";
 import ReviewSection from "@/components/review/ReviewSection.vue";
+import ArticleSection from "@/components/review/ArticleSection.vue";
 import ReviewHeaderSummary from "@/components/review/ReviewHeaderSummary.vue";
 import type {
   Item,
@@ -300,6 +311,16 @@ const {
 const itemCollections = ref<ItemCollectionMembership[]>([]);
 const reviewSummary = ref<ReviewSummary | null>(null);
 const myReview = ref<Review | null>(null);
+const articleCount = ref(0);
+
+/** Nombre d'articles de l'onglet « Actualités » (publiés, et ceux du lecteur). */
+async function loadArticleCount(itemId: string) {
+  try {
+    articleCount.value = (await articleApi.list(itemId, { per_page: 1 })).total;
+  } catch {
+    articleCount.value = 0;
+  }
+}
 
 // Notes du premier bloc. Sans avis ouverts, la fiche reste utilisable : un échec ne se signale pas ici.
 async function loadReviewSummary(itemId: string) {
@@ -330,7 +351,8 @@ const title = computed(() =>
   item.value ? itemLabel(item.value, lang.value) : "",
 );
 
-type Tab = "relations" | "collections" | "images" | "reviews" | "history";
+type Tab =
+  "relations" | "collections" | "images" | "reviews" | "articles" | "history";
 const tab = ref<Tab>("relations");
 const tabsRef = ref<HTMLElement | null>(null);
 
@@ -418,6 +440,7 @@ async function loadItem(id: string) {
     historyVersion.value++;
     loadCollections(id);
     loadReviewSummary(id);
+    loadArticleCount(id);
   } catch (e) {
     notifyError(e, t("items.detail.notFound"));
   } finally {

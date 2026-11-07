@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/shinsaber/colec/internal/model"
@@ -55,7 +56,7 @@ func TestReviewComments_AnonymousAuthor(t *testing.T) {
 		Data []model.Comment `json:"data"`
 	}
 	_ = json.Unmarshal([]byte(raw), &page)
-	if !page.Data[0].ReviewAuthor || page.Data[0].Author != nil || !page.Data[1].Mine || page.Data[1].Author == nil {
+	if !page.Data[0].TargetAuthor || page.Data[0].Author != nil || !page.Data[1].Mine || page.Data[1].Author == nil {
 		t.Errorf("fil : %+v", page.Data)
 	}
 }
@@ -160,5 +161,54 @@ func TestCommentOwnership(t *testing.T) {
 	}
 	if resp, _ := callReview(t, mock, "POST", "/reviews/"+id+"/comments/close", testutil.UserToken(), ""); resp.StatusCode != http.StatusNotFound {
 		t.Errorf("fermer le fil d'un autre : %d", resp.StatusCode)
+	}
+}
+
+// Un commentateur au profil privé n'est jamais nommé ; « membres » ne l'est que pour un membre.
+func TestReviewComments_PrivateProfile(t *testing.T) {
+	someone := uuid.New()
+	mock := &testutil.MockStore{
+		GetReviewFn: reviewBy(authorID, "public", "texte"),
+		ListCommentsFn: func(context.Context, string, uuid.UUID, uuid.UUID, model.Pagination) ([]model.Comment, int, error) {
+			return []model.Comment{
+				{ID: uuid.New(), AuthorID: someone, AuthorProfile: "private", Author: &model.ReviewAuthor{Username: "discret"}, Body: "a"},
+				{ID: uuid.New(), AuthorID: uuid.New(), AuthorProfile: "members", Author: &model.ReviewAuthor{Username: "membre"}, Body: "b"},
+				{ID: uuid.New(), AuthorID: uuid.New(), AuthorProfile: "public", Author: &model.ReviewAuthor{Username: "public"}, Body: "c"},
+			}, 3, nil
+		},
+	}
+	path := "/reviews/" + reviewID.String() + "/comments"
+	_, raw := callReview(t, mock, "GET", path, testutil.UserToken(), "")
+	if strings.Contains(raw, "discret") || !strings.Contains(raw, `"membre"`) || !strings.Contains(raw, `"public"`) {
+		t.Errorf("membre : %s", raw)
+	}
+	_, raw = callReview(t, mock, "GET", path, "", "")
+	if strings.Contains(raw, "discret") || strings.Contains(raw, `"membre"`) || !strings.Contains(raw, `"public"`) {
+		t.Errorf("visiteur : %s", raw)
+	}
+}
+
+// Un commentaire supprimé, ou masqué pour un autre que son auteur, reste une trace sans texte ni auteur.
+func TestReviewComments_Traces(t *testing.T) {
+	now := time.Now()
+	reason := "Hors sujet"
+	mock := &testutil.MockStore{
+		GetReviewFn: reviewBy(authorID, "public", "texte"),
+		ListCommentsFn: func(context.Context, string, uuid.UUID, uuid.UUID, model.Pagination) ([]model.Comment, int, error) {
+			return []model.Comment{
+				{ID: uuid.New(), AuthorID: uuid.New(), AuthorProfile: "public", Author: &model.ReviewAuthor{Username: "parti"}, Body: "", DeletedAt: &now},
+				{ID: uuid.New(), AuthorID: uuid.New(), AuthorProfile: "public", Author: &model.ReviewAuthor{Username: "masque"}, Body: "insulte", HiddenAt: &now, HiddenReason: &reason},
+				{ID: uuid.New(), AuthorID: testutil.UserID, AuthorProfile: "public", Author: &model.ReviewAuthor{Username: "moi"}, Body: "mon texte masqué", HiddenAt: &now, HiddenReason: &reason},
+			}, 3, nil
+		},
+	}
+	_, raw := callReview(t, mock, "GET", "/reviews/"+reviewID.String()+"/comments", testutil.UserToken(), "")
+	for _, leak := range []string{"parti", "masque", "insulte"} {
+		if strings.Contains(raw, leak) {
+			t.Errorf("%q dans une trace : %s", leak, raw)
+		}
+	}
+	if !strings.Contains(raw, "mon texte masqué") || !strings.Contains(raw, reason) {
+		t.Errorf("son auteur voit son commentaire masqué et le motif : %s", raw)
 	}
 }

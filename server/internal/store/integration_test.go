@@ -1161,8 +1161,8 @@ func TestComments(t *testing.T) {
 	if _, err := s.Moderate(ctx, "comment", c1.ID, mod.ID, model.ModerationHide, "Hors sujet"); err != nil {
 		t.Fatal(err)
 	}
-	if list, _, _ := s.ListComments(ctx, "review", rv.ID, author.ID, model.Pagination{Page: 1, PerPage: 50}); len(list) != 1 {
-		t.Errorf("commentaire masqué listé : %d", len(list))
+	if list, _, _ := s.ListComments(ctx, "review", rv.ID, author.ID, model.Pagination{Page: 1, PerPage: 50}); len(list) != 2 || list[0].HiddenAt == nil {
+		t.Errorf("commentaire masqué gardé en trace (le handler retire son texte) : %+v", list)
 	}
 	if list, _, _ := s.ListComments(ctx, "review", rv.ID, other.ID, model.Pagination{Page: 1, PerPage: 50}); len(list) != 2 || list[0].HiddenAt == nil {
 		t.Errorf("son auteur le voit avec le motif : %+v", list)
@@ -1191,5 +1191,136 @@ func TestComments(t *testing.T) {
 	}
 	if _, err := s.GetComment(ctx, c1.ID); !errors.Is(err, store.ErrNotFound) {
 		t.Errorf("commentaire orphelin : %v", err)
+	}
+}
+
+// I-3 : un article attend sa validation ; publié, il porte un fil ; supprimé, son fil part avec lui.
+func TestArticles(t *testing.T) {
+	item, _ := s.CreateItem(ctx, model.ItemCreate{ItemTypeID: typeSerie, Attributes: json.RawMessage(`{"title":"Série d'articles"}`)})
+	author, _ := s.CreateUser(ctx, "art_author", "art_author@example.org", "x", model.RoleUser)
+	reader, _ := s.CreateUser(ctx, "art_reader", "art_reader@example.org", "x", model.RoleUser)
+	mod, _ := s.CreateUser(ctx, "art_mod", "art_mod@example.org", "x", model.RoleModerator)
+	in := model.ArticleWrite{Title: "Saison 2 annoncée", URL: "https://example.org/s2", Lang: "fr"}
+	a, err := s.CreateArticle(ctx, item.ID, author.ID, in, model.ArticlePending)
+	if err != nil || a.Status != "pending" {
+		t.Fatalf("création : %+v %v", a, err)
+	}
+	if list, _, _ := s.ListItemArticles(ctx, item.ID, reader.ID, model.Pagination{Page: 1, PerPage: 20}); len(list) != 0 {
+		t.Errorf("article en attente montré à un autre : %d", len(list))
+	}
+	if list, _, _ := s.ListItemArticles(ctx, item.ID, author.ID, model.Pagination{Page: 1, PerPage: 20}); len(list) != 1 {
+		t.Errorf("son auteur le voit : %d", len(list))
+	}
+	if n, _ := s.CountPendingArticles(ctx); n < 1 {
+		t.Errorf("en attente : %d", n)
+	}
+	pending, _, _ := s.ListPendingArticles(ctx, model.Pagination{Page: 1, PerPage: 50})
+	if len(pending) == 0 || pending[len(pending)-1].Item == nil {
+		t.Errorf("file de validation : %+v", pending)
+	}
+	if _, err := s.ReviewArticle(ctx, a.ID, mod.ID, true, ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.ReviewArticle(ctx, a.ID, mod.ID, true, ""); !errors.Is(err, store.ErrConflict) {
+		t.Errorf("publier deux fois : %v", err)
+	}
+	if list, _, _ := s.ListItemArticles(ctx, item.ID, uuid.Nil, model.Pagination{Page: 1, PerPage: 20}); len(list) != 1 {
+		t.Errorf("publié, visible de tous : %d", len(list))
+	}
+	// Modifié par son auteur : de nouveau en attente.
+	in.Title = "Saison 2 confirmée"
+	if a2, err := s.UpdateArticle(ctx, a.ID, author.ID, in, model.ArticlePending); err != nil || a2.Status != "pending" || a2.Title != in.Title {
+		t.Errorf("modification : %+v %v", a2, err)
+	}
+	if _, err := s.UpdateArticle(ctx, a.ID, reader.ID, in, model.ArticlePending); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("modifier l'article d'un autre : %v", err)
+	}
+	_, _ = s.ReviewArticle(ctx, a.ID, mod.ID, true, "")
+
+	c, err := s.CreateComment(ctx, "article", a.ID, reader.ID, "Enfin !")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := s.GetArticle(ctx, a.ID); got.CommentCount != 1 {
+		t.Errorf("compte des commentaires : %d", got.CommentCount)
+	}
+	// Masquer l'article, puis le commentaire d'un fil d'article : l'item est retrouvé pour la notification.
+	if res, err := s.Moderate(ctx, "article", a.ID, mod.ID, model.ModerationHide, "Lien mort"); err != nil || res.ItemID != item.ID || res.AuthorID != author.ID {
+		t.Errorf("masquer l'article : %+v %v", res, err)
+	}
+	if list, _, _ := s.ListItemArticles(ctx, item.ID, reader.ID, model.Pagination{Page: 1, PerPage: 20}); len(list) != 0 {
+		t.Errorf("article masqué listé : %d", len(list))
+	}
+	if res, err := s.Moderate(ctx, "comment", c.ID, mod.ID, model.ModerationHide, "Hors sujet"); err != nil || res.ItemID != item.ID {
+		t.Errorf("commentaire d'un article : %+v %v", res, err)
+	}
+	if err := s.SetArticleCommentsClosed(ctx, a.ID, author.ID, true); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.DeleteArticle(ctx, a.ID, author.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.GetComment(ctx, c.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("commentaire orphelin : %v", err)
+	}
+	if _, err := s.CreateArticle(ctx, uuid.New(), author.ID, in, model.ArticlePending); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("item inconnu : %v", err)
+	}
+}
+
+// Traces : supprimer un commentaire suivi d'une réponse laisse sa place ; le dernier s'efface tout à fait.
+func TestComments_Traces(t *testing.T) {
+	it, _ := s.CreateItemType(ctx, model.ItemTypeCreate{Name: "TestTraces", AttributesSchema: json.RawMessage(`{"type":"object"}`)})
+	rt, _ := s.CreateReviewType(ctx, model.ReviewTypeCreate{Name: "TestTracesReview"})
+	_, _ = s.UpdateItemType(ctx, it.ID, model.ItemTypeUpdate{ReviewTypeID: model.OptionalUUID{Set: true, Value: &rt.ID}})
+	item, _ := s.CreateItem(ctx, model.ItemCreate{ItemTypeID: it.ID, Attributes: json.RawMessage(`{}`)})
+	a, _ := s.CreateUser(ctx, "tr_a", "tr_a@example.org", "x", model.RoleUser)
+	b, _ := s.CreateUser(ctx, "tr_b", "tr_b@example.org", "x", model.RoleUser)
+	rv, _ := s.PutReview(ctx, item.ID, a.ID, model.ReviewWrite{Rating: 5, Body: "avis", Lang: "fr", Visibility: "public"})
+	first, _ := s.CreateComment(ctx, "review", rv.ID, b.ID, "premier")
+	last, _ := s.CreateComment(ctx, "review", rv.ID, a.ID, "réponse au premier")
+
+	if c, err := s.UpdateComment(ctx, last.ID, a.ID, "réponse corrigée"); err != nil || c.EditedAt == nil {
+		t.Errorf("modifié : %+v %v", c, err)
+	}
+	if err := s.DeleteComment(ctx, first.ID, b.ID); err != nil {
+		t.Fatal(err)
+	}
+	got, err := s.GetComment(ctx, first.ID)
+	if err != nil || got.DeletedAt == nil || got.Body != "" {
+		t.Errorf("trace : %+v %v", got, err)
+	}
+	if _, err := s.UpdateComment(ctx, first.ID, b.ID, "revenu"); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("modifier une trace : %v", err)
+	}
+	if r, _ := s.GetReview(ctx, rv.ID); r.CommentCount != 1 {
+		t.Errorf("une trace ne compte pas : %d", r.CommentCount)
+	}
+	if list, total, _ := s.ListComments(ctx, "review", rv.ID, uuid.Nil, model.Pagination{Page: 1, PerPage: 50}); total != 2 || len(list) != 2 {
+		t.Errorf("la trace garde sa place : %d", total)
+	}
+	if err := s.DeleteComment(ctx, last.ID, a.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.GetComment(ctx, last.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("le dernier s'efface tout à fait : %v", err)
+	}
+	if _, err := s.GetComment(ctx, first.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("la trace restée en fin de fil part avec lui : %v", err)
+	}
+
+	// Une trace suivie d'un commentaire masqué reste : le masqué garde sa place.
+	gone, _ := s.CreateComment(ctx, "review", rv.ID, b.ID, "sera supprimé")
+	hidden, _ := s.CreateComment(ctx, "review", rv.ID, a.ID, "sera masqué")
+	tail, _ := s.CreateComment(ctx, "review", rv.ID, b.ID, "dernier")
+	_ = s.DeleteComment(ctx, gone.ID, b.ID)
+	if _, err := s.Moderate(ctx, "comment", hidden.ID, a.ID, "hide", "test"); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.DeleteComment(ctx, tail.ID, b.ID); err != nil {
+		t.Fatal(err)
+	}
+	if list, total, _ := s.ListComments(ctx, "review", rv.ID, uuid.Nil, model.Pagination{Page: 1, PerPage: 50}); total != 2 || len(list) != 2 {
+		t.Errorf("trace et commentaire masqué restent : %d", total)
 	}
 }

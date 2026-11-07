@@ -6,6 +6,8 @@ import {
   setTokens,
 } from "./tokens";
 import type {
+  Article,
+  ArticleWrite,
   Comment,
   LoginRequest,
   ModerationHistory,
@@ -385,8 +387,19 @@ export const reportApi = {
 };
 
 export const moderationApi = {
+  /** Contenus signalés et articles en attente de validation. */
   count: () =>
-    http.get<{ count: number }>("/moderation/count").then((r) => r.data.count),
+    http
+      .get<{ count: number; pending_articles: number }>("/moderation/count")
+      .then((r) => r.data),
+  pendingArticles: (params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<Article>>("/moderation/articles", { params })
+      .then((r) => r.data),
+  reviewArticle: (id: string, publish: boolean, reason = "") =>
+    http.post(`/moderation/articles/${id}/${publish ? "publish" : "reject"}`, {
+      reason,
+    }),
   queue: (params?: PaginationParams) =>
     http
       .get<PaginatedResponse<ModerationItem>>("/moderation/queue", { params })
@@ -400,7 +413,7 @@ export const moderationApi = {
       .get<ModerationHistory>(`/moderation/users/${userId}/history`)
       .then((r) => r.data),
   act: (
-    kind: "review" | "comment",
+    kind: "review" | "comment" | "article",
     id: string,
     action: "hide" | "restore" | "dismiss",
     reason = "",
@@ -409,22 +422,38 @@ export const moderationApi = {
 
 // ── Commentaires (I-2) ────────────────────────────────────────────────
 export const commentApi = {
-  list: (reviewId: string, params?: PaginationParams) =>
+  list: (kind: "review" | "article", id: string, params?: PaginationParams) =>
     http
-      .get<PaginatedResponse<Comment>>(`/reviews/${reviewId}/comments`, {
+      .get<PaginatedResponse<Comment>>(`/${kind}s/${id}/comments`, {
         ...publicRead,
         params,
       })
       .then((r) => r.data),
-  create: (reviewId: string, body: string) =>
+  create: (kind: "review" | "article", id: string, body: string) =>
     http
-      .post<Comment>(`/reviews/${reviewId}/comments`, { body })
+      .post<Comment>(`/${kind}s/${id}/comments`, { body })
       .then((r) => r.data),
   update: (id: string, body: string) =>
     http.put<Comment>(`/comments/${id}`, { body }).then((r) => r.data),
   remove: (id: string) => http.delete(`/comments/${id}`),
-  setClosed: (reviewId: string, closed: boolean) =>
-    http.post(`/reviews/${reviewId}/comments/${closed ? "close" : "open"}`),
+  setClosed: (kind: "review" | "article", id: string, closed: boolean) =>
+    http.post(`/${kind}s/${id}/comments/${closed ? "close" : "open"}`),
+};
+
+// ── Articles (I-3) ────────────────────────────────────────────────────
+export const articleApi = {
+  list: (itemId: string, params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<Article>>(`/items/${itemId}/articles`, {
+        ...publicRead,
+        params,
+      })
+      .then((r) => r.data),
+  create: (itemId: string, data: ArticleWrite) =>
+    http.post<Article>(`/items/${itemId}/articles`, data).then((r) => r.data),
+  update: (id: string, data: ArticleWrite) =>
+    http.put<Article>(`/articles/${id}`, data).then((r) => r.data),
+  remove: (id: string) => http.delete(`/articles/${id}`),
 };
 
 // ── Collection Types ──────────────────────────────────────────────────

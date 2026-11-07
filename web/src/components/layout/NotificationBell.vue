@@ -101,7 +101,9 @@ function text(n: AppNotification): string {
   return t(`notifications.kinds.${n.kind}`, {
     by: n.payload.by_review_author
       ? t("notifications.reviewAuthor")
-      : (n.payload.by ?? t("notifications.someone")),
+      : n.payload.by_member
+        ? t("notifications.member")
+        : (n.payload.by ?? t("notifications.someone")),
     title: n.payload.title ?? "",
     reason: n.payload.reason ?? "",
   });

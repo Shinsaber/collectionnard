@@ -23,6 +23,7 @@ vi.mock("@/api/client", () => ({
   itemTypeApi: { list: api.listTypes },
   relationTypeApi: { list: api.listTypes },
   reviewApi: { summary: api.summary, mine: api.mine },
+  articleApi: { list: () => Promise.resolve({ data: [], total: 0 }) },
   extractApiError: () => ({ message: "" }),
 }));
 
@@ -64,6 +65,7 @@ const stubs = {
   RelationCreateDialog: true,
   RelationEditDialog: true,
   ReviewSection: true,
+  ArticleSection: true,
   ItemEditDialog: true,
   NavIcon: true,
 };

@@ -127,6 +127,8 @@ func (h *Handler) Router() chi.Router {
 		r.Get("/api/v1/items/{id}/reviews", h.ListItemReviews)
 		r.Get("/api/v1/items/{id}/reviews/summary", h.GetItemReviewSummary)
 		r.Get("/api/v1/reviews/{id}/comments", h.ListReviewComments)
+		r.Get("/api/v1/items/{id}/articles", h.ListItemArticles)
+		r.Get("/api/v1/articles/{id}/comments", h.ListArticleComments)
 	})
 
 	// Authenticated
@@ -201,6 +203,12 @@ func (h *Handler) Router() chi.Router {
 		r.Post("/api/v1/reviews/{id}/comments/open", h.OpenReviewComments)
 		r.Put("/api/v1/comments/{id}", h.UpdateComment)
 		r.Delete("/api/v1/comments/{id}", h.DeleteComment)
+		r.Post("/api/v1/items/{id}/articles", h.CreateItemArticle)
+		r.Put("/api/v1/articles/{id}", h.UpdateArticle)
+		r.Delete("/api/v1/articles/{id}", h.DeleteArticle)
+		r.Post("/api/v1/articles/{id}/comments", h.CreateArticleComment)
+		r.Post("/api/v1/articles/{id}/comments/close", h.CloseArticleComments)
+		r.Post("/api/v1/articles/{id}/comments/open", h.OpenArticleComments)
 
 		// Modération des avis (I-1) : admins et modérateurs.
 		r.Group(func(r chi.Router) {
@@ -216,6 +224,12 @@ func (h *Handler) Router() chi.Router {
 			r.Post("/api/v1/moderation/comments/{id}/hide", h.HideComment)
 			r.Post("/api/v1/moderation/comments/{id}/restore", h.RestoreComment)
 			r.Post("/api/v1/moderation/comments/{id}/dismiss", h.DismissCommentReports)
+			r.Get("/api/v1/moderation/articles", h.ListPendingArticles)
+			r.Post("/api/v1/moderation/articles/{id}/publish", h.PublishArticle)
+			r.Post("/api/v1/moderation/articles/{id}/reject", h.RejectArticle)
+			r.Post("/api/v1/moderation/articles/{id}/hide", h.HideArticle)
+			r.Post("/api/v1/moderation/articles/{id}/restore", h.RestoreArticle)
+			r.Post("/api/v1/moderation/articles/{id}/dismiss", h.DismissArticleReports)
 		})
 
 		r.Post("/api/v1/items/duplicates", h.FindDuplicates)

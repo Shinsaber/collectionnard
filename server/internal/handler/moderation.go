@@ -46,8 +46,9 @@ func (h *Handler) CreateReport(w http.ResponseWriter, r *http.Request) {
 	}
 	in.Details = strings.TrimSpace(in.Details)
 	switch {
-	case in.TargetKind != model.ReportTargetReview && in.TargetKind != model.ReportTargetComment:
-		respondValidationError(w, "target_kind must be review or comment", map[string]any{"fields": map[string]string{"target_kind": "unsupported"}})
+	case in.TargetKind != model.ReportTargetReview && in.TargetKind != model.ReportTargetComment &&
+		in.TargetKind != model.ReportTargetArticle:
+		respondValidationError(w, "target_kind must be review, comment or article", map[string]any{"fields": map[string]string{"target_kind": "unsupported"}})
 		return
 	case !slices.Contains(model.ReportReasons, in.Reason):
 		respondValidationError(w, "unknown reason", map[string]any{"fields": map[string]string{"reason": "unknown"}})
@@ -88,13 +89,27 @@ func (h *Handler) CreateReport(w http.ResponseWriter, r *http.Request) {
 // reportable returns the author of a content and whether the reader sees it:
 // a review listed for them, or a comment of a thread open to them.
 func (h *Handler) reportable(r *http.Request, kind string, id, viewer uuid.UUID) (uuid.UUID, bool, error) {
-	if kind == model.ReportTargetComment {
+	switch kind {
+	case model.ReportTargetArticle:
+		a, err := h.Store.GetArticle(r.Context(), id)
+		if err != nil {
+			return uuid.Nil, false, err
+		}
+		return a.AuthorID, a.AuthorID != viewer && articleShownTo(a, viewer), nil
+	case model.ReportTargetComment:
 		c, err := h.Store.GetComment(r.Context(), id)
 		if err != nil {
 			return uuid.Nil, false, err
 		}
-		if c.HiddenAt != nil || c.TargetKind != model.CommentTargetReview {
+		if c.HiddenAt != nil || c.DeletedAt != nil {
 			return c.AuthorID, false, nil
+		}
+		if c.TargetKind == model.CommentTargetArticle {
+			a, err := h.Store.GetArticle(r.Context(), c.TargetID)
+			if err != nil {
+				return uuid.Nil, false, err
+			}
+			return c.AuthorID, articleShownTo(a, viewer), nil
 		}
 		rv, err := h.Store.GetReview(r.Context(), c.TargetID)
 		if err != nil {
@@ -115,7 +130,12 @@ func (h *Handler) CountModerationQueue(w http.ResponseWriter, r *http.Request) {
 		handleStoreError(w, r, err)
 		return
 	}
-	respondJSON(w, http.StatusOK, map[string]int{"count": n})
+	pending, err := h.Store.CountPendingArticles(r.Context())
+	if err != nil {
+		handleStoreError(w, r, err)
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]int{"count": n, "pending_articles": pending})
 }
 
 func (h *Handler) ListModerationQueue(w http.ResponseWriter, r *http.Request) {
@@ -141,6 +161,18 @@ func (h *Handler) RestoreReview(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) DismissReviewReports(w http.ResponseWriter, r *http.Request) {
 	h.moderate(w, r, model.ReportTargetReview, model.ModerationDismiss)
+}
+
+func (h *Handler) HideArticle(w http.ResponseWriter, r *http.Request) {
+	h.moderate(w, r, model.ReportTargetArticle, model.ModerationHide)
+}
+
+func (h *Handler) RestoreArticle(w http.ResponseWriter, r *http.Request) {
+	h.moderate(w, r, model.ReportTargetArticle, model.ModerationRestore)
+}
+
+func (h *Handler) DismissArticleReports(w http.ResponseWriter, r *http.Request) {
+	h.moderate(w, r, model.ReportTargetArticle, model.ModerationDismiss)
 }
 
 func (h *Handler) HideComment(w http.ResponseWriter, r *http.Request) {
@@ -200,6 +232,7 @@ func (h *Handler) moderate(w http.ResponseWriter, r *http.Request, kind, action 
 	notify := map[string]map[string]string{
 		model.ReportTargetReview:  {model.ModerationHide: model.NotifyReviewHidden, model.ModerationRestore: model.NotifyReviewRestored},
 		model.ReportTargetComment: {model.ModerationHide: model.NotifyCommentHidden, model.ModerationRestore: model.NotifyCommentRestore},
+		model.ReportTargetArticle: {model.ModerationHide: model.NotifyArticleHidden, model.ModerationRestore: model.NotifyArticleRestored},
 	}
 	if n := notify[kind][action]; n != "" {
 		h.notifyModeration(r, res, n, in.Reason)

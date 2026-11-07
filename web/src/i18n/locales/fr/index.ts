@@ -2,6 +2,7 @@
 // langues par le compilateur. Un fichier par espace de noms (`t("items.title")`…).
 import account from "./account";
 import admin from "./admin";
+import articles from "./articles";
 import auth from "./auth";
 import collections from "./collections";
 import common from "./common";
@@ -24,6 +25,7 @@ import stats from "./stats";
 const fr = {
   account,
   admin,
+  articles,
   auth,
   collections,
   common,

@@ -1,13 +1,7 @@
 <template>
   <ElDialog
     :model-value="visible"
-    :title="
-      t(
-        targetKind === 'comment'
-          ? 'reviews.report.titleComment'
-          : 'reviews.report.title',
-      )
-    "
+    :title="t(`reviews.report.titles.${targetKind}`)"
     width="min(480px, 92vw)"
     append-to-body
     @update:model-value="emit('update:visible', $event)"
@@ -73,7 +67,7 @@ const props = withDefaults(
     visible: boolean;
     /** Contenu signalé : un avis, ou un commentaire (`targetKind`). */
     reviewId: string;
-    targetKind?: "review" | "comment";
+    targetKind?: "review" | "comment" | "article";
   }>(),
   { targetKind: "review" },
 );

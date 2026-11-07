@@ -131,6 +131,12 @@ tags:
       contenu). Un avis masqué sort des listes et des moyennes, son auteur le voit encore avec le motif. Les
       réactions donnent une intention ou une émotion, jamais un signalement. Écritures limitées par heure et par
       compte (avis 60, signalements 20, réactions 300 ; admins exemptés) : 429 `rate_limited` avec `Retry-After`.
+  - name: Articles
+    description: |
+      Articles sur la fiche d'un item (I-3) : relayer une nouvelle (titre, lien http(s), un mot), sur tous les types
+      d'item. L'article d'un membre attend la validation d'un modérateur, comme une proposition de fiche ; les admins et
+      les modérateurs publient directement. Le serveur ne récupère jamais le lien (pas d'aperçu). Un article publié se
+      signale, se masque et porte un fil de commentaires.
   - name: Items
     description: |
       Gestion du catalogue d'items. Chaque item est un **nœud unique** dans le graphe :
@@ -1034,9 +1040,45 @@ components:
           items:
             $ref: "#/components/schemas/Item"
 
+    Article:
+      type: object
+      required: [id, item_id, mine, title, url, message, lang, status, comment_count, comments_closed, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        item_id: { type: string, format: uuid }
+        author:
+          $ref: "#/components/schemas/ReviewAuthor"
+        mine: { type: boolean }
+        title: { type: string, maxLength: 200 }
+        url: { type: string, format: uri, maxLength: 2000, description: "Adresse http(s), jamais récupérée par le serveur." }
+        message: { type: string, maxLength: 1000 }
+        lang: { type: string, enum: [fr, en] }
+        status:
+          type: string
+          enum: [pending, published, rejected]
+          description: "L'article d'un membre attend la validation d'un modérateur ; les admins et modérateurs publient directement."
+        reject_reason: { type: string, description: Motif d'un refus (son auteur seulement). }
+        hidden_at: { type: string, format: date-time }
+        hidden_reason: { type: string }
+        comment_count: { type: integer }
+        comments_closed: { type: boolean }
+        item:
+          $ref: "#/components/schemas/Item"
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    ArticleWrite:
+      type: object
+      required: [title, url, lang]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        url: { type: string, format: uri, maxLength: 2000 }
+        message: { type: string, maxLength: 1000 }
+        lang: { type: string, enum: [fr, en] }
+
     Comment:
       type: object
-      required: [id, target_kind, target_id, review_author, mine, body, created_at, updated_at]
+      required: [id, target_kind, target_id, target_author, mine, body, created_at, updated_at]
       properties:
         id: { type: string, format: uuid }
         target_kind: { type: string, enum: [review, article] }
@@ -1044,17 +1086,28 @@ components:
         author:
           allOf:
             - $ref: "#/components/schemas/ReviewAuthor"
-          description: Absent pour l'auteur d'un avis anonyme qui répond dans son fil (`review_author`).
-        review_author:
+          description: Absent pour l'auteur d'un avis anonyme qui répond dans son fil (`target_author`).
+        target_author:
           type: boolean
-          description: Écrit par l'auteur de l'avis commenté.
+          description: Écrit par l'auteur de l'avis ou de l'article commenté.
         mine:
           type: boolean
           description: Écrit par le lecteur (modifier, supprimer).
         body:
           type: string
           description: Markdown restreint, comme un avis.
-        hidden_at: { type: string, format: date-time, description: Masqué par la modération (visible de son auteur seulement). }
+        hidden_at:
+          type: string
+          format: date-time
+          description: "Masqué par la modération : son auteur le voit avec le motif, les autres une trace sans texte ni auteur."
+        deleted_at:
+          type: string
+          format: date-time
+          description: Supprimé par son auteur ; trace sans texte ni auteur, qui garde le sens des réponses.
+        edited_at:
+          type: string
+          format: date-time
+          description: Modifié après sa publication.
         hidden_reason: { type: string }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
@@ -1074,7 +1127,7 @@ components:
       properties:
         target_kind:
           type: string
-          enum: [review, comment]
+          enum: [review, comment, article]
         target_id:
           type: string
           format: uuid
@@ -1124,6 +1177,8 @@ components:
           description: Avis entier, auteur compris même s'il est anonyme (modérateurs seulement) ; pour un commentaire, l'avis de son fil ; absent s'il a été supprimé.
         comment:
           $ref: "#/components/schemas/Comment"
+        article:
+          $ref: "#/components/schemas/Article"
         review_type:
           $ref: "#/components/schemas/ReviewType"
         item:
@@ -4349,9 +4404,10 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [count]
+                required: [count, pending_articles]
                 properties:
-                  count: { type: integer }
+                  count: { type: integer, description: Contenus signalés à traiter. }
+                  pending_articles: { type: integer, description: Articles en attente de validation (I-3). }
 
   /moderation/queue:
     get:
@@ -4572,7 +4628,8 @@ paths:
       summary: Fil d'un avis
       description: |
         Authentification facultative. Le fil suit la visibilité de l'avis (404 sinon) ; une note seule n'en a pas.
-        Les plus anciens d'abord ; un commentaire masqué n'apparaît qu'à son auteur.
+        Les plus anciens d'abord. Un commentaire supprimé (sauf le dernier, effacé tout à fait) ou masqué reste une
+        trace sans texte ni auteur, pour que les réponses gardent leur sens ; son auteur voit son commentaire masqué.
       operationId: listReviewComments
       security: [{}, { bearerAuth: [] }]
       parameters:
@@ -4822,6 +4879,487 @@ paths:
       summary: Classer sans suite les signalements d\x27un commentaire
       description: "Ferme les signalements ouverts du commentaire."
       operationId: dismissCommentReports
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "403":
+          description: "`forbidden` (rôle) ou `own_content`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "`moderation_state` : l'action ne s'applique plus."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "204":
+          description: Fait.
+
+  /items/{id}/articles:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    get:
+      tags: [Articles]
+      summary: Articles d'un item
+      description: |
+        Authentification facultative. Les articles publiés et non masqués, le plus récent d'abord, plus tous ceux du
+        lecteur (en attente, refusés avec leur motif, masqués).
+      operationId: listItemArticles
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Article"
+    post:
+      tags: [Articles]
+      summary: Partager un article
+      description: "En attente de validation pour un membre, publié directement par un admin ou un modérateur. 10 par heure et par compte."
+      operationId: createItemArticle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ArticleWrite"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          description: "`rate_limited` (`Retry-After`)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "201":
+          description: Article enregistré.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Article"
+
+  /articles/{id}:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    put:
+      tags: [Articles]
+      summary: Modifier son article
+      description: "Repasse en attente de validation pour un membre."
+      operationId: updateArticle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ArticleWrite"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          description: "`rate_limited` (`Retry-After`)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Article modifié.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Article"
+    delete:
+      tags: [Articles]
+      summary: Supprimer son article
+      operationId: deleteArticle
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Supprimé.
+
+  /articles/{id}/comments:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    get:
+      tags: [Articles]
+      summary: Fil d'un article
+      description: "Authentification facultative. Article publié et non masqué (404 sinon), les plus anciens d'abord."
+      operationId: listArticleComments
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Comment"
+    post:
+      tags: [Articles]
+      summary: Commenter un article
+      operationId: createArticleComment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentBody"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "409":
+          description: "`comments_closed` : fil fermé ou article masqué."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          description: "`rate_limited` (`Retry-After`)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "201":
+          description: Commentaire ajouté.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+
+  /articles/{id}/comments/close:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Articles]
+      summary: Fermer le fil de son article
+      operationId: closeArticleComments
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Fermé.
+
+  /articles/{id}/comments/open:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Articles]
+      summary: Rouvrir le fil de son article
+      operationId: openArticleComments
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Rouvert.
+
+  /moderation/articles:
+    get:
+      tags: [Moderation]
+      summary: Articles en attente de validation
+      description: Admins et modérateurs. Le plus ancien d'abord, avec leur item.
+      operationId: listPendingArticles
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Article"
+
+  /moderation/articles/{id}/publish:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Moderation]
+      summary: Publier un article en attente
+      description: "L'auteur est notifié ; jamais son propre article."
+      operationId: publishArticle
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "403":
+          description: "`forbidden` (rôle) ou `own_content`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "`moderation_state` : l'action ne s'applique plus."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "204":
+          description: Fait.
+
+  /moderation/articles/{id}/reject:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Moderation]
+      summary: Refuser un article en attente
+      description: "Motif obligatoire, montré à l'auteur (notifié)."
+      operationId: rejectArticle
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "403":
+          description: "`forbidden` (rôle) ou `own_content`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "`moderation_state` : l'action ne s'applique plus."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "204":
+          description: Fait.
+
+  /moderation/articles/{id}/hide:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Moderation]
+      summary: Masquer un article publié
+      description: "Motif obligatoire, montré à l'auteur (notifié). Ferme les signalements ouverts."
+      operationId: hideArticle
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "403":
+          description: "`forbidden` (rôle) ou `own_content`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "`moderation_state` : l'action ne s'applique plus."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "204":
+          description: Fait.
+
+  /moderation/articles/{id}/restore:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Moderation]
+      summary: Rétablir un article masqué
+      description: "L'auteur est notifié."
+      operationId: restoreArticle
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "403":
+          description: "`forbidden` (rôle) ou `own_content`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "`moderation_state` : l'action ne s'applique plus."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "204":
+          description: Fait.
+
+  /moderation/articles/{id}/dismiss:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Moderation]
+      summary: Classer sans suite les signalements d\x27un article
+      description: "Ferme les signalements ouverts de l'article."
+      operationId: dismissArticleReports
       requestBody:
         content:
           application/json:

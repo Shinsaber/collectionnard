@@ -40,6 +40,7 @@ Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
 | `views/admin/TypesLayout.vue` | Page « Types » : un lien de menu, un onglet par sorte de méta-type, onglets liés à l'URL (`isNavActive` garde le lien actif) |
 | `views/ModerationView.vue`, `components/review/ReviewReactions.vue`, `ReportDialog.vue` | Modération des avis (I-1) : file des signalements, journal, historique d'un membre (route `meta.moderation`, `auth.canModerate`) ; réactions et bouton « Signaler » sur un avis ; pastille de la cloche (`toModerate`) |
 | `components/review/CommentThread.vue` | Fil de commentaires d'un avis (I-2), déplié depuis le pied de l'avis ; styles du texte Markdown partagés (`.review-body` dans `main.css`) |
+| `components/review/ArticleSection.vue`, `ArticleCard.vue` | Onglet « Actualités » d'une fiche (I-3) : partage d'un article, état (en attente, refusé, masqué) pour son auteur, fil de commentaires (`CommentThread` avec `target-kind="article"`) |
 | `src/lib/itemSearch.ts`               | Recherche du catalogue : champs filtrables / triables d'un schéma, état ↔ query (URL = paramètres de `GET /items`) |
 | `src/lib/externalPlan.ts`             | Aperçu d'un import externe : regroupement par édition (et par saison d'une série : rôle `season`), sélection par défaut, relation au parent (`role` = vocabulaire du connecteur, jamais un ItemType) |
 | `src/i18n/`                          | vue-i18n : registre des langues (`langs.ts`), instance + locales Element Plus (`index.ts`), catalogues `locales/<lang>/<ns>.ts` (fr = référence typée) |

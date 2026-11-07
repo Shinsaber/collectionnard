@@ -100,6 +100,9 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
   (ajout seul, copie du contenu) ; un avis masqué sort des listes, des moyennes et du profil public, son auteur le voit
   avec le motif. Les réactions ne modèrent jamais. Écritures sociales limitées par heure et par compte (`handler/rate.go` :
   avis 60, signalements 20, réactions 300 ; admins exemptés ; 429 `rate_limited`).
+- Articles (`handler/article.go`, `store/article.go`, I-3) : `pending` pour un membre (et après modification),
+  `published` directement pour un admin ou un modérateur ; validation par `ReviewArticle` (jamais son propre article) ;
+  lien `http(s)` vérifié, jamais récupéré. Le fil d'un article n'existe qu'une fois publié (`articleShownTo`).
 - Commentaires (`handler/comment.go`, `store/comment.go`, I-2) : le fil d'un avis suit sa visibilité (`threadVisibleTo` : pas de
   fil pour une note seule) ; `shapeComments` retire le nom de l'auteur d'un avis anonyme qui répond. Modération commune aux
   avis et commentaires (`Store.Moderate`, `moderationTables`).

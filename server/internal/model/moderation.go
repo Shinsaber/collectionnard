@@ -81,6 +81,8 @@ type ModerationItem struct {
 	Review     *Review   `json:"review,omitempty"`
 	// Comment: the reported comment (target_kind comment), Review being its thread's review.
 	Comment *Comment `json:"comment,omitempty"`
+	// Article: the reported article (target_kind article).
+	Article *Article `json:"article,omitempty"`
 	// ReviewType: labels of its criteria.
 	ReviewType  *ReviewType     `json:"review_type,omitempty"`
 	Item        *Item           `json:"item,omitempty"`

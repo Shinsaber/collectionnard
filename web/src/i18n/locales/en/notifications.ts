@@ -21,9 +21,16 @@ const en: typeof fr = {
     comment_hidden:
       "One of your comments was hidden by the moderation: {reason}",
     comment_restored: "One of your comments was restored by the moderation",
+    article_published: "Your article was published",
+    article_rejected: "Your article was refused: {reason}",
+    article_hidden:
+      "One of your articles was hidden by the moderation: {reason}",
+    article_restored: "One of your articles was restored by the moderation",
+    article_comment: "{by} commented on an article",
   },
   someone: "A moderator",
   reviewAuthor: "The author of the review",
+  member: "A member",
 };
 
 export default en;

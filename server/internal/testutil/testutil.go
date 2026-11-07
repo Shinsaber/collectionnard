@@ -125,6 +125,15 @@ type MockStore struct {
 	ListDomainsFn                func(ctx context.Context) ([]model.DomainInfo, error)
 	InstallDomainFn              func(ctx context.Context, pkg *model.DomainPackage, dryRun bool) (*model.DomainInstallReport, error)
 	RefreshInstalledDomainsFn    func(ctx context.Context, except string) error
+	ListItemArticlesFn           func(ctx context.Context, itemID, viewer uuid.UUID, pg model.Pagination) ([]model.Article, int, error)
+	GetArticleFn                 func(ctx context.Context, id uuid.UUID) (*model.Article, error)
+	CreateArticleFn              func(ctx context.Context, itemID, authorID uuid.UUID, in model.ArticleWrite, status string) (*model.Article, error)
+	UpdateArticleFn              func(ctx context.Context, id, authorID uuid.UUID, in model.ArticleWrite, status string) (*model.Article, error)
+	DeleteArticleFn              func(ctx context.Context, id, authorID uuid.UUID) error
+	CountPendingArticlesFn       func(ctx context.Context) (int, error)
+	ListPendingArticlesFn        func(ctx context.Context, pg model.Pagination) ([]model.Article, int, error)
+	ReviewArticleFn              func(ctx context.Context, id, moderatorID uuid.UUID, publish bool, reason string) (*model.Article, error)
+	SetArticleCommentsClosedFn   func(ctx context.Context, id, userID uuid.UUID, closed bool) error
 	ListCommentsFn               func(ctx context.Context, kind string, targetID, viewer uuid.UUID, pg model.Pagination) ([]model.Comment, int, error)
 	GetCommentFn                 func(ctx context.Context, id uuid.UUID) (*model.Comment, error)
 	CreateCommentFn              func(ctx context.Context, kind string, targetID, authorID uuid.UUID, body string) (*model.Comment, error)
@@ -371,6 +380,69 @@ func (m *MockStore) CommentParticipants(ctx context.Context, kind string, target
 func (m *MockStore) SetReviewCommentsClosed(ctx context.Context, reviewID, userID uuid.UUID, closed bool) error {
 	if m.SetReviewCommentsClosedFn != nil {
 		return m.SetReviewCommentsClosedFn(ctx, reviewID, userID, closed)
+	}
+	return store.ErrNotFound
+}
+
+func (m *MockStore) ListItemArticles(ctx context.Context, itemID, viewer uuid.UUID, pg model.Pagination) ([]model.Article, int, error) {
+	if m.ListItemArticlesFn != nil {
+		return m.ListItemArticlesFn(ctx, itemID, viewer, pg)
+	}
+	return []model.Article{}, 0, nil
+}
+
+func (m *MockStore) GetArticle(ctx context.Context, id uuid.UUID) (*model.Article, error) {
+	if m.GetArticleFn != nil {
+		return m.GetArticleFn(ctx, id)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) CreateArticle(ctx context.Context, itemID, authorID uuid.UUID, in model.ArticleWrite, status string) (*model.Article, error) {
+	if m.CreateArticleFn != nil {
+		return m.CreateArticleFn(ctx, itemID, authorID, in, status)
+	}
+	return &model.Article{ID: uuid.New(), ItemID: itemID, AuthorID: authorID, Title: in.Title, Status: status}, nil
+}
+
+func (m *MockStore) UpdateArticle(ctx context.Context, id, authorID uuid.UUID, in model.ArticleWrite, status string) (*model.Article, error) {
+	if m.UpdateArticleFn != nil {
+		return m.UpdateArticleFn(ctx, id, authorID, in, status)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) DeleteArticle(ctx context.Context, id, authorID uuid.UUID) error {
+	if m.DeleteArticleFn != nil {
+		return m.DeleteArticleFn(ctx, id, authorID)
+	}
+	return store.ErrNotFound
+}
+
+func (m *MockStore) CountPendingArticles(ctx context.Context) (int, error) {
+	if m.CountPendingArticlesFn != nil {
+		return m.CountPendingArticlesFn(ctx)
+	}
+	return 0, nil
+}
+
+func (m *MockStore) ListPendingArticles(ctx context.Context, pg model.Pagination) ([]model.Article, int, error) {
+	if m.ListPendingArticlesFn != nil {
+		return m.ListPendingArticlesFn(ctx, pg)
+	}
+	return []model.Article{}, 0, nil
+}
+
+func (m *MockStore) ReviewArticle(ctx context.Context, id, moderatorID uuid.UUID, publish bool, reason string) (*model.Article, error) {
+	if m.ReviewArticleFn != nil {
+		return m.ReviewArticleFn(ctx, id, moderatorID, publish, reason)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) SetArticleCommentsClosed(ctx context.Context, id, userID uuid.UUID, closed bool) error {
+	if m.SetArticleCommentsClosedFn != nil {
+		return m.SetArticleCommentsClosedFn(ctx, id, userID, closed)
 	}
 	return store.ErrNotFound
 }

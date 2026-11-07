@@ -1,6 +1,7 @@
 import type { Messages } from "../fr";
 import account from "./account";
 import admin from "./admin";
+import articles from "./articles";
 import auth from "./auth";
 import collections from "./collections";
 import common from "./common";
@@ -23,6 +24,7 @@ import stats from "./stats";
 const en: Messages = {
   account,
   admin,
+  articles,
   auth,
   collections,
   common,

@@ -257,6 +257,35 @@ export interface ReviewSummary {
 }
 
 // ---------- Modération (I-1) ----------
+/** Article sur la fiche d'un item (I-3). */
+export interface Article {
+  id: string;
+  item_id: string;
+  author?: { username: string; display_name?: string; avatar?: string };
+  mine: boolean;
+  title: string;
+  url: string;
+  message: string;
+  lang: string;
+  /** L'article d'un membre attend la validation d'un modérateur. */
+  status: "pending" | "published" | "rejected";
+  reject_reason?: string;
+  hidden_at?: string;
+  hidden_reason?: string;
+  comment_count: number;
+  comments_closed: boolean;
+  item?: Item;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ArticleWrite {
+  title: string;
+  url: string;
+  message: string;
+  lang: string;
+}
+
 /** Commentaire du fil d'un avis (I-2). */
 export interface Comment {
   id: string;
@@ -264,17 +293,22 @@ export interface Comment {
   target_id: string;
   /** Absent pour l'auteur d'un avis anonyme qui répond dans son fil. */
   author?: { username: string; display_name?: string; avatar?: string };
-  review_author: boolean;
+  /** Écrit par l'auteur de l'avis ou de l'article commenté. */
+  target_author: boolean;
   mine: boolean;
   body: string;
   hidden_at?: string;
   hidden_reason?: string;
+  /** Trace d'un commentaire supprimé par son auteur (ni texte ni auteur). */
+  deleted_at?: string;
+  /** Modifié après sa publication. */
+  edited_at?: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface ReportCreate {
-  target_kind: "review" | "comment";
+  target_kind: "review" | "comment" | "article";
   target_id: string;
   reason: string;
   details: string;
@@ -305,8 +339,10 @@ export interface ModerationItem {
   target_id: string;
   author_id: string;
   review?: Review;
-  /** Commentaire signalé ; `review` est alors l'avis de son fil. */
+  /** Commentaire signalé ; `review` ou `article` est alors le contenu de son fil. */
   comment?: Comment;
+  /** Article signalé, ou celui du fil d'un commentaire. */
+  article?: Article;
   /** Type d'avis : libellés des critères. */
   review_type?: ReviewType;
   item?: Item;
@@ -778,7 +814,12 @@ export type NotificationKind =
   | "review_restored"
   | "review_comment"
   | "comment_hidden"
-  | "comment_restored";
+  | "comment_restored"
+  | "article_published"
+  | "article_rejected"
+  | "article_hidden"
+  | "article_restored"
+  | "article_comment";
 
 export interface AppNotification {
   id: string;
@@ -792,6 +833,8 @@ export interface AppNotification {
     reason?: string;
     /** Commentaire de l'auteur d'un avis anonyme : jamais nommé. */
     by_review_author?: boolean;
+    /** Émetteur au profil privé : jamais nommé. */
+    by_member?: boolean;
   };
   created_at: string;
   read_at?: string;

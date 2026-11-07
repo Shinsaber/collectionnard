@@ -120,6 +120,17 @@ type Store interface {
 	DeleteComment(ctx context.Context, id, authorID uuid.UUID) error
 	CommentParticipants(ctx context.Context, kind string, targetID uuid.UUID) ([]uuid.UUID, error)
 	SetReviewCommentsClosed(ctx context.Context, reviewID, userID uuid.UUID, closed bool) error
+
+	// Articles (I-3)
+	ListItemArticles(ctx context.Context, itemID, viewer uuid.UUID, pg model.Pagination) ([]model.Article, int, error)
+	GetArticle(ctx context.Context, id uuid.UUID) (*model.Article, error)
+	CreateArticle(ctx context.Context, itemID, authorID uuid.UUID, in model.ArticleWrite, status string) (*model.Article, error)
+	UpdateArticle(ctx context.Context, id, authorID uuid.UUID, in model.ArticleWrite, status string) (*model.Article, error)
+	DeleteArticle(ctx context.Context, id, authorID uuid.UUID) error
+	CountPendingArticles(ctx context.Context) (int, error)
+	ListPendingArticles(ctx context.Context, pg model.Pagination) ([]model.Article, int, error)
+	ReviewArticle(ctx context.Context, id, moderatorID uuid.UUID, publish bool, reason string) (*model.Article, error)
+	SetArticleCommentsClosed(ctx context.Context, id, userID uuid.UUID, closed bool) error
 	ListModerationLog(ctx context.Context, pg model.Pagination) ([]model.ModerationLogEntry, int, error)
 	ModerationHistory(ctx context.Context, userID uuid.UUID) (*model.ModerationHistory, error)
 	SetReaction(ctx context.Context, reviewID, userID uuid.UUID, kind string, on bool) error

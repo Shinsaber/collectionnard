@@ -62,11 +62,37 @@
               <p class="whitespace-pre-line">{{ q.comment.body }}</p>
             </div>
             <p
-              v-if="q.comment && q.review"
+              v-if="q.comment && (q.review || q.article)"
               class="text-xs font-semibold text-muted"
             >
-              {{ t("moderation.inThreadOf") }}
+              {{
+                t(
+                  q.article
+                    ? "moderation.inThreadOfArticle"
+                    : "moderation.inThreadOf",
+                )
+              }}
             </p>
+            <div
+              v-if="q.article"
+              class="flex flex-col gap-1 rounded-2xl bg-surface p-4 shadow-card"
+              data-test="moderation-article"
+            >
+              <span class="font-bold">{{ q.article.title }}</span>
+              <a
+                :href="q.article.url"
+                target="_blank"
+                rel="nofollow ugc noopener noreferrer"
+                class="break-all font-mono text-xs text-link"
+                >{{ q.article.url }}</a
+              >
+              <p v-if="q.article.message" class="whitespace-pre-line text-sm">
+                {{ q.article.message }}
+              </p>
+              <span class="text-[13px] text-muted">{{
+                t("moderation.by", { name: q.article.author?.username ?? "?" })
+              }}</span>
+            </div>
             <ReviewCard
               v-if="q.review"
               :review="q.review"
@@ -115,7 +141,13 @@
             </ul>
 
             <div
-              v-if="q.target_kind === 'comment' ? q.comment : q.review"
+              v-if="
+                q.target_kind === 'comment'
+                  ? q.comment
+                  : q.target_kind === 'article'
+                    ? q.article
+                    : q.review
+              "
               class="flex flex-wrap justify-end gap-2"
             >
               <ElButton
@@ -140,6 +172,66 @@
             :current-page="queuePage"
             @current-change="(p: number) => ((queuePage = p), loadQueue())"
           />
+        </div>
+      </ElTabPane>
+
+      <ElTabPane
+        name="articles"
+        :label="`${t('moderation.pendingArticles')} · ${pendingTotal}`"
+      >
+        <p
+          v-if="pending.length === 0"
+          class="rounded-2xl bg-surface p-5 text-sm text-muted shadow-card"
+        >
+          {{ t("moderation.noPendingArticles") }}
+        </p>
+        <div v-else class="flex flex-col gap-4">
+          <section
+            v-for="a in pending"
+            :key="a.id"
+            class="flex flex-col gap-2 rounded-2xl bg-bar p-4"
+            data-test="pending-article"
+          >
+            <RouterLink
+              v-if="a.item"
+              :to="`/items/${a.item_id}`"
+              class="font-bold text-link"
+              >{{ itemLabel(a.item, lang) }}</RouterLink
+            >
+            <div
+              class="flex flex-col gap-1 rounded-2xl bg-surface p-4 shadow-card"
+            >
+              <span class="font-bold">{{ a.title }}</span>
+              <a
+                :href="a.url"
+                target="_blank"
+                rel="nofollow ugc noopener noreferrer"
+                class="break-all font-mono text-xs text-link"
+                >{{ a.url }}</a
+              >
+              <p v-if="a.message" class="whitespace-pre-line text-sm">
+                {{ a.message }}
+              </p>
+              <span class="text-[13px] text-muted">{{
+                t("moderation.by", { name: a.author?.username ?? "?" })
+              }}</span>
+            </div>
+            <div class="flex flex-wrap justify-end gap-2">
+              <ElButton
+                type="danger"
+                plain
+                data-test="article-reject"
+                @click="reviewArticle(a.id, false)"
+                >{{ t("moderation.reject") }}</ElButton
+              >
+              <ElButton
+                type="primary"
+                data-test="article-publish"
+                @click="reviewArticle(a.id, true)"
+                >{{ t("moderation.publish") }}</ElButton
+              >
+            </div>
+          </section>
         </div>
       </ElTabPane>
 
@@ -287,6 +379,7 @@ import AppSpinner from "@/components/common/AppSpinner.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
 import ReviewCard from "@/components/review/ReviewCard.vue";
 import type {
+  Article,
   ModerationHistory,
   ModerationItem,
   ModerationLogEntry,
@@ -300,7 +393,7 @@ const { notifyError, notifySuccess } = useNotify();
 const { confirm } = useConfirmDialog();
 const notifications = useNotificationsStore();
 
-const tab = ref<"queue" | "log">("queue");
+const tab = ref<"queue" | "articles" | "log">("queue");
 const queue = ref<ModerationItem[]>([]);
 const queueTotal = ref(0);
 const queuePage = ref(1);
@@ -354,11 +447,62 @@ async function openHistory(userId: string) {
 }
 
 /** Masquer demande un motif, montré à l'auteur ; classer et rétablir se confirment. */
-const kindOf = (k: string): "review" | "comment" =>
-  k === "comment" ? "comment" : "review";
+const kindOf = (k: string): "review" | "comment" | "article" =>
+  k === "comment" || k === "article" ? k : "review";
+
+const pending = ref<Article[]>([]);
+const pendingTotal = ref(0);
+
+async function loadPending() {
+  try {
+    const res = await moderationApi.pendingArticles({ per_page: 100 });
+    pending.value = res.data;
+    pendingTotal.value = res.total;
+  } catch (e) {
+    notifyError(e);
+  }
+}
+
+/** Publier se confirme ; refuser demande un motif, montré à l'auteur. */
+async function reviewArticle(id: string, publish: boolean) {
+  let reason = "";
+  if (publish) {
+    const ok = await confirm({
+      message: t("moderation.confirm.publish"),
+      confirmText: t("moderation.publish"),
+    });
+    if (!ok) return;
+  } else {
+    try {
+      const res = await ElMessageBox.prompt(
+        t("moderation.rejectPrompt"),
+        t("moderation.reject"),
+        {
+          confirmButtonText: t("moderation.reject"),
+          cancelButtonText: t("common.cancel"),
+          confirmButtonClass: "el-button--danger",
+          inputValidator: (v: string) => !!v?.trim() || t("errors.required"),
+        },
+      );
+      reason = res.value.trim();
+    } catch {
+      return;
+    }
+  }
+  try {
+    await moderationApi.reviewArticle(id, publish, reason);
+    notifySuccess(
+      t(publish ? "moderation.done.publish" : "moderation.done.reject"),
+    );
+    await loadPending();
+    notifications.refresh().catch(() => undefined);
+  } catch (e) {
+    notifyError(e);
+  }
+}
 
 async function act(
-  kind: "review" | "comment",
+  kind: "review" | "comment" | "article",
   targetId: string,
   action: "hide" | "restore" | "dismiss",
 ) {
@@ -396,7 +540,10 @@ async function act(
   }
 }
 
-onMounted(loadQueue);
+onMounted(() => {
+  loadQueue();
+  loadPending();
+});
 watch(tab, (v) => {
   if (v === "log") loadLog();
 });

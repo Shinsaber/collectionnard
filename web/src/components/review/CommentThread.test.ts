@@ -37,7 +37,7 @@ function comment(over: Partial<Comment>): Comment {
     id: "c" + Math.random(),
     target_kind: "review",
     target_id: "r1",
-    review_author: false,
+    target_author: false,
     mine: false,
     body: "texte",
     created_at: "2026-11-07T10:00:00Z",
@@ -49,12 +49,12 @@ function comment(over: Partial<Comment>): Comment {
 function mountThread(
   props: Partial<{
     canWrite: boolean;
-    ownReview: boolean;
-    review: Review;
+    ownTarget: boolean;
+    target: Review;
   }> = {},
 ) {
   return mount(CommentThread, {
-    props: { review, canWrite: true, ...props },
+    props: { target: review, canWrite: true, ...props },
     global: { plugins: [ElementPlus] },
   });
 }
@@ -69,7 +69,7 @@ describe("CommentThread (I-2)", () => {
     api.list.mockResolvedValue({
       data: [
         comment({ author: { username: "camille" }, body: "Bien vu" }),
-        comment({ review_author: true, body: "Merci" }),
+        comment({ target_author: true, body: "Merci" }),
       ],
       total: 2,
     });
@@ -92,7 +92,11 @@ describe("CommentThread (I-2)", () => {
       .setValue("  Bonne remarque ");
     await w.find('[data-test="comment-form"]').trigger("submit");
     await flushPromises();
-    expect(api.create).toHaveBeenCalledWith("r1", "  Bonne remarque ");
+    expect(api.create).toHaveBeenCalledWith(
+      "review",
+      "r1",
+      "  Bonne remarque ",
+    );
     expect(api.list).toHaveBeenCalledTimes(2);
   });
 
@@ -100,16 +104,50 @@ describe("CommentThread (I-2)", () => {
     api.list.mockResolvedValue({ data: [], total: 0 });
     api.setClosed.mockResolvedValue(undefined);
     const w = mountThread({
-      review: { ...review, comments_closed: true },
-      ownReview: true,
+      target: { ...review, comments_closed: true },
+      ownTarget: true,
     });
     await flushPromises();
     expect(w.find('[data-test="comment-form"]').exists()).toBe(false);
     expect(w.find('[data-test="comments-closed"]').exists()).toBe(true);
     await w.find('[data-test="comments-toggle-closed"]').trigger("click");
     await flushPromises();
-    expect(api.setClosed).toHaveBeenCalledWith("r1", false);
+    expect(api.setClosed).toHaveBeenCalledWith("review", "r1", false);
     expect(w.find('[data-test="comment-form"]').exists()).toBe(true);
+  });
+
+  it("montre « Un membre » pour un auteur au nom retiré par le serveur", async () => {
+    api.list.mockResolvedValue({
+      data: [comment({ body: "discret" })],
+      total: 1,
+    });
+    const w = mountThread();
+    await flushPromises();
+    expect(w.find('[data-test="comment-author"]').text()).toBe("Un membre");
+  });
+
+  it("garde la trace d'un commentaire supprimé ou masqué, et marque les modifications", async () => {
+    api.list.mockResolvedValue({
+      data: [
+        comment({ deleted_at: "2026-11-07T11:00:00Z", body: "" }),
+        comment({ hidden_at: "2026-11-07T11:00:00Z", body: "" }),
+        comment({
+          author: { username: "camille" },
+          edited_at: "2026-11-07T12:00:00Z",
+        }),
+      ],
+      total: 3,
+    });
+    const w = mountThread();
+    await flushPromises();
+    const traces = w
+      .findAll('[data-test="comment-trace"]')
+      .map((e) => e.text());
+    expect(traces[0]).toContain("supprimé par son auteur");
+    expect(traces[1]).toContain("masqué par la modération");
+    expect(w.findAll('[data-test="comment-author"]')).toHaveLength(1);
+    expect(w.find('[data-test="comment-edited"]').text()).toBe("(modifié)");
+    expect(w.emitted("count")?.[0]).toEqual([1]);
   });
 
   it("en visiteur, ni formulaire ni signalement", async () => {

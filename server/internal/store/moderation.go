@@ -81,6 +81,17 @@ func (s *PgStore) ListModerationQueue(ctx context.Context, pg model.Pagination) 
 
 func (s *PgStore) fillModerationItem(ctx context.Context, it *model.ModerationItem) error {
 	reviewID := it.TargetID
+	if it.TargetKind == model.ReportTargetArticle {
+		reviewID = uuid.Nil
+		if a, err := s.GetArticle(ctx, it.TargetID); err == nil {
+			it.Article, it.AuthorID = a, a.AuthorID
+			if item, err := s.GetItem(ctx, a.ItemID); err == nil {
+				it.Item = item
+			}
+		} else if err != ErrNotFound {
+			return err
+		}
+	}
 	if it.TargetKind == model.ReportTargetComment {
 		c, err := s.GetComment(ctx, it.TargetID)
 		switch {
@@ -91,6 +102,15 @@ func (s *PgStore) fillModerationItem(ctx context.Context, it *model.ModerationIt
 		default:
 			it.Comment, it.AuthorID = c, c.AuthorID
 			reviewID = c.TargetID
+			if c.TargetKind == model.CommentTargetArticle {
+				reviewID = uuid.Nil
+				if a, err := s.GetArticle(ctx, c.TargetID); err == nil {
+					it.Article = a
+					if item, err := s.GetItem(ctx, a.ItemID); err == nil {
+						it.Item = item
+					}
+				}
+			}
 		}
 	}
 	if reviewID != uuid.Nil && (it.TargetKind == model.ReportTargetReview || it.TargetKind == model.ReportTargetComment) {
@@ -177,7 +197,11 @@ func excerptOf(text string) string {
 }
 
 // moderationTables: the table of each moderated kind (its name is part of the SQL).
-var moderationTables = map[string]string{model.ReportTargetReview: "reviews", model.ReportTargetComment: "comments"}
+var moderationTables = map[string]string{
+	model.ReportTargetReview:  "reviews",
+	model.ReportTargetComment: "comments",
+	model.ReportTargetArticle: "item_articles",
+}
 
 // moderationTarget returns the author, the item and the copy of a moderated content.
 func (s *PgStore) moderationTarget(ctx context.Context, kind string, id uuid.UUID) (author, item uuid.UUID, excerpt string, err error) {
@@ -193,12 +217,23 @@ func (s *PgStore) moderationTarget(ctx context.Context, kind string, id uuid.UUI
 		if err != nil {
 			return uuid.Nil, uuid.Nil, "", err
 		}
-		if c.TargetKind == model.CommentTargetReview {
+		switch c.TargetKind {
+		case model.CommentTargetReview:
 			if r, err := s.GetReview(ctx, c.TargetID); err == nil {
 				item = r.ItemID
 			}
+		case model.CommentTargetArticle:
+			if a, err := s.GetArticle(ctx, c.TargetID); err == nil {
+				item = a.ItemID
+			}
 		}
 		return c.AuthorID, item, excerptOf(c.Body), nil
+	case model.ReportTargetArticle:
+		a, err := s.GetArticle(ctx, id)
+		if err != nil {
+			return uuid.Nil, uuid.Nil, "", err
+		}
+		return a.AuthorID, a.ItemID, excerptOf(a.Title + "\n" + a.URL + "\n" + a.Message), nil
 	}
 	return uuid.Nil, uuid.Nil, "", ErrNotFound
 }
@@ -275,6 +310,7 @@ const logColumns = `l.id, l.action, l.target_kind, l.target_id, l.target_author_
 	a.username, a.display_name, a.avatar, m.username, m.display_name, m.avatar,
 	EXISTS (SELECT 1 FROM reviews r WHERE l.target_kind = 'review' AND r.id = l.target_id AND r.hidden_at IS NOT NULL)
 		OR EXISTS (SELECT 1 FROM comments c WHERE l.target_kind = 'comment' AND c.id = l.target_id AND c.hidden_at IS NOT NULL)
+		OR EXISTS (SELECT 1 FROM item_articles a WHERE l.target_kind = 'article' AND a.id = l.target_id AND a.hidden_at IS NOT NULL)
 	FROM moderation_log l LEFT JOIN users a ON a.id = l.target_author_id LEFT JOIN users m ON m.id = l.moderator_id `
 
 func scanLog(rows pgx.Rows) ([]model.ModerationLogEntry, error) {

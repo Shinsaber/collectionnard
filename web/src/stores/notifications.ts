@@ -23,7 +23,9 @@ export const useNotificationsStore = defineStore("notifications", () => {
         const [page, count, reported] = await Promise.all([
           notificationApi.list({ page: 1, per_page: 10 }),
           auth.canEditCatalog ? proposalApi.reviewCount() : Promise.resolve(0),
-          auth.canModerate ? moderationApi.count() : Promise.resolve(0),
+          auth.canModerate
+            ? moderationApi.count().then((c) => c.count + c.pending_articles)
+            : Promise.resolve(0),
         ]);
         items.value = page.data;
         unread.value = page.unread;

@@ -289,8 +289,15 @@ Un seul fil pour les avis et, en I-3, pour les articles.
   déclencheur qui supprime le fil avec son avis (suppression par l'auteur ou de l'item en cascade).
 - Le fil existe pour un avis listable (ni note seule, ni anonyme sans texte) et suit sa visibilité ; son auteur y a
   toujours accès. Les commentaires sont **signés** ; seul l'auteur d'un avis anonyme y apparaît comme « Auteur de
-  l'avis » (le serveur n'envoie pas son nom), y compris dans la notification (`by_review_author`).
-- 1 à 5 000 caractères, Markdown restreint ; on modifie et supprime les siens. Fil fermé (ou avis masqué) : 409
+  l'avis » (le serveur n'envoie pas son nom), y compris dans la notification (`by_review_author`). Correctif du 2026-11-07 : le
+  nom d'un commentateur, comme celui de l'auteur d'un article, n'est envoyé qu'aux lecteurs qui peuvent voir son profil
+  (`privacy.CanView`) ; sinon « Un membre », notification comprise (`by_member`). Un avis signé garde le nom, choisi
+  explicitement par sa visibilité.
+- 1 à 5 000 caractères, Markdown restreint ; on modifie et supprime les siens. Traces (migration 018, 2026-11-07) : un fil
+  étant à plat, un commentaire supprimé garde sa place (« Commentaire supprimé par son auteur », texte effacé en base),
+  sauf s'il était le dernier du fil : il s'efface alors, avec les traces restées juste avant lui (un commentaire masqué
+  arrête ce nettoyage) ; un commentaire masqué apparaît aux autres comme « Commentaire masqué par la
+  modération », sans texte ni auteur ; « (modifié) » signale une modification (`edited_at`). Les traces ne comptent pas. Fil fermé (ou avis masqué) : 409
   `comments_closed`, les commentaires restent lisibles. 120 commentaires par heure et par compte.
 - Notification `review_comment` à l'auteur de l'avis et aux participants, jamais à l'émetteur ni en double.
 - Signalement et modération des commentaires comme pour les avis (`target_kind: comment`, routes
@@ -310,6 +317,26 @@ Relayer les nouvelles d'une œuvre (sortie d'un tome, annonce d'une saison, crit
 - Onglet « Actualités » de la fiche, les plus récents d'abord ; liens `rel="nofollow ugc noopener"`.
 - Anti-spam : quota par compte (comme `PROPOSAL_QUOTA`), signalement, masquage.
 - **Fil de commentaires** : chaque article a le sien (table `comments` d'I-2, `target_kind = article`).
+
+### Livré
+
+**I-3 livré le 2026-11-07.** Décision du mainteneur à la réalisation : articles ouverts sur **tous les types d'item**,
+mais l'article d'un membre **attend d'être validé**, comme une proposition de fiche. Choix faits :
+
+- Migration 017 : `item_articles` (`status` `pending` | `published` | `rejected`, motif du refus, champs de modération,
+  `comments_closed_at`), déclencheur qui supprime le fil avec son article.
+- Les admins et les modérateurs publient directement et valident ceux des autres (jamais le leur) ; les contributeurs
+  passent par la validation comme les membres. Modifier un article publié le **renvoie en attente**. Refuser exige un
+  motif, montré à l'auteur ; notifications `article_published`, `article_rejected`.
+- Titre 1 à 200 caractères, lien `http(s)` sans identifiants (2 000 au plus), un mot de 1 000 au plus, langue de
+  l'interface ; 10 articles (création ou modification) par heure et par compte. Le serveur ne récupère jamais le lien.
+- La liste d'une fiche montre les articles publiés et non masqués, plus tous ceux du lecteur avec leur état ; le motif
+  d'un refus ou d'un masquage ne va qu'à son auteur.
+- Un article publié se signale, se masque, se rétablit comme un avis (`/moderation/articles/{id}/…`) et porte un fil de
+  commentaires (commun avec les avis : `thread`, `commentApi` par sorte). Dans les commentaires, `review_author`
+  devient `target_author` (auteur de l'avis ou de l'article).
+- Front : onglet « Actualités · N » de la fiche (partage, liste, état, fil, signalement), onglet « Articles à valider »
+  de la page Modération, pastille de la cloche (signalements + articles en attente).
 
 ## I-4 — Recommander un item à un membre
 

@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -9,24 +10,25 @@ import (
 )
 
 const commentColumns = `c.id, c.target_kind, c.target_id, c.author_id, c.body, c.hidden_at, c.hidden_reason,
-	c.created_at, c.updated_at, u.username, u.display_name, u.avatar`
+	c.deleted_at, c.edited_at, c.created_at, c.updated_at, u.username, u.display_name, u.avatar, u.profile_visibility`
 
 func scanComment(row pgx.Row) (*model.Comment, error) {
 	var c model.Comment
 	var a model.ReviewAuthor
 	if err := row.Scan(&c.ID, &c.TargetKind, &c.TargetID, &c.AuthorID, &c.Body, &c.HiddenAt, &c.HiddenReason,
-		&c.CreatedAt, &c.UpdatedAt, &a.Username, &a.DisplayName, &a.Avatar); err != nil {
+		&c.DeletedAt, &c.EditedAt, &c.CreatedAt, &c.UpdatedAt, &a.Username, &a.DisplayName, &a.Avatar, &c.AuthorProfile); err != nil {
 		return nil, err
 	}
 	c.Author = &a
 	return &c, nil
 }
 
-// ListComments lists the thread of a target, oldest first: the hidden comments
-// only for their author; none of a disabled account.
+// ListComments lists the thread of a target, oldest first, deleted and hidden
+// comments included: the handler turns them into traces (the replies keep
+// their sense). None of a disabled account.
 func (s *PgStore) ListComments(ctx context.Context, kind string, targetID, viewer uuid.UUID, pg model.Pagination) ([]model.Comment, int, error) {
 	where := ` FROM comments c JOIN users u ON u.id = c.author_id AND u.disabled_at IS NULL
-		WHERE c.target_kind = $1 AND c.target_id = $2 AND (c.hidden_at IS NULL OR c.author_id = $3)`
+		WHERE c.target_kind = $1 AND c.target_id = $2 AND $3::uuid IS NOT NULL`
 	var total int
 	if err := s.pool.QueryRow(ctx, `SELECT count(*)`+where, kind, targetID, viewer).Scan(&total); err != nil {
 		return nil, 0, err
@@ -71,7 +73,7 @@ func (s *PgStore) CreateComment(ctx context.Context, kind string, targetID, auth
 
 // UpdateComment replaces the text of a comment of authorID (ErrNotFound otherwise).
 func (s *PgStore) UpdateComment(ctx context.Context, id, authorID uuid.UUID, body string) (*model.Comment, error) {
-	ct, err := s.pool.Exec(ctx, `UPDATE comments SET body = $3 WHERE id = $1 AND author_id = $2`, id, authorID, body)
+	ct, err := s.pool.Exec(ctx, `UPDATE comments SET body = $3, edited_at = now() WHERE id = $1 AND author_id = $2 AND deleted_at IS NULL`, id, authorID, body)
 	if err != nil {
 		return nil, err
 	}
@@ -81,16 +83,46 @@ func (s *PgStore) UpdateComment(ctx context.Context, id, authorID uuid.UUID, bod
 	return s.GetComment(ctx, id)
 }
 
-// DeleteComment removes a comment of authorID (ErrNotFound otherwise).
+// noLaterLiveComment holds when no comment still in place comes after c in its thread.
+const noLaterLiveComment = `NOT EXISTS (
+	SELECT 1 FROM comments n WHERE n.target_kind = c.target_kind AND n.target_id = c.target_id
+		AND n.deleted_at IS NULL AND (n.created_at, n.id) > (c.created_at, c.id))`
+
+// DeleteComment removes a comment of authorID: outright when nothing came after
+// it, otherwise its text is erased and a trace keeps its place in the thread.
+// An outright deletion takes along the traces it leaves at the end of the thread.
 func (s *PgStore) DeleteComment(ctx context.Context, id, authorID uuid.UUID) error {
-	ct, err := s.pool.Exec(ctx, `DELETE FROM comments WHERE id = $1 AND author_id = $2`, id, authorID)
+	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
-	if ct.RowsAffected() == 0 {
-		return ErrNotFound
+	defer func() { _ = tx.Rollback(ctx) }()
+	var kind string
+	var targetID uuid.UUID
+	err = tx.QueryRow(ctx,
+		`DELETE FROM comments c WHERE c.id = $1 AND c.author_id = $2 AND `+noLaterLiveComment+`
+		 RETURNING target_kind, target_id`, id, authorID).Scan(&kind, &targetID)
+	switch {
+	case err == nil:
+		if _, err := tx.Exec(ctx,
+			`DELETE FROM comments c WHERE c.target_kind = $1 AND c.target_id = $2 AND c.deleted_at IS NOT NULL
+			 AND `+noLaterLiveComment, kind, targetID); err != nil {
+			return err
+		}
+	case errors.Is(err, pgx.ErrNoRows):
+		ct, err := tx.Exec(ctx,
+			`UPDATE comments SET body = '', deleted_at = now() WHERE id = $1 AND author_id = $2 AND deleted_at IS NULL`,
+			id, authorID)
+		if err != nil {
+			return err
+		}
+		if ct.RowsAffected() == 0 {
+			return ErrNotFound
+		}
+	default:
+		return err
 	}
-	return nil
+	return tx.Commit(ctx)
 }
 
 // CommentParticipants lists the authors of a thread.

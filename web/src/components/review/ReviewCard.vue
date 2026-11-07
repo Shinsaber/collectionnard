@@ -146,9 +146,9 @@
     </div>
     <CommentThread
       v-if="comments && threadOpen"
-      :review="review"
+      :target="review"
       :can-write="canComment"
-      :own-review="ownReview"
+      :own-target="ownReview"
       @count="(n) => (commentCount = n)"
     />
     <ReportDialog
