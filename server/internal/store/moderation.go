@@ -80,14 +80,30 @@ func (s *PgStore) ListModerationQueue(ctx context.Context, pg model.Pagination) 
 }
 
 func (s *PgStore) fillModerationItem(ctx context.Context, it *model.ModerationItem) error {
-	if it.TargetKind == model.ReportTargetReview {
-		r, err := s.GetReview(ctx, it.TargetID)
+	reviewID := it.TargetID
+	if it.TargetKind == model.ReportTargetComment {
+		c, err := s.GetComment(ctx, it.TargetID)
+		switch {
+		case err == ErrNotFound:
+			reviewID = uuid.Nil
+		case err != nil:
+			return err
+		default:
+			it.Comment, it.AuthorID = c, c.AuthorID
+			reviewID = c.TargetID
+		}
+	}
+	if reviewID != uuid.Nil && (it.TargetKind == model.ReportTargetReview || it.TargetKind == model.ReportTargetComment) {
+		r, err := s.GetReview(ctx, reviewID)
 		switch {
 		case err == ErrNotFound: // supprimé par son auteur depuis le signalement
 		case err != nil:
 			return err
 		default:
-			it.Review, it.AuthorID = r, r.UserID
+			it.Review = r
+			if it.TargetKind == model.ReportTargetReview {
+				it.AuthorID = r.UserID
+			}
 			if r.ReviewTypeID != nil {
 				if rt, err := s.GetReviewType(ctx, *r.ReviewTypeID); err == nil {
 					it.ReviewType = rt
@@ -152,23 +168,55 @@ func (s *PgStore) ModerationRecap(ctx context.Context, userID uuid.UUID) (*model
 	return &r, err
 }
 
-// excerptOf copies a review for the journal: its rating, then its text, bounded.
-func excerptOf(r *model.Review) string {
-	text := r.Body
+// excerptOf copies a content for the journal, bounded.
+func excerptOf(text string) string {
 	if utf8.RuneCountInString(text) > maxExcerpt {
 		text = string([]rune(text)[:maxExcerpt]) + "…"
 	}
 	return text
 }
 
-// ModerateReview hides or restores a review, or dismisses its open reports, in
-// one transaction with its journal entry. A hide or a dismiss closes the open
-// reports; an action that does not apply (hide a hidden review…) is ErrConflict.
-func (s *PgStore) ModerateReview(ctx context.Context, reviewID, moderatorID uuid.UUID, action, reason string) (*model.ModerationResult, error) {
-	r, err := s.GetReview(ctx, reviewID)
+// moderationTables: the table of each moderated kind (its name is part of the SQL).
+var moderationTables = map[string]string{model.ReportTargetReview: "reviews", model.ReportTargetComment: "comments"}
+
+// moderationTarget returns the author, the item and the copy of a moderated content.
+func (s *PgStore) moderationTarget(ctx context.Context, kind string, id uuid.UUID) (author, item uuid.UUID, excerpt string, err error) {
+	switch kind {
+	case model.ReportTargetReview:
+		r, err := s.GetReview(ctx, id)
+		if err != nil {
+			return uuid.Nil, uuid.Nil, "", err
+		}
+		return r.UserID, r.ItemID, excerptOf(r.Body), nil
+	case model.ReportTargetComment:
+		c, err := s.GetComment(ctx, id)
+		if err != nil {
+			return uuid.Nil, uuid.Nil, "", err
+		}
+		if c.TargetKind == model.CommentTargetReview {
+			if r, err := s.GetReview(ctx, c.TargetID); err == nil {
+				item = r.ItemID
+			}
+		}
+		return c.AuthorID, item, excerptOf(c.Body), nil
+	}
+	return uuid.Nil, uuid.Nil, "", ErrNotFound
+}
+
+// Moderate hides or restores a review or a comment, or dismisses its open
+// reports, in one transaction with its journal entry. A hide or a dismiss closes
+// the open reports; an action that does not apply (hide a hidden content…) is
+// ErrConflict.
+func (s *PgStore) Moderate(ctx context.Context, kind string, targetID, moderatorID uuid.UUID, action, reason string) (*model.ModerationResult, error) {
+	table, ok := moderationTables[kind]
+	if !ok {
+		return nil, ErrNotFound
+	}
+	author, item, excerpt, err := s.moderationTarget(ctx, kind, targetID)
 	if err != nil {
 		return nil, err
 	}
+	reviewID := targetID
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return nil, err
@@ -179,11 +227,11 @@ func (s *PgStore) ModerateReview(ctx context.Context, reviewID, moderatorID uuid
 	var args []any
 	switch action {
 	case model.ModerationHide:
-		sql, status = `UPDATE reviews SET hidden_at = now(), hidden_by = $2, hidden_reason = $3
+		sql, status = `UPDATE `+table+` SET hidden_at = now(), hidden_by = $2, hidden_reason = $3
 			WHERE id = $1 AND hidden_at IS NULL`, model.ReportActioned
 		args = []any{reviewID, moderatorID, reason}
 	case model.ModerationRestore:
-		sql = `UPDATE reviews SET hidden_at = NULL, hidden_by = NULL, hidden_reason = NULL
+		sql = `UPDATE ` + table + ` SET hidden_at = NULL, hidden_by = NULL, hidden_reason = NULL
 			WHERE id = $1 AND hidden_at IS NOT NULL`
 		args = []any{reviewID}
 	case model.ModerationDismiss:
@@ -203,7 +251,7 @@ func (s *PgStore) ModerateReview(ctx context.Context, reviewID, moderatorID uuid
 	if status != "" {
 		ct, err := tx.Exec(ctx,
 			`UPDATE reports SET status = $3, handled_by = $2, handled_at = now()
-			 WHERE target_kind = 'review' AND target_id = $1 AND status = 'open'`, reviewID, moderatorID, status)
+			 WHERE target_kind = $4 AND target_id = $1 AND status = 'open'`, reviewID, moderatorID, status, kind)
 		if err != nil {
 			return nil, err
 		}
@@ -213,19 +261,20 @@ func (s *PgStore) ModerateReview(ctx context.Context, reviewID, moderatorID uuid
 	}
 	if _, err := tx.Exec(ctx,
 		`INSERT INTO moderation_log (action, target_kind, target_id, target_author_id, moderator_id, reason, excerpt)
-		 VALUES ($1, 'review', $2, $3, $4, $5, $6)`,
-		action, reviewID, r.UserID, moderatorID, reason, excerptOf(r)); err != nil {
+		 VALUES ($1, $7, $2, $3, $4, $5, $6)`,
+		action, reviewID, author, moderatorID, reason, excerpt, kind); err != nil {
 		return nil, err
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return nil, err
 	}
-	return &model.ModerationResult{AuthorID: r.UserID, ItemID: r.ItemID}, nil
+	return &model.ModerationResult{AuthorID: author, ItemID: item}, nil
 }
 
 const logColumns = `l.id, l.action, l.target_kind, l.target_id, l.target_author_id, l.reason, l.excerpt, l.created_at,
 	a.username, a.display_name, a.avatar, m.username, m.display_name, m.avatar,
 	EXISTS (SELECT 1 FROM reviews r WHERE l.target_kind = 'review' AND r.id = l.target_id AND r.hidden_at IS NOT NULL)
+		OR EXISTS (SELECT 1 FROM comments c WHERE l.target_kind = 'comment' AND c.id = l.target_id AND c.hidden_at IS NOT NULL)
 	FROM moderation_log l LEFT JOIN users a ON a.id = l.target_author_id LEFT JOIN users m ON m.id = l.moderator_id `
 
 func scanLog(rows pgx.Rows) ([]model.ModerationLogEntry, error) {

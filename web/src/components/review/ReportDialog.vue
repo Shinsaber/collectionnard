@@ -1,7 +1,13 @@
 <template>
   <ElDialog
     :model-value="visible"
-    :title="t('reviews.report.title')"
+    :title="
+      t(
+        targetKind === 'comment'
+          ? 'reviews.report.titleComment'
+          : 'reviews.report.title',
+      )
+    "
     width="min(480px, 92vw)"
     append-to-body
     @update:model-value="emit('update:visible', $event)"
@@ -62,7 +68,15 @@ import { reportApi } from "@/api/client";
 import { useNotify } from "@/composables/useNotify";
 import { REPORT_REASONS, type ReportReason } from "@/lib/reviews";
 
-const props = defineProps<{ visible: boolean; reviewId: string }>();
+const props = withDefaults(
+  defineProps<{
+    visible: boolean;
+    /** Contenu signalé : un avis, ou un commentaire (`targetKind`). */
+    reviewId: string;
+    targetKind?: "review" | "comment";
+  }>(),
+  { targetKind: "review" },
+);
 const emit = defineEmits<{ "update:visible": [value: boolean] }>();
 
 const { t } = useI18n();
@@ -87,7 +101,7 @@ async function send() {
   sending.value = true;
   try {
     await reportApi.create({
-      target_kind: "review",
+      target_kind: props.targetKind,
       target_id: props.reviewId,
       reason: reason.value,
       details: details.value,

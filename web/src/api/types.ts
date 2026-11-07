@@ -219,6 +219,9 @@ export interface Review {
   /** Nombre de chaque réaction, et celles du lecteur. */
   reactions?: Record<string, number>;
   my_reactions?: string[];
+  /** Fil de commentaires (I-2). */
+  comment_count?: number;
+  comments_closed?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -254,8 +257,24 @@ export interface ReviewSummary {
 }
 
 // ---------- Modération (I-1) ----------
+/** Commentaire du fil d'un avis (I-2). */
+export interface Comment {
+  id: string;
+  target_kind: "review" | "article";
+  target_id: string;
+  /** Absent pour l'auteur d'un avis anonyme qui répond dans son fil. */
+  author?: { username: string; display_name?: string; avatar?: string };
+  review_author: boolean;
+  mine: boolean;
+  body: string;
+  hidden_at?: string;
+  hidden_reason?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ReportCreate {
-  target_kind: "review";
+  target_kind: "review" | "comment";
   target_id: string;
   reason: string;
   details: string;
@@ -286,6 +305,8 @@ export interface ModerationItem {
   target_id: string;
   author_id: string;
   review?: Review;
+  /** Commentaire signalé ; `review` est alors l'avis de son fil. */
+  comment?: Comment;
   /** Type d'avis : libellés des critères. */
   review_type?: ReviewType;
   item?: Item;
@@ -754,7 +775,10 @@ export type NotificationKind =
   | "proposal_changes_requested"
   | "proposal_comment"
   | "review_hidden"
-  | "review_restored";
+  | "review_restored"
+  | "review_comment"
+  | "comment_hidden"
+  | "comment_restored";
 
 export interface AppNotification {
   id: string;
@@ -766,6 +790,8 @@ export interface AppNotification {
     /** Modération d'un avis (I-1) : sa fiche et le motif. */
     item_id?: string;
     reason?: string;
+    /** Commentaire de l'auteur d'un avis anonyme : jamais nommé. */
+    by_review_author?: boolean;
   };
   created_at: string;
   read_at?: string;

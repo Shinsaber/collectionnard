@@ -47,6 +47,26 @@
                 }}
               </button>
             </div>
+            <div
+              v-if="q.comment"
+              class="flex flex-col gap-1 rounded-2xl bg-surface p-4 shadow-card"
+              data-test="moderation-comment"
+            >
+              <span class="text-[13px] text-muted">
+                {{
+                  t("moderation.commentBy", {
+                    name: q.comment.author?.username ?? "?",
+                  })
+                }}
+              </span>
+              <p class="whitespace-pre-line">{{ q.comment.body }}</p>
+            </div>
+            <p
+              v-if="q.comment && q.review"
+              class="text-xs font-semibold text-muted"
+            >
+              {{ t("moderation.inThreadOf") }}
+            </p>
             <ReviewCard
               v-if="q.review"
               :review="q.review"
@@ -94,16 +114,19 @@
               </li>
             </ul>
 
-            <div v-if="q.review" class="flex flex-wrap justify-end gap-2">
+            <div
+              v-if="q.target_kind === 'comment' ? q.comment : q.review"
+              class="flex flex-wrap justify-end gap-2"
+            >
               <ElButton
                 data-test="moderation-dismiss"
-                @click="act(q.review.id, 'dismiss')"
+                @click="act(kindOf(q.target_kind), q.target_id, 'dismiss')"
                 >{{ t("moderation.dismiss") }}</ElButton
               >
               <ElButton
                 type="danger"
                 data-test="moderation-hide"
-                @click="act(q.review.id, 'hide')"
+                @click="act(kindOf(q.target_kind), q.target_id, 'hide')"
                 >{{ t("moderation.hide") }}</ElButton
               >
             </div>
@@ -133,6 +156,9 @@
                 t(`moderation.actions.${e.action}`)
               }}</span>
               <span class="text-muted">{{
+                t(`moderation.kinds.${kindOf(e.target_kind)}`)
+              }}</span>
+              <span class="text-muted">{{
                 t("moderation.by", { name: e.moderator?.username ?? "?" })
               }}</span>
               <span class="text-muted">·</span>
@@ -154,7 +180,7 @@
                 v-if="e.action === 'hide' && e.still_hidden"
                 size="small"
                 data-test="moderation-restore"
-                @click="act(e.target_id, 'restore')"
+                @click="act(kindOf(e.target_kind), e.target_id, 'restore')"
                 >{{ t("moderation.restore") }}</ElButton
               >
             </div>
@@ -328,7 +354,14 @@ async function openHistory(userId: string) {
 }
 
 /** Masquer demande un motif, montré à l'auteur ; classer et rétablir se confirment. */
-async function act(reviewId: string, action: "hide" | "restore" | "dismiss") {
+const kindOf = (k: string): "review" | "comment" =>
+  k === "comment" ? "comment" : "review";
+
+async function act(
+  kind: "review" | "comment",
+  targetId: string,
+  action: "hide" | "restore" | "dismiss",
+) {
   let reason = "";
   if (action === "hide") {
     try {
@@ -354,7 +387,7 @@ async function act(reviewId: string, action: "hide" | "restore" | "dismiss") {
     if (!ok) return;
   }
   try {
-    await moderationApi.act(reviewId, action, reason);
+    await moderationApi.act(kind, targetId, action, reason);
     notifySuccess(t(`moderation.done.${action}`));
     await Promise.all([loadQueue(), tab.value === "log" ? loadLog() : null]);
     notifications.refresh().catch(() => undefined);

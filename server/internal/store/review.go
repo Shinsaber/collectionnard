@@ -12,7 +12,9 @@ import (
 // review is signed for the reader. Reviews of disabled accounts count nowhere.
 const reviewColumns = `r.id, r.item_id, r.user_id, r.review_type_id, r.criteria, r.rating::float8, r.body, r.spoiler,
 	r.lang, r.visibility, r.created_at, r.updated_at, u.username, u.display_name, u.avatar,
-	r.context_item_id, ci.item_type_id, ci.attributes, cit.name, cit.attributes_schema, r.hidden_at, r.hidden_reason`
+	r.context_item_id, ci.item_type_id, ci.attributes, cit.name, cit.attributes_schema, r.hidden_at, r.hidden_reason,
+	r.comments_closed_at IS NOT NULL, (SELECT count(*) FROM comments cc JOIN users cu ON cu.id = cc.author_id
+		AND cu.disabled_at IS NULL WHERE cc.target_kind = 'review' AND cc.target_id = r.id AND cc.hidden_at IS NULL)`
 
 // reviewContextJoin: the edition used, with what its label needs.
 const reviewContextJoin = ` LEFT JOIN items ci ON ci.id = r.context_item_id
@@ -41,7 +43,8 @@ func (v *reviewScan) dest(extra ...any) []any {
 	r := &v.r
 	return append([]any{&r.ID, &r.ItemID, &r.UserID, &r.ReviewTypeID, &r.Criteria, &r.Rating, &r.Body, &r.Spoiler,
 		&r.Lang, &r.Visibility, &r.CreatedAt, &r.UpdatedAt, &v.a.Username, &v.a.DisplayName, &v.a.Avatar,
-		&r.ContextItemID, &v.ctxType, &v.ctxAttrs, &v.ctxName, &v.ctxSchema, &r.HiddenAt, &r.HiddenReason}, extra...)
+		&r.ContextItemID, &v.ctxType, &v.ctxAttrs, &v.ctxName, &v.ctxSchema, &r.HiddenAt, &r.HiddenReason,
+		&r.CommentsClosed, &r.CommentCount}, extra...)
 }
 
 func (v *reviewScan) review() *model.Review {

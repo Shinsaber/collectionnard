@@ -16,6 +16,11 @@ export default {
     proposal_comment: "{by} a écrit sur « {title} »",
     review_hidden: "Un de vos avis a été masqué par la modération : {reason}",
     review_restored: "Un de vos avis a été rétabli par la modération",
+    review_comment: "{by} a commenté un avis",
+    comment_hidden:
+      "Un de vos commentaires a été masqué par la modération : {reason}",
+    comment_restored: "Un de vos commentaires a été rétabli par la modération",
   },
   someone: "Un modérateur",
+  reviewAuthor: "L'auteur de l'avis",
 };

@@ -84,7 +84,9 @@
       >
         <div
           v-if="review.body"
-          :class="{ '-ml-3 border-l border-line pl-3': criteria.length === 0 }"
+          :class="{
+            '-ml-3 border-l-2 border-dash pl-3': criteria.length === 0,
+          }"
         >
           <ElButton
             v-if="review.spoiler && !revealed"
@@ -105,7 +107,7 @@
           <!-- eslint-enable vue/no-v-html -->
         </div>
         <div
-          v-if="reportable || (showReactions && hasReactions)"
+          v-if="reportable || comments || (showReactions && hasReactions)"
           class="mt-auto flex flex-wrap items-center justify-between gap-2"
           data-test="review-footer"
         >
@@ -114,20 +116,41 @@
             :review="review"
             :interactive="reportable"
           />
-          <ElButton
-            v-if="reportable"
-            text
-            size="small"
-            class="ml-auto text-muted!"
-            data-test="review-report"
-            @click="reporting = true"
-          >
-            <i class="pi pi-flag mr-1.5" aria-hidden="true"></i>
-            {{ t("reviews.report.action") }}
-          </ElButton>
+          <span class="ml-auto flex flex-wrap items-center gap-1">
+            <ElButton
+              v-if="comments"
+              text
+              size="small"
+              class="text-muted!"
+              :aria-expanded="threadOpen"
+              data-test="review-comments"
+              @click="threadOpen = !threadOpen"
+            >
+              <i class="pi pi-comment mr-1.5" aria-hidden="true"></i>
+              {{ t("reviews.comments.count", commentCount) }}
+            </ElButton>
+            <ElButton
+              v-if="reportable"
+              text
+              size="small"
+              class="text-muted!"
+              data-test="review-report"
+              @click="reporting = true"
+            >
+              <i class="pi pi-flag mr-1.5" aria-hidden="true"></i>
+              {{ t("reviews.report.action") }}
+            </ElButton>
+          </span>
         </div>
       </div>
     </div>
+    <CommentThread
+      v-if="comments && threadOpen"
+      :review="review"
+      :can-write="canComment"
+      :own-review="ownReview"
+      @count="(n) => (commentCount = n)"
+    />
     <ReportDialog
       v-if="reportable"
       v-model:visible="reporting"
@@ -148,6 +171,7 @@ import UserAvatar from "@/components/account/UserAvatar.vue";
 import ReviewStars from "./ReviewStars.vue";
 import ReviewReactions from "./ReviewReactions.vue";
 import ReportDialog from "./ReportDialog.vue";
+import CommentThread from "./CommentThread.vue";
 import type { Review } from "@/api/types";
 
 const props = defineProps<{
@@ -160,7 +184,15 @@ const props = defineProps<{
   reportable?: boolean;
   /** Afficher les réactions reçues (en lecture seule si non `reportable`). */
   showReactions?: boolean;
+  /** Fil de commentaires (I-2) : bouton dans le pied, fil déplié sous l'avis. */
+  comments?: boolean;
+  /** Lecteur connecté : peut écrire dans le fil. */
+  canComment?: boolean;
+  /** Son propre avis : peut fermer le fil. */
+  ownReview?: boolean;
 }>();
+const threadOpen = ref(false);
+const commentCount = ref(props.review.comment_count ?? 0);
 const reporting = ref(false);
 // Réactions et signalement en pied d'avis, sur toute la largeur ; rien en lecture seule sans réaction reçue.
 const hasReactions = computed(() =>
@@ -191,41 +223,3 @@ const criteria = computed(() => {
     }));
 });
 </script>
-
-<style scoped>
-.review-body {
-  font-size: 15px;
-  overflow-wrap: anywhere;
-}
-.review-body :deep(p),
-.review-body :deep(ul),
-.review-body :deep(ol),
-.review-body :deep(blockquote),
-.review-body :deep(pre) {
-  margin-block: 0.4em;
-}
-.review-body :deep(ul) {
-  list-style: disc;
-  padding-inline-start: 1.4em;
-}
-.review-body :deep(ol) {
-  list-style: decimal;
-  padding-inline-start: 1.4em;
-}
-.review-body :deep(blockquote) {
-  border-inline-start: 3px solid var(--c-line);
-  color: var(--c-muted);
-  padding-inline-start: 0.8em;
-}
-.review-body :deep(a) {
-  color: var(--c-link);
-  text-decoration: underline;
-}
-.review-body :deep(code) {
-  font-family: var(--font-mono, monospace);
-  font-size: 0.9em;
-}
-.review-body :deep(pre) {
-  overflow-x: auto;
-}
-</style>

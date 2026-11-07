@@ -6,6 +6,7 @@ import {
   setTokens,
 } from "./tokens";
 import type {
+  Comment,
   LoginRequest,
   ModerationHistory,
   ModerationItem,
@@ -399,10 +400,31 @@ export const moderationApi = {
       .get<ModerationHistory>(`/moderation/users/${userId}/history`)
       .then((r) => r.data),
   act: (
-    reviewId: string,
+    kind: "review" | "comment",
+    id: string,
     action: "hide" | "restore" | "dismiss",
     reason = "",
-  ) => http.post(`/moderation/reviews/${reviewId}/${action}`, { reason }),
+  ) => http.post(`/moderation/${kind}s/${id}/${action}`, { reason }),
+};
+
+// ── Commentaires (I-2) ────────────────────────────────────────────────
+export const commentApi = {
+  list: (reviewId: string, params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<Comment>>(`/reviews/${reviewId}/comments`, {
+        ...publicRead,
+        params,
+      })
+      .then((r) => r.data),
+  create: (reviewId: string, body: string) =>
+    http
+      .post<Comment>(`/reviews/${reviewId}/comments`, { body })
+      .then((r) => r.data),
+  update: (id: string, body: string) =>
+    http.put<Comment>(`/comments/${id}`, { body }).then((r) => r.data),
+  remove: (id: string) => http.delete(`/comments/${id}`),
+  setClosed: (reviewId: string, closed: boolean) =>
+    http.post(`/reviews/${reviewId}/comments/${closed ? "close" : "open"}`),
 };
 
 // ── Collection Types ──────────────────────────────────────────────────

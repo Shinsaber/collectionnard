@@ -97,8 +97,11 @@ type Review struct {
 	// Reactions: count of each kind; MyReactions: those of the reader.
 	Reactions   map[string]int `json:"reactions,omitempty"`
 	MyReactions []string       `json:"my_reactions,omitempty"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
+	// CommentCount, CommentsClosed: the thread of the review (I-2).
+	CommentCount   int       `json:"comment_count"`
+	CommentsClosed bool      `json:"comments_closed"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 // ReviewPut is the body of PUT /items/{id}/reviews/mine: an overall rating or

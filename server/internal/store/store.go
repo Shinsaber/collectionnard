@@ -110,7 +110,16 @@ type Store interface {
 	CountModerationQueue(ctx context.Context) (int, error)
 	ListModerationQueue(ctx context.Context, pg model.Pagination) ([]model.ModerationItem, int, error)
 	ModerationRecap(ctx context.Context, userID uuid.UUID) (*model.ModerationRecap, error)
-	ModerateReview(ctx context.Context, reviewID, moderatorID uuid.UUID, action, reason string) (*model.ModerationResult, error)
+	Moderate(ctx context.Context, kind string, targetID, moderatorID uuid.UUID, action, reason string) (*model.ModerationResult, error)
+
+	// Comments (I-2)
+	ListComments(ctx context.Context, kind string, targetID, viewer uuid.UUID, pg model.Pagination) ([]model.Comment, int, error)
+	GetComment(ctx context.Context, id uuid.UUID) (*model.Comment, error)
+	CreateComment(ctx context.Context, kind string, targetID, authorID uuid.UUID, body string) (*model.Comment, error)
+	UpdateComment(ctx context.Context, id, authorID uuid.UUID, body string) (*model.Comment, error)
+	DeleteComment(ctx context.Context, id, authorID uuid.UUID) error
+	CommentParticipants(ctx context.Context, kind string, targetID uuid.UUID) ([]uuid.UUID, error)
+	SetReviewCommentsClosed(ctx context.Context, reviewID, userID uuid.UUID, closed bool) error
 	ListModerationLog(ctx context.Context, pg model.Pagination) ([]model.ModerationLogEntry, int, error)
 	ModerationHistory(ctx context.Context, userID uuid.UUID) (*model.ModerationHistory, error)
 	SetReaction(ctx context.Context, reviewID, userID uuid.UUID, kind string, on bool) error

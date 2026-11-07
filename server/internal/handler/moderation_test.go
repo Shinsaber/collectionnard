@@ -90,7 +90,7 @@ func TestModeration_Roles(t *testing.T) {
 	calls := 0
 	mock := &testutil.MockStore{
 		GetReviewFn: reviewBy(authorID, "public", "x"),
-		ModerateReviewFn: func(_ context.Context, _, moderator uuid.UUID, action, reason string) (*model.ModerationResult, error) {
+		ModerateFn: func(_ context.Context, kind string, _, moderator uuid.UUID, action, reason string) (*model.ModerationResult, error) {
 			calls++
 			if action != "hide" || reason != "Propos injurieux" {
 				t.Errorf("action : %s %q", action, reason)
@@ -133,7 +133,7 @@ func TestModeration_Roles(t *testing.T) {
 func TestModeration_OwnAndState(t *testing.T) {
 	mock := &testutil.MockStore{
 		GetReviewFn: reviewBy(testutil.ModeratorID, "public", "x"),
-		ModerateReviewFn: func(context.Context, uuid.UUID, uuid.UUID, string, string) (*model.ModerationResult, error) {
+		ModerateFn: func(context.Context, string, uuid.UUID, uuid.UUID, string, string) (*model.ModerationResult, error) {
 			return nil, store.ErrConflict
 		},
 	}

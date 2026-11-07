@@ -17,6 +17,9 @@ export default {
   historyOf: "Historique de {name}",
   noHistory: "Rien n'a été modéré chez ce membre.",
   dismissedReports: "Ses signalements classés sans suite",
+  commentBy: "Commentaire de {name}",
+  inThreadOf: "Dans le fil de cet avis :",
+  kinds: { review: "avis", comment: "commentaire" },
   actions: { hide: "Masqué", restore: "Rétabli", dismiss: "Classé sans suite" },
   confirm: {
     restore: "Rétablir cet avis ? Son auteur sera prévenu.",

@@ -538,7 +538,7 @@ par les admins et un rôle `moderator`.
       globale ou moyenne des critères, en étoiles, texte, spoiler, langue, visibilité ; suppression de `Visionnage.rating`.
 - [x] **I-1 — Signalements, modération et réactions** (livré le 2026-11-07) : rôle `moderator`, bouton « Signaler » (avis, commentaire, article),
       file de modération, masquage, journal de modération et récapitulatif par membre, réactions (intention ou émotion).
-- [ ] **I-2 — Commentaires** : fil sur les avis, notifications.
+- [x] **I-2 — Commentaires** (livré le 2026-11-07) : fil sur les avis, notifications.
 - [ ] **I-3 — Articles sur la fiche d'un item** : partage de nouvelles (titre, message, lien), fil de commentaires.
 - [ ] **I-4 — Recommandations** : envoyer une fiche à un membre avec un mot.
 

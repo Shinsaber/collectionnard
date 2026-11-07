@@ -1050,10 +1050,10 @@ func TestModeration(t *testing.T) {
 		t.Fatalf("file : %d %+v %v", total, queue, err)
 	}
 
-	if _, err := s.ModerateReview(ctx, rv.ID, moderator.ID, model.ModerationHide, "Propos injurieux"); err != nil {
+	if _, err := s.Moderate(ctx, "review", rv.ID, moderator.ID, model.ModerationHide, "Propos injurieux"); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.ModerateReview(ctx, rv.ID, moderator.ID, model.ModerationHide, "encore"); !errors.Is(err, store.ErrConflict) {
+	if _, err := s.Moderate(ctx, "review", rv.ID, moderator.ID, model.ModerationHide, "encore"); !errors.Is(err, store.ErrConflict) {
 		t.Errorf("masquer un avis masqué : %v", err)
 	}
 	if n, _ := s.CountModerationQueue(ctx); n != 0 {
@@ -1087,13 +1087,13 @@ func TestModeration(t *testing.T) {
 	// Signalement classé sans suite : compté chez le signaleur.
 	rv2, _ := s.PutReview(ctx, item.ID, author.ID, model.ReviewWrite{Rating: 9, Body: "avis correct", Lang: "fr", Visibility: "public"})
 	_, _ = s.CreateReport(ctx, reporter.ID, model.ReportCreate{TargetKind: "review", TargetID: rv2.ID, Reason: "spam"})
-	if _, err := s.ModerateReview(ctx, rv2.ID, moderator.ID, model.ModerationDismiss, ""); err != nil {
+	if _, err := s.Moderate(ctx, "review", rv2.ID, moderator.ID, model.ModerationDismiss, ""); err != nil {
 		t.Fatal(err)
 	}
 	if recap, _ := s.ModerationRecap(ctx, reporter.ID); recap.Dismissed90d != 1 {
 		t.Errorf("signalements classés du signaleur : %+v", recap)
 	}
-	if _, err := s.ModerateReview(ctx, rv2.ID, moderator.ID, model.ModerationDismiss, ""); !errors.Is(err, store.ErrConflict) {
+	if _, err := s.Moderate(ctx, "review", rv2.ID, moderator.ID, model.ModerationDismiss, ""); !errors.Is(err, store.ErrConflict) {
 		t.Errorf("rien à classer : %v", err)
 	}
 	log, n, _ := s.ListModerationLog(ctx, model.Pagination{Page: 1, PerPage: 20})
@@ -1116,5 +1116,80 @@ func TestModeration(t *testing.T) {
 	}
 	if _, _, err := s.ListItemReviews(ctx, item.ID, model.ReviewListParams{Viewer: uuid.Nil, Levels: []string{"public"}, Sort: "interesting"}, model.Pagination{Page: 1, PerPage: 20}); err != nil {
 		t.Errorf("tri interesting : %v", err)
+	}
+}
+
+// I-2 : fil d'un avis, commentaires masqués, fermeture, suppression avec l'avis.
+func TestComments(t *testing.T) {
+	it, _ := s.CreateItemType(ctx, model.ItemTypeCreate{Name: "TestCommented", AttributesSchema: json.RawMessage(`{"type":"object"}`)})
+	rt, _ := s.CreateReviewType(ctx, model.ReviewTypeCreate{Name: "TestCommentReview"})
+	_, _ = s.UpdateItemType(ctx, it.ID, model.ItemTypeUpdate{ReviewTypeID: model.OptionalUUID{Set: true, Value: &rt.ID}})
+	item, _ := s.CreateItem(ctx, model.ItemCreate{ItemTypeID: it.ID, Attributes: json.RawMessage(`{}`)})
+	author, _ := s.CreateUser(ctx, "com_author", "com_author@example.org", "x", model.RoleUser)
+	other, _ := s.CreateUser(ctx, "com_other", "com_other@example.org", "x", model.RoleUser)
+	mod, _ := s.CreateUser(ctx, "com_mod", "com_mod@example.org", "x", model.RoleModerator)
+	rv, err := s.PutReview(ctx, item.ID, author.ID, model.ReviewWrite{Rating: 8, Body: "avis", Lang: "fr", Visibility: "public"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	c1, err := s.CreateComment(ctx, "review", rv.ID, other.ID, "premier")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.CreateComment(ctx, "review", rv.ID, author.ID, "réponse"); err != nil {
+		t.Fatal(err)
+	}
+	list, total, _ := s.ListComments(ctx, "review", rv.ID, uuid.Nil, model.Pagination{Page: 1, PerPage: 50})
+	if total != 2 || list[0].Body != "premier" || list[0].Author == nil || list[0].Author.Username != "com_other" {
+		t.Errorf("fil : %d %+v", total, list)
+	}
+	if got, _ := s.GetReview(ctx, rv.ID); got.CommentCount != 2 {
+		t.Errorf("compte des commentaires : %d", got.CommentCount)
+	}
+	if parts, _ := s.CommentParticipants(ctx, "review", rv.ID); len(parts) != 2 {
+		t.Errorf("participants : %v", parts)
+	}
+
+	if _, err := s.UpdateComment(ctx, c1.ID, author.ID, "pas le mien"); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("modifier le commentaire d'un autre : %v", err)
+	}
+	if c, err := s.UpdateComment(ctx, c1.ID, other.ID, "premier, corrigé"); err != nil || c.Body != "premier, corrigé" {
+		t.Errorf("modifier le sien : %+v %v", c, err)
+	}
+
+	// Masqué : hors du fil et du compte, visible de son auteur seulement.
+	if _, err := s.Moderate(ctx, "comment", c1.ID, mod.ID, model.ModerationHide, "Hors sujet"); err != nil {
+		t.Fatal(err)
+	}
+	if list, _, _ := s.ListComments(ctx, "review", rv.ID, author.ID, model.Pagination{Page: 1, PerPage: 50}); len(list) != 1 {
+		t.Errorf("commentaire masqué listé : %d", len(list))
+	}
+	if list, _, _ := s.ListComments(ctx, "review", rv.ID, other.ID, model.Pagination{Page: 1, PerPage: 50}); len(list) != 2 || list[0].HiddenAt == nil {
+		t.Errorf("son auteur le voit avec le motif : %+v", list)
+	}
+	if got, _ := s.GetReview(ctx, rv.ID); got.CommentCount != 1 {
+		t.Errorf("compte sans le masqué : %d", got.CommentCount)
+	}
+	if hist, _ := s.ModerationHistory(ctx, other.ID); hist.Recap.Hidden90d != 1 || hist.Entries[0].TargetKind != "comment" || !hist.Entries[0].StillHidden {
+		t.Errorf("journal : %+v", hist)
+	}
+
+	// Fermeture par l'auteur seulement.
+	if err := s.SetReviewCommentsClosed(ctx, rv.ID, other.ID, true); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("fermer le fil d'un autre : %v", err)
+	}
+	if err := s.SetReviewCommentsClosed(ctx, rv.ID, author.ID, true); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := s.GetReview(ctx, rv.ID); !got.CommentsClosed {
+		t.Error("fil fermé")
+	}
+
+	// Le fil part avec l'avis.
+	if err := s.DeleteReview(ctx, item.ID, author.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.GetComment(ctx, c1.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("commentaire orphelin : %v", err)
 	}
 }

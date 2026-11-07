@@ -99,7 +99,9 @@ const badge = computed(() => store.unread + store.toReview + store.toModerate);
 
 function text(n: AppNotification): string {
   return t(`notifications.kinds.${n.kind}`, {
-    by: n.payload.by ?? t("notifications.someone"),
+    by: n.payload.by_review_author
+      ? t("notifications.reviewAuthor")
+      : (n.payload.by ?? t("notifications.someone")),
     title: n.payload.title ?? "",
     reason: n.payload.reason ?? "",
   });

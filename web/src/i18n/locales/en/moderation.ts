@@ -18,6 +18,9 @@ const en: typeof fr = {
   historyOf: "Record of {name}",
   noHistory: "Nothing of this member was moderated.",
   dismissedReports: "Their dismissed reports",
+  commentBy: "Comment by {name}",
+  inThreadOf: "In the thread of this review:",
+  kinds: { review: "review", comment: "comment" },
   actions: { hide: "Hidden", restore: "Restored", dismiss: "Dismissed" },
   confirm: {
     restore: "Restore this review? Its author will be told.",

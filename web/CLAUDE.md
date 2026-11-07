@@ -39,6 +39,7 @@ Pinia · Vue Router (lazy imports) · alias `@` → `src/`.
 | `src/lib/markdown.ts`, `components/review/` | Avis (I-0) : Markdown restreint (markdown-it puis DOMPurify, seul `v-html` du projet), étoiles, formulaire, section de la fiche, liste d'un profil |
 | `views/admin/TypesLayout.vue` | Page « Types » : un lien de menu, un onglet par sorte de méta-type, onglets liés à l'URL (`isNavActive` garde le lien actif) |
 | `views/ModerationView.vue`, `components/review/ReviewReactions.vue`, `ReportDialog.vue` | Modération des avis (I-1) : file des signalements, journal, historique d'un membre (route `meta.moderation`, `auth.canModerate`) ; réactions et bouton « Signaler » sur un avis ; pastille de la cloche (`toModerate`) |
+| `components/review/CommentThread.vue` | Fil de commentaires d'un avis (I-2), déplié depuis le pied de l'avis ; styles du texte Markdown partagés (`.review-body` dans `main.css`) |
 | `src/lib/itemSearch.ts`               | Recherche du catalogue : champs filtrables / triables d'un schéma, état ↔ query (URL = paramètres de `GET /items`) |
 | `src/lib/externalPlan.ts`             | Aperçu d'un import externe : regroupement par édition (et par saison d'une série : rôle `season`), sélection par défaut, relation au parent (`role` = vocabulaire du connecteur, jamais un ItemType) |
 | `src/i18n/`                          | vue-i18n : registre des langues (`langs.ts`), instance + locales Element Plus (`index.ts`), catalogues `locales/<lang>/<ns>.ts` (fr = référence typée) |

@@ -100,6 +100,9 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
   (ajout seul, copie du contenu) ; un avis masqué sort des listes, des moyennes et du profil public, son auteur le voit
   avec le motif. Les réactions ne modèrent jamais. Écritures sociales limitées par heure et par compte (`handler/rate.go` :
   avis 60, signalements 20, réactions 300 ; admins exemptés ; 429 `rate_limited`).
+- Commentaires (`handler/comment.go`, `store/comment.go`, I-2) : le fil d'un avis suit sa visibilité (`threadVisibleTo` : pas de
+  fil pour une note seule) ; `shapeComments` retire le nom de l'auteur d'un avis anonyme qui répond. Modération commune aux
+  avis et commentaires (`Store.Moderate`, `moderationTables`).
 - Visibilité et partage (`handler/sharing.go`, `store/sharing.go`, P4-2) : routes publiques derrière
   `Auth.OptionalAuthenticate` (sans jeton : anonyme, `GetUserID` = `uuid.Nil` ; jeton invalide : 401) ; `loadReadable`
   vérifie visibilité et compte actif (404 sinon) et calcule les champs cachés ; une nouvelle lecture publique doit

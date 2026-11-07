@@ -941,6 +941,12 @@ components:
         my_reactions:
           type: array
           items: { type: string, enum: [interesting, tempting, funny, disapprove] }
+        comment_count:
+          type: integer
+          description: Commentaires visibles du fil (I-2).
+        comments_closed:
+          type: boolean
+          description: Fil fermé par l'auteur de l'avis.
         author:
           allOf:
             - $ref: "#/components/schemas/ReviewAuthor"
@@ -1028,13 +1034,47 @@ components:
           items:
             $ref: "#/components/schemas/Item"
 
+    Comment:
+      type: object
+      required: [id, target_kind, target_id, review_author, mine, body, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        target_kind: { type: string, enum: [review, article] }
+        target_id: { type: string, format: uuid }
+        author:
+          allOf:
+            - $ref: "#/components/schemas/ReviewAuthor"
+          description: Absent pour l'auteur d'un avis anonyme qui répond dans son fil (`review_author`).
+        review_author:
+          type: boolean
+          description: Écrit par l'auteur de l'avis commenté.
+        mine:
+          type: boolean
+          description: Écrit par le lecteur (modifier, supprimer).
+        body:
+          type: string
+          description: Markdown restreint, comme un avis.
+        hidden_at: { type: string, format: date-time, description: Masqué par la modération (visible de son auteur seulement). }
+        hidden_reason: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CommentBody:
+      type: object
+      required: [body]
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 5000
+
     ReportCreate:
       type: object
       required: [target_kind, target_id, reason]
       properties:
         target_kind:
           type: string
-          enum: [review]
+          enum: [review, comment]
         target_id:
           type: string
           format: uuid
@@ -1081,7 +1121,9 @@ components:
         review:
           allOf:
             - $ref: "#/components/schemas/Review"
-          description: Avis entier, auteur compris même s'il est anonyme (modérateurs seulement) ; absent s'il a été supprimé.
+          description: Avis entier, auteur compris même s'il est anonyme (modérateurs seulement) ; pour un commentaire, l'avis de son fil ; absent s'il a été supprimé.
+        comment:
+          $ref: "#/components/schemas/Comment"
         review_type:
           $ref: "#/components/schemas/ReviewType"
         item:
@@ -2177,7 +2219,8 @@ components:
             `account_exists`, `invitation_used`, `self_lockout`, `last_admin` (409), `wrong_password` (403).
             Propositions (P4-3) : `proposal_state`, `proposal_quota`, `proposal_invalid`, `proposal_conflict`,
             `proposal_meta_types`, `own_proposal`. Avis (I-0) : `reviews_closed` (409). Modération (I-1) :
-            `report_exists`, `moderation_state` (409), `own_content` (403), `rate_limited` (429). Chaque réponse d'erreur d'une opération nomme les codes qu'elle
+            `report_exists`, `moderation_state` (409), `own_content` (403), `rate_limited` (429). Commentaires (I-2) :
+            `comments_closed` (409). Chaque réponse d'erreur d'une opération nomme les codes qu'elle
             émet. Un client doit prévoir un libellé générique pour un code inconnu.
           example: validation_error
         message:
@@ -4518,6 +4561,299 @@ paths:
           $ref: "#/components/responses/ValidationError"
         "500":
           $ref: "#/components/responses/InternalError"
+        "204":
+          description: Fait.
+
+  /reviews/{id}/comments:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    get:
+      tags: [Reviews]
+      summary: Fil d'un avis
+      description: |
+        Authentification facultative. Le fil suit la visibilité de l'avis (404 sinon) ; une note seule n'en a pas.
+        Les plus anciens d'abord ; un commentaire masqué n'apparaît qu'à son auteur.
+      operationId: listReviewComments
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Comment"
+    post:
+      tags: [Reviews]
+      summary: Commenter un avis
+      description: L'auteur de l'avis et les participants du fil sont notifiés, jamais l'émetteur.
+      operationId: createReviewComment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentBody"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "409":
+          description: "`comments_closed` : fil fermé par l'auteur de l'avis, ou avis masqué."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          description: "`rate_limited` (`Retry-After`)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "201":
+          description: Commentaire ajouté.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+
+  /reviews/{id}/comments/close:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Reviews]
+      summary: Fermer le fil de son avis
+      description: Auteur de l'avis seulement (404 sinon) ; les commentaires restent lisibles.
+      operationId: closeReviewComments
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Fermé.
+
+  /reviews/{id}/comments/open:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Reviews]
+      summary: Rouvrir le fil de son avis
+      operationId: openReviewComments
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Rouvert.
+
+  /comments/{id}:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    put:
+      tags: [Reviews]
+      summary: Modifier son commentaire
+      operationId: updateComment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentBody"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "200":
+          description: Commentaire modifié.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+    delete:
+      tags: [Reviews]
+      summary: Supprimer son commentaire
+      operationId: deleteComment
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Supprimé.
+
+  /moderation/comments/{id}/hide:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Moderation]
+      summary: Masquer un commentaire
+      description: "Motif obligatoire, montré à l'auteur (notifié). Ferme les signalements ouverts."
+      operationId: hideComment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "403":
+          description: "`forbidden` (rôle) ou `own_content`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "`moderation_state` : l'action ne s'applique plus."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "204":
+          description: Fait.
+
+  /moderation/comments/{id}/restore:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Moderation]
+      summary: Rétablir un commentaire masqué
+      description: "L'auteur est notifié."
+      operationId: restoreComment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "403":
+          description: "`forbidden` (rôle) ou `own_content`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "`moderation_state` : l'action ne s'applique plus."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "204":
+          description: Fait.
+
+  /moderation/comments/{id}/dismiss:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Moderation]
+      summary: Classer sans suite les signalements d\x27un commentaire
+      description: "Ferme les signalements ouverts du commentaire."
+      operationId: dismissCommentReports
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "403":
+          description: "`forbidden` (rôle) ou `own_content`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "`moderation_state` : l'action ne s'applique plus."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
         "204":
           description: Fait.
 

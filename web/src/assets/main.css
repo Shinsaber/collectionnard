@@ -500,3 +500,40 @@ html.dark .el-button--primary {
 .el-input-number .el-input .el-input__inner {
   text-align: left;
 }
+
+/* Texte d'un avis ou d'un commentaire (Markdown restreint, lib/markdown.ts). */
+.review-body {
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+.review-body p,
+.review-body ul,
+.review-body ol,
+.review-body blockquote,
+.review-body pre {
+  margin-block: 0.4em;
+}
+.review-body ul {
+  list-style: disc;
+  padding-inline-start: 1.4em;
+}
+.review-body ol {
+  list-style: decimal;
+  padding-inline-start: 1.4em;
+}
+.review-body blockquote {
+  border-inline-start: 3px solid var(--c-line);
+  color: var(--c-muted);
+  padding-inline-start: 0.8em;
+}
+.review-body a {
+  color: var(--c-link);
+  text-decoration: underline;
+}
+.review-body code {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.9em;
+}
+.review-body pre {
+  overflow-x: auto;
+}

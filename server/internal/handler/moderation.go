@@ -46,8 +46,8 @@ func (h *Handler) CreateReport(w http.ResponseWriter, r *http.Request) {
 	}
 	in.Details = strings.TrimSpace(in.Details)
 	switch {
-	case in.TargetKind != model.ReportTargetReview:
-		respondValidationError(w, "target_kind must be review", map[string]any{"fields": map[string]string{"target_kind": "unsupported"}})
+	case in.TargetKind != model.ReportTargetReview && in.TargetKind != model.ReportTargetComment:
+		respondValidationError(w, "target_kind must be review or comment", map[string]any{"fields": map[string]string{"target_kind": "unsupported"}})
 		return
 	case !slices.Contains(model.ReportReasons, in.Reason):
 		respondValidationError(w, "unknown reason", map[string]any{"fields": map[string]string{"reason": "unknown"}})
@@ -57,16 +57,16 @@ func (h *Handler) CreateReport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	me := middleware.GetUserID(r.Context())
-	rv, err := h.Store.GetReview(r.Context(), in.TargetID)
+	author, shown, err := h.reportable(r, in.TargetKind, in.TargetID, me)
 	if err != nil {
 		handleStoreError(w, r, err)
 		return
 	}
-	if rv.UserID == me {
+	if author == me {
 		respondError(w, http.StatusForbidden, "own_content", "you cannot report your own content")
 		return
 	}
-	if !reviewShownTo(rv, me) {
+	if !shown {
 		notFound(w)
 		return
 	}
@@ -83,6 +83,30 @@ func (h *Handler) CreateReport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondJSON(w, http.StatusCreated, rep)
+}
+
+// reportable returns the author of a content and whether the reader sees it:
+// a review listed for them, or a comment of a thread open to them.
+func (h *Handler) reportable(r *http.Request, kind string, id, viewer uuid.UUID) (uuid.UUID, bool, error) {
+	if kind == model.ReportTargetComment {
+		c, err := h.Store.GetComment(r.Context(), id)
+		if err != nil {
+			return uuid.Nil, false, err
+		}
+		if c.HiddenAt != nil || c.TargetKind != model.CommentTargetReview {
+			return c.AuthorID, false, nil
+		}
+		rv, err := h.Store.GetReview(r.Context(), c.TargetID)
+		if err != nil {
+			return uuid.Nil, false, err
+		}
+		return c.AuthorID, threadVisibleTo(rv, viewer), nil
+	}
+	rv, err := h.Store.GetReview(r.Context(), id)
+	if err != nil {
+		return uuid.Nil, false, err
+	}
+	return rv.UserID, reviewShownTo(rv, viewer), nil
 }
 
 func (h *Handler) CountModerationQueue(w http.ResponseWriter, r *http.Request) {
@@ -108,19 +132,32 @@ func (h *Handler) ListModerationQueue(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) HideReview(w http.ResponseWriter, r *http.Request) {
-	h.moderateReview(w, r, model.ModerationHide)
+	h.moderate(w, r, model.ReportTargetReview, model.ModerationHide)
 }
 
 func (h *Handler) RestoreReview(w http.ResponseWriter, r *http.Request) {
-	h.moderateReview(w, r, model.ModerationRestore)
+	h.moderate(w, r, model.ReportTargetReview, model.ModerationRestore)
 }
 
 func (h *Handler) DismissReviewReports(w http.ResponseWriter, r *http.Request) {
-	h.moderateReview(w, r, model.ModerationDismiss)
+	h.moderate(w, r, model.ReportTargetReview, model.ModerationDismiss)
 }
 
-// moderateReview applies an action; a hide needs a reason, shown to the author.
-func (h *Handler) moderateReview(w http.ResponseWriter, r *http.Request, action string) {
+func (h *Handler) HideComment(w http.ResponseWriter, r *http.Request) {
+	h.moderate(w, r, model.ReportTargetComment, model.ModerationHide)
+}
+
+func (h *Handler) RestoreComment(w http.ResponseWriter, r *http.Request) {
+	h.moderate(w, r, model.ReportTargetComment, model.ModerationRestore)
+}
+
+func (h *Handler) DismissCommentReports(w http.ResponseWriter, r *http.Request) {
+	h.moderate(w, r, model.ReportTargetComment, model.ModerationDismiss)
+}
+
+// moderate applies an action to a review or a comment; a hide needs a reason,
+// shown to the author.
+func (h *Handler) moderate(w http.ResponseWriter, r *http.Request, kind, action string) {
 	id, ok := parseUUID(w, r, "id")
 	if !ok {
 		return
@@ -142,16 +179,16 @@ func (h *Handler) moderateReview(w http.ResponseWriter, r *http.Request, action 
 		return
 	}
 	me := middleware.GetUserID(r.Context())
-	rv, err := h.Store.GetReview(r.Context(), id)
+	author, _, err := h.reportable(r, kind, id, me)
 	if err != nil {
 		handleStoreError(w, r, err)
 		return
 	}
-	if rv.UserID == me {
+	if author == me {
 		respondError(w, http.StatusForbidden, "own_content", "nobody moderates their own content")
 		return
 	}
-	res, err := h.Store.ModerateReview(r.Context(), id, me, action, in.Reason)
+	res, err := h.Store.Moderate(r.Context(), kind, id, me, action, in.Reason)
 	if err != nil {
 		if errors.Is(err, store.ErrConflict) {
 			respondError(w, http.StatusConflict, "moderation_state", "this action does not apply to the content any more")
@@ -160,11 +197,12 @@ func (h *Handler) moderateReview(w http.ResponseWriter, r *http.Request, action 
 		handleStoreError(w, r, err)
 		return
 	}
-	switch action {
-	case model.ModerationHide:
-		h.notifyModeration(r, res, model.NotifyReviewHidden, in.Reason)
-	case model.ModerationRestore:
-		h.notifyModeration(r, res, model.NotifyReviewRestored, in.Reason)
+	notify := map[string]map[string]string{
+		model.ReportTargetReview:  {model.ModerationHide: model.NotifyReviewHidden, model.ModerationRestore: model.NotifyReviewRestored},
+		model.ReportTargetComment: {model.ModerationHide: model.NotifyCommentHidden, model.ModerationRestore: model.NotifyCommentRestore},
+	}
+	if n := notify[kind][action]; n != "" {
+		h.notifyModeration(r, res, n, in.Reason)
 	}
 	w.WriteHeader(http.StatusNoContent)
 }

@@ -79,6 +79,8 @@ type ModerationItem struct {
 	TargetID   uuid.UUID `json:"target_id"`
 	AuthorID   uuid.UUID `json:"author_id"`
 	Review     *Review   `json:"review,omitempty"`
+	// Comment: the reported comment (target_kind comment), Review being its thread's review.
+	Comment *Comment `json:"comment,omitempty"`
 	// ReviewType: labels of its criteria.
 	ReviewType  *ReviewType     `json:"review_type,omitempty"`
 	Item        *Item           `json:"item,omitempty"`

@@ -17,8 +17,13 @@ const en: typeof fr = {
     proposal_comment: "{by} wrote on “{title}”",
     review_hidden: "One of your reviews was hidden by the moderation: {reason}",
     review_restored: "One of your reviews was restored by the moderation",
+    review_comment: "{by} commented on a review",
+    comment_hidden:
+      "One of your comments was hidden by the moderation: {reason}",
+    comment_restored: "One of your comments was restored by the moderation",
   },
   someone: "A moderator",
+  reviewAuthor: "The author of the review",
 };
 
 export default en;

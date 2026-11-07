@@ -281,6 +281,24 @@ Un seul fil pour les avis et, en I-3, pour les articles.
 - Notifications : l'auteur de l'avis ou de l'article et les participants du fil, jamais l'émetteur (comme `notifyComment`).
 - L'auteur de l'avis ou de l'article peut **fermer** son fil ; signalement et masquage comme en I-1.
 
+### Livré
+
+**I-2 livré le 2026-11-07.** Choix faits à la réalisation :
+
+- Migration 016 : `comments` (`target_kind` `review` | `article`, champs de modération), `reviews.comments_closed_at`,
+  déclencheur qui supprime le fil avec son avis (suppression par l'auteur ou de l'item en cascade).
+- Le fil existe pour un avis listable (ni note seule, ni anonyme sans texte) et suit sa visibilité ; son auteur y a
+  toujours accès. Les commentaires sont **signés** ; seul l'auteur d'un avis anonyme y apparaît comme « Auteur de
+  l'avis » (le serveur n'envoie pas son nom), y compris dans la notification (`by_review_author`).
+- 1 à 5 000 caractères, Markdown restreint ; on modifie et supprime les siens. Fil fermé (ou avis masqué) : 409
+  `comments_closed`, les commentaires restent lisibles. 120 commentaires par heure et par compte.
+- Notification `review_comment` à l'auteur de l'avis et aux participants, jamais à l'émetteur ni en double.
+- Signalement et modération des commentaires comme pour les avis (`target_kind: comment`, routes
+  `/moderation/comments/{id}/…`, notifications `comment_hidden` / `comment_restored`) ; la file montre le commentaire et
+  l'avis de son fil. `Store.Moderate` traite les deux sortes.
+- Front : bouton « Commenter » / « N commentaires » dans le pied de l'avis, fil déplié sous l'avis (auteur, badge
+  « Auteur de l'avis », modifier / supprimer les siens, « Signaler » les autres, « Fermer le fil » sur son avis).
+
 ## I-3 — Articles sur la fiche d'un item
 
 Relayer les nouvelles d'une œuvre (sortie d'un tome, annonce d'une saison, critique de presse) :

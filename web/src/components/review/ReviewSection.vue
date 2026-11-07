@@ -59,6 +59,9 @@
         :schema="schema"
         :context-label-text="contextLabelText"
         show-reactions
+        comments
+        can-comment
+        own-review
       >
         <template #heading>
           <span
@@ -137,6 +140,8 @@
         :context-label-text="contextLabelText"
         reportable
         show-reactions
+        comments
+        can-comment
       />
       <p
         v-if="summary.note_only_count > 0"
