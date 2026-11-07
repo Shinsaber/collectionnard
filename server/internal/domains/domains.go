@@ -87,7 +87,7 @@ type Plan struct {
 	Entries []model.DomainInstallEntry
 	// Bases: package version to record for each type (types skipped excluded).
 	Bases map[uuid.UUID]Snapshot
-	// Kinds: entity of each type of Bases (item_types, collection_types, relation_types).
+	// Kinds: entity of each type of Bases (item_types, collection_types, relation_types, review_types).
 	Kinds map[uuid.UUID]string
 }
 
@@ -107,6 +107,16 @@ func PlanInstall(pkg *model.DomainPackage, st State) (*Plan, error) {
 		Kinds:   map[uuid.UUID]string{},
 	}
 	var refs []typeRef
+	// Review types first: the item types of the package point at them.
+	gone := map[string]bool{} // review types deleted locally since their install
+	for _, t := range pkg.ReviewTypes {
+		refs = append(refs, typeRef{model.EntityReviewTypes, t.ID, t.Name, t})
+		_, local := st.Local[t.ID]
+		_, installed := st.Base[t.ID]
+		if !local && installed {
+			gone[t.ID.String()] = true
+		}
+	}
 	for _, t := range pkg.ItemTypes {
 		refs = append(refs, typeRef{model.EntityItemTypes, t.ID, t.Name, t})
 	}
@@ -140,6 +150,7 @@ func PlanInstall(pkg *model.DomainPackage, st State) (*Plan, error) {
 		// de référence au prochain passage, pour qu'un type installé plus tard (ex. Series) soit ajouté.
 		applied := clone(next)
 		keepKnown(applied, known)
+		dropGoneReviewType(applied, gone)
 		local, hasLocal := st.Local[r.id]
 		base, hasBase := st.Base[r.id]
 		entry := model.DomainInstallEntry{Entity: r.entity, ID: r.id, Name: r.name}
@@ -166,6 +177,7 @@ func PlanInstall(pkg *model.DomainPackage, st State) (*Plan, error) {
 			entry.Conflicts = conflicts
 			entry.Outcome = model.DomainMerged
 		}
+		dropGoneReviewType(result, gone)
 		for _, id := range keepKnown(result, known) {
 			if u, err := uuid.Parse(id); err == nil {
 				entry.MissingTypes = append(entry.MissingTypes, u)
@@ -197,6 +209,14 @@ func PlanInstall(pkg *model.DomainPackage, st State) (*Plan, error) {
 	return plan, nil
 }
 
+// dropGoneReviewType keeps an item type from pointing at a review type deleted
+// locally: that deletion stands, like that of any type of a package.
+func dropGoneReviewType(s Snapshot, gone map[string]bool) {
+	if id, _ := s["review_type_id"].(string); gone[strings.ToLower(id)] {
+		delete(s, "review_type_id")
+	}
+}
+
 func isEmpty(v any) bool {
 	a, _ := v.([]any)
 	return len(a) == 0
@@ -221,6 +241,10 @@ func addToCatalog(cat *model.CatalogExport, entity string, id uuid.UUID, s Snaps
 		var t model.ExportItemType
 		err = json.Unmarshal(raw, &t)
 		cat.ItemTypes = append(cat.ItemTypes, t)
+	case model.EntityReviewTypes:
+		var t model.ExportReviewType
+		err = json.Unmarshal(raw, &t)
+		cat.ReviewTypes = append(cat.ReviewTypes, t)
 	case model.EntityCollectionTypes:
 		var t model.ExportCollectionType
 		err = json.Unmarshal(raw, &t)

@@ -125,6 +125,118 @@ type MockStore struct {
 	ListDomainsFn                func(ctx context.Context) ([]model.DomainInfo, error)
 	InstallDomainFn              func(ctx context.Context, pkg *model.DomainPackage, dryRun bool) (*model.DomainInstallReport, error)
 	RefreshInstalledDomainsFn    func(ctx context.Context, except string) error
+	ListReviewTypesFn            func(ctx context.Context, pg model.Pagination) ([]model.ReviewType, int, error)
+	GetReviewTypeFn              func(ctx context.Context, id uuid.UUID) (*model.ReviewType, error)
+	CreateReviewTypeFn           func(ctx context.Context, in model.ReviewTypeCreate) (*model.ReviewType, error)
+	UpdateReviewTypeFn           func(ctx context.Context, id uuid.UUID, in model.ReviewTypeUpdate) (*model.ReviewType, error)
+	DeleteReviewTypeFn           func(ctx context.Context, id uuid.UUID) error
+	ListReviewContextItemsFn     func(ctx context.Context, reviewTypeID, itemID uuid.UUID) ([]model.Item, error)
+	IsReviewContextFn            func(ctx context.Context, reviewTypeID, itemID, contextID uuid.UUID) (bool, error)
+	GetItemReviewTypeFn          func(ctx context.Context, itemID uuid.UUID) (*model.ReviewType, error)
+	ListItemReviewsFn            func(ctx context.Context, itemID uuid.UUID, p model.ReviewListParams, pg model.Pagination) ([]model.Review, int, error)
+	GetReviewStatsFn             func(ctx context.Context, itemID, viewer uuid.UUID, levels []string) (*model.ReviewStats, error)
+	GetMyReviewFn                func(ctx context.Context, itemID, userID uuid.UUID) (*model.Review, error)
+	PutReviewFn                  func(ctx context.Context, itemID, userID uuid.UUID, in model.ReviewWrite) (*model.Review, error)
+	DeleteReviewFn               func(ctx context.Context, itemID, userID uuid.UUID) error
+	ListUserReviewsFn            func(ctx context.Context, userID uuid.UUID, levels []string, pg model.Pagination) ([]model.Review, int, error)
+}
+
+func (m *MockStore) ListReviewTypes(ctx context.Context, pg model.Pagination) ([]model.ReviewType, int, error) {
+	if m.ListReviewTypesFn != nil {
+		return m.ListReviewTypesFn(ctx, pg)
+	}
+	return nil, 0, nil
+}
+
+func (m *MockStore) GetReviewType(ctx context.Context, id uuid.UUID) (*model.ReviewType, error) {
+	if m.GetReviewTypeFn != nil {
+		return m.GetReviewTypeFn(ctx, id)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) CreateReviewType(ctx context.Context, in model.ReviewTypeCreate) (*model.ReviewType, error) {
+	if m.CreateReviewTypeFn != nil {
+		return m.CreateReviewTypeFn(ctx, in)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) UpdateReviewType(ctx context.Context, id uuid.UUID, in model.ReviewTypeUpdate) (*model.ReviewType, error) {
+	if m.UpdateReviewTypeFn != nil {
+		return m.UpdateReviewTypeFn(ctx, id, in)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) DeleteReviewType(ctx context.Context, id uuid.UUID) error {
+	if m.DeleteReviewTypeFn != nil {
+		return m.DeleteReviewTypeFn(ctx, id)
+	}
+	return store.ErrNotFound
+}
+
+func (m *MockStore) ListReviewContextItems(ctx context.Context, reviewTypeID, itemID uuid.UUID) ([]model.Item, error) {
+	if m.ListReviewContextItemsFn != nil {
+		return m.ListReviewContextItemsFn(ctx, reviewTypeID, itemID)
+	}
+	return []model.Item{}, nil
+}
+
+func (m *MockStore) IsReviewContext(ctx context.Context, reviewTypeID, itemID, contextID uuid.UUID) (bool, error) {
+	if m.IsReviewContextFn != nil {
+		return m.IsReviewContextFn(ctx, reviewTypeID, itemID, contextID)
+	}
+	return false, nil
+}
+
+func (m *MockStore) GetItemReviewType(ctx context.Context, itemID uuid.UUID) (*model.ReviewType, error) {
+	if m.GetItemReviewTypeFn != nil {
+		return m.GetItemReviewTypeFn(ctx, itemID)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) ListItemReviews(ctx context.Context, itemID uuid.UUID, p model.ReviewListParams, pg model.Pagination) ([]model.Review, int, error) {
+	if m.ListItemReviewsFn != nil {
+		return m.ListItemReviewsFn(ctx, itemID, p, pg)
+	}
+	return nil, 0, nil
+}
+
+func (m *MockStore) GetReviewStats(ctx context.Context, itemID, viewer uuid.UUID, levels []string) (*model.ReviewStats, error) {
+	if m.GetReviewStatsFn != nil {
+		return m.GetReviewStatsFn(ctx, itemID, viewer, levels)
+	}
+	return &model.ReviewStats{}, nil
+}
+
+func (m *MockStore) GetMyReview(ctx context.Context, itemID, userID uuid.UUID) (*model.Review, error) {
+	if m.GetMyReviewFn != nil {
+		return m.GetMyReviewFn(ctx, itemID, userID)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) PutReview(ctx context.Context, itemID, userID uuid.UUID, in model.ReviewWrite) (*model.Review, error) {
+	if m.PutReviewFn != nil {
+		return m.PutReviewFn(ctx, itemID, userID, in)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) DeleteReview(ctx context.Context, itemID, userID uuid.UUID) error {
+	if m.DeleteReviewFn != nil {
+		return m.DeleteReviewFn(ctx, itemID, userID)
+	}
+	return store.ErrNotFound
+}
+
+func (m *MockStore) ListUserReviews(ctx context.Context, userID uuid.UUID, levels []string, pg model.Pagination) ([]model.Review, int, error) {
+	if m.ListUserReviewsFn != nil {
+		return m.ListUserReviewsFn(ctx, userID, levels, pg)
+	}
+	return nil, 0, nil
 }
 
 func (m *MockStore) Ping(ctx context.Context) error {

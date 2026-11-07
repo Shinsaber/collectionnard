@@ -14,6 +14,7 @@ vi.mock("@/api/client", () => ({
   itemTypeApi: api,
   relationTypeApi: {},
   collectionTypeApi: {},
+  reviewTypeApi: { list: () => Promise.resolve({ data: [], total_pages: 1 }) },
   extractApiError: () => ({ message: "" }),
 }));
 

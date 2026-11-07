@@ -23,8 +23,10 @@ type CatalogExport struct {
 	ItemTypes       []ExportItemType       `json:"item_types"`
 	CollectionTypes []ExportCollectionType `json:"collection_types"`
 	RelationTypes   []ExportRelationType   `json:"relation_types"`
-	Items           []ExportItem           `json:"items"`
-	Relations       []ExportRelation       `json:"relations"`
+	// ReviewTypes: absent from files older than I-0.
+	ReviewTypes []ExportReviewType `json:"review_types,omitempty"`
+	Items       []ExportItem       `json:"items"`
+	Relations   []ExportRelation   `json:"relations"`
 }
 
 // ExportItemType is an ItemType in an export. DisplayOrder absent on import: 100
@@ -32,6 +34,8 @@ type CatalogExport struct {
 type ExportItemType struct {
 	ExportMetaType
 	DisplayOrder *int `json:"display_order,omitempty"`
+	// ReviewTypeID absent on import keeps the stored value.
+	ReviewTypeID *uuid.UUID `json:"review_type_id,omitempty"`
 }
 
 // ExportCollectionType is a CollectionType in an export. ItemTypeIDs absent on
@@ -39,6 +43,14 @@ type ExportItemType struct {
 type ExportCollectionType struct {
 	ExportMetaType
 	ItemTypeIDs []uuid.UUID `json:"item_type_ids"`
+}
+
+// ExportReviewType is a ReviewType in an export. ContextRelationTypeIDs absent
+// on import keeps the stored list; relation types unknown here are left out.
+type ExportReviewType struct {
+	ExportMetaType
+	ContextRelationTypeIDs []uuid.UUID       `json:"context_relation_type_ids,omitempty"`
+	ContextLabel           map[string]string `json:"context_label,omitempty"`
 }
 
 // ExportMetaType is the common part of the meta-types in an export.
@@ -77,6 +89,7 @@ const (
 	EntityItemTypes       = "item_types"
 	EntityCollectionTypes = "collection_types"
 	EntityRelationTypes   = "relation_types"
+	EntityReviewTypes     = "review_types"
 	EntityItems           = "items"
 	EntityRelations       = "relations"
 	EntityCollection      = "collection"
@@ -113,7 +126,7 @@ type ImportReport struct {
 // NewImportReport returns an empty report with every list counted.
 func NewImportReport(dryRun bool) *ImportReport {
 	r := &ImportReport{DryRun: dryRun, Counts: map[string]*ImportCounts{}, Errors: []ImportError{}}
-	for _, e := range []string{EntityItemTypes, EntityCollectionTypes, EntityRelationTypes, EntityItems, EntityRelations} {
+	for _, e := range []string{EntityItemTypes, EntityCollectionTypes, EntityRelationTypes, EntityReviewTypes, EntityItems, EntityRelations} {
 		r.Counts[e] = &ImportCounts{}
 	}
 	return r

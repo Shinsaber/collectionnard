@@ -86,6 +86,24 @@ type Store interface {
 	UpdateCollectionType(ctx context.Context, id uuid.UUID, in model.CollectionTypeUpdate) (*model.CollectionType, error)
 	DeleteCollectionType(ctx context.Context, id uuid.UUID) error
 
+	// ReviewTypes
+	ListReviewTypes(ctx context.Context, pg model.Pagination) ([]model.ReviewType, int, error)
+	GetReviewType(ctx context.Context, id uuid.UUID) (*model.ReviewType, error)
+	CreateReviewType(ctx context.Context, in model.ReviewTypeCreate) (*model.ReviewType, error)
+	UpdateReviewType(ctx context.Context, id uuid.UUID, in model.ReviewTypeUpdate) (*model.ReviewType, error)
+	DeleteReviewType(ctx context.Context, id uuid.UUID) error
+
+	// Reviews (I-0)
+	GetItemReviewType(ctx context.Context, itemID uuid.UUID) (*model.ReviewType, error)
+	ListReviewContextItems(ctx context.Context, reviewTypeID, itemID uuid.UUID) ([]model.Item, error)
+	IsReviewContext(ctx context.Context, reviewTypeID, itemID, contextID uuid.UUID) (bool, error)
+	ListItemReviews(ctx context.Context, itemID uuid.UUID, p model.ReviewListParams, pg model.Pagination) ([]model.Review, int, error)
+	GetReviewStats(ctx context.Context, itemID, viewer uuid.UUID, levels []string) (*model.ReviewStats, error)
+	GetMyReview(ctx context.Context, itemID, userID uuid.UUID) (*model.Review, error)
+	PutReview(ctx context.Context, itemID, userID uuid.UUID, in model.ReviewWrite) (*model.Review, error)
+	DeleteReview(ctx context.Context, itemID, userID uuid.UUID) error
+	ListUserReviews(ctx context.Context, userID uuid.UUID, levels []string, pg model.Pagination) ([]model.Review, int, error)
+
 	// Item
 	ListItems(ctx context.Context, pg model.Pagination, f ItemFilters) ([]model.Item, int, error)
 	GetItem(ctx context.Context, id uuid.UUID) (*model.Item, error)

@@ -1,12 +1,18 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
-import { collectionTypeApi, itemTypeApi, relationTypeApi } from "@/api/client";
+import {
+  collectionTypeApi,
+  itemTypeApi,
+  relationTypeApi,
+  reviewTypeApi,
+} from "@/api/client";
 import type {
   CollectionType,
   ItemType,
   PaginatedResponse,
   PaginationParams,
   RelationType,
+  ReviewType,
 } from "@/api/types";
 
 type ListFn<T> = (params?: PaginationParams) => Promise<PaginatedResponse<T>>;
@@ -33,11 +39,17 @@ export const useMetaTypes = defineStore("metaTypes", () => {
   const itemTypes = ref<ItemType[]>([]);
   const relationTypes = ref<RelationType[]>([]);
   const collectionTypes = ref<CollectionType[]>([]);
+  const reviewTypes = ref<ReviewType[]>([]);
 
   const pending: Partial<
-    Record<"items" | "relations" | "collections", Promise<void>>
+    Record<"items" | "relations" | "collections" | "reviews", Promise<void>>
   > = {};
-  const loaded = { items: false, relations: false, collections: false };
+  const loaded = {
+    items: false,
+    relations: false,
+    collections: false,
+    reviews: false,
+  };
 
   function load<T>(
     key: keyof typeof loaded,
@@ -65,6 +77,8 @@ export const useMetaTypes = defineStore("metaTypes", () => {
     load("relations", relationTypeApi.list, relationTypes, force);
   const loadCollectionTypes = (force = false) =>
     load("collections", collectionTypeApi.list, collectionTypes, force);
+  const loadReviewTypes = (force = false) =>
+    load("reviews", reviewTypeApi.list, reviewTypes, force);
 
   /** Schémas d'ItemType indexés par nom (les nœuds du graphe ne portent que le nom). */
   const itemTypeSchemasByName = computed<
@@ -90,18 +104,24 @@ export const useMetaTypes = defineStore("metaTypes", () => {
 
   /** À appeler après toute création / modification / suppression d'un méta-type. */
   function invalidate() {
-    loaded.items = loaded.relations = loaded.collections = false;
+    loaded.items =
+      loaded.relations =
+      loaded.collections =
+      loaded.reviews =
+        false;
   }
 
   return {
     itemTypes,
     relationTypes,
     collectionTypes,
+    reviewTypes,
     itemTypeSchemasByName,
     relationTypeSchemasByName,
     loadItemTypes,
     loadRelationTypes,
     loadCollectionTypes,
+    loadReviewTypes,
     invalidate,
   };
 });

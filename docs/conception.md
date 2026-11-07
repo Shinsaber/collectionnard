@@ -53,7 +53,8 @@ Le système repose sur **un pattern unique appliqué à 3 niveaux**. Chaque nive
 | ------------------ | ---------------------------------------------------------- | ------------------ | -------------------------------------------- |
 | **ItemType**       | Attributs d'un item                                        | **Item**           | titre, année, ISBN…                          |
 | **RelationType**   | Attributs d'un lien inter-items + contrainte source→target | **ItemRelation**   | disque, piste, rôle…                         |
-| **CollectionType** | Attributs du lien user↔item + sémantique de la collection  | **CollectionItem** | état physique, prix d'achat, date vue, note… |
+| **CollectionType** | Attributs du lien user↔item + sémantique de la collection  | **CollectionItem** | état physique, prix d'achat, date vue… |
+| **ReviewType** | Critères notés d'un avis, entiers de 0 à 10 | **Review** | scénario, dessin, jouabilité… |
 
 ### Schéma d'architecture
 
@@ -135,7 +136,7 @@ Instance d'un lien entre deux items, avec les valeurs des attributs dynamiques d
 
 #### CollectionItem
 
-Instance du lien entre une collection et un item, avec les valeurs des attributs dynamiques définis par le CollectionType (état, prix, note…).
+Instance du lien entre une collection et un item, avec les valeurs des attributs dynamiques définis par le CollectionType (état, prix…).
 
 #### Tag
 
@@ -147,7 +148,7 @@ Instance du lien entre une collection et un item, avec les valeurs des attributs
 
 ### Un JSON Schema par méta-type
 
-Chaque méta-type (ItemType, RelationType, CollectionType) porte un **JSON Schema** (draft 2020-12) dans sa
+Chaque méta-type (ItemType, RelationType, CollectionType, ReviewType) porte un **JSON Schema** (draft 2020-12) dans sa
 colonne `attributes_schema` (JSONB). Les instances (Item, ItemRelation, CollectionItem) portent un objet
 `attributes` (JSONB) validé contre ce schéma à chaque écriture, côté serveur
 (`santhosh-tekuri/jsonschema`). Le schéma lui-même est vérifié à l'enregistrement du méta-type : objet JSON
@@ -222,6 +223,7 @@ d'autres codes de langue, et les traductions de types / champs / enums se compl�
 **CollectionTypes :**
 
 | CollectionType | Attributs du lien CollectionItem                                           |
+| ReviewType | Critères notés d'un avis (`docs/phases/interactions.md`) |
 | -------------- | -------------------------------------------------------------------------- |
 | Ownership      | condition (new/very_good/good/fair/poor), purchase_price, acquisition_date |
 | Watching       | watched_at, rating, progress                                               |
@@ -531,7 +533,7 @@ instance publique à terme. Décisions : avis dans une entité dédiée (un par 
 notés sur 10 portés par un méta-type, note de *Visionnage* supprimée, modération humaine
 par les admins et un rôle `moderator`.
 
-- [ ] **I-0 — Avis et critères** : méta-type `ReviewType` rattaché aux types d'item (fermé sur les personnes), note
+- [x] **I-0 — Avis et critères** (livré le 2026-11-06) : méta-type `ReviewType` rattaché aux types d'item (fermé sur les personnes), note
       globale ou moyenne des critères, en étoiles, texte, spoiler, langue, visibilité ; suppression de `Visionnage.rating`.
 - [ ] **I-1 — Signalements, modération et réactions** : rôle `moderator`, bouton « Signaler » (avis, commentaire, article),
       file de modération, masquage, journal de modération et récapitulatif par membre, réactions (intention ou émotion).

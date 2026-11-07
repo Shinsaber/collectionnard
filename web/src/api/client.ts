@@ -7,6 +7,13 @@ import {
 } from "./tokens";
 import type {
   LoginRequest,
+  Review,
+  ReviewListParams,
+  ReviewPut,
+  ReviewSummary,
+  ReviewType,
+  ReviewTypeCreate,
+  ReviewTypeUpdate,
   Invitation,
   InvitationCheck,
   InvitationCreate,
@@ -315,6 +322,51 @@ export const relationTypeApi = {
   delete: (id: string) => http.delete(`/relation-types/${id}`),
 };
 
+// ── Review Types et avis (I-0) ────────────────────────────────────────
+export const reviewTypeApi = {
+  list: (params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<ReviewType>>("/review-types", { params })
+      .then((r) => r.data),
+  get: (id: string) =>
+    http.get<ReviewType>(`/review-types/${id}`).then((r) => r.data),
+  create: (data: ReviewTypeCreate) =>
+    http.post<ReviewType>("/review-types", data).then((r) => r.data),
+  update: (id: string, data: ReviewTypeUpdate) =>
+    http.put<ReviewType>(`/review-types/${id}`, data).then((r) => r.data),
+  delete: (id: string) => http.delete(`/review-types/${id}`),
+};
+
+export const reviewApi = {
+  summary: (itemId: string) =>
+    http
+      .get<ReviewSummary>(`/items/${itemId}/reviews/summary`, publicRead)
+      .then((r) => r.data),
+  list: (itemId: string, params?: ReviewListParams) =>
+    http
+      .get<PaginatedResponse<Review>>(`/items/${itemId}/reviews`, {
+        ...publicRead,
+        params,
+      })
+      .then((r) => r.data),
+  /** Mon avis, `null` si je n'en ai pas écrit. */
+  mine: (itemId: string) =>
+    http
+      .get<Review>(`/items/${itemId}/reviews/mine`)
+      .then((r) => r.data)
+      .catch((e) => {
+        if (e?.response?.status === 404) return null;
+        throw e;
+      }),
+  put: (itemId: string, data: ReviewPut) =>
+    http.put<Review>(`/items/${itemId}/reviews/mine`, data).then((r) => r.data),
+  remove: (itemId: string) => http.delete(`/items/${itemId}/reviews/mine`),
+  listMine: (params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<Review>>("/me/reviews", { params })
+      .then((r) => r.data),
+};
+
 // ── Collection Types ──────────────────────────────────────────────────
 export const collectionTypeApi = {
   list: (params?: PaginationParams) =>
@@ -537,6 +589,13 @@ export const shareLinkApi = {
 
 /** Lectures publiques (P4-2) : champs cachés déjà retirés par le serveur. */
 export const publicApi = {
+  reviews: (username: string, params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<Review>>(
+        `/public/users/${encodeURIComponent(username)}/reviews`,
+        { ...publicRead, params },
+      )
+      .then((r) => r.data),
   profile: (username: string) =>
     http
       .get<PublicProfile>(

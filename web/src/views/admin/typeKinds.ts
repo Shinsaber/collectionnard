@@ -1,10 +1,20 @@
-import { collectionTypeApi, itemTypeApi, relationTypeApi } from "@/api/client";
-import type { CollectionType, ItemType, RelationType } from "@/api/types";
+import {
+  collectionTypeApi,
+  itemTypeApi,
+  relationTypeApi,
+  reviewTypeApi,
+} from "@/api/client";
+import type {
+  CollectionType,
+  ItemType,
+  RelationType,
+  ReviewType,
+} from "@/api/types";
 
-/** Les trois sortes de méta-types, éditées par la même page (TypeEditorView). */
-export type TypeKind = "item" | "relation" | "collection";
+/** Les quatre sortes de méta-types, éditées par la même page (TypeEditorView). */
+export type TypeKind = "item" | "relation" | "collection" | "review";
 
-export type AnyType = ItemType | RelationType | CollectionType;
+export type AnyType = ItemType | RelationType | CollectionType | ReviewType;
 
 /** Données saisies sur la page ; les types source / cible ne concernent que les relations. */
 export interface TypeForm {
@@ -14,6 +24,11 @@ export interface TypeForm {
   target_item_type_ids: string[];
   /** Types d'item seulement. */
   display_order: number;
+  /** Types d'item seulement : type d'avis (`null` = avis fermés). */
+  review_type_id: string | null;
+  /** Types d'avis seulement : relations vers l'édition utilisée et libellé de ce choix. */
+  context_relation_type_ids: string[];
+  context_label: Record<string, string>;
   /** Types de collection seulement : types d'item permis (vide = tous). */
   item_type_ids: string[];
   attributes_schema: Record<string, unknown>;
@@ -38,6 +53,14 @@ function base(f: TypeForm) {
   };
 }
 
+function itemPayload(f: TypeForm) {
+  return {
+    ...base(f),
+    display_order: f.display_order,
+    review_type_id: f.review_type_id || null,
+  };
+}
+
 export const TYPE_KINDS: Record<TypeKind, TypeKindConfig> = {
   item: {
     listPath: "/admin/item-types",
@@ -48,8 +71,8 @@ export const TYPE_KINDS: Record<TypeKind, TypeKindConfig> = {
     get: (id) => itemTypeApi.get(id),
     save: (f, id) =>
       id
-        ? itemTypeApi.update(id, { ...base(f), display_order: f.display_order })
-        : itemTypeApi.create({ ...base(f), display_order: f.display_order }),
+        ? itemTypeApi.update(id, itemPayload(f))
+        : itemTypeApi.create(itemPayload(f)),
   },
   relation: {
     listPath: "/admin/relation-types",
@@ -83,6 +106,26 @@ export const TYPE_KINDS: Record<TypeKind, TypeKindConfig> = {
         : collectionTypeApi.create(payload);
     },
   },
+  review: {
+    listPath: "/admin/review-types",
+    listTitleKey: "admin.reviewTypes.title",
+    namePlaceholderKey: "admin.reviewTypes.namePlaceholder",
+    createdKey: "admin.shared.created",
+    updatedKey: "admin.shared.updated",
+    get: (id) => reviewTypeApi.get(id),
+    save: (f, id) => {
+      const payload = {
+        ...base(f),
+        context_relation_type_ids: f.context_relation_type_ids,
+        context_label: Object.fromEntries(
+          Object.entries(f.context_label).filter(([, v]) => v.trim()),
+        ),
+      };
+      return id
+        ? reviewTypeApi.update(id, payload)
+        : reviewTypeApi.create(payload);
+    },
+  },
 };
 
 export function emptySchema(): Record<string, unknown> {
@@ -98,6 +141,12 @@ export function formOf(type?: AnyType | null): TypeForm {
     source_item_type_ids: rel?.source_item_type_ids ?? [],
     target_item_type_ids: rel?.target_item_type_ids ?? [],
     display_order: (type as ItemType | undefined)?.display_order ?? 100,
+    review_type_id: (type as ItemType | undefined)?.review_type_id ?? null,
+    context_relation_type_ids:
+      (type as ReviewType | undefined)?.context_relation_type_ids ?? [],
+    context_label: {
+      ...((type as ReviewType | undefined)?.context_label ?? {}),
+    },
     item_type_ids: (type as CollectionType | undefined)?.item_type_ids ?? [],
     attributes_schema: type?.attributes_schema ?? emptySchema(),
   };

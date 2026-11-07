@@ -76,6 +76,7 @@ const en: typeof fr = {
       "Records changed since the proposal: resolve the conflicts.",
     proposal_meta_types: "A proposal changes items and relations only.",
     own_proposal: "Nobody reviews their own proposals.",
+    reviews_closed: "Reviews are closed on this item type.",
   },
 };
 

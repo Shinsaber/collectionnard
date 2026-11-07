@@ -8,9 +8,7 @@ export const NAV_ICONS = {
   catalog: "M4 3h6v18H4zM12 6h5v15h-5zM19 7l2 13",
   collections: "M6 3h12v18l-6-4-6 4z",
   more: "M4 12a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0M10.5 12a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0M17 12a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0",
-  itemTypes: "M12 2l9 5v10l-9 5-9-5V7zM12 12l9-5M12 12v10M12 12L3 7",
-  relationTypes: "M4 12h16M14 6l6 6-6 6M10 6l-6 6 6 6",
-  collectionTypes: "M3 12V4h8l10 10-8 8zM7.5 7.5h.01",
+  types: "M12 2l9 5v10l-9 5-9-5V7zM12 12l9-5M12 12v10M12 12L3 7",
   stats: "M4 20V10M10 20V4M16 20v-7M22 20H2",
   proposals: "M4 4h16v12H8l-4 4zM8 9h8M8 12h5",
   members:
@@ -38,9 +36,13 @@ export interface NavLink {
   icon: NavIconName;
 }
 
+/** Lien « Types » du menu : son premier onglet ; les autres sortes de types l'activent aussi. */
+const TYPES_PATH = "/admin/item-types";
+
 /** Un lien est actif sur sa route et ses sous-routes (`/items` couvre `/items/:id`) ; `/` seulement sur elle-même. */
 export function isNavActive(to: string, path: string): boolean {
   if (to === "/") return path === "/";
+  if (to === TYPES_PATH) return /^\/admin\/[a-z]+-types(\/|$)/.test(path);
   return path === to || path.startsWith(`${to}/`);
 }
 
@@ -100,21 +102,7 @@ export function useNavigation() {
     () => [
       { to: "/admin/users", label: t("layout.nav.users"), icon: "users" },
       { to: "/admin/domains", label: t("layout.nav.domains"), icon: "domains" },
-      {
-        to: "/admin/item-types",
-        label: t("layout.nav.itemTypes"),
-        icon: "itemTypes",
-      },
-      {
-        to: "/admin/relation-types",
-        label: t("layout.nav.relationTypes"),
-        icon: "relationTypes",
-      },
-      {
-        to: "/admin/collection-types",
-        label: t("layout.nav.collectionTypes"),
-        icon: "collectionTypes",
-      },
+      { to: TYPES_PATH, label: t("layout.nav.types"), icon: "types" },
       {
         to: "/admin/import-export",
         label: t("layout.nav.importExport"),

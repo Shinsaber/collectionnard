@@ -1,0 +1,70 @@
+import type fr from "../fr/reviews";
+
+const en: typeof fr = {
+  tab: "Reviews",
+  outOfTen: "{rating} out of 10",
+  anonymousAuthor: "Anonymous",
+  showSpoiler: "Show the spoiler",
+  count: "no ratings | {n} rating | {n} ratings",
+  belowThreshold: "Not enough ratings for an average yet ({count} of {min}).",
+  detailedCount:
+    "{n} detailed review | {n} detailed review | {n} detailed reviews",
+  mine: "My review",
+  myReviews: "My reviews",
+  publicReviews: "Reviews",
+  noMyReviews: "You have not written a review yet.",
+  noPublicReviews: "No signed reviews.",
+  write: "Write a review",
+  none: "No reviews from other members yet.",
+  noteOnly:
+    "and no ratings without text | and {n} rating without text | and {n} ratings without text",
+  myLangOnly: "In my language",
+  contextOf: "{label}:",
+  allContexts: "All editions",
+  saved: "Review saved",
+  deleted: "Review deleted",
+  confirmDelete: "Delete your review?",
+  header: {
+    open: "See the reviews",
+    average: "{rating}/10",
+    notEnough: "{count}, average from {min}",
+    none: "No ratings yet",
+    mine: "My rating",
+  },
+  sort: {
+    label: "Sort the reviews",
+    recent: "Most recent",
+    rating: "Highest rated",
+  },
+  visibility: {
+    private: "Rating only",
+    privateHelp:
+      "Your rating counts in the average, without your name; your text stays yours.",
+    members: "Members",
+    membersHelp:
+      "Signed for members; visitors only get the rating, in the average.",
+    anonymous: "Anonymous",
+    anonymousHelp: "Text visible to all, without your name.",
+    public: "Public",
+    publicHelp: "Signed review, visible to all.",
+  },
+  form: {
+    contextDefault: "Edition used",
+    contextNone: "Not given",
+    contextHelp: "Optional. It is not shown if your review is anonymous.",
+    contextAnonymous: "Anonymous review: the edition will not be shown.",
+    mode: "Way of rating",
+    overall: "Overall rating",
+    byCriteria: "By criterion",
+    rating: "Rating out of 10",
+    average: "Rating of the review (average):",
+    body: "Your review (optional)",
+    bodyHelp:
+      "Markdown: *italic*, **bold**, lists, > quote, [link](https://…). No images or HTML.",
+    spoiler: "Contains a spoiler",
+    lang: "Language",
+    visibility: "Who sees this review?",
+  },
+};
+
+export default en;

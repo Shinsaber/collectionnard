@@ -13,6 +13,20 @@
       </template>
     </PageHeader>
 
+    <section
+      class="flex flex-col gap-4 rounded-2xl bg-surface p-5 shadow-card"
+      data-test="my-reviews"
+    >
+      <h2 class="text-lg font-extrabold tracking-tight">
+        {{ t("reviews.myReviews") }}
+      </h2>
+      <ReviewUserList
+        :fetch="reviewApi.listMine"
+        :empty-text="t('reviews.noMyReviews')"
+        show-visibility
+      />
+    </section>
+
     <!-- Profil -->
     <section class="flex flex-col gap-4 rounded-2xl bg-surface p-5 shadow-card">
       <h2 class="text-lg font-extrabold tracking-tight">
@@ -138,7 +152,7 @@
 // Mon profil (P4-0) : nom affiché, présentation, avatar ; mot de passe ; invitations si permises.
 import { computed, ref, useId, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { meApi, uploadApi } from "@/api/client";
+import { meApi, reviewApi, uploadApi } from "@/api/client";
 import { useAuthStore } from "@/stores/auth";
 import { useNotify } from "@/composables/useNotify";
 import PageHeader from "@/components/common/PageHeader.vue";
@@ -146,6 +160,7 @@ import InvitationsCard from "@/components/account/InvitationsCard.vue";
 import PasswordFields from "@/components/account/PasswordFields.vue";
 import UserAvatar from "@/components/account/UserAvatar.vue";
 import VisibilitySelect from "@/components/sharing/VisibilitySelect.vue";
+import ReviewUserList from "@/components/review/ReviewUserList.vue";
 import type { Visibility } from "@/api/types";
 
 const { t } = useI18n();

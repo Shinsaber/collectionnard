@@ -31,6 +31,7 @@ export interface SchemaBuilderFeatures {
   completeness: boolean; // x-completeness (types de relation : composition)
   private: boolean; // x-private par champ (types de collection : caché aux autres lecteurs)
   identifier: boolean; // x-identifier par champ (types d'item : ISBN, EAN… pour les doublons)
+  criteria: boolean; // types d'avis : chaque champ est un critère, entier de 0 à 10 sans autre réglage
 }
 
 export const defaultFeatures: SchemaBuilderFeatures = {
@@ -57,6 +58,7 @@ export const defaultFeatures: SchemaBuilderFeatures = {
   completeness: false,
   private: false,
   identifier: false,
+  criteria: false,
 };
 
 /** Un champ du schéma tel qu'édité dans le builder. */

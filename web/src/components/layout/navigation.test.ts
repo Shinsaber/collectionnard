@@ -19,6 +19,22 @@ describe("isNavActive", () => {
     expect(isNavActive("/collections", "/collections-archive")).toBe(false);
   });
 
+  it("garde « Types » actif sur tous les onglets et les éditeurs de types", () => {
+    const types = "/admin/item-types";
+    for (const path of [
+      "/admin/item-types",
+      "/admin/relation-types",
+      "/admin/collection-types",
+      "/admin/review-types",
+      "/admin/review-types/new",
+      "/admin/relation-types/42",
+    ]) {
+      expect(isNavActive(types, path)).toBe(true);
+    }
+    expect(isNavActive(types, "/admin/users")).toBe(false);
+    expect(isNavActive(types, "/items")).toBe(false);
+  });
+
   it("rattache l'administration, les statistiques et le hors ligne à l'onglet « Plus »", () => {
     expect(isMoreActive("/admin/item-types")).toBe(true);
     expect(isMoreActive("/stats")).toBe(true);

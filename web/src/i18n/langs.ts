@@ -16,6 +16,12 @@ export const LANG_NAMES: Record<Lang, string> = {
   en: "English",
 };
 
+/** Petit drapeau d'une langue (avis, I-0). */
+export const LANG_FLAGS: Record<Lang, string> = {
+  fr: "🇫🇷",
+  en: "🇬🇧",
+};
+
 export function isLang(value: unknown): value is Lang {
   return (LANGS as readonly unknown[]).includes(value);
 }

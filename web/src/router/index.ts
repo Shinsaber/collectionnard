@@ -117,35 +117,52 @@ const router = createRouter({
           props: true,
         },
         // ── Administration ──
+        // Listes des méta-types : une page à onglets, un onglet par sorte (chemins absolus gardés).
         {
-          path: "admin/item-types",
-          name: "item-types",
-          component: () => import("@/views/admin/ItemTypesView.vue"),
+          path: "admin/types",
+          component: () => import("@/views/admin/TypesLayout.vue"),
           meta: { admin: true },
+          redirect: "/admin/item-types",
+          children: [
+            {
+              path: "/admin/item-types",
+              name: "item-types",
+              component: () => import("@/views/admin/ItemTypesView.vue"),
+              meta: { admin: true },
+            },
+            {
+              path: "/admin/relation-types",
+              name: "relation-types",
+              component: () => import("@/views/admin/RelationTypesView.vue"),
+              meta: { admin: true },
+            },
+            {
+              path: "/admin/collection-types",
+              name: "collection-types",
+              component: () => import("@/views/admin/CollectionTypesView.vue"),
+              meta: { admin: true },
+            },
+            {
+              path: "/admin/review-types",
+              name: "review-types",
+              component: () => import("@/views/admin/ReviewTypesView.vue"),
+              meta: { admin: true },
+            },
+          ],
         },
-        {
-          path: "admin/relation-types",
-          name: "relation-types",
-          component: () => import("@/views/admin/RelationTypesView.vue"),
-          meta: { admin: true },
-        },
-        {
-          path: "admin/collection-types",
-          name: "collection-types",
-          component: () => import("@/views/admin/CollectionTypesView.vue"),
-          meta: { admin: true },
-        },
-        // Édition d'un méta-type (page dédiée, commune aux trois sortes) : `new` ou un id.
-        ...(["item", "relation", "collection"] as const).map((kind) => ({
-          path: `admin/${kind}-types/:id`,
-          name: `${kind}-type-editor`,
-          component: () => import("@/views/admin/TypeEditorView.vue"),
-          props: (route: RouteLocationNormalized) => ({
-            kind,
-            id: route.params.id === "new" ? undefined : route.params.id,
+        // Édition d'un méta-type (page dédiée, commune aux quatre sortes) : `new` ou un id.
+        ...(["item", "relation", "collection", "review"] as const).map(
+          (kind) => ({
+            path: `admin/${kind}-types/:id`,
+            name: `${kind}-type-editor`,
+            component: () => import("@/views/admin/TypeEditorView.vue"),
+            props: (route: RouteLocationNormalized) => ({
+              kind,
+              id: route.params.id === "new" ? undefined : route.params.id,
+            }),
+            meta: { admin: true },
           }),
-          meta: { admin: true },
-        })),
+        ),
         {
           path: "admin/import-export",
           name: "import-export",

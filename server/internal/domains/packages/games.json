@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "games",
-  "package_version": 3,
+  "package_version": 5,
   "title": {
     "fr": "Jeux vidéo",
     "en": "Video games"
@@ -14,9 +14,78 @@
   "requires": [
     "people"
   ],
+  "review_types": [
+    {
+      "attributes_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "gameplay": {
+            "maximum": 10,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "graphics": {
+            "maximum": 10,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "sound": {
+            "maximum": 10,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "story": {
+            "maximum": 10,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "x-description": {
+          "en": "Criteria of a video game",
+          "fr": "Critères d'un jeu vidéo"
+        },
+        "x-labels": {
+          "en": {
+            "gameplay": "Gameplay",
+            "graphics": "Graphics",
+            "sound": "Sound",
+            "story": "Story"
+          },
+          "fr": {
+            "gameplay": "Jouabilité",
+            "graphics": "Graphismes",
+            "sound": "Son",
+            "story": "Histoire"
+          }
+        },
+        "x-order": [
+          "gameplay",
+          "story",
+          "graphics",
+          "sound"
+        ],
+        "x-title": {
+          "en": "Game review",
+          "fr": "Avis de jeu"
+        }
+      },
+      "description": "Critères d'un jeu vidéo",
+      "id": "f1000000-0000-0000-0000-000000000007",
+      "context_relation_type_ids": [
+        "c0000000-0000-0000-0000-000000000040"
+      ],
+      "context_label": {
+        "en": "Played on",
+        "fr": "Joué sur"
+      },
+      "name": "GameReview"
+    }
+  ],
   "item_types": [
     {
       "id": "b0000000-0000-0000-0000-000000000040",
+      "review_type_id": "f1000000-0000-0000-0000-000000000007",
       "name": "Game",
       "description": "Jeu vidéo : l'œuvre, toutes plateformes et éditions confondues",
       "display_order": 17,

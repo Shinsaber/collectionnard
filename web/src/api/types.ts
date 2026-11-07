@@ -109,6 +109,8 @@ export interface ItemType {
   attributes_schema: Record<string, unknown>;
   /** Ordre d'affichage (petit = en premier, puis par nom) ; défaut 100. */
   display_order: number;
+  /** Type d'avis (critères notés) ; `null` = avis fermés sur ce type. */
+  review_type_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -118,6 +120,7 @@ export interface ItemTypeCreate {
   description?: string;
   attributes_schema: Record<string, unknown>;
   display_order?: number;
+  review_type_id?: string | null;
 }
 
 export interface ItemTypeUpdate {
@@ -125,6 +128,8 @@ export interface ItemTypeUpdate {
   description?: string;
   attributes_schema?: Record<string, unknown>;
   display_order?: number;
+  /** Absent = inchangé ; `null` ferme les avis. */
+  review_type_id?: string | null;
 }
 
 // ---------- RelationType ----------
@@ -155,6 +160,91 @@ export interface RelationTypeUpdate {
   source_item_type_ids?: string[];
   target_item_type_ids?: string[];
   attributes_schema?: Record<string, unknown>;
+}
+
+// ---------- ReviewType et avis (I-0, docs/phases/interactions.md) ----------
+export interface ReviewType {
+  id: string;
+  name: string;
+  description?: string;
+  /** Ses propriétés sont les critères, chacun un entier de 0 à 10. */
+  attributes_schema: Record<string, unknown>;
+  /** Relations de l'item noté vers l'édition qu'un avis peut préciser ; vide = pas de choix. */
+  context_relation_type_ids: string[];
+  /** Libellé de ce choix par langue (« Joué sur »). */
+  context_label?: Record<string, string>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReviewTypeCreate {
+  name: string;
+  description?: string;
+  attributes_schema?: Record<string, unknown>;
+  context_relation_type_ids?: string[];
+  context_label?: Record<string, string>;
+}
+
+export interface ReviewTypeUpdate {
+  name?: string;
+  description?: string;
+  attributes_schema?: Record<string, unknown>;
+  context_relation_type_ids?: string[];
+  context_label?: Record<string, string>;
+}
+
+export type ReviewVisibility = "private" | "members" | "anonymous" | "public";
+
+export interface Review {
+  id: string;
+  item_id: string;
+  review_type_id?: string;
+  /** Note de chaque critère ; absent en note globale. */
+  criteria?: Record<string, number>;
+  /** Édition utilisée ; absente d'un avis non signé pour le lecteur. */
+  context_item_id?: string;
+  context_item?: Item;
+  rating: number;
+  body: string;
+  spoiler: boolean;
+  lang: string;
+  visibility: ReviewVisibility;
+  /** Présent seulement si l'avis est signé pour le lecteur. */
+  author?: { username: string; display_name?: string; avatar?: string };
+  /** Listes par utilisateur seulement. */
+  item?: Item;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Une note globale (`rating`) ou la note de chaque critère (`criteria`), jamais les deux. */
+export interface ReviewPut {
+  rating?: number;
+  criteria?: Record<string, number>;
+  context_item_id?: string;
+  body: string;
+  spoiler: boolean;
+  lang: string;
+  visibility: ReviewVisibility;
+}
+
+export interface ReviewListParams extends PaginationParams {
+  sort?: "recent" | "rating";
+  lang?: string;
+  context_item_id?: string;
+}
+
+export interface ReviewSummary {
+  enabled: boolean;
+  review_type?: ReviewType;
+  count: number;
+  /** Moyenne ; `null` sous `min_ratings` notes. */
+  rating: number | null;
+  min_ratings: number;
+  note_only_count: number;
+  criteria: { key: string; count: number; rating: number | null }[];
+  /** Éditions qu'un avis peut préciser (formulaire, filtre). */
+  context_items: Item[];
 }
 
 // ---------- CollectionType ----------
@@ -692,6 +782,7 @@ export type ImportEntity =
   | "item_types"
   | "collection_types"
   | "relation_types"
+  | "review_types"
   | "items"
   | "relations"
   | "collection";

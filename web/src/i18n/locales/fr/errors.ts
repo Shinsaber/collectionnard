@@ -83,5 +83,6 @@ export default {
     proposal_meta_types:
       "Une proposition ne modifie que des items et des relations.",
     own_proposal: "On ne relit pas ses propres propositions.",
+    reviews_closed: "Les avis sont fermés sur ce type d'item.",
   },
 };

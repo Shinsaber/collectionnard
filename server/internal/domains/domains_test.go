@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shinsaber/colec/internal/model"
+	"github.com/shinsaber/colec/internal/review"
 	"github.com/shinsaber/colec/internal/validator"
 )
 
@@ -81,6 +82,14 @@ func TestPackages(t *testing.T) {
 	}
 	ids := map[string]bool{}
 	seen := map[uuid.UUID]string{}
+	// Relations of each package, for the context relations of the review types.
+	relationsOf := map[string]map[uuid.UUID]bool{}
+	for _, p := range all {
+		relationsOf[p.ID] = map[uuid.UUID]bool{}
+		for _, rt := range p.RelationTypes {
+			relationsOf[p.ID][rt.ID] = true
+		}
+	}
 	for _, p := range all {
 		ids[p.ID] = true
 		if p.Title["fr"] == "" || p.Title["en"] == "" {
@@ -92,7 +101,34 @@ func TestPackages(t *testing.T) {
 			}
 			seen[id] = p.ID + "/" + name
 		}
+		reviewTypes := map[uuid.UUID]bool{}
+		for _, rt := range p.ReviewTypes {
+			check(rt.ID, rt.Name)
+			reviewTypes[rt.ID] = true
+			reqs, _ := Requirements(p)
+			for _, rel := range rt.ContextRelationTypeIDs {
+				found := relationsOf[p.ID][rel]
+				for _, r := range reqs {
+					found = found || relationsOf[r.ID][rel]
+				}
+				if !found {
+					t.Errorf("%s/%s: context relation %s neither in the package nor in a required one", p.ID, rt.Name, rel)
+				}
+			}
+			if err := validator.CheckSchema(rt.AttributesSchema); err != nil {
+				t.Errorf("%s/%s: %v", p.ID, rt.Name, err)
+			}
+			if err := review.CheckSchema(rt.AttributesSchema); err != nil {
+				t.Errorf("%s/%s: %v", p.ID, rt.Name, err)
+			}
+		}
 		for _, it := range p.ItemTypes {
+			if it.ReviewTypeID != nil && !reviewTypes[*it.ReviewTypeID] {
+				t.Errorf("%s/%s: review type %s not in the package", p.ID, it.Name, it.ReviewTypeID)
+			}
+			if it.Name == "Person" && it.ReviewTypeID != nil {
+				t.Errorf("reviews must stay closed on people")
+			}
 			check(it.ID, it.Name)
 			if err := validator.CheckSchema(it.AttributesSchema); err != nil {
 				t.Errorf("%s/%s: %v", p.ID, it.Name, err)

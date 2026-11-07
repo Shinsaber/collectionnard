@@ -64,6 +64,17 @@
         </li>
       </ul>
     </section>
+
+    <section class="flex flex-col gap-3" data-test="public-reviews">
+      <h2 class="text-lg font-extrabold tracking-tight">
+        {{ t("reviews.publicReviews") }}
+      </h2>
+      <ReviewUserList
+        :key="profile.username"
+        :fetch="fetchReviews"
+        :empty-text="t('reviews.noPublicReviews')"
+      />
+    </section>
   </div>
 </template>
 
@@ -77,9 +88,16 @@ import { useNotify } from "@/composables/useNotify";
 import { typeTitle } from "@/lib/schema";
 import AppSpinner from "@/components/common/AppSpinner.vue";
 import UserAvatar from "@/components/account/UserAvatar.vue";
-import type { PublicCollection, PublicProfile } from "@/api/types";
+import ReviewUserList from "@/components/review/ReviewUserList.vue";
+import type {
+  PaginationParams,
+  PublicCollection,
+  PublicProfile,
+} from "@/api/types";
 
 const props = defineProps<{ username: string }>();
+const fetchReviews = (params: PaginationParams) =>
+  publicApi.reviews(props.username, params);
 const { t } = useI18n();
 const { lang } = useLang();
 const { notifyError } = useNotify();

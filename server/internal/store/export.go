@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/shinsaber/colec/internal/model"
+	"github.com/shinsaber/colec/internal/review"
 	"github.com/shinsaber/colec/internal/validator"
 )
 
@@ -31,18 +32,21 @@ func (s *PgStore) ExportCatalog(ctx context.Context) (*model.CatalogExport, erro
 	now := time.Now().UTC().Truncate(time.Second)
 	out := &model.CatalogExport{Format: model.CatalogFormat, Version: model.ExportVersion, ExportedAt: &now}
 
+	if out.ReviewTypes, err = exportReviewTypes(ctx, tx); err != nil {
+		return nil, err
+	}
 	metas, err := exportMetaTypes(ctx, tx, "item_types")
 	if err != nil {
 		return nil, err
 	}
-	orders, err := exportDisplayOrders(ctx, tx)
+	orders, reviewTypes, err := exportItemTypeSettings(ctx, tx)
 	if err != nil {
 		return nil, err
 	}
 	out.ItemTypes = make([]model.ExportItemType, len(metas))
 	for i, m := range metas {
 		o := orders[m.ID]
-		out.ItemTypes[i] = model.ExportItemType{ExportMetaType: m, DisplayOrder: &o}
+		out.ItemTypes[i] = model.ExportItemType{ExportMetaType: m, DisplayOrder: &o, ReviewTypeID: reviewTypes[m.ID]}
 	}
 	cts, err := exportMetaTypes(ctx, tx, "collection_types")
 	if err != nil {
@@ -113,7 +117,7 @@ func (s *PgStore) ExportCatalog(ctx context.Context) (*model.CatalogExport, erro
 }
 
 // metaTables is the whitelist of meta-type tables (their name is part of the SQL).
-var metaTables = map[string]bool{"item_types": true, "collection_types": true, "relation_types": true}
+var metaTables = map[string]bool{"item_types": true, "collection_types": true, "relation_types": true, "review_types": true}
 
 func exportMetaTypes(ctx context.Context, tx pgx.Tx, table string) ([]model.ExportMetaType, error) {
 	if !metaTables[table] {
@@ -130,23 +134,24 @@ func exportMetaTypes(ctx context.Context, tx pgx.Tx, table string) ([]model.Expo
 	})
 }
 
-// exportDisplayOrders reads item_types.display_order by type.
-func exportDisplayOrders(ctx context.Context, tx pgx.Tx) (map[uuid.UUID]int, error) {
-	rows, err := tx.Query(ctx, `SELECT id, display_order FROM item_types`)
+// exportItemTypeSettings reads display_order and review_type_id of the item types.
+func exportItemTypeSettings(ctx context.Context, tx pgx.Tx) (map[uuid.UUID]int, map[uuid.UUID]*uuid.UUID, error) {
+	rows, err := tx.Query(ctx, `SELECT id, display_order, review_type_id FROM item_types`)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer rows.Close()
-	out := map[uuid.UUID]int{}
+	orders, reviewTypes := map[uuid.UUID]int{}, map[uuid.UUID]*uuid.UUID{}
 	for rows.Next() {
 		var id uuid.UUID
 		var o int
-		if err := rows.Scan(&id, &o); err != nil {
-			return nil, err
+		var rt *uuid.UUID
+		if err := rows.Scan(&id, &o, &rt); err != nil {
+			return nil, nil, err
 		}
-		out[id] = o
+		orders[id], reviewTypes[id] = o, rt
 	}
-	return out, rows.Err()
+	return orders, reviewTypes, rows.Err()
 }
 
 // junctionOwners whitelists the meta-type → item type junction tables and their owner column.
@@ -232,9 +237,11 @@ func (o outcome) count(c *model.ImportCounts) {
 // its own savepoint: a failing row is reported and rolled back alone, so all
 // the errors of a file are listed in one pass.
 type importer struct {
-	s   *PgStore
-	tx  pgx.Tx
-	rep *model.ImportReport
+	// reviewOutcomes: review types written by this import, for reviewTypeContexts.
+	reviewOutcomes map[uuid.UUID]outcome
+	s              *PgStore
+	tx             pgx.Tx
+	rep            *model.ImportReport
 }
 
 func (s *PgStore) ImportCatalog(ctx context.Context, cat *model.CatalogExport, dryRun bool) (*model.ImportReport, error) {
@@ -261,6 +268,7 @@ func (s *PgStore) importCatalog(ctx context.Context, cat *model.CatalogExport, d
 
 	im := &importer{s: s, tx: tx, rep: rep}
 	steps := []func(context.Context) error{
+		func(ctx context.Context) error { return im.reviewTypes(ctx, cat.ReviewTypes) },
 		func(ctx context.Context) error {
 			return im.itemTypes(ctx, cat.ItemTypes)
 		},
@@ -268,6 +276,7 @@ func (s *PgStore) importCatalog(ctx context.Context, cat *model.CatalogExport, d
 			return im.collectionTypes(ctx, cat.CollectionTypes)
 		},
 		func(ctx context.Context) error { return im.relationTypes(ctx, cat.RelationTypes) },
+		func(ctx context.Context) error { return im.reviewTypeContexts(ctx, cat.ReviewTypes) },
 		func(ctx context.Context) error { return im.items(ctx, cat.Items) },
 		func(ctx context.Context) error { return im.relations(ctx, cat.Relations) },
 	}
@@ -415,22 +424,24 @@ func (im *importer) collectionTypes(ctx context.Context, list []model.ExportColl
 // itemTypes upserts the item types; an absent display_order keeps the stored one (100 if new).
 func (im *importer) itemTypes(ctx context.Context, list []model.ExportItemType) error {
 	const sql = `
-		INSERT INTO item_types (id, name, description, attributes_schema, display_order)
-		VALUES ($1, $2, $3, $4, COALESCE($5, 100))
+		INSERT INTO item_types (id, name, description, attributes_schema, display_order, review_type_id)
+		VALUES ($1, $2, $3, $4, COALESCE($5, 100), $6)
 		ON CONFLICT (id) DO UPDATE SET
 			name = EXCLUDED.name, description = EXCLUDED.description,
 			attributes_schema = EXCLUDED.attributes_schema,
-			display_order = COALESCE($5, item_types.display_order)
-		WHERE (item_types.name, item_types.description, item_types.attributes_schema, item_types.display_order)
+			display_order = COALESCE($5, item_types.display_order),
+			review_type_id = COALESCE($6, item_types.review_type_id)
+		WHERE (item_types.name, item_types.description, item_types.attributes_schema, item_types.display_order,
+				item_types.review_type_id)
 			IS DISTINCT FROM (EXCLUDED.name, EXCLUDED.description, EXCLUDED.attributes_schema,
-				COALESCE($5, item_types.display_order))
+				COALESCE($5, item_types.display_order), COALESCE($6, item_types.review_type_id))
 		RETURNING (xmax = 0)`
 	for i, it := range list {
 		o, ok, err := im.row(ctx, model.EntityItemTypes, i, it.ID, func(tx pgx.Tx) (outcome, error) {
 			if err := checkMeta(it.ExportMetaType); err != nil {
 				return 0, err
 			}
-			return upsert(ctx, tx, sql, it.ID, it.Name, it.Description, emptyObject(it.AttributesSchema), it.DisplayOrder)
+			return upsert(ctx, tx, sql, it.ID, it.Name, it.Description, emptyObject(it.AttributesSchema), it.DisplayOrder, it.ReviewTypeID)
 		})
 		if err != nil {
 			return err
@@ -440,6 +451,82 @@ func (im *importer) itemTypes(ctx context.Context, list []model.ExportItemType) 
 		}
 	}
 	return nil
+}
+
+// reviewTypes upserts the review types; their context relations are written by
+// reviewTypeContexts, once the relation types of the same file exist.
+func (im *importer) reviewTypes(ctx context.Context, list []model.ExportReviewType) error {
+	const sql = `
+		INSERT INTO review_types (id, name, description, attributes_schema, context_label) VALUES ($1, $2, $3, $4, $5)
+		ON CONFLICT (id) DO UPDATE SET
+			name = EXCLUDED.name, description = EXCLUDED.description, attributes_schema = EXCLUDED.attributes_schema,
+			context_label = EXCLUDED.context_label
+		WHERE (review_types.name, review_types.description, review_types.attributes_schema, review_types.context_label)
+			IS DISTINCT FROM (EXCLUDED.name, EXCLUDED.description, EXCLUDED.attributes_schema, EXCLUDED.context_label)
+		RETURNING (xmax = 0)`
+	im.reviewOutcomes = map[uuid.UUID]outcome{}
+	for i, t := range list {
+		o, ok, err := im.row(ctx, model.EntityReviewTypes, i, t.ID, func(tx pgx.Tx) (outcome, error) {
+			if err := checkMeta(t.ExportMetaType); err != nil {
+				return 0, err
+			}
+			if err := review.CheckSchema(emptyObject(t.AttributesSchema)); err != nil {
+				return 0, rowError("attributes_schema: " + err.Error())
+			}
+			if err := review.CheckContextLabel(t.ContextLabel); err != nil {
+				return 0, rowError("context_label: " + err.Error())
+			}
+			return upsert(ctx, tx, sql, t.ID, t.Name, t.Description, emptyObject(t.AttributesSchema), contextLabel(t.ContextLabel))
+		})
+		if err != nil {
+			return err
+		}
+		if ok {
+			im.reviewOutcomes[t.ID] = o
+			o.count(im.rep.Counts[model.EntityReviewTypes])
+		}
+	}
+	return nil
+}
+
+// reviewTypeContexts replaces the context relations of the review types written
+// by reviewTypes (absent list: kept). A type counted unchanged becomes updated.
+func (im *importer) reviewTypeContexts(ctx context.Context, list []model.ExportReviewType) error {
+	for _, t := range list {
+		o, written := im.reviewOutcomes[t.ID]
+		if !written || t.ContextRelationTypeIDs == nil {
+			continue
+		}
+		changed, err := setReviewTypeContexts(ctx, im.tx, t.ID, t.ContextRelationTypeIDs)
+		if err != nil {
+			return err
+		}
+		if changed && o == unchanged {
+			c := im.rep.Counts[model.EntityReviewTypes]
+			c.Unchanged--
+			c.Updated++
+		}
+	}
+	return nil
+}
+
+// exportReviewTypes reads the review types with their context relations.
+func exportReviewTypes(ctx context.Context, tx pgx.Tx) ([]model.ExportReviewType, error) {
+	rows, err := tx.Query(ctx, `SELECT t.id, t.name, t.description, t.attributes_schema, t.context_label,
+		COALESCE((SELECT array_agg(j.relation_type_id ORDER BY j.relation_type_id)
+			FROM review_type_context_relations j WHERE j.review_type_id = t.id), '{}')
+		FROM review_types t ORDER BY t.id`)
+	if err != nil {
+		return nil, err
+	}
+	return pgx.CollectRows(rows, func(r pgx.CollectableRow) (model.ExportReviewType, error) {
+		var t model.ExportReviewType
+		err := r.Scan(&t.ID, &t.Name, &t.Description, &t.AttributesSchema, &t.ContextLabel, &t.ContextRelationTypeIDs)
+		if len(t.ContextRelationTypeIDs) == 0 {
+			t.ContextRelationTypeIDs = nil
+		}
+		return t, err
+	})
 }
 
 func checkMeta(m model.ExportMetaType) error {

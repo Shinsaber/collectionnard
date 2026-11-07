@@ -100,8 +100,30 @@ tags:
 
       Exemples :
       - **Ownership** : état physique, prix d'achat, date d'acquisition
-      - **Watching** : date vue, rating (0-10), progress en %
+      - **Watching** : date vue, progress en %
       - **Wishlist** : priorité, budget maximum
+  - name: ReviewTypes
+    description: |
+      Types d'avis (I-0). Quatrième méta-type : son JSON Schema liste les **critères notés d'un avis**, chacun un entier
+      de 0 à 10. Un type sans critère n'offre que la note globale. Un type d'item sans `review_type_id` n'ouvre pas
+      les avis (les personnes, pour éviter les attaques contre des gens).
+  - name: Reviews
+    description: |
+      Avis (I-0) : un par utilisateur et par item, sur l'œuvre et non sur un exemplaire. Note globale **ou** note par
+      critère (tous obligatoires, la note est alors leur moyenne), texte facultatif.
+
+      Une note compte toujours dans la moyenne de la fiche, affichée à partir de 5 notes. La visibilité décide de ce que
+      voit le lecteur :
+
+      | `visibility` | Membres connectés | Visiteurs anonymes |
+      | --- | --- | --- |
+      | `private` | Note seule | Note seule |
+      | `members` | Avis signé | Note seule |
+      | `anonymous` | Texte sans auteur | Texte sans auteur |
+      | `public` | Avis signé | Avis signé |
+
+      Une note seule n'apparaît pas dans les listes, seulement dans `note_only_count`. Le filtre vaut aussi pour les
+      admins.
   - name: Items
     description: |
       Gestion du catalogue d'items. Chaque item est un **nœud unique** dans le graphe :
@@ -471,6 +493,10 @@ components:
             Ordre d'affichage (petit = en premier, puis par nom) : listes, sélecteurs, « Répartition
             par type ». Défaut 100.
           example: 10
+        review_type_id:
+          type: [string, "null"]
+          format: uuid
+          description: Type d'avis (critères notés) ; `null` = avis fermés sur ce type.
         attributes_schema:
           type: object
           description: |
@@ -512,6 +538,10 @@ components:
         display_order:
           type: integer
           description: Ordre d'affichage (défaut 100).
+        review_type_id:
+          type: [string, "null"]
+          format: uuid
+          description: Type d'avis ; absent ou `null` = avis fermés sur ce type.
         attributes_schema:
           type: object
           description: 'JSON Schema définissant les attributs. Doit être un JSON Schema valide avec `"type": "object"` à la racine.'
@@ -529,6 +559,10 @@ components:
           type: string
         display_order:
           type: integer
+        review_type_id:
+          type: [string, "null"]
+          format: uuid
+          description: Absent = inchangé ; `null` ferme les avis sur ce type.
         attributes_schema:
           type: object
 
@@ -656,7 +690,7 @@ components:
 
         Exemples :
         - **Ownership** : état_physique, purchase_price, acquisition_date
-        - **Watching** : watched_at, rating (0-10), progress (%)
+        - **Watching** : watched_at, progress (%)
         - **Wishlist** : priority (1-5), max_budget
       properties:
         id:
@@ -739,6 +773,241 @@ components:
     # -------------------------------------------------------------------------
     # Item
     # -------------------------------------------------------------------------
+    ReviewType:
+      type: object
+      description: Type d'avis. Son schéma liste les critères notés, chacun un entier de 0 à 10.
+      required: [id, name, attributes_schema, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Nom technique unique.
+          example: ComicReview
+        description:
+          type: string
+        attributes_schema:
+          type: object
+          description: |
+            JSON Schema : `"type": "object"` à la racine, chaque propriété `{"type": "integer", "minimum": 0, "maximum": 10}`.
+            Sans propriété : note globale seulement.
+          example:
+            type: object
+            x-order: [story, art]
+            x-labels:
+              fr: { story: Scénario, art: Dessin }
+              en: { story: Story, art: Art }
+            properties:
+              story: { type: integer, minimum: 0, maximum: 10 }
+              art: { type: integer, minimum: 0, maximum: 10 }
+            additionalProperties: false
+        context_relation_type_ids:
+          type: array
+          items: { type: string, format: uuid }
+          description: |
+            Relations qui mènent de l'item noté à l'édition qu'un avis peut préciser (Game → GameRelease par
+            `game_released_as`). Vide : pas d'édition à choisir.
+        context_label:
+          type: object
+          additionalProperties: { type: string, maxLength: 60 }
+          description: Libellé de ce choix par langue de l'interface.
+          example: { fr: Joué sur, en: Played on }
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ReviewTypeCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        attributes_schema:
+          type: object
+        context_relation_type_ids:
+          type: array
+          items: { type: string, format: uuid }
+          description: |
+            Relations qui mènent de l'item noté à l'édition qu'un avis peut préciser (Game → GameRelease par
+            `game_released_as`). Vide : pas d'édition à choisir.
+        context_label:
+          type: object
+          additionalProperties: { type: string, maxLength: 60 }
+          description: Libellé de ce choix par langue de l'interface.
+          example: { fr: Joué sur, en: Played on }
+
+    ReviewTypeUpdate:
+      type: object
+      description: Un champ absent est gardé ; un tableau ou un objet vide l'efface.
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        attributes_schema:
+          type: object
+        context_relation_type_ids:
+          type: array
+          items: { type: string, format: uuid }
+          description: |
+            Relations qui mènent de l'item noté à l'édition qu'un avis peut préciser (Game → GameRelease par
+            `game_released_as`). Vide : pas d'édition à choisir.
+        context_label:
+          type: object
+          additionalProperties: { type: string, maxLength: 60 }
+          description: Libellé de ce choix par langue de l'interface.
+          example: { fr: Joué sur, en: Played on }
+
+    ReviewVisibility:
+      type: string
+      enum: [private, members, anonymous, public]
+      description: Ce que voit le lecteur, voir l'étiquette `Reviews`.
+
+    ReviewAuthor:
+      type: object
+      required: [username]
+      properties:
+        username:
+          type: string
+        display_name:
+          type: string
+        avatar:
+          type: string
+
+    Review:
+      type: object
+      required: [id, item_id, rating, body, spoiler, lang, visibility, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        review_type_id:
+          type: string
+          format: uuid
+          description: Type dont viennent les critères ; absent en note globale.
+        criteria:
+          type: object
+          additionalProperties: { type: integer, minimum: 0, maximum: 10 }
+          description: Note de chaque critère ; absent en note globale.
+        context_item_id:
+          type: string
+          format: uuid
+          description: Édition utilisée pour donner l'avis ; absente, avec `author`, d'un avis non signé pour le lecteur.
+        context_item:
+          allOf:
+            - $ref: "#/components/schemas/Item"
+          description: Cette édition, avec son type (libellé).
+        rating:
+          type: number
+          minimum: 0
+          maximum: 10
+          description: Note saisie, ou moyenne des critères à une décimale.
+        body:
+          type: string
+          description: Texte en Markdown restreint, rendu sans HTML ni image par le client.
+        spoiler:
+          type: boolean
+        lang:
+          type: string
+          enum: [fr, en]
+        visibility:
+          $ref: "#/components/schemas/ReviewVisibility"
+        author:
+          allOf:
+            - $ref: "#/components/schemas/ReviewAuthor"
+          description: Présent seulement si l'avis est signé pour le lecteur.
+        item:
+          allOf:
+            - $ref: "#/components/schemas/Item"
+          description: Listes par utilisateur seulement (`/me/reviews`, `/public/users/{username}/reviews`).
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ReviewPut:
+      type: object
+      description: Une note globale (`rating`) ou la note de chaque critère (`criteria`), jamais les deux.
+      required: [lang, visibility]
+      properties:
+        rating:
+          type: integer
+          minimum: 0
+          maximum: 10
+        criteria:
+          type: object
+          additionalProperties: { type: integer, minimum: 0, maximum: 10 }
+          description: Tous les critères du type d'avis sont obligatoires.
+        context_item_id:
+          type: string
+          format: uuid
+          description: Facultatif. Une cible de l'item par une relation `context_relation_type_ids` de son type d'avis (422 sinon).
+        body:
+          type: string
+          maxLength: 10000
+        spoiler:
+          type: boolean
+        lang:
+          type: string
+          enum: [fr, en]
+        visibility:
+          $ref: "#/components/schemas/ReviewVisibility"
+
+    ReviewCriterionSummary:
+      type: object
+      required: [key, count, rating]
+      properties:
+        key:
+          type: string
+        count:
+          type: integer
+        rating:
+          type: [number, "null"]
+          description: "`null` sous `min_ratings` avis détaillés."
+
+    ReviewSummary:
+      type: object
+      required: [enabled, count, rating, min_ratings, note_only_count, criteria, context_items]
+      properties:
+        enabled:
+          type: boolean
+          description: "`false` : avis fermés sur le type de cet item."
+        review_type:
+          $ref: "#/components/schemas/ReviewType"
+        count:
+          type: integer
+          description: Nombre de notes, quelle que soit leur visibilité.
+        rating:
+          type: [number, "null"]
+          description: Moyenne à une décimale ; `null` sous `min_ratings` notes, pour qu'une note ne se lise pas dans la moyenne.
+        min_ratings:
+          type: integer
+          example: 5
+        note_only_count:
+          type: integer
+          description: Notes que le lecteur ne voit pas dans la liste (la sienne exclue).
+        criteria:
+          type: array
+          description: Moyenne par critère, dans l'ordre du schéma, sur les seuls avis détaillés.
+          items:
+            $ref: "#/components/schemas/ReviewCriterionSummary"
+        context_items:
+          type: array
+          description: Éditions qu'un avis sur cet item peut préciser (100 au plus).
+          items:
+            $ref: "#/components/schemas/Item"
+
     Item:
       type: object
       description: |
@@ -1787,7 +2056,7 @@ components:
             `invalid_reset_link` (401), `invalid_username`, `invalid_email`, `weak_password` (400),
             `account_exists`, `invitation_used`, `self_lockout`, `last_admin` (409), `wrong_password` (403).
             Propositions (P4-3) : `proposal_state`, `proposal_quota`, `proposal_invalid`, `proposal_conflict`,
-            `proposal_meta_types`, `own_proposal`. Chaque réponse d'erreur d'une opération nomme les codes qu'elle
+            `proposal_meta_types`, `own_proposal`. Avis (I-0) : `reviews_closed` (409). Chaque réponse d'erreur d'une opération nomme les codes qu'elle
             émet. Un client doit prévoir un libellé générique pour un code inconnu.
           example: validation_error
         message:
@@ -1892,6 +2161,7 @@ components:
         item_types: { type: integer }
         relation_types: { type: integer }
         collection_types: { type: integer }
+        review_types: { type: integer }
     DomainInstallReport:
       type: object
       required: [dry_run, applied, domain, to_version, entries, errors]
@@ -1915,7 +2185,7 @@ components:
             properties:
               entity:
                 type: string
-                enum: [item_types, collection_types, relation_types]
+                enum: [item_types, collection_types, relation_types, review_types]
               id: { type: string, format: uuid }
               name: { type: string }
               outcome:
@@ -1965,6 +2235,21 @@ components:
           type: string
           format: date-time
           description: Informatif, ignoré à l'import.
+        review_types:
+          type: array
+          description: Types d'avis (absent des fichiers antérieurs à I-0).
+          items:
+            allOf:
+              - $ref: "#/components/schemas/ExportMetaType"
+              - type: object
+                properties:
+                  context_relation_type_ids:
+                    type: array
+                    items: { type: string, format: uuid }
+                    description: Absent à l'import → liste conservée ; une relation inconnue de l'instance est ignorée.
+                  context_label:
+                    type: object
+                    additionalProperties: { type: string }
         item_types:
           type: array
           items:
@@ -1975,6 +2260,10 @@ components:
                   display_order:
                     type: integer
                     description: Absent à l'import → 100 pour un nouveau type, valeur conservée sinon.
+                  review_type_id:
+                    type: string
+                    format: uuid
+                    description: Type d'avis ; absent à l'import → valeur conservée.
         collection_types:
           type: array
           items:
@@ -2067,7 +2356,7 @@ components:
             properties:
               entity:
                 type: string
-                enum: [file, item_types, collection_types, relation_types, items, relations, collection]
+                enum: [file, item_types, collection_types, relation_types, review_types, items, relations, collection]
               index:
                 type: integer
                 description: Position dans la liste (0-based), -1 pour une erreur de fichier.
@@ -3472,6 +3761,321 @@ paths:
   # ===========================================================================
   # Collection Types (admin)
   # ===========================================================================
+  /review-types:
+    get:
+      tags: [ReviewTypes]
+      summary: Lister les types d'avis
+      operationId: listReviewTypes
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée des types d'avis.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/ReviewType"
+    post:
+      tags: [ReviewTypes]
+      summary: Créer un type d'avis
+      description: "**Admin uniquement.**"
+      operationId: createReviewType
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewTypeCreate"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Type d'avis créé.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewType"
+
+  /review-types/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: UUID du type d'avis.
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [ReviewTypes]
+      summary: Lire un type d'avis
+      operationId: getReviewType
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Type d'avis.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewType"
+    put:
+      tags: [ReviewTypes]
+      summary: Modifier un type d'avis
+      description: "**Admin uniquement.** Un avis existant garde ses valeurs et sa note jusqu'à sa prochaine modification."
+      operationId: updateReviewType
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewTypeUpdate"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Type d'avis modifié.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewType"
+    delete:
+      tags: [ReviewTypes]
+      summary: Supprimer un type d'avis
+      description: "**Admin uniquement.** Refusé (409) tant qu'un type d'item ou un avis l'utilise."
+      operationId: deleteReviewType
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Supprimé.
+
+  /items/{id}/reviews:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    get:
+      tags: [Reviews]
+      summary: Avis d'un item montrés au lecteur
+      description: |
+        Authentification facultative. L'avis du lecteur n'y figure pas (`GET /items/{id}/reviews/mine`), ni les notes
+        seules ; `author` n'est présent que si l'avis est signé pour le lecteur.
+      operationId: listItemReviews
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [recent, rating]
+            default: recent
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [fr, en]
+        - name: context_item_id
+          in: query
+          description: Avis de cette édition seulement, parmi ceux signés pour le lecteur.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Review"
+
+  /items/{id}/reviews/summary:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    get:
+      tags: [Reviews]
+      summary: Moyennes d'un item
+      description: Authentification facultative. Les moyennes restent `null` sous `min_ratings` notes.
+      operationId: getItemReviewSummary
+      security: [{}, { bearerAuth: [] }]
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Moyennes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewSummary"
+
+  /items/{id}/reviews/mine:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    get:
+      tags: [Reviews]
+      summary: Mon avis sur un item
+      operationId: getMyReview
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Mon avis.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+    put:
+      tags: [Reviews]
+      summary: Écrire ou remplacer mon avis
+      operationId: putMyReview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewPut"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: "`reviews_closed` : avis fermés sur le type de cet item."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Avis enregistré.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+    delete:
+      tags: [Reviews]
+      summary: Supprimer mon avis
+      operationId: deleteMyReview
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Supprimé.
+
+  /me/reviews:
+    get:
+      tags: [Reviews]
+      summary: Tous mes avis
+      operationId: listMyReviews
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Mes avis, le plus récent d'abord, avec leur item.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Review"
+
   /collection-types:
     get:
       tags: [CollectionTypes]
@@ -5585,6 +6189,38 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/PublicCollection"
+
+  /public/users/{username}/reviews:
+    get:
+      tags: [Reviews]
+      summary: Avis signés d'un membre
+      description: |
+        Authentification facultative. Le profil doit être visible du lecteur (sinon 404). Seuls les avis **signés pour
+        le lecteur** sont listés : un avis anonyme ou une note seule, listés sous un nom, perdraient leur anonymat.
+      operationId: listPublicReviews
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/username"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Avis, le plus récent d'abord, avec leur item.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Review"
 
   /public/collections/{id}:
     get:

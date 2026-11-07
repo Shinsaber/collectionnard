@@ -327,6 +327,7 @@ Le système repose sur un **pattern unique à 3 niveaux** : des méta-types déf
 | **ItemType**       | Item           | "Series" → `{title, synopsis, start_year…}`                   |
 | **RelationType**   | ItemRelation   | "includes_episode" → `{disc, track}`                          |
 | **CollectionType** | CollectionItem | "Ownership" → `{condition, purchase_price, acquisition_date}` |
+| **ReviewType** | Review | "ComicReview" → `{story, art}` : critères notés de 0 à 10 |
 
 Les items forment un **graphe orienté libre** : un même épisode peut être atteint via une diffusion TV et un DVD. Voir l'endpoint `GET /items/{id}/graph`.
 

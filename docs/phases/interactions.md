@@ -66,8 +66,8 @@ sont décrits par un nouveau méta-type, **`ReviewType`**, dont le schéma liste
   peuvent partager un même `ReviewType` (BD et Manga). Un `ReviewType` sans critère n'offre que la note globale.
 - **Contraintes vérifiées par le serveur** sur le schéma d'un `ReviewType` (en plus de `checkAttributesSchema`) : chaque
   propriété est un entier de 0 à 10 ; ni objet ni tableau. L'échelle reste ainsi commune et les moyennes comparables.
-- **Paquets de domaine** : chaque paquet porte ses `ReviewType` et leur rattachement (UUID préfixe à réserver, `f…` par
-  exemple), versionnés comme les autres types. `people` n'en rattache aucun à Person.
+- **Paquets de domaine** : chaque paquet porte ses `ReviewType` et leur rattachement (UUID préfixe `f1…`, les seeds
+  utilisant `f0…` pour leurs collections), versionnés comme les autres types. `people` n'en rattache aucun à Person.
 - **Front** : `SchemaBuilder` en mode « critères » (entiers 0–10 seulement), `DynamicForm` affiche déjà un curseur dès
   que `minimum` et `maximum` sont posés. Page admin « Types d'avis » à côté des autres méta-types.
 
@@ -154,13 +154,47 @@ Instance encore en bêta : les notes existantes sont **supprimées, sans reprise
 
 ### API visée
 
-- `GET /items/{id}/reviews` (pagination, tri `interesting` | `recent` | `rating`, filtre `lang`), authentification
+- `GET /items/{id}/reviews` (pagination, tri `recent` | `rating`, plus `interesting` en I-1, filtre `lang`), authentification
   facultative comme `/public/…` ; `GET /items/{id}/reviews/summary` (moyenne, nombre, moyenne par critère).
 - `GET|PUT|DELETE /items/{id}/reviews/mine` : un avis par item, donc pas d'identifiant à connaître (PUT = remplacement).
 - `GET /me/reviews` ; avis publics d'un profil sur `GET /public/users/{username}/reviews`.
 - Méta-type : `GET|POST /review-types`, `GET|PUT|DELETE /review-types/{id}` (admin) ; `review_type_id` sur les ItemTypes.
 - Import / export : `review_types` rejoint le catalogue (règle « toute nouvelle table du catalogue… ») ; les avis,
   données personnelles, rejoignent l'export du compte.
+
+### Livré
+
+**I-0 livré le 2026-11-06.** Choix faits à la réalisation :
+
+- Migration 013 : `review_types`, `item_types.review_type_id`, `reviews`, `meta_type_origins` accepte `review_types`, retrait
+  de `rating` (attributs, schéma installé, copie de référence). `reviews.review_type_id` n'est renseigné qu'en mode détaillé,
+  pour qu'un type d'avis sans avis détaillé reste supprimable. Les colonnes `hidden_*` arrivent avec I-1, qui les écrit.
+- `internal/review` (Go pur, testé seul) : forme du schéma, note calculée, limites (`MinRatings` 5, `MaxBody` 10 000 caractères,
+  langues à garder alignées sur `langs.ts`). Le filtre reste dans le handler : l'auteur ne sort que par `privacy.CanView`,
+  `user_id` jamais (`json:"-"`). Les avis des comptes désactivés ne comptent nulle part.
+- Paquets : `collections` v4 (et les domaines d'œuvres, versions ci-dessous). Avis ouverts sur Comic, Manga, Volume,
+  Novel, Saga, Series, Season, Episode, Film, Album, Track (note globale seule) et Game ; fermés sur Person, Publisher, Artist,
+  Label, les éditions, Broadcast, Universe et Platform. Un type fermé ou supprimé localement le reste à la mise à jour.
+- Front : page « Types » à onglets (`TypesLayout`, onglets liés à l'URL), éditeur en mode critères (`features.criteria`),
+  onglet « Avis » de la fiche ; sous le titre, moyenne, nombre de notes et ma note (un clic ouvre l'onglet), « Mes avis » sur le profil, avis signés sur la page publique ; Markdown par
+  markdown-it (MIT) puis DOMPurify (Apache 2.0). Un curseur non touché part de 5.
+
+- **Édition utilisée** (décision du 2026-11-07) : un avis sur une œuvre peut préciser l'édition jouée, vue, lue ou
+  écoutée (`reviews.context_item_id`), plutôt que d'ouvrir les avis sur les éditions, ce qui éparpillerait les notes. Le
+  type d'avis déclare les relations qui y mènent (`review_type_context_relations` : `game_released_as`, `released_as`,
+  `published_as`, `issued_as`) et le libellé du choix (`context_label` : « Joué sur », « Vu dans », « Lu dans »,
+  « Écouté sur ») ; le serveur vérifie le lien (422 sinon). L'édition suit l'auteur : **jamais montrée sur un avis non
+  signé pour le lecteur** (une édition rare pourrait désigner son propriétaire), le formulaire le rappelle sous le
+  sélecteur. Filtre des avis par édition (avis signés seulement). Supprimer l'édition garde l'avis, sans précision.
+  Une saison, un épisode, un tome n'ont pas de lien direct vers une édition : pas de choix pour eux. Migration 014 (la 013 était déjà
+  appliquée) ; paquets `books` v8, `tv` v8, `video` v6, `music` v6, `games` v5.
+
+**Pas encore fait** (lots suivants ou à trancher) :
+
+- Limites de débit sur les avis : prévues avec le signalement (I-1).
+- Pages publiques d'un item : l'API des avis sert les visiteurs, mais aucune page ne les leur montre encore (seule la page
+  d'un profil le fait).
+- Avis dans l'export du compte : il n'existe pas encore d'export du compte (RGPD).
 
 ## I-1 — Signalements, modération et réactions
 

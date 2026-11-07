@@ -122,6 +122,9 @@ func (h *Handler) Router() chi.Router {
 		r.Get("/api/v1/share", h.GetSharedCollection)
 		r.Get("/api/v1/share/items", h.ListSharedCollectionItems)
 		r.Get("/api/v1/share/stats", h.GetSharedCollectionStats)
+		r.Get("/api/v1/public/users/{username}/reviews", h.ListPublicReviews)
+		r.Get("/api/v1/items/{id}/reviews", h.ListItemReviews)
+		r.Get("/api/v1/items/{id}/reviews/summary", h.GetItemReviewSummary)
 	})
 
 	// Authenticated
@@ -151,6 +154,8 @@ func (h *Handler) Router() chi.Router {
 		r.Get("/api/v1/relation-types/{id}", h.GetRelationType)
 		r.Get("/api/v1/collection-types", h.ListCollectionTypes)
 		r.Get("/api/v1/collection-types/{id}", h.GetCollectionType)
+		r.Get("/api/v1/review-types", h.ListReviewTypes)
+		r.Get("/api/v1/review-types/{id}", h.GetReviewType)
 		r.Get("/api/v1/items", h.ListItems)
 		r.Get("/api/v1/items/export", h.ExportItemsCSV)
 		r.Get("/api/v1/items/{id}", h.GetItem)
@@ -180,6 +185,13 @@ func (h *Handler) Router() chi.Router {
 		r.Delete("/api/v1/collections/{collectionId}/items/{itemId}", h.RemoveItemFromCollection)
 
 		r.Get("/api/v1/items/{id}/history", h.GetItemHistory)
+
+		// Avis (I-0) : celui du lecteur.
+		r.Get("/api/v1/me/reviews", h.ListMyReviews)
+		r.Get("/api/v1/items/{id}/reviews/mine", h.GetMyReview)
+		r.Put("/api/v1/items/{id}/reviews/mine", h.PutMyReview)
+		r.Delete("/api/v1/items/{id}/reviews/mine", h.DeleteMyReview)
+
 		r.Post("/api/v1/items/duplicates", h.FindDuplicates)
 
 		// Sources externes (Wikidata, BnF, MusicBrainz, TVmaze) : recherche et aperçu pour tous ;
@@ -244,6 +256,10 @@ func (h *Handler) Router() chi.Router {
 			r.Post("/api/v1/collection-types", h.CreateCollectionType)
 			r.Put("/api/v1/collection-types/{id}", h.UpdateCollectionType)
 			r.Delete("/api/v1/collection-types/{id}", h.DeleteCollectionType)
+
+			r.Post("/api/v1/review-types", h.CreateReviewType)
+			r.Put("/api/v1/review-types/{id}", h.UpdateReviewType)
+			r.Delete("/api/v1/review-types/{id}", h.DeleteReviewType)
 
 			r.Delete("/api/v1/items/{id}", h.DeleteItem)
 

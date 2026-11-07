@@ -75,6 +75,12 @@
         >
           {{ title }}
         </h1>
+        <ReviewHeaderSummary
+          v-if="reviewSummary?.enabled"
+          :summary="reviewSummary"
+          :mine="myReview"
+          @open="openTab('reviews')"
+        />
         <!-- Appartenance : relations de composition entrantes (x-completeness) -->
         <p
           v-if="partOf.length"
@@ -182,6 +188,18 @@
         >
           <ItemGallery :attributes="item.attributes" :schema="schema" bare />
         </ElTabPane>
+        <ElTabPane
+          v-if="reviewSummary?.enabled"
+          name="reviews"
+          :label="`${t('reviews.tab')} · ${reviewSummary.count}`"
+          lazy
+        >
+          <ReviewSection
+            :item-id="item.id"
+            :summary="reviewSummary"
+            @changed="loadReviewSummary(item!.id)"
+          />
+        </ElTabPane>
         <ElTabPane name="history" :label="t('history.title')" lazy>
           <ItemHistoryCard
             :item="item"
@@ -226,7 +244,7 @@ import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import AppSpinner from "@/components/common/AppSpinner.vue";
-import { itemApi, relationApi } from "@/api/client";
+import { itemApi, relationApi, reviewApi } from "@/api/client";
 import { useAuthStore } from "@/stores/auth";
 import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";
@@ -250,7 +268,15 @@ import AddToCollectionDialog from "@/components/item/AddToCollectionDialog.vue";
 import RelationCreateDialog from "@/components/item/RelationCreateDialog.vue";
 import RelationEditDialog from "@/components/item/RelationEditDialog.vue";
 import RelationTree from "@/components/item/RelationTree.vue";
-import type { Item, ItemCollectionMembership, ItemRelation } from "@/api/types";
+import ReviewSection from "@/components/review/ReviewSection.vue";
+import ReviewHeaderSummary from "@/components/review/ReviewHeaderSummary.vue";
+import type {
+  Item,
+  ItemCollectionMembership,
+  ItemRelation,
+  Review,
+  ReviewSummary,
+} from "@/api/types";
 
 const props = defineProps<{ id: string }>();
 const { t } = useI18n();
@@ -272,6 +298,21 @@ const {
   remove: forgetRelation,
 } = useItemRelations();
 const itemCollections = ref<ItemCollectionMembership[]>([]);
+const reviewSummary = ref<ReviewSummary | null>(null);
+const myReview = ref<Review | null>(null);
+
+// Notes du premier bloc. Sans avis ouverts, la fiche reste utilisable : un échec ne se signale pas ici.
+async function loadReviewSummary(itemId: string) {
+  try {
+    reviewSummary.value = await reviewApi.summary(itemId);
+    myReview.value = reviewSummary.value.enabled
+      ? await reviewApi.mine(itemId)
+      : null;
+  } catch {
+    reviewSummary.value = null;
+    myReview.value = null;
+  }
+}
 const loading = ref(true);
 
 const editDialogVisible = ref(false);
@@ -289,7 +330,7 @@ const title = computed(() =>
   item.value ? itemLabel(item.value, lang.value) : "",
 );
 
-type Tab = "relations" | "collections" | "images" | "history";
+type Tab = "relations" | "collections" | "images" | "reviews" | "history";
 const tab = ref<Tab>("relations");
 const tabsRef = ref<HTMLElement | null>(null);
 
@@ -376,6 +417,7 @@ async function loadItem(id: string) {
     item.value = i;
     historyVersion.value++;
     loadCollections(id);
+    loadReviewSummary(id);
   } catch (e) {
     notifyError(e, t("items.detail.notFound"));
   } finally {

@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "collections",
-  "package_version": 3,
+  "package_version": 4,
   "title": {
     "fr": "Collections",
     "en": "Collections"
@@ -118,7 +118,6 @@
         "type": "object",
         "x-order": [
           "watched_at",
-          "rating",
           "progress"
         ],
         "x-title": {
@@ -127,22 +126,15 @@
         },
         "x-labels": {
           "en": {
-            "rating": "Rating",
             "progress": "Progress",
             "watched_at": "Watch Date"
           },
           "fr": {
-            "rating": "Note",
             "progress": "Progression",
             "watched_at": "Date de visionnage"
           }
         },
         "properties": {
-          "rating": {
-            "type": "integer",
-            "maximum": 10,
-            "minimum": 0
-          },
           "progress": {
             "type": "integer",
             "maximum": 100,

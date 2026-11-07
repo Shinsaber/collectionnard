@@ -19,6 +19,7 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 | `itemquery`  | Recherche avancée de `GET /items` : filtres `attr.<clé>[.<op>]`, tri `attr.<clé>`, requête plein texte — validés contre le schéma du type (pendant de `web/src/lib/itemSearch.ts`) |
 | `collstats`  | Statistiques d'une collection (P4-1) déduites du schéma du CollectionType : nombres, répartitions (enum, booléen), mois des dates, ajouts par mois ; la complétude (relations `x-completeness`) est calculée en SQL dans `store/stats.go` |
 | `privacy`    | Visibilité et champs cachés (P4-2) : `CanView`, `Levels`, `HiddenFields` (`x-private` ou `hidden_fields`), `StripAttributes`, `StripSchema`. **Toute lecture faite pour un autre que le propriétaire** (routes `/public/…`, `/share`, statistiques) passe par ce filtre, admins compris |
+| `review`     | Règles d'un avis (I-0) : `CheckSchema` (critères = entiers de 0 à 10), `Rate` (moyenne, tous les critères obligatoires), `MinRatings` (seuil d'affichage d'une moyenne), `MaxBody`, `Languages` (pendant de `web/src/i18n/langs.ts`) |
 | `identifier` | Champs `x-identifier` d'un schéma (premier niveau ou un niveau dans un objet) et leurs valeurs : doublons (`POST /items/duplicates`, P4-3b) |
 | `csvexport`  | Mise à plat CSV des attributs (colonnes depuis le schéma, i18n-text → `clé.langue`, BOM, anti-injection de formules) |
 | `dbmigrate`  | Migrations tern (`db/migrations`) + seeds de démonstration (`SEED_FILE` : liste séparée par des virgules ; défaut `seed.sql`, `seed_bd_manga.sql`, `seed_music.sql`, `seed_video.sql` puis `seed_games.sql`), précédés de l'installation des paquets de domaine : sous-commandes `colec-server migrate` / `seed` / `install-domain` (`cmd.go`) |
@@ -87,6 +88,12 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 - Notifications (`handler/notification.go`, `store/notification.go`, P4-3c) : `notifyProposal` / `notifyComment`
   après une décision ou un message ; l'émetteur n'est jamais notifié, un échec est journalisé sans faire échouer la
   requête.
+- Avis (`handler/review.go`, `store/review.go`, I-0) : toute note compte dans la moyenne, quelle que soit sa visibilité ; ce que
+  voit le lecteur se décide au serveur (`reviewListed` en SQL, auteur retiré par `signedFor` via `privacy.CanView`, `user_id`
+  jamais sérialisé), admins compris. Une moyenne sous `review.MinRatings` notes ne sort pas de l'API. La liste d'un profil ne
+  montre que les avis signés pour le lecteur. L'édition utilisée (`context_item_id`, cible de l'item par une relation de
+  `review_type_context_relations`, vérifiée par `IsReviewContext`) est retirée avec l'auteur ; à l'import, ces relations
+  s'écrivent après les types de relation (`reviewTypeContexts`).
 - Visibilité et partage (`handler/sharing.go`, `store/sharing.go`, P4-2) : routes publiques derrière
   `Auth.OptionalAuthenticate` (sans jeton : anonyme, `GetUserID` = `uuid.Nil` ; jeton invalide : 401) ; `loadReadable`
   vérifie visibilité et compte actif (404 sinon) et calcule les champs cachés ; une nouvelle lecture publique doit

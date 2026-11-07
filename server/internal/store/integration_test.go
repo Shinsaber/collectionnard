@@ -792,3 +792,228 @@ func TestListItemRelationsPage(t *testing.T) {
 		t.Errorf("filtered page: %d of %d, err %v", len(filtered), total, err)
 	}
 }
+
+// Avis (I-0) : le SQL réel décide de ce qui est listé, de ce qui compte dans la moyenne, et le paquet de
+// domaine ouvre les avis sur le bon type.
+func TestReviews(t *testing.T) {
+	rt, err := s.CreateReviewType(ctx, model.ReviewTypeCreate{Name: "TestReview",
+		AttributesSchema: json.RawMessage(`{"type":"object","properties":{"a":{"type":"integer","minimum":0,"maximum":10}}}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	it, err := s.CreateItemType(ctx, model.ItemTypeCreate{Name: "TestReviewed",
+		AttributesSchema: json.RawMessage(`{"type":"object"}`), ReviewTypeID: &rt.ID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if it.ReviewTypeID == nil || *it.ReviewTypeID != rt.ID {
+		t.Fatalf("review_type_id : %+v", it.ReviewTypeID)
+	}
+	item, err := s.CreateItem(ctx, model.ItemCreate{ItemTypeID: it.ID, Attributes: json.RawMessage(`{}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := s.GetItemReviewType(ctx, item.ID)
+	if err != nil || got == nil || got.ID != rt.ID {
+		t.Fatalf("GetItemReviewType : %+v %v", got, err)
+	}
+	if _, err := s.GetItemReviewType(ctx, uuid.New()); !errors.Is(err, store.ErrNotFound) {
+		t.Fatalf("item inconnu : %v", err)
+	}
+
+	// Quatre auteurs, une visibilité chacun, plus un compte désactivé.
+	writers := map[string]uuid.UUID{}
+	for _, v := range []string{"private", "members", "anonymous", "public", "disabled"} {
+		u, err := s.CreateUser(ctx, "rev_"+v, "rev_"+v+"@example.org", "x", model.RoleUser)
+		if err != nil {
+			t.Fatal(err)
+		}
+		writers[v] = u.ID
+		vis := v
+		if v == "disabled" {
+			vis = "public"
+		}
+		if _, err := s.PutReview(ctx, item.ID, u.ID, model.ReviewWrite{Rating: 8, Body: "texte de " + v, Lang: "fr", Visibility: vis}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	now := true
+	if _, err := s.UpdateUser(ctx, writers["disabled"], model.UserUpdate{Disabled: &now}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Remplacement : toujours une ligne par couple, la moyenne suit.
+	crit := json.RawMessage(`{"a":6}`)
+	mine, err := s.PutReview(ctx, item.ID, writers["public"], model.ReviewWrite{ReviewTypeID: &rt.ID, Criteria: crit, Rating: 6, Body: "texte de public", Lang: "en", Visibility: "public"})
+	if err != nil || mine.Rating != 6 || mine.Lang != "en" || mine.Author == nil {
+		t.Fatalf("remplacement : %+v %v", mine, err)
+	}
+
+	list := func(viewer uuid.UUID, levels []string) []string {
+		reviews, total, err := s.ListItemReviews(ctx, item.ID, model.ReviewListParams{Viewer: viewer, Levels: levels}, model.Pagination{Page: 1, PerPage: 20})
+		if err != nil {
+			t.Fatal(err)
+		}
+		out := []string{}
+		for _, r := range reviews {
+			out = append(out, r.Visibility)
+		}
+		slices.Sort(out)
+		if total != len(out) {
+			t.Errorf("total %d pour %d lignes", total, len(out))
+		}
+		return out
+	}
+	if got := list(uuid.Nil, []string{"public"}); !slices.Equal(got, []string{"anonymous", "public"}) {
+		t.Errorf("visiteur : %v", got)
+	}
+	reader := writers["private"]
+	if got := list(reader, []string{"members", "public"}); !slices.Equal(got, []string{"anonymous", "members", "public"}) {
+		t.Errorf("membre : %v", got)
+	}
+	if got := list(writers["public"], []string{"members", "public"}); !slices.Equal(got, []string{"anonymous", "members"}) {
+		t.Errorf("son propre avis n'est pas dans la liste : %v", got)
+	}
+
+	// La moyenne porte sur toutes les notes, sauf le compte désactivé : (8+8+8+6)/4.
+	st, err := s.GetReviewStats(ctx, item.ID, uuid.Nil, []string{"public"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if st.Count != 4 || st.Avg != 7.5 || st.NoteOnly != 2 {
+		t.Errorf("stats visiteur : %+v", st)
+	}
+	if st.Criteria["a"].Count != 1 || st.Criteria["a"].Avg != 6 {
+		t.Errorf("critères : %+v", st.Criteria)
+	}
+	if st, _ = s.GetReviewStats(ctx, item.ID, reader, []string{"members", "public"}); st.NoteOnly != 0 {
+		t.Errorf("notes seules d'un membre, la sienne exclue : %+v", st)
+	}
+
+	// Un avis anonyme sans texte n'a rien à montrer.
+	if _, err := s.PutReview(ctx, item.ID, writers["anonymous"], model.ReviewWrite{Rating: 8, Lang: "fr", Visibility: "anonymous"}); err != nil {
+		t.Fatal(err)
+	}
+	if got := list(uuid.Nil, []string{"public"}); !slices.Equal(got, []string{"public"}) {
+		t.Errorf("anonyme sans texte : %v", got)
+	}
+
+	// Un profil ne liste que le signé.
+	for v, want := range map[string]int{"members": 0, "anonymous": 0, "private": 0, "public": 1} {
+		reviews, _, err := s.ListUserReviews(ctx, writers[v], []string{"public"}, model.Pagination{Page: 1, PerPage: 20})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(reviews) != want {
+			t.Errorf("profil de %s : %d", v, len(reviews))
+		}
+		if len(reviews) > 0 && (reviews[0].Item == nil || reviews[0].Item.ItemType == nil) {
+			t.Errorf("item absent : %+v", reviews[0])
+		}
+	}
+	all, _, err := s.ListUserReviews(ctx, writers["private"], nil, model.Pagination{Page: 1, PerPage: 20})
+	if err != nil || len(all) != 1 {
+		t.Errorf("mes avis : %d %v", len(all), err)
+	}
+
+	// Un type d'avis utilisé ne se supprime pas ; fermer les avis libère le type d'item.
+	if err := s.DeleteReviewType(ctx, rt.ID); !errors.Is(err, store.ErrConflict) {
+		t.Errorf("type utilisé : %v", err)
+	}
+	if _, err := s.UpdateItemType(ctx, it.ID, model.ItemTypeUpdate{ReviewTypeID: model.OptionalUUID{Set: true}}); err != nil {
+		t.Fatal(err)
+	}
+	if closed, _ := s.GetItemReviewType(ctx, item.ID); closed != nil {
+		t.Errorf("avis fermés : %+v", closed)
+	}
+	if err := s.DeleteReview(ctx, item.ID, writers["public"]); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.DeleteReview(ctx, item.ID, writers["public"]); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("deuxième suppression : %v", err)
+	}
+	if err := s.DeleteReviewType(ctx, rt.ID); err != nil {
+		t.Errorf("type libre : %v", err)
+	}
+}
+
+// L'édition utilisée : seule une cible de l'œuvre par une relation déclarée est permise ; le filtre ne montre
+// que les avis signés ; supprimer l'édition garde l'avis.
+func TestReviews_Context(t *testing.T) {
+	game := uuid.MustParse("b0000000-0000-0000-0000-000000000040")
+	release := uuid.MustParse("b0000000-0000-0000-0000-000000000041")
+	releasedAs := uuid.MustParse("c0000000-0000-0000-0000-000000000040")
+	if _, err := s.InstallDomains(ctx, "games"); err != nil {
+		t.Fatal(err)
+	}
+	gt, err := s.GetItemType(ctx, game)
+	if err != nil || gt.ReviewTypeID == nil {
+		t.Fatalf("Game : %+v %v", gt, err)
+	}
+	rt, err := s.GetReviewType(ctx, *gt.ReviewTypeID)
+	if err != nil || len(rt.ContextRelationTypeIDs) != 1 || rt.ContextRelationTypeIDs[0] != releasedAs || rt.ContextLabel["fr"] != "Joué sur" {
+		t.Fatalf("type d'avis du jeu : %+v %v", rt, err)
+	}
+	g, _ := s.CreateItem(ctx, model.ItemCreate{ItemTypeID: game, Attributes: json.RawMessage(`{"title":"Jeu de test"}`)})
+	linked, _ := s.CreateItem(ctx, model.ItemCreate{ItemTypeID: release, Attributes: json.RawMessage(`{"title":"Édition liée","format":"cartridge"}`)})
+	other, _ := s.CreateItem(ctx, model.ItemCreate{ItemTypeID: release, Attributes: json.RawMessage(`{"title":"Autre édition","format":"cartridge"}`)})
+	if g == nil || linked == nil || other == nil {
+		t.Fatal("items de test")
+	}
+	if _, err := s.CreateRelation(ctx, model.ItemRelationCreate{RelationTypeID: releasedAs, SourceItemID: g.ID, TargetItemID: linked.ID, Attributes: json.RawMessage(`{}`)}); err != nil {
+		t.Fatal(err)
+	}
+	items, err := s.ListReviewContextItems(ctx, rt.ID, g.ID)
+	if err != nil || len(items) != 1 || items[0].ID != linked.ID || items[0].ItemType == nil {
+		t.Fatalf("éditions proposées : %+v %v", items, err)
+	}
+	if ok, _ := s.IsReviewContext(ctx, rt.ID, g.ID, linked.ID); !ok {
+		t.Error("édition liée refusée")
+	}
+	if ok, _ := s.IsReviewContext(ctx, rt.ID, g.ID, other.ID); ok {
+		t.Error("édition sans lien acceptée")
+	}
+
+	pub, _ := s.CreateUser(ctx, "ctx_public", "ctx_public@example.org", "x", model.RoleUser)
+	anon, _ := s.CreateUser(ctx, "ctx_anon", "ctx_anon@example.org", "x", model.RoleUser)
+	for _, w := range []struct {
+		id  uuid.UUID
+		vis string
+	}{{pub.ID, "public"}, {anon.ID, "anonymous"}} {
+		if _, err := s.PutReview(ctx, g.ID, w.id, model.ReviewWrite{Rating: 7, Body: "texte", Lang: "fr", Visibility: w.vis, ContextItemID: &linked.ID}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	mine, _ := s.GetMyReview(ctx, g.ID, anon.ID)
+	if mine.ContextItem == nil || mine.ContextItem.ItemType == nil || !strings.Contains(string(mine.ContextItem.Attributes), "Édition liée") {
+		t.Errorf("édition jointe à l'avis : %+v", mine.ContextItem)
+	}
+	list, total, err := s.ListItemReviews(ctx, g.ID, model.ReviewListParams{Viewer: uuid.Nil, Levels: []string{"public"}, ContextItemID: &linked.ID}, model.Pagination{Page: 1, PerPage: 20})
+	if err != nil || total != 1 || len(list) != 1 || list[0].Visibility != "public" {
+		t.Errorf("filtre par édition : %d %+v %v", total, list, err)
+	}
+
+	if err := s.DeleteItem(ctx, linked.ID); err != nil {
+		t.Fatal(err)
+	}
+	if mine, err = s.GetMyReview(ctx, g.ID, anon.ID); err != nil || mine.ContextItemID != nil {
+		t.Errorf("édition supprimée : l'avis reste, sans précision : %+v %v", mine, err)
+	}
+}
+
+// Les paquets ouvrent les avis sur les œuvres et les laissent fermés sur les personnes ; la note a
+// quitté le type « Watching ».
+func TestReviews_Packages(t *testing.T) {
+	series, err := s.GetItemType(ctx, uuid.MustParse("b0000000-0000-0000-0000-000000000001"))
+	if err != nil || series.ReviewTypeID == nil {
+		t.Fatalf("Series : %+v %v", series, err)
+	}
+	person, err := s.GetItemType(ctx, uuid.MustParse("b0000000-0000-0000-0000-000000000016"))
+	if err != nil || person.ReviewTypeID != nil {
+		t.Fatalf("Person : %+v %v", person, err)
+	}
+	watching, err := s.GetCollectionType(ctx, uuid.MustParse("d0000000-0000-0000-0000-000000000002"))
+	if err != nil || strings.Contains(string(watching.AttributesSchema), "rating") {
+		t.Fatalf("Watching : %s %v", watching.AttributesSchema, err)
+	}
+}

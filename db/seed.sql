@@ -145,7 +145,7 @@ INSERT INTO collections (id, user_id, collection_type_id, name, description) VAL
 INSERT INTO collection_items (collection_id, item_id, attributes) VALUES
 ('f0000000-0000-0000-0000-000000000002',
  'e0000000-0000-0000-0000-000000000001',
- '{"watched_at": "2023-03-15", "rating": 10, "progress": 100}');
+ '{"watched_at": "2023-03-15", "progress": 100}');
 
 -- =============================================================================
 -- 8. TAGS

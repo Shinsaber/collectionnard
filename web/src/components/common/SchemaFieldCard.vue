@@ -81,6 +81,7 @@
         />
 
         <ElSelect
+          v-if="!features.criteria"
           :model-value="field.type"
           :aria-label="t('schema.field.type')"
           class="w-full! sm:w-48!"
@@ -95,6 +96,7 @@
         </ElSelect>
 
         <ElCheckbox
+          v-if="!features.criteria"
           :id="`${uid}-req`"
           :model-value="field.required"
           :title="t('schema.field.required')"
@@ -141,6 +143,7 @@
       </div>
 
       <SchemaFieldConstraints
+        v-if="!features.criteria"
         :field="field"
         :features="features"
         @update:field="emit('update:field', $event)"

@@ -75,14 +75,14 @@ func TestInstallDomain(t *testing.T) {
 	if err != nil || !rep.Applied || len(rep.Errors) != 0 {
 		t.Fatalf("install: %v %+v", err, rep)
 	}
-	if o := outcomes(rep); o[model.DomainCreated] != 13 || o[model.DomainSkipped] != 1 {
+	if o := outcomes(rep); o[model.DomainCreated] != 15 || o[model.DomainSkipped] != 1 {
 		t.Errorf("first install: %v", o)
 	}
 	if len(rep.Required) != 1 || rep.Required[0].Domain != "people" || !rep.Required[0].Applied || outcomes(rep.Required[0])[model.DomainCreated] != 2 {
 		t.Errorf("required: %+v", rep.Required)
 	}
 	// Réinstallation : rien à changer, people déjà là.
-	if rep, _ = st.InstallDomain(ctx, books, false); outcomes(rep)[model.DomainUnchanged] != 13 || len(rep.Required) != 0 {
+	if rep, _ = st.InstallDomain(ctx, books, false); outcomes(rep)[model.DomainUnchanged] != 15 || len(rep.Required) != 0 {
 		t.Errorf("reinstall: %v", outcomes(rep))
 	}
 	// tv installé ensuite : adapted_as est ajoutée au domaine books.
@@ -240,5 +240,54 @@ func TestInstallDomain_TVv1ToVideo(t *testing.T) {
 		if (d.ID == "tv" || d.ID == "video" || d.ID == "people") && d.Status != model.DomainUpToDate {
 			t.Errorf("%s: %+v", d.ID, d)
 		}
+	}
+}
+
+// Fermer les avis sur un type ou supprimer un type d'avis reste acquis à la mise à jour du paquet.
+func TestInstallDomain_ReviewTypes(t *testing.T) {
+	st := freshStore(t, "colec_test_domain_reviews")
+	books, err := domains.Get("books")
+	if err != nil || books == nil {
+		t.Fatal(err)
+	}
+	if _, err := st.InstallDomain(ctx, books, false); err != nil {
+		t.Fatal(err)
+	}
+	comicType := uuid.MustParse("f1000000-0000-0000-0000-000000000001")
+	novelType := uuid.MustParse("f1000000-0000-0000-0000-000000000002")
+	manga := uuid.MustParse("b0000000-0000-0000-0000-000000000012")
+	novel := uuid.MustParse("b0000000-0000-0000-0000-000000000018")
+	saga := uuid.MustParse("b0000000-0000-0000-0000-000000000011")
+	if got, _ := st.GetItemType(ctx, manga); got == nil || got.ReviewTypeID == nil || *got.ReviewTypeID != comicType {
+		t.Fatalf("avis ouverts sur Manga : %+v", got)
+	}
+
+	closed := model.ItemTypeUpdate{ReviewTypeID: model.OptionalUUID{Set: true}}
+	for _, id := range []uuid.UUID{manga, novel, saga} {
+		if _, err := st.UpdateItemType(ctx, id, closed); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := st.DeleteReviewType(ctx, novelType); err != nil {
+		t.Fatal(err)
+	}
+
+	v2 := *books
+	v2.PackageVersion = books.PackageVersion + 1
+	rep, err := st.InstallDomain(ctx, &v2, false)
+	if err != nil || !rep.Applied || len(rep.Errors) != 0 {
+		t.Fatalf("mise à jour : %v %+v", err, rep)
+	}
+	if got, _ := st.GetItemType(ctx, manga); got.ReviewTypeID != nil {
+		t.Errorf("avis fermés localement sur Manga : rouverts vers %s", got.ReviewTypeID)
+	}
+	if got, _ := st.GetItemType(ctx, novel); got.ReviewTypeID != nil {
+		t.Errorf("Novel pointe vers un type supprimé : %s", got.ReviewTypeID)
+	}
+	if _, err := st.GetReviewType(ctx, novelType); err == nil {
+		t.Error("type d'avis supprimé localement : réinstallé")
+	}
+	if _, err := st.GetReviewType(ctx, comicType); err != nil {
+		t.Errorf("ComicReview : %v", err)
 	}
 }
