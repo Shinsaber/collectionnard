@@ -49,12 +49,12 @@ Le **concept clé** est le dynamisme : le système doit permettre de créer des 
 
 Le système repose sur **un pattern unique appliqué à 3 niveaux**. Chaque niveau a un "méta-type" qui définit un schéma d'attributs dynamiques, et des instances qui portent les valeurs.
 
-| Méta-type          | Définit le schéma de…                                      | Instance           | Exemple de valeurs dynamiques                |
-| ------------------ | ---------------------------------------------------------- | ------------------ | -------------------------------------------- |
-| **ItemType**       | Attributs d'un item                                        | **Item**           | titre, année, ISBN…                          |
-| **RelationType**   | Attributs d'un lien inter-items + contrainte source→target | **ItemRelation**   | disque, piste, rôle…                         |
+| Méta-type          | Définit le schéma de…                                      | Instance           | Exemple de valeurs dynamiques          |
+| ------------------ | ---------------------------------------------------------- | ------------------ | -------------------------------------- |
+| **ItemType**       | Attributs d'un item                                        | **Item**           | titre, année, ISBN…                    |
+| **RelationType**   | Attributs d'un lien inter-items + contrainte source→target | **ItemRelation**   | disque, piste, rôle…                   |
 | **CollectionType** | Attributs du lien user↔item + sémantique de la collection  | **CollectionItem** | état physique, prix d'achat, date vue… |
-| **ReviewType** | Critères notés d'un avis, entiers de 0 à 10 | **Review** | scénario, dessin, jouabilité… |
+| **ReviewType**     | Critères notés d'un avis, entiers de 0 à 10                | **Review**         | scénario, dessin, jouabilité…          |
 
 ### Schéma d'architecture
 
@@ -161,19 +161,19 @@ une abstraction de ce schéma ; elle n'existe pas dans l'implémentation.
 
 ### Extensions `x-*` (pilotent le front)
 
-| Extension            | Niveau    | Rôle                                                                                                                                                                                                     |
-| -------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `x-order`            | racine    | Ordre d'affichage des champs (tableau de clés ; les clés absentes suivent)                                                                                                                               |
-| `x-labels`           | racine    | Libellés par langue : `{ "fr": { "title": "Titre" }, "en": { "title": "Title" } }`                                                                                                                       |
-| `x-title`            | racine    | Nom affiché du méta-type par langue : `{ "fr": "Série", "en": "Series" }` ; repli sur la colonne `name` (identifiant technique anglais)                                                                  |
-| `x-description`      | racine    | Description du méta-type par langue ; repli sur la colonne `description`                                                                                                                                 |
-| `x-enum-labels`      | propriété | Libellés des valeurs d'un `enum` par langue : `{ "fr": { "tv": "Télévision" }, "en": { "tv": "TV" } }` ; repli sur la valeur brute                                                                       |
-| `x-widget`           | propriété | Widget dédié : `i18n-text` (objet `{fr, en, …}` : une chaîne par langue, codes supplémentaires acceptés), `image-gallery` (objet de catégories), `links` (tableau de `{label?, url}`, URL http(s) en format `uri` : liens cliquables sur la fiche, libellé facultatif, nom du site à défaut)                                                          |
-| `x-image-categories` | propriété | Catégories d'images et ratios : `{ "poster": { "ratio": "2/3" } }` (avec `image-gallery`). Contrôles facultatifs à l'envoi, dans le navigateur : `tolerance` (écart de ratio permis, %), `min_width` / `min_height` (px), `strict` (proposer le recadrage ; sinon avertissement). Le ratio contraint aussi le cadre du recadrage (photo prise sur écran tactile, ou fichier hors format), `docs/phases/mobile.md` M1 |
-| `x-private`          | propriété | CollectionType : champ caché par défaut à tout autre lecteur que le propriétaire (prix payé, budget max), même dans une collection publique ; le propriétaire peut remplacer ce défaut par collection (`hidden_fields`). Retiré **par le serveur** des pages publiques, liens de partage et statistiques, administrateurs compris |
+| Extension            | Niveau    | Rôle                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| -------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `x-order`            | racine    | Ordre d'affichage des champs (tableau de clés ; les clés absentes suivent)                                                                                                                                                                                                                                                                                                                                                    |
+| `x-labels`           | racine    | Libellés par langue : `{ "fr": { "title": "Titre" }, "en": { "title": "Title" } }`                                                                                                                                                                                                                                                                                                                                            |
+| `x-title`            | racine    | Nom affiché du méta-type par langue : `{ "fr": "Série", "en": "Series" }` ; repli sur la colonne `name` (identifiant technique anglais)                                                                                                                                                                                                                                                                                       |
+| `x-description`      | racine    | Description du méta-type par langue ; repli sur la colonne `description`                                                                                                                                                                                                                                                                                                                                                      |
+| `x-enum-labels`      | propriété | Libellés des valeurs d'un `enum` par langue : `{ "fr": { "tv": "Télévision" }, "en": { "tv": "TV" } }` ; repli sur la valeur brute                                                                                                                                                                                                                                                                                            |
+| `x-widget`           | propriété | Widget dédié : `i18n-text` (objet `{fr, en, …}` : une chaîne par langue, codes supplémentaires acceptés), `image-gallery` (objet de catégories), `links` (tableau de `{label?, url}`, URL http(s) en format `uri` : liens cliquables sur la fiche, libellé facultatif, nom du site à défaut)                                                                                                                                  |
+| `x-image-categories` | propriété | Catégories d'images et ratios : `{ "poster": { "ratio": "2/3" } }` (avec `image-gallery`). Contrôles facultatifs à l'envoi, dans le navigateur : `tolerance` (écart de ratio permis, %), `min_width` / `min_height` (px), `strict` (proposer le recadrage ; sinon avertissement). Le ratio contraint aussi le cadre du recadrage (photo prise sur écran tactile, ou fichier hors format), `docs/phases/mobile.md` M1          |
+| `x-private`          | propriété | CollectionType : champ caché par défaut à tout autre lecteur que le propriétaire (prix payé, budget max), même dans une collection publique ; le propriétaire peut remplacer ce défaut par collection (`hidden_fields`). Retiré **par le serveur** des pages publiques, liens de partage et statistiques, administrateurs compris                                                                                             |
 | `x-identifier`       | propriété | ItemType : identifiant (ISBN, EAN, QID Wikidata, ARK BnF, MBID…), au premier niveau ou dans un objet (`external_ids.wikidata`). Un autre item du même type portant la même valeur est signalé comme doublon possible avant l'enregistrement ou la proposition (`POST /items/duplicates`). Dans les formulaires, un champ `x-identifier` de premier niveau a un bouton « scanner un code-barres » (`docs/phases/mobile.md` M2) |
-| `x-completeness`     | racine    | RelationType seulement : `true` marque une relation de composition (la cible fait partie de la source : `contains_volume`, `contains_track`, `contains_episode`, `includes_episode`, `contains_work`). Les statistiques d'une collection comptent, pour chaque source, les cibles présentes sur le total (« 30 tomes sur 42 ») |
-| `x-label`            | racine    | Gabarit du libellé des instances : `"{title}"`, `"{number}. {title}"`, `"{last_name} {first_name}"` ; sans gabarit, repli sur `title`, `name`, `label` (Go `internal/label`, TS `web/src/lib/schema.ts`) |
+| `x-completeness`     | racine    | RelationType seulement : `true` marque une relation de composition (la cible fait partie de la source : `contains_volume`, `contains_track`, `contains_episode`, `includes_episode`, `contains_work`). Les statistiques d'une collection comptent, pour chaque source, les cibles présentes sur le total (« 30 tomes sur 42 »)                                                                                                |
+| `x-label`            | racine    | Gabarit du libellé des instances : `"{title}"`, `"{number}. {title}"`, `"{last_name} {first_name}"` ; sans gabarit, repli sur `title`, `name`, `label` (Go `internal/label`, TS `web/src/lib/schema.ts`)                                                                                                                                                                                                                      |
 
 Règles d'affichage dérivées du schéma lui-même (pas d'extension) : un `integer` / `number` avec `minimum`
 **et** `maximum` est rendu par un curseur ; un `enum` par une liste déroulante ; `format: date` / `uri` par
@@ -222,12 +222,12 @@ d'autres codes de langue, et les traductions de types / champs / enums se compl�
 
 **CollectionTypes :**
 
-| CollectionType | Attributs du lien CollectionItem                                           |
+| CollectionType | Attributs du lien CollectionItem |
 | ReviewType | Critères notés d'un avis (`docs/phases/interactions.md`) |
 | -------------- | -------------------------------------------------------------------------- |
-| Ownership      | condition (new/very_good/good/fair/poor), purchase_price, acquisition_date |
-| Watching       | watched_at, rating, progress                                               |
-| Wishlist       | priority, max_budget                                                       |
+| Ownership | condition (new/very_good/good/fair/poor), purchase_price, acquisition_date |
+| Watching | watched_at, rating, progress |
+| Wishlist | priority, max_budget |
 
 **Graphe de données :**
 
@@ -266,13 +266,13 @@ User "shinsaber" :
 
 ## 5. Permissions et rôles
 
-| Rôle             | Droits                                                                                                                  |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| **Admin**        | Crée / modifie les ItemTypes, RelationTypes, CollectionTypes et installe les paquets de domaine. Écrit et supprime dans le catalogue. Gère les comptes, les invitations, l'import / export et les images. Modère les propositions. |
-| **Contributeur** | (Phase 4, P4-3) Écrit directement dans le catalogue (items, relations, images, sources externes), sans supprimer d'item ; modère les propositions des autres. Ni méta-types ni administration. |
-| **Modérateur** | (Phase 6, I-1) Traite les signalements avec les admins : masque, rétablit ou classe sans suite un avis, consulte le journal et l'historique d'un membre ; n'écrit pas dans le catalogue (rôle unique par compte) |
-| **Membre** (`user`) | Crée ses collections (visibilité au choix), y ajoute des items existants, consulte le catalogue ; propose des créations ou corrections, modérées ; signale ; invite si `MEMBER_INVITES`. |
-| **Visiteur**     | Sans compte : profils et collections publics (`/u/…`, `/c/…`) et liens de partage (`/share`), en lecture seule ; les champs `x-private` sont retirés par le serveur. |
+| Rôle                | Droits                                                                                                                                                                                                                             |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Admin**           | Crée / modifie les ItemTypes, RelationTypes, CollectionTypes et installe les paquets de domaine. Écrit et supprime dans le catalogue. Gère les comptes, les invitations, l'import / export et les images. Modère les propositions. |
+| **Contributeur**    | (Phase 4, P4-3) Écrit directement dans le catalogue (items, relations, images, sources externes), sans supprimer d'item ; modère les propositions des autres. Ni méta-types ni administration.                                     |
+| **Modérateur**      | (Phase 6, I-1) Traite les signalements avec les admins : masque, rétablit ou classe sans suite un avis, consulte le journal et l'historique d'un membre ; n'écrit pas dans le catalogue (rôle unique par compte)                   |
+| **Membre** (`user`) | Crée ses collections (visibilité au choix), y ajoute des items existants, consulte le catalogue ; propose des créations ou corrections, modérées ; signale ; invite si `MEMBER_INVITES`.                                           |
+| **Visiteur**        | Sans compte : profils et collections publics (`/u/…`, `/c/…`) et liens de partage (`/share`), en lecture seule ; les champs `x-private` sont retirés par le serveur.                                                               |
 
 ### Décisions de sécurité consignées (audit du 2026-11-01)
 
@@ -527,12 +527,14 @@ barcode-detector / zxing-wasm (MIT, `.wasm` servi localement) pour les codes-bar
 - [ ] Plus tard (voir `docs/phases/mobile.md`) : recadrage d'une image déjà en galerie, OCR, QR code des liens de partage, scan
       d'étagère.
 
-### Phase 6 : Interactions entre utilisateurs (en exploration)
+### Phase 6 : Interactions entre utilisateurs
 
-Ouverte le 2026-11-02 (conception : `docs/phases/interactions.md`, pistes reportées : `docs/idées.md`). Cible : une
-instance publique à terme. Décisions : avis dans une entité dédiée (un par utilisateur et par item), critères génériques
-notés sur 10 portés par un méta-type, note de *Visionnage* supprimée, modération humaine
+Raffinée entre le 2026-11-02 et le 2026-11-07, branche `phase6-interactions`, un commit par lot (conception : `docs/phases/interactions.md`, pistes reportées : `docs/idées.md`).
+Cible : une instance publique à terme.  
+Décisions : avis dans une entité dédiée (un par utilisateur et par item), critères génériques
+notés sur 10 portés par un méta-type, note de _Visionnage_ supprimée, modération humaine
 par les admins et un rôle `moderator`.
+Avant l'ouverture publique : cadre légal et RGPD (voir les « Questions transverses » de `docs/phases/interactions.md`).
 
 - [x] **I-0 — Avis et critères** (livré le 2026-11-06) : méta-type `ReviewType` rattaché aux types d'item (fermé sur les personnes), note
       globale ou moyenne des critères, en étoiles, texte, spoiler, langue, visibilité ; suppression de `Visionnage.rating`.
@@ -546,19 +548,19 @@ par les admins et un rôle `moderator`.
 
 ## 9. Stack technique
 
-| Composant       | Choix                                                                                         | Version              |
-| --------------- | --------------------------------------------------------------------------------------------- | -------------------- |
-| Backend         | Go (chi 5.3, pgx 5.11, JWT 5.3, jsonschema v5 — v6 différé, API incompatible, sans CVE)       | 1.27 (go.mod ≥ 1.26) |
-| Base de données | PostgreSQL                                                                                    | 16                   |
-| Frontend        | Vue 3 + TypeScript                                                                            | 3.5 / 6.0            |
-| UI              | Element Plus (MIT) + Tailwind CSS ; identité « Étiquette » (Schibsted Grotesk, IBM Plex Mono) | 2.14 / 4.3           |
-| Graphes         | Cytoscape.js                                                                                  | 3.34                 |
+| Composant       | Choix                                                                                          | Version              |
+| --------------- | ---------------------------------------------------------------------------------------------- | -------------------- |
+| Backend         | Go (chi 5.3, pgx 5.11, JWT 5.3, jsonschema v5 — v6 différé, API incompatible, sans CVE)        | 1.27 (go.mod ≥ 1.26) |
+| Base de données | PostgreSQL                                                                                     | 16                   |
+| Frontend        | Vue 3 + TypeScript                                                                             | 3.5 / 6.0            |
+| UI              | Element Plus (MIT) + Tailwind CSS ; identité « Étiquette » (Schibsted Grotesk, IBM Plex Mono)  | 2.14 / 4.3           |
+| Graphes         | Cytoscape.js                                                                                   | 3.34                 |
 | Statistiques    | Apache ECharts (Apache 2.0), modules à la carte, rendu SVG, chargé à la demande                | 6.1                  |
-| Langues         | vue-i18n (fr / en, registre `web/src/i18n/langs.ts`)                                          | 11.4                 |
+| Langues         | vue-i18n (fr / en, registre `web/src/i18n/langs.ts`)                                           | 11.4                 |
 | Mobile          | vite-plugin-pwa (Workbox), cropperjs (recadrage), barcode-detector + zxing-wasm (codes-barres) | 1.3 / 2.3 / 3.1      |
-| Build           | Vite (Rolldown), vue-tsc 3, Pinia 4, vue-router 5                                             | 8.3                  |
-| Déploiement     | Docker Compose (4 services : postgres, migrate, server, web)                                  | —                    |
-| Dev             | Nix flake (Go, Node, PostgreSQL, golangci-lint) + direnv                                      | flake.lock           |
+| Build           | Vite (Rolldown), vue-tsc 3, Pinia 4, vue-router 5                                              | 8.3                  |
+| Déploiement     | Docker Compose (4 services : postgres, migrate, server, web)                                   | —                    |
+| Dev             | Nix flake (Go, Node, PostgreSQL, golangci-lint) + direnv                                       | flake.lock           |
 
 ---
 

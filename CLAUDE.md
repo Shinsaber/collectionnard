@@ -40,7 +40,7 @@ leur emplacement par Claude Code). Un nouveau document va dans `docs/`, avec une
 | [docs/phases/social.md](docs/phases/social.md)                 | Phase 4 (social) : décisions, modèle et API visés — comptes et invitations, statistiques, visibilité, contributions |
 | [docs/audits/suivi.md](docs/audits/suivi.md) | Audits récurrents (`/audit`, skill `.claude/skills/audit/`, agent lecture seule `.claude/agents/auditeur.md`) : constats S-/Q-/C-nnn, états, rapports datés — ne jamais y corriger le code, proposer un lot |
 | [docs/phases/mobile.md](docs/phases/mobile.md)                 | Phase 5 (mobile) : cas d'usage et décisions — photo de couverture et recadrage, scanner de codes-barres, page « Scanner » |
-| [docs/phases/interactions.md](docs/phases/interactions.md) | Phase 6 (en exploration) : avis à critères, modération et votes, échanges sur les avis, articles, recommandations |
+| [docs/phases/interactions.md](docs/phases/interactions.md) | Phase 6 (livrée en test) : avis à critères, modération et réactions, commentaires, articles, recommandations et blocage |
 | [docs/idées.md](docs/idées.md)                               | Pistes notées mais non retenues : prêts, cadeaux, comparaison de collections, suivi, suppression du compte… |
 
 ## Modèle en une table
@@ -190,4 +190,4 @@ perspective) et M5 (photos de l'état d'un exemplaire, paquet `collections` v3) 
 dans `docs/phases/mobile.md`. Retours de la v0.4.0 (branche `retours-mobile`, fusionnée, v0.4.1) : caméra dans
 l'application, loupe et rotation au redressement, visionneuse maison, menus des relations et des collections, thème des
 pages publiques. Documentation restructurée le 2026-11-01 : tout dans `docs/`, README seul à la racine, `LICENSE` (MIT).
-Phase 6 (interactions, `docs/phases/interactions.md`), branche `phase6-interactions` : I-0 (avis et critères), I-1 (signalements, modération, réactions, rôle `moderator`) I-2 (commentaires), I-3 (articles validés par la modération) et I-4 (recommandations, blocage) livrés ; restent le cadre légal et le RGPD avant l'ouverture publique.
+Phase 6 (interactions, `docs/phases/interactions.md`), branche `phase6-interactions` : I-0 (avis et critères), I-1 (signalements, modération, réactions, rôle `moderator`) I-2 (commentaires), I-3 (articles validés par la modération) et I-4 (recommandations, blocage) livrés : Phase 6 close le 2026-11-07, livrée en test ; restent le cadre légal et le RGPD avant l'ouverture publique. Lot suivant (après fusion dans `main`) : exemplaires multiples, prêts, cadeaux réservés, amis (`docs/idées.md`).
