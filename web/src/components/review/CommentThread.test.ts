@@ -150,6 +150,22 @@ describe("CommentThread (I-2)", () => {
     expect(w.emitted("count")?.[0]).toEqual([1]);
   });
 
+  it("montre une trace pour un membre bloqué et propose de bloquer les autres", async () => {
+    api.list.mockResolvedValue({
+      data: [
+        comment({ blocked: true, body: "" }),
+        comment({ author: { username: "camille" } }),
+      ],
+      total: 2,
+    });
+    const w = mountThread();
+    await flushPromises();
+    expect(w.find('[data-test="comment-trace"]').text()).toContain(
+      "membre que vous avez bloqué",
+    );
+    expect(w.findAll('[data-test="block-author"]')).toHaveLength(1);
+  });
+
   it("en visiteur, ni formulaire ni signalement", async () => {
     api.list.mockResolvedValue({
       data: [comment({ author: { username: "camille" } })],

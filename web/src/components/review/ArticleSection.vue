@@ -93,6 +93,7 @@
         :can-write="auth.isAuthenticated"
         @edit="startEdit(a)"
         @remove="remove(a)"
+        @blocked="load"
       />
       <ElPagination
         class="justify-end"

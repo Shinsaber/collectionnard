@@ -137,6 +137,18 @@ tags:
       d'item. L'article d'un membre attend la validation d'un modérateur, comme une proposition de fiche ; les admins et
       les modérateurs publient directement. Le serveur ne récupère jamais le lien (pas d'aperçu). Un article publié se
       signale, se masque et porte un fil de commentaires.
+  - name: Recommendations
+    description: |
+      Recommandations et blocages (I-4). Un membre recommande un item à un membre de l'annuaire (profil `members` ou
+      `public`), avec un mot facultatif : le destinataire est notifié et retrouve ses recommandations reçues. Il peut
+      les refuser toutes (`accepts_recommendations` du profil) ou bloquer l'expéditeur : les deux répondent le même 403,
+      l'expéditeur ne sait pas lequel. 20 recommandations par jour et par compte (admins exemptés).
+
+      Bloquer un membre : il ne peut plus recommander d'item au bloqueur, ni commenter ou réagir à ses contenus signés
+      (403 `blocked`) ; ses avis signés et ses articles sortent des listes du bloqueur, ses commentaires y deviennent des
+      traces (`blocked`), ses messages ne le notifient plus. Sur un contenu qui ne nomme pas son auteur (avis anonyme), le
+      blocage ne refuse rien et l'avis reste listé : refuser ou retirer le nommerait. Les notes des membres bloqués comptent toujours dans les
+      moyennes.
   - name: Items
     description: |
       Gestion du catalogue d'items. Chaque item est un **nœud unique** dans le graphe :
@@ -367,6 +379,9 @@ components:
           description: Compte désactivé depuis cette date (connexion et rafraîchissement refusés).
         profile_visibility:
           $ref: "#/components/schemas/Visibility"
+        accepts_recommendations:
+          type: boolean
+          description: Les autres membres peuvent lui recommander des items (I-4).
         can_invite:
           type: boolean
           description: |
@@ -404,6 +419,9 @@ components:
           allOf:
             - $ref: "#/components/schemas/Visibility"
           description: Qui voit le profil et la liste des collections visibles ; absent ou vide = `private`.
+        accepts_recommendations:
+          type: boolean
+          description: Les autres membres peuvent me recommander des items ; absent = `true`.
 
     PasswordChange:
       type: object
@@ -1108,9 +1126,63 @@ components:
           type: string
           format: date-time
           description: Modifié après sa publication.
+        blocked:
+          type: boolean
+          description: Écrit par un membre que le lecteur a bloqué ; trace sans texte ni auteur.
         hidden_reason: { type: string }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+
+    Recommendation:
+      type: object
+      description: Un item recommandé au lecteur ; seul le destinataire la lit, l'expéditeur lui est nommé.
+      required: [id, item_id, message, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        item_id: { type: string, format: uuid }
+        item:
+          $ref: "#/components/schemas/Item"
+        sender:
+          $ref: "#/components/schemas/ReviewAuthor"
+        message:
+          type: string
+          maxLength: 500
+          description: Texte brut (pas de Markdown), éventuellement vide.
+        created_at: { type: string, format: date-time }
+        read_at: { type: string, format: date-time }
+
+    RecommendationCreate:
+      type: object
+      required: [to]
+      properties:
+        to:
+          type: string
+          description: Nom d'utilisateur du destinataire.
+        message:
+          type: string
+          maxLength: 500
+
+    Block:
+      type: object
+      description: |
+        Un membre bloqué. `user` est absent quand le bloqueur ne doit pas savoir qui il est : bloqué depuis un contenu
+        qui ne le nommait pas (avis anonyme, commentaire « Un membre »), ou profil qui ne lui est plus visible.
+      required: [id, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        user:
+          $ref: "#/components/schemas/ReviewAuthor"
+        created_at: { type: string, format: date-time }
+
+    BlockCreate:
+      type: object
+      description: Un nom d'utilisateur, ou un contenu montré au lecteur dont l'auteur est bloqué (l'un ou l'autre).
+      properties:
+        username: { type: string }
+        content_kind:
+          type: string
+          enum: [review, comment, article, recommendation]
+        content_id: { type: string, format: uuid }
 
     CommentBody:
       type: object
@@ -4340,7 +4412,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
-          description: "`own_content` : pas de réaction à son propre avis."
+          description: "`own_content` : pas de réaction à son propre avis ; `blocked` : l'auteur de l'avis signé a bloqué le lecteur."
           content:
             application/json:
               schema:
@@ -4671,6 +4743,12 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: "`blocked` : l'auteur du contenu, nommé au lecteur, l'a bloqué."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -5087,6 +5165,12 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: "`blocked` : l'auteur du contenu, nommé au lecteur, l'a bloqué."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -8293,6 +8377,216 @@ paths:
   # ===========================================================================
   # Notifications (P4-3c)
   # ===========================================================================
+
+  /items/{id}/recommendations:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Recommendations]
+      summary: Recommander un item à un membre
+      description: |
+        Le destinataire, un membre de l'annuaire, est notifié (`recommendation`). Une seule recommandation par
+        expéditeur, destinataire et item tant qu'elle n'est pas écartée. 20 par jour et par compte.
+      operationId: createRecommendation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecommendationCreate"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: "`recommendations_refused` : le membre refuse les recommandations, ou a bloqué l'expéditeur."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Item inconnu, ou destinataire inconnu ou hors de l'annuaire.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "`already_recommended` : déjà recommandé à ce membre."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          description: "`rate_limited` (`Retry-After`)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Recommandation envoyée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recommendation"
+
+  /me/recommendations:
+    get:
+      tags: [Recommendations]
+      summary: Mes recommandations reçues
+      description: Les plus récentes d'abord ; `unread` compte toutes les non-lues.
+      operationId: listMyRecommendations
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Recommandations reçues.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, total, page, per_page, unread]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Recommendation"
+                  total: { type: integer }
+                  page: { type: integer }
+                  per_page: { type: integer }
+                  unread: { type: integer }
+
+  /me/recommendations/read:
+    post:
+      tags: [Recommendations]
+      summary: Marquer des recommandations comme lues
+      description: "`ids` absent ou vide : toutes mes recommandations."
+      operationId: markRecommendationsRead
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Marquées comme lues.
+
+  /me/recommendations/{id}:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    delete:
+      tags: [Recommendations]
+      summary: Écarter une recommandation reçue
+      operationId: deleteMyRecommendation
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Écartée.
+
+  /me/blocks:
+    get:
+      tags: [Recommendations]
+      summary: Membres que j'ai bloqués
+      operationId: listBlocks
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée, le plus récent d'abord.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Block"
+    post:
+      tags: [Recommendations]
+      summary: Bloquer un membre
+      description: |
+        Par son nom (profil visible du lecteur), ou depuis un contenu qu'il voit : avis, commentaire, article ou
+        recommandation reçue. Ses recommandations au bloqueur sont écartées. Bloquer à nouveau ne change rien, sauf
+        qu'un blocage par nom le rend nommé.
+      operationId: createBlock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlockCreate"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Membre bloqué.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Block"
+
+  /me/blocks/{id}:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    delete:
+      tags: [Recommendations]
+      summary: Débloquer un membre
+      operationId: deleteBlock
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Débloqué.
 
   /me/notifications:
     get:

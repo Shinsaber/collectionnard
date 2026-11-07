@@ -124,7 +124,10 @@ func (s *PgStore) IsReviewContext(ctx context.Context, reviewTypeID, itemID, con
 // ListItemReviews lists the reviews of an item shown to the reader, their own excluded.
 func (s *PgStore) ListItemReviews(ctx context.Context, itemID uuid.UUID, p model.ReviewListParams, pg model.Pagination) ([]model.Review, int, error) {
 	// Filtre par édition : seuls les avis signés pour le lecteur la montrent.
-	where := `WHERE r.item_id = $1 AND r.user_id <> $2 AND r.hidden_at IS NULL AND ` + reviewListed("$3") + ` AND ($4 = '' OR r.lang = $4)
+	// Membres bloqués : leurs avis signés sortent ; un avis anonyme reste, le retirer nommerait son auteur.
+	where := `WHERE r.item_id = $1 AND r.user_id <> $2 AND r.hidden_at IS NULL
+		AND (r.visibility = 'anonymous' OR ` + notBlockedBy("$2", "r.user_id") + `)` +
+		` AND ` + reviewListed("$3") + ` AND ($4 = '' OR r.lang = $4)
 		AND ($5::uuid IS NULL OR (r.context_item_id = $5 AND r.visibility = ANY($3)))`
 	var total int
 	err := s.pool.QueryRow(ctx, `SELECT count(*)`+reviewFrom+where, itemID, p.Viewer, p.Levels, p.Lang, p.ContextItemID).Scan(&total)

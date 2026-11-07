@@ -16,6 +16,7 @@ export const NAV_ICONS = {
   offline:
     "M3 3l18 18M8.6 8.6A5 5 0 0 0 7 18h10.6M20.4 16.4A4 4 0 0 0 18 9a6 6 0 0 0-7.7-3.8",
   importExport: "M12 3v12M7 10l5 5 5-5M4 21h16",
+  recommendations: "M22 2L11 13M22 2l-7 20-4-9-9-4z",
   moderation: "M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6zM9 12l2 2 4-4",
   scan: "M4 5v14M8 5v14M12 5v9M16 5v14M20 5v9M12 17v2M20 17v2",
   images: "M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15.5 9a1.5 1.5 0 1 0 0 .01",
@@ -54,6 +55,7 @@ export function isMoreActive(path: string): boolean {
     isNavActive("/scan", path) ||
     isNavActive("/stats", path) ||
     isNavActive("/members", path) ||
+    isNavActive("/recommendations", path) ||
     isNavActive("/proposals", path) ||
     isNavActive("/moderation", path) ||
     isNavActive("/offline", path)
@@ -76,6 +78,11 @@ export function useNavigation() {
     { to: "/stats", label: t("layout.nav.stats"), icon: "stats" },
     { to: "/proposals", label: t("layout.nav.proposals"), icon: "proposals" },
     { to: "/members", label: t("layout.nav.members"), icon: "members" },
+    {
+      to: "/recommendations",
+      label: t("layout.nav.recommendations"),
+      icon: "recommendations",
+    },
     { to: "/offline", label: t("layout.nav.offline"), icon: "offline" },
   ]);
 
@@ -85,6 +92,11 @@ export function useNavigation() {
     { to: "/stats", label: t("layout.nav.stats"), icon: "stats" },
     { to: "/proposals", label: t("layout.nav.proposals"), icon: "proposals" },
     { to: "/members", label: t("layout.nav.members"), icon: "members" },
+    {
+      to: "/recommendations",
+      label: t("layout.nav.recommendations"),
+      icon: "recommendations",
+    },
     { to: "/offline", label: t("layout.nav.offline"), icon: "offline" },
   ]);
 

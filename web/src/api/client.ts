@@ -8,8 +8,13 @@ import {
 import type {
   Article,
   ArticleWrite,
+  Block,
+  BlockCreate,
   Comment,
   LoginRequest,
+  Recommendation,
+  RecommendationCreate,
+  RecommendationPage,
   ModerationHistory,
   ModerationItem,
   ModerationLogEntry,
@@ -739,6 +744,33 @@ export const sharedApi = {
         params: { token },
       })
       .then((r) => r.data),
+};
+
+/** Recommandations (I-4) : envoyer un item à un membre, celles que j'ai reçues. */
+export const recommendationApi = {
+  create: (itemId: string, data: RecommendationCreate) =>
+    http
+      .post<Recommendation>(`/items/${itemId}/recommendations`, data)
+      .then((r) => r.data),
+  mine: (params?: PaginationParams) =>
+    http
+      .get<RecommendationPage>("/me/recommendations", { params })
+      .then((r) => r.data),
+  /** Sans ids : toutes. */
+  markRead: (ids?: string[]) =>
+    http.post("/me/recommendations/read", ids ? { ids } : {}),
+  remove: (id: string) => http.delete(`/me/recommendations/${id}`),
+};
+
+/** Membres bloqués (I-4). */
+export const blockApi = {
+  list: (params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<Block>>("/me/blocks", { params })
+      .then((r) => r.data),
+  create: (data: BlockCreate) =>
+    http.post<Block>("/me/blocks", data).then((r) => r.data),
+  remove: (id: string) => http.delete(`/me/blocks/${id}`),
 };
 
 /** Annuaire des membres (profils visibles des membres ou publics). */

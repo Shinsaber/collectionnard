@@ -150,6 +150,14 @@ func (h *Handler) Router() chi.Router {
 		r.Get("/api/v1/me/notifications", h.ListNotifications)
 		r.Post("/api/v1/me/notifications/read", h.MarkNotificationsRead)
 		r.Get("/api/v1/members", h.ListMembers)
+		// Recommandations et blocages (I-4).
+		r.Post("/api/v1/items/{id}/recommendations", h.CreateRecommendation)
+		r.Get("/api/v1/me/recommendations", h.ListMyRecommendations)
+		r.Post("/api/v1/me/recommendations/read", h.MarkRecommendationsRead)
+		r.Delete("/api/v1/me/recommendations/{id}", h.DeleteMyRecommendation)
+		r.Get("/api/v1/me/blocks", h.ListBlocks)
+		r.Post("/api/v1/me/blocks", h.CreateBlock)
+		r.Delete("/api/v1/me/blocks/{id}", h.DeleteBlock)
 
 		// Read endpoints (all authenticated users)
 		r.Get("/api/v1/item-types", h.ListItemTypes)

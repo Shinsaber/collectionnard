@@ -190,4 +190,4 @@ perspective) et M5 (photos de l'état d'un exemplaire, paquet `collections` v3) 
 dans `docs/phases/mobile.md`. Retours de la v0.4.0 (branche `retours-mobile`, fusionnée, v0.4.1) : caméra dans
 l'application, loupe et rotation au redressement, visionneuse maison, menus des relations et des collections, thème des
 pages publiques. Documentation restructurée le 2026-11-01 : tout dans `docs/`, README seul à la racine, `LICENSE` (MIT).
-Phase 6 (interactions, `docs/phases/interactions.md`), branche `phase6-interactions` : I-0 (avis et critères), I-1 (signalements, modération, réactions, rôle `moderator`) I-2 (commentaires) et I-3 (articles validés par la modération) livrés ; I-4 à faire.
+Phase 6 (interactions, `docs/phases/interactions.md`), branche `phase6-interactions` : I-0 (avis et critères), I-1 (signalements, modération, réactions, rôle `moderator`) I-2 (commentaires), I-3 (articles validés par la modération) et I-4 (recommandations, blocage) livrés ; restent le cadre légal et le RGPD avant l'ouverture publique.

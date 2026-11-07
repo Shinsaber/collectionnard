@@ -17,6 +17,7 @@ const en: typeof fr = {
     offline: "Offline",
     stats: "Statistics",
     members: "Members",
+    recommendations: "Recommendations",
     proposals: "Proposals",
     scan: "Scan",
   },

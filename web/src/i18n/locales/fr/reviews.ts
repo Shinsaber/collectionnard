@@ -45,6 +45,7 @@ export default {
     member: "Un membre",
     deleted: "Commentaire supprimé par son auteur",
     hiddenTrace: "Commentaire masqué par la modération",
+    blockedTrace: "Commentaire d'un membre que vous avez bloqué",
     edited: "(modifié)",
     articleAuthor: "Auteur de l'article",
     closedArticle: "Fil fermé par l'auteur de l'article.",

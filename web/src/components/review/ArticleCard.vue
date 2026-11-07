@@ -76,17 +76,23 @@
             t("common.delete")
           }}</ElButton>
         </template>
-        <ElButton
-          v-else-if="canWrite && published"
-          text
-          size="small"
-          class="text-muted!"
-          data-test="article-report"
-          @click="reporting = true"
-        >
-          <i class="pi pi-flag mr-1.5" aria-hidden="true"></i>
-          {{ t("reviews.report.action") }}
-        </ElButton>
+        <template v-else-if="canWrite && published">
+          <ElButton
+            text
+            size="small"
+            class="text-muted!"
+            data-test="article-report"
+            @click="reporting = true"
+          >
+            <i class="pi pi-flag mr-1.5" aria-hidden="true"></i>
+            {{ t("reviews.report.action") }}
+          </ElButton>
+          <BlockButton
+            content-kind="article"
+            :content-id="article.id"
+            @blocked="emit('blocked')"
+          />
+        </template>
       </span>
     </footer>
     <CommentThread
@@ -116,10 +122,11 @@ import { useLang } from "@/composables/useLang";
 import { DEFAULT_LANG, LANG_FLAGS, LANG_NAMES, isLang } from "@/i18n/langs";
 import CommentThread from "./CommentThread.vue";
 import ReportDialog from "./ReportDialog.vue";
+import BlockButton from "./BlockButton.vue";
 import type { Article } from "@/api/types";
 
 const props = defineProps<{ article: Article; canWrite: boolean }>();
-const emit = defineEmits<{ edit: []; remove: [] }>();
+const emit = defineEmits<{ edit: []; remove: []; blocked: [] }>();
 
 const { t } = useI18n();
 const { lang } = useLang();

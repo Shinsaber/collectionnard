@@ -33,6 +33,9 @@ type thread struct {
 	Hidden bool
 	// AnonymousAuthor: its author is not named in the thread.
 	AnonymousAuthor bool
+	// AuthorNamed: the reader knows who its author is (a block then refuses
+	// their comments; otherwise it only mutes them).
+	AuthorNamed bool
 }
 
 // threadVisibleTo tells whether the thread of a review is open to the reader.
@@ -72,7 +75,7 @@ func (h *Handler) loadThread(w http.ResponseWriter, r *http.Request, kind string
 			return nil, false
 		}
 		return &thread{Kind: kind, ID: a.ID, AuthorID: a.AuthorID, ItemID: a.ItemID, Closed: a.CommentsClosed,
-			Hidden: a.HiddenAt != nil}, true
+			Hidden: a.HiddenAt != nil, AuthorNamed: privacy.CanView(a.AuthorProfile, a.AuthorID, viewer)}, true
 	}
 	rv, err := h.Store.GetReview(r.Context(), id)
 	if err != nil {
@@ -84,12 +87,15 @@ func (h *Handler) loadThread(w http.ResponseWriter, r *http.Request, kind string
 		return nil, false
 	}
 	return &thread{Kind: kind, ID: rv.ID, AuthorID: rv.UserID, ItemID: rv.ItemID, Closed: rv.CommentsClosed,
-		Hidden: rv.HiddenAt != nil, AnonymousAuthor: rv.Visibility == privacy.Anonymous}, true
+		Hidden: rv.HiddenAt != nil, AnonymousAuthor: rv.Visibility == privacy.Anonymous,
+		AuthorNamed: privacy.CanView(rv.Visibility, rv.UserID, viewer)}, true
 }
 
 // shapeComments sets what the reader may see of each comment: a deleted
-// comment, or one hidden by the moderation for anyone but its author, is a trace.
-func shapeComments(list []model.Comment, t *thread, viewer uuid.UUID) {
+// comment, one hidden by the moderation for anyone but its author, or one of a
+// member the reader blocked is a trace. The author of an anonymous review is
+// never marked blocked: it would name them.
+func shapeComments(list []model.Comment, t *thread, viewer uuid.UUID, blocked map[uuid.UUID]bool) {
 	for i := range list {
 		c := &list[i]
 		c.Mine = viewer != uuid.Nil && c.AuthorID == viewer
@@ -98,6 +104,11 @@ func shapeComments(list []model.Comment, t *thread, viewer uuid.UUID) {
 		if c.DeletedAt != nil || (c.HiddenAt != nil && !c.Mine) {
 			c.Body, c.Author, c.HiddenReason, c.EditedAt = "", nil, nil, nil
 			c.Mine, c.TargetAuthor = false, false
+			continue
+		}
+		if !c.Mine && blocked[c.AuthorID] && (!c.TargetAuthor || !t.AnonymousAuthor) {
+			c.Body, c.Author, c.HiddenAt, c.HiddenReason, c.EditedAt = "", nil, nil, nil, nil
+			c.TargetAuthor, c.Blocked = false, true
 			continue
 		}
 		switch {
@@ -140,7 +151,12 @@ func (h *Handler) listComments(w http.ResponseWriter, r *http.Request, kind stri
 		handleStoreError(w, r, err)
 		return
 	}
-	shapeComments(list, t, viewer)
+	blocked, err := h.blockedSet(r, viewer)
+	if err != nil {
+		handleStoreError(w, r, err)
+		return
+	}
+	shapeComments(list, t, viewer, blocked)
 	respondJSON(w, http.StatusOK, model.NewPaginatedResponse(list, total, pg))
 }
 
@@ -170,17 +186,20 @@ func (h *Handler) createComment(w http.ResponseWriter, r *http.Request, kind str
 		respondError(w, http.StatusConflict, "comments_closed", "this thread is closed")
 		return
 	}
+	me := middleware.GetUserID(r.Context())
+	if t.AuthorID != me && h.refuseBlocked(w, r, t.AuthorID, t.AuthorNamed) {
+		return
+	}
 	if h.limited(w, r, "comments", rateComments) {
 		return
 	}
-	me := middleware.GetUserID(r.Context())
 	c, err := h.Store.CreateComment(r.Context(), kind, t.ID, me, in.Body)
 	if err != nil {
 		handleStoreError(w, r, err)
 		return
 	}
 	one := []model.Comment{*c}
-	shapeComments(one, t, me)
+	shapeComments(one, t, me, nil)
 	h.notifyThread(r, t)
 	respondJSON(w, http.StatusCreated, one[0])
 }
@@ -201,6 +220,7 @@ func (h *Handler) notifyThread(r *http.Request, t *thread) {
 			to = append(to, u)
 		}
 	}
+	to = h.withoutBlockers(r, me, to)
 	if len(to) == 0 {
 		return
 	}

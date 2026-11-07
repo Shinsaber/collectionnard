@@ -87,5 +87,8 @@ export default {
     report_exists: "Vous avez déjà signalé ce contenu.",
     own_content: "Impossible sur votre propre contenu.",
     moderation_state: "Ce contenu a changé entre-temps : rechargez la page.",
+    recommendations_refused: "Ce membre n'accepte pas les recommandations.",
+    already_recommended: "Vous lui avez déjà recommandé cet item.",
+    blocked: "L'auteur de ce contenu n'accepte pas vos interactions.",
   },
 };

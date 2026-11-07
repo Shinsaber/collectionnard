@@ -1324,3 +1324,104 @@ func TestComments_Traces(t *testing.T) {
 		t.Errorf("trace et commentaire masqué restent : %d", total)
 	}
 }
+
+// I-4 : recommandations, blocage et ce qu'il retire des listes du bloqueur.
+func TestRecommendationsAndBlocks(t *testing.T) {
+	item, _ := s.CreateItem(ctx, model.ItemCreate{ItemTypeID: typeSerie, Attributes: json.RawMessage(`{"title":"Série recommandée"}`)})
+	a, _ := s.CreateUser(ctx, "rec_a", "rec_a@example.org", "x", model.RoleUser)
+	b, _ := s.CreateUser(ctx, "rec_b", "rec_b@example.org", "x", model.RoleUser)
+	if !a.AcceptsRecommendations {
+		t.Errorf("accepte par défaut")
+	}
+	rc, err := s.CreateRecommendation(ctx, b.ID, a.ID, item.ID, "à voir")
+	if err != nil || rc.Sender == nil || rc.Sender.Username != "rec_b" || rc.Item == nil || rc.Item.ItemType == nil {
+		t.Fatalf("création : %+v %v", rc, err)
+	}
+	if _, err := s.CreateRecommendation(ctx, b.ID, a.ID, item.ID, "encore"); !errors.Is(err, store.ErrConflict) {
+		t.Errorf("doublon : %v", err)
+	}
+	if list, total, unread, _ := s.ListRecommendations(ctx, a.ID, model.Pagination{Page: 1, PerPage: 20}); total != 1 || unread != 1 || len(list) != 1 {
+		t.Errorf("reçues : %d %d", total, unread)
+	}
+	if err := s.MarkRecommendationsRead(ctx, a.ID, nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, unread, _ := s.ListRecommendations(ctx, a.ID, model.Pagination{Page: 1, PerPage: 20}); unread != 0 {
+		t.Errorf("toutes lues : %d", unread)
+	}
+	if _, err := s.GetRecommendation(ctx, rc.ID, b.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("seul le destinataire la lit : %v", err)
+	}
+
+	// Contenus de b : avis et article sur l'item.
+	rt, _ := s.CreateReviewType(ctx, model.ReviewTypeCreate{Name: "TestBlocksReview"})
+	it, _ := s.CreateItemType(ctx, model.ItemTypeCreate{Name: "TestBlocks", AttributesSchema: json.RawMessage(`{"type":"object"}`)})
+	_, _ = s.UpdateItemType(ctx, it.ID, model.ItemTypeUpdate{ReviewTypeID: model.OptionalUUID{Set: true, Value: &rt.ID}})
+	reviewed, _ := s.CreateItem(ctx, model.ItemCreate{ItemTypeID: it.ID, Attributes: json.RawMessage(`{}`)})
+	_, _ = s.PutReview(ctx, reviewed.ID, b.ID, model.ReviewWrite{Rating: 4, Body: "avis de b", Lang: "fr", Visibility: "public"})
+	art, _ := s.CreateArticle(ctx, reviewed.ID, b.ID, model.ArticleWrite{Title: "Nouvelle", URL: "https://example.org/n", Lang: "fr"}, model.ArticlePublished)
+	pg := model.Pagination{Page: 1, PerPage: 20}
+	params := model.ReviewListParams{Viewer: a.ID, Levels: []string{"members", "public"}}
+	if list, _, _ := s.ListItemReviews(ctx, reviewed.ID, params, pg); len(list) != 1 {
+		t.Fatalf("avis de b visible avant blocage : %d", len(list))
+	}
+
+	blk, err := s.BlockUser(ctx, a.ID, b.ID, true)
+	if err != nil || !blk.Anonymous || blk.BlockedID != b.ID {
+		t.Fatalf("blocage : %+v %v", blk, err)
+	}
+	if again, _ := s.BlockUser(ctx, a.ID, b.ID, false); again.ID != blk.ID || again.Anonymous {
+		t.Errorf("un blocage par nom le rend nommé : %+v", again)
+	}
+	if again, _ := s.BlockUser(ctx, a.ID, b.ID, true); again.Anonymous {
+		t.Errorf("une fois nommé, il le reste : %+v", again)
+	}
+	if _, total, _, _ := s.ListRecommendations(ctx, a.ID, pg); total != 0 {
+		t.Errorf("ses recommandations sont écartées : %d", total)
+	}
+	if ok, _ := s.IsBlocked(ctx, a.ID, b.ID); !ok {
+		t.Errorf("IsBlocked")
+	}
+	if ids, _ := s.Blockers(ctx, b.ID, []uuid.UUID{a.ID, b.ID}); len(ids) != 1 || ids[0] != a.ID {
+		t.Errorf("Blockers : %v", ids)
+	}
+	if list, _, _ := s.ListItemReviews(ctx, reviewed.ID, params, pg); len(list) != 0 {
+		t.Errorf("avis de b masqué au bloqueur : %d", len(list))
+	}
+	if st, _ := s.GetReviewStats(ctx, reviewed.ID, a.ID, params.Levels); st.Count != 1 {
+		t.Errorf("sa note compte toujours : %+v", st)
+	}
+	if list, _, _ := s.ListItemArticles(ctx, reviewed.ID, a.ID, pg); len(list) != 0 {
+		t.Errorf("article de b masqué au bloqueur : %d", len(list))
+	}
+	if list, _, _ := s.ListItemArticles(ctx, reviewed.ID, uuid.Nil, pg); len(list) != 1 || list[0].ID != art.ID {
+		t.Errorf("visible des autres : %d", len(list))
+	}
+	if list, total, _ := s.ListBlocks(ctx, a.ID, pg); total != 1 || list[0].User == nil || list[0].User.Username != "rec_b" {
+		t.Errorf("liste des blocages : %+v", list)
+	}
+	// L'avis anonyme d'un membre bloqué reste listé : le retirer le nommerait.
+	c, _ := s.CreateUser(ctx, "rec_c", "rec_c@example.org", "x", model.RoleUser)
+	_, _ = s.PutReview(ctx, reviewed.ID, c.ID, model.ReviewWrite{Rating: 2, Body: "avis anonyme de c", Lang: "fr", Visibility: "anonymous"})
+	_, _ = s.BlockUser(ctx, a.ID, c.ID, false)
+	if list, _, _ := s.ListItemReviews(ctx, reviewed.ID, params, pg); len(list) != 1 || list[0].UserID != c.ID {
+		t.Errorf("avis anonyme d'un membre bloqué : %d", len(list))
+	}
+	if err := s.DeleteBlock(ctx, b.ID, blk.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("seul le bloqueur débloque : %v", err)
+	}
+	if err := s.DeleteBlock(ctx, a.ID, blk.ID); err != nil {
+		t.Fatal(err)
+	}
+	if list, _, _ := s.ListItemReviews(ctx, reviewed.ID, params, pg); len(list) != 2 {
+		t.Errorf("débloqué : %d", len(list))
+	}
+
+	f := false
+	if u, err := s.UpdateProfile(ctx, a.ID, model.ProfileUpdate{ProfileVisibility: "members", AcceptsRecommendations: &f}); err != nil || u.AcceptsRecommendations {
+		t.Errorf("refuser les recommandations : %+v %v", u, err)
+	}
+	if u, _ := s.UpdateProfile(ctx, a.ID, model.ProfileUpdate{ProfileVisibility: "members"}); !u.AcceptsRecommendations {
+		t.Errorf("absent = accepte")
+	}
+}

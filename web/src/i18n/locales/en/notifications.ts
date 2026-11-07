@@ -27,6 +27,7 @@ const en: typeof fr = {
       "One of your articles was hidden by the moderation: {reason}",
     article_restored: "One of your articles was restored by the moderation",
     article_comment: "{by} commented on an article",
+    recommendation: "{by} recommends an item to you",
   },
   someone: "A moderator",
   reviewAuthor: "The author of the review",

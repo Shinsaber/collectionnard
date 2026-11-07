@@ -131,6 +131,19 @@ type Store interface {
 	ListPendingArticles(ctx context.Context, pg model.Pagination) ([]model.Article, int, error)
 	ReviewArticle(ctx context.Context, id, moderatorID uuid.UUID, publish bool, reason string) (*model.Article, error)
 	SetArticleCommentsClosed(ctx context.Context, id, userID uuid.UUID, closed bool) error
+
+	// Recommendations and blocks (I-4)
+	CreateRecommendation(ctx context.Context, senderID, recipientID, itemID uuid.UUID, message string) (*model.Recommendation, error)
+	GetRecommendation(ctx context.Context, id, recipientID uuid.UUID) (*model.Recommendation, error)
+	ListRecommendations(ctx context.Context, recipientID uuid.UUID, pg model.Pagination) ([]model.Recommendation, int, int, error)
+	MarkRecommendationsRead(ctx context.Context, recipientID uuid.UUID, ids []uuid.UUID) error
+	DeleteRecommendation(ctx context.Context, id, recipientID uuid.UUID) error
+	BlockUser(ctx context.Context, blockerID, blockedID uuid.UUID, anonymous bool) (*model.Block, error)
+	ListBlocks(ctx context.Context, blockerID uuid.UUID, pg model.Pagination) ([]model.Block, int, error)
+	DeleteBlock(ctx context.Context, blockerID, id uuid.UUID) error
+	BlockedBy(ctx context.Context, blockerID uuid.UUID) ([]uuid.UUID, error)
+	Blockers(ctx context.Context, blockedID uuid.UUID, users []uuid.UUID) ([]uuid.UUID, error)
+	IsBlocked(ctx context.Context, blockerID, blockedID uuid.UUID) (bool, error)
 	ListModerationLog(ctx context.Context, pg model.Pagination) ([]model.ModerationLogEntry, int, error)
 	ModerationHistory(ctx context.Context, userID uuid.UUID) (*model.ModerationHistory, error)
 	SetReaction(ctx context.Context, reviewID, userID uuid.UUID, kind string, on bool) error

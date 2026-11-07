@@ -36,10 +36,12 @@ type Comment struct {
 	// DeletedAt: deleted by its author, a trace without text nor author.
 	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 	// EditedAt: changed after it was posted.
-	EditedAt     *time.Time `json:"edited_at,omitempty"`
-	HiddenReason *string    `json:"hidden_reason,omitempty"`
-	CreatedAt    time.Time  `json:"created_at"`
-	UpdatedAt    time.Time  `json:"updated_at"`
+	EditedAt *time.Time `json:"edited_at,omitempty"`
+	// Blocked: written by a member the reader blocked, a trace without text nor author.
+	Blocked      bool      `json:"blocked,omitempty"`
+	HiddenReason *string   `json:"hidden_reason,omitempty"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 // CommentBody is the body of POST /reviews/{id}/comments and PUT /comments/{id}.

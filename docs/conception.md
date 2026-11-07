@@ -540,7 +540,7 @@ par les admins et un rôle `moderator`.
       file de modération, masquage, journal de modération et récapitulatif par membre, réactions (intention ou émotion).
 - [x] **I-2 — Commentaires** (livré le 2026-11-07) : fil sur les avis, notifications.
 - [x] **I-3 — Articles sur la fiche d'un item** (livré le 2026-11-07) : partage de nouvelles (titre, message, lien), fil de commentaires.
-- [ ] **I-4 — Recommandations** : envoyer une fiche à un membre avec un mot.
+- [x] **I-4 — Recommandations** (livré le 2026-11-07) : envoyer une fiche à un membre avec un mot ; refus et blocage d'un membre.
 
 ---
 

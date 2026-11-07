@@ -80,6 +80,9 @@ const en: typeof fr = {
     report_exists: "You already reported this content.",
     own_content: "Not possible on your own content.",
     moderation_state: "This content changed meanwhile: reload the page.",
+    recommendations_refused: "This member does not accept recommendations.",
+    already_recommended: "You already recommended this item to them.",
+    blocked: "The author of this content does not accept your interactions.",
   },
 };
 

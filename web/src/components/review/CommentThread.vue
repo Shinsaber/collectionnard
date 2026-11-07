@@ -23,7 +23,9 @@
             {{
               c.deleted_at
                 ? t("reviews.comments.deleted")
-                : t("reviews.comments.hiddenTrace")
+                : c.blocked
+                  ? t("reviews.comments.blockedTrace")
+                  : t("reviews.comments.hiddenTrace")
             }}
             <time class="ml-1 font-mono text-[11px] not-italic">{{
               new Date(c.created_at).toLocaleDateString(lang)
@@ -73,17 +75,23 @@
                     >{{ t("common.delete") }}</ElButton
                   >
                 </template>
-                <ElButton
-                  v-else-if="canWrite"
-                  text
-                  size="small"
-                  class="text-muted!"
-                  data-test="comment-report"
-                  @click="reportingId = c.id"
-                >
-                  <i class="pi pi-flag mr-1" aria-hidden="true"></i>
-                  {{ t("reviews.report.action") }}
-                </ElButton>
+                <template v-else-if="canWrite">
+                  <ElButton
+                    text
+                    size="small"
+                    class="text-muted!"
+                    data-test="comment-report"
+                    @click="reportingId = c.id"
+                  >
+                    <i class="pi pi-flag mr-1" aria-hidden="true"></i>
+                    {{ t("reviews.report.action") }}
+                  </ElButton>
+                  <BlockButton
+                    content-kind="comment"
+                    :content-id="c.id"
+                    @blocked="load"
+                  />
+                </template>
               </span>
             </div>
             <p
@@ -199,6 +207,7 @@ import { useNotify } from "@/composables/useNotify";
 import { renderMarkdown } from "@/lib/markdown";
 import AppSpinner from "@/components/common/AppSpinner.vue";
 import ReportDialog from "./ReportDialog.vue";
+import BlockButton from "./BlockButton.vue";
 import type { Comment } from "@/api/types";
 
 const PER_PAGE = 50;
@@ -256,7 +265,11 @@ async function load() {
     });
     comments.value = res.data;
     total.value = res.total;
-    emit("count", res.data.filter((c) => !c.hidden_at && !c.deleted_at).length);
+    emit(
+      "count",
+      res.data.filter((c) => !c.hidden_at && !c.deleted_at && !c.blocked)
+        .length,
+    );
   } catch (e) {
     notifyError(e);
   } finally {
@@ -279,7 +292,8 @@ async function send() {
 }
 
 /** Commentaire supprimé, ou masqué pour un autre que son auteur : une trace. */
-const isTrace = (c: Comment) => !!c.deleted_at || (!!c.hidden_at && !c.mine);
+const isTrace = (c: Comment) =>
+  !!c.deleted_at || !!c.blocked || (!!c.hidden_at && !c.mine);
 
 function startEdit(c: Comment) {
   editingId.value = c.id;

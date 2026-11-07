@@ -26,6 +26,7 @@ export default {
       "Un de vos articles a été masqué par la modération : {reason}",
     article_restored: "Un de vos articles a été rétabli par la modération",
     article_comment: "{by} a commenté un article",
+    recommendation: "{by} vous recommande un item",
   },
   someone: "Un modérateur",
   reviewAuthor: "L'auteur de l'avis",

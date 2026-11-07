@@ -347,9 +347,38 @@ mais l'article d'un membre **attend d'être validé**, comme une proposition de 
 - Qui peut recommander à qui : tout membre de l'annuaire (profil `members` ou `public`) ; le destinataire peut **refuser
   les recommandations** (réglage du compte), et bloquer un expéditeur (voir ci-dessous).
 
+### Livré
+
+**I-4 livré le 2026-11-07.** Décisions du mainteneur à la réalisation : le **blocage complet** fait partie du lot ; le
+message d'une recommandation, privé, **ne se signale pas** (le destinataire bloque l'expéditeur). Choix faits :
+
+- Migration 019 : `recommendations` (une par expéditeur, destinataire et item tant qu'elle n'est pas écartée : 409
+  `already_recommended`), `users.accepts_recommendations` (vrai par défaut, case du profil), `user_blocks`.
+- Destinataire : un membre de l'annuaire (profil `members` ou `public`), sinon 404 comme un inconnu. Refus et blocage
+  répondent le même 403 `recommendations_refused` : l'expéditeur ne sait pas lequel. Message en texte brut, 500
+  caractères au plus ; 20 recommandations **par jour** et par compte (`handler/rate.go` prend désormais une fenêtre).
+  L'expéditeur est nommé au destinataire, même avec un profil privé : c'est lui qui envoie.
+- Page « Recommandations » (`/recommendations`, menu) : l'item, l'expéditeur, son mot ; ouvrir, écarter, bloquer. Les
+  nouvelles sont marquées lues à la visite ; la notification `recommendation` y mène.
+- **Blocage** (`/me/blocks`) : par nom (profil visible), ou depuis un avis, un commentaire, un article ou une
+  recommandation reçue (bouton « Bloquer » à côté de « Signaler », et sur le profil public). Le bloqué ne peut plus
+  recommander d'item au bloqueur, ni commenter ou réagir à ses contenus **signés** (403 `blocked`) ; retirer sa
+  réaction reste permis. Ses avis signés et ses articles sortent des listes du bloqueur, son profil n'y montre plus
+  d'avis, ses commentaires deviennent des traces (« Commentaire d'un membre que vous avez bloqué »), ses messages ne
+  notifient plus le bloqueur. Ses recommandations au bloqueur sont écartées. Les notes comptent toujours dans les
+  moyennes.
+- **Anonymat d'abord** : sur un contenu qui ne nomme pas son auteur, le blocage ne refuse rien et ne retire rien.
+  Commenter ou réagir à un avis anonyme du bloqueur reste possible (le bloqueur ne voit pas le commentaire et n'est
+  pas notifié) ; l'avis anonyme d'un membre bloqué reste listé, et sa réponse dans son fil n'est pas marquée : le
+  retirer le nommerait. Bloqué depuis un contenu qui ne le nommait pas (avis anonyme, commentaire « Un membre »), le
+  membre reste « Un membre » dans la liste des blocages (`user_blocks.anonymous`) ; un blocage par nom le lève.
+  Limite acceptée : les commentaires « Un membre » d'un même auteur bloqué deviennent tous des traces, ce qui les
+  relie entre eux.
+
 ## Questions transverses
 
-- **Blocage et mise en sourdine** : indispensables avant l'ouverture publique. Bloquer un membre : il ne peut plus
+- **Blocage et mise en sourdine** : indispensables avant l'ouverture publique. Blocage livré en I-4 (voir plus haut) ;
+  la mise en sourdine seule (sans bloquer) n'est pas faite. Bloquer un membre : il ne peut plus
   commenter mes avis, réagir, me recommander d'item ; ses contenus me sont masqués.
 - **Limites de débit** : avis, commentaires, articles, réactions et recommandations par heure et par compte (même principe
   que `UPLOAD_RATE_LIMIT`).

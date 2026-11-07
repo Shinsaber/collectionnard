@@ -34,6 +34,8 @@ export interface User {
   disabled_at?: string;
   /** GET /auth/me seulement : peut créer des invitations. */
   profile_visibility?: Visibility;
+  /** Les autres membres peuvent lui recommander des items (I-4). */
+  accepts_recommendations?: boolean;
   can_invite?: boolean;
   created_at: string;
   updated_at: string;
@@ -50,6 +52,8 @@ export interface ProfileUpdate {
   bio: string;
   avatar: string;
   profile_visibility: Visibility;
+  /** Absent = true. */
+  accepts_recommendations?: boolean;
 }
 
 export interface PasswordChange {
@@ -303,9 +307,46 @@ export interface Comment {
   deleted_at?: string;
   /** Modifié après sa publication. */
   edited_at?: string;
+  /** Écrit par un membre que le lecteur a bloqué (ni texte ni auteur). */
+  blocked?: boolean;
   created_at: string;
   updated_at: string;
 }
+
+// ---------- Recommandations et blocages (I-4) ----------
+export interface Recommendation {
+  id: string;
+  item_id: string;
+  item?: Item;
+  sender?: { username: string; display_name?: string; avatar?: string };
+  /** Texte brut, éventuellement vide. */
+  message: string;
+  created_at: string;
+  read_at?: string;
+}
+
+export interface RecommendationCreate {
+  /** Nom d'utilisateur du destinataire. */
+  to: string;
+  message?: string;
+}
+
+export interface RecommendationPage extends PaginatedResponse<Recommendation> {
+  unread: number;
+}
+
+/** Un membre bloqué ; `user` absent quand le bloqueur ne doit pas savoir qui il est. */
+export interface Block {
+  id: string;
+  user?: { username: string; display_name?: string; avatar?: string };
+  created_at: string;
+}
+
+export type BlockContentKind =
+  "review" | "comment" | "article" | "recommendation";
+
+export type BlockCreate =
+  { username: string } | { content_kind: BlockContentKind; content_id: string };
 
 export interface ReportCreate {
   target_kind: "review" | "comment" | "article";
@@ -819,7 +860,8 @@ export type NotificationKind =
   | "article_rejected"
   | "article_hidden"
   | "article_restored"
-  | "article_comment";
+  | "article_comment"
+  | "recommendation";
 
 export interface AppNotification {
   id: string;
@@ -835,6 +877,8 @@ export interface AppNotification {
     by_review_author?: boolean;
     /** Émetteur au profil privé : jamais nommé. */
     by_member?: boolean;
+    /** Recommandation reçue (I-4). */
+    recommendation_id?: string;
   };
   created_at: string;
   read_at?: string;

@@ -47,10 +47,12 @@ type User struct {
 	Avatar      *string    `json:"avatar,omitempty"` // URL d'un envoi (/api/v1/uploads/…)
 	DisabledAt  *time.Time `json:"disabled_at,omitempty"`
 	// CanInvite: GET /auth/me only — the user may create invitations.
-	ProfileVisibility string    `json:"profile_visibility"`
-	CanInvite         bool      `json:"can_invite,omitempty"`
-	CreatedAt         time.Time `json:"created_at"`
-	UpdatedAt         time.Time `json:"updated_at"`
+	ProfileVisibility string `json:"profile_visibility"`
+	// AcceptsRecommendations: other members may recommend items to them (I-4).
+	AcceptsRecommendations bool      `json:"accepts_recommendations"`
+	CanInvite              bool      `json:"can_invite,omitempty"`
+	CreatedAt              time.Time `json:"created_at"`
+	UpdatedAt              time.Time `json:"updated_at"`
 }
 
 // ---------------------------------------------------------------------------

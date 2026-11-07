@@ -53,13 +53,7 @@
       <ul v-else class="flex flex-col">
         <li v-for="n in store.items" :key="n.id">
           <RouterLink
-            :to="
-              n.payload.proposal_id
-                ? `/proposals/${n.payload.proposal_id}`
-                : n.payload.item_id
-                  ? `/items/${n.payload.item_id}`
-                  : '/proposals'
-            "
+            :to="link(n)"
             class="flex flex-col rounded-lg px-2 py-1.5 text-sm hover:bg-soft"
             :class="n.read_at ? 'text-muted' : 'font-semibold text-ink'"
             @click="read(n)"
@@ -107,6 +101,13 @@ function text(n: AppNotification): string {
     title: n.payload.title ?? "",
     reason: n.payload.reason ?? "",
   });
+}
+
+/** Recommandation : la page des recommandations reçues ; sinon la proposition ou la fiche. */
+function link(n: AppNotification): string {
+  if (n.kind === "recommendation") return "/recommendations";
+  if (n.payload.proposal_id) return `/proposals/${n.payload.proposal_id}`;
+  return n.payload.item_id ? `/items/${n.payload.item_id}` : "/proposals";
 }
 
 function read(n: AppNotification) {

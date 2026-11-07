@@ -31,6 +31,12 @@
           {{ profile.bio }}
         </p>
       </div>
+      <BlockButton
+        v-if="auth.isAuthenticated && auth.user?.username !== profile.username"
+        class="sm:ml-auto sm:self-start"
+        :username="profile.username"
+        @blocked="blocks++"
+      />
     </section>
 
     <section class="flex flex-col gap-3">
@@ -70,7 +76,7 @@
         {{ t("reviews.publicReviews") }}
       </h2>
       <ReviewUserList
-        :key="profile.username"
+        :key="`${profile.username}-${blocks}`"
         :fetch="fetchReviews"
         :empty-text="t('reviews.noPublicReviews')"
       />
@@ -89,6 +95,8 @@ import { typeTitle } from "@/lib/schema";
 import AppSpinner from "@/components/common/AppSpinner.vue";
 import UserAvatar from "@/components/account/UserAvatar.vue";
 import ReviewUserList from "@/components/review/ReviewUserList.vue";
+import BlockButton from "@/components/review/BlockButton.vue";
+import { useAuthStore } from "@/stores/auth";
 import type {
   PaginationParams,
   PublicCollection,
@@ -105,6 +113,9 @@ const { notifyError } = useNotify();
 const profile = ref<PublicProfile | null>(null);
 const collections = ref<PublicCollection[]>([]);
 const loading = ref(true);
+/** Change après un blocage : la liste des avis se recharge (ceux du membre bloqué me sont masqués). */
+const blocks = ref(0);
+const auth = useAuthStore();
 
 async function load() {
   loading.value = true;

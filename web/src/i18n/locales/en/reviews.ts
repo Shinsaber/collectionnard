@@ -46,6 +46,7 @@ const en: typeof fr = {
     member: "A member",
     deleted: "Comment deleted by its author",
     hiddenTrace: "Comment hidden by the moderation",
+    blockedTrace: "Comment by a member you blocked",
     edited: "(edited)",
     articleAuthor: "Author of the article",
     closedArticle: "Thread closed by the author of the article.",

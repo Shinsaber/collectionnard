@@ -9,6 +9,7 @@
 import type { App, Plugin } from "vue";
 import {
   ElAlert,
+  ElAutocomplete,
   ElButton,
   ElCheckbox,
   ElConfigProvider,
@@ -43,6 +44,7 @@ import {
 // popper, scrollbar, tag du select… — sont tirées par chacun).
 import "element-plus/es/components/base/style/css";
 import "element-plus/es/components/alert/style/css";
+import "element-plus/es/components/autocomplete/style/css";
 import "element-plus/es/components/button/style/css";
 import "element-plus/es/components/checkbox/style/css";
 import "element-plus/es/components/config-provider/style/css";
@@ -78,6 +80,7 @@ import "element-plus/es/components/loading/style/css";
 /** Composants globaux `<El…>` des gabarits, par nom. */
 export const components: Record<string, Plugin> = {
   ElAlert,
+  ElAutocomplete,
   ElButton,
   ElCheckbox,
   ElConfigProvider,

@@ -296,6 +296,9 @@ func (h *Handler) SetReaction(w http.ResponseWriter, r *http.Request) {
 		notFound(w)
 		return
 	}
+	if r.Method == http.MethodPut && h.refuseBlocked(w, r, rv.UserID, privacy.CanView(rv.Visibility, rv.UserID, me)) {
+		return
+	}
 	if h.limited(w, r, "reactions", rateReactions) {
 		return
 	}

@@ -253,6 +253,15 @@ func (h *Handler) ListPublicReviews(w http.ResponseWriter, r *http.Request) {
 	}
 	viewer := middleware.GetUserID(r.Context())
 	pg := parsePagination(r)
+	blocked, err := h.Store.IsBlocked(r.Context(), viewer, u.ID)
+	if err != nil {
+		handleStoreError(w, r, err)
+		return
+	}
+	if blocked { // ses contenus me sont masqués
+		respondJSON(w, http.StatusOK, model.NewPaginatedResponse([]model.Review{}, 0, pg))
+		return
+	}
 	list, total, err := h.Store.ListUserReviews(r.Context(), u.ID, privacy.Levels(viewer), pg)
 	if err == nil {
 		err = h.withReactions(r, list)

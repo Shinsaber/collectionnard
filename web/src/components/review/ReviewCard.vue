@@ -140,6 +140,12 @@
               <i class="pi pi-flag mr-1.5" aria-hidden="true"></i>
               {{ t("reviews.report.action") }}
             </ElButton>
+            <BlockButton
+              v-if="reportable"
+              content-kind="review"
+              :content-id="review.id"
+              @blocked="emit('blocked')"
+            />
           </span>
         </div>
       </div>
@@ -172,6 +178,7 @@ import ReviewStars from "./ReviewStars.vue";
 import ReviewReactions from "./ReviewReactions.vue";
 import ReportDialog from "./ReportDialog.vue";
 import CommentThread from "./CommentThread.vue";
+import BlockButton from "./BlockButton.vue";
 import type { Review } from "@/api/types";
 
 const props = defineProps<{
@@ -191,6 +198,8 @@ const props = defineProps<{
   /** Son propre avis : peut fermer le fil. */
   ownReview?: boolean;
 }>();
+// blocked : l'auteur vient d'être bloqué ; le parent recharge la liste (ses avis en sortent).
+const emit = defineEmits<{ blocked: [] }>();
 const threadOpen = ref(false);
 const commentCount = ref(props.review.comment_count ?? 0);
 const reporting = ref(false);

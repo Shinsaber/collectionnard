@@ -31,7 +31,7 @@ func scanArticle(row pgx.Row, extra ...any) (*model.Article, error) {
 // published and not hidden, and every one of the reader (waiting, refused…).
 func (s *PgStore) ListItemArticles(ctx context.Context, itemID, viewer uuid.UUID, pg model.Pagination) ([]model.Article, int, error) {
 	where := ` FROM item_articles a JOIN users u ON u.id = a.author_id AND u.disabled_at IS NULL
-		WHERE a.item_id = $1 AND ((a.status = 'published' AND a.hidden_at IS NULL) OR a.author_id = $2)`
+		WHERE a.item_id = $1 AND ((a.status = 'published' AND a.hidden_at IS NULL) OR a.author_id = $2) AND ` + notBlockedBy("$2", "a.author_id")
 	var total int
 	if err := s.pool.QueryRow(ctx, `SELECT count(*)`+where, itemID, viewer).Scan(&total); err != nil {
 		return nil, 0, err

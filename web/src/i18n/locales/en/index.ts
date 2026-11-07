@@ -15,6 +15,7 @@ import moderation from "./moderation";
 import notifications from "./notifications";
 import offline from "./offline";
 import proposals from "./proposals";
+import recommendations from "./recommendations";
 import reviews from "./reviews";
 import scan from "./scan";
 import schema from "./schema";
@@ -38,6 +39,7 @@ const en: Messages = {
   notifications,
   offline,
   proposals,
+  recommendations,
   reviews,
   scan,
   schema,

@@ -142,6 +142,7 @@
         show-reactions
         comments
         can-comment
+        @blocked="loadList"
       />
       <p
         v-if="summary.note_only_count > 0"

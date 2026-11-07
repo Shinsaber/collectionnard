@@ -16,6 +16,7 @@ export default {
     offline: "Hors ligne",
     stats: "Statistiques",
     members: "Membres",
+    recommendations: "Recommandations",
     proposals: "Propositions",
     scan: "Scanner",
   },
