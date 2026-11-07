@@ -177,7 +177,9 @@ Instance encore en bêta : les notes existantes sont **supprimées, sans reprise
   Label, les éditions, Broadcast, Universe et Platform. Un type fermé ou supprimé localement le reste à la mise à jour.
 - Front : page « Types » à onglets (`TypesLayout`, onglets liés à l'URL), éditeur en mode critères (`features.criteria`),
   onglet « Avis » de la fiche ; sous le titre, moyenne, nombre de notes et ma note (un clic ouvre l'onglet), « Mes avis » sur le profil, avis signés sur la page publique ; Markdown par
-  markdown-it (MIT) puis DOMPurify (Apache 2.0). Un curseur non touché part de 5.
+  markdown-it (MIT) puis DOMPurify (Apache 2.0). Un curseur non touché part de 5. Étoiles colorées par paliers (0–4 rouge,
+  5–7 orange, 8–10 vert, note arrondie ; jetons `--c-star-*`, mode dégradé disponible par `STAR_COLOR_MODE`) ; sur un avis
+  détaillé, les critères en colonne à gauche, une ligne par critère.
 
 - **Édition utilisée** (décision du 2026-11-07) : un avis sur une œuvre peut préciser l'édition jouée, vue, lue ou
   écoutée (`reviews.context_item_id`), plutôt que d'ouvrir les avis sur les éditions, ce qui éparpillerait les notes. Le

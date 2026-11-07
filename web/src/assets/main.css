@@ -72,6 +72,10 @@
   --c-accent: #e09a2c;
   --c-accent-ink: #17202b;
   --c-danger: #a2342b;
+  /* Étoiles des avis : basse (0–4), moyenne (5–7), haute (8–10). */
+  --c-star-low: #c2412f;
+  --c-star-mid: #e39320;
+  --c-star-high: #2e8b57;
 
   --s-card:
     0 1px 2px rgb(23 32 43 / 0.06), 0 6px 18px -6px rgb(23 32 43 / 0.12);
@@ -151,6 +155,9 @@ html.dark {
   --c-accent: #e09a2c;
   --c-accent-ink: #17202b;
   --c-danger: #f08a80;
+  --c-star-low: #f07a6a;
+  --c-star-mid: #f0aa45;
+  --c-star-high: #62c48a;
 
   /* Halos clairs teintés pétrole, flou réduit (retour du mainteneur). */
   --s-card:

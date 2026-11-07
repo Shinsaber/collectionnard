@@ -4,6 +4,7 @@ import {
   criteriaAverage,
   criteriaKeys,
   defaultReviewVisibility,
+  ratingColor,
   ratingTone,
   starsFill,
 } from "./reviews";
@@ -46,9 +47,26 @@ describe("reviews", () => {
     expect(contextLabel(undefined, "fr", "Édition")).toBe("Édition");
   });
 
-  it("colore selon la note", () => {
-    expect(ratingTone(3.9)).toBe("danger");
-    expect(ratingTone(4)).toBe("accent");
-    expect(ratingTone(7)).toBe("primary");
+  it("colore par paliers : 0–4, 5–7, 8–10, note arrondie", () => {
+    expect([0, 4, 4.4].map(ratingTone)).toEqual(["low", "low", "low"]);
+    expect([4.5, 5, 7, 7.4].map(ratingTone)).toEqual([
+      "mid",
+      "mid",
+      "mid",
+      "mid",
+    ]);
+    expect([7.5, 8, 10].map(ratingTone)).toEqual(["high", "high", "high"]);
+    expect(ratingColor(8, "steps")).toBe("var(--c-star-high)");
+  });
+
+  it("colore en dégradé, du rouge au vert en passant par l'orange", () => {
+    expect(ratingColor(0, "gradient")).toBe(
+      "color-mix(in oklch, var(--c-star-mid) 0%, var(--c-star-low))",
+    );
+    expect(ratingColor(6, "gradient")).toContain("var(--c-star-mid) 100%");
+    expect(ratingColor(7.5, "gradient")).toBe(
+      "color-mix(in oklch, var(--c-star-high) 50%, var(--c-star-mid))",
+    );
+    expect(ratingColor(10, "gradient")).toContain("var(--c-star-high) 100%");
   });
 });

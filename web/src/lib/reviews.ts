@@ -45,8 +45,30 @@ export function starsFill(rating: number): number {
   return Math.round(Math.min(10, Math.max(0, rating))) * 10;
 }
 
-/** Couleur des étoiles selon la note. */
-export function ratingTone(rating: number): "danger" | "accent" | "primary" {
-  if (rating < 4) return "danger";
-  return rating < 7 ? "accent" : "primary";
+export type StarColorMode = "steps" | "gradient";
+
+/** Couleur des étoiles : « steps » par paliers, « gradient » en dégradé continu. */
+export const STAR_COLOR_MODE: StarColorMode = "steps";
+
+/** Palier d'une note, arrondie comme les étoiles : 0–4 bas, 5–7 moyen, 8–10 haut. */
+export function ratingTone(rating: number): "low" | "mid" | "high" {
+  const r = Math.round(rating);
+  if (r <= 4) return "low";
+  return r <= 7 ? "mid" : "high";
+}
+
+/**
+ * Couleur CSS des étoiles, à partir des jetons du thème (clair et sombre). En dégradé, la couleur
+ * passe du rouge (3 et moins) à l'orange (6) puis au vert (9 et plus), mélangée en OKLCH.
+ */
+export function ratingColor(
+  rating: number,
+  mode: StarColorMode = STAR_COLOR_MODE,
+): string {
+  if (mode === "steps") return `var(--c-star-${ratingTone(rating)})`;
+  const r = Math.min(9, Math.max(3, rating));
+  const [from, to, start] =
+    r <= 6 ? ["low", "mid", 3] : (["mid", "high", 6] as const);
+  const part = Math.round(((r - Number(start)) / 3) * 100);
+  return `color-mix(in oklch, var(--c-star-${to}) ${part}%, var(--c-star-${from}))`;
 }

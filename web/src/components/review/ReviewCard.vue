@@ -46,31 +46,55 @@
       >
     </p>
 
-    <dl
-      v-if="criteria.length > 0"
-      class="flex flex-wrap gap-x-4 gap-y-1 text-[13px]"
-      data-test="review-criteria"
+    <!-- Avis détaillé : les critères dans une colonne à gauche du texte (au-dessus sur mobile). -->
+    <div
+      :class="
+        criteria.length > 0
+          ? 'grid grid-cols-1 gap-4 sm:grid-cols-[minmax(200px,230px)_1fr]'
+          : 'flex flex-col'
+      "
     >
-      <div v-for="c in criteria" :key="c.key" class="flex gap-1.5">
-        <dt class="text-muted">{{ c.label }}</dt>
-        <dd class="font-mono">{{ c.value }}</dd>
-      </div>
-    </dl>
-
-    <template v-if="review.body">
-      <ElButton
-        v-if="review.spoiler && !revealed"
-        class="self-start"
-        data-test="review-spoiler"
-        @click="revealed = true"
+      <!-- Une ligne par critère : libellé à gauche, étoiles et note alignées à droite. -->
+      <dl
+        v-if="criteria.length > 0"
+        class="flex flex-col gap-2 rounded-xl bg-soft px-3 py-2.5 sm:self-start"
+        data-test="review-criteria"
       >
-        <i class="pi pi-eye mr-2" aria-hidden="true"></i>
-        {{ t("reviews.showSpoiler") }}
-      </ElButton>
-      <!-- Source Markdown rendu puis assaini par lib/markdown.ts. -->
-      <!-- eslint-disable-next-line vue/no-v-html -->
-      <div v-else class="review-body" data-test="review-body" v-html="html" />
-    </template>
+        <div v-for="c in criteria" :key="c.key" class="flex items-center gap-3">
+          <dt
+            class="min-w-0 flex-1 truncate text-[13px] font-semibold"
+            :title="c.label"
+          >
+            {{ c.label }}
+          </dt>
+          <dd>
+            <ReviewStars :rating="Number(c.value)" :size="14" />
+          </dd>
+        </div>
+      </dl>
+      <div class="flex min-w-0 flex-col gap-2.5">
+        <template v-if="review.body">
+          <ElButton
+            v-if="review.spoiler && !revealed"
+            class="self-start"
+            data-test="review-spoiler"
+            @click="revealed = true"
+          >
+            <i class="pi pi-eye mr-2" aria-hidden="true"></i>
+            {{ t("reviews.showSpoiler") }}
+          </ElButton>
+          <!-- Source Markdown rendu puis assaini par lib/markdown.ts. -->
+          <!-- eslint-disable vue/no-v-html -->
+          <div
+            v-else
+            class="review-body"
+            data-test="review-body"
+            v-html="html"
+          />
+          <!-- eslint-enable vue/no-v-html -->
+        </template>
+      </div>
+    </div>
   </article>
 </template>
 
