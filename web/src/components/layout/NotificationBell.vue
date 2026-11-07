@@ -40,17 +40,20 @@
         data-test="to-review"
         >{{ t("notifications.toReview", store.toReview) }}</RouterLink
       >
+      <RouterLink
+        v-if="store.toModerate > 0"
+        to="/moderation"
+        class="rounded-lg bg-danger/12 px-3 py-2 text-sm font-semibold text-danger"
+        data-test="to-moderate"
+        >{{ t("notifications.toModerate", store.toModerate) }}</RouterLink
+      >
       <p v-if="store.items.length === 0" class="text-sm text-muted">
         {{ t("notifications.none") }}
       </p>
       <ul v-else class="flex flex-col">
         <li v-for="n in store.items" :key="n.id">
           <RouterLink
-            :to="
-              n.payload.proposal_id
-                ? `/proposals/${n.payload.proposal_id}`
-                : '/proposals'
-            "
+            :to="link(n)"
             class="flex flex-col rounded-lg px-2 py-1.5 text-sm hover:bg-soft"
             :class="n.read_at ? 'text-muted' : 'font-semibold text-ink'"
             @click="read(n)"
@@ -86,13 +89,25 @@ const { notifyError } = useNotify();
 const route = useRoute();
 const store = useNotificationsStore();
 
-const badge = computed(() => store.unread + store.toReview);
+const badge = computed(() => store.unread + store.toReview + store.toModerate);
 
 function text(n: AppNotification): string {
   return t(`notifications.kinds.${n.kind}`, {
-    by: n.payload.by ?? t("notifications.someone"),
+    by: n.payload.by_review_author
+      ? t("notifications.reviewAuthor")
+      : n.payload.by_member
+        ? t("notifications.member")
+        : (n.payload.by ?? t("notifications.someone")),
     title: n.payload.title ?? "",
+    reason: n.payload.reason ?? "",
   });
+}
+
+/** Recommandation : la page des recommandations reçues ; sinon la proposition ou la fiche. */
+function link(n: AppNotification): string {
+  if (n.kind === "recommendation") return "/recommendations";
+  if (n.payload.proposal_id) return `/proposals/${n.payload.proposal_id}`;
+  return n.payload.item_id ? `/items/${n.payload.item_id}` : "/proposals";
 }
 
 function read(n: AppNotification) {

@@ -100,8 +100,55 @@ tags:
 
       Exemples :
       - **Ownership** : état physique, prix d'achat, date d'acquisition
-      - **Watching** : date vue, rating (0-10), progress en %
+      - **Watching** : date vue, progress en %
       - **Wishlist** : priorité, budget maximum
+  - name: ReviewTypes
+    description: |
+      Types d'avis (I-0). Quatrième méta-type : son JSON Schema liste les **critères notés d'un avis**, chacun un entier
+      de 0 à 10. Un type sans critère n'offre que la note globale. Un type d'item sans `review_type_id` n'ouvre pas
+      les avis (les personnes, pour éviter les attaques contre des gens).
+  - name: Reviews
+    description: |
+      Avis (I-0) : un par utilisateur et par item, sur l'œuvre et non sur un exemplaire. Note globale **ou** note par
+      critère (tous obligatoires, la note est alors leur moyenne), texte facultatif.
+
+      Une note compte toujours dans la moyenne de la fiche, affichée à partir de 5 notes. La visibilité décide de ce que
+      voit le lecteur :
+
+      | `visibility` | Membres connectés | Visiteurs anonymes |
+      | --- | --- | --- |
+      | `private` | Note seule | Note seule |
+      | `members` | Avis signé | Note seule |
+      | `anonymous` | Texte sans auteur | Texte sans auteur |
+      | `public` | Avis signé | Avis signé |
+
+      Une note seule n'apparaît pas dans les listes, seulement dans `note_only_count`. Le filtre vaut aussi pour les
+      admins.
+  - name: Moderation
+    description: |
+      Signalements, modération et réactions (I-1). Un membre signale un avis qu'il voit ; les admins et le rôle
+      `moderator` masquent, rétablissent ou classent sans suite. Toute action va au journal (ajout seul, copie du
+      contenu). Un avis masqué sort des listes et des moyennes, son auteur le voit encore avec le motif. Les
+      réactions donnent une intention ou une émotion, jamais un signalement. Écritures limitées par heure et par
+      compte (avis 60, signalements 20, réactions 300 ; admins exemptés) : 429 `rate_limited` avec `Retry-After`.
+  - name: Articles
+    description: |
+      Articles sur la fiche d'un item (I-3) : relayer une nouvelle (titre, lien http(s), un mot), sur tous les types
+      d'item. L'article d'un membre attend la validation d'un modérateur, comme une proposition de fiche ; les admins et
+      les modérateurs publient directement. Le serveur ne récupère jamais le lien (pas d'aperçu). Un article publié se
+      signale, se masque et porte un fil de commentaires.
+  - name: Recommendations
+    description: |
+      Recommandations et blocages (I-4). Un membre recommande un item à un membre de l'annuaire (profil `members` ou
+      `public`), avec un mot facultatif : le destinataire est notifié et retrouve ses recommandations reçues. Il peut
+      les refuser toutes (`accepts_recommendations` du profil) ou bloquer l'expéditeur : les deux répondent le même 403,
+      l'expéditeur ne sait pas lequel. 20 recommandations par jour et par compte (admins exemptés).
+
+      Bloquer un membre : il ne peut plus recommander d'item au bloqueur, ni commenter ou réagir à ses contenus signés
+      (403 `blocked`) ; ses avis signés et ses articles sortent des listes du bloqueur, ses commentaires y deviennent des
+      traces (`blocked`), ses messages ne le notifient plus. Sur un contenu qui ne nomme pas son auteur (avis anonyme), le
+      blocage ne refuse rien et l'avis reste listé : refuser ou retirer le nommerait. Les notes des membres bloqués comptent toujours dans les
+      moyennes.
   - name: Items
     description: |
       Gestion du catalogue d'items. Chaque item est un **nœud unique** dans le graphe :
@@ -312,7 +359,7 @@ components:
           example: shinsaber@colec.local
         role:
           type: string
-          enum: [admin, contributor, user]
+          enum: [admin, contributor, moderator, user]
           description: |
             Rôle de l'utilisateur :
             - `admin` : peut créer/modifier types, items, relations
@@ -332,6 +379,9 @@ components:
           description: Compte désactivé depuis cette date (connexion et rafraîchissement refusés).
         profile_visibility:
           $ref: "#/components/schemas/Visibility"
+        accepts_recommendations:
+          type: boolean
+          description: Les autres membres peuvent lui recommander des items (I-4).
         can_invite:
           type: boolean
           description: |
@@ -348,7 +398,7 @@ components:
       type: object
       description: Modification d'un compte par un admin (champs absents inchangés).
       properties:
-        role: { type: string, enum: [admin, contributor, user] }
+        role: { type: string, enum: [admin, contributor, moderator, user] }
         disabled:
           type: boolean
           description: |
@@ -369,6 +419,9 @@ components:
           allOf:
             - $ref: "#/components/schemas/Visibility"
           description: Qui voit le profil et la liste des collections visibles ; absent ou vide = `private`.
+        accepts_recommendations:
+          type: boolean
+          description: Les autres membres peuvent me recommander des items ; absent = `true`.
 
     PasswordChange:
       type: object
@@ -383,7 +436,7 @@ components:
       required: [id, role, expires_at, status, created_at]
       properties:
         id: { type: string, format: uuid }
-        role: { type: string, enum: [admin, contributor, user] }
+        role: { type: string, enum: [admin, contributor, moderator, user] }
         note: { type: string, maxLength: 255, description: "Mémo de l'auteur (« pour Camille »)." }
         created_by: { type: string, format: uuid }
         created_by_username: { type: string }
@@ -400,7 +453,7 @@ components:
       properties:
         role:
           type: string
-          enum: [admin, contributor, user]
+          enum: [admin, contributor, moderator, user]
           default: user
           description: Rôle du compte créé ; `admin` réservé aux admins.
         note: { type: string, maxLength: 255 }
@@ -471,6 +524,10 @@ components:
             Ordre d'affichage (petit = en premier, puis par nom) : listes, sélecteurs, « Répartition
             par type ». Défaut 100.
           example: 10
+        review_type_id:
+          type: [string, "null"]
+          format: uuid
+          description: Type d'avis (critères notés) ; `null` = avis fermés sur ce type.
         attributes_schema:
           type: object
           description: |
@@ -512,6 +569,10 @@ components:
         display_order:
           type: integer
           description: Ordre d'affichage (défaut 100).
+        review_type_id:
+          type: [string, "null"]
+          format: uuid
+          description: Type d'avis ; absent ou `null` = avis fermés sur ce type.
         attributes_schema:
           type: object
           description: 'JSON Schema définissant les attributs. Doit être un JSON Schema valide avec `"type": "object"` à la racine.'
@@ -529,6 +590,10 @@ components:
           type: string
         display_order:
           type: integer
+        review_type_id:
+          type: [string, "null"]
+          format: uuid
+          description: Absent = inchangé ; `null` ferme les avis sur ce type.
         attributes_schema:
           type: object
 
@@ -656,7 +721,7 @@ components:
 
         Exemples :
         - **Ownership** : état_physique, purchase_price, acquisition_date
-        - **Watching** : watched_at, rating (0-10), progress (%)
+        - **Watching** : watched_at, progress (%)
         - **Wishlist** : priority (1-5), max_budget
       properties:
         id:
@@ -739,6 +804,499 @@ components:
     # -------------------------------------------------------------------------
     # Item
     # -------------------------------------------------------------------------
+    ReviewType:
+      type: object
+      description: Type d'avis. Son schéma liste les critères notés, chacun un entier de 0 à 10.
+      required: [id, name, attributes_schema, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Nom technique unique.
+          example: ComicReview
+        description:
+          type: string
+        attributes_schema:
+          type: object
+          description: |
+            JSON Schema : `"type": "object"` à la racine, chaque propriété `{"type": "integer", "minimum": 0, "maximum": 10}`.
+            Sans propriété : note globale seulement.
+          example:
+            type: object
+            x-order: [story, art]
+            x-labels:
+              fr: { story: Scénario, art: Dessin }
+              en: { story: Story, art: Art }
+            properties:
+              story: { type: integer, minimum: 0, maximum: 10 }
+              art: { type: integer, minimum: 0, maximum: 10 }
+            additionalProperties: false
+        context_relation_type_ids:
+          type: array
+          items: { type: string, format: uuid }
+          description: |
+            Relations qui mènent de l'item noté à l'édition qu'un avis peut préciser (Game → GameRelease par
+            `game_released_as`). Vide : pas d'édition à choisir.
+        context_label:
+          type: object
+          additionalProperties: { type: string, maxLength: 60 }
+          description: Libellé de ce choix par langue de l'interface.
+          example: { fr: Joué sur, en: Played on }
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ReviewTypeCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        attributes_schema:
+          type: object
+        context_relation_type_ids:
+          type: array
+          items: { type: string, format: uuid }
+          description: |
+            Relations qui mènent de l'item noté à l'édition qu'un avis peut préciser (Game → GameRelease par
+            `game_released_as`). Vide : pas d'édition à choisir.
+        context_label:
+          type: object
+          additionalProperties: { type: string, maxLength: 60 }
+          description: Libellé de ce choix par langue de l'interface.
+          example: { fr: Joué sur, en: Played on }
+
+    ReviewTypeUpdate:
+      type: object
+      description: Un champ absent est gardé ; un tableau ou un objet vide l'efface.
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        attributes_schema:
+          type: object
+        context_relation_type_ids:
+          type: array
+          items: { type: string, format: uuid }
+          description: |
+            Relations qui mènent de l'item noté à l'édition qu'un avis peut préciser (Game → GameRelease par
+            `game_released_as`). Vide : pas d'édition à choisir.
+        context_label:
+          type: object
+          additionalProperties: { type: string, maxLength: 60 }
+          description: Libellé de ce choix par langue de l'interface.
+          example: { fr: Joué sur, en: Played on }
+
+    ReviewVisibility:
+      type: string
+      enum: [private, members, anonymous, public]
+      description: Ce que voit le lecteur, voir l'étiquette `Reviews`.
+
+    ReviewAuthor:
+      type: object
+      required: [username]
+      properties:
+        username:
+          type: string
+        display_name:
+          type: string
+        avatar:
+          type: string
+
+    Review:
+      type: object
+      required: [id, item_id, rating, body, spoiler, lang, visibility, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        review_type_id:
+          type: string
+          format: uuid
+          description: Type dont viennent les critères ; absent en note globale.
+        criteria:
+          type: object
+          additionalProperties: { type: integer, minimum: 0, maximum: 10 }
+          description: Note de chaque critère ; absent en note globale.
+        context_item_id:
+          type: string
+          format: uuid
+          description: Édition utilisée pour donner l'avis ; absente, avec `author`, d'un avis non signé pour le lecteur.
+        context_item:
+          allOf:
+            - $ref: "#/components/schemas/Item"
+          description: Cette édition, avec son type (libellé).
+        rating:
+          type: number
+          minimum: 0
+          maximum: 10
+          description: Note saisie, ou moyenne des critères à une décimale.
+        body:
+          type: string
+          description: Texte en Markdown restreint, rendu sans HTML ni image par le client.
+        spoiler:
+          type: boolean
+        lang:
+          type: string
+          enum: [fr, en]
+        visibility:
+          $ref: "#/components/schemas/ReviewVisibility"
+        hidden_at:
+          type: string
+          format: date-time
+          description: Masqué par la modération ; un avis masqué n'atteint que son auteur et les modérateurs.
+        hidden_reason:
+          type: string
+        reactions:
+          type: object
+          additionalProperties: { type: integer }
+          description: Nombre de chaque réaction (`interesting`, `tempting`, `funny`, `disapprove`).
+        my_reactions:
+          type: array
+          items: { type: string, enum: [interesting, tempting, funny, disapprove] }
+        comment_count:
+          type: integer
+          description: Commentaires visibles du fil (I-2).
+        comments_closed:
+          type: boolean
+          description: Fil fermé par l'auteur de l'avis.
+        author:
+          allOf:
+            - $ref: "#/components/schemas/ReviewAuthor"
+          description: Présent seulement si l'avis est signé pour le lecteur.
+        item:
+          allOf:
+            - $ref: "#/components/schemas/Item"
+          description: Listes par utilisateur seulement (`/me/reviews`, `/public/users/{username}/reviews`).
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ReviewPut:
+      type: object
+      description: Une note globale (`rating`) ou la note de chaque critère (`criteria`), jamais les deux.
+      required: [lang, visibility]
+      properties:
+        rating:
+          type: integer
+          minimum: 0
+          maximum: 10
+        criteria:
+          type: object
+          additionalProperties: { type: integer, minimum: 0, maximum: 10 }
+          description: Tous les critères du type d'avis sont obligatoires.
+        context_item_id:
+          type: string
+          format: uuid
+          description: Facultatif. Une cible de l'item par une relation `context_relation_type_ids` de son type d'avis (422 sinon).
+        body:
+          type: string
+          maxLength: 10000
+        spoiler:
+          type: boolean
+        lang:
+          type: string
+          enum: [fr, en]
+        visibility:
+          $ref: "#/components/schemas/ReviewVisibility"
+
+    ReviewCriterionSummary:
+      type: object
+      required: [key, count, rating]
+      properties:
+        key:
+          type: string
+        count:
+          type: integer
+        rating:
+          type: [number, "null"]
+          description: "`null` sous `min_ratings` avis détaillés."
+
+    ReviewSummary:
+      type: object
+      required: [enabled, count, rating, min_ratings, note_only_count, criteria, context_items]
+      properties:
+        enabled:
+          type: boolean
+          description: "`false` : avis fermés sur le type de cet item."
+        review_type:
+          $ref: "#/components/schemas/ReviewType"
+        count:
+          type: integer
+          description: Nombre de notes, quelle que soit leur visibilité.
+        rating:
+          type: [number, "null"]
+          description: Moyenne à une décimale ; `null` sous `min_ratings` notes, pour qu'une note ne se lise pas dans la moyenne.
+        min_ratings:
+          type: integer
+          example: 5
+        note_only_count:
+          type: integer
+          description: Notes que le lecteur ne voit pas dans la liste (la sienne exclue).
+        criteria:
+          type: array
+          description: Moyenne par critère, dans l'ordre du schéma, sur les seuls avis détaillés.
+          items:
+            $ref: "#/components/schemas/ReviewCriterionSummary"
+        context_items:
+          type: array
+          description: Éditions qu'un avis sur cet item peut préciser (100 au plus).
+          items:
+            $ref: "#/components/schemas/Item"
+
+    Article:
+      type: object
+      required: [id, item_id, mine, title, url, message, lang, status, comment_count, comments_closed, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        item_id: { type: string, format: uuid }
+        author:
+          $ref: "#/components/schemas/ReviewAuthor"
+        mine: { type: boolean }
+        title: { type: string, maxLength: 200 }
+        url: { type: string, format: uri, maxLength: 2000, description: "Adresse http(s), jamais récupérée par le serveur." }
+        message: { type: string, maxLength: 1000 }
+        lang: { type: string, enum: [fr, en] }
+        status:
+          type: string
+          enum: [pending, published, rejected]
+          description: "L'article d'un membre attend la validation d'un modérateur ; les admins et modérateurs publient directement."
+        reject_reason: { type: string, description: Motif d'un refus (son auteur seulement). }
+        hidden_at: { type: string, format: date-time }
+        hidden_reason: { type: string }
+        comment_count: { type: integer }
+        comments_closed: { type: boolean }
+        item:
+          $ref: "#/components/schemas/Item"
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    ArticleWrite:
+      type: object
+      required: [title, url, lang]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        url: { type: string, format: uri, maxLength: 2000 }
+        message: { type: string, maxLength: 1000 }
+        lang: { type: string, enum: [fr, en] }
+
+    Comment:
+      type: object
+      required: [id, target_kind, target_id, target_author, mine, body, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        target_kind: { type: string, enum: [review, article] }
+        target_id: { type: string, format: uuid }
+        author:
+          allOf:
+            - $ref: "#/components/schemas/ReviewAuthor"
+          description: Absent pour l'auteur d'un avis anonyme qui répond dans son fil (`target_author`).
+        target_author:
+          type: boolean
+          description: Écrit par l'auteur de l'avis ou de l'article commenté.
+        mine:
+          type: boolean
+          description: Écrit par le lecteur (modifier, supprimer).
+        body:
+          type: string
+          description: Markdown restreint, comme un avis.
+        hidden_at:
+          type: string
+          format: date-time
+          description: "Masqué par la modération : son auteur le voit avec le motif, les autres une trace sans texte ni auteur."
+        deleted_at:
+          type: string
+          format: date-time
+          description: Supprimé par son auteur ; trace sans texte ni auteur, qui garde le sens des réponses.
+        edited_at:
+          type: string
+          format: date-time
+          description: Modifié après sa publication.
+        blocked:
+          type: boolean
+          description: Écrit par un membre que le lecteur a bloqué ; trace sans texte ni auteur.
+        hidden_reason: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    Recommendation:
+      type: object
+      description: Un item recommandé au lecteur ; seul le destinataire la lit, l'expéditeur lui est nommé.
+      required: [id, item_id, message, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        item_id: { type: string, format: uuid }
+        item:
+          $ref: "#/components/schemas/Item"
+        sender:
+          $ref: "#/components/schemas/ReviewAuthor"
+        message:
+          type: string
+          maxLength: 500
+          description: Texte brut (pas de Markdown), éventuellement vide.
+        created_at: { type: string, format: date-time }
+        read_at: { type: string, format: date-time }
+
+    RecommendationCreate:
+      type: object
+      required: [to]
+      properties:
+        to:
+          type: string
+          description: Nom d'utilisateur du destinataire.
+        message:
+          type: string
+          maxLength: 500
+
+    Block:
+      type: object
+      description: |
+        Un membre bloqué. `user` est absent quand le bloqueur ne doit pas savoir qui il est : bloqué depuis un contenu
+        qui ne le nommait pas (avis anonyme, commentaire « Un membre »), ou profil qui ne lui est plus visible.
+      required: [id, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        user:
+          $ref: "#/components/schemas/ReviewAuthor"
+        created_at: { type: string, format: date-time }
+
+    BlockCreate:
+      type: object
+      description: Un nom d'utilisateur, ou un contenu montré au lecteur dont l'auteur est bloqué (l'un ou l'autre).
+      properties:
+        username: { type: string }
+        content_kind:
+          type: string
+          enum: [review, comment, article, recommendation]
+        content_id: { type: string, format: uuid }
+
+    CommentBody:
+      type: object
+      required: [body]
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 5000
+
+    ReportCreate:
+      type: object
+      required: [target_kind, target_id, reason]
+      properties:
+        target_kind:
+          type: string
+          enum: [review, comment, article]
+        target_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          enum: [abusive, harassment, spoiler, spam, off_topic, other]
+        details:
+          type: string
+          maxLength: 1000
+
+    Report:
+      type: object
+      required: [id, target_kind, target_id, reason, details, status, reporter_id, reporter_dismissed, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        target_kind: { type: string }
+        target_id: { type: string, format: uuid }
+        reason: { type: string }
+        details: { type: string }
+        status: { type: string, enum: [open, actioned, dismissed] }
+        reporter_id: { type: string, format: uuid }
+        reporter:
+          $ref: "#/components/schemas/ReviewAuthor"
+        reporter_dismissed:
+          type: integer
+          description: Signalements du même membre classés sans suite ces 90 derniers jours.
+        created_at: { type: string, format: date-time }
+
+    ModerationRecap:
+      type: object
+      required: [hidden_90d, hidden_total, dismissed_reports_90d]
+      properties:
+        hidden_90d: { type: integer }
+        hidden_total: { type: integer }
+        dismissed_reports_90d: { type: integer }
+
+    ModerationItem:
+      type: object
+      required: [target_kind, target_id, author_id, reports, author_recap]
+      properties:
+        target_kind: { type: string }
+        target_id: { type: string, format: uuid }
+        author_id: { type: string, format: uuid }
+        review:
+          allOf:
+            - $ref: "#/components/schemas/Review"
+          description: Avis entier, auteur compris même s'il est anonyme (modérateurs seulement) ; pour un commentaire, l'avis de son fil ; absent s'il a été supprimé.
+        comment:
+          $ref: "#/components/schemas/Comment"
+        article:
+          $ref: "#/components/schemas/Article"
+        review_type:
+          $ref: "#/components/schemas/ReviewType"
+        item:
+          $ref: "#/components/schemas/Item"
+        reports:
+          type: array
+          items:
+            $ref: "#/components/schemas/Report"
+        author_recap:
+          $ref: "#/components/schemas/ModerationRecap"
+
+    ModerationLogEntry:
+      type: object
+      required: [id, action, target_kind, target_id, reason, excerpt, still_hidden, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        action: { type: string, enum: [hide, restore, dismiss] }
+        target_kind: { type: string }
+        target_id: { type: string, format: uuid }
+        target_author:
+          $ref: "#/components/schemas/ReviewAuthor"
+        author_id: { type: string, format: uuid }
+        moderator:
+          $ref: "#/components/schemas/ReviewAuthor"
+        reason: { type: string }
+        excerpt: { type: string, description: Copie du contenu au moment de l'action. }
+        still_hidden: { type: boolean }
+        created_at: { type: string, format: date-time }
+
+    ModerationHistory:
+      type: object
+      required: [user, recap, entries, dismissed_reports]
+      properties:
+        user:
+          $ref: "#/components/schemas/ReviewAuthor"
+        recap:
+          $ref: "#/components/schemas/ModerationRecap"
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/ModerationLogEntry"
+        dismissed_reports:
+          type: array
+          items:
+            $ref: "#/components/schemas/Report"
+
     Item:
       type: object
       description: |
@@ -1787,7 +2345,9 @@ components:
             `invalid_reset_link` (401), `invalid_username`, `invalid_email`, `weak_password` (400),
             `account_exists`, `invitation_used`, `self_lockout`, `last_admin` (409), `wrong_password` (403).
             Propositions (P4-3) : `proposal_state`, `proposal_quota`, `proposal_invalid`, `proposal_conflict`,
-            `proposal_meta_types`, `own_proposal`. Chaque réponse d'erreur d'une opération nomme les codes qu'elle
+            `proposal_meta_types`, `own_proposal`. Avis (I-0) : `reviews_closed` (409). Modération (I-1) :
+            `report_exists`, `moderation_state` (409), `own_content` (403), `rate_limited` (429). Commentaires (I-2) :
+            `comments_closed` (409). Chaque réponse d'erreur d'une opération nomme les codes qu'elle
             émet. Un client doit prévoir un libellé générique pour un code inconnu.
           example: validation_error
         message:
@@ -1892,6 +2452,7 @@ components:
         item_types: { type: integer }
         relation_types: { type: integer }
         collection_types: { type: integer }
+        review_types: { type: integer }
     DomainInstallReport:
       type: object
       required: [dry_run, applied, domain, to_version, entries, errors]
@@ -1915,7 +2476,7 @@ components:
             properties:
               entity:
                 type: string
-                enum: [item_types, collection_types, relation_types]
+                enum: [item_types, collection_types, relation_types, review_types]
               id: { type: string, format: uuid }
               name: { type: string }
               outcome:
@@ -1965,6 +2526,21 @@ components:
           type: string
           format: date-time
           description: Informatif, ignoré à l'import.
+        review_types:
+          type: array
+          description: Types d'avis (absent des fichiers antérieurs à I-0).
+          items:
+            allOf:
+              - $ref: "#/components/schemas/ExportMetaType"
+              - type: object
+                properties:
+                  context_relation_type_ids:
+                    type: array
+                    items: { type: string, format: uuid }
+                    description: Absent à l'import → liste conservée ; une relation inconnue de l'instance est ignorée.
+                  context_label:
+                    type: object
+                    additionalProperties: { type: string }
         item_types:
           type: array
           items:
@@ -1975,6 +2551,10 @@ components:
                   display_order:
                     type: integer
                     description: Absent à l'import → 100 pour un nouveau type, valeur conservée sinon.
+                  review_type_id:
+                    type: string
+                    format: uuid
+                    description: Type d'avis ; absent à l'import → valeur conservée.
         collection_types:
           type: array
           items:
@@ -2067,7 +2647,7 @@ components:
             properties:
               entity:
                 type: string
-                enum: [file, item_types, collection_types, relation_types, items, relations, collection]
+                enum: [file, item_types, collection_types, relation_types, review_types, items, relations, collection]
               index:
                 type: integer
                 description: Position dans la liste (0-based), -1 pour une erreur de fichier.
@@ -3472,6 +4052,1458 @@ paths:
   # ===========================================================================
   # Collection Types (admin)
   # ===========================================================================
+  /review-types:
+    get:
+      tags: [ReviewTypes]
+      summary: Lister les types d'avis
+      operationId: listReviewTypes
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée des types d'avis.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/ReviewType"
+    post:
+      tags: [ReviewTypes]
+      summary: Créer un type d'avis
+      description: "**Admin uniquement.**"
+      operationId: createReviewType
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewTypeCreate"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Type d'avis créé.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewType"
+
+  /review-types/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: UUID du type d'avis.
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [ReviewTypes]
+      summary: Lire un type d'avis
+      operationId: getReviewType
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Type d'avis.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewType"
+    put:
+      tags: [ReviewTypes]
+      summary: Modifier un type d'avis
+      description: "**Admin uniquement.** Un avis existant garde ses valeurs et sa note jusqu'à sa prochaine modification."
+      operationId: updateReviewType
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewTypeUpdate"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Type d'avis modifié.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewType"
+    delete:
+      tags: [ReviewTypes]
+      summary: Supprimer un type d'avis
+      description: "**Admin uniquement.** Refusé (409) tant qu'un type d'item ou un avis l'utilise."
+      operationId: deleteReviewType
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Supprimé.
+
+  /items/{id}/reviews:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    get:
+      tags: [Reviews]
+      summary: Avis d'un item montrés au lecteur
+      description: |
+        Authentification facultative. L'avis du lecteur n'y figure pas (`GET /items/{id}/reviews/mine`), ni les notes
+        seules ; `author` n'est présent que si l'avis est signé pour le lecteur.
+      operationId: listItemReviews
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [recent, rating, interesting]
+            default: recent
+        - name: lang
+          in: query
+          schema:
+            type: string
+            enum: [fr, en]
+        - name: context_item_id
+          in: query
+          description: Avis de cette édition seulement, parmi ceux signés pour le lecteur.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Review"
+
+  /items/{id}/reviews/summary:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    get:
+      tags: [Reviews]
+      summary: Moyennes d'un item
+      description: Authentification facultative. Les moyennes restent `null` sous `min_ratings` notes.
+      operationId: getItemReviewSummary
+      security: [{}, { bearerAuth: [] }]
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Moyennes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewSummary"
+
+  /items/{id}/reviews/mine:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    get:
+      tags: [Reviews]
+      summary: Mon avis sur un item
+      operationId: getMyReview
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Mon avis.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+    put:
+      tags: [Reviews]
+      summary: Écrire ou remplacer mon avis
+      operationId: putMyReview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewPut"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: "`reviews_closed` : avis fermés sur le type de cet item."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Avis enregistré.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+    delete:
+      tags: [Reviews]
+      summary: Supprimer mon avis
+      operationId: deleteMyReview
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Supprimé.
+
+  /reports:
+    post:
+      tags: [Moderation]
+      summary: Signaler un contenu
+      description: "Un avis que le lecteur voit (ni le sien, ni une note seule, ni un avis masqué : 404 sinon)."
+      operationId: createReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportCreate"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: "`own_content` : on ne signale pas son propre contenu."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: "`report_exists` : un signalement de ce membre sur ce contenu est déjà ouvert."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          description: "`rate_limited` : trop de signalements cette heure-ci (`Retry-After`)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Signalement enregistré.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+
+  /reviews/{id}/reactions/{kind}:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+      - name: kind
+        in: path
+        required: true
+        schema:
+          type: string
+          enum: [interesting, tempting, funny, disapprove]
+    put:
+      tags: [Moderation]
+      summary: Ajouter une réaction
+      description: Sur un avis que le lecteur voit, jamais le sien. Plusieurs sortes se cumulent.
+      operationId: addReaction
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: "`own_content` : pas de réaction à son propre avis ; `blocked` : l'auteur de l'avis signé a bloqué le lecteur."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          description: "`rate_limited` (`Retry-After`)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Ajoutée (sans effet si elle l'était déjà).
+    delete:
+      tags: [Moderation]
+      summary: Retirer une réaction
+      operationId: removeReaction
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: "`own_content`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          description: "`rate_limited` (`Retry-After`)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Retirée.
+
+  /moderation/count:
+    get:
+      tags: [Moderation]
+      summary: Nombre de contenus à modérer
+      description: Admins et modérateurs. Pastille de la cloche.
+      operationId: countModerationQueue
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Nombre.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count, pending_articles]
+                properties:
+                  count: { type: integer, description: Contenus signalés à traiter. }
+                  pending_articles: { type: integer, description: Articles en attente de validation (I-3). }
+
+  /moderation/queue:
+    get:
+      tags: [Moderation]
+      summary: File de modération
+      description: Admins et modérateurs. Contenus portant un signalement ouvert, le plus ancien d'abord, avec le récapitulatif de leur auteur.
+      operationId: listModerationQueue
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/ModerationItem"
+
+  /moderation/log:
+    get:
+      tags: [Moderation]
+      summary: Journal de modération
+      description: Admins et modérateurs. Toute action, la plus récente d'abord ; les modérateurs aussi y sont tracés.
+      operationId: listModerationLog
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/ModerationLogEntry"
+
+  /moderation/users/{id}/history:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    get:
+      tags: [Moderation]
+      summary: Historique de modération d'un membre
+      description: Admins et modérateurs. Ce qui a été modéré chez lui, et ses signalements classés sans suite.
+      operationId: getModerationHistory
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Historique.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModerationHistory"
+
+  /moderation/reviews/{id}/hide:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Moderation]
+      summary: Masquer un avis
+      description: Motif obligatoire, montré à l'auteur (notifié). Ferme les signalements ouverts.
+      operationId: hideReview
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: "`forbidden` (rôle) ou `own_content` : on ne modère pas son propre contenu."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: "`moderation_state` : l'action ne s'applique plus (déjà masqué, rien à classer…)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Fait.
+
+  /moderation/reviews/{id}/restore:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Moderation]
+      summary: Rétablir un avis masqué
+      description: L'auteur est notifié.
+      operationId: restoreReview
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: "`forbidden` (rôle) ou `own_content` : on ne modère pas son propre contenu."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: "`moderation_state` : l'action ne s'applique plus (déjà masqué, rien à classer…)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Fait.
+
+  /moderation/reviews/{id}/dismiss:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Moderation]
+      summary: Classer sans suite les signalements
+      description: Ferme les signalements ouverts de l'avis.
+      operationId: dismissReviewReports
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: "`forbidden` (rôle) ou `own_content` : on ne modère pas son propre contenu."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: "`moderation_state` : l'action ne s'applique plus (déjà masqué, rien à classer…)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Fait.
+
+  /reviews/{id}/comments:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    get:
+      tags: [Reviews]
+      summary: Fil d'un avis
+      description: |
+        Authentification facultative. Le fil suit la visibilité de l'avis (404 sinon) ; une note seule n'en a pas.
+        Les plus anciens d'abord. Un commentaire supprimé (sauf le dernier, effacé tout à fait) ou masqué reste une
+        trace sans texte ni auteur, pour que les réponses gardent leur sens ; son auteur voit son commentaire masqué.
+      operationId: listReviewComments
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Comment"
+    post:
+      tags: [Reviews]
+      summary: Commenter un avis
+      description: L'auteur de l'avis et les participants du fil sont notifiés, jamais l'émetteur.
+      operationId: createReviewComment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentBody"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: "`blocked` : l'auteur du contenu, nommé au lecteur, l'a bloqué."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "409":
+          description: "`comments_closed` : fil fermé par l'auteur de l'avis, ou avis masqué."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          description: "`rate_limited` (`Retry-After`)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "201":
+          description: Commentaire ajouté.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+
+  /reviews/{id}/comments/close:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Reviews]
+      summary: Fermer le fil de son avis
+      description: Auteur de l'avis seulement (404 sinon) ; les commentaires restent lisibles.
+      operationId: closeReviewComments
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Fermé.
+
+  /reviews/{id}/comments/open:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Reviews]
+      summary: Rouvrir le fil de son avis
+      operationId: openReviewComments
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Rouvert.
+
+  /comments/{id}:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    put:
+      tags: [Reviews]
+      summary: Modifier son commentaire
+      operationId: updateComment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentBody"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "200":
+          description: Commentaire modifié.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+    delete:
+      tags: [Reviews]
+      summary: Supprimer son commentaire
+      operationId: deleteComment
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Supprimé.
+
+  /moderation/comments/{id}/hide:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Moderation]
+      summary: Masquer un commentaire
+      description: "Motif obligatoire, montré à l'auteur (notifié). Ferme les signalements ouverts."
+      operationId: hideComment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "403":
+          description: "`forbidden` (rôle) ou `own_content`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "`moderation_state` : l'action ne s'applique plus."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "204":
+          description: Fait.
+
+  /moderation/comments/{id}/restore:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Moderation]
+      summary: Rétablir un commentaire masqué
+      description: "L'auteur est notifié."
+      operationId: restoreComment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "403":
+          description: "`forbidden` (rôle) ou `own_content`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "`moderation_state` : l'action ne s'applique plus."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "204":
+          description: Fait.
+
+  /moderation/comments/{id}/dismiss:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Moderation]
+      summary: Classer sans suite les signalements d\x27un commentaire
+      description: "Ferme les signalements ouverts du commentaire."
+      operationId: dismissCommentReports
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "403":
+          description: "`forbidden` (rôle) ou `own_content`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "`moderation_state` : l'action ne s'applique plus."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "204":
+          description: Fait.
+
+  /items/{id}/articles:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    get:
+      tags: [Articles]
+      summary: Articles d'un item
+      description: |
+        Authentification facultative. Les articles publiés et non masqués, le plus récent d'abord, plus tous ceux du
+        lecteur (en attente, refusés avec leur motif, masqués).
+      operationId: listItemArticles
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Article"
+    post:
+      tags: [Articles]
+      summary: Partager un article
+      description: "En attente de validation pour un membre, publié directement par un admin ou un modérateur. 10 par heure et par compte."
+      operationId: createItemArticle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ArticleWrite"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          description: "`rate_limited` (`Retry-After`)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "201":
+          description: Article enregistré.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Article"
+
+  /articles/{id}:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    put:
+      tags: [Articles]
+      summary: Modifier son article
+      description: "Repasse en attente de validation pour un membre."
+      operationId: updateArticle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ArticleWrite"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          description: "`rate_limited` (`Retry-After`)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Article modifié.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Article"
+    delete:
+      tags: [Articles]
+      summary: Supprimer son article
+      operationId: deleteArticle
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Supprimé.
+
+  /articles/{id}/comments:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    get:
+      tags: [Articles]
+      summary: Fil d'un article
+      description: "Authentification facultative. Article publié et non masqué (404 sinon), les plus anciens d'abord."
+      operationId: listArticleComments
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Comment"
+    post:
+      tags: [Articles]
+      summary: Commenter un article
+      operationId: createArticleComment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentBody"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: "`blocked` : l'auteur du contenu, nommé au lecteur, l'a bloqué."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "409":
+          description: "`comments_closed` : fil fermé ou article masqué."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          description: "`rate_limited` (`Retry-After`)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "201":
+          description: Commentaire ajouté.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+
+  /articles/{id}/comments/close:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Articles]
+      summary: Fermer le fil de son article
+      operationId: closeArticleComments
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Fermé.
+
+  /articles/{id}/comments/open:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Articles]
+      summary: Rouvrir le fil de son article
+      operationId: openArticleComments
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Rouvert.
+
+  /moderation/articles:
+    get:
+      tags: [Moderation]
+      summary: Articles en attente de validation
+      description: Admins et modérateurs. Le plus ancien d'abord, avec leur item.
+      operationId: listPendingArticles
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Article"
+
+  /moderation/articles/{id}/publish:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Moderation]
+      summary: Publier un article en attente
+      description: "L'auteur est notifié ; jamais son propre article."
+      operationId: publishArticle
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "403":
+          description: "`forbidden` (rôle) ou `own_content`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "`moderation_state` : l'action ne s'applique plus."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "204":
+          description: Fait.
+
+  /moderation/articles/{id}/reject:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Moderation]
+      summary: Refuser un article en attente
+      description: "Motif obligatoire, montré à l'auteur (notifié)."
+      operationId: rejectArticle
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "403":
+          description: "`forbidden` (rôle) ou `own_content`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "`moderation_state` : l'action ne s'applique plus."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "204":
+          description: Fait.
+
+  /moderation/articles/{id}/hide:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Moderation]
+      summary: Masquer un article publié
+      description: "Motif obligatoire, montré à l'auteur (notifié). Ferme les signalements ouverts."
+      operationId: hideArticle
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "403":
+          description: "`forbidden` (rôle) ou `own_content`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "`moderation_state` : l'action ne s'applique plus."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "204":
+          description: Fait.
+
+  /moderation/articles/{id}/restore:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Moderation]
+      summary: Rétablir un article masqué
+      description: "L'auteur est notifié."
+      operationId: restoreArticle
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "403":
+          description: "`forbidden` (rôle) ou `own_content`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "`moderation_state` : l'action ne s'applique plus."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "204":
+          description: Fait.
+
+  /moderation/articles/{id}/dismiss:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Moderation]
+      summary: Classer sans suite les signalements d\x27un article
+      description: "Ferme les signalements ouverts de l'article."
+      operationId: dismissArticleReports
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "403":
+          description: "`forbidden` (rôle) ou `own_content`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "`moderation_state` : l'action ne s'applique plus."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "204":
+          description: Fait.
+
+  /me/reviews:
+    get:
+      tags: [Reviews]
+      summary: Tous mes avis
+      operationId: listMyReviews
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Mes avis, le plus récent d'abord, avec leur item.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Review"
+
   /collection-types:
     get:
       tags: [CollectionTypes]
@@ -5586,6 +7618,38 @@ paths:
                 items:
                   $ref: "#/components/schemas/PublicCollection"
 
+  /public/users/{username}/reviews:
+    get:
+      tags: [Reviews]
+      summary: Avis signés d'un membre
+      description: |
+        Authentification facultative. Le profil doit être visible du lecteur (sinon 404). Seuls les avis **signés pour
+        le lecteur** sont listés : un avis anonyme ou une note seule, listés sous un nom, perdraient leur anonymat.
+      operationId: listPublicReviews
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/username"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Avis, le plus récent d'abord, avec leur item.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Review"
+
   /public/collections/{id}:
     get:
       tags: [Public]
@@ -6313,6 +8377,216 @@ paths:
   # ===========================================================================
   # Notifications (P4-3c)
   # ===========================================================================
+
+  /items/{id}/recommendations:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Recommendations]
+      summary: Recommander un item à un membre
+      description: |
+        Le destinataire, un membre de l'annuaire, est notifié (`recommendation`). Une seule recommandation par
+        expéditeur, destinataire et item tant qu'elle n'est pas écartée. 20 par jour et par compte.
+      operationId: createRecommendation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecommendationCreate"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: "`recommendations_refused` : le membre refuse les recommandations, ou a bloqué l'expéditeur."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Item inconnu, ou destinataire inconnu ou hors de l'annuaire.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "`already_recommended` : déjà recommandé à ce membre."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          description: "`rate_limited` (`Retry-After`)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Recommandation envoyée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recommendation"
+
+  /me/recommendations:
+    get:
+      tags: [Recommendations]
+      summary: Mes recommandations reçues
+      description: Les plus récentes d'abord ; `unread` compte toutes les non-lues.
+      operationId: listMyRecommendations
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Recommandations reçues.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, total, page, per_page, unread]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Recommendation"
+                  total: { type: integer }
+                  page: { type: integer }
+                  per_page: { type: integer }
+                  unread: { type: integer }
+
+  /me/recommendations/read:
+    post:
+      tags: [Recommendations]
+      summary: Marquer des recommandations comme lues
+      description: "`ids` absent ou vide : toutes mes recommandations."
+      operationId: markRecommendationsRead
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Marquées comme lues.
+
+  /me/recommendations/{id}:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    delete:
+      tags: [Recommendations]
+      summary: Écarter une recommandation reçue
+      operationId: deleteMyRecommendation
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Écartée.
+
+  /me/blocks:
+    get:
+      tags: [Recommendations]
+      summary: Membres que j'ai bloqués
+      operationId: listBlocks
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée, le plus récent d'abord.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Block"
+    post:
+      tags: [Recommendations]
+      summary: Bloquer un membre
+      description: |
+        Par son nom (profil visible du lecteur), ou depuis un contenu qu'il voit : avis, commentaire, article ou
+        recommandation reçue. Ses recommandations au bloqueur sont écartées. Bloquer à nouveau ne change rien, sauf
+        qu'un blocage par nom le rend nommé.
+      operationId: createBlock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlockCreate"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Membre bloqué.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Block"
+
+  /me/blocks/{id}:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    delete:
+      tags: [Recommendations]
+      summary: Débloquer un membre
+      operationId: deleteBlock
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Débloqué.
 
   /me/notifications:
     get:

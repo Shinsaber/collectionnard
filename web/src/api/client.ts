@@ -6,7 +6,27 @@ import {
   setTokens,
 } from "./tokens";
 import type {
+  Article,
+  ArticleWrite,
+  Block,
+  BlockCreate,
+  Comment,
   LoginRequest,
+  Recommendation,
+  RecommendationCreate,
+  RecommendationPage,
+  ModerationHistory,
+  ModerationItem,
+  ModerationLogEntry,
+  Report,
+  ReportCreate,
+  Review,
+  ReviewListParams,
+  ReviewPut,
+  ReviewSummary,
+  ReviewType,
+  ReviewTypeCreate,
+  ReviewTypeUpdate,
   Invitation,
   InvitationCheck,
   InvitationCreate,
@@ -315,6 +335,132 @@ export const relationTypeApi = {
   delete: (id: string) => http.delete(`/relation-types/${id}`),
 };
 
+// ── Review Types et avis (I-0) ────────────────────────────────────────
+export const reviewTypeApi = {
+  list: (params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<ReviewType>>("/review-types", { params })
+      .then((r) => r.data),
+  get: (id: string) =>
+    http.get<ReviewType>(`/review-types/${id}`).then((r) => r.data),
+  create: (data: ReviewTypeCreate) =>
+    http.post<ReviewType>("/review-types", data).then((r) => r.data),
+  update: (id: string, data: ReviewTypeUpdate) =>
+    http.put<ReviewType>(`/review-types/${id}`, data).then((r) => r.data),
+  delete: (id: string) => http.delete(`/review-types/${id}`),
+};
+
+export const reviewApi = {
+  summary: (itemId: string) =>
+    http
+      .get<ReviewSummary>(`/items/${itemId}/reviews/summary`, publicRead)
+      .then((r) => r.data),
+  list: (itemId: string, params?: ReviewListParams) =>
+    http
+      .get<PaginatedResponse<Review>>(`/items/${itemId}/reviews`, {
+        ...publicRead,
+        params,
+      })
+      .then((r) => r.data),
+  /** Mon avis, `null` si je n'en ai pas écrit. */
+  mine: (itemId: string) =>
+    http
+      .get<Review>(`/items/${itemId}/reviews/mine`)
+      .then((r) => r.data)
+      .catch((e) => {
+        if (e?.response?.status === 404) return null;
+        throw e;
+      }),
+  put: (itemId: string, data: ReviewPut) =>
+    http.put<Review>(`/items/${itemId}/reviews/mine`, data).then((r) => r.data),
+  remove: (itemId: string) => http.delete(`/items/${itemId}/reviews/mine`),
+  listMine: (params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<Review>>("/me/reviews", { params })
+      .then((r) => r.data),
+  /** Ajoute (`on`) ou retire une réaction (I-1). */
+  react: (reviewId: string, kind: string, on: boolean) =>
+    on
+      ? http.put(`/reviews/${reviewId}/reactions/${kind}`)
+      : http.delete(`/reviews/${reviewId}/reactions/${kind}`),
+};
+
+// ── Signalements et modération (I-1) ──────────────────────────────────
+export const reportApi = {
+  create: (data: ReportCreate) =>
+    http.post<Report>("/reports", data).then((r) => r.data),
+};
+
+export const moderationApi = {
+  /** Contenus signalés et articles en attente de validation. */
+  count: () =>
+    http
+      .get<{ count: number; pending_articles: number }>("/moderation/count")
+      .then((r) => r.data),
+  pendingArticles: (params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<Article>>("/moderation/articles", { params })
+      .then((r) => r.data),
+  reviewArticle: (id: string, publish: boolean, reason = "") =>
+    http.post(`/moderation/articles/${id}/${publish ? "publish" : "reject"}`, {
+      reason,
+    }),
+  queue: (params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<ModerationItem>>("/moderation/queue", { params })
+      .then((r) => r.data),
+  log: (params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<ModerationLogEntry>>("/moderation/log", { params })
+      .then((r) => r.data),
+  history: (userId: string) =>
+    http
+      .get<ModerationHistory>(`/moderation/users/${userId}/history`)
+      .then((r) => r.data),
+  act: (
+    kind: "review" | "comment" | "article",
+    id: string,
+    action: "hide" | "restore" | "dismiss",
+    reason = "",
+  ) => http.post(`/moderation/${kind}s/${id}/${action}`, { reason }),
+};
+
+// ── Commentaires (I-2) ────────────────────────────────────────────────
+export const commentApi = {
+  list: (kind: "review" | "article", id: string, params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<Comment>>(`/${kind}s/${id}/comments`, {
+        ...publicRead,
+        params,
+      })
+      .then((r) => r.data),
+  create: (kind: "review" | "article", id: string, body: string) =>
+    http
+      .post<Comment>(`/${kind}s/${id}/comments`, { body })
+      .then((r) => r.data),
+  update: (id: string, body: string) =>
+    http.put<Comment>(`/comments/${id}`, { body }).then((r) => r.data),
+  remove: (id: string) => http.delete(`/comments/${id}`),
+  setClosed: (kind: "review" | "article", id: string, closed: boolean) =>
+    http.post(`/${kind}s/${id}/comments/${closed ? "close" : "open"}`),
+};
+
+// ── Articles (I-3) ────────────────────────────────────────────────────
+export const articleApi = {
+  list: (itemId: string, params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<Article>>(`/items/${itemId}/articles`, {
+        ...publicRead,
+        params,
+      })
+      .then((r) => r.data),
+  create: (itemId: string, data: ArticleWrite) =>
+    http.post<Article>(`/items/${itemId}/articles`, data).then((r) => r.data),
+  update: (id: string, data: ArticleWrite) =>
+    http.put<Article>(`/articles/${id}`, data).then((r) => r.data),
+  remove: (id: string) => http.delete(`/articles/${id}`),
+};
+
 // ── Collection Types ──────────────────────────────────────────────────
 export const collectionTypeApi = {
   list: (params?: PaginationParams) =>
@@ -537,6 +683,13 @@ export const shareLinkApi = {
 
 /** Lectures publiques (P4-2) : champs cachés déjà retirés par le serveur. */
 export const publicApi = {
+  reviews: (username: string, params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<Review>>(
+        `/public/users/${encodeURIComponent(username)}/reviews`,
+        { ...publicRead, params },
+      )
+      .then((r) => r.data),
   profile: (username: string) =>
     http
       .get<PublicProfile>(
@@ -591,6 +744,33 @@ export const sharedApi = {
         params: { token },
       })
       .then((r) => r.data),
+};
+
+/** Recommandations (I-4) : envoyer un item à un membre, celles que j'ai reçues. */
+export const recommendationApi = {
+  create: (itemId: string, data: RecommendationCreate) =>
+    http
+      .post<Recommendation>(`/items/${itemId}/recommendations`, data)
+      .then((r) => r.data),
+  mine: (params?: PaginationParams) =>
+    http
+      .get<RecommendationPage>("/me/recommendations", { params })
+      .then((r) => r.data),
+  /** Sans ids : toutes. */
+  markRead: (ids?: string[]) =>
+    http.post("/me/recommendations/read", ids ? { ids } : {}),
+  remove: (id: string) => http.delete(`/me/recommendations/${id}`),
+};
+
+/** Membres bloqués (I-4). */
+export const blockApi = {
+  list: (params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<Block>>("/me/blocks", { params })
+      .then((r) => r.data),
+  create: (data: BlockCreate) =>
+    http.post<Block>("/me/blocks", data).then((r) => r.data),
+  remove: (id: string) => http.delete(`/me/blocks/${id}`),
 };
 
 /** Annuaire des membres (profils visibles des membres ou publics). */

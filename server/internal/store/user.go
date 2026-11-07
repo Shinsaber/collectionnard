@@ -10,12 +10,13 @@ import (
 )
 
 // userColumns are read by every user query (scanUser), in this order.
-const userColumns = `id, username, email, role, display_name, bio, avatar, disabled_at, profile_visibility, created_at, updated_at`
+const userColumns = `id, username, email, role, display_name, bio, avatar, disabled_at, profile_visibility, accepts_recommendations,
+	created_at, updated_at`
 
 func scanUser(row pgx.Row, extra ...any) (*model.User, error) {
 	var u model.User
 	dest := append([]any{&u.ID, &u.Username, &u.Email, &u.Role, &u.DisplayName, &u.Bio, &u.Avatar,
-		&u.DisabledAt, &u.ProfileVisibility, &u.CreatedAt, &u.UpdatedAt}, extra...)
+		&u.DisabledAt, &u.ProfileVisibility, &u.AcceptsRecommendations, &u.CreatedAt, &u.UpdatedAt}, extra...)
 	if err := row.Scan(dest...); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound

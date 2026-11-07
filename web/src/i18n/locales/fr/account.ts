@@ -4,7 +4,12 @@ export default {
   displayName: "Nom affiché",
   bio: "Présentation",
   role: "Rôle",
-  roles: { user: "Membre", contributor: "Contributeur", admin: "Admin" },
+  roles: {
+    user: "Membre",
+    contributor: "Contributeur",
+    moderator: "Modérateur",
+    admin: "Admin",
+  },
   avatarAlt: "Avatar de {name}",
   register: {
     subtitle: "Créer votre compte",

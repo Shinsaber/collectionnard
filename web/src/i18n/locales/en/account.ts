@@ -6,7 +6,12 @@ const en: typeof fr = {
   displayName: "Display name",
   bio: "About",
   role: "Role",
-  roles: { user: "Member", contributor: "Contributor", admin: "Admin" },
+  roles: {
+    user: "Member",
+    contributor: "Contributor",
+    moderator: "Moderator",
+    admin: "Admin",
+  },
   avatarAlt: "Avatar of {name}",
   register: {
     subtitle: "Create your account",

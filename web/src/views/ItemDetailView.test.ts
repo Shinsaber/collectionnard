@@ -13,6 +13,8 @@ const api = vi.hoisted(() => ({
   relations: vi.fn(),
   collections: vi.fn(),
   listTypes: vi.fn(),
+  summary: vi.fn(),
+  mine: vi.fn(),
 }));
 vi.mock("@/api/client", () => ({
   itemApi: api,
@@ -20,6 +22,8 @@ vi.mock("@/api/client", () => ({
   // Cache des méta-types (useMetaTypes) : vide, les fixtures portent déjà leurs types.
   itemTypeApi: { list: api.listTypes },
   relationTypeApi: { list: api.listTypes },
+  reviewApi: { summary: api.summary, mine: api.mine },
+  articleApi: { list: () => Promise.resolve({ data: [], total: 0 }) },
   extractApiError: () => ({ message: "" }),
 }));
 
@@ -39,6 +43,7 @@ function item(attributes: Record<string, unknown>): Item {
       name: "Publisher",
       attributes_schema: publisherType.schema as Record<string, unknown>,
       display_order: 140,
+      review_type_id: null,
       created_at: "2026-10-17T00:00:00Z",
       updated_at: "2026-10-17T00:00:00Z",
     },
@@ -59,6 +64,8 @@ const stubs = {
   AddToCollectionDialog: true,
   RelationCreateDialog: true,
   RelationEditDialog: true,
+  ReviewSection: true,
+  ArticleSection: true,
   ItemEditDialog: true,
   NavIcon: true,
 };
@@ -92,6 +99,8 @@ describe("ItemDetailView", () => {
     api.relations.mockResolvedValue(page([]));
     api.collections.mockResolvedValue([]);
     api.listTypes.mockResolvedValue(page([]));
+    api.summary.mockResolvedValue({ enabled: false, count: 0, rating: null });
+    api.mine.mockResolvedValue(null);
     useLang().setLang("fr");
     await nextTick();
   });
@@ -182,6 +191,8 @@ describe("ItemDetailView — en-tête A2", () => {
       { collection: { id: "c1", name: "Mes mangas" }, attributes: {} },
     ]);
     api.listTypes.mockResolvedValue(page([]));
+    api.summary.mockResolvedValue({ enabled: false, count: 0, rating: null });
+    api.mine.mockResolvedValue(null);
     useLang().setLang("fr");
     await nextTick();
   });
@@ -239,5 +250,52 @@ describe("ItemDetailView — en-tête A2", () => {
     expect(w.find(".el-tabs__item.is-active").text()).toContain(
       "Dans vos collections",
     );
+  });
+
+  it("montre les notes dans le premier bloc et ouvre l'onglet « Avis » au clic", async () => {
+    api.relations.mockResolvedValue(page([]));
+    api.summary.mockResolvedValue({
+      enabled: true,
+      count: 6,
+      rating: 7.5,
+      min_ratings: 5,
+      note_only_count: 0,
+      criteria: [],
+      context_items: [],
+    });
+    api.mine.mockResolvedValue({ id: "r", rating: 9, visibility: "public" });
+    const w = await mountDetail({ name: "Glénat" });
+    const header = w.find('[data-test="review-header"]');
+    expect(header.find('[data-test="review-header-average"]').text()).toBe(
+      "7,5/10",
+    );
+    expect(header.text()).toContain("6 notes");
+    expect(header.find('[data-test="review-header-mine"]').exists()).toBe(true);
+    await header.trigger("click");
+    await flushPromises();
+    const active = w.find(".el-tabs__item.is-active");
+    expect(active.text()).toContain("Avis");
+  });
+
+  it("annonce le seuil sous 5 notes, et rien si les avis sont fermés", async () => {
+    api.relations.mockResolvedValue(page([]));
+    api.summary.mockResolvedValue({
+      enabled: true,
+      count: 2,
+      rating: null,
+      min_ratings: 5,
+      note_only_count: 0,
+      criteria: [],
+      context_items: [],
+    });
+    let w = await mountDetail({ name: "Glénat" });
+    expect(w.find('[data-test="review-header-count"]').text()).toContain(
+      "2 notes",
+    );
+    expect(w.find('[data-test="review-header-write"]').exists()).toBe(true);
+
+    api.summary.mockResolvedValue({ enabled: false, count: 0, rating: null });
+    w = await mountDetail({ name: "Glénat" });
+    expect(w.find('[data-test="review-header"]').exists()).toBe(false);
   });
 });

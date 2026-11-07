@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "music",
-  "package_version": 4,
+  "package_version": 6,
   "title": {
     "fr": "Musique",
     "en": "Music"
@@ -11,6 +11,81 @@
     "fr": "Albums, éditions (CD, vinyles…), pistes, artistes et labels (source MusicBrainz).",
     "en": "Albums, releases (CD, vinyl…), tracks, artists and labels (MusicBrainz source)."
   },
+  "review_types": [
+    {
+      "attributes_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "composition": {
+            "maximum": 10,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "production": {
+            "maximum": 10,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "x-description": {
+          "en": "Criteria of an album",
+          "fr": "Critères d'un album"
+        },
+        "x-labels": {
+          "en": {
+            "composition": "Songwriting",
+            "production": "Production"
+          },
+          "fr": {
+            "composition": "Composition",
+            "production": "Production"
+          }
+        },
+        "x-order": [
+          "composition",
+          "production"
+        ],
+        "x-title": {
+          "en": "Album review",
+          "fr": "Avis d'album"
+        }
+      },
+      "description": "Critères d'un album",
+      "id": "f1000000-0000-0000-0000-000000000005",
+      "context_relation_type_ids": [
+        "c0000000-0000-0000-0000-000000000021"
+      ],
+      "context_label": {
+        "en": "Listened on",
+        "fr": "Écouté sur"
+      },
+      "name": "AlbumReview"
+    },
+    {
+      "attributes_schema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object",
+        "x-description": {
+          "en": "Overall rating of a track, without criteria",
+          "fr": "Note globale d'une piste, sans critère"
+        },
+        "x-labels": {
+          "en": {},
+          "fr": {}
+        },
+        "x-order": [],
+        "x-title": {
+          "en": "Track review",
+          "fr": "Avis de piste"
+        }
+      },
+      "description": "Note globale d'une piste, sans critère",
+      "id": "f1000000-0000-0000-0000-000000000006",
+      "name": "TrackReview"
+    }
+  ],
   "item_types": [
     {
       "id": "b0000000-0000-0000-0000-000000000020",
@@ -209,6 +284,7 @@
     },
     {
       "id": "b0000000-0000-0000-0000-000000000021",
+      "review_type_id": "f1000000-0000-0000-0000-000000000005",
       "name": "Album",
       "description": "Album : œuvre musicale, indépendante du support",
       "display_order": 25,
@@ -679,6 +755,7 @@
     },
     {
       "id": "b0000000-0000-0000-0000-000000000023",
+      "review_type_id": "f1000000-0000-0000-0000-000000000006",
       "name": "Track",
       "description": "Piste : un enregistrement",
       "display_order": 115,

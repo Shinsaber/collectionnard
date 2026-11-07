@@ -92,8 +92,9 @@ func (s *PgStore) UpdateUser(ctx context.Context, id uuid.UUID, in model.UserUpd
 func (s *PgStore) UpdateProfile(ctx context.Context, id uuid.UUID, in model.ProfileUpdate) (*model.User, error) {
 	return scanUser(s.pool.QueryRow(ctx, `
 		UPDATE users SET display_name = NULLIF($2, ''), bio = NULLIF($3, ''), avatar = NULLIF($4, ''),
-			profile_visibility = COALESCE(NULLIF($5, ''), 'private'), updated_at = now()
-		WHERE id = $1 RETURNING `+userColumns, id, in.DisplayName, in.Bio, in.Avatar, in.ProfileVisibility))
+			profile_visibility = COALESCE(NULLIF($5, ''), 'private'), accepts_recommendations = COALESCE($6, true),
+			updated_at = now()
+		WHERE id = $1 RETURNING `+userColumns, id, in.DisplayName, in.Bio, in.Avatar, in.ProfileVisibility, in.AcceptsRecommendations))
 }
 
 // SetPassword changes the password of a user and revokes all its refresh tokens.

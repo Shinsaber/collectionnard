@@ -19,7 +19,7 @@ export interface RefreshRequest {
 
 // ---------- User ----------
 /** `contributor` (P4-3) : écrit dans le catalogue sans supprimer d'item, modère les propositions. */
-export type Role = "admin" | "contributor" | "user";
+export type Role = "admin" | "contributor" | "moderator" | "user";
 
 export interface User {
   id: string;
@@ -34,6 +34,8 @@ export interface User {
   disabled_at?: string;
   /** GET /auth/me seulement : peut créer des invitations. */
   profile_visibility?: Visibility;
+  /** Les autres membres peuvent lui recommander des items (I-4). */
+  accepts_recommendations?: boolean;
   can_invite?: boolean;
   created_at: string;
   updated_at: string;
@@ -50,6 +52,8 @@ export interface ProfileUpdate {
   bio: string;
   avatar: string;
   profile_visibility: Visibility;
+  /** Absent = true. */
+  accepts_recommendations?: boolean;
 }
 
 export interface PasswordChange {
@@ -109,6 +113,8 @@ export interface ItemType {
   attributes_schema: Record<string, unknown>;
   /** Ordre d'affichage (petit = en premier, puis par nom) ; défaut 100. */
   display_order: number;
+  /** Type d'avis (critères notés) ; `null` = avis fermés sur ce type. */
+  review_type_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -118,6 +124,7 @@ export interface ItemTypeCreate {
   description?: string;
   attributes_schema: Record<string, unknown>;
   display_order?: number;
+  review_type_id?: string | null;
 }
 
 export interface ItemTypeUpdate {
@@ -125,6 +132,8 @@ export interface ItemTypeUpdate {
   description?: string;
   attributes_schema?: Record<string, unknown>;
   display_order?: number;
+  /** Absent = inchangé ; `null` ferme les avis. */
+  review_type_id?: string | null;
 }
 
 // ---------- RelationType ----------
@@ -155,6 +164,252 @@ export interface RelationTypeUpdate {
   source_item_type_ids?: string[];
   target_item_type_ids?: string[];
   attributes_schema?: Record<string, unknown>;
+}
+
+// ---------- ReviewType et avis (I-0, docs/phases/interactions.md) ----------
+export interface ReviewType {
+  id: string;
+  name: string;
+  description?: string;
+  /** Ses propriétés sont les critères, chacun un entier de 0 à 10. */
+  attributes_schema: Record<string, unknown>;
+  /** Relations de l'item noté vers l'édition qu'un avis peut préciser ; vide = pas de choix. */
+  context_relation_type_ids: string[];
+  /** Libellé de ce choix par langue (« Joué sur »). */
+  context_label?: Record<string, string>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReviewTypeCreate {
+  name: string;
+  description?: string;
+  attributes_schema?: Record<string, unknown>;
+  context_relation_type_ids?: string[];
+  context_label?: Record<string, string>;
+}
+
+export interface ReviewTypeUpdate {
+  name?: string;
+  description?: string;
+  attributes_schema?: Record<string, unknown>;
+  context_relation_type_ids?: string[];
+  context_label?: Record<string, string>;
+}
+
+export type ReviewVisibility = "private" | "members" | "anonymous" | "public";
+
+export interface Review {
+  id: string;
+  item_id: string;
+  review_type_id?: string;
+  /** Note de chaque critère ; absent en note globale. */
+  criteria?: Record<string, number>;
+  /** Édition utilisée ; absente d'un avis non signé pour le lecteur. */
+  context_item_id?: string;
+  context_item?: Item;
+  rating: number;
+  body: string;
+  spoiler: boolean;
+  lang: string;
+  visibility: ReviewVisibility;
+  /** Présent seulement si l'avis est signé pour le lecteur. */
+  author?: { username: string; display_name?: string; avatar?: string };
+  /** Listes par utilisateur seulement. */
+  item?: Item;
+  /** Masqué par la modération (I-1) : visible de son auteur et des modérateurs seulement. */
+  hidden_at?: string;
+  hidden_reason?: string;
+  /** Nombre de chaque réaction, et celles du lecteur. */
+  reactions?: Record<string, number>;
+  my_reactions?: string[];
+  /** Fil de commentaires (I-2). */
+  comment_count?: number;
+  comments_closed?: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Une note globale (`rating`) ou la note de chaque critère (`criteria`), jamais les deux. */
+export interface ReviewPut {
+  rating?: number;
+  criteria?: Record<string, number>;
+  context_item_id?: string;
+  body: string;
+  spoiler: boolean;
+  lang: string;
+  visibility: ReviewVisibility;
+}
+
+export interface ReviewListParams extends PaginationParams {
+  sort?: "recent" | "rating" | "interesting";
+  lang?: string;
+  context_item_id?: string;
+}
+
+export interface ReviewSummary {
+  enabled: boolean;
+  review_type?: ReviewType;
+  count: number;
+  /** Moyenne ; `null` sous `min_ratings` notes. */
+  rating: number | null;
+  min_ratings: number;
+  note_only_count: number;
+  criteria: { key: string; count: number; rating: number | null }[];
+  /** Éditions qu'un avis peut préciser (formulaire, filtre). */
+  context_items: Item[];
+}
+
+// ---------- Modération (I-1) ----------
+/** Article sur la fiche d'un item (I-3). */
+export interface Article {
+  id: string;
+  item_id: string;
+  author?: { username: string; display_name?: string; avatar?: string };
+  mine: boolean;
+  title: string;
+  url: string;
+  message: string;
+  lang: string;
+  /** L'article d'un membre attend la validation d'un modérateur. */
+  status: "pending" | "published" | "rejected";
+  reject_reason?: string;
+  hidden_at?: string;
+  hidden_reason?: string;
+  comment_count: number;
+  comments_closed: boolean;
+  item?: Item;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ArticleWrite {
+  title: string;
+  url: string;
+  message: string;
+  lang: string;
+}
+
+/** Commentaire du fil d'un avis (I-2). */
+export interface Comment {
+  id: string;
+  target_kind: "review" | "article";
+  target_id: string;
+  /** Absent pour l'auteur d'un avis anonyme qui répond dans son fil. */
+  author?: { username: string; display_name?: string; avatar?: string };
+  /** Écrit par l'auteur de l'avis ou de l'article commenté. */
+  target_author: boolean;
+  mine: boolean;
+  body: string;
+  hidden_at?: string;
+  hidden_reason?: string;
+  /** Trace d'un commentaire supprimé par son auteur (ni texte ni auteur). */
+  deleted_at?: string;
+  /** Modifié après sa publication. */
+  edited_at?: string;
+  /** Écrit par un membre que le lecteur a bloqué (ni texte ni auteur). */
+  blocked?: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// ---------- Recommandations et blocages (I-4) ----------
+export interface Recommendation {
+  id: string;
+  item_id: string;
+  item?: Item;
+  sender?: { username: string; display_name?: string; avatar?: string };
+  /** Texte brut, éventuellement vide. */
+  message: string;
+  created_at: string;
+  read_at?: string;
+}
+
+export interface RecommendationCreate {
+  /** Nom d'utilisateur du destinataire. */
+  to: string;
+  message?: string;
+}
+
+export interface RecommendationPage extends PaginatedResponse<Recommendation> {
+  unread: number;
+}
+
+/** Un membre bloqué ; `user` absent quand le bloqueur ne doit pas savoir qui il est. */
+export interface Block {
+  id: string;
+  user?: { username: string; display_name?: string; avatar?: string };
+  created_at: string;
+}
+
+export type BlockContentKind =
+  "review" | "comment" | "article" | "recommendation";
+
+export type BlockCreate =
+  { username: string } | { content_kind: BlockContentKind; content_id: string };
+
+export interface ReportCreate {
+  target_kind: "review" | "comment" | "article";
+  target_id: string;
+  reason: string;
+  details: string;
+}
+
+export interface Report {
+  id: string;
+  target_kind: string;
+  target_id: string;
+  reason: string;
+  details: string;
+  status: "open" | "actioned" | "dismissed";
+  reporter_id: string;
+  reporter?: { username: string; display_name?: string; avatar?: string };
+  /** Signalements du même membre classés sans suite ces 90 derniers jours. */
+  reporter_dismissed: number;
+  created_at: string;
+}
+
+export interface ModerationRecap {
+  hidden_90d: number;
+  hidden_total: number;
+  dismissed_reports_90d: number;
+}
+
+export interface ModerationItem {
+  target_kind: string;
+  target_id: string;
+  author_id: string;
+  review?: Review;
+  /** Commentaire signalé ; `review` ou `article` est alors le contenu de son fil. */
+  comment?: Comment;
+  /** Article signalé, ou celui du fil d'un commentaire. */
+  article?: Article;
+  /** Type d'avis : libellés des critères. */
+  review_type?: ReviewType;
+  item?: Item;
+  reports: Report[];
+  author_recap: ModerationRecap;
+}
+
+export interface ModerationLogEntry {
+  id: string;
+  action: "hide" | "restore" | "dismiss";
+  target_kind: string;
+  target_id: string;
+  target_author?: { username: string; display_name?: string };
+  author_id?: string;
+  moderator?: { username: string; display_name?: string };
+  reason: string;
+  excerpt: string;
+  still_hidden: boolean;
+  created_at: string;
+}
+
+export interface ModerationHistory {
+  user: { username: string; display_name?: string };
+  recap: ModerationRecap;
+  entries: ModerationLogEntry[];
+  dismissed_reports: Report[];
 }
 
 // ---------- CollectionType ----------
@@ -595,12 +850,36 @@ export type NotificationKind =
   | "proposal_accepted"
   | "proposal_rejected"
   | "proposal_changes_requested"
-  | "proposal_comment";
+  | "proposal_comment"
+  | "review_hidden"
+  | "review_restored"
+  | "review_comment"
+  | "comment_hidden"
+  | "comment_restored"
+  | "article_published"
+  | "article_rejected"
+  | "article_hidden"
+  | "article_restored"
+  | "article_comment"
+  | "recommendation";
 
 export interface AppNotification {
   id: string;
   kind: NotificationKind;
-  payload: { proposal_id?: string; title?: string; by?: string };
+  payload: {
+    proposal_id?: string;
+    title?: string;
+    by?: string;
+    /** Modération d'un avis (I-1) : sa fiche et le motif. */
+    item_id?: string;
+    reason?: string;
+    /** Commentaire de l'auteur d'un avis anonyme : jamais nommé. */
+    by_review_author?: boolean;
+    /** Émetteur au profil privé : jamais nommé. */
+    by_member?: boolean;
+    /** Recommandation reçue (I-4). */
+    recommendation_id?: string;
+  };
   created_at: string;
   read_at?: string;
 }
@@ -692,6 +971,7 @@ export type ImportEntity =
   | "item_types"
   | "collection_types"
   | "relation_types"
+  | "review_types"
   | "items"
   | "relations"
   | "collection";

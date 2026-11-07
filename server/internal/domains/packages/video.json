@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "video",
-  "package_version": 4,
+  "package_version": 6,
   "title": {
     "fr": "Vidéo : films",
     "en": "Video: films"
@@ -14,9 +14,70 @@
   "requires": [
     "people"
   ],
+  "review_types": [
+    {
+      "attributes_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "acting": {
+            "maximum": 10,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "directing": {
+            "maximum": 10,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "story": {
+            "maximum": 10,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "x-description": {
+          "en": "Criteria of a film",
+          "fr": "Critères d'un film"
+        },
+        "x-labels": {
+          "en": {
+            "acting": "Acting",
+            "directing": "Directing",
+            "story": "Story"
+          },
+          "fr": {
+            "acting": "Interprétation",
+            "directing": "Réalisation",
+            "story": "Scénario"
+          }
+        },
+        "x-order": [
+          "story",
+          "acting",
+          "directing"
+        ],
+        "x-title": {
+          "en": "Film review",
+          "fr": "Avis de film"
+        }
+      },
+      "description": "Critères d'un film",
+      "id": "f1000000-0000-0000-0000-000000000004",
+      "context_relation_type_ids": [
+        "c0000000-0000-0000-0000-000000000004"
+      ],
+      "context_label": {
+        "en": "Watched in",
+        "fr": "Vu dans"
+      },
+      "name": "FilmReview"
+    }
+  ],
   "item_types": [
     {
       "id": "b0000000-0000-0000-0000-000000000030",
+      "review_type_id": "f1000000-0000-0000-0000-000000000004",
       "name": "Film",
       "description": "Film : l'œuvre, indépendante de ses éditions vidéo",
       "display_order": 15,

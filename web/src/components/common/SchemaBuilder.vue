@@ -256,7 +256,13 @@ function move(idx: number, dir: -1 | 1) {
 /** Nouveau champ vide à la position donnée, déplié pour être saisi. */
 function addField(at: number) {
   const id = nextId++;
-  fields.value.splice(at, 0, emptyField());
+  fields.value.splice(
+    at,
+    0,
+    ft.value.criteria
+      ? { ...emptyField(), type: "integer", minimum: 0, maximum: 10 }
+      : emptyField(),
+  );
   ids.value.splice(at, 0, id);
   expanded.value = new Set(expanded.value).add(id);
 }

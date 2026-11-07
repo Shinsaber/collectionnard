@@ -341,3 +341,30 @@ describe("SchemaBuilder — x-identifier", () => {
     ).toBe(true);
   });
 });
+
+describe("SchemaBuilder en mode critères (types d'avis)", () => {
+  it("crée des entiers de 0 à 10, sans choix de type ni contraintes", async () => {
+    const w = mount(SchemaBuilder, {
+      props: {
+        modelValue: { type: "object", properties: {} },
+        features: { criteria: true },
+      },
+      global: { plugins: [ElementPlus] },
+    });
+    await w.vm.$nextTick();
+    const add = w.findAll("button").find((b) => b.text().includes("Ajouter"));
+    await add!.trigger("click");
+    await w.vm.$nextTick();
+    expect(w.findAll(".el-select").length).toBe(0);
+    await w.find("input").setValue("story");
+    await w.vm.$nextTick();
+    await w.vm.$nextTick();
+    const emitted = w.emitted("update:modelValue")!;
+    const schema = emitted[emitted.length - 1]![0] as Schema;
+    expect((schema.properties as Props).story).toMatchObject({
+      type: "integer",
+      minimum: 0,
+      maximum: 10,
+    });
+  });
+});

@@ -22,6 +22,9 @@ const (
 	Private = "private" // the owner only
 	Members = "members" // any signed-in account
 	Public  = "public"  // anyone, signed in or not
+
+	// Anonymous is a visibility of reviews only: text shown to all, without its author.
+	Anonymous = "anonymous"
 )
 
 // Valid tells whether v is a visibility level.

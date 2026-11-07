@@ -41,6 +41,7 @@
         completeness: kind === 'relation',
         private: kind === 'collection',
         identifier: kind === 'item',
+        criteria: kind === 'review',
       }"
     >
       <template #aside>
@@ -94,6 +95,77 @@
               t("admin.itemTypes.displayOrderHelp")
             }}</small>
           </div>
+          <div v-if="kind === 'item'" class="flex flex-col gap-1.5">
+            <label :for="`${uid}-review`" class="text-[13px] font-bold">{{
+              t("admin.itemTypes.reviewType")
+            }}</label>
+            <ElSelect
+              :id="`${uid}-review`"
+              v-model="form.review_type_id"
+              clearable
+              :value-on-clear="null"
+              :placeholder="t('admin.itemTypes.reviewsClosed')"
+              :aria-describedby="`${uid}-review-help`"
+              data-test="review-type-select"
+            >
+              <ElOption
+                v-for="rt in metaTypes.reviewTypes"
+                :key="rt.id"
+                :label="typeTitle(rt, lang)"
+                :value="rt.id"
+              />
+            </ElSelect>
+            <small :id="`${uid}-review-help`" class="text-xs text-muted">{{
+              t("admin.itemTypes.reviewTypeHelp")
+            }}</small>
+          </div>
+          <template v-if="kind === 'review'">
+            <div class="flex flex-col gap-1.5">
+              <label :for="`${uid}-context`" class="text-[13px] font-bold">{{
+                t("admin.reviewTypes.contextRelations")
+              }}</label>
+              <ElSelect
+                :id="`${uid}-context`"
+                v-model="form.context_relation_type_ids"
+                multiple
+                collapse-tags
+                collapse-tags-tooltip
+                filterable
+                :aria-describedby="`${uid}-context-help`"
+                data-test="context-relations"
+              >
+                <ElOption
+                  v-for="rt in metaTypes.relationTypes"
+                  :key="rt.id"
+                  :label="`${typeTitle(rt, lang)} (${rt.name})`"
+                  :value="rt.id"
+                />
+              </ElSelect>
+              <small :id="`${uid}-context-help`" class="text-xs text-muted">{{
+                t("admin.reviewTypes.contextRelationsHelp")
+              }}</small>
+            </div>
+            <div
+              v-for="l in LANGS"
+              v-show="form.context_relation_type_ids.length > 0"
+              :key="l"
+              class="flex flex-col gap-1.5"
+            >
+              <label
+                :for="`${uid}-context-${l}`"
+                class="text-[13px] font-bold"
+                >{{
+                  t("admin.reviewTypes.contextLabel", { lang: l.toUpperCase() })
+                }}</label
+              >
+              <ElInput
+                :id="`${uid}-context-${l}`"
+                v-model="form.context_label[l]"
+                maxlength="60"
+                :placeholder="t('admin.reviewTypes.contextLabelPlaceholder')"
+              />
+            </div>
+          </template>
           <div v-if="kind === 'collection'" class="flex flex-col gap-1.5">
             <label :for="`${uid}-allowed`" class="text-[13px] font-bold">{{
               t("admin.collectionTypes.allowedItemTypes")
@@ -190,6 +262,7 @@ import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import { useLang } from "@/composables/useLang";
 import { useMetaTypes } from "@/stores/metaTypes";
 import { typeTitle } from "@/lib/schema";
+import { LANGS } from "@/i18n/langs";
 import AppSpinner from "@/components/common/AppSpinner.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
 import SchemaBuilder from "@/components/common/SchemaBuilder.vue";
@@ -286,6 +359,10 @@ onBeforeRouteLeave(async () => {
 });
 
 onMounted(() => {
+  if (props.kind === "item")
+    metaTypes.loadReviewTypes().catch((e) => notifyError(e));
+  if (props.kind === "review")
+    metaTypes.loadRelationTypes().catch((e) => notifyError(e));
   if (props.kind !== "item")
     metaTypes
       .loadItemTypes()

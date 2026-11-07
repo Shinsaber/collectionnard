@@ -125,6 +125,338 @@ type MockStore struct {
 	ListDomainsFn                func(ctx context.Context) ([]model.DomainInfo, error)
 	InstallDomainFn              func(ctx context.Context, pkg *model.DomainPackage, dryRun bool) (*model.DomainInstallReport, error)
 	RefreshInstalledDomainsFn    func(ctx context.Context, except string) error
+	ListItemArticlesFn           func(ctx context.Context, itemID, viewer uuid.UUID, pg model.Pagination) ([]model.Article, int, error)
+	GetArticleFn                 func(ctx context.Context, id uuid.UUID) (*model.Article, error)
+	CreateArticleFn              func(ctx context.Context, itemID, authorID uuid.UUID, in model.ArticleWrite, status string) (*model.Article, error)
+	UpdateArticleFn              func(ctx context.Context, id, authorID uuid.UUID, in model.ArticleWrite, status string) (*model.Article, error)
+	DeleteArticleFn              func(ctx context.Context, id, authorID uuid.UUID) error
+	CountPendingArticlesFn       func(ctx context.Context) (int, error)
+	ListPendingArticlesFn        func(ctx context.Context, pg model.Pagination) ([]model.Article, int, error)
+	ReviewArticleFn              func(ctx context.Context, id, moderatorID uuid.UUID, publish bool, reason string) (*model.Article, error)
+	SetArticleCommentsClosedFn   func(ctx context.Context, id, userID uuid.UUID, closed bool) error
+	CreateRecommendationFn       func(ctx context.Context, senderID, recipientID, itemID uuid.UUID, message string) (*model.Recommendation, error)
+	GetRecommendationFn          func(ctx context.Context, id, recipientID uuid.UUID) (*model.Recommendation, error)
+	ListRecommendationsFn        func(ctx context.Context, recipientID uuid.UUID, pg model.Pagination) ([]model.Recommendation, int, int, error)
+	MarkRecommendationsReadFn    func(ctx context.Context, recipientID uuid.UUID, ids []uuid.UUID) error
+	DeleteRecommendationFn       func(ctx context.Context, id, recipientID uuid.UUID) error
+	BlockUserFn                  func(ctx context.Context, blockerID, blockedID uuid.UUID, anonymous bool) (*model.Block, error)
+	ListBlocksFn                 func(ctx context.Context, blockerID uuid.UUID, pg model.Pagination) ([]model.Block, int, error)
+	DeleteBlockFn                func(ctx context.Context, blockerID, id uuid.UUID) error
+	// BlockedByFn, BlockersFn, IsBlockedFn: nothing blocked when unset.
+	BlockedByFn               func(ctx context.Context, blockerID uuid.UUID) ([]uuid.UUID, error)
+	BlockersFn                func(ctx context.Context, blockedID uuid.UUID, users []uuid.UUID) ([]uuid.UUID, error)
+	IsBlockedFn               func(ctx context.Context, blockerID, blockedID uuid.UUID) (bool, error)
+	ListCommentsFn            func(ctx context.Context, kind string, targetID, viewer uuid.UUID, pg model.Pagination) ([]model.Comment, int, error)
+	GetCommentFn              func(ctx context.Context, id uuid.UUID) (*model.Comment, error)
+	CreateCommentFn           func(ctx context.Context, kind string, targetID, authorID uuid.UUID, body string) (*model.Comment, error)
+	UpdateCommentFn           func(ctx context.Context, id, authorID uuid.UUID, body string) (*model.Comment, error)
+	DeleteCommentFn           func(ctx context.Context, id, authorID uuid.UUID) error
+	CommentParticipantsFn     func(ctx context.Context, kind string, targetID uuid.UUID) ([]uuid.UUID, error)
+	SetReviewCommentsClosedFn func(ctx context.Context, reviewID, userID uuid.UUID, closed bool) error
+	GetReviewFn               func(ctx context.Context, id uuid.UUID) (*model.Review, error)
+	CreateReportFn            func(ctx context.Context, reporterID uuid.UUID, in model.ReportCreate) (*model.Report, error)
+	CountModerationQueueFn    func(ctx context.Context) (int, error)
+	ListModerationQueueFn     func(ctx context.Context, pg model.Pagination) ([]model.ModerationItem, int, error)
+	ModerationRecapFn         func(ctx context.Context, userID uuid.UUID) (*model.ModerationRecap, error)
+	ModerateFn                func(ctx context.Context, kind string, targetID, moderatorID uuid.UUID, action, reason string) (*model.ModerationResult, error)
+	ListModerationLogFn       func(ctx context.Context, pg model.Pagination) ([]model.ModerationLogEntry, int, error)
+	ModerationHistoryFn       func(ctx context.Context, userID uuid.UUID) (*model.ModerationHistory, error)
+	SetReactionFn             func(ctx context.Context, reviewID, userID uuid.UUID, kind string, on bool) error
+	ReactionsOfFn             func(ctx context.Context, reviewIDs []uuid.UUID, viewer uuid.UUID) (map[uuid.UUID]map[string]int, map[uuid.UUID][]string, error)
+	ListReviewTypesFn         func(ctx context.Context, pg model.Pagination) ([]model.ReviewType, int, error)
+	GetReviewTypeFn           func(ctx context.Context, id uuid.UUID) (*model.ReviewType, error)
+	CreateReviewTypeFn        func(ctx context.Context, in model.ReviewTypeCreate) (*model.ReviewType, error)
+	UpdateReviewTypeFn        func(ctx context.Context, id uuid.UUID, in model.ReviewTypeUpdate) (*model.ReviewType, error)
+	DeleteReviewTypeFn        func(ctx context.Context, id uuid.UUID) error
+	ListReviewContextItemsFn  func(ctx context.Context, reviewTypeID, itemID uuid.UUID) ([]model.Item, error)
+	IsReviewContextFn         func(ctx context.Context, reviewTypeID, itemID, contextID uuid.UUID) (bool, error)
+	GetItemReviewTypeFn       func(ctx context.Context, itemID uuid.UUID) (*model.ReviewType, error)
+	ListItemReviewsFn         func(ctx context.Context, itemID uuid.UUID, p model.ReviewListParams, pg model.Pagination) ([]model.Review, int, error)
+	GetReviewStatsFn          func(ctx context.Context, itemID, viewer uuid.UUID, levels []string) (*model.ReviewStats, error)
+	GetMyReviewFn             func(ctx context.Context, itemID, userID uuid.UUID) (*model.Review, error)
+	PutReviewFn               func(ctx context.Context, itemID, userID uuid.UUID, in model.ReviewWrite) (*model.Review, error)
+	DeleteReviewFn            func(ctx context.Context, itemID, userID uuid.UUID) error
+	ListUserReviewsFn         func(ctx context.Context, userID uuid.UUID, levels []string, pg model.Pagination) ([]model.Review, int, error)
+}
+
+func (m *MockStore) ListReviewTypes(ctx context.Context, pg model.Pagination) ([]model.ReviewType, int, error) {
+	if m.ListReviewTypesFn != nil {
+		return m.ListReviewTypesFn(ctx, pg)
+	}
+	return nil, 0, nil
+}
+
+func (m *MockStore) GetReviewType(ctx context.Context, id uuid.UUID) (*model.ReviewType, error) {
+	if m.GetReviewTypeFn != nil {
+		return m.GetReviewTypeFn(ctx, id)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) CreateReviewType(ctx context.Context, in model.ReviewTypeCreate) (*model.ReviewType, error) {
+	if m.CreateReviewTypeFn != nil {
+		return m.CreateReviewTypeFn(ctx, in)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) UpdateReviewType(ctx context.Context, id uuid.UUID, in model.ReviewTypeUpdate) (*model.ReviewType, error) {
+	if m.UpdateReviewTypeFn != nil {
+		return m.UpdateReviewTypeFn(ctx, id, in)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) DeleteReviewType(ctx context.Context, id uuid.UUID) error {
+	if m.DeleteReviewTypeFn != nil {
+		return m.DeleteReviewTypeFn(ctx, id)
+	}
+	return store.ErrNotFound
+}
+
+func (m *MockStore) ListReviewContextItems(ctx context.Context, reviewTypeID, itemID uuid.UUID) ([]model.Item, error) {
+	if m.ListReviewContextItemsFn != nil {
+		return m.ListReviewContextItemsFn(ctx, reviewTypeID, itemID)
+	}
+	return []model.Item{}, nil
+}
+
+func (m *MockStore) IsReviewContext(ctx context.Context, reviewTypeID, itemID, contextID uuid.UUID) (bool, error) {
+	if m.IsReviewContextFn != nil {
+		return m.IsReviewContextFn(ctx, reviewTypeID, itemID, contextID)
+	}
+	return false, nil
+}
+
+func (m *MockStore) GetItemReviewType(ctx context.Context, itemID uuid.UUID) (*model.ReviewType, error) {
+	if m.GetItemReviewTypeFn != nil {
+		return m.GetItemReviewTypeFn(ctx, itemID)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) ListItemReviews(ctx context.Context, itemID uuid.UUID, p model.ReviewListParams, pg model.Pagination) ([]model.Review, int, error) {
+	if m.ListItemReviewsFn != nil {
+		return m.ListItemReviewsFn(ctx, itemID, p, pg)
+	}
+	return nil, 0, nil
+}
+
+func (m *MockStore) GetReviewStats(ctx context.Context, itemID, viewer uuid.UUID, levels []string) (*model.ReviewStats, error) {
+	if m.GetReviewStatsFn != nil {
+		return m.GetReviewStatsFn(ctx, itemID, viewer, levels)
+	}
+	return &model.ReviewStats{}, nil
+}
+
+func (m *MockStore) GetMyReview(ctx context.Context, itemID, userID uuid.UUID) (*model.Review, error) {
+	if m.GetMyReviewFn != nil {
+		return m.GetMyReviewFn(ctx, itemID, userID)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) PutReview(ctx context.Context, itemID, userID uuid.UUID, in model.ReviewWrite) (*model.Review, error) {
+	if m.PutReviewFn != nil {
+		return m.PutReviewFn(ctx, itemID, userID, in)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) DeleteReview(ctx context.Context, itemID, userID uuid.UUID) error {
+	if m.DeleteReviewFn != nil {
+		return m.DeleteReviewFn(ctx, itemID, userID)
+	}
+	return store.ErrNotFound
+}
+
+func (m *MockStore) ListUserReviews(ctx context.Context, userID uuid.UUID, levels []string, pg model.Pagination) ([]model.Review, int, error) {
+	if m.ListUserReviewsFn != nil {
+		return m.ListUserReviewsFn(ctx, userID, levels, pg)
+	}
+	return nil, 0, nil
+}
+
+func (m *MockStore) GetReview(ctx context.Context, id uuid.UUID) (*model.Review, error) {
+	if m.GetReviewFn != nil {
+		return m.GetReviewFn(ctx, id)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) CreateReport(ctx context.Context, reporterID uuid.UUID, in model.ReportCreate) (*model.Report, error) {
+	if m.CreateReportFn != nil {
+		return m.CreateReportFn(ctx, reporterID, in)
+	}
+	return &model.Report{ID: uuid.New(), Status: "open"}, nil
+}
+
+func (m *MockStore) CountModerationQueue(ctx context.Context) (int, error) {
+	if m.CountModerationQueueFn != nil {
+		return m.CountModerationQueueFn(ctx)
+	}
+	return 0, nil
+}
+
+func (m *MockStore) ListModerationQueue(ctx context.Context, pg model.Pagination) ([]model.ModerationItem, int, error) {
+	if m.ListModerationQueueFn != nil {
+		return m.ListModerationQueueFn(ctx, pg)
+	}
+	return nil, 0, nil
+}
+
+func (m *MockStore) ModerationRecap(ctx context.Context, userID uuid.UUID) (*model.ModerationRecap, error) {
+	if m.ModerationRecapFn != nil {
+		return m.ModerationRecapFn(ctx, userID)
+	}
+	return &model.ModerationRecap{}, nil
+}
+
+func (m *MockStore) Moderate(ctx context.Context, kind string, targetID, moderatorID uuid.UUID, action, reason string) (*model.ModerationResult, error) {
+	if m.ModerateFn != nil {
+		return m.ModerateFn(ctx, kind, targetID, moderatorID, action, reason)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) ListModerationLog(ctx context.Context, pg model.Pagination) ([]model.ModerationLogEntry, int, error) {
+	if m.ListModerationLogFn != nil {
+		return m.ListModerationLogFn(ctx, pg)
+	}
+	return nil, 0, nil
+}
+
+func (m *MockStore) ModerationHistory(ctx context.Context, userID uuid.UUID) (*model.ModerationHistory, error) {
+	if m.ModerationHistoryFn != nil {
+		return m.ModerationHistoryFn(ctx, userID)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) SetReaction(ctx context.Context, reviewID, userID uuid.UUID, kind string, on bool) error {
+	if m.SetReactionFn != nil {
+		return m.SetReactionFn(ctx, reviewID, userID, kind, on)
+	}
+	return nil
+}
+
+func (m *MockStore) ReactionsOf(ctx context.Context, reviewIDs []uuid.UUID, viewer uuid.UUID) (map[uuid.UUID]map[string]int, map[uuid.UUID][]string, error) {
+	if m.ReactionsOfFn != nil {
+		return m.ReactionsOfFn(ctx, reviewIDs, viewer)
+	}
+	return map[uuid.UUID]map[string]int{}, map[uuid.UUID][]string{}, nil
+}
+
+func (m *MockStore) ListComments(ctx context.Context, kind string, targetID, viewer uuid.UUID, pg model.Pagination) ([]model.Comment, int, error) {
+	if m.ListCommentsFn != nil {
+		return m.ListCommentsFn(ctx, kind, targetID, viewer, pg)
+	}
+	return []model.Comment{}, 0, nil
+}
+
+func (m *MockStore) GetComment(ctx context.Context, id uuid.UUID) (*model.Comment, error) {
+	if m.GetCommentFn != nil {
+		return m.GetCommentFn(ctx, id)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) CreateComment(ctx context.Context, kind string, targetID, authorID uuid.UUID, body string) (*model.Comment, error) {
+	if m.CreateCommentFn != nil {
+		return m.CreateCommentFn(ctx, kind, targetID, authorID, body)
+	}
+	return &model.Comment{ID: uuid.New(), AuthorID: authorID, Body: body}, nil
+}
+
+func (m *MockStore) UpdateComment(ctx context.Context, id, authorID uuid.UUID, body string) (*model.Comment, error) {
+	if m.UpdateCommentFn != nil {
+		return m.UpdateCommentFn(ctx, id, authorID, body)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) DeleteComment(ctx context.Context, id, authorID uuid.UUID) error {
+	if m.DeleteCommentFn != nil {
+		return m.DeleteCommentFn(ctx, id, authorID)
+	}
+	return store.ErrNotFound
+}
+
+func (m *MockStore) CommentParticipants(ctx context.Context, kind string, targetID uuid.UUID) ([]uuid.UUID, error) {
+	if m.CommentParticipantsFn != nil {
+		return m.CommentParticipantsFn(ctx, kind, targetID)
+	}
+	return nil, nil
+}
+
+func (m *MockStore) SetReviewCommentsClosed(ctx context.Context, reviewID, userID uuid.UUID, closed bool) error {
+	if m.SetReviewCommentsClosedFn != nil {
+		return m.SetReviewCommentsClosedFn(ctx, reviewID, userID, closed)
+	}
+	return store.ErrNotFound
+}
+
+func (m *MockStore) ListItemArticles(ctx context.Context, itemID, viewer uuid.UUID, pg model.Pagination) ([]model.Article, int, error) {
+	if m.ListItemArticlesFn != nil {
+		return m.ListItemArticlesFn(ctx, itemID, viewer, pg)
+	}
+	return []model.Article{}, 0, nil
+}
+
+func (m *MockStore) GetArticle(ctx context.Context, id uuid.UUID) (*model.Article, error) {
+	if m.GetArticleFn != nil {
+		return m.GetArticleFn(ctx, id)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) CreateArticle(ctx context.Context, itemID, authorID uuid.UUID, in model.ArticleWrite, status string) (*model.Article, error) {
+	if m.CreateArticleFn != nil {
+		return m.CreateArticleFn(ctx, itemID, authorID, in, status)
+	}
+	return &model.Article{ID: uuid.New(), ItemID: itemID, AuthorID: authorID, Title: in.Title, Status: status}, nil
+}
+
+func (m *MockStore) UpdateArticle(ctx context.Context, id, authorID uuid.UUID, in model.ArticleWrite, status string) (*model.Article, error) {
+	if m.UpdateArticleFn != nil {
+		return m.UpdateArticleFn(ctx, id, authorID, in, status)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) DeleteArticle(ctx context.Context, id, authorID uuid.UUID) error {
+	if m.DeleteArticleFn != nil {
+		return m.DeleteArticleFn(ctx, id, authorID)
+	}
+	return store.ErrNotFound
+}
+
+func (m *MockStore) CountPendingArticles(ctx context.Context) (int, error) {
+	if m.CountPendingArticlesFn != nil {
+		return m.CountPendingArticlesFn(ctx)
+	}
+	return 0, nil
+}
+
+func (m *MockStore) ListPendingArticles(ctx context.Context, pg model.Pagination) ([]model.Article, int, error) {
+	if m.ListPendingArticlesFn != nil {
+		return m.ListPendingArticlesFn(ctx, pg)
+	}
+	return []model.Article{}, 0, nil
+}
+
+func (m *MockStore) ReviewArticle(ctx context.Context, id, moderatorID uuid.UUID, publish bool, reason string) (*model.Article, error) {
+	if m.ReviewArticleFn != nil {
+		return m.ReviewArticleFn(ctx, id, moderatorID, publish, reason)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) SetArticleCommentsClosed(ctx context.Context, id, userID uuid.UUID, closed bool) error {
+	if m.SetArticleCommentsClosedFn != nil {
+		return m.SetArticleCommentsClosedFn(ctx, id, userID, closed)
+	}
+	return store.ErrNotFound
 }
 
 func (m *MockStore) Ping(ctx context.Context) error {
@@ -482,6 +814,8 @@ var (
 	UserID  = uuid.MustParse("a0000000-0000-0000-0000-000000000002")
 	// ContributorID : rôle contributor (P4-3).
 	ContributorID = uuid.MustParse("a0000000-0000-0000-0000-000000000003")
+	// ModeratorID : rôle moderator (I-1).
+	ModeratorID = uuid.MustParse("a0000000-0000-0000-0000-000000000004")
 )
 
 func AdminUser() *model.User {
@@ -533,6 +867,13 @@ func NewTestServer(mockStore *MockStore) *httptest.Server {
 func AdminToken() string {
 	auth := middleware.NewAuth(TestSecret, TestAccessTTL)
 	t, _ := auth.GenerateToken(AdminID, "admin")
+	return t
+}
+
+// ModeratorToken : jeton d'un modérateur (signalements, I-1).
+func ModeratorToken() string {
+	auth := middleware.NewAuth(TestSecret, TestAccessTTL)
+	t, _ := auth.GenerateToken(ModeratorID, "moderator")
 	return t
 }
 
@@ -621,4 +962,83 @@ func (m *MockStore) ListItemRelationsPage(ctx context.Context, itemID uuid.UUID,
 		return m.ListItemRelationsPageFn(ctx, itemID, rtID, pg)
 	}
 	return []model.ItemRelation{}, 0, nil
+}
+
+// --- Recommendations and blocks (I-4) ---
+
+func (m *MockStore) CreateRecommendation(ctx context.Context, senderID, recipientID, itemID uuid.UUID, message string) (*model.Recommendation, error) {
+	if m.CreateRecommendationFn != nil {
+		return m.CreateRecommendationFn(ctx, senderID, recipientID, itemID, message)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) GetRecommendation(ctx context.Context, id, recipientID uuid.UUID) (*model.Recommendation, error) {
+	if m.GetRecommendationFn != nil {
+		return m.GetRecommendationFn(ctx, id, recipientID)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) ListRecommendations(ctx context.Context, recipientID uuid.UUID, pg model.Pagination) ([]model.Recommendation, int, int, error) {
+	if m.ListRecommendationsFn != nil {
+		return m.ListRecommendationsFn(ctx, recipientID, pg)
+	}
+	return nil, 0, 0, store.ErrNotFound
+}
+
+func (m *MockStore) MarkRecommendationsRead(ctx context.Context, recipientID uuid.UUID, ids []uuid.UUID) error {
+	if m.MarkRecommendationsReadFn != nil {
+		return m.MarkRecommendationsReadFn(ctx, recipientID, ids)
+	}
+	return store.ErrNotFound
+}
+
+func (m *MockStore) DeleteRecommendation(ctx context.Context, id, recipientID uuid.UUID) error {
+	if m.DeleteRecommendationFn != nil {
+		return m.DeleteRecommendationFn(ctx, id, recipientID)
+	}
+	return store.ErrNotFound
+}
+
+func (m *MockStore) BlockUser(ctx context.Context, blockerID, blockedID uuid.UUID, anonymous bool) (*model.Block, error) {
+	if m.BlockUserFn != nil {
+		return m.BlockUserFn(ctx, blockerID, blockedID, anonymous)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) ListBlocks(ctx context.Context, blockerID uuid.UUID, pg model.Pagination) ([]model.Block, int, error) {
+	if m.ListBlocksFn != nil {
+		return m.ListBlocksFn(ctx, blockerID, pg)
+	}
+	return nil, 0, store.ErrNotFound
+}
+
+func (m *MockStore) DeleteBlock(ctx context.Context, blockerID, id uuid.UUID) error {
+	if m.DeleteBlockFn != nil {
+		return m.DeleteBlockFn(ctx, blockerID, id)
+	}
+	return store.ErrNotFound
+}
+
+func (m *MockStore) BlockedBy(ctx context.Context, blockerID uuid.UUID) ([]uuid.UUID, error) {
+	if m.BlockedByFn != nil {
+		return m.BlockedByFn(ctx, blockerID)
+	}
+	return nil, nil
+}
+
+func (m *MockStore) Blockers(ctx context.Context, blockedID uuid.UUID, users []uuid.UUID) ([]uuid.UUID, error) {
+	if m.BlockersFn != nil {
+		return m.BlockersFn(ctx, blockedID, users)
+	}
+	return nil, nil
+}
+
+func (m *MockStore) IsBlocked(ctx context.Context, blockerID, blockedID uuid.UUID) (bool, error) {
+	if m.IsBlockedFn != nil {
+		return m.IsBlockedFn(ctx, blockerID, blockedID)
+	}
+	return false, nil
 }

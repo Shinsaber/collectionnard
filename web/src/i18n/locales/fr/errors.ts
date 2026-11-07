@@ -83,5 +83,12 @@ export default {
     proposal_meta_types:
       "Une proposition ne modifie que des items et des relations.",
     own_proposal: "On ne relit pas ses propres propositions.",
+    reviews_closed: "Les avis sont fermés sur ce type d'item.",
+    report_exists: "Vous avez déjà signalé ce contenu.",
+    own_content: "Impossible sur votre propre contenu.",
+    moderation_state: "Ce contenu a changé entre-temps : rechargez la page.",
+    recommendations_refused: "Ce membre n'accepte pas les recommandations.",
+    already_recommended: "Vous lui avez déjà recommandé cet item.",
+    blocked: "L'auteur de ce contenu n'accepte pas vos interactions.",
   },
 };

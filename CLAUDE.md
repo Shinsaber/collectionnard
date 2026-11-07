@@ -40,7 +40,7 @@ leur emplacement par Claude Code). Un nouveau document va dans `docs/`, avec une
 | [docs/phases/social.md](docs/phases/social.md)                 | Phase 4 (social) : décisions, modèle et API visés — comptes et invitations, statistiques, visibilité, contributions |
 | [docs/audits/suivi.md](docs/audits/suivi.md) | Audits récurrents (`/audit`, skill `.claude/skills/audit/`, agent lecture seule `.claude/agents/auditeur.md`) : constats S-/Q-/C-nnn, états, rapports datés — ne jamais y corriger le code, proposer un lot |
 | [docs/phases/mobile.md](docs/phases/mobile.md)                 | Phase 5 (mobile) : cas d'usage et décisions — photo de couverture et recadrage, scanner de codes-barres, page « Scanner » |
-| [docs/phases/interactions.md](docs/phases/interactions.md) | Phase 6 (en exploration) : avis à critères, modération et votes, échanges sur les avis, articles, recommandations |
+| [docs/phases/interactions.md](docs/phases/interactions.md) | Phase 6 (livrée en test) : avis à critères, modération et réactions, commentaires, articles, recommandations et blocage |
 | [docs/idées.md](docs/idées.md)                               | Pistes notées mais non retenues : prêts, cadeaux, comparaison de collections, suivi, suppression du compte… |
 
 ## Modèle en une table
@@ -49,7 +49,8 @@ leur emplacement par Claude Code). Un nouveau document va dans `docs/`, avec une
 | ---------------- | ---------------- | --------------------------------------------- |
 | `ItemType`       | `Item`           | les attributs de l'item (titre, année, ISBN…) |
 | `RelationType`   | `ItemRelation`   | les attributs du lien (disque, piste, rôle…)  |
-| `CollectionType` | `CollectionItem` | les attributs user↔item (état, prix, note…)   |
+| `CollectionType` | `CollectionItem` | les attributs user↔item (état, prix…)         |
+| `ReviewType`     | `Review`         | les critères notés d'un avis (scénario, dessin…), entiers de 0 à 10 ; le type déclare aussi les relations vers l'édition qu'un avis peut préciser (« Joué sur ») |
 
 - Les items forment un **graphe orienté libre** : un même nœud peut être atteint par plusieurs
   chemins (ex. Épisode via Saison _et_ via DVD). Ne jamais modéliser en arbre strict.
@@ -58,8 +59,9 @@ leur emplacement par Claude Code). Un nouveau document va dans `docs/`, avec une
 - Un `RelationType` a **plusieurs** types source et cible possibles (tables de jonction
   `relation_type_sources` / `relation_type_targets`, champs `source_item_type_ids` /
   `target_item_type_ids`). Le TODO « arrays » de `docs/domaines/livres.md` est donc déjà traité.
-- Les données propres à un utilisateur (état, prix payé, note) vont sur `CollectionItem`,
-  **jamais** sur `Item`.
+- Les données propres à un utilisateur (état, prix payé) vont sur `CollectionItem`, **jamais** sur `Item`. La note et
+  l'avis sur une œuvre vont sur `Review` (un par utilisateur et par item) ; un type d'item sans `review_type_id` n'ouvre
+  pas les avis (Person).
 - `docs/conception.md` parle d'`AttributeDefinition` : c'est le concept historique.
   **L'implémentation réelle est le JSON Schema** (`attributes_schema` JSONB).
 
@@ -136,7 +138,7 @@ docker compose down -v && docker compose up --build   # repart d'une base vide (
 ```
 
 Comptes de dev (seed) : `admin` / `admin` (rôle admin), `shinsaber` / `shinsaber` (rôle user).
-Nouveau compte : `go run . create-user <nom> <email> [--admin|--contributor]` (mot de passe demandé).
+Nouveau compte : `go run . create-user <nom> <email> [--admin|--contributor|--moderator]` (mot de passe demandé).
 Production : images publiées par la CI sur ghcr.io (job `images`, tags `v*` et `main`), `docker-compose.prod.yml`
 (sans seed) — voir README « Mise en production ».
 
@@ -155,7 +157,7 @@ Production : images publiées par la CI sur ghcr.io (job `images`, tags `v*` et 
    format de l'import, UUID fixes) ; modifier un type = incrémenter `package_version` (la mise à jour fusionne,
    les modifications des instances sont gardées). Les seeds ne contiennent que des données de démonstration,
    chargées après l'installation des paquets. UUID lisibles par préfixe — `a…` users, `b…` item_types, `c…` relation_types,
-   `d…` collection_types, `e…` items. Garder ce schéma pour les nouveaux jeux de données
+   `d…` collection_types, `e…` items, `f0…` collections des seeds, `f1…` review_types. Garder ce schéma pour les nouveaux jeux de données
    (prendre des plages libres, ne pas renuméroter l'existant).
 4. Avant de dire « terminé » : `gofmt -l .` + `go vet` + `golangci-lint run` + `go test ./...` côté
    server, `npm run lint` + `npm run lint:openapi` (dès que `api/openapi.yaml` change) + `npm run format:check` + `npm run type-check` + `npm test` côté web,
@@ -188,3 +190,4 @@ perspective) et M5 (photos de l'état d'un exemplaire, paquet `collections` v3) 
 dans `docs/phases/mobile.md`. Retours de la v0.4.0 (branche `retours-mobile`, fusionnée, v0.4.1) : caméra dans
 l'application, loupe et rotation au redressement, visionneuse maison, menus des relations et des collections, thème des
 pages publiques. Documentation restructurée le 2026-11-01 : tout dans `docs/`, README seul à la racine, `LICENSE` (MIT).
+Phase 6 (interactions, `docs/phases/interactions.md`), branche `phase6-interactions` : I-0 (avis et critères), I-1 (signalements, modération, réactions, rôle `moderator`) I-2 (commentaires), I-3 (articles validés par la modération) et I-4 (recommandations, blocage) livrés : Phase 6 close le 2026-11-07, livrée en test ; restent le cadre légal et le RGPD avant l'ouverture publique. Lot suivant (après fusion dans `main`) : exemplaires multiples, prêts, cadeaux réservés, amis (`docs/idées.md`).

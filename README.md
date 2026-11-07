@@ -58,7 +58,7 @@ Le fichier `db/seed.sql` crée deux comptes de développement (appliqué si `SEE
 | `admin`     | `admin`      | admin |
 | `shinsaber` | `shinsaber`  | user  |
 
-Pour créer un compte : `colec-server create-user <nom> <email> [--admin|--contributor]` (mot de passe demandé
+Pour créer un compte : `colec-server create-user <nom> <email> [--admin|--contributor|--moderator]` (mot de passe demandé
 sans écho, ou lu sur l'entrée standard ; 8 caractères minimum). Avec Docker :
 `docker compose run --rm server colec-server create-user <nom> <email> --admin`. Les autres comptes se créent
 ensuite depuis l'application, sur invitation (page « Utilisateurs », ou « Mon profil » si `MEMBER_INVITES=true`).
@@ -247,7 +247,7 @@ emplacement).
 | [docs/phases/evolutions-socle.md](docs/phases/evolutions-socle.md) | Lots E1–E5 : identifiants insensibles à la casse, ordre des types, types d'item permis, images, hors ligne |
 | [docs/phases/social.md](docs/phases/social.md)                 | Phase 4 : comptes et invitations, statistiques personnelles, visibilité et partage, contributions              |
 | [docs/phases/mobile.md](docs/phases/mobile.md)                 | Phase 5 : photo de couverture, redressement et recadrage, scanner de codes-barres, page « Scanner », retours v0.4.0 |
-| [docs/phases/interactions.md](docs/phases/interactions.md) | Phase 6 (en exploration) : avis à critères, modération et votes, échanges sur les avis, articles, recommandations |
+| [docs/phases/interactions.md](docs/phases/interactions.md) | Phase 6 (livrée en test) : avis à critères, modération et réactions, commentaires, articles, recommandations et blocage |
 | [docs/idées.md](docs/idées.md)                               | Pistes notées mais non retenues : prêts, cadeaux, comparaison de collections, suivi, suppression du compte… |
 | [docs/audits/suivi.md](docs/audits/suivi.md)                   | Audits récurrents (`/audit`, lecture seule) : suivi des constats à identifiant stable et rapports datés `AAAA-MM-DD.md` |
 | [api/openapi.yaml](api/openapi.yaml)                           | Spécification OpenAPI 3.1, **source de vérité de l'API**                                                       |
@@ -327,6 +327,7 @@ Le système repose sur un **pattern unique à 3 niveaux** : des méta-types déf
 | **ItemType**       | Item           | "Series" → `{title, synopsis, start_year…}`                   |
 | **RelationType**   | ItemRelation   | "includes_episode" → `{disc, track}`                          |
 | **CollectionType** | CollectionItem | "Ownership" → `{condition, purchase_price, acquisition_date}` |
+| **ReviewType** | Review | "ComicReview" → `{story, art}` : critères notés de 0 à 10 |
 
 Les items forment un **graphe orienté libre** : un même épisode peut être atteint via une diffusion TV et un DVD. Voir l'endpoint `GET /items/{id}/graph`.
 

@@ -72,6 +72,10 @@
   --c-accent: #e09a2c;
   --c-accent-ink: #17202b;
   --c-danger: #a2342b;
+  /* Étoiles des avis : basse (0–4), moyenne (5–7), haute (8–10). */
+  --c-star-low: #c2412f;
+  --c-star-mid: #e39320;
+  --c-star-high: #2e8b57;
 
   --s-card:
     0 1px 2px rgb(23 32 43 / 0.06), 0 6px 18px -6px rgb(23 32 43 / 0.12);
@@ -151,6 +155,9 @@ html.dark {
   --c-accent: #e09a2c;
   --c-accent-ink: #17202b;
   --c-danger: #f08a80;
+  --c-star-low: #f07a6a;
+  --c-star-mid: #f0aa45;
+  --c-star-high: #62c48a;
 
   /* Halos clairs teintés pétrole, flou réduit (retour du mainteneur). */
   --s-card:
@@ -492,4 +499,41 @@ html.dark .el-button--primary {
 /* Nombres : alignés à gauche comme les autres champs (Element Plus les centre). */
 .el-input-number .el-input .el-input__inner {
   text-align: left;
+}
+
+/* Texte d'un avis ou d'un commentaire (Markdown restreint, lib/markdown.ts). */
+.review-body {
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+.review-body p,
+.review-body ul,
+.review-body ol,
+.review-body blockquote,
+.review-body pre {
+  margin-block: 0.4em;
+}
+.review-body ul {
+  list-style: disc;
+  padding-inline-start: 1.4em;
+}
+.review-body ol {
+  list-style: decimal;
+  padding-inline-start: 1.4em;
+}
+.review-body blockquote {
+  border-inline-start: 3px solid var(--c-line);
+  color: var(--c-muted);
+  padding-inline-start: 0.8em;
+}
+.review-body a {
+  color: var(--c-link);
+  text-decoration: underline;
+}
+.review-body code {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.9em;
+}
+.review-body pre {
+  overflow-x: auto;
 }

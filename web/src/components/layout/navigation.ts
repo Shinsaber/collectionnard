@@ -8,9 +8,7 @@ export const NAV_ICONS = {
   catalog: "M4 3h6v18H4zM12 6h5v15h-5zM19 7l2 13",
   collections: "M6 3h12v18l-6-4-6 4z",
   more: "M4 12a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0M10.5 12a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0M17 12a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0",
-  itemTypes: "M12 2l9 5v10l-9 5-9-5V7zM12 12l9-5M12 12v10M12 12L3 7",
-  relationTypes: "M4 12h16M14 6l6 6-6 6M10 6l-6 6 6 6",
-  collectionTypes: "M3 12V4h8l10 10-8 8zM7.5 7.5h.01",
+  types: "M12 2l9 5v10l-9 5-9-5V7zM12 12l9-5M12 12v10M12 12L3 7",
   stats: "M4 20V10M10 20V4M16 20v-7M22 20H2",
   proposals: "M4 4h16v12H8l-4 4zM8 9h8M8 12h5",
   members:
@@ -18,6 +16,8 @@ export const NAV_ICONS = {
   offline:
     "M3 3l18 18M8.6 8.6A5 5 0 0 0 7 18h10.6M20.4 16.4A4 4 0 0 0 18 9a6 6 0 0 0-7.7-3.8",
   importExport: "M12 3v12M7 10l5 5 5-5M4 21h16",
+  recommendations: "M22 2L11 13M22 2l-7 20-4-9-9-4z",
+  moderation: "M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6zM9 12l2 2 4-4",
   scan: "M4 5v14M8 5v14M12 5v9M16 5v14M20 5v9M12 17v2M20 17v2",
   images: "M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15.5 9a1.5 1.5 0 1 0 0 .01",
   domains: "M12 3l9 5-9 5-9-5zM3 12.5l9 5 9-5M3 16.5l9 5 9-5",
@@ -38,9 +38,13 @@ export interface NavLink {
   icon: NavIconName;
 }
 
+/** Lien « Types » du menu : son premier onglet ; les autres sortes de types l'activent aussi. */
+const TYPES_PATH = "/admin/item-types";
+
 /** Un lien est actif sur sa route et ses sous-routes (`/items` couvre `/items/:id`) ; `/` seulement sur elle-même. */
 export function isNavActive(to: string, path: string): boolean {
   if (to === "/") return path === "/";
+  if (to === TYPES_PATH) return /^\/admin\/[a-z]+-types(\/|$)/.test(path);
   return path === to || path.startsWith(`${to}/`);
 }
 
@@ -51,7 +55,9 @@ export function isMoreActive(path: string): boolean {
     isNavActive("/scan", path) ||
     isNavActive("/stats", path) ||
     isNavActive("/members", path) ||
+    isNavActive("/recommendations", path) ||
     isNavActive("/proposals", path) ||
+    isNavActive("/moderation", path) ||
     isNavActive("/offline", path)
   );
 }
@@ -72,6 +78,11 @@ export function useNavigation() {
     { to: "/stats", label: t("layout.nav.stats"), icon: "stats" },
     { to: "/proposals", label: t("layout.nav.proposals"), icon: "proposals" },
     { to: "/members", label: t("layout.nav.members"), icon: "members" },
+    {
+      to: "/recommendations",
+      label: t("layout.nav.recommendations"),
+      icon: "recommendations",
+    },
     { to: "/offline", label: t("layout.nav.offline"), icon: "offline" },
   ]);
 
@@ -81,6 +92,11 @@ export function useNavigation() {
     { to: "/stats", label: t("layout.nav.stats"), icon: "stats" },
     { to: "/proposals", label: t("layout.nav.proposals"), icon: "proposals" },
     { to: "/members", label: t("layout.nav.members"), icon: "members" },
+    {
+      to: "/recommendations",
+      label: t("layout.nav.recommendations"),
+      icon: "recommendations",
+    },
     { to: "/offline", label: t("layout.nav.offline"), icon: "offline" },
   ]);
 
@@ -95,47 +111,42 @@ export function useNavigation() {
     },
   ]);
 
-  /** Section « Administration » : tout pour un admin, les sources externes pour un contributeur. */
-  const allAdminLinks = computed<(NavLink & { contributor?: boolean })[]>(
-    () => [
-      { to: "/admin/users", label: t("layout.nav.users"), icon: "users" },
-      { to: "/admin/domains", label: t("layout.nav.domains"), icon: "domains" },
-      {
-        to: "/admin/item-types",
-        label: t("layout.nav.itemTypes"),
-        icon: "itemTypes",
-      },
-      {
-        to: "/admin/relation-types",
-        label: t("layout.nav.relationTypes"),
-        icon: "relationTypes",
-      },
-      {
-        to: "/admin/collection-types",
-        label: t("layout.nav.collectionTypes"),
-        icon: "collectionTypes",
-      },
-      {
-        to: "/admin/import-export",
-        label: t("layout.nav.importExport"),
-        icon: "importExport",
-      },
-      {
-        to: "/admin/external-import",
-        label: t("layout.nav.externalImport"),
-        icon: "external",
-        contributor: true,
-      },
-      { to: "/admin/images", label: t("layout.nav.images"), icon: "images" },
-    ],
-  );
+  /** Section « Administration » : tout pour un admin ; les sources externes pour un contributeur, la
+   * modération pour un modérateur. */
+  const allAdminLinks = computed<
+    (NavLink & { contributor?: boolean; moderator?: boolean })[]
+  >(() => [
+    {
+      to: "/moderation",
+      label: t("layout.nav.moderation"),
+      icon: "moderation",
+      moderator: true,
+    },
+    { to: "/admin/users", label: t("layout.nav.users"), icon: "users" },
+    { to: "/admin/domains", label: t("layout.nav.domains"), icon: "domains" },
+    { to: TYPES_PATH, label: t("layout.nav.types"), icon: "types" },
+    {
+      to: "/admin/import-export",
+      label: t("layout.nav.importExport"),
+      icon: "importExport",
+    },
+    {
+      to: "/admin/external-import",
+      label: t("layout.nav.externalImport"),
+      icon: "external",
+      contributor: true,
+    },
+    { to: "/admin/images", label: t("layout.nav.images"), icon: "images" },
+  ]);
 
   const adminLinks = computed<NavLink[]>(() =>
     auth.isAdmin
       ? allAdminLinks.value
-      : auth.canEditCatalog
-        ? allAdminLinks.value.filter((l) => l.contributor)
-        : [],
+      : allAdminLinks.value.filter(
+          (l) =>
+            (l.contributor && auth.canEditCatalog) ||
+            (l.moderator && auth.canModerate),
+        ),
   );
 
   return { mainLinks, tabLinks, sheetLinks, adminLinks };

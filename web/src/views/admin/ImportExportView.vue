@@ -81,6 +81,7 @@ const ENTITIES: ImportEntity[] = [
   "item_types",
   "collection_types",
   "relation_types",
+  "review_types",
   "items",
   "relations",
 ];

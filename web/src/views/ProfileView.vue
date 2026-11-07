@@ -13,6 +13,20 @@
       </template>
     </PageHeader>
 
+    <section
+      class="flex flex-col gap-4 rounded-2xl bg-surface p-5 shadow-card"
+      data-test="my-reviews"
+    >
+      <h2 class="text-lg font-extrabold tracking-tight">
+        {{ t("reviews.myReviews") }}
+      </h2>
+      <ReviewUserList
+        :fetch="reviewApi.listMine"
+        :empty-text="t('reviews.noMyReviews')"
+        show-visibility
+      />
+    </section>
+
     <!-- Profil -->
     <section class="flex flex-col gap-4 rounded-2xl bg-surface p-5 shadow-card">
       <h2 class="text-lg font-extrabold tracking-tight">
@@ -85,6 +99,17 @@
             {{ t("sharing.profile.view") }}
           </RouterLink>
         </div>
+        <div class="flex flex-col gap-1.5" data-test="profile-recommendations">
+          <span class="flex items-center gap-3">
+            <ElSwitch :id="`${id}-reco`" v-model="acceptsRecommendations" />
+            <label :for="`${id}-reco`" class="font-semibold">{{
+              t("recommendations.settings.accept")
+            }}</label>
+          </span>
+          <p class="text-sm text-muted">
+            {{ t("recommendations.settings.help") }}
+          </p>
+        </div>
         <ElButton
           type="primary"
           native-type="submit"
@@ -130,6 +155,8 @@
       </form>
     </section>
 
+    <BlocksCard />
+
     <InvitationsCard v-if="auth.user?.can_invite" :admin="auth.isAdmin" />
   </div>
 </template>
@@ -138,14 +165,16 @@
 // Mon profil (P4-0) : nom affiché, présentation, avatar ; mot de passe ; invitations si permises.
 import { computed, ref, useId, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { meApi, uploadApi } from "@/api/client";
+import { meApi, reviewApi, uploadApi } from "@/api/client";
 import { useAuthStore } from "@/stores/auth";
 import { useNotify } from "@/composables/useNotify";
 import PageHeader from "@/components/common/PageHeader.vue";
+import BlocksCard from "@/components/account/BlocksCard.vue";
 import InvitationsCard from "@/components/account/InvitationsCard.vue";
 import PasswordFields from "@/components/account/PasswordFields.vue";
 import UserAvatar from "@/components/account/UserAvatar.vue";
 import VisibilitySelect from "@/components/sharing/VisibilitySelect.vue";
+import ReviewUserList from "@/components/review/ReviewUserList.vue";
 import type { Visibility } from "@/api/types";
 
 const { t } = useI18n();
@@ -158,6 +187,7 @@ const displayName = ref("");
 const bio = ref("");
 const avatar = ref("");
 const profileVisibility = ref<Visibility>("private");
+const acceptsRecommendations = ref(true);
 watch(
   () => auth.user,
   (u) => {
@@ -165,6 +195,7 @@ watch(
     bio.value = u?.bio ?? "";
     avatar.value = u?.avatar ?? "";
     profileVisibility.value = u?.profile_visibility ?? "private";
+    acceptsRecommendations.value = u?.accepts_recommendations ?? true;
   },
   { immediate: true },
 );
@@ -201,6 +232,7 @@ async function saveProfile() {
       bio: bio.value.trim(),
       avatar: avatar.value,
       profile_visibility: profileVisibility.value,
+      accepts_recommendations: acceptsRecommendations.value,
     });
     auth.user.can_invite = canInvite;
     notifySuccess(t("account.profile.saved"));

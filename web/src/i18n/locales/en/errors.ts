@@ -76,6 +76,13 @@ const en: typeof fr = {
       "Records changed since the proposal: resolve the conflicts.",
     proposal_meta_types: "A proposal changes items and relations only.",
     own_proposal: "Nobody reviews their own proposals.",
+    reviews_closed: "Reviews are closed on this item type.",
+    report_exists: "You already reported this content.",
+    own_content: "Not possible on your own content.",
+    moderation_state: "This content changed meanwhile: reload the page.",
+    recommendations_refused: "This member does not accept recommendations.",
+    already_recommended: "You already recommended this item to them.",
+    blocked: "The author of this content does not accept your interactions.",
   },
 };
 

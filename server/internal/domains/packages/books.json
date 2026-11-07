@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "books",
-  "package_version": 6,
+  "package_version": 8,
   "title": {
     "fr": "Livres",
     "en": "Books"
@@ -13,6 +13,108 @@
   },
   "requires": [
     "people"
+  ],
+  "review_types": [
+    {
+      "attributes_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "art": {
+            "maximum": 10,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "story": {
+            "maximum": 10,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "x-description": {
+          "en": "Criteria of a comic or a manga",
+          "fr": "Critères d'une BD ou d'un manga"
+        },
+        "x-labels": {
+          "en": {
+            "art": "Art",
+            "story": "Story"
+          },
+          "fr": {
+            "art": "Dessin",
+            "story": "Scénario"
+          }
+        },
+        "x-order": [
+          "story",
+          "art"
+        ],
+        "x-title": {
+          "en": "Comic review",
+          "fr": "Avis de BD ou manga"
+        }
+      },
+      "description": "Critères d'une BD ou d'un manga",
+      "id": "f1000000-0000-0000-0000-000000000001",
+      "context_relation_type_ids": [
+        "c0000000-0000-0000-0000-000000000013"
+      ],
+      "context_label": {
+        "en": "Read in",
+        "fr": "Lu dans"
+      },
+      "name": "ComicReview"
+    },
+    {
+      "attributes_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "story": {
+            "maximum": 10,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "style": {
+            "maximum": 10,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "x-description": {
+          "en": "Criteria of a novel",
+          "fr": "Critères d'un roman"
+        },
+        "x-labels": {
+          "en": {
+            "story": "Story",
+            "style": "Style"
+          },
+          "fr": {
+            "story": "Histoire",
+            "style": "Style"
+          }
+        },
+        "x-order": [
+          "story",
+          "style"
+        ],
+        "x-title": {
+          "en": "Novel review",
+          "fr": "Avis de roman"
+        }
+      },
+      "description": "Critères d'un roman",
+      "id": "f1000000-0000-0000-0000-000000000002",
+      "context_relation_type_ids": [
+        "c0000000-0000-0000-0000-000000000013"
+      ],
+      "context_label": {
+        "en": "Read in",
+        "fr": "Lu dans"
+      },
+      "name": "NovelReview"
+    }
   ],
   "item_types": [
     {
@@ -202,6 +304,7 @@
     },
     {
       "id": "b0000000-0000-0000-0000-000000000011",
+      "review_type_id": "f1000000-0000-0000-0000-000000000002",
       "name": "Saga",
       "description": "Arc narratif ou sous-ensemble d'un univers",
       "display_order": 50,
@@ -376,6 +479,7 @@
     },
     {
       "id": "b0000000-0000-0000-0000-000000000012",
+      "review_type_id": "f1000000-0000-0000-0000-000000000001",
       "name": "Manga",
       "description": "Œuvre de type manga (manhwa, manhua, webtoon)",
       "display_order": 20,
@@ -669,6 +773,7 @@
     },
     {
       "id": "b0000000-0000-0000-0000-000000000013",
+      "review_type_id": "f1000000-0000-0000-0000-000000000001",
       "name": "Comic",
       "description": "Bande dessinée (franco-belge, comics, roman graphique)",
       "display_order": 30,
@@ -1261,6 +1366,7 @@
     },
     {
       "id": "b0000000-0000-0000-0000-000000000015",
+      "review_type_id": "f1000000-0000-0000-0000-000000000001",
       "name": "Volume",
       "description": "Volume physique individuel (tome, album)",
       "display_order": 110,
@@ -1469,6 +1575,7 @@
     },
     {
       "id": "b0000000-0000-0000-0000-000000000018",
+      "review_type_id": "f1000000-0000-0000-0000-000000000002",
       "name": "Novel",
       "description": "Œuvre littéraire : roman, nouvelle, recueil…",
       "display_order": 35,

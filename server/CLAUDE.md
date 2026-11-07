@@ -12,13 +12,14 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 | `model`      | Structs JSON (entités, `*Create`, `*Update`, `Pagination`, `APIError`)                               |
 | `store`      | Interface `Store` (`store.go`) + implémentation pgx (1 fichier/domaine)                              |
 | `handler`    | Handlers HTTP, 1 fichier/domaine ; **toutes les routes** dans `handler.go` → `Router()`              |
-| `middleware` | Cinq niveaux d'accès du `Router()` : public ; `OptionalAuthenticate` (routes `/public/…`, `/share` : anonyme ou jeton valide) ; `Authenticate` (JWT HS256, `exp` obligatoire) ; `RequireRole(admin, contributor)` (écriture du catalogue, modération, import externe) ; `RequireAdmin` (méta-types, administration, suppression d'item). Plus `RateLimiter` (`/auth/*`, deux compteurs), `TrustedProxyRealIP`, `RequestLogger` |
+| `middleware` | Cinq niveaux d'accès du `Router()` : public ; `OptionalAuthenticate` (routes `/public/…`, `/share` : anonyme ou jeton valide) ; `Authenticate` (JWT HS256, `exp` obligatoire) ; `RequireRole(admin, contributor)` (écriture du catalogue, modération des propositions, import externe) ; `RequireRole(admin, moderator)` (modération des avis, I-1) ; `RequireAdmin` (méta-types, administration, suppression d'item). Plus `RateLimiter` (`/auth/*`, deux compteurs), `TrustedProxyRealIP`, `RequestLogger` |
 | `validator`  | `ValidateAttributes(schema, data)` + `FormatValidationError`                                         |
 | `testutil`   | `MockStore` (champs `XxxFn`), `NewTestServer`, `AdminToken`/`UserToken`, `AuthHeader`                |
 | `label`      | `Render(schema, attrs, lang)` : libellé d'un item via `x-label` (pendant de `web/src/lib/schema.ts`) |
 | `itemquery`  | Recherche avancée de `GET /items` : filtres `attr.<clé>[.<op>]`, tri `attr.<clé>`, requête plein texte — validés contre le schéma du type (pendant de `web/src/lib/itemSearch.ts`) |
 | `collstats`  | Statistiques d'une collection (P4-1) déduites du schéma du CollectionType : nombres, répartitions (enum, booléen), mois des dates, ajouts par mois ; la complétude (relations `x-completeness`) est calculée en SQL dans `store/stats.go` |
 | `privacy`    | Visibilité et champs cachés (P4-2) : `CanView`, `Levels`, `HiddenFields` (`x-private` ou `hidden_fields`), `StripAttributes`, `StripSchema`. **Toute lecture faite pour un autre que le propriétaire** (routes `/public/…`, `/share`, statistiques) passe par ce filtre, admins compris |
+| `review`     | Règles d'un avis (I-0) : `CheckSchema` (critères = entiers de 0 à 10), `Rate` (moyenne, tous les critères obligatoires), `MinRatings` (seuil d'affichage d'une moyenne), `MaxBody`, `Languages` (pendant de `web/src/i18n/langs.ts`) |
 | `identifier` | Champs `x-identifier` d'un schéma (premier niveau ou un niveau dans un objet) et leurs valeurs : doublons (`POST /items/duplicates`, P4-3b) |
 | `csvexport`  | Mise à plat CSV des attributs (colonnes depuis le schéma, i18n-text → `clé.langue`, BOM, anti-injection de formules) |
 | `dbmigrate`  | Migrations tern (`db/migrations`) + seeds de démonstration (`SEED_FILE` : liste séparée par des virgules ; défaut `seed.sql`, `seed_bd_manga.sql`, `seed_music.sql`, `seed_video.sql` puis `seed_games.sql`), précédés de l'installation des paquets de domaine : sous-commandes `colec-server migrate` / `seed` / `install-domain` (`cmd.go`) |
@@ -87,6 +88,32 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 - Notifications (`handler/notification.go`, `store/notification.go`, P4-3c) : `notifyProposal` / `notifyComment`
   après une décision ou un message ; l'émetteur n'est jamais notifié, un échec est journalisé sans faire échouer la
   requête.
+- Avis (`handler/review.go`, `store/review.go`, I-0) : toute note compte dans la moyenne, quelle que soit sa visibilité ; ce que
+  voit le lecteur se décide au serveur (`reviewListed` en SQL, auteur retiré par `signedFor` via `privacy.CanView`, `user_id`
+  jamais sérialisé), admins compris. Une moyenne sous `review.MinRatings` notes ne sort pas de l'API. La liste d'un profil ne
+  montre que les avis signés pour le lecteur. L'édition utilisée (`context_item_id`, cible de l'item par une relation de
+  `review_type_context_relations`, vérifiée par `IsReviewContext`) est retirée avec l'auteur ; à l'import, ces relations
+  s'écrivent après les types de relation (`reviewTypeContexts`).
+- Modération (`handler/moderation.go`, `store/moderation.go`, I-1) : on ne signale ou ne réagit qu'à un avis montré au lecteur
+  (`reviewShownTo` : ni le sien, ni une note seule, ni un avis masqué ; 404 sinon), jamais à son propre contenu (403
+  `own_content`). `ModerateReview` masque / rétablit / classe dans une transaction avec son entrée de `moderation_log`
+  (ajout seul, copie du contenu) ; un avis masqué sort des listes, des moyennes et du profil public, son auteur le voit
+  avec le motif. Les réactions ne modèrent jamais. Écritures sociales limitées par heure et par compte (`handler/rate.go` :
+  avis 60, signalements 20, réactions 300, commentaires 120, articles 10 ; recommandations 20 par jour ; admins exemptés ;
+  429 `rate_limited`).
+- Articles (`handler/article.go`, `store/article.go`, I-3) : `pending` pour un membre (et après modification),
+  `published` directement pour un admin ou un modérateur ; validation par `ReviewArticle` (jamais son propre article) ;
+  lien `http(s)` vérifié, jamais récupéré. Le fil d'un article n'existe qu'une fois publié (`articleShownTo`).
+- Commentaires (`handler/comment.go`, `store/comment.go`, I-2) : le fil d'un avis suit sa visibilité (`threadVisibleTo` : pas de
+  fil pour une note seule) ; `shapeComments` retire le nom de l'auteur d'un avis anonyme qui répond. Modération commune aux
+  avis et commentaires (`Store.Moderate`, `moderationTables`).
+- Recommandations et blocages (`handler/recommendation.go`, `store/recommendation.go`, I-4) : destinataire de l'annuaire
+  (`privacy.CanView`, sinon 404) ; refus et blocage répondent le même 403 `recommendations_refused` ; quota par jour
+  (`limitedIn`, fenêtre de `hourlyLimit`). Un bloqué est refusé (403 `blocked`, `refuseBlocked`) seulement quand le
+  contenu le nomme au lecteur (`thread.AuthorNamed`) ; sinon le blocage masque sans refuser. Listes du bloqueur :
+  `notBlockedBy` en SQL (avis signés, articles), traces `blocked` dans `shapeComments` (jamais pour l'auteur d'un avis
+  anonyme), `withoutBlockers` avant toute notification d'un fil. `user_blocks.anonymous` : bloqué sans être nommé, son
+  nom ne sort jamais de `/me/blocks`.
 - Visibilité et partage (`handler/sharing.go`, `store/sharing.go`, P4-2) : routes publiques derrière
   `Auth.OptionalAuthenticate` (sans jeton : anonyme, `GetUserID` = `uuid.Nil` ; jeton invalide : 401) ; `loadReadable`
   vérifie visibilité et compte actif (404 sinon) et calcule les champs cachés ; une nouvelle lecture publique doit

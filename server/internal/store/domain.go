@@ -18,8 +18,14 @@ import (
 var snapshotSQL = map[string]string{
 	model.EntityItemTypes: `SELECT t.id, jsonb_strip_nulls(jsonb_build_object(
 		'name', t.name, 'description', t.description, 'attributes_schema', t.attributes_schema,
-		'display_order', t.display_order))
+		'display_order', t.display_order, 'review_type_id', t.review_type_id))
 		FROM item_types t WHERE t.id = ANY($1)`,
+	model.EntityReviewTypes: `SELECT t.id, jsonb_strip_nulls(jsonb_build_object(
+		'name', t.name, 'description', t.description, 'attributes_schema', t.attributes_schema,
+		'context_label', t.context_label,
+		'context_relation_type_ids', (SELECT jsonb_agg(j.relation_type_id ORDER BY j.relation_type_id)
+			FROM review_type_context_relations j WHERE j.review_type_id = t.id)))
+		FROM review_types t WHERE t.id = ANY($1)`,
 	model.EntityCollectionTypes: `SELECT t.id, jsonb_strip_nulls(jsonb_build_object(
 		'name', t.name, 'description', t.description, 'attributes_schema', t.attributes_schema,
 		'item_type_ids', COALESCE((SELECT jsonb_agg(j.item_type_id ORDER BY j.item_type_id)
@@ -101,6 +107,9 @@ func loadOrigins(ctx context.Context, q querier, ids []uuid.UUID) (map[uuid.UUID
 
 func packageIDs(pkg *model.DomainPackage) []uuid.UUID {
 	var ids []uuid.UUID
+	for _, t := range pkg.ReviewTypes {
+		ids = append(ids, t.ID)
+	}
 	for _, t := range pkg.ItemTypes {
 		ids = append(ids, t.ID)
 	}
@@ -221,6 +230,9 @@ func (s *PgStore) installTx(ctx context.Context, tx pgx.Tx, pkg *model.DomainPac
 
 	imp := model.NewImportReport(dryRun)
 	im := &importer{s: s, tx: tx, rep: imp}
+	if err := im.reviewTypes(ctx, plan.Catalog.ReviewTypes); err != nil {
+		return nil, err
+	}
 	if err := im.itemTypes(ctx, plan.Catalog.ItemTypes); err != nil {
 		return nil, err
 	}
@@ -228,6 +240,9 @@ func (s *PgStore) installTx(ctx context.Context, tx pgx.Tx, pkg *model.DomainPac
 		return nil, err
 	}
 	if err := im.relationTypes(ctx, plan.Catalog.RelationTypes); err != nil {
+		return nil, err
+	}
+	if err := im.reviewTypeContexts(ctx, plan.Catalog.ReviewTypes); err != nil {
 		return nil, err
 	}
 	rep.Errors = imp.Errors
@@ -276,7 +291,7 @@ func (s *PgStore) ListDomains(ctx context.Context) ([]model.DomainInfo, error) {
 		info := model.DomainInfo{ID: p.ID, Title: p.Title, Description: p.Description,
 			Requires:       append([]string{}, p.Requires...),
 			PackageVersion: p.PackageVersion, Status: model.DomainNotInstalled,
-			ItemTypes: len(p.ItemTypes), RelationTypes: len(p.RelationTypes), CollectionTypes: len(p.CollectionTypes)}
+			ItemTypes: len(p.ItemTypes), RelationTypes: len(p.RelationTypes), CollectionTypes: len(p.CollectionTypes), ReviewTypes: len(p.ReviewTypes)}
 		for id, o := range origins {
 			if o.domain != p.ID {
 				continue

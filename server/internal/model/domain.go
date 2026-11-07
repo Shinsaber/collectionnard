@@ -19,6 +19,7 @@ type DomainPackage struct {
 	ItemTypes       []ExportItemType       `json:"item_types"`
 	CollectionTypes []ExportCollectionType `json:"collection_types"`
 	RelationTypes   []ExportRelationType   `json:"relation_types"`
+	ReviewTypes     []ExportReviewType     `json:"review_types,omitempty"`
 }
 
 // Domain install states (DomainInfo.Status).
@@ -43,6 +44,7 @@ type DomainInfo struct {
 	ItemTypes       int  `json:"item_types"`
 	RelationTypes   int  `json:"relation_types"`
 	CollectionTypes int  `json:"collection_types"`
+	ReviewTypes     int  `json:"review_types"`
 }
 
 // Outcomes of a meta-type in a domain install (DomainInstallEntry.Outcome).
@@ -56,7 +58,7 @@ const (
 
 // DomainInstallEntry is the outcome for one meta-type of the package.
 type DomainInstallEntry struct {
-	Entity  string    `json:"entity"` // item_types | collection_types | relation_types
+	Entity  string    `json:"entity"` // item_types | collection_types | relation_types | review_types
 	ID      uuid.UUID `json:"id"`
 	Name    string    `json:"name"`
 	Outcome string    `json:"outcome"`

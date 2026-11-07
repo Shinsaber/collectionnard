@@ -38,6 +38,7 @@ type Handler struct {
 
 	uploads uploadQuota // hourly quota of POST /uploads per account (upload_quota.go)
 	thumbs  thumbGate   // decodings of thumbnails in flight (thumbnail.go)
+	rates   hourlyLimit // hourly limits of the social writes per account (rate.go)
 }
 
 func New(s store.Store, auth *middleware.Auth, cfg *config.Config) *Handler {
@@ -122,6 +123,12 @@ func (h *Handler) Router() chi.Router {
 		r.Get("/api/v1/share", h.GetSharedCollection)
 		r.Get("/api/v1/share/items", h.ListSharedCollectionItems)
 		r.Get("/api/v1/share/stats", h.GetSharedCollectionStats)
+		r.Get("/api/v1/public/users/{username}/reviews", h.ListPublicReviews)
+		r.Get("/api/v1/items/{id}/reviews", h.ListItemReviews)
+		r.Get("/api/v1/items/{id}/reviews/summary", h.GetItemReviewSummary)
+		r.Get("/api/v1/reviews/{id}/comments", h.ListReviewComments)
+		r.Get("/api/v1/items/{id}/articles", h.ListItemArticles)
+		r.Get("/api/v1/articles/{id}/comments", h.ListArticleComments)
 	})
 
 	// Authenticated
@@ -143,6 +150,14 @@ func (h *Handler) Router() chi.Router {
 		r.Get("/api/v1/me/notifications", h.ListNotifications)
 		r.Post("/api/v1/me/notifications/read", h.MarkNotificationsRead)
 		r.Get("/api/v1/members", h.ListMembers)
+		// Recommandations et blocages (I-4).
+		r.Post("/api/v1/items/{id}/recommendations", h.CreateRecommendation)
+		r.Get("/api/v1/me/recommendations", h.ListMyRecommendations)
+		r.Post("/api/v1/me/recommendations/read", h.MarkRecommendationsRead)
+		r.Delete("/api/v1/me/recommendations/{id}", h.DeleteMyRecommendation)
+		r.Get("/api/v1/me/blocks", h.ListBlocks)
+		r.Post("/api/v1/me/blocks", h.CreateBlock)
+		r.Delete("/api/v1/me/blocks/{id}", h.DeleteBlock)
 
 		// Read endpoints (all authenticated users)
 		r.Get("/api/v1/item-types", h.ListItemTypes)
@@ -151,6 +166,8 @@ func (h *Handler) Router() chi.Router {
 		r.Get("/api/v1/relation-types/{id}", h.GetRelationType)
 		r.Get("/api/v1/collection-types", h.ListCollectionTypes)
 		r.Get("/api/v1/collection-types/{id}", h.GetCollectionType)
+		r.Get("/api/v1/review-types", h.ListReviewTypes)
+		r.Get("/api/v1/review-types/{id}", h.GetReviewType)
 		r.Get("/api/v1/items", h.ListItems)
 		r.Get("/api/v1/items/export", h.ExportItemsCSV)
 		r.Get("/api/v1/items/{id}", h.GetItem)
@@ -180,6 +197,49 @@ func (h *Handler) Router() chi.Router {
 		r.Delete("/api/v1/collections/{collectionId}/items/{itemId}", h.RemoveItemFromCollection)
 
 		r.Get("/api/v1/items/{id}/history", h.GetItemHistory)
+
+		// Avis (I-0) : celui du lecteur.
+		r.Get("/api/v1/me/reviews", h.ListMyReviews)
+		r.Get("/api/v1/items/{id}/reviews/mine", h.GetMyReview)
+		r.Put("/api/v1/items/{id}/reviews/mine", h.PutMyReview)
+		r.Delete("/api/v1/items/{id}/reviews/mine", h.DeleteMyReview)
+		r.Put("/api/v1/reviews/{id}/reactions/{kind}", h.SetReaction)
+		r.Delete("/api/v1/reviews/{id}/reactions/{kind}", h.SetReaction)
+		r.Post("/api/v1/reports", h.CreateReport)
+		r.Post("/api/v1/reviews/{id}/comments", h.CreateReviewComment)
+		r.Post("/api/v1/reviews/{id}/comments/close", h.CloseReviewComments)
+		r.Post("/api/v1/reviews/{id}/comments/open", h.OpenReviewComments)
+		r.Put("/api/v1/comments/{id}", h.UpdateComment)
+		r.Delete("/api/v1/comments/{id}", h.DeleteComment)
+		r.Post("/api/v1/items/{id}/articles", h.CreateItemArticle)
+		r.Put("/api/v1/articles/{id}", h.UpdateArticle)
+		r.Delete("/api/v1/articles/{id}", h.DeleteArticle)
+		r.Post("/api/v1/articles/{id}/comments", h.CreateArticleComment)
+		r.Post("/api/v1/articles/{id}/comments/close", h.CloseArticleComments)
+		r.Post("/api/v1/articles/{id}/comments/open", h.OpenArticleComments)
+
+		// Modération des avis (I-1) : admins et modérateurs.
+		r.Group(func(r chi.Router) {
+			r.Use(h.Auth.RequireRole(model.RoleAdmin, model.RoleModerator))
+
+			r.Get("/api/v1/moderation/count", h.CountModerationQueue)
+			r.Get("/api/v1/moderation/queue", h.ListModerationQueue)
+			r.Get("/api/v1/moderation/log", h.ListModerationLog)
+			r.Get("/api/v1/moderation/users/{id}/history", h.GetModerationHistory)
+			r.Post("/api/v1/moderation/reviews/{id}/hide", h.HideReview)
+			r.Post("/api/v1/moderation/reviews/{id}/restore", h.RestoreReview)
+			r.Post("/api/v1/moderation/reviews/{id}/dismiss", h.DismissReviewReports)
+			r.Post("/api/v1/moderation/comments/{id}/hide", h.HideComment)
+			r.Post("/api/v1/moderation/comments/{id}/restore", h.RestoreComment)
+			r.Post("/api/v1/moderation/comments/{id}/dismiss", h.DismissCommentReports)
+			r.Get("/api/v1/moderation/articles", h.ListPendingArticles)
+			r.Post("/api/v1/moderation/articles/{id}/publish", h.PublishArticle)
+			r.Post("/api/v1/moderation/articles/{id}/reject", h.RejectArticle)
+			r.Post("/api/v1/moderation/articles/{id}/hide", h.HideArticle)
+			r.Post("/api/v1/moderation/articles/{id}/restore", h.RestoreArticle)
+			r.Post("/api/v1/moderation/articles/{id}/dismiss", h.DismissArticleReports)
+		})
+
 		r.Post("/api/v1/items/duplicates", h.FindDuplicates)
 
 		// Sources externes (Wikidata, BnF, MusicBrainz, TVmaze) : recherche et aperçu pour tous ;
@@ -244,6 +304,10 @@ func (h *Handler) Router() chi.Router {
 			r.Post("/api/v1/collection-types", h.CreateCollectionType)
 			r.Put("/api/v1/collection-types/{id}", h.UpdateCollectionType)
 			r.Delete("/api/v1/collection-types/{id}", h.DeleteCollectionType)
+
+			r.Post("/api/v1/review-types", h.CreateReviewType)
+			r.Put("/api/v1/review-types/{id}", h.UpdateReviewType)
+			r.Delete("/api/v1/review-types/{id}", h.DeleteReviewType)
 
 			r.Delete("/api/v1/items/{id}", h.DeleteItem)
 

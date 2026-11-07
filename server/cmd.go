@@ -117,7 +117,7 @@ func runHashPassword(args []string) int {
 	return 0
 }
 
-// runCreateUser implements `colec-server create-user <username> <email> [--admin|--contributor]`:
+// runCreateUser implements `colec-server create-user <username> <email> [--admin|--contributor|--moderator]`:
 // the first account of a production instance (seed disabled), or any later one.
 // The password is typed twice without echo on a terminal, otherwise read from the
 // first line of standard input (scripts: `echo … | colec-server create-user …`).
@@ -130,12 +130,14 @@ func runCreateUser(args []string) int {
 			role = model.RoleAdmin
 		case "--contributor":
 			role = model.RoleContributor
+		case "--moderator":
+			role = model.RoleModerator
 		default:
 			pos = append(pos, a)
 		}
 	}
 	if len(pos) != 2 || pos[0] == "" || !strings.Contains(pos[1], "@") {
-		fmt.Fprintln(os.Stderr, "usage: colec-server create-user <username> <email> [--admin|--contributor]")
+		fmt.Fprintln(os.Stderr, "usage: colec-server create-user <username> <email> [--admin|--contributor|--moderator]")
 		return 2
 	}
 	databaseURL := os.Getenv("DATABASE_URL")

@@ -6,12 +6,29 @@ export default {
   markAll: "Tout marquer comme lu",
   toReview:
     "aucune proposition à relire | 1 proposition à relire | {n} propositions à relire",
+  toModerate:
+    "aucun contenu à modérer | 1 contenu à modérer | {n} contenus à modérer",
   kinds: {
     proposal_accepted: "{by} a accepté « {title} »",
     proposal_rejected: "{by} a refusé « {title} »",
     proposal_changes_requested:
       "{by} demande des modifications sur « {title} »",
     proposal_comment: "{by} a écrit sur « {title} »",
+    review_hidden: "Un de vos avis a été masqué par la modération : {reason}",
+    review_restored: "Un de vos avis a été rétabli par la modération",
+    review_comment: "{by} a commenté un avis",
+    comment_hidden:
+      "Un de vos commentaires a été masqué par la modération : {reason}",
+    comment_restored: "Un de vos commentaires a été rétabli par la modération",
+    article_published: "Votre article a été publié",
+    article_rejected: "Votre article a été refusé : {reason}",
+    article_hidden:
+      "Un de vos articles a été masqué par la modération : {reason}",
+    article_restored: "Un de vos articles a été rétabli par la modération",
+    article_comment: "{by} a commenté un article",
+    recommendation: "{by} vous recommande un item",
   },
   someone: "Un modérateur",
+  reviewAuthor: "L'auteur de l'avis",
+  member: "Un membre",
 };

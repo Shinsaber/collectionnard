@@ -86,6 +86,69 @@ type Store interface {
 	UpdateCollectionType(ctx context.Context, id uuid.UUID, in model.CollectionTypeUpdate) (*model.CollectionType, error)
 	DeleteCollectionType(ctx context.Context, id uuid.UUID) error
 
+	// ReviewTypes
+	ListReviewTypes(ctx context.Context, pg model.Pagination) ([]model.ReviewType, int, error)
+	GetReviewType(ctx context.Context, id uuid.UUID) (*model.ReviewType, error)
+	CreateReviewType(ctx context.Context, in model.ReviewTypeCreate) (*model.ReviewType, error)
+	UpdateReviewType(ctx context.Context, id uuid.UUID, in model.ReviewTypeUpdate) (*model.ReviewType, error)
+	DeleteReviewType(ctx context.Context, id uuid.UUID) error
+
+	// Reviews (I-0)
+	GetItemReviewType(ctx context.Context, itemID uuid.UUID) (*model.ReviewType, error)
+	ListReviewContextItems(ctx context.Context, reviewTypeID, itemID uuid.UUID) ([]model.Item, error)
+	IsReviewContext(ctx context.Context, reviewTypeID, itemID, contextID uuid.UUID) (bool, error)
+	ListItemReviews(ctx context.Context, itemID uuid.UUID, p model.ReviewListParams, pg model.Pagination) ([]model.Review, int, error)
+	GetReviewStats(ctx context.Context, itemID, viewer uuid.UUID, levels []string) (*model.ReviewStats, error)
+	GetMyReview(ctx context.Context, itemID, userID uuid.UUID) (*model.Review, error)
+	PutReview(ctx context.Context, itemID, userID uuid.UUID, in model.ReviewWrite) (*model.Review, error)
+	DeleteReview(ctx context.Context, itemID, userID uuid.UUID) error
+	ListUserReviews(ctx context.Context, userID uuid.UUID, levels []string, pg model.Pagination) ([]model.Review, int, error)
+
+	// Moderation and reactions (I-1)
+	GetReview(ctx context.Context, id uuid.UUID) (*model.Review, error)
+	CreateReport(ctx context.Context, reporterID uuid.UUID, in model.ReportCreate) (*model.Report, error)
+	CountModerationQueue(ctx context.Context) (int, error)
+	ListModerationQueue(ctx context.Context, pg model.Pagination) ([]model.ModerationItem, int, error)
+	ModerationRecap(ctx context.Context, userID uuid.UUID) (*model.ModerationRecap, error)
+	Moderate(ctx context.Context, kind string, targetID, moderatorID uuid.UUID, action, reason string) (*model.ModerationResult, error)
+
+	// Comments (I-2)
+	ListComments(ctx context.Context, kind string, targetID, viewer uuid.UUID, pg model.Pagination) ([]model.Comment, int, error)
+	GetComment(ctx context.Context, id uuid.UUID) (*model.Comment, error)
+	CreateComment(ctx context.Context, kind string, targetID, authorID uuid.UUID, body string) (*model.Comment, error)
+	UpdateComment(ctx context.Context, id, authorID uuid.UUID, body string) (*model.Comment, error)
+	DeleteComment(ctx context.Context, id, authorID uuid.UUID) error
+	CommentParticipants(ctx context.Context, kind string, targetID uuid.UUID) ([]uuid.UUID, error)
+	SetReviewCommentsClosed(ctx context.Context, reviewID, userID uuid.UUID, closed bool) error
+
+	// Articles (I-3)
+	ListItemArticles(ctx context.Context, itemID, viewer uuid.UUID, pg model.Pagination) ([]model.Article, int, error)
+	GetArticle(ctx context.Context, id uuid.UUID) (*model.Article, error)
+	CreateArticle(ctx context.Context, itemID, authorID uuid.UUID, in model.ArticleWrite, status string) (*model.Article, error)
+	UpdateArticle(ctx context.Context, id, authorID uuid.UUID, in model.ArticleWrite, status string) (*model.Article, error)
+	DeleteArticle(ctx context.Context, id, authorID uuid.UUID) error
+	CountPendingArticles(ctx context.Context) (int, error)
+	ListPendingArticles(ctx context.Context, pg model.Pagination) ([]model.Article, int, error)
+	ReviewArticle(ctx context.Context, id, moderatorID uuid.UUID, publish bool, reason string) (*model.Article, error)
+	SetArticleCommentsClosed(ctx context.Context, id, userID uuid.UUID, closed bool) error
+
+	// Recommendations and blocks (I-4)
+	CreateRecommendation(ctx context.Context, senderID, recipientID, itemID uuid.UUID, message string) (*model.Recommendation, error)
+	GetRecommendation(ctx context.Context, id, recipientID uuid.UUID) (*model.Recommendation, error)
+	ListRecommendations(ctx context.Context, recipientID uuid.UUID, pg model.Pagination) ([]model.Recommendation, int, int, error)
+	MarkRecommendationsRead(ctx context.Context, recipientID uuid.UUID, ids []uuid.UUID) error
+	DeleteRecommendation(ctx context.Context, id, recipientID uuid.UUID) error
+	BlockUser(ctx context.Context, blockerID, blockedID uuid.UUID, anonymous bool) (*model.Block, error)
+	ListBlocks(ctx context.Context, blockerID uuid.UUID, pg model.Pagination) ([]model.Block, int, error)
+	DeleteBlock(ctx context.Context, blockerID, id uuid.UUID) error
+	BlockedBy(ctx context.Context, blockerID uuid.UUID) ([]uuid.UUID, error)
+	Blockers(ctx context.Context, blockedID uuid.UUID, users []uuid.UUID) ([]uuid.UUID, error)
+	IsBlocked(ctx context.Context, blockerID, blockedID uuid.UUID) (bool, error)
+	ListModerationLog(ctx context.Context, pg model.Pagination) ([]model.ModerationLogEntry, int, error)
+	ModerationHistory(ctx context.Context, userID uuid.UUID) (*model.ModerationHistory, error)
+	SetReaction(ctx context.Context, reviewID, userID uuid.UUID, kind string, on bool) error
+	ReactionsOf(ctx context.Context, reviewIDs []uuid.UUID, viewer uuid.UUID) (map[uuid.UUID]map[string]int, map[uuid.UUID][]string, error)
+
 	// Item
 	ListItems(ctx context.Context, pg model.Pagination, f ItemFilters) ([]model.Item, int, error)
 	GetItem(ctx context.Context, id uuid.UUID) (*model.Item, error)

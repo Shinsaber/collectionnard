@@ -1,7 +1,7 @@
 # Phase 6 — Interactions entre utilisateurs : conception
 
-Exploration ouverte le 2026-11-02. Les lots et leurs cases à cocher seront reportés dans
-[`docs/conception.md`](../conception.md), Phase 6, une fois raffinés ; ce document porte les décisions, le modèle et
+Exploration ouverte le 2026-11-02, phase close le 2026-11-07 (I-0 à I-4 livrés). Les lots et leurs cases à
+cocher sont reportés dans [`docs/conception.md`](../conception.md), Phase 6 ; ce document porte les décisions, le modèle et
 l'API visés. Les pistes écartées pour l'instant vivent dans [`docs/idées.md`](../idées.md).
 
 **Cible** : l'instance est appelée à devenir **publique** une fois la phase exploratoire terminée. Tout ce qui suit doit
@@ -9,19 +9,19 @@ donc tenir face à des inconnus (abus, spam, harcèlement), même si l'inscripti
 
 ## Décisions du mainteneur
 
-| Sujet                 | Décision                                                                                                                                                                                                                                                                                |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Avis                  | **Entité dédiée** `reviews`, une seule ligne par couple (utilisateur, item). Un avis porte sur l'œuvre, pas sur un exemplaire : on peut noter sans posséder.                                                                                                                            |
-| Note de collection    | **Supprimée** : la propriété `rating` du type de collection _Visionnage_ disparaît, sans reprise des valeurs (instance encore en bêta).                                                                                                                                                 |
-| Critères              | **Génériques dès la V1** : critères définis par type d'item, échelle **fixe sur 10**. Au choix de l'auteur : **note globale** seule, ou **note par critère** dont la **moyenne** donne la note. Affichage en petites étoiles colorées.                                                  |
-| Activation            | **Par type d'item** : les avis ne sont ouverts que sur les types choisis, et fermés sur les personnes (Person), pour éviter les attaques contre des gens.                                                                                                                               |
-| Contenu d'un avis     | Note obligatoire, texte facultatif (`body`, Markdown restreint), drapeau `spoiler`, langue (`lang`, parmi celles de l'interface, petit drapeau), visibilité, dates de création et de modification.                                                                                      |
-| Visibilité d'un avis  | **Un seul réglage** : `private`, `members`, `anonymous`, `public` (voir I-0). Défaut : `public` si le profil est public, sinon `anonymous`. Toute note non masquée compte dans la moyenne, affichée **à partir de 5 notes**.                                                            |
-| Modération            | **Humaine**, par les **admins et un nouveau rôle `moderator`** : bouton « Signaler » sur chaque avis, commentaire et article, file de modération, **journal de toutes les actions**. La détection automatique des mots injurieux viendra plus tard.                                     |
-| Réactions             | Sur un avis (« intéressant », « ça donne envie », « drôle », « désapprouvé ») : donner une **intention ou une émotion**. « Intéressant » sert au tri ; **jamais de signalement**.                                                                                                       |
-| Commentaires          | (1) **Échanges sur un avis** ; (2) sur la fiche d'un item, **partage d'articles** (titre, petit message, lien), avec leur propre fil de commentaires, plutôt qu'un fil de discussion libre.                                                                                             |
-| Recommandation        | **Retenue** : envoyer une fiche à un membre avec un mot, il reçoit une notification.                                                                                                                                                                                                    |
-| Reporté               | Prêts, cadeaux réservés, comparaison de collections, fil d'activité, collections à plusieurs propriétaires, échanges : voir [`docs/idées.md`](../idées.md). Le choix proposé à la **suppression du compte** (anonymiser ou effacer ses contributions) aussi : il n'est pas prévu en V1. |
+| Sujet                | Décision                                                                                                                                                                                                                                                                                |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Avis                 | **Entité dédiée** `reviews`, une seule ligne par couple (utilisateur, item). Un avis porte sur l'œuvre, pas sur un exemplaire : on peut noter sans posséder.                                                                                                                            |
+| Note de collection   | **Supprimée** : la propriété `rating` du type de collection _Visionnage_ disparaît, sans reprise des valeurs (instance encore en bêta).                                                                                                                                                 |
+| Critères             | **Génériques dès la V1** : critères définis par type d'item, échelle **fixe sur 10**. Au choix de l'auteur : **note globale** seule, ou **note par critère** dont la **moyenne** donne la note. Affichage en petites étoiles colorées.                                                  |
+| Activation           | **Par type d'item** : les avis ne sont ouverts que sur les types choisis, et fermés sur les personnes (Person), pour éviter les attaques contre des gens.                                                                                                                               |
+| Contenu d'un avis    | Note obligatoire, texte facultatif (`body`, Markdown restreint), drapeau `spoiler`, langue (`lang`, parmi celles de l'interface, petit drapeau), visibilité, dates de création et de modification.                                                                                      |
+| Visibilité d'un avis | **Un seul réglage** : `private`, `members`, `anonymous`, `public` (voir I-0). Défaut : `public` si le profil est public, sinon `anonymous`. Toute note non masquée compte dans la moyenne, affichée **à partir de 5 notes**.                                                            |
+| Modération           | **Humaine**, par les **admins et un nouveau rôle `moderator`** : bouton « Signaler » sur chaque avis, commentaire et article, file de modération, **journal de toutes les actions**. La détection automatique des mots injurieux viendra plus tard.                                     |
+| Réactions            | Sur un avis (« intéressant », « ça donne envie », « drôle », « désapprouvé ») : donner une **intention ou une émotion**. « Intéressant » sert au tri ; **jamais de signalement**.                                                                                                       |
+| Commentaires         | (1) **Échanges sur un avis** ; (2) sur la fiche d'un item, **partage d'articles** (titre, petit message, lien), avec leur propre fil de commentaires, plutôt qu'un fil de discussion libre.                                                                                             |
+| Recommandation       | **Retenue** : envoyer une fiche à un membre avec un mot, il reçoit une notification.                                                                                                                                                                                                    |
+| Reporté              | Prêts, cadeaux réservés, comparaison de collections, fil d'activité, collections à plusieurs propriétaires, échanges : voir [`docs/idées.md`](../idées.md). Le choix proposé à la **suppression du compte** (anonymiser ou effacer ses contributions) aussi : il n'est pas prévu en V1. |
 
 ## État de départ
 
@@ -66,8 +66,8 @@ sont décrits par un nouveau méta-type, **`ReviewType`**, dont le schéma liste
   peuvent partager un même `ReviewType` (BD et Manga). Un `ReviewType` sans critère n'offre que la note globale.
 - **Contraintes vérifiées par le serveur** sur le schéma d'un `ReviewType` (en plus de `checkAttributesSchema`) : chaque
   propriété est un entier de 0 à 10 ; ni objet ni tableau. L'échelle reste ainsi commune et les moyennes comparables.
-- **Paquets de domaine** : chaque paquet porte ses `ReviewType` et leur rattachement (UUID préfixe à réserver, `f…` par
-  exemple), versionnés comme les autres types. `people` n'en rattache aucun à Person.
+- **Paquets de domaine** : chaque paquet porte ses `ReviewType` et leur rattachement (UUID préfixe `f1…`, les seeds
+  utilisant `f0…` pour leurs collections), versionnés comme les autres types. `people` n'en rattache aucun à Person.
 - **Front** : `SchemaBuilder` en mode « critères » (entiers 0–10 seulement), `DynamicForm` affiche déjà un curseur dès
   que `minimum` et `maximum` sont posés. Page admin « Types d'avis » à côté des autres méta-types.
 
@@ -154,13 +154,49 @@ Instance encore en bêta : les notes existantes sont **supprimées, sans reprise
 
 ### API visée
 
-- `GET /items/{id}/reviews` (pagination, tri `interesting` | `recent` | `rating`, filtre `lang`), authentification
+- `GET /items/{id}/reviews` (pagination, tri `recent` | `rating`, plus `interesting` en I-1, filtre `lang`), authentification
   facultative comme `/public/…` ; `GET /items/{id}/reviews/summary` (moyenne, nombre, moyenne par critère).
 - `GET|PUT|DELETE /items/{id}/reviews/mine` : un avis par item, donc pas d'identifiant à connaître (PUT = remplacement).
 - `GET /me/reviews` ; avis publics d'un profil sur `GET /public/users/{username}/reviews`.
 - Méta-type : `GET|POST /review-types`, `GET|PUT|DELETE /review-types/{id}` (admin) ; `review_type_id` sur les ItemTypes.
 - Import / export : `review_types` rejoint le catalogue (règle « toute nouvelle table du catalogue… ») ; les avis,
   données personnelles, rejoignent l'export du compte.
+
+### Livré
+
+**I-0 livré le 2026-11-06.** Choix faits à la réalisation :
+
+- Migration 013 : `review_types`, `item_types.review_type_id`, `reviews`, `meta_type_origins` accepte `review_types`, retrait
+  de `rating` (attributs, schéma installé, copie de référence). `reviews.review_type_id` n'est renseigné qu'en mode détaillé,
+  pour qu'un type d'avis sans avis détaillé reste supprimable. Les colonnes `hidden_*` arrivent avec I-1, qui les écrit.
+- `internal/review` (Go pur, testé seul) : forme du schéma, note calculée, limites (`MinRatings` 5, `MaxBody` 10 000 caractères,
+  langues à garder alignées sur `langs.ts`). Le filtre reste dans le handler : l'auteur ne sort que par `privacy.CanView`,
+  `user_id` jamais (`json:"-"`). Les avis des comptes désactivés ne comptent nulle part.
+- Paquets : `collections` v4 (et les domaines d'œuvres, versions ci-dessous). Avis ouverts sur Comic, Manga, Volume,
+  Novel, Saga, Series, Season, Episode, Film, Album, Track (note globale seule) et Game ; fermés sur Person, Publisher, Artist,
+  Label, les éditions, Broadcast, Universe et Platform. Un type fermé ou supprimé localement le reste à la mise à jour.
+- Front : page « Types » à onglets (`TypesLayout`, onglets liés à l'URL), éditeur en mode critères (`features.criteria`),
+  onglet « Avis » de la fiche ; sous le titre, moyenne, nombre de notes et ma note (un clic ouvre l'onglet), « Mes avis » sur le profil, avis signés sur la page publique ; Markdown par
+  markdown-it (MIT) puis DOMPurify (Apache 2.0). Un curseur non touché part de 5. Étoiles colorées par paliers (0–4 rouge,
+  5–7 orange, 8–10 vert, note arrondie ; jetons `--c-star-*`, mode dégradé disponible par `STAR_COLOR_MODE`) ; sur un avis
+  détaillé, les critères en colonne à gauche, une ligne par critère.
+
+- **Édition utilisée** (décision du 2026-11-07) : un avis sur une œuvre peut préciser l'édition jouée, vue, lue ou
+  écoutée (`reviews.context_item_id`), plutôt que d'ouvrir les avis sur les éditions, ce qui éparpillerait les notes. Le
+  type d'avis déclare les relations qui y mènent (`review_type_context_relations` : `game_released_as`, `released_as`,
+  `published_as`, `issued_as`) et le libellé du choix (`context_label` : « Joué sur », « Vu dans », « Lu dans »,
+  « Écouté sur ») ; le serveur vérifie le lien (422 sinon). L'édition suit l'auteur : **jamais montrée sur un avis non
+  signé pour le lecteur** (une édition rare pourrait désigner son propriétaire), le formulaire le rappelle sous le
+  sélecteur. Filtre des avis par édition (avis signés seulement). Supprimer l'édition garde l'avis, sans précision.
+  Une saison, un épisode, un tome n'ont pas de lien direct vers une édition : pas de choix pour eux. Migration 014 (la 013 était déjà
+  appliquée) ; paquets `books` v8, `tv` v8, `video` v6, `music` v6, `games` v5.
+
+**Pas encore fait** (lots suivants ou à trancher) :
+
+- Limites de débit sur les avis : prévues avec le signalement (I-1).
+- Pages publiques d'un item : l'API des avis sert les visiteurs, mais aucune page ne les leur montre encore (seule la page
+  d'un profil le fait).
+- Avis dans l'export du compte : il n'existe pas encore d'export du compte (RGPD).
 
 ## I-1 — Signalements, modération et réactions
 
@@ -211,6 +247,29 @@ soit leur nombre, n'envoie un avis en modération.
 - Liste fixe (codes anglais, libellés via vue-i18n) plutôt qu'un méta-type : c'est un vocabulaire d'interface, pas une
   donnée de domaine.
 
+### Livré
+
+**I-1 livré le 2026-11-07.** Choix faits à la réalisation :
+
+- Migration 015 : rôle `moderator` (contraintes de `users` et `invitations`), `reviews.hidden_*`, `reports` (un seul
+  signalement ouvert par signaleur et cible, index partiel), `moderation_log`, `review_reactions`. Motifs : `abusive`,
+  `harassment`, `spoiler`, `spam`, `off_topic`, `other`.
+- `moderation_log` est en ajout seul **par le code** (aucune méthode n'y modifie ni n'y supprime) ; la copie du contenu
+  est bornée à 2 000 caractères.
+- Seul un avis **montré au lecteur** se signale ou reçoit une réaction : ni le sien (403 `own_content`), ni une note
+  seule, ni un avis masqué (404). Un modérateur ne modère pas son propre avis.
+- Masquer exige un motif, montré à l'auteur et notifié (`review_hidden`, `review_restored`) ; masquer ou classer ferme
+  les signalements ouverts. Une action qui ne s'applique plus répond 409 `moderation_state`.
+- Récapitulatif d'un membre : masquages sur 90 jours et au total, signalements classés sans suite sur 90 jours ; à côté
+  de chaque signalement, le nombre de signalements classés du signaleur.
+- Limites de débit par heure et par compte (`handler/rate.go`, en mémoire) : avis 60, signalements 20, réactions 300 ;
+  admins exemptés ; 429 `rate_limited` (code déjà employé par la connexion).
+- Front : page « Modération » (file, journal, historique d'un membre ; lien dans l'administration pour les admins et
+  les modérateurs, pastille dans la cloche), réactions et « Signaler » sur chaque avis d'un autre membre, tri « Les plus
+  intéressants », bannière « Masqué par la modération » sur son propre avis, rôle dans « Utilisateurs » et les
+  invitations, `create-user … --moderator`. Sur chaque avis, réactions et « Signaler » en pied : à droite des critères
+  (calés en bas) pour un avis détaillé ; texte en retrait marqué d'un filet pour une note globale.
+
 ## I-2 — Commentaires
 
 Un seul fil pour les avis et, en I-3, pour les articles.
@@ -221,6 +280,31 @@ Un seul fil pour les avis et, en I-3, pour les articles.
   comme « Auteur de l'avis », jamais sous son nom. Un avis `members` n'a de fil que pour les membres.
 - Notifications : l'auteur de l'avis ou de l'article et les participants du fil, jamais l'émetteur (comme `notifyComment`).
 - L'auteur de l'avis ou de l'article peut **fermer** son fil ; signalement et masquage comme en I-1.
+
+### Livré
+
+**I-2 livré le 2026-11-07.** Choix faits à la réalisation :
+
+- Migration 016 : `comments` (`target_kind` `review` | `article`, champs de modération), `reviews.comments_closed_at`,
+  déclencheur qui supprime le fil avec son avis (suppression par l'auteur ou de l'item en cascade).
+- Le fil existe pour un avis listable (ni note seule, ni anonyme sans texte) et suit sa visibilité ; son auteur y a
+  toujours accès. Les commentaires sont **signés** ; seul l'auteur d'un avis anonyme y apparaît comme « Auteur de
+  l'avis » (le serveur n'envoie pas son nom), y compris dans la notification (`by_review_author`). Correctif du 2026-11-07 : le
+  nom d'un commentateur, comme celui de l'auteur d'un article, n'est envoyé qu'aux lecteurs qui peuvent voir son profil
+  (`privacy.CanView`) ; sinon « Un membre », notification comprise (`by_member`). Un avis signé garde le nom, choisi
+  explicitement par sa visibilité.
+- 1 à 5 000 caractères, Markdown restreint ; on modifie et supprime les siens. Traces (migration 018, 2026-11-07) : un fil
+  étant à plat, un commentaire supprimé garde sa place (« Commentaire supprimé par son auteur », texte effacé en base),
+  sauf s'il était le dernier du fil : il s'efface alors, avec les traces restées juste avant lui (un commentaire masqué
+  arrête ce nettoyage) ; un commentaire masqué apparaît aux autres comme « Commentaire masqué par la
+  modération », sans texte ni auteur ; « (modifié) » signale une modification (`edited_at`). Les traces ne comptent pas. Fil fermé (ou avis masqué) : 409
+  `comments_closed`, les commentaires restent lisibles. 120 commentaires par heure et par compte.
+- Notification `review_comment` à l'auteur de l'avis et aux participants, jamais à l'émetteur ni en double.
+- Signalement et modération des commentaires comme pour les avis (`target_kind: comment`, routes
+  `/moderation/comments/{id}/…`, notifications `comment_hidden` / `comment_restored`) ; la file montre le commentaire et
+  l'avis de son fil. `Store.Moderate` traite les deux sortes.
+- Front : bouton « Commenter » / « N commentaires » dans le pied de l'avis, fil déplié sous l'avis (auteur, badge
+  « Auteur de l'avis », modifier / supprimer les siens, « Signaler » les autres, « Fermer le fil » sur son avis).
 
 ## I-3 — Articles sur la fiche d'un item
 
@@ -234,6 +318,26 @@ Relayer les nouvelles d'une œuvre (sortie d'un tome, annonce d'une saison, crit
 - Anti-spam : quota par compte (comme `PROPOSAL_QUOTA`), signalement, masquage.
 - **Fil de commentaires** : chaque article a le sien (table `comments` d'I-2, `target_kind = article`).
 
+### Livré
+
+**I-3 livré le 2026-11-07.** Décision du mainteneur à la réalisation : articles ouverts sur **tous les types d'item**,
+mais l'article d'un membre **attend d'être validé**, comme une proposition de fiche. Choix faits :
+
+- Migration 017 : `item_articles` (`status` `pending` | `published` | `rejected`, motif du refus, champs de modération,
+  `comments_closed_at`), déclencheur qui supprime le fil avec son article.
+- Les admins et les modérateurs publient directement et valident ceux des autres (jamais le leur) ; les contributeurs
+  passent par la validation comme les membres. Modifier un article publié le **renvoie en attente**. Refuser exige un
+  motif, montré à l'auteur ; notifications `article_published`, `article_rejected`.
+- Titre 1 à 200 caractères, lien `http(s)` sans identifiants (2 000 au plus), un mot de 1 000 au plus, langue de
+  l'interface ; 10 articles (création ou modification) par heure et par compte. Le serveur ne récupère jamais le lien.
+- La liste d'une fiche montre les articles publiés et non masqués, plus tous ceux du lecteur avec leur état ; le motif
+  d'un refus ou d'un masquage ne va qu'à son auteur.
+- Un article publié se signale, se masque, se rétablit comme un avis (`/moderation/articles/{id}/…`) et porte un fil de
+  commentaires (commun avec les avis : `thread`, `commentApi` par sorte). Dans les commentaires, `review_author`
+  devient `target_author` (auteur de l'avis ou de l'article).
+- Front : onglet « Actualités · N » de la fiche (partage, liste, état, fil, signalement), onglet « Articles à valider »
+  de la page Modération, pastille de la cloche (signalements + articles en attente).
+
 ## I-4 — Recommander un item à un membre
 
 - `POST /items/{id}/recommendations` (`to` : nom d'utilisateur, `message` court) → notification du destinataire, qui
@@ -243,9 +347,38 @@ Relayer les nouvelles d'une œuvre (sortie d'un tome, annonce d'une saison, crit
 - Qui peut recommander à qui : tout membre de l'annuaire (profil `members` ou `public`) ; le destinataire peut **refuser
   les recommandations** (réglage du compte), et bloquer un expéditeur (voir ci-dessous).
 
+### Livré
+
+**I-4 livré le 2026-11-07.** Décisions du mainteneur à la réalisation : le **blocage complet** fait partie du lot ; le
+message d'une recommandation, privé, **ne se signale pas** (le destinataire bloque l'expéditeur). Choix faits :
+
+- Migration 019 : `recommendations` (une par expéditeur, destinataire et item tant qu'elle n'est pas écartée : 409
+  `already_recommended`), `users.accepts_recommendations` (vrai par défaut, case du profil), `user_blocks`.
+- Destinataire : un membre de l'annuaire (profil `members` ou `public`), sinon 404 comme un inconnu. Refus et blocage
+  répondent le même 403 `recommendations_refused` : l'expéditeur ne sait pas lequel. Message en texte brut, 500
+  caractères au plus ; 20 recommandations **par jour** et par compte (`handler/rate.go` prend désormais une fenêtre).
+  L'expéditeur est nommé au destinataire, même avec un profil privé : c'est lui qui envoie.
+- Page « Recommandations » (`/recommendations`, menu) : l'item, l'expéditeur, son mot ; ouvrir, écarter, bloquer. Les
+  nouvelles sont marquées lues à la visite ; la notification `recommendation` y mène.
+- **Blocage** (`/me/blocks`) : par nom (profil visible), ou depuis un avis, un commentaire, un article ou une
+  recommandation reçue (bouton « Bloquer » à côté de « Signaler », et sur le profil public). Le bloqué ne peut plus
+  recommander d'item au bloqueur, ni commenter ou réagir à ses contenus **signés** (403 `blocked`) ; retirer sa
+  réaction reste permis. Ses avis signés et ses articles sortent des listes du bloqueur, son profil n'y montre plus
+  d'avis, ses commentaires deviennent des traces (« Commentaire d'un membre que vous avez bloqué »), ses messages ne
+  notifient plus le bloqueur. Ses recommandations au bloqueur sont écartées. Les notes comptent toujours dans les
+  moyennes.
+- **Anonymat d'abord** : sur un contenu qui ne nomme pas son auteur, le blocage ne refuse rien et ne retire rien.
+  Commenter ou réagir à un avis anonyme du bloqueur reste possible (le bloqueur ne voit pas le commentaire et n'est
+  pas notifié) ; l'avis anonyme d'un membre bloqué reste listé, et sa réponse dans son fil n'est pas marquée : le
+  retirer le nommerait. Bloqué depuis un contenu qui ne le nommait pas (avis anonyme, commentaire « Un membre »), le
+  membre reste « Un membre » dans la liste des blocages (`user_blocks.anonymous`) ; un blocage par nom le lève.
+  Limite acceptée : les commentaires « Un membre » d'un même auteur bloqué deviennent tous des traces, ce qui les
+  relie entre eux.
+
 ## Questions transverses
 
-- **Blocage et mise en sourdine** : indispensables avant l'ouverture publique. Bloquer un membre : il ne peut plus
+- **Blocage et mise en sourdine** : indispensables avant l'ouverture publique. Blocage livré en I-4 (voir plus haut) ;
+  la mise en sourdine seule (sans bloquer) n'est pas faite. Bloquer un membre : il ne peut plus
   commenter mes avis, réagir, me recommander d'item ; ses contenus me sont masqués.
 - **Limites de débit** : avis, commentaires, articles, réactions et recommandations par heure et par compte (même principe
   que `UPLOAD_RATE_LIMIT`).

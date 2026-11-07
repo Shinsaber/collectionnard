@@ -28,6 +28,8 @@ type ProfileUpdate struct {
 	Avatar      string `json:"avatar"`
 	// ProfileVisibility: empty = private.
 	ProfileVisibility string `json:"profile_visibility"`
+	// AcceptsRecommendations: absent = true.
+	AcceptsRecommendations *bool `json:"accepts_recommendations,omitempty"`
 }
 
 // PasswordChange is the body of PUT /me/password.

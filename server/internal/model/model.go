@@ -47,10 +47,12 @@ type User struct {
 	Avatar      *string    `json:"avatar,omitempty"` // URL d'un envoi (/api/v1/uploads/…)
 	DisabledAt  *time.Time `json:"disabled_at,omitempty"`
 	// CanInvite: GET /auth/me only — the user may create invitations.
-	ProfileVisibility string    `json:"profile_visibility"`
-	CanInvite         bool      `json:"can_invite,omitempty"`
-	CreatedAt         time.Time `json:"created_at"`
-	UpdatedAt         time.Time `json:"updated_at"`
+	ProfileVisibility string `json:"profile_visibility"`
+	// AcceptsRecommendations: other members may recommend items to them (I-4).
+	AcceptsRecommendations bool      `json:"accepts_recommendations"`
+	CanInvite              bool      `json:"can_invite,omitempty"`
+	CreatedAt              time.Time `json:"created_at"`
+	UpdatedAt              time.Time `json:"updated_at"`
 }
 
 // ---------------------------------------------------------------------------
@@ -63,8 +65,10 @@ type ItemType struct {
 	Description      *string         `json:"description,omitempty"`
 	AttributesSchema json.RawMessage `json:"attributes_schema"`
 	DisplayOrder     int             `json:"display_order"`
-	CreatedAt        time.Time       `json:"created_at"`
-	UpdatedAt        time.Time       `json:"updated_at"`
+	// ReviewTypeID: criteria of its reviews; nil = reviews closed on this type.
+	ReviewTypeID *uuid.UUID `json:"review_type_id"`
+	CreatedAt    time.Time  `json:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at"`
 }
 
 type ItemTypeCreate struct {
@@ -72,6 +76,7 @@ type ItemTypeCreate struct {
 	Description      *string         `json:"description,omitempty"`
 	AttributesSchema json.RawMessage `json:"attributes_schema"`
 	DisplayOrder     *int            `json:"display_order,omitempty"`
+	ReviewTypeID     *uuid.UUID      `json:"review_type_id,omitempty"`
 }
 
 type ItemTypeUpdate struct {
@@ -79,6 +84,8 @@ type ItemTypeUpdate struct {
 	Description      *string         `json:"description,omitempty"`
 	AttributesSchema json.RawMessage `json:"attributes_schema,omitempty"`
 	DisplayOrder     *int            `json:"display_order,omitempty"`
+	// ReviewTypeID: absent keeps the type, null closes the reviews.
+	ReviewTypeID OptionalUUID `json:"review_type_id"`
 }
 
 // ---------------------------------------------------------------------------
