@@ -58,6 +58,7 @@
         :review="mine"
         :schema="schema"
         :context-label-text="contextLabelText"
+        show-reactions
       >
         <template #heading>
           <span
@@ -93,6 +94,7 @@
       >
         <ElOption value="recent" :label="t('reviews.sort.recent')" />
         <ElOption value="rating" :label="t('reviews.sort.rating')" />
+        <ElOption value="interesting" :label="t('reviews.sort.interesting')" />
       </ElSelect>
       <ElSelect
         v-if="summary.context_items.length > 0"
@@ -133,6 +135,8 @@
         :review="r"
         :schema="schema"
         :context-label-text="contextLabelText"
+        reportable
+        show-reactions
       />
       <p
         v-if="summary.note_only_count > 0"
@@ -206,7 +210,7 @@ const editing = ref(false);
 const reviews = ref<Review[]>([]);
 const total = ref(0);
 const page = ref(1);
-const sort = ref<"recent" | "rating">("recent");
+const sort = ref<"recent" | "rating" | "interesting">("recent");
 const myLangOnly = ref(false);
 const contextFilter = ref<string | null>(null);
 const contextLabelText = computed(() =>

@@ -16,6 +16,7 @@ export const NAV_ICONS = {
   offline:
     "M3 3l18 18M8.6 8.6A5 5 0 0 0 7 18h10.6M20.4 16.4A4 4 0 0 0 18 9a6 6 0 0 0-7.7-3.8",
   importExport: "M12 3v12M7 10l5 5 5-5M4 21h16",
+  moderation: "M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6zM9 12l2 2 4-4",
   scan: "M4 5v14M8 5v14M12 5v9M16 5v14M20 5v9M12 17v2M20 17v2",
   images: "M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15.5 9a1.5 1.5 0 1 0 0 .01",
   domains: "M12 3l9 5-9 5-9-5zM3 12.5l9 5 9-5M3 16.5l9 5 9-5",
@@ -54,6 +55,7 @@ export function isMoreActive(path: string): boolean {
     isNavActive("/stats", path) ||
     isNavActive("/members", path) ||
     isNavActive("/proposals", path) ||
+    isNavActive("/moderation", path) ||
     isNavActive("/offline", path)
   );
 }
@@ -97,33 +99,42 @@ export function useNavigation() {
     },
   ]);
 
-  /** Section « Administration » : tout pour un admin, les sources externes pour un contributeur. */
-  const allAdminLinks = computed<(NavLink & { contributor?: boolean })[]>(
-    () => [
-      { to: "/admin/users", label: t("layout.nav.users"), icon: "users" },
-      { to: "/admin/domains", label: t("layout.nav.domains"), icon: "domains" },
-      { to: TYPES_PATH, label: t("layout.nav.types"), icon: "types" },
-      {
-        to: "/admin/import-export",
-        label: t("layout.nav.importExport"),
-        icon: "importExport",
-      },
-      {
-        to: "/admin/external-import",
-        label: t("layout.nav.externalImport"),
-        icon: "external",
-        contributor: true,
-      },
-      { to: "/admin/images", label: t("layout.nav.images"), icon: "images" },
-    ],
-  );
+  /** Section « Administration » : tout pour un admin ; les sources externes pour un contributeur, la
+   * modération pour un modérateur. */
+  const allAdminLinks = computed<
+    (NavLink & { contributor?: boolean; moderator?: boolean })[]
+  >(() => [
+    {
+      to: "/moderation",
+      label: t("layout.nav.moderation"),
+      icon: "moderation",
+      moderator: true,
+    },
+    { to: "/admin/users", label: t("layout.nav.users"), icon: "users" },
+    { to: "/admin/domains", label: t("layout.nav.domains"), icon: "domains" },
+    { to: TYPES_PATH, label: t("layout.nav.types"), icon: "types" },
+    {
+      to: "/admin/import-export",
+      label: t("layout.nav.importExport"),
+      icon: "importExport",
+    },
+    {
+      to: "/admin/external-import",
+      label: t("layout.nav.externalImport"),
+      icon: "external",
+      contributor: true,
+    },
+    { to: "/admin/images", label: t("layout.nav.images"), icon: "images" },
+  ]);
 
   const adminLinks = computed<NavLink[]>(() =>
     auth.isAdmin
       ? allAdminLinks.value
-      : auth.canEditCatalog
-        ? allAdminLinks.value.filter((l) => l.contributor)
-        : [],
+      : allAdminLinks.value.filter(
+          (l) =>
+            (l.contributor && auth.canEditCatalog) ||
+            (l.moderator && auth.canModerate),
+        ),
   );
 
   return { mainLinks, tabLinks, sheetLinks, adminLinks };

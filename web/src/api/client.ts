@@ -7,6 +7,11 @@ import {
 } from "./tokens";
 import type {
   LoginRequest,
+  ModerationHistory,
+  ModerationItem,
+  ModerationLogEntry,
+  Report,
+  ReportCreate,
   Review,
   ReviewListParams,
   ReviewPut,
@@ -365,6 +370,39 @@ export const reviewApi = {
     http
       .get<PaginatedResponse<Review>>("/me/reviews", { params })
       .then((r) => r.data),
+  /** Ajoute (`on`) ou retire une réaction (I-1). */
+  react: (reviewId: string, kind: string, on: boolean) =>
+    on
+      ? http.put(`/reviews/${reviewId}/reactions/${kind}`)
+      : http.delete(`/reviews/${reviewId}/reactions/${kind}`),
+};
+
+// ── Signalements et modération (I-1) ──────────────────────────────────
+export const reportApi = {
+  create: (data: ReportCreate) =>
+    http.post<Report>("/reports", data).then((r) => r.data),
+};
+
+export const moderationApi = {
+  count: () =>
+    http.get<{ count: number }>("/moderation/count").then((r) => r.data.count),
+  queue: (params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<ModerationItem>>("/moderation/queue", { params })
+      .then((r) => r.data),
+  log: (params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<ModerationLogEntry>>("/moderation/log", { params })
+      .then((r) => r.data),
+  history: (userId: string) =>
+    http
+      .get<ModerationHistory>(`/moderation/users/${userId}/history`)
+      .then((r) => r.data),
+  act: (
+    reviewId: string,
+    action: "hide" | "restore" | "dismiss",
+    reason = "",
+  ) => http.post(`/moderation/reviews/${reviewId}/${action}`, { reason }),
 };
 
 // ── Collection Types ──────────────────────────────────────────────────

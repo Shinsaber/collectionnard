@@ -8,6 +8,7 @@ const en: typeof fr = {
     collectionsTab: "Collections",
     more: "More",
     types: "Types",
+    moderation: "Moderation",
     importExport: "Import / export",
     externalImport: "External sources",
     images: "Images",

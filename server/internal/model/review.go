@@ -90,8 +90,15 @@ type Review struct {
 	Visibility    string        `json:"visibility"`
 	Author        *ReviewAuthor `json:"author,omitempty"`
 	Item          *Item         `json:"item,omitempty"`
-	CreatedAt     time.Time     `json:"created_at"`
-	UpdatedAt     time.Time     `json:"updated_at"`
+	// HiddenAt, HiddenReason: hidden by the moderation (I-1); a hidden review
+	// reaches only its author and the moderators.
+	HiddenAt     *time.Time `json:"hidden_at,omitempty"`
+	HiddenReason *string    `json:"hidden_reason,omitempty"`
+	// Reactions: count of each kind; MyReactions: those of the reader.
+	Reactions   map[string]int `json:"reactions,omitempty"`
+	MyReactions []string       `json:"my_reactions,omitempty"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
 // ReviewPut is the body of PUT /items/{id}/reviews/mine: an overall rating or
@@ -123,7 +130,7 @@ type ReviewWrite struct {
 type ReviewListParams struct {
 	Viewer uuid.UUID // uuid.Nil: anonymous
 	Levels []string  // visibilities signed for the reader
-	Sort   string    // recent | rating
+	Sort   string    // recent | rating | interesting
 	Lang   string
 	// ContextItemID: only the reviews of this edition, signed for the reader.
 	ContextItemID *uuid.UUID

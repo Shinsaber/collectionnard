@@ -270,6 +270,7 @@ User "shinsaber" :
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | **Admin**        | Crée / modifie les ItemTypes, RelationTypes, CollectionTypes et installe les paquets de domaine. Écrit et supprime dans le catalogue. Gère les comptes, les invitations, l'import / export et les images. Modère les propositions. |
 | **Contributeur** | (Phase 4, P4-3) Écrit directement dans le catalogue (items, relations, images, sources externes), sans supprimer d'item ; modère les propositions des autres. Ni méta-types ni administration. |
+| **Modérateur** | (Phase 6, I-1) Traite les signalements avec les admins : masque, rétablit ou classe sans suite un avis, consulte le journal et l'historique d'un membre ; n'écrit pas dans le catalogue (rôle unique par compte) |
 | **Membre** (`user`) | Crée ses collections (visibilité au choix), y ajoute des items existants, consulte le catalogue ; propose des créations ou corrections, modérées ; signale ; invite si `MEMBER_INVITES`. |
 | **Visiteur**     | Sans compte : profils et collections publics (`/u/…`, `/c/…`) et liens de partage (`/share`), en lecture seule ; les champs `x-private` sont retirés par le serveur. |
 
@@ -535,7 +536,7 @@ par les admins et un rôle `moderator`.
 
 - [x] **I-0 — Avis et critères** (livré le 2026-11-06) : méta-type `ReviewType` rattaché aux types d'item (fermé sur les personnes), note
       globale ou moyenne des critères, en étoiles, texte, spoiler, langue, visibilité ; suppression de `Visionnage.rating`.
-- [ ] **I-1 — Signalements, modération et réactions** : rôle `moderator`, bouton « Signaler » (avis, commentaire, article),
+- [x] **I-1 — Signalements, modération et réactions** (livré le 2026-11-07) : rôle `moderator`, bouton « Signaler » (avis, commentaire, article),
       file de modération, masquage, journal de modération et récapitulatif par membre, réactions (intention ou émotion).
 - [ ] **I-2 — Commentaires** : fil sur les avis, notifications.
 - [ ] **I-3 — Articles sur la fiche d'un item** : partage de nouvelles (titre, message, lien), fil de commentaires.

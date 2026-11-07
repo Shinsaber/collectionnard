@@ -7,6 +7,7 @@ export default {
     collectionsTab: "Collections",
     more: "Plus",
     types: "Types",
+    moderation: "Modération",
     importExport: "Import / export",
     externalImport: "Sources externes",
     images: "Images",

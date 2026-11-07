@@ -38,6 +38,7 @@ type Handler struct {
 
 	uploads uploadQuota // hourly quota of POST /uploads per account (upload_quota.go)
 	thumbs  thumbGate   // decodings of thumbnails in flight (thumbnail.go)
+	rates   hourlyLimit // hourly limits of the social writes per account (rate.go)
 }
 
 func New(s store.Store, auth *middleware.Auth, cfg *config.Config) *Handler {
@@ -191,6 +192,22 @@ func (h *Handler) Router() chi.Router {
 		r.Get("/api/v1/items/{id}/reviews/mine", h.GetMyReview)
 		r.Put("/api/v1/items/{id}/reviews/mine", h.PutMyReview)
 		r.Delete("/api/v1/items/{id}/reviews/mine", h.DeleteMyReview)
+		r.Put("/api/v1/reviews/{id}/reactions/{kind}", h.SetReaction)
+		r.Delete("/api/v1/reviews/{id}/reactions/{kind}", h.SetReaction)
+		r.Post("/api/v1/reports", h.CreateReport)
+
+		// Modération des avis (I-1) : admins et modérateurs.
+		r.Group(func(r chi.Router) {
+			r.Use(h.Auth.RequireRole(model.RoleAdmin, model.RoleModerator))
+
+			r.Get("/api/v1/moderation/count", h.CountModerationQueue)
+			r.Get("/api/v1/moderation/queue", h.ListModerationQueue)
+			r.Get("/api/v1/moderation/log", h.ListModerationLog)
+			r.Get("/api/v1/moderation/users/{id}/history", h.GetModerationHistory)
+			r.Post("/api/v1/moderation/reviews/{id}/hide", h.HideReview)
+			r.Post("/api/v1/moderation/reviews/{id}/restore", h.RestoreReview)
+			r.Post("/api/v1/moderation/reviews/{id}/dismiss", h.DismissReviewReports)
+		})
 
 		r.Post("/api/v1/items/duplicates", h.FindDuplicates)
 

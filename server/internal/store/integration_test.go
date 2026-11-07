@@ -1017,3 +1017,104 @@ func TestReviews_Packages(t *testing.T) {
 		t.Fatalf("Watching : %s %v", watching.AttributesSchema, err)
 	}
 }
+
+// I-1 : un avis masqué sort des listes et des moyennes mais reste à son auteur ; le journal garde tout ;
+// les réactions se comptent sans jamais modérer.
+func TestModeration(t *testing.T) {
+	it, _ := s.CreateItemType(ctx, model.ItemTypeCreate{Name: "TestModerated", AttributesSchema: json.RawMessage(`{"type":"object"}`)})
+	rt, _ := s.CreateReviewType(ctx, model.ReviewTypeCreate{Name: "TestModReview"})
+	if _, err := s.UpdateItemType(ctx, it.ID, model.ItemTypeUpdate{ReviewTypeID: model.OptionalUUID{Set: true, Value: &rt.ID}}); err != nil {
+		t.Fatal(err)
+	}
+	item, _ := s.CreateItem(ctx, model.ItemCreate{ItemTypeID: it.ID, Attributes: json.RawMessage(`{}`)})
+	author, _ := s.CreateUser(ctx, "mod_author", "mod_author@example.org", "x", model.RoleUser)
+	reporter, _ := s.CreateUser(ctx, "mod_reporter", "mod_reporter@example.org", "x", model.RoleUser)
+	moderator, err := s.CreateUser(ctx, "mod_moderator", "mod_moderator@example.org", "x", model.RoleModerator)
+	if err != nil {
+		t.Fatalf("rôle moderator : %v", err)
+	}
+	rv, err := s.PutReview(ctx, item.ID, author.ID, model.ReviewWrite{Rating: 2, Body: "texte injurieux", Lang: "fr", Visibility: "public"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	in := model.ReportCreate{TargetKind: "review", TargetID: rv.ID, Reason: "abusive"}
+	if _, err := s.CreateReport(ctx, reporter.ID, in); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.CreateReport(ctx, reporter.ID, in); !errors.Is(err, store.ErrConflict) {
+		t.Errorf("deuxième signalement ouvert : %v", err)
+	}
+	queue, total, err := s.ListModerationQueue(ctx, model.Pagination{Page: 1, PerPage: 20})
+	if err != nil || total != 1 || len(queue) != 1 || queue[0].Review == nil || len(queue[0].Reports) != 1 || queue[0].AuthorID != author.ID {
+		t.Fatalf("file : %d %+v %v", total, queue, err)
+	}
+
+	if _, err := s.ModerateReview(ctx, rv.ID, moderator.ID, model.ModerationHide, "Propos injurieux"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.ModerateReview(ctx, rv.ID, moderator.ID, model.ModerationHide, "encore"); !errors.Is(err, store.ErrConflict) {
+		t.Errorf("masquer un avis masqué : %v", err)
+	}
+	if n, _ := s.CountModerationQueue(ctx); n != 0 {
+		t.Errorf("signalement fermé par le masquage : %d", n)
+	}
+	list, _, _ := s.ListItemReviews(ctx, item.ID, model.ReviewListParams{Viewer: uuid.Nil, Levels: []string{"public"}}, model.Pagination{Page: 1, PerPage: 20})
+	st, _ := s.GetReviewStats(ctx, item.ID, uuid.Nil, []string{"public"})
+	if len(list) != 0 || st.Count != 0 {
+		t.Errorf("avis masqué listé ou compté : %d %+v", len(list), st)
+	}
+	mine, _ := s.GetMyReview(ctx, item.ID, author.ID)
+	if mine.HiddenAt == nil || mine.HiddenReason == nil || *mine.HiddenReason != "Propos injurieux" {
+		t.Errorf("l'auteur voit son avis et le motif : %+v", mine)
+	}
+	if pub, _, _ := s.ListUserReviews(ctx, author.ID, []string{"public"}, model.Pagination{Page: 1, PerPage: 20}); len(pub) != 0 {
+		t.Errorf("avis masqué sur le profil public : %d", len(pub))
+	}
+	if own, _, _ := s.ListUserReviews(ctx, author.ID, nil, model.Pagination{Page: 1, PerPage: 20}); len(own) != 1 {
+		t.Errorf("mes avis, masqué compris : %d", len(own))
+	}
+
+	// Le journal garde la copie même si l'auteur supprime son avis.
+	if err := s.DeleteReview(ctx, item.ID, author.ID); err != nil {
+		t.Fatal(err)
+	}
+	hist, err := s.ModerationHistory(ctx, author.ID)
+	if err != nil || hist.Recap.Hidden90d != 1 || len(hist.Entries) != 1 || hist.Entries[0].Excerpt != "texte injurieux" || hist.Entries[0].Moderator == nil {
+		t.Errorf("historique : %+v %v", hist, err)
+	}
+
+	// Signalement classé sans suite : compté chez le signaleur.
+	rv2, _ := s.PutReview(ctx, item.ID, author.ID, model.ReviewWrite{Rating: 9, Body: "avis correct", Lang: "fr", Visibility: "public"})
+	_, _ = s.CreateReport(ctx, reporter.ID, model.ReportCreate{TargetKind: "review", TargetID: rv2.ID, Reason: "spam"})
+	if _, err := s.ModerateReview(ctx, rv2.ID, moderator.ID, model.ModerationDismiss, ""); err != nil {
+		t.Fatal(err)
+	}
+	if recap, _ := s.ModerationRecap(ctx, reporter.ID); recap.Dismissed90d != 1 {
+		t.Errorf("signalements classés du signaleur : %+v", recap)
+	}
+	if _, err := s.ModerateReview(ctx, rv2.ID, moderator.ID, model.ModerationDismiss, ""); !errors.Is(err, store.ErrConflict) {
+		t.Errorf("rien à classer : %v", err)
+	}
+	log, n, _ := s.ListModerationLog(ctx, model.Pagination{Page: 1, PerPage: 20})
+	if n < 2 || log[0].Action != "dismiss" {
+		t.Errorf("journal : %d %+v", n, log)
+	}
+
+	// Réactions : comptées, les miennes reconnues, tri « les plus intéressants ».
+	for _, kind := range []string{"interesting", "funny"} {
+		if err := s.SetReaction(ctx, rv2.ID, reporter.ID, kind, true); err != nil {
+			t.Fatal(err)
+		}
+	}
+	_ = s.SetReaction(ctx, rv2.ID, reporter.ID, "interesting", true) // sans effet
+	_ = s.SetReaction(ctx, rv2.ID, moderator.ID, "interesting", true)
+	_ = s.SetReaction(ctx, rv2.ID, reporter.ID, "funny", false)
+	counts, mineR, err := s.ReactionsOf(ctx, []uuid.UUID{rv2.ID}, reporter.ID)
+	if err != nil || counts[rv2.ID]["interesting"] != 2 || counts[rv2.ID]["funny"] != 0 || len(mineR[rv2.ID]) != 1 {
+		t.Errorf("réactions : %+v %+v %v", counts, mineR, err)
+	}
+	if _, _, err := s.ListItemReviews(ctx, item.ID, model.ReviewListParams{Viewer: uuid.Nil, Levels: []string{"public"}, Sort: "interesting"}, model.Pagination{Page: 1, PerPage: 20}); err != nil {
+		t.Errorf("tri interesting : %v", err)
+	}
+}

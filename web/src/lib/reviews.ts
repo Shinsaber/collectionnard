@@ -1,6 +1,26 @@
 import { orderedKeys, type Schema } from "@/lib/schema";
 import type { ReviewVisibility, Visibility } from "@/api/types";
 
+/** Réactions à un avis (I-1) : une intention ou une émotion, jamais un signalement. */
+export const REACTION_KINDS = [
+  "interesting",
+  "tempting",
+  "funny",
+  "disapprove",
+] as const;
+export type ReactionKind = (typeof REACTION_KINDS)[number];
+
+/** Motifs d'un signalement. */
+export const REPORT_REASONS = [
+  "abusive",
+  "harassment",
+  "spoiler",
+  "spam",
+  "off_topic",
+  "other",
+] as const;
+export type ReportReason = (typeof REPORT_REASONS)[number];
+
 /** Ordre du formulaire : du plus discret au plus exposé. */
 export const REVIEW_VISIBILITIES: ReviewVisibility[] = [
   "private",

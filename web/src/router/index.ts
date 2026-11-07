@@ -175,6 +175,12 @@ const router = createRouter({
           component: () => import("@/views/OfflineView.vue"),
         },
         {
+          path: "moderation",
+          name: "moderation",
+          component: () => import("@/views/ModerationView.vue"),
+          meta: { moderation: true },
+        },
+        {
           path: "proposals",
           name: "proposals",
           component: () => import("@/views/ProposalsView.vue"),
@@ -250,6 +256,10 @@ router.beforeEach(async (to) => {
   }
 
   if (to.meta.catalog && !auth.canEditCatalog) {
+    return { name: "dashboard" };
+  }
+
+  if (to.meta.moderation && !auth.canModerate) {
     return { name: "dashboard" };
   }
 

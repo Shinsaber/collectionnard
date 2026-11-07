@@ -42,6 +42,10 @@
                 :label="t('account.roles.contributor')"
                 value="contributor"
               />
+              <ElOption
+                :label="t('account.roles.moderator')"
+                value="moderator"
+              />
               <ElOption :label="t('account.roles.admin')" value="admin" />
             </ElSelect>
           </template>

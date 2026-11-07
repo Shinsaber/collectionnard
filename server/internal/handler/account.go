@@ -277,10 +277,10 @@ func (h *Handler) CreateInvitation(w http.ResponseWriter, r *http.Request) {
 	in.Note = strings.TrimSpace(in.Note)
 	switch {
 	case !validRole(in.Role):
-		respondError(w, http.StatusBadRequest, "bad_request", "role must be admin, contributor or user")
+		respondError(w, http.StatusBadRequest, "bad_request", "role must be admin, contributor, moderator or user")
 		return
 	case in.Role != model.RoleUser && middleware.GetRole(r.Context()) != model.RoleAdmin:
-		respondError(w, http.StatusForbidden, "forbidden", "only an admin may invite an admin or a contributor")
+		respondError(w, http.StatusForbidden, "forbidden", "only an admin may invite an admin, a contributor or a moderator")
 		return
 	case in.ExpiresInDays < 1 || in.ExpiresInDays > maxInvitationDays:
 		respondError(w, http.StatusBadRequest, "bad_request", "expires_in_days: 1 to 90")
@@ -344,7 +344,7 @@ func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func validRole(role string) bool {
-	return role == model.RoleAdmin || role == model.RoleContributor || role == model.RoleUser
+	return role == model.RoleAdmin || role == model.RoleContributor || role == model.RoleModerator || role == model.RoleUser
 }
 
 // UpdateUser answers PUT /users/{id} (admin): role and disabled state.
@@ -359,7 +359,7 @@ func (h *Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if in.Role != nil && !validRole(*in.Role) {
-		respondError(w, http.StatusBadRequest, "bad_request", "role must be admin, contributor or user")
+		respondError(w, http.StatusBadRequest, "bad_request", "role must be admin, contributor, moderator or user")
 		return
 	}
 	if id == middleware.GetUserID(r.Context()) &&

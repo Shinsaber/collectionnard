@@ -125,6 +125,16 @@ type MockStore struct {
 	ListDomainsFn                func(ctx context.Context) ([]model.DomainInfo, error)
 	InstallDomainFn              func(ctx context.Context, pkg *model.DomainPackage, dryRun bool) (*model.DomainInstallReport, error)
 	RefreshInstalledDomainsFn    func(ctx context.Context, except string) error
+	GetReviewFn                  func(ctx context.Context, id uuid.UUID) (*model.Review, error)
+	CreateReportFn               func(ctx context.Context, reporterID uuid.UUID, in model.ReportCreate) (*model.Report, error)
+	CountModerationQueueFn       func(ctx context.Context) (int, error)
+	ListModerationQueueFn        func(ctx context.Context, pg model.Pagination) ([]model.ModerationItem, int, error)
+	ModerationRecapFn            func(ctx context.Context, userID uuid.UUID) (*model.ModerationRecap, error)
+	ModerateReviewFn             func(ctx context.Context, reviewID, moderatorID uuid.UUID, action, reason string) (*model.ModerationResult, error)
+	ListModerationLogFn          func(ctx context.Context, pg model.Pagination) ([]model.ModerationLogEntry, int, error)
+	ModerationHistoryFn          func(ctx context.Context, userID uuid.UUID) (*model.ModerationHistory, error)
+	SetReactionFn                func(ctx context.Context, reviewID, userID uuid.UUID, kind string, on bool) error
+	ReactionsOfFn                func(ctx context.Context, reviewIDs []uuid.UUID, viewer uuid.UUID) (map[uuid.UUID]map[string]int, map[uuid.UUID][]string, error)
 	ListReviewTypesFn            func(ctx context.Context, pg model.Pagination) ([]model.ReviewType, int, error)
 	GetReviewTypeFn              func(ctx context.Context, id uuid.UUID) (*model.ReviewType, error)
 	CreateReviewTypeFn           func(ctx context.Context, in model.ReviewTypeCreate) (*model.ReviewType, error)
@@ -237,6 +247,76 @@ func (m *MockStore) ListUserReviews(ctx context.Context, userID uuid.UUID, level
 		return m.ListUserReviewsFn(ctx, userID, levels, pg)
 	}
 	return nil, 0, nil
+}
+
+func (m *MockStore) GetReview(ctx context.Context, id uuid.UUID) (*model.Review, error) {
+	if m.GetReviewFn != nil {
+		return m.GetReviewFn(ctx, id)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) CreateReport(ctx context.Context, reporterID uuid.UUID, in model.ReportCreate) (*model.Report, error) {
+	if m.CreateReportFn != nil {
+		return m.CreateReportFn(ctx, reporterID, in)
+	}
+	return &model.Report{ID: uuid.New(), Status: "open"}, nil
+}
+
+func (m *MockStore) CountModerationQueue(ctx context.Context) (int, error) {
+	if m.CountModerationQueueFn != nil {
+		return m.CountModerationQueueFn(ctx)
+	}
+	return 0, nil
+}
+
+func (m *MockStore) ListModerationQueue(ctx context.Context, pg model.Pagination) ([]model.ModerationItem, int, error) {
+	if m.ListModerationQueueFn != nil {
+		return m.ListModerationQueueFn(ctx, pg)
+	}
+	return nil, 0, nil
+}
+
+func (m *MockStore) ModerationRecap(ctx context.Context, userID uuid.UUID) (*model.ModerationRecap, error) {
+	if m.ModerationRecapFn != nil {
+		return m.ModerationRecapFn(ctx, userID)
+	}
+	return &model.ModerationRecap{}, nil
+}
+
+func (m *MockStore) ModerateReview(ctx context.Context, reviewID, moderatorID uuid.UUID, action, reason string) (*model.ModerationResult, error) {
+	if m.ModerateReviewFn != nil {
+		return m.ModerateReviewFn(ctx, reviewID, moderatorID, action, reason)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) ListModerationLog(ctx context.Context, pg model.Pagination) ([]model.ModerationLogEntry, int, error) {
+	if m.ListModerationLogFn != nil {
+		return m.ListModerationLogFn(ctx, pg)
+	}
+	return nil, 0, nil
+}
+
+func (m *MockStore) ModerationHistory(ctx context.Context, userID uuid.UUID) (*model.ModerationHistory, error) {
+	if m.ModerationHistoryFn != nil {
+		return m.ModerationHistoryFn(ctx, userID)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) SetReaction(ctx context.Context, reviewID, userID uuid.UUID, kind string, on bool) error {
+	if m.SetReactionFn != nil {
+		return m.SetReactionFn(ctx, reviewID, userID, kind, on)
+	}
+	return nil
+}
+
+func (m *MockStore) ReactionsOf(ctx context.Context, reviewIDs []uuid.UUID, viewer uuid.UUID) (map[uuid.UUID]map[string]int, map[uuid.UUID][]string, error) {
+	if m.ReactionsOfFn != nil {
+		return m.ReactionsOfFn(ctx, reviewIDs, viewer)
+	}
+	return map[uuid.UUID]map[string]int{}, map[uuid.UUID][]string{}, nil
 }
 
 func (m *MockStore) Ping(ctx context.Context) error {
@@ -594,6 +674,8 @@ var (
 	UserID  = uuid.MustParse("a0000000-0000-0000-0000-000000000002")
 	// ContributorID : rôle contributor (P4-3).
 	ContributorID = uuid.MustParse("a0000000-0000-0000-0000-000000000003")
+	// ModeratorID : rôle moderator (I-1).
+	ModeratorID = uuid.MustParse("a0000000-0000-0000-0000-000000000004")
 )
 
 func AdminUser() *model.User {
@@ -645,6 +727,13 @@ func NewTestServer(mockStore *MockStore) *httptest.Server {
 func AdminToken() string {
 	auth := middleware.NewAuth(TestSecret, TestAccessTTL)
 	t, _ := auth.GenerateToken(AdminID, "admin")
+	return t
+}
+
+// ModeratorToken : jeton d'un modérateur (signalements, I-1).
+func ModeratorToken() string {
+	auth := middleware.NewAuth(TestSecret, TestAccessTTL)
+	t, _ := auth.GenerateToken(ModeratorID, "moderator")
 	return t
 }
 

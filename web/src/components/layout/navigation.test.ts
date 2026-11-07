@@ -35,6 +35,10 @@ describe("isNavActive", () => {
     expect(isNavActive(types, "/items")).toBe(false);
   });
 
+  it("garde « Modération » dans l'onglet « Plus »", () => {
+    expect(isMoreActive("/moderation")).toBe(true);
+  });
+
   it("rattache l'administration, les statistiques et le hors ligne à l'onglet « Plus »", () => {
     expect(isMoreActive("/admin/item-types")).toBe(true);
     expect(isMoreActive("/stats")).toBe(true);

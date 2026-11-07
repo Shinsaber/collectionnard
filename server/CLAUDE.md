@@ -12,7 +12,7 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 | `model`      | Structs JSON (entités, `*Create`, `*Update`, `Pagination`, `APIError`)                               |
 | `store`      | Interface `Store` (`store.go`) + implémentation pgx (1 fichier/domaine)                              |
 | `handler`    | Handlers HTTP, 1 fichier/domaine ; **toutes les routes** dans `handler.go` → `Router()`              |
-| `middleware` | Cinq niveaux d'accès du `Router()` : public ; `OptionalAuthenticate` (routes `/public/…`, `/share` : anonyme ou jeton valide) ; `Authenticate` (JWT HS256, `exp` obligatoire) ; `RequireRole(admin, contributor)` (écriture du catalogue, modération, import externe) ; `RequireAdmin` (méta-types, administration, suppression d'item). Plus `RateLimiter` (`/auth/*`, deux compteurs), `TrustedProxyRealIP`, `RequestLogger` |
+| `middleware` | Cinq niveaux d'accès du `Router()` : public ; `OptionalAuthenticate` (routes `/public/…`, `/share` : anonyme ou jeton valide) ; `Authenticate` (JWT HS256, `exp` obligatoire) ; `RequireRole(admin, contributor)` (écriture du catalogue, modération des propositions, import externe) ; `RequireRole(admin, moderator)` (modération des avis, I-1) ; `RequireAdmin` (méta-types, administration, suppression d'item). Plus `RateLimiter` (`/auth/*`, deux compteurs), `TrustedProxyRealIP`, `RequestLogger` |
 | `validator`  | `ValidateAttributes(schema, data)` + `FormatValidationError`                                         |
 | `testutil`   | `MockStore` (champs `XxxFn`), `NewTestServer`, `AdminToken`/`UserToken`, `AuthHeader`                |
 | `label`      | `Render(schema, attrs, lang)` : libellé d'un item via `x-label` (pendant de `web/src/lib/schema.ts`) |
@@ -94,6 +94,12 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
   montre que les avis signés pour le lecteur. L'édition utilisée (`context_item_id`, cible de l'item par une relation de
   `review_type_context_relations`, vérifiée par `IsReviewContext`) est retirée avec l'auteur ; à l'import, ces relations
   s'écrivent après les types de relation (`reviewTypeContexts`).
+- Modération (`handler/moderation.go`, `store/moderation.go`, I-1) : on ne signale ou ne réagit qu'à un avis montré au lecteur
+  (`reviewShownTo` : ni le sien, ni une note seule, ni un avis masqué ; 404 sinon), jamais à son propre contenu (403
+  `own_content`). `ModerateReview` masque / rétablit / classe dans une transaction avec son entrée de `moderation_log`
+  (ajout seul, copie du contenu) ; un avis masqué sort des listes, des moyennes et du profil public, son auteur le voit
+  avec le motif. Les réactions ne modèrent jamais. Écritures sociales limitées par heure et par compte (`handler/rate.go` :
+  avis 60, signalements 20, réactions 300 ; admins exemptés ; 429 `rate_limited`).
 - Visibilité et partage (`handler/sharing.go`, `store/sharing.go`, P4-2) : routes publiques derrière
   `Auth.OptionalAuthenticate` (sans jeton : anonyme, `GetUserID` = `uuid.Nil` ; jeton invalide : 401) ; `loadReadable`
   vérifie visibilité et compte actif (404 sinon) et calcule les champs cachés ; une nouvelle lecture publique doit

@@ -138,7 +138,7 @@ docker compose down -v && docker compose up --build   # repart d'une base vide (
 ```
 
 Comptes de dev (seed) : `admin` / `admin` (rôle admin), `shinsaber` / `shinsaber` (rôle user).
-Nouveau compte : `go run . create-user <nom> <email> [--admin|--contributor]` (mot de passe demandé).
+Nouveau compte : `go run . create-user <nom> <email> [--admin|--contributor|--moderator]` (mot de passe demandé).
 Production : images publiées par la CI sur ghcr.io (job `images`, tags `v*` et `main`), `docker-compose.prod.yml`
 (sans seed) — voir README « Mise en production ».
 
@@ -190,4 +190,4 @@ perspective) et M5 (photos de l'état d'un exemplaire, paquet `collections` v3) 
 dans `docs/phases/mobile.md`. Retours de la v0.4.0 (branche `retours-mobile`, fusionnée, v0.4.1) : caméra dans
 l'application, loupe et rotation au redressement, visionneuse maison, menus des relations et des collections, thème des
 pages publiques. Documentation restructurée le 2026-11-01 : tout dans `docs/`, README seul à la racine, `LICENSE` (MIT).
-Phase 6 (interactions, `docs/phases/interactions.md`), branche `phase6-interactions` : I-0 (avis et critères) livré ; I-1 à I-4 à faire.
+Phase 6 (interactions, `docs/phases/interactions.md`), branche `phase6-interactions` : I-0 (avis et critères) et I-1 (signalements, modération, réactions, rôle `moderator`) livrés ; I-2 à I-4 à faire.

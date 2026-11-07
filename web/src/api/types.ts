@@ -19,7 +19,7 @@ export interface RefreshRequest {
 
 // ---------- User ----------
 /** `contributor` (P4-3) : écrit dans le catalogue sans supprimer d'item, modère les propositions. */
-export type Role = "admin" | "contributor" | "user";
+export type Role = "admin" | "contributor" | "moderator" | "user";
 
 export interface User {
   id: string;
@@ -213,6 +213,12 @@ export interface Review {
   author?: { username: string; display_name?: string; avatar?: string };
   /** Listes par utilisateur seulement. */
   item?: Item;
+  /** Masqué par la modération (I-1) : visible de son auteur et des modérateurs seulement. */
+  hidden_at?: string;
+  hidden_reason?: string;
+  /** Nombre de chaque réaction, et celles du lecteur. */
+  reactions?: Record<string, number>;
+  my_reactions?: string[];
   created_at: string;
   updated_at: string;
 }
@@ -229,7 +235,7 @@ export interface ReviewPut {
 }
 
 export interface ReviewListParams extends PaginationParams {
-  sort?: "recent" | "rating";
+  sort?: "recent" | "rating" | "interesting";
   lang?: string;
   context_item_id?: string;
 }
@@ -245,6 +251,67 @@ export interface ReviewSummary {
   criteria: { key: string; count: number; rating: number | null }[];
   /** Éditions qu'un avis peut préciser (formulaire, filtre). */
   context_items: Item[];
+}
+
+// ---------- Modération (I-1) ----------
+export interface ReportCreate {
+  target_kind: "review";
+  target_id: string;
+  reason: string;
+  details: string;
+}
+
+export interface Report {
+  id: string;
+  target_kind: string;
+  target_id: string;
+  reason: string;
+  details: string;
+  status: "open" | "actioned" | "dismissed";
+  reporter_id: string;
+  reporter?: { username: string; display_name?: string; avatar?: string };
+  /** Signalements du même membre classés sans suite ces 90 derniers jours. */
+  reporter_dismissed: number;
+  created_at: string;
+}
+
+export interface ModerationRecap {
+  hidden_90d: number;
+  hidden_total: number;
+  dismissed_reports_90d: number;
+}
+
+export interface ModerationItem {
+  target_kind: string;
+  target_id: string;
+  author_id: string;
+  review?: Review;
+  /** Type d'avis : libellés des critères. */
+  review_type?: ReviewType;
+  item?: Item;
+  reports: Report[];
+  author_recap: ModerationRecap;
+}
+
+export interface ModerationLogEntry {
+  id: string;
+  action: "hide" | "restore" | "dismiss";
+  target_kind: string;
+  target_id: string;
+  target_author?: { username: string; display_name?: string };
+  author_id?: string;
+  moderator?: { username: string; display_name?: string };
+  reason: string;
+  excerpt: string;
+  still_hidden: boolean;
+  created_at: string;
+}
+
+export interface ModerationHistory {
+  user: { username: string; display_name?: string };
+  recap: ModerationRecap;
+  entries: ModerationLogEntry[];
+  dismissed_reports: Report[];
 }
 
 // ---------- CollectionType ----------
@@ -685,12 +752,21 @@ export type NotificationKind =
   | "proposal_accepted"
   | "proposal_rejected"
   | "proposal_changes_requested"
-  | "proposal_comment";
+  | "proposal_comment"
+  | "review_hidden"
+  | "review_restored";
 
 export interface AppNotification {
   id: string;
   kind: NotificationKind;
-  payload: { proposal_id?: string; title?: string; by?: string };
+  payload: {
+    proposal_id?: string;
+    title?: string;
+    by?: string;
+    /** Modération d'un avis (I-1) : sa fiche et le motif. */
+    item_id?: string;
+    reason?: string;
+  };
   created_at: string;
   read_at?: string;
 }

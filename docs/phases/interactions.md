@@ -247,6 +247,29 @@ soit leur nombre, n'envoie un avis en modération.
 - Liste fixe (codes anglais, libellés via vue-i18n) plutôt qu'un méta-type : c'est un vocabulaire d'interface, pas une
   donnée de domaine.
 
+### Livré
+
+**I-1 livré le 2026-11-07.** Choix faits à la réalisation :
+
+- Migration 015 : rôle `moderator` (contraintes de `users` et `invitations`), `reviews.hidden_*`, `reports` (un seul
+  signalement ouvert par signaleur et cible, index partiel), `moderation_log`, `review_reactions`. Motifs : `abusive`,
+  `harassment`, `spoiler`, `spam`, `off_topic`, `other`.
+- `moderation_log` est en ajout seul **par le code** (aucune méthode n'y modifie ni n'y supprime) ; la copie du contenu
+  est bornée à 2 000 caractères.
+- Seul un avis **montré au lecteur** se signale ou reçoit une réaction : ni le sien (403 `own_content`), ni une note
+  seule, ni un avis masqué (404). Un modérateur ne modère pas son propre avis.
+- Masquer exige un motif, montré à l'auteur et notifié (`review_hidden`, `review_restored`) ; masquer ou classer ferme
+  les signalements ouverts. Une action qui ne s'applique plus répond 409 `moderation_state`.
+- Récapitulatif d'un membre : masquages sur 90 jours et au total, signalements classés sans suite sur 90 jours ; à côté
+  de chaque signalement, le nombre de signalements classés du signaleur.
+- Limites de débit par heure et par compte (`handler/rate.go`, en mémoire) : avis 60, signalements 20, réactions 300 ;
+  admins exemptés ; 429 `rate_limited` (code déjà employé par la connexion).
+- Front : page « Modération » (file, journal, historique d'un membre ; lien dans l'administration pour les admins et
+  les modérateurs, pastille dans la cloche), réactions et « Signaler » sur chaque avis d'un autre membre, tri « Les plus
+  intéressants », bannière « Masqué par la modération » sur son propre avis, rôle dans « Utilisateurs » et les
+  invitations, `create-user … --moderator`. Sur chaque avis, réactions et « Signaler » en pied : à droite des critères
+  (calés en bas) pour un avis détaillé ; texte en retrait marqué d'un filet pour une note globale.
+
 ## I-2 — Commentaires
 
 Un seul fil pour les avis et, en I-3, pour les articles.

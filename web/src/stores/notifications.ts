@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { notificationApi, proposalApi } from "@/api/client";
+import { moderationApi, notificationApi, proposalApi } from "@/api/client";
 import { useAuthStore } from "./auth";
 import type { AppNotification } from "@/api/types";
 
@@ -12,19 +12,23 @@ export const useNotificationsStore = defineStore("notifications", () => {
   const items = ref<AppNotification[]>([]);
   const unread = ref(0);
   const toReview = ref(0);
+  /** Contenus signalés à modérer (I-1), pour les admins et les modérateurs. */
+  const toModerate = ref(0);
   let pending: Promise<void> | null = null;
 
   function refresh(): Promise<void> {
     pending ??= (async () => {
       const auth = useAuthStore();
       try {
-        const [page, count] = await Promise.all([
+        const [page, count, reported] = await Promise.all([
           notificationApi.list({ page: 1, per_page: 10 }),
           auth.canEditCatalog ? proposalApi.reviewCount() : Promise.resolve(0),
+          auth.canModerate ? moderationApi.count() : Promise.resolve(0),
         ]);
         items.value = page.data;
         unread.value = page.unread;
         toReview.value = count;
+        toModerate.value = reported;
       } finally {
         pending = null;
       }
@@ -48,7 +52,8 @@ export const useNotificationsStore = defineStore("notifications", () => {
     items.value = [];
     unread.value = 0;
     toReview.value = 0;
+    toModerate.value = 0;
   }
 
-  return { items, unread, toReview, refresh, markRead, $reset };
+  return { items, unread, toReview, toModerate, refresh, markRead, $reset };
 });

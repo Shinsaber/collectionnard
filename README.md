@@ -58,7 +58,7 @@ Le fichier `db/seed.sql` crée deux comptes de développement (appliqué si `SEE
 | `admin`     | `admin`      | admin |
 | `shinsaber` | `shinsaber`  | user  |
 
-Pour créer un compte : `colec-server create-user <nom> <email> [--admin|--contributor]` (mot de passe demandé
+Pour créer un compte : `colec-server create-user <nom> <email> [--admin|--contributor|--moderator]` (mot de passe demandé
 sans écho, ou lu sur l'entrée standard ; 8 caractères minimum). Avec Docker :
 `docker compose run --rm server colec-server create-user <nom> <email> --admin`. Les autres comptes se créent
 ensuite depuis l'application, sur invitation (page « Utilisateurs », ou « Mon profil » si `MEMBER_INVITES=true`).

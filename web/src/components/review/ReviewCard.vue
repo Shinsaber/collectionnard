@@ -34,6 +34,14 @@
     </header>
 
     <p
+      v-if="review.hidden_at"
+      class="rounded-lg bg-danger/12 px-3 py-2 text-[13px] text-danger"
+      role="status"
+      data-test="review-hidden"
+    >
+      {{ t("reviews.hidden", { reason: review.hidden_reason ?? "" }) }}
+    </p>
+    <p
       v-if="review.context_item"
       class="text-[13px] text-muted"
       data-test="review-context"
@@ -46,18 +54,16 @@
       >
     </p>
 
-    <!-- Avis détaillé : les critères dans une colonne à gauche du texte (au-dessus sur mobile). -->
-    <div
-      :class="
-        criteria.length > 0
-          ? 'grid grid-cols-1 gap-4 sm:grid-cols-[minmax(200px,230px)_1fr]'
-          : 'flex flex-col'
-      "
-    >
+    <!--
+      Avis détaillé : les critères à gauche, le texte et le pied (réactions, signalement) à droite, le pied calé en
+      bas, au niveau des critères quand le texte est court ; sur mobile, tout s'empile. Note globale (déjà dans
+      l'en-tête) : le texte en retrait, marqué d'un filet, le pied aligné dessous.
+    -->
+    <div class="flex flex-col gap-3 sm:flex-row sm:gap-4">
       <!-- Une ligne par critère : libellé à gauche, étoiles et note alignées à droite. -->
       <dl
         v-if="criteria.length > 0"
-        class="flex flex-col gap-2 rounded-xl bg-soft px-3 py-2.5 sm:self-start"
+        class="flex flex-col gap-2 rounded-xl bg-soft px-3 py-2.5 sm:w-[230px] sm:shrink-0 sm:self-start"
         data-test="review-criteria"
       >
         <div v-for="c in criteria" :key="c.key" class="flex items-center gap-3">
@@ -72,11 +78,16 @@
           </dd>
         </div>
       </dl>
-      <div class="flex min-w-0 flex-col gap-2.5">
-        <template v-if="review.body">
+      <div
+        class="flex min-w-0 flex-1 flex-col gap-2.5"
+        :class="{ 'pl-3': criteria.length === 0 }"
+      >
+        <div
+          v-if="review.body"
+          :class="{ '-ml-3 border-l border-line pl-3': criteria.length === 0 }"
+        >
           <ElButton
             v-if="review.spoiler && !revealed"
-            class="self-start"
             data-test="review-spoiler"
             @click="revealed = true"
           >
@@ -92,9 +103,36 @@
             v-html="html"
           />
           <!-- eslint-enable vue/no-v-html -->
-        </template>
+        </div>
+        <div
+          v-if="reportable || (showReactions && hasReactions)"
+          class="mt-auto flex flex-wrap items-center justify-between gap-2"
+          data-test="review-footer"
+        >
+          <ReviewReactions
+            v-if="showReactions"
+            :review="review"
+            :interactive="reportable"
+          />
+          <ElButton
+            v-if="reportable"
+            text
+            size="small"
+            class="ml-auto text-muted!"
+            data-test="review-report"
+            @click="reporting = true"
+          >
+            <i class="pi pi-flag mr-1.5" aria-hidden="true"></i>
+            {{ t("reviews.report.action") }}
+          </ElButton>
+        </div>
       </div>
     </div>
+    <ReportDialog
+      v-if="reportable"
+      v-model:visible="reporting"
+      :review-id="review.id"
+    />
   </article>
 </template>
 
@@ -108,6 +146,8 @@ import { renderMarkdown } from "@/lib/markdown";
 import { criteriaKeys } from "@/lib/reviews";
 import UserAvatar from "@/components/account/UserAvatar.vue";
 import ReviewStars from "./ReviewStars.vue";
+import ReviewReactions from "./ReviewReactions.vue";
+import ReportDialog from "./ReportDialog.vue";
 import type { Review } from "@/api/types";
 
 const props = defineProps<{
@@ -116,7 +156,16 @@ const props = defineProps<{
   schema?: Record<string, unknown>;
   /** Libellé de l'édition utilisée (« Joué sur »). */
   contextLabelText?: string;
+  /** Avis d'un autre membre, vu connecté : réactions et signalement possibles (I-1). */
+  reportable?: boolean;
+  /** Afficher les réactions reçues (en lecture seule si non `reportable`). */
+  showReactions?: boolean;
 }>();
+const reporting = ref(false);
+// Réactions et signalement en pied d'avis, sur toute la largeur ; rien en lecture seule sans réaction reçue.
+const hasReactions = computed(() =>
+  Object.values(props.review.reactions ?? {}).some((n) => n > 0),
+);
 
 const { t } = useI18n();
 const { lang } = useLang();

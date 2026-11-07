@@ -38,8 +38,8 @@ func (h *Handler) ListItemReviews(w http.ResponseWriter, r *http.Request) {
 	viewer := middleware.GetUserID(r.Context())
 	p := model.ReviewListParams{Viewer: viewer, Levels: privacy.Levels(viewer),
 		Sort: r.URL.Query().Get("sort"), Lang: r.URL.Query().Get("lang")}
-	if p.Sort != "" && p.Sort != "recent" && p.Sort != "rating" {
-		respondError(w, http.StatusBadRequest, "bad_request", "sort must be recent or rating")
+	if p.Sort != "" && p.Sort != "recent" && p.Sort != "rating" && p.Sort != "interesting" {
+		respondError(w, http.StatusBadRequest, "bad_request", "sort must be recent, rating or interesting")
 		return
 	}
 	if p.Lang != "" && !review.ValidLang(p.Lang) {
@@ -60,6 +60,10 @@ func (h *Handler) ListItemReviews(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	signedFor(list, viewer)
+	if err := h.withReactions(r, list); err != nil {
+		handleStoreError(w, r, err)
+		return
+	}
 	respondJSON(w, http.StatusOK, model.NewPaginatedResponse(list, total, pg))
 }
 
@@ -118,7 +122,12 @@ func (h *Handler) GetMyReview(w http.ResponseWriter, r *http.Request) {
 		handleStoreError(w, r, err)
 		return
 	}
-	respondJSON(w, http.StatusOK, rv)
+	one := []model.Review{*rv}
+	if err := h.withReactions(r, one); err != nil {
+		handleStoreError(w, r, err)
+		return
+	}
+	respondJSON(w, http.StatusOK, one[0])
 }
 
 // PutMyReview creates or replaces the review of the reader on an item.
@@ -139,6 +148,9 @@ func (h *Handler) PutMyReview(w http.ResponseWriter, r *http.Request) {
 	}
 	if rt == nil {
 		respondError(w, http.StatusConflict, "reviews_closed", "reviews are closed on this item type")
+		return
+	}
+	if h.limited(w, r, "reviews", rateReviews) {
 		return
 	}
 	write, field, err := checkReview(rt, in)
@@ -222,6 +234,9 @@ func (h *Handler) DeleteMyReview(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) ListMyReviews(w http.ResponseWriter, r *http.Request) {
 	pg := parsePagination(r)
 	list, total, err := h.Store.ListUserReviews(r.Context(), middleware.GetUserID(r.Context()), nil, pg)
+	if err == nil {
+		err = h.withReactions(r, list)
+	}
 	if err != nil {
 		handleStoreError(w, r, err)
 		return
@@ -239,6 +254,9 @@ func (h *Handler) ListPublicReviews(w http.ResponseWriter, r *http.Request) {
 	viewer := middleware.GetUserID(r.Context())
 	pg := parsePagination(r)
 	list, total, err := h.Store.ListUserReviews(r.Context(), u.ID, privacy.Levels(viewer), pg)
+	if err == nil {
+		err = h.withReactions(r, list)
+	}
 	if err != nil {
 		handleStoreError(w, r, err)
 		return

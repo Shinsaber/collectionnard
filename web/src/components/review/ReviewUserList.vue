@@ -8,6 +8,7 @@
       v-for="r in reviews"
       :key="r.id"
       :review="r"
+      show-reactions
       data-test="review-user-item"
     >
       <template #heading>

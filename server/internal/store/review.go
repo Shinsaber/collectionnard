@@ -12,7 +12,7 @@ import (
 // review is signed for the reader. Reviews of disabled accounts count nowhere.
 const reviewColumns = `r.id, r.item_id, r.user_id, r.review_type_id, r.criteria, r.rating::float8, r.body, r.spoiler,
 	r.lang, r.visibility, r.created_at, r.updated_at, u.username, u.display_name, u.avatar,
-	r.context_item_id, ci.item_type_id, ci.attributes, cit.name, cit.attributes_schema`
+	r.context_item_id, ci.item_type_id, ci.attributes, cit.name, cit.attributes_schema, r.hidden_at, r.hidden_reason`
 
 // reviewContextJoin: the edition used, with what its label needs.
 const reviewContextJoin = ` LEFT JOIN items ci ON ci.id = r.context_item_id
@@ -41,7 +41,7 @@ func (v *reviewScan) dest(extra ...any) []any {
 	r := &v.r
 	return append([]any{&r.ID, &r.ItemID, &r.UserID, &r.ReviewTypeID, &r.Criteria, &r.Rating, &r.Body, &r.Spoiler,
 		&r.Lang, &r.Visibility, &r.CreatedAt, &r.UpdatedAt, &v.a.Username, &v.a.DisplayName, &v.a.Avatar,
-		&r.ContextItemID, &v.ctxType, &v.ctxAttrs, &v.ctxName, &v.ctxSchema}, extra...)
+		&r.ContextItemID, &v.ctxType, &v.ctxAttrs, &v.ctxName, &v.ctxSchema, &r.HiddenAt, &r.HiddenReason}, extra...)
 }
 
 func (v *reviewScan) review() *model.Review {
@@ -121,7 +121,7 @@ func (s *PgStore) IsReviewContext(ctx context.Context, reviewTypeID, itemID, con
 // ListItemReviews lists the reviews of an item shown to the reader, their own excluded.
 func (s *PgStore) ListItemReviews(ctx context.Context, itemID uuid.UUID, p model.ReviewListParams, pg model.Pagination) ([]model.Review, int, error) {
 	// Filtre par édition : seuls les avis signés pour le lecteur la montrent.
-	where := `WHERE r.item_id = $1 AND r.user_id <> $2 AND ` + reviewListed("$3") + ` AND ($4 = '' OR r.lang = $4)
+	where := `WHERE r.item_id = $1 AND r.user_id <> $2 AND r.hidden_at IS NULL AND ` + reviewListed("$3") + ` AND ($4 = '' OR r.lang = $4)
 		AND ($5::uuid IS NULL OR (r.context_item_id = $5 AND r.visibility = ANY($3)))`
 	var total int
 	err := s.pool.QueryRow(ctx, `SELECT count(*)`+reviewFrom+where, itemID, p.Viewer, p.Levels, p.Lang, p.ContextItemID).Scan(&total)
@@ -129,8 +129,12 @@ func (s *PgStore) ListItemReviews(ctx context.Context, itemID uuid.UUID, p model
 		return nil, 0, err
 	}
 	order := `r.created_at DESC`
-	if p.Sort == "rating" {
+	switch p.Sort {
+	case "rating":
 		order = `r.rating DESC, r.created_at DESC`
+	case "interesting":
+		order = `(SELECT count(*) FROM review_reactions rr WHERE rr.review_id = r.id AND rr.kind = 'interesting') DESC,
+			r.created_at DESC`
 	}
 	rows, err := s.pool.Query(ctx, `SELECT `+reviewColumns+reviewFrom+where+` ORDER BY `+order+` LIMIT $6 OFFSET $7`,
 		itemID, p.Viewer, p.Levels, p.Lang, p.ContextItemID, pg.PerPage, pg.Offset())
@@ -154,7 +158,7 @@ func (s *PgStore) GetReviewStats(ctx context.Context, itemID, viewer uuid.UUID, 
 	st := model.ReviewStats{Criteria: map[string]model.ReviewCriterionStats{}}
 	err := s.pool.QueryRow(ctx,
 		`SELECT count(*), COALESCE(avg(r.rating), 0)::float8,
-			count(*) FILTER (WHERE r.user_id <> $2 AND NOT `+reviewListed("$3")+`)`+reviewFrom+`WHERE r.item_id = $1`,
+			count(*) FILTER (WHERE r.user_id <> $2 AND NOT `+reviewListed("$3")+`)`+reviewFrom+`WHERE r.item_id = $1 AND r.hidden_at IS NULL`,
 		itemID, viewer, levels).Scan(&st.Count, &st.Avg, &st.NoteOnly)
 	if err != nil {
 		return nil, err
@@ -162,7 +166,7 @@ func (s *PgStore) GetReviewStats(ctx context.Context, itemID, viewer uuid.UUID, 
 	rows, err := s.pool.Query(ctx,
 		`SELECT c.key, count(*), avg(c.value::numeric)::float8`+reviewFrom+`
 		 CROSS JOIN LATERAL jsonb_each_text(r.criteria) c
-		 WHERE r.item_id = $1 AND r.criteria IS NOT NULL GROUP BY c.key`, itemID)
+		 WHERE r.item_id = $1 AND r.criteria IS NOT NULL AND r.hidden_at IS NULL GROUP BY c.key`, itemID)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +227,8 @@ func (s *PgStore) DeleteReview(ctx context.Context, itemID, userID uuid.UUID) er
 // ListUserReviews lists the reviews of a user with their item, latest first:
 // every one when levels is nil (their own page), else those signed at these levels.
 func (s *PgStore) ListUserReviews(ctx context.Context, userID uuid.UUID, levels []string, pg model.Pagination) ([]model.Review, int, error) {
-	where := `WHERE r.user_id = $1 AND ($2::text[] IS NULL OR r.visibility = ANY($2))`
+	// Sa propre liste montre aussi les avis masqués, avec leur motif.
+	where := `WHERE r.user_id = $1 AND ($2::text[] IS NULL OR (r.visibility = ANY($2) AND r.hidden_at IS NULL))`
 	var total int
 	err := s.pool.QueryRow(ctx, `SELECT count(*) FROM reviews r `+where, userID, levels).Scan(&total)
 	if err != nil {

@@ -104,6 +104,18 @@ type Store interface {
 	DeleteReview(ctx context.Context, itemID, userID uuid.UUID) error
 	ListUserReviews(ctx context.Context, userID uuid.UUID, levels []string, pg model.Pagination) ([]model.Review, int, error)
 
+	// Moderation and reactions (I-1)
+	GetReview(ctx context.Context, id uuid.UUID) (*model.Review, error)
+	CreateReport(ctx context.Context, reporterID uuid.UUID, in model.ReportCreate) (*model.Report, error)
+	CountModerationQueue(ctx context.Context) (int, error)
+	ListModerationQueue(ctx context.Context, pg model.Pagination) ([]model.ModerationItem, int, error)
+	ModerationRecap(ctx context.Context, userID uuid.UUID) (*model.ModerationRecap, error)
+	ModerateReview(ctx context.Context, reviewID, moderatorID uuid.UUID, action, reason string) (*model.ModerationResult, error)
+	ListModerationLog(ctx context.Context, pg model.Pagination) ([]model.ModerationLogEntry, int, error)
+	ModerationHistory(ctx context.Context, userID uuid.UUID) (*model.ModerationHistory, error)
+	SetReaction(ctx context.Context, reviewID, userID uuid.UUID, kind string, on bool) error
+	ReactionsOf(ctx context.Context, reviewIDs []uuid.UUID, viewer uuid.UUID) (map[uuid.UUID]map[string]int, map[uuid.UUID][]string, error)
+
 	// Item
 	ListItems(ctx context.Context, pg model.Pagination, f ItemFilters) ([]model.Item, int, error)
 	GetItem(ctx context.Context, id uuid.UUID) (*model.Item, error)

@@ -11,6 +11,7 @@ import graph from "./graph";
 import history from "./history";
 import items from "./items";
 import layout from "./layout";
+import moderation from "./moderation";
 import notifications from "./notifications";
 import offline from "./offline";
 import proposals from "./proposals";
@@ -32,6 +33,7 @@ const fr = {
   history,
   items,
   layout,
+  moderation,
   notifications,
   offline,
   proposals,

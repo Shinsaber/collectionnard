@@ -31,6 +31,11 @@ export const useAuthStore = defineStore("auth", () => {
     () => user.value?.role === "admin" || user.value?.role === "contributor",
   );
 
+  /** Modération des avis (I-1) : admins et modérateurs. */
+  const canModerate = computed(
+    () => user.value?.role === "admin" || user.value?.role === "moderator",
+  );
+
   // Session ouverte (connexion, inscription, nouveau mot de passe) : jetons et profil.
   function openSession(res: LoginResponse) {
     setTokens(res.token, res.refresh_token);
@@ -100,6 +105,7 @@ export const useAuthStore = defineStore("auth", () => {
     isAuthenticated,
     isAdmin,
     canEditCatalog,
+    canModerate,
     login,
     register,
     changePassword,
