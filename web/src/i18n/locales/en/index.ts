@@ -7,6 +7,7 @@ import collections from "./collections";
 import common from "./common";
 import dashboard from "./dashboard";
 import errors from "./errors";
+import friends from "./friends";
 import graph from "./graph";
 import history from "./history";
 import items from "./items";
@@ -31,6 +32,7 @@ const en: Messages = {
   common,
   dashboard,
   errors,
+  friends,
   graph,
   history,
   items,

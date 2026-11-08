@@ -27,6 +27,8 @@ export default {
     article_restored: "Un de vos articles a été rétabli par la modération",
     article_comment: "{by} a commenté un article",
     recommendation: "{by} vous recommande un item",
+    friend_request: "{by} vous propose d'être amis",
+    friend_accepted: "{by} et vous êtes maintenant amis",
   },
   someone: "Un modérateur",
   reviewAuthor: "L'auteur de l'avis",

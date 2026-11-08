@@ -28,6 +28,7 @@
     </div>
     <template #footer>
       <ElButton text @click="emit('close')">{{ t("common.close") }}</ElButton>
+      <slot name="actions" />
       <ElButton type="primary" @click="copy">
         <i class="pi pi-copy mr-2" aria-hidden="true"></i>
         {{ copied ? t("account.link.copied") : t("account.link.copy") }}

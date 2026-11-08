@@ -70,7 +70,7 @@ func TestCreateReviewComment(t *testing.T) {
 			return []uuid.UUID{testutil.UserID, testutil.AdminID, authorID}, nil
 		},
 		GetUserByIDFn: func(_ context.Context, id uuid.UUID) (*model.User, error) {
-			return &model.User{ID: id, Username: "moi"}, nil
+			return &model.User{ID: id, Username: "moi", ProfileVisibility: "members"}, nil
 		},
 		CreateNotificationsFn: func(_ context.Context, users []uuid.UUID, kind string, p any) error {
 			notified, payload = users, p

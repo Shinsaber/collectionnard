@@ -152,6 +152,19 @@ type Store interface {
 	BlockedBy(ctx context.Context, blockerID uuid.UUID) ([]uuid.UUID, error)
 	Blockers(ctx context.Context, blockedID uuid.UUID, users []uuid.UUID) ([]uuid.UUID, error)
 	IsBlocked(ctx context.Context, blockerID, blockedID uuid.UUID) (bool, error)
+
+	// Friends (P7-2)
+	FriendIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
+	ListFriendships(ctx context.Context, userID uuid.UUID, status string, pg model.Pagination) ([]model.Friendship, int, error)
+	RequestFriend(ctx context.Context, from, to uuid.UUID) (*model.Friendship, error)
+	AcceptFriendRequest(ctx context.Context, userID, id uuid.UUID) (*model.Friendship, error)
+	DeleteFriendship(ctx context.Context, userID, id uuid.UUID) error
+	CreateFriendLink(ctx context.Context, userID uuid.UUID, tokenHash string, expiresAt time.Time) (*model.FriendLink, error)
+	ListFriendLinks(ctx context.Context, userID uuid.UUID) ([]model.FriendLink, error)
+	DeleteFriendLink(ctx context.Context, userID, id uuid.UUID) error
+	GetFriendLink(ctx context.Context, tokenHash string) (*model.FriendLink, error)
+	UseFriendLink(ctx context.Context, tokenHash string, userID uuid.UUID) (*model.Friendship, error)
+
 	ListModerationLog(ctx context.Context, pg model.Pagination) ([]model.ModerationLogEntry, int, error)
 	ModerationHistory(ctx context.Context, userID uuid.UUID) (*model.ModerationHistory, error)
 	SetReaction(ctx context.Context, reviewID, userID uuid.UUID, kind string, on bool) error

@@ -17,9 +17,10 @@ import (
 	"github.com/google/uuid"
 )
 
-// Visibility levels of a collection or a profile.
+// Visibility levels of a collection, a profile or a review.
 const (
 	Private = "private" // the owner only
+	Friends = "friends" // the owner's friends (P7-2)
 	Members = "members" // any signed-in account
 	Public  = "public"  // anyone, signed in or not
 
@@ -29,29 +30,64 @@ const (
 
 // Valid tells whether v is a visibility level.
 func Valid(v string) bool {
-	return v == Private || v == Members || v == Public
+	return v == Private || v == Friends || v == Members || v == Public
 }
 
-// CanView tells whether viewer (uuid.Nil when anonymous) may read something
-// of owner with the given visibility.
-func CanView(visibility string, owner, viewer uuid.UUID) bool {
+// Viewer is who reads: an account (ID uuid.Nil when anonymous) and the members
+// they are friends with (P7-2), loaded once per request.
+type Viewer struct {
+	ID      uuid.UUID
+	friends map[uuid.UUID]bool
+}
+
+// NewViewer builds the viewer id with their friends.
+func NewViewer(id uuid.UUID, friends []uuid.UUID) Viewer {
+	v := Viewer{ID: id}
+	if len(friends) > 0 {
+		v.friends = make(map[uuid.UUID]bool, len(friends))
+		for _, f := range friends {
+			v.friends[f] = true
+		}
+	}
+	return v
+}
+
+// Is tells whether the viewer is the account id.
+func (v Viewer) Is(id uuid.UUID) bool { return v.ID != uuid.Nil && v.ID == id }
+
+// FriendOf tells whether the viewer is a friend of the account id.
+func (v Viewer) FriendOf(id uuid.UUID) bool { return v.ID != uuid.Nil && v.friends[id] }
+
+// CanView tells whether the viewer may read something of owner with the given visibility.
+func CanView(visibility string, owner uuid.UUID, v Viewer) bool {
 	switch {
-	case viewer != uuid.Nil && viewer == owner:
+	case v.Is(owner):
 		return true
 	case visibility == Public:
 		return true
 	case visibility == Members:
-		return viewer != uuid.Nil
+		return v.ID != uuid.Nil
+	case visibility == Friends:
+		return v.FriendOf(owner)
 	}
 	return false
 }
 
-// Levels lists the visibilities a non-owner viewer may read.
+// Levels lists the visibilities a viewer may read of any member they are not
+// friends with; the SQL adds `friends` for the authors they are friends with.
 func Levels(viewer uuid.UUID) []string {
 	if viewer == uuid.Nil {
 		return []string{Public}
 	}
 	return []string{Members, Public}
+}
+
+// LevelsOf lists the visibilities the viewer may read of owner (not the owner).
+func LevelsOf(v Viewer, owner uuid.UUID) []string {
+	if v.FriendOf(owner) {
+		return []string{Friends, Members, Public}
+	}
+	return Levels(v.ID)
 }
 
 type rootSchema struct {

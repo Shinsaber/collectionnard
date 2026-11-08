@@ -28,6 +28,8 @@ const en: typeof fr = {
     article_restored: "One of your articles was restored by the moderation",
     article_comment: "{by} commented on an article",
     recommendation: "{by} recommends an item to you",
+    friend_request: "{by} would like to be friends",
+    friend_accepted: "You and {by} are now friends",
   },
   someone: "A moderator",
   reviewAuthor: "The author of the review",

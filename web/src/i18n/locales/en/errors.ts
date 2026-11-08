@@ -88,6 +88,11 @@ const en: typeof fr = {
     moderation_state: "This content changed meanwhile: reload the page.",
     recommendations_refused: "This member does not accept recommendations.",
     already_recommended: "You already recommended this item to them.",
+    friendship_exists:
+      "You are already friends, or your request is awaiting an answer.",
+    member_blocked: "You blocked this member: unblock them first.",
+    friend_links_limit:
+      "You already have 10 valid friend links: revoke one first.",
     blocked: "The author of this content does not accept your interactions.",
   },
 };

@@ -18,7 +18,7 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 | `label`      | `Render(schema, attrs, lang)` : libellé d'un item via `x-label` (pendant de `web/src/lib/schema.ts`) |
 | `itemquery`  | Recherche avancée de `GET /items` : filtres `attr.<clé>[.<op>]`, tri `attr.<clé>`, requête plein texte — validés contre le schéma du type (pendant de `web/src/lib/itemSearch.ts`) |
 | `collstats`  | Statistiques d'une collection (P4-1) déduites du schéma du CollectionType : nombres, répartitions (enum, booléen), mois des dates, ajouts par mois ; la complétude (relations `x-completeness`) est calculée en SQL dans `store/stats.go` |
-| `privacy`    | Visibilité et champs cachés (P4-2) : `CanView`, `Levels`, `HiddenFields` (`x-private` ou `hidden_fields`), `StripAttributes`, `StripSchema`. **Toute lecture faite pour un autre que le propriétaire** (routes `/public/…`, `/share`, statistiques) passe par ce filtre, admins compris |
+| `privacy`    | Visibilité et champs cachés (P4-2) : `Viewer` (compte + amis, P7-2 ; `h.viewer(r)`), `CanView`, `Levels` / `LevelsOf`, `HiddenFields` (`x-private` ou `hidden_fields`), `StripAttributes`, `StripSchema`. **Toute lecture faite pour un autre que le propriétaire** (routes `/public/…`, `/share`, statistiques) passe par ce filtre, admins compris |
 | `review`     | Règles d'un avis (I-0) : `CheckSchema` (critères = entiers de 0 à 10), `Rate` (moyenne, tous les critères obligatoires), `MinRatings` (seuil d'affichage d'une moyenne), `MaxBody`, `Languages` (pendant de `web/src/i18n/langs.ts`) |
 | `identifier` | Champs `x-identifier` d'un schéma (premier niveau ou un niveau dans un objet) et leurs valeurs : doublons (`POST /items/duplicates`, P4-3b) |
 | `csvexport`  | Mise à plat CSV des attributs (colonnes depuis le schéma, i18n-text → `clé.langue`, BOM, anti-injection de formules) |
@@ -125,6 +125,12 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
   `item_type_id` ; `default_sort` vérifié par `checkCollectionSettings` (422 `invalid_sort`), appliqué sans `sort` par
   `applyDefaultSort`, pages publiques comprises, ignoré s'il ne s'applique plus. Statistiques pondérées par la quantité (`collstats.Entry.Quantity`) ; `item_count` = items distincts, `copy_count` =
   exemplaires.
+- Amis (`handler/friend.go`, `store/friend.go`, P7-2, migrations 022–023) : une ligne par paire (`friendships_pair`), demande par
+  nom réservée aux profils visibles du demandeur (sinon 404, comme un nom inconnu : rien à deviner), liens d'ami à usage
+  unique pour les autres (`friend_links`, hash seul, `UseFriendLink` en transaction), demande croisée = acceptation, `BlockUser` rompt l'amitié ; la demande
+  d'un bloqué reste muette (cachée par `notBlockedBy`, jamais notifiée). Niveau `friends` : toute décision de visibilité
+  prend un `privacy.Viewer` chargé par `h.viewer(r)` (`viewerOrStranger` pour les lectures qui ne font que nommer) ;
+  en SQL, `friendOf(a, b)` et `reviewSigned(levels, viewer)` signent un avis `friends` pour les amis de son auteur.
 - Visibilité et partage (`handler/sharing.go`, `store/sharing.go`, P4-2) : routes publiques derrière
   `Auth.OptionalAuthenticate` (sans jeton : anonyme, `GetUserID` = `uuid.Nil` ; jeton invalide : 401) ; `loadReadable`
   vérifie visibilité et compte actif (404 sinon) et calcule les champs cachés ; une nouvelle lecture publique doit

@@ -118,6 +118,7 @@ tags:
       | `visibility` | Membres connectés | Visiteurs anonymes |
       | --- | --- | --- |
       | `private` | Note seule | Note seule |
+      | `friends` | Avis signé pour les amis, note seule sinon | Note seule |
       | `members` | Avis signé | Note seule |
       | `anonymous` | Texte sans auteur | Texte sans auteur |
       | `public` | Avis signé | Avis signé |
@@ -149,6 +150,19 @@ tags:
       traces (`blocked`), ses messages ne le notifient plus. Sur un contenu qui ne nomme pas son auteur (avis anonyme), le
       blocage ne refuse rien et l'avis reste listé : refuser ou retirer le nommerait. Les notes des membres bloqués comptent toujours dans les
       moyennes.
+  - name: Friends
+    description: |
+      Amis (P7-2). Une amitié est réciproque : un membre en invite un autre dont il voit le profil, par son nom
+      d'utilisateur (tout autre nom répond 404, comme un nom inconnu : les noms ne se devinent pas), et l'autre
+      accepte ou refuse. Inviter un membre qui m'a déjà invité vaut acceptation. Pour un profil privé, un **lien
+      d'ami** secret (usage unique, 7 jours, 10 valides au plus, seul son hash est stocké) se transmet hors de
+      l'application : qui l'ouvre et l'accepte devient ami de son auteur.
+      L'amitié ouvre le niveau de visibilité `friends` des collections, des profils et des avis.
+      Refuser, annuler ou rompre supprime l'amitié, sans notification. Bloquer un membre rompt l'amitié et retire les
+      demandes entre eux ; la demande d'un membre bloqué reste sans réponse (en attente, jamais montrée ni notifiée).
+      20 demandes par jour et par compte (admins exemptés). Notifications `friend_request` et `friend_accepted`
+      (`payload` : `friendship_id`, `by`).
+
   - name: Items
     description: |
       Gestion du catalogue d'items. Chaque item est un **nœud unique** dans le graphe :
@@ -897,7 +911,7 @@ components:
 
     ReviewVisibility:
       type: string
-      enum: [private, members, anonymous, public]
+      enum: [private, friends, members, anonymous, public]
       description: Ce que voit le lecteur, voir l'étiquette `Reviews`.
 
     ReviewAuthor:
@@ -1183,6 +1197,46 @@ components:
           type: string
           enum: [review, comment, article, recommendation]
         content_id: { type: string, format: uuid }
+
+    Friendship:
+      type: object
+      description: |
+        Une amitié ou une demande, vue par l'un des deux membres : `user` est l'autre. Une demande envoyée à un membre
+        dont le profil ne m'est pas visible ne montre que le nom d'utilisateur saisi.
+      required: [id, status, incoming, user, profile_visible, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        status:
+          type: string
+          enum: [pending, accepted]
+        incoming:
+          type: boolean
+          description: "Demande reçue (`false` : demande envoyée, ou amitié)."
+        user:
+          $ref: "#/components/schemas/ReviewAuthor"
+        profile_visible:
+          type: boolean
+          description: Le profil public de l'autre membre m'est ouvert (`/public/users/{username}`).
+        created_at: { type: string, format: date-time }
+        accepted_at: { type: string, format: date-time }
+
+    FriendLink:
+      type: object
+      description: Lien d'ami secret, à usage unique. `token` n'est présent qu'à la création, `user` qu'à l'ouverture.
+      required: [id, created_at, expires_at]
+      properties:
+        id: { type: string, format: uuid }
+        token: { type: string }
+        user:
+          $ref: "#/components/schemas/ReviewAuthor"
+        created_at: { type: string, format: date-time }
+        expires_at: { type: string, format: date-time }
+
+    FriendRequestCreate:
+      type: object
+      required: [username]
+      properties:
+        username: { type: string, description: "Nom d'utilisateur exact du membre invité." }
 
     CommentBody:
       type: object
@@ -2139,10 +2193,10 @@ components:
 
     Visibility:
       type: string
-      enum: [private, members, public]
+      enum: [private, friends, members, public]
       description: |
-        `private` : le propriétaire seul ; `members` : tout compte connecté ; `public` : tout le monde,
-        connecté ou non.
+        `private` : le propriétaire seul ; `friends` : ses amis (P7-2) ; `members` : tout compte connecté ;
+        `public` : tout le monde, connecté ou non.
 
     Owner:
       type: object
@@ -2455,7 +2509,7 @@ components:
             Propositions (P4-3) : `proposal_state`, `proposal_quota`, `proposal_invalid`, `proposal_conflict`,
             `proposal_meta_types`, `own_proposal`. Avis (I-0) : `reviews_closed` (409). Modération (I-1) :
             `report_exists`, `moderation_state` (409), `own_content` (403), `rate_limited` (429). Commentaires (I-2) :
-            `comments_closed` (409). Chaque réponse d'erreur d'une opération nomme les codes qu'elle
+            `comments_closed` (409). Amis (P7-2) : `friendship_exists`, `member_blocked`, `friend_links_limit` (409). Chaque réponse d'erreur d'une opération nomme les codes qu'elle
             émet. Un client doit prévoir un libellé générique pour un code inconnu.
           example: validation_error
         message:
@@ -3044,6 +3098,12 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    friendLinkToken:
+      name: token
+      in: path
+      required: true
+      description: Jeton d'un lien d'ami.
+      schema: { type: string }
     shareToken:
       name: token
       in: query
@@ -8845,6 +8905,271 @@ paths:
           $ref: "#/components/responses/InternalError"
         "204":
           description: Débloqué.
+
+  /me/friends:
+    get:
+      tags: [Friends]
+      summary: Mes amis
+      operationId: listFriends
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée, par nom d'utilisateur.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Friendship"
+    post:
+      tags: [Friends]
+      summary: Inviter un membre à devenir ami
+      description: |
+        Le membre, dont je dois voir le profil, est notifié (`friend_request`). S'il m'avait déjà invité, sa demande
+        est acceptée (`status` : `accepted`, notification `friend_accepted`).
+      operationId: requestFriend
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FriendRequestCreate"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: |
+            `friendship_exists` : déjà amis, ou demande déjà envoyée ; `member_blocked` : j'ai bloqué ce membre.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          description: "`rate_limited` (`Retry-After`)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Demande envoyée, ou amitié acceptée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Friendship"
+
+  /me/friends/{id}:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    delete:
+      tags: [Friends]
+      summary: Refuser, annuler ou rompre
+      description: Supprime une demande reçue ou envoyée, ou une amitié ; l'autre membre n'est pas notifié.
+      operationId: deleteFriendship
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Supprimée.
+
+  /me/friend-requests:
+    get:
+      tags: [Friends]
+      summary: Demandes d'amitié en attente
+      description: Les demandes reçues (`incoming`) d'abord, puis celles envoyées ; les plus récentes d'abord.
+      operationId: listFriendRequests
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Friendship"
+
+  /me/friend-requests/{id}/accept:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Friends]
+      summary: Accepter une demande reçue
+      description: L'autre membre est notifié (`friend_accepted`).
+      operationId: acceptFriendRequest
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Amitié acceptée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Friendship"
+
+  /me/friend-links:
+    get:
+      tags: [Friends]
+      summary: Mes liens d'ami valides
+      description: Sans leur jeton, montré une seule fois à la création.
+      operationId: listFriendLinks
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liens valides, le plus récent d'abord.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FriendLink"
+    post:
+      tags: [Friends]
+      summary: Créer un lien d'ami
+      description: Le jeton n'est renvoyé qu'ici ; le lien se construit côté client (`/friend/{token}`). 20 par jour.
+      operationId: createFriendLink
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: "`friend_links_limit` : 10 liens valides au plus, en révoquer un d'abord."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: "`rate_limited` (`Retry-After`)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Lien créé, avec son jeton.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FriendLink"
+
+  /me/friend-links/{id}:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    delete:
+      tags: [Friends]
+      summary: Révoquer un lien d'ami
+      operationId: deleteFriendLink
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Révoqué.
+
+  /friend-links/{token}:
+    parameters:
+      - $ref: "#/components/parameters/friendLinkToken"
+    get:
+      tags: [Friends]
+      summary: Ouvrir un lien d'ami
+      description: Qui m'invite (`user`). 404 si le lien est inconnu, expiré, déjà utilisé, ou si son auteur m'a bloqué.
+      operationId: getFriendLink
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Le lien et son auteur.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FriendLink"
+
+  /friend-links/{token}/accept:
+    parameters:
+      - $ref: "#/components/parameters/friendLinkToken"
+    post:
+      tags: [Friends]
+      summary: Accepter un lien d'ami
+      description: |
+        Je deviens ami de l'auteur du lien, qui est notifié (`friend_accepted`) ; une demande en attente entre nous est
+        acceptée. Le lien est consommé.
+      operationId: acceptFriendLink
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: "`friendship_exists` : déjà amis (le lien reste valide) ; `member_blocked` : j'ai bloqué son auteur."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Mon propre lien.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Amitié acceptée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Friendship"
 
   /me/notifications:
     get:

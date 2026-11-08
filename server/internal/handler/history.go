@@ -33,14 +33,14 @@ func withActor(next http.Handler) http.Handler {
 type authors struct {
 	h      *Handler
 	r      *http.Request
-	viewer uuid.UUID
+	viewer privacy.Viewer
 	admin  bool
 	cache  map[uuid.UUID]model.HistoryAuthor
 }
 
 func (h *Handler) newAuthors(r *http.Request) *authors {
 	return &authors{
-		h: h, r: r, viewer: middleware.GetUserID(r.Context()),
+		h: h, r: r, viewer: h.viewerOrStranger(r),
 		admin: middleware.GetRole(r.Context()) == model.RoleAdmin,
 		cache: map[uuid.UUID]model.HistoryAuthor{},
 	}

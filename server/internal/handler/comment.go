@@ -39,66 +39,71 @@ type thread struct {
 }
 
 // threadVisibleTo tells whether the thread of a review is open to the reader.
-func threadVisibleTo(rv *model.Review, viewer uuid.UUID) bool {
+func threadVisibleTo(rv *model.Review, viewer privacy.Viewer) bool {
 	switch {
 	case rv.Visibility == privacy.Private, rv.Visibility == privacy.Anonymous && rv.Body == "":
 		return false // une note seule n'a pas de fil
-	case viewer != uuid.Nil && rv.UserID == viewer:
+	case viewer.Is(rv.UserID):
 		return true
 	}
 	return reviewShownTo(rv, viewer)
 }
 
 // articleShownTo tells whether an article (and its thread) is open to the reader.
-func articleShownTo(a *model.Article, viewer uuid.UUID) bool {
-	if viewer != uuid.Nil && a.AuthorID == viewer {
+func articleShownTo(a *model.Article, viewer privacy.Viewer) bool {
+	if viewer.Is(a.AuthorID) {
 		return a.Status == model.ArticlePublished
 	}
 	return a.Status == model.ArticlePublished && a.HiddenAt == nil
 }
 
-// loadThread loads the content of a thread visible to the reader (404 otherwise).
-func (h *Handler) loadThread(w http.ResponseWriter, r *http.Request, kind string) (*thread, bool) {
+// loadThread loads the content of a thread visible to the reader (404
+// otherwise), and the reader.
+func (h *Handler) loadThread(w http.ResponseWriter, r *http.Request, kind string) (*thread, privacy.Viewer, bool) {
 	id, ok := parseUUID(w, r, "id")
 	if !ok {
-		return nil, false
+		return nil, privacy.Viewer{}, false
 	}
-	viewer := middleware.GetUserID(r.Context())
+	viewer, err := h.viewer(r)
+	if err != nil {
+		handleStoreError(w, r, err)
+		return nil, viewer, false
+	}
 	if kind == model.CommentTargetArticle {
 		a, err := h.Store.GetArticle(r.Context(), id)
 		if err != nil {
 			handleStoreError(w, r, err)
-			return nil, false
+			return nil, viewer, false
 		}
 		if !articleShownTo(a, viewer) {
 			notFound(w)
-			return nil, false
+			return nil, viewer, false
 		}
 		return &thread{Kind: kind, ID: a.ID, AuthorID: a.AuthorID, ItemID: a.ItemID, Closed: a.CommentsClosed,
-			Hidden: a.HiddenAt != nil, AuthorNamed: privacy.CanView(a.AuthorProfile, a.AuthorID, viewer)}, true
+			Hidden: a.HiddenAt != nil, AuthorNamed: privacy.CanView(a.AuthorProfile, a.AuthorID, viewer)}, viewer, true
 	}
 	rv, err := h.Store.GetReview(r.Context(), id)
 	if err != nil {
 		handleStoreError(w, r, err)
-		return nil, false
+		return nil, viewer, false
 	}
 	if !threadVisibleTo(rv, viewer) {
 		notFound(w)
-		return nil, false
+		return nil, viewer, false
 	}
 	return &thread{Kind: kind, ID: rv.ID, AuthorID: rv.UserID, ItemID: rv.ItemID, Closed: rv.CommentsClosed,
 		Hidden: rv.HiddenAt != nil, AnonymousAuthor: rv.Visibility == privacy.Anonymous,
-		AuthorNamed: privacy.CanView(rv.Visibility, rv.UserID, viewer)}, true
+		AuthorNamed: privacy.CanView(rv.Visibility, rv.UserID, viewer)}, viewer, true
 }
 
 // shapeComments sets what the reader may see of each comment: a deleted
 // comment, one hidden by the moderation for anyone but its author, or one of a
 // member the reader blocked is a trace. The author of an anonymous review is
 // never marked blocked: it would name them.
-func shapeComments(list []model.Comment, t *thread, viewer uuid.UUID, blocked map[uuid.UUID]bool) {
+func shapeComments(list []model.Comment, t *thread, viewer privacy.Viewer, blocked map[uuid.UUID]bool) {
 	for i := range list {
 		c := &list[i]
-		c.Mine = viewer != uuid.Nil && c.AuthorID == viewer
+		c.Mine = viewer.Is(c.AuthorID)
 		c.TargetAuthor = c.AuthorID == t.AuthorID
 		// Traces : ni texte ni auteur, pour que les réponses gardent leur sens.
 		if c.DeletedAt != nil || (c.HiddenAt != nil && !c.Mine) {
@@ -140,18 +145,17 @@ func (h *Handler) ListArticleComments(w http.ResponseWriter, r *http.Request) {
 
 // listComments returns a thread, oldest first (optional authentication).
 func (h *Handler) listComments(w http.ResponseWriter, r *http.Request, kind string) {
-	t, ok := h.loadThread(w, r, kind)
+	t, viewer, ok := h.loadThread(w, r, kind)
 	if !ok {
 		return
 	}
-	viewer := middleware.GetUserID(r.Context())
 	pg := parsePaginationDefault(r, 50)
-	list, total, err := h.Store.ListComments(r.Context(), kind, t.ID, viewer, pg)
+	list, total, err := h.Store.ListComments(r.Context(), kind, t.ID, viewer.ID, pg)
 	if err != nil {
 		handleStoreError(w, r, err)
 		return
 	}
-	blocked, err := h.blockedSet(r, viewer)
+	blocked, err := h.blockedSet(r, viewer.ID)
 	if err != nil {
 		handleStoreError(w, r, err)
 		return
@@ -170,7 +174,7 @@ func (h *Handler) CreateArticleComment(w http.ResponseWriter, r *http.Request) {
 
 // createComment adds a message to a thread.
 func (h *Handler) createComment(w http.ResponseWriter, r *http.Request, kind string) {
-	t, ok := h.loadThread(w, r, kind)
+	t, viewer, ok := h.loadThread(w, r, kind)
 	if !ok {
 		return
 	}
@@ -199,7 +203,7 @@ func (h *Handler) createComment(w http.ResponseWriter, r *http.Request, kind str
 		return
 	}
 	one := []model.Comment{*c}
-	shapeComments(one, t, me, nil)
+	shapeComments(one, t, viewer, nil)
 	h.notifyThread(r, t)
 	respondJSON(w, http.StatusCreated, one[0])
 }
@@ -230,7 +234,7 @@ func (h *Handler) notifyThread(r *http.Request, t *thread) {
 	}
 	if me == t.AuthorID && t.AnonymousAuthor {
 		payload["by_review_author"] = true
-	} else if u, err := h.Store.GetUserByID(r.Context(), me); err == nil && u.ProfileVisibility != privacy.Private {
+	} else if u, err := h.Store.GetUserByID(r.Context(), me); err == nil && (u.ProfileVisibility == privacy.Members || u.ProfileVisibility == privacy.Public) {
 		payload["by"] = u.Username // les destinataires sont des membres : profil « membres » ou public
 	} else {
 		payload["by_member"] = true

@@ -88,6 +88,9 @@ export default {
     private: "Note seule",
     privateHelp:
       "Votre note compte dans la moyenne, sans votre nom ; votre texte reste pour vous.",
+    friends: "Amis",
+    friendsHelp:
+      "Avis signé pour vos amis ; les autres n'en voient que la note, dans la moyenne.",
     members: "Membres",
     membersHelp:
       "Avis signé pour les membres ; les visiteurs n'en voient que la note, dans la moyenne.",

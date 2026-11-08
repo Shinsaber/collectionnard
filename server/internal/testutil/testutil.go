@@ -145,9 +145,20 @@ type MockStore struct {
 	ListBlocksFn                 func(ctx context.Context, blockerID uuid.UUID, pg model.Pagination) ([]model.Block, int, error)
 	DeleteBlockFn                func(ctx context.Context, blockerID, id uuid.UUID) error
 	// BlockedByFn, BlockersFn, IsBlockedFn: nothing blocked when unset.
-	BlockedByFn               func(ctx context.Context, blockerID uuid.UUID) ([]uuid.UUID, error)
-	BlockersFn                func(ctx context.Context, blockedID uuid.UUID, users []uuid.UUID) ([]uuid.UUID, error)
-	IsBlockedFn               func(ctx context.Context, blockerID, blockedID uuid.UUID) (bool, error)
+	BlockedByFn func(ctx context.Context, blockerID uuid.UUID) ([]uuid.UUID, error)
+	BlockersFn  func(ctx context.Context, blockedID uuid.UUID, users []uuid.UUID) ([]uuid.UUID, error)
+	IsBlockedFn func(ctx context.Context, blockerID, blockedID uuid.UUID) (bool, error)
+	// FriendIDsFn: no friend when unset.
+	FriendIDsFn               func(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
+	ListFriendshipsFn         func(ctx context.Context, userID uuid.UUID, status string, pg model.Pagination) ([]model.Friendship, int, error)
+	RequestFriendFn           func(ctx context.Context, from, to uuid.UUID) (*model.Friendship, error)
+	AcceptFriendRequestFn     func(ctx context.Context, userID, id uuid.UUID) (*model.Friendship, error)
+	DeleteFriendshipFn        func(ctx context.Context, userID, id uuid.UUID) error
+	CreateFriendLinkFn        func(ctx context.Context, userID uuid.UUID, tokenHash string, expiresAt time.Time) (*model.FriendLink, error)
+	ListFriendLinksFn         func(ctx context.Context, userID uuid.UUID) ([]model.FriendLink, error)
+	DeleteFriendLinkFn        func(ctx context.Context, userID, id uuid.UUID) error
+	GetFriendLinkFn           func(ctx context.Context, tokenHash string) (*model.FriendLink, error)
+	UseFriendLinkFn           func(ctx context.Context, tokenHash string, userID uuid.UUID) (*model.Friendship, error)
 	ListCommentsFn            func(ctx context.Context, kind string, targetID, viewer uuid.UUID, pg model.Pagination) ([]model.Comment, int, error)
 	GetCommentFn              func(ctx context.Context, id uuid.UUID) (*model.Comment, error)
 	CreateCommentFn           func(ctx context.Context, kind string, targetID, authorID uuid.UUID, body string) (*model.Comment, error)
@@ -1055,4 +1066,74 @@ func (m *MockStore) IsBlocked(ctx context.Context, blockerID, blockedID uuid.UUI
 		return m.IsBlockedFn(ctx, blockerID, blockedID)
 	}
 	return false, nil
+}
+
+func (m *MockStore) FriendIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
+	if m.FriendIDsFn != nil {
+		return m.FriendIDsFn(ctx, userID)
+	}
+	return nil, nil
+}
+
+func (m *MockStore) ListFriendships(ctx context.Context, userID uuid.UUID, status string, pg model.Pagination) ([]model.Friendship, int, error) {
+	if m.ListFriendshipsFn != nil {
+		return m.ListFriendshipsFn(ctx, userID, status, pg)
+	}
+	return nil, 0, store.ErrNotFound
+}
+
+func (m *MockStore) RequestFriend(ctx context.Context, from, to uuid.UUID) (*model.Friendship, error) {
+	if m.RequestFriendFn != nil {
+		return m.RequestFriendFn(ctx, from, to)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) AcceptFriendRequest(ctx context.Context, userID, id uuid.UUID) (*model.Friendship, error) {
+	if m.AcceptFriendRequestFn != nil {
+		return m.AcceptFriendRequestFn(ctx, userID, id)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) DeleteFriendship(ctx context.Context, userID, id uuid.UUID) error {
+	if m.DeleteFriendshipFn != nil {
+		return m.DeleteFriendshipFn(ctx, userID, id)
+	}
+	return store.ErrNotFound
+}
+
+func (m *MockStore) CreateFriendLink(ctx context.Context, userID uuid.UUID, tokenHash string, expiresAt time.Time) (*model.FriendLink, error) {
+	if m.CreateFriendLinkFn != nil {
+		return m.CreateFriendLinkFn(ctx, userID, tokenHash, expiresAt)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) ListFriendLinks(ctx context.Context, userID uuid.UUID) ([]model.FriendLink, error) {
+	if m.ListFriendLinksFn != nil {
+		return m.ListFriendLinksFn(ctx, userID)
+	}
+	return []model.FriendLink{}, nil
+}
+
+func (m *MockStore) DeleteFriendLink(ctx context.Context, userID, id uuid.UUID) error {
+	if m.DeleteFriendLinkFn != nil {
+		return m.DeleteFriendLinkFn(ctx, userID, id)
+	}
+	return store.ErrNotFound
+}
+
+func (m *MockStore) GetFriendLink(ctx context.Context, tokenHash string) (*model.FriendLink, error) {
+	if m.GetFriendLinkFn != nil {
+		return m.GetFriendLinkFn(ctx, tokenHash)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) UseFriendLink(ctx context.Context, tokenHash string, userID uuid.UUID) (*model.Friendship, error) {
+	if m.UseFriendLinkFn != nil {
+		return m.UseFriendLinkFn(ctx, tokenHash, userID)
+	}
+	return nil, store.ErrNotFound
 }

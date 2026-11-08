@@ -57,13 +57,22 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { extractApiError } from "@/api/client";
 import AuthShell from "@/components/layout/AuthShell.vue";
 
 const auth = useAuthStore();
 const router = useRouter();
+const route = useRoute();
+
+/** Page demandée avant la connexion : un chemin interne seulement (jamais `//hôte`). */
+function nextPath(): string {
+  const r = route.query.redirect;
+  return typeof r === "string" && r.startsWith("/") && !r.startsWith("//")
+    ? r
+    : "/";
+}
 const { t } = useI18n();
 
 const username = ref("");
@@ -78,7 +87,7 @@ async function handleLogin() {
   loading.value = true;
   try {
     await auth.login({ username: username.value, password: password.value });
-    router.push("/");
+    router.push(nextPath());
   } catch (e) {
     errorKey.value =
       extractApiError(e).code === "account_disabled"

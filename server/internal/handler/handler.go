@@ -158,6 +158,17 @@ func (h *Handler) Router() chi.Router {
 		r.Get("/api/v1/me/blocks", h.ListBlocks)
 		r.Post("/api/v1/me/blocks", h.CreateBlock)
 		r.Delete("/api/v1/me/blocks/{id}", h.DeleteBlock)
+		// Amis (P7-2).
+		r.Get("/api/v1/me/friends", h.ListFriends)
+		r.Post("/api/v1/me/friends", h.RequestFriend)
+		r.Delete("/api/v1/me/friends/{id}", h.DeleteFriendship)
+		r.Get("/api/v1/me/friend-requests", h.ListFriendRequests)
+		r.Post("/api/v1/me/friend-requests/{id}/accept", h.AcceptFriendRequest)
+		r.Get("/api/v1/me/friend-links", h.ListFriendLinks)
+		r.Post("/api/v1/me/friend-links", h.CreateFriendLink)
+		r.Delete("/api/v1/me/friend-links/{id}", h.DeleteFriendLink)
+		r.Get("/api/v1/friend-links/{token}", h.GetFriendLink)
+		r.Post("/api/v1/friend-links/{token}/accept", h.AcceptFriendLink)
 
 		// Read endpoints (all authenticated users)
 		r.Get("/api/v1/item-types", h.ListItemTypes)

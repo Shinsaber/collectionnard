@@ -197,6 +197,12 @@ const router = createRouter({
           component: () => import("@/views/MembersView.vue"),
         },
         {
+          path: "friend/:token",
+          name: "friend-link",
+          component: () => import("@/views/FriendLinkView.vue"),
+          props: true,
+        },
+        {
           path: "recommendations",
           name: "recommendations",
           component: () => import("@/views/RecommendationsView.vue"),
@@ -246,7 +252,10 @@ router.beforeEach(async (to) => {
   if (to.meta.public) return true;
 
   if (!auth.isAuthenticated) {
-    return { name: "login" };
+    // Lien ouvert sans session (lien d'ami…) : on y revient après la connexion.
+    return to.fullPath === "/"
+      ? { name: "login" }
+      : { name: "login", query: { redirect: to.fullPath } };
   }
 
   // Load user if not yet fetched

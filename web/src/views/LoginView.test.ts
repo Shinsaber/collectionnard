@@ -62,6 +62,29 @@ describe("LoginView", () => {
     expect(localStorage.getItem("refresh_token")).toBe("refresh");
   });
 
+  it("revient à la page demandée avant la connexion, interne seulement", async () => {
+    loginMock.mockResolvedValue({
+      token: "access",
+      refresh_token: "refresh",
+      expires_in: 900,
+      user: { id: "u1", username: "admin", email: "a@b", role: "admin" },
+    });
+    for (const [redirect, want] of [
+      ["/friend/abc", "/friend/abc"],
+      ["//evil.example", "/"],
+      ["https://evil.example", "/"],
+    ]) {
+      const { wrapper, router } = mountLogin();
+      await router.push({ path: "/login", query: { redirect } });
+      const push = vi.spyOn(router, "push");
+      await wrapper.find('input[autocomplete="username"]').setValue("admin");
+      await wrapper.find('input[type="password"]').setValue("secret");
+      await wrapper.find("form").trigger("submit");
+      await flushPromises();
+      expect(push).toHaveBeenCalledWith(want);
+    }
+  });
+
   it("affiche une erreur quand les identifiants sont refusés", async () => {
     loginMock.mockRejectedValue(new Error("401"));
     const { wrapper } = mountLogin();

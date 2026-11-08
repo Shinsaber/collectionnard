@@ -51,13 +51,13 @@ func validArticleURL(raw string) bool {
 }
 
 // shapeArticles marks the reader's articles and keeps the refusal reason for them only.
-func shapeArticles(list []model.Article, r *http.Request) {
-	me := middleware.GetUserID(r.Context())
+func (h *Handler) shapeArticles(list []model.Article, r *http.Request) {
+	viewer := h.viewerOrStranger(r)
 	for i := range list {
-		list[i].Mine = list[i].AuthorID == me && me != [16]byte{}
+		list[i].Mine = viewer.Is(list[i].AuthorID)
 		if !list[i].Mine {
 			list[i].RejectReason, list[i].HiddenReason = nil, nil
-			if !privacy.CanView(list[i].AuthorProfile, list[i].AuthorID, me) {
+			if !privacy.CanView(list[i].AuthorProfile, list[i].AuthorID, viewer) {
 				list[i].Author = nil // profil non visible du lecteur : « Un membre »
 			}
 		}
@@ -80,7 +80,7 @@ func (h *Handler) ListItemArticles(w http.ResponseWriter, r *http.Request) {
 		handleStoreError(w, r, err)
 		return
 	}
-	shapeArticles(list, r)
+	h.shapeArticles(list, r)
 	respondJSON(w, http.StatusOK, model.NewPaginatedResponse(list, total, pg))
 }
 

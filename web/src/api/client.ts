@@ -10,6 +10,8 @@ import type {
   ArticleWrite,
   Block,
   BlockCreate,
+  FriendLink,
+  Friendship,
   Comment,
   LoginRequest,
   Recommendation,
@@ -792,6 +794,41 @@ export const blockApi = {
   create: (data: BlockCreate) =>
     http.post<Block>("/me/blocks", data).then((r) => r.data),
   remove: (id: string) => http.delete(`/me/blocks/${id}`),
+};
+
+/** Amis (P7-2) : demandes par nom d'utilisateur exact, acceptation, refus, annulation ou rupture. */
+export const friendApi = {
+  list: (params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<Friendship>>("/me/friends", { params })
+      .then((r) => r.data),
+  requests: (params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<Friendship>>("/me/friend-requests", { params })
+      .then((r) => r.data),
+  /** Vaut acceptation si ce membre m'avait invité. */
+  request: (username: string) =>
+    http.post<Friendship>("/me/friends", { username }).then((r) => r.data),
+  accept: (id: string) =>
+    http
+      .post<Friendship>(`/me/friend-requests/${id}/accept`)
+      .then((r) => r.data),
+  remove: (id: string) => http.delete(`/me/friends/${id}`),
+};
+
+/** Liens d'ami (P7-2) : à usage unique, transmis hors de l'application ; le jeton n'est montré qu'à la création. */
+export const friendLinkApi = {
+  list: () => http.get<FriendLink[]>("/me/friend-links").then((r) => r.data),
+  create: () => http.post<FriendLink>("/me/friend-links").then((r) => r.data),
+  remove: (id: string) => http.delete(`/me/friend-links/${id}`),
+  open: (token: string) =>
+    http
+      .get<FriendLink>(`/friend-links/${encodeURIComponent(token)}`)
+      .then((r) => r.data),
+  accept: (token: string) =>
+    http
+      .post<Friendship>(`/friend-links/${encodeURIComponent(token)}/accept`)
+      .then((r) => r.data),
 };
 
 /** Annuaire des membres (profils visibles des membres ou publics). */

@@ -103,9 +103,11 @@ function text(n: AppNotification): string {
   });
 }
 
-/** Recommandation : la page des recommandations reçues ; sinon la proposition ou la fiche. */
+/** Recommandation, amis : leur page ; sinon la proposition ou la fiche. */
 function link(n: AppNotification): string {
   if (n.kind === "recommendation") return "/recommendations";
+  if (n.kind === "friend_request" || n.kind === "friend_accepted")
+    return "/members";
   if (n.payload.proposal_id) return `/proposals/${n.payload.proposal_id}`;
   return n.payload.item_id ? `/items/${n.payload.item_id}` : "/proposals";
 }

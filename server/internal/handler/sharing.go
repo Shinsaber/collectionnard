@@ -38,9 +38,16 @@ func (h *Handler) loadReadable(w http.ResponseWriter, r *http.Request, id uuid.U
 		handleStoreError(w, r, err)
 		return nil, false
 	}
-	if !shared && !privacy.CanView(col.Visibility, col.UserID, middleware.GetUserID(r.Context())) {
-		notFound(w)
-		return nil, false
+	if !shared {
+		viewer, err := h.viewer(r)
+		if err != nil {
+			handleStoreError(w, r, err)
+			return nil, false
+		}
+		if !privacy.CanView(col.Visibility, col.UserID, viewer) {
+			notFound(w)
+			return nil, false
+		}
 	}
 	owner, err := h.Store.GetUserByID(r.Context(), col.UserID)
 	if err != nil {
@@ -165,22 +172,27 @@ func (h *Handler) GetSharedCollectionStats(w http.ResponseWriter, r *http.Reques
 
 // --- /public/users/{username} ---
 
-// visibleProfile loads an active user whose profile the reader may see.
-func (h *Handler) visibleProfile(w http.ResponseWriter, r *http.Request) (*model.User, bool) {
+// visibleProfile loads an active user whose profile the reader may see, and the reader.
+func (h *Handler) visibleProfile(w http.ResponseWriter, r *http.Request) (*model.User, privacy.Viewer, bool) {
+	viewer, err := h.viewer(r)
+	if err != nil {
+		handleStoreError(w, r, err)
+		return nil, viewer, false
+	}
 	u, _, err := h.Store.GetUserByUsername(r.Context(), chi.URLParam(r, "username"))
 	if err != nil {
 		handleStoreError(w, r, err)
-		return nil, false
+		return nil, viewer, false
 	}
-	if u.DisabledAt != nil || !privacy.CanView(u.ProfileVisibility, u.ID, middleware.GetUserID(r.Context())) {
+	if u.DisabledAt != nil || !privacy.CanView(u.ProfileVisibility, u.ID, viewer) {
 		notFound(w)
-		return nil, false
+		return nil, viewer, false
 	}
-	return u, true
+	return u, viewer, true
 }
 
 func (h *Handler) GetPublicProfile(w http.ResponseWriter, r *http.Request) {
-	if u, ok := h.visibleProfile(w, r); ok {
+	if u, _, ok := h.visibleProfile(w, r); ok {
 		respondJSON(w, http.StatusOK, model.NewPublicProfile(u))
 	}
 }
@@ -188,11 +200,11 @@ func (h *Handler) GetPublicProfile(w http.ResponseWriter, r *http.Request) {
 // ListPublicCollections lists the collections of a visible profile that the
 // reader may see (the owner sees the list as members do: preview).
 func (h *Handler) ListPublicCollections(w http.ResponseWriter, r *http.Request) {
-	u, ok := h.visibleProfile(w, r)
+	u, viewer, ok := h.visibleProfile(w, r)
 	if !ok {
 		return
 	}
-	levels := privacy.Levels(middleware.GetUserID(r.Context()))
+	levels := privacy.LevelsOf(viewer, u.ID)
 	cols, err := h.Store.ListVisibleCollections(r.Context(), u.ID, levels)
 	if err != nil {
 		handleStoreError(w, r, err)

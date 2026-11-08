@@ -95,6 +95,11 @@ export default {
     moderation_state: "Ce contenu a changé entre-temps : rechargez la page.",
     recommendations_refused: "Ce membre n'accepte pas les recommandations.",
     already_recommended: "Vous lui avez déjà recommandé cet item.",
+    friendship_exists:
+      "Vous êtes déjà amis, ou votre demande attend sa réponse.",
+    member_blocked: "Vous avez bloqué ce membre : débloquez-le d'abord.",
+    friend_links_limit:
+      "Vous avez déjà 10 liens d'ami valides : révoquez-en un d'abord.",
     blocked: "L'auteur de ce contenu n'accepte pas vos interactions.",
   },
 };

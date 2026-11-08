@@ -187,6 +187,42 @@ types acceptés se choisissent sur la collection, par son propriétaire.
   `DELETE /me/friends/{id}` (refus, annulation ou rupture).
 - Notifications `friend_request`, `friend_accepted`.
 
+### Livré (2026-11-08)
+
+Migrations `022_friendships.sql` (table, unicité de la paire par `LEAST` / `GREATEST`, niveau `friends` ajouté aux
+contraintes des collections, profils et avis) et `023_friend_links.sql`. Choix faits en cours de lot :
+
+- **Deux façons d'inviter** (piste 2, retenue par le mainteneur le 2026-11-08). Une première version invitait par
+  nom exact quelle que soit la visibilité du profil : la réponse (404 ou 201) laissait deviner les noms d'utilisateur.
+  Désormais :
+  - **par nom, un membre dont je vois le profil** (annuaire, avis, commentaires ; bouton « Inviter en ami » sur son
+    profil) ; tout autre nom répond 404, comme un nom inconnu ;
+  - **par lien d'ami**, pour un profil privé : un lien secret (jeton aléatoire, seul son hash stocké, comme les
+    invitations de comptes), à usage unique, valable 7 jours, 10 valides au plus, 20 créations par jour. Je le
+    transmets moi-même (copie, ou feuille de partage du téléphone) ; qui l'ouvre voit « Camille vous propose d'être
+    amis » et devient ami en acceptant (une demande en attente entre nous est acceptée). Le lien d'un membre qui m'a
+    bloqué répond 404, comme un lien expiré. Ouvert sans session, il ramène au lien après la connexion
+    (`/login?redirect=`, chemin interne seulement).
+- Une demande envoyée à un profil devenu invisible depuis ne montre que le nom saisi tant qu'elle n'est pas acceptée.
+- **Demande croisée** : inviter un membre qui m'a déjà invité vaut acceptation (`friend_accepted`).
+- **Refus muet** : la demande d'un membre que le destinataire a bloqué est enregistrée mais reste cachée de lui, jamais
+  notifiée ni acceptable ; le demandeur la voit « en attente », comme une demande ignorée. Inviter un membre que j'ai
+  moi-même bloqué répond 409 `member_blocked`. 20 demandes par jour.
+- **Lecteur** : `privacy.Viewer` (compte + amis, chargé une fois par requête par `h.viewer`) remplace l'UUID dans
+  `CanView` ; `Levels` reste sur le compte, `LevelsOf(viewer, owner)` ajoute `friends` pour une liste d'un seul
+  propriétaire ; les listes multi-auteurs (avis d'un item, moyennes) signent un avis `friends` en SQL (`reviewSigned`,
+  `friendOf`). Les lectures qui ne font que nommer (historique, articles) traitent le lecteur en inconnu si ses amis ne
+  se chargent pas.
+- **Annuaire** : il reste limité aux profils `members` et `public` ; un profil `friends` n'y figure pas.
+- **Notification d'un commentaire** : l'émetteur n'y est nommé que si son profil est `members` ou `public`.
+- **Page « Membres »** (`/members`, une seule entrée de menu) : onglet « Amis » (inviter, liens d'ami, demandes reçues
+  et envoyées, liste des amis avec lien vers le profil quand il m'est ouvert, `profile_visible`, retrait confirmé) et
+  onglet « Annuaire » (`?tab=directory`) ; ouverture d'un lien sur `/friend/:token`.
+
+Restent en suspens : le défaut de visibilité d'un nouvel avis ne tient pas compte d'un profil `friends` (règle de la
+Phase 6 inchangée : public si le profil est public, anonyme sinon) ; pas de QR code pour le lien d'ami (il faudrait
+une bibliothèque de génération, la feuille de partage du téléphone suffit pour l'instant).
+
 ## P7-3 — Prêts
 
 **Coût : moyen.**

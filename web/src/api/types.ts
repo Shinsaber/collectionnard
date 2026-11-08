@@ -197,7 +197,8 @@ export interface ReviewTypeUpdate {
   context_label?: Record<string, string>;
 }
 
-export type ReviewVisibility = "private" | "members" | "anonymous" | "public";
+export type ReviewVisibility =
+  "private" | "friends" | "members" | "anonymous" | "public";
 
 export interface Review {
   id: string;
@@ -340,6 +341,28 @@ export interface Block {
   id: string;
   user?: { username: string; display_name?: string; avatar?: string };
   created_at: string;
+}
+
+/** Une amitié ou une demande (P7-2), vue par l'un des deux : `user` est l'autre. */
+export interface Friendship {
+  id: string;
+  status: "pending" | "accepted";
+  /** Demande reçue (`false` : envoyée, ou amitié). */
+  incoming: boolean;
+  user: { username: string; display_name?: string; avatar?: string };
+  /** Son profil public m'est ouvert. */
+  profile_visible: boolean;
+  created_at: string;
+  accepted_at?: string;
+}
+
+/** Lien d'ami secret (P7-2) : `token` à la création seulement, `user` (son auteur) à l'ouverture. */
+export interface FriendLink {
+  id: string;
+  token?: string;
+  user?: { username: string; display_name?: string; avatar?: string };
+  created_at: string;
+  expires_at: string;
 }
 
 export type BlockContentKind =
@@ -536,7 +559,8 @@ export interface CollectionUpdate {
 
 // ---------- Visibilité et partage (P4-2) : miroir de server/internal/model/sharing.go ----------
 
-export type Visibility = "private" | "members" | "public";
+/** `friends` : les amis du propriétaire (P7-2). */
+export type Visibility = "private" | "friends" | "members" | "public";
 
 export interface Owner {
   username: string;
@@ -887,7 +911,9 @@ export type NotificationKind =
   | "article_hidden"
   | "article_restored"
   | "article_comment"
-  | "recommendation";
+  | "recommendation"
+  | "friend_request"
+  | "friend_accepted";
 
 export interface AppNotification {
   id: string;
@@ -905,6 +931,8 @@ export interface AppNotification {
     by_member?: boolean;
     /** Recommandation reçue (I-4). */
     recommendation_id?: string;
+    /** Demande ou amitié acceptée (P7-2). */
+    friendship_id?: string;
   };
   created_at: string;
   read_at?: string;

@@ -327,7 +327,7 @@ La table unique d'items avec attributs dynamiques nécessite une attention parti
 ### Fonctionnalités sociales (Phase 4, livrée — `docs/phases/social.md`)
 
 - Comptes sur invitation, profils (nom affiché, avatar, présentation), rôles admin / contributeur / membre
-- Visibilité par collection et pour le profil (privé, membres, public), liens de partage secrets, champs privés retirés par le serveur
+- Visibilité par collection et pour le profil (privé, amis, membres, public), liens de partage secrets, champs privés retirés par le serveur
 - Listes de souhaits partageables ; statistiques personnelles et complétude (« 30 tomes sur 42 »)
 - Contributions : propositions modérées, rôle contributeur, historique des fiches, notifications
 - _Reporté_ : système d'échange entre collectionneurs (exemplaires « à échanger », correspondances avec les listes de souhaits, messagerie)
@@ -556,7 +556,8 @@ prêts et réservations dans deux tables distinctes ; emprunteur et offrant choi
       `estimated_value` sur Possession (paquet `collections` v5), statistiques, import / export, hors ligne.
 - [x] **P7-1b — Types d'item acceptés et tri par défaut** (livré le 2026-11-08) : une collection resserre les types d'item de son type de collection
       (spécialisée = un seul type, tris par ses attributs) ; tri par défaut appliqué aussi aux pages publiques.
-- [ ] **P7-2 — Amis** : demandes et acceptation, niveau de visibilité `friends` (collections, profil, avis).
+- [x] **P7-2 — Amis** (livré le 2026-11-08) : invitation d'un profil visible ou par lien d'ami à usage unique, acceptation,
+      niveau de visibilité `friends` (collections, profil, avis), rupture par le blocage, onglets Amis / Annuaire de « Membres ».
 - [ ] **P7-3 — Prêts** : à un ami ou à un simple nom, retour prévu, rappels, historique, drapeau privé, page « Mes emprunts ».
 - [ ] **P7-4 — Cadeaux réservés** : réservation par les amis dans une liste de souhaits, jamais visible du propriétaire.
 

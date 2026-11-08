@@ -1573,3 +1573,142 @@ func TestCollectionSettings(t *testing.T) {
 		t.Errorf("imported settings: %+v %v", got, err)
 	}
 }
+
+func TestFriendships(t *testing.T) {
+	a, _ := s.CreateUser(ctx, "fr_a", "fr_a@example.org", "x", model.RoleUser)
+	b, _ := s.CreateUser(ctx, "fr_b", "fr_b@example.org", "x", model.RoleUser)
+	c, _ := s.CreateUser(ctx, "fr_c", "fr_c@example.org", "x", model.RoleUser)
+	pg := model.Pagination{Page: 1, PerPage: 20}
+
+	req, err := s.RequestFriend(ctx, a.ID, b.ID)
+	if err != nil || req.Status != model.FriendPending || req.Incoming || req.User.Username != "fr_b" {
+		t.Fatalf("demande : %+v %v", req, err)
+	}
+	if _, err := s.RequestFriend(ctx, a.ID, b.ID); !errors.Is(err, store.ErrConflict) {
+		t.Errorf("deux fois : %v", err)
+	}
+	if list, total, _ := s.ListFriendships(ctx, b.ID, model.FriendPending, pg); total != 1 || !list[0].Incoming || list[0].User.Username != "fr_a" {
+		t.Errorf("reçue par b : %+v", list)
+	}
+	if _, err := s.AcceptFriendRequest(ctx, a.ID, req.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("seul le destinataire accepte : %v", err)
+	}
+	// Ma demande à qui m'a invité vaut acceptation.
+	crossed, err := s.RequestFriend(ctx, b.ID, a.ID)
+	if err != nil || crossed.ID != req.ID || crossed.Status != model.FriendAccepted || crossed.AcceptedAt == nil {
+		t.Fatalf("demande croisée : %+v %v", crossed, err)
+	}
+	if ids, _ := s.FriendIDs(ctx, a.ID); len(ids) != 1 || ids[0] != b.ID {
+		t.Errorf("amis de a : %v", ids)
+	}
+	if list, total, _ := s.ListFriendships(ctx, b.ID, model.FriendAccepted, pg); total != 1 || list[0].User.Username != "fr_a" {
+		t.Errorf("amis de b : %+v", list)
+	}
+
+	// Un avis `friends` de a : signé pour b, note seule pour c.
+	rt, _ := s.CreateReviewType(ctx, model.ReviewTypeCreate{Name: "TestFriendsReview"})
+	it, _ := s.CreateItemType(ctx, model.ItemTypeCreate{Name: "TestFriends", AttributesSchema: json.RawMessage(`{"type":"object"}`)})
+	_, _ = s.UpdateItemType(ctx, it.ID, model.ItemTypeUpdate{ReviewTypeID: model.OptionalUUID{Set: true, Value: &rt.ID}})
+	reviewed, _ := s.CreateItem(ctx, model.ItemCreate{ItemTypeID: it.ID, Attributes: json.RawMessage(`{}`)})
+	if _, err := s.PutReview(ctx, reviewed.ID, a.ID, model.ReviewWrite{Rating: 4, Body: "pour mes amis", Lang: "fr", Visibility: "friends"}); err != nil {
+		t.Fatal(err)
+	}
+	levels := []string{"members", "public"}
+	if list, _, _ := s.ListItemReviews(ctx, reviewed.ID, model.ReviewListParams{Viewer: b.ID, Levels: levels}, pg); len(list) != 1 {
+		t.Errorf("listé pour un ami : %d", len(list))
+	}
+	if list, _, _ := s.ListItemReviews(ctx, reviewed.ID, model.ReviewListParams{Viewer: c.ID, Levels: levels}, pg); len(list) != 0 {
+		t.Errorf("pas listé pour un autre : %d", len(list))
+	}
+	if st, _ := s.GetReviewStats(ctx, reviewed.ID, c.ID, levels); st.Count != 1 || st.NoteOnly != 1 {
+		t.Errorf("note seule pour un autre : %+v", st)
+	}
+	if st, _ := s.GetReviewStats(ctx, reviewed.ID, b.ID, levels); st.NoteOnly != 0 {
+		t.Errorf("signé pour un ami : %+v", st)
+	}
+
+	// Une collection `friends` : la visibilité est acceptée par la base.
+	col, err := s.CreateCollection(ctx, a.ID, model.CollectionCreate{Name: "Pour mes amis", CollectionTypeID: uuid.MustParse("d0000000-0000-0000-0000-000000000001")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.UpdateCollection(ctx, col.ID, model.CollectionUpdate{Visibility: new("friends")}); err != nil {
+		t.Errorf("visibilité friends : %v", err)
+	}
+
+	// Bloquer rompt l'amitié ; la demande du bloqué reste muette.
+	if _, err := s.BlockUser(ctx, b.ID, a.ID, false); err != nil {
+		t.Fatal(err)
+	}
+	if ids, _ := s.FriendIDs(ctx, a.ID); len(ids) != 0 {
+		t.Errorf("amitié rompue : %v", ids)
+	}
+	muted, err := s.RequestFriend(ctx, a.ID, b.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, total, _ := s.ListFriendships(ctx, b.ID, model.FriendPending, pg); total != 0 {
+		t.Errorf("demande d'un bloqué cachée : %d", total)
+	}
+	if _, err := s.AcceptFriendRequest(ctx, b.ID, muted.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("ni acceptable : %v", err)
+	}
+	if _, total, _ := s.ListFriendships(ctx, a.ID, model.FriendPending, pg); total != 1 {
+		t.Errorf("toujours en attente pour lui : %d", total)
+	}
+	if err := s.DeleteFriendship(ctx, c.ID, muted.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("un tiers ne la supprime pas : %v", err)
+	}
+	if err := s.DeleteFriendship(ctx, a.ID, muted.ID); err != nil {
+		t.Errorf("annulation : %v", err)
+	}
+}
+
+func TestFriendLinks(t *testing.T) {
+	a, _ := s.CreateUser(ctx, "fl_a", "fl_a@example.org", "x", model.RoleUser)
+	b, _ := s.CreateUser(ctx, "fl_b", "fl_b@example.org", "x", model.RoleUser)
+	c, _ := s.CreateUser(ctx, "fl_c", "fl_c@example.org", "x", model.RoleUser)
+	l, err := s.CreateFriendLink(ctx, a.ID, "hash-fl-1", time.Now().Add(time.Hour))
+	if err != nil || l.Owner == nil || l.Owner.Username != "fl_a" {
+		t.Fatalf("création : %+v %v", l, err)
+	}
+	if _, err := s.CreateFriendLink(ctx, a.ID, "hash-fl-old", time.Now().Add(-time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	if list, _ := s.ListFriendLinks(ctx, a.ID); len(list) != 1 || list[0].ID != l.ID {
+		t.Errorf("seuls les liens valides : %+v", list)
+	}
+	if _, err := s.GetFriendLink(ctx, "hash-fl-old"); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("expiré : %v", err)
+	}
+	// b avait une demande en attente vers a : le lien l'accepte.
+	if _, err := s.RequestFriend(ctx, b.ID, a.ID); err != nil {
+		t.Fatal(err)
+	}
+	f, err := s.UseFriendLink(ctx, "hash-fl-1", b.ID)
+	if err != nil || f.Status != model.FriendAccepted || f.User.Username != "fl_a" {
+		t.Fatalf("utilisation : %+v %v", f, err)
+	}
+	if _, err := s.UseFriendLink(ctx, "hash-fl-1", c.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("usage unique : %v", err)
+	}
+	if _, err := s.CreateFriendLink(ctx, a.ID, "hash-fl-2", time.Now().Add(time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.UseFriendLink(ctx, "hash-fl-2", b.ID); !errors.Is(err, store.ErrConflict) {
+		t.Errorf("déjà amis : %v", err)
+	}
+	if _, err := s.UseFriendLink(ctx, "hash-fl-2", c.ID); err != nil {
+		t.Errorf("le lien reste valide après un refus : %v", err)
+	}
+	if ids, _ := s.FriendIDs(ctx, a.ID); len(ids) != 2 {
+		t.Errorf("amis de a : %v", ids)
+	}
+	l3, _ := s.CreateFriendLink(ctx, a.ID, "hash-fl-3", time.Now().Add(time.Hour))
+	if err := s.DeleteFriendLink(ctx, b.ID, l3.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("seul son auteur le révoque : %v", err)
+	}
+	if err := s.DeleteFriendLink(ctx, a.ID, l3.ID); err != nil {
+		t.Errorf("révocation : %v", err)
+	}
+}
