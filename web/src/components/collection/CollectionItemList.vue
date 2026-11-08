@@ -35,6 +35,7 @@
               <span class="font-mono text-xs uppercase text-muted">{{
                 typeTitle((row as CollectionItem).item?.item_type, lang) || "?"
               }}</span>
+              <LoanFlag :lot="row as CollectionItem" />
             </div>
           </template>
         </ElTableColumn>
@@ -90,7 +91,7 @@
               <LotActionsMenu
                 :lot="row as CollectionItem"
                 :label="labelOf(row as CollectionItem)"
-                :commands="['split', 'merge', 'remove']"
+                :commands="menuCommands"
                 @command="(cmd) => onCommand(cmd, row as CollectionItem)"
               />
             </div>
@@ -127,6 +128,7 @@
             class="self-start rounded-full bg-tint px-2 py-0.5 font-mono text-[11px] text-tint-ink"
             >{{ t("collections.lots.copies", ci.quantity) }}</span
           >
+          <LoanFlag :lot="ci" />
           <dl
             v-if="filledKeys(ci).length"
             class="flex flex-wrap gap-x-3 gap-y-1 text-[13px]"
@@ -149,7 +151,7 @@
           class="self-center"
           :lot="ci"
           :label="labelOf(ci)"
-          :commands="['edit', 'split', 'merge', 'remove']"
+          :commands="['edit', ...menuCommands]"
           @command="(cmd) => onCommand(cmd, ci)"
         />
       </li>
@@ -179,6 +181,7 @@ import {
 } from "@/lib/schema";
 import ItemCover from "@/components/item/ItemCover.vue";
 import GalleryThumbs from "@/components/common/GalleryThumbs.vue";
+import LoanFlag from "./LoanFlag.vue";
 import LotActionsMenu from "./LotActionsMenu.vue";
 import type { LotCommand } from "@/lib/lots";
 import type { CollectionItem } from "@/api/types";
@@ -195,8 +198,10 @@ const props = withDefaults(
     linkItems?: boolean;
     /** Texte de la liste vide (défaut : collection vide). */
     emptyText?: string;
+    /** Le type de la collection ouvre les prêts (`x-lendable`, P7-3) : « Prêter… », « Prêts… ». */
+    lendable?: boolean;
   }>(),
-  { readonly: false, linkItems: true, emptyText: "" },
+  { readonly: false, linkItems: true, emptyText: "", lendable: false },
 );
 
 const emit = defineEmits<{
@@ -204,6 +209,8 @@ const emit = defineEmits<{
   split: [ci: CollectionItem];
   merge: [ci: CollectionItem];
   remove: [ci: CollectionItem];
+  lend: [ci: CollectionItem];
+  loans: [ci: CollectionItem];
 }>();
 
 const { t } = useI18n();
@@ -212,6 +219,12 @@ const { lang } = useLang();
 /** Attributs contextuels du type de collection, dans l'ordre du schéma (hors galeries). */
 const attrKeys = computed(() =>
   orderedKeys(props.schema, {}).filter((k) => !isImageGallery(props.schema, k)),
+);
+/** Actions du menu d'un lot (hors « Modifier », bouton à part sur bureau). */
+const menuCommands = computed<LotCommand[]>(() =>
+  props.lendable
+    ? ["split", "merge", "lend", "loans", "remove"]
+    : ["split", "merge", "remove"],
 );
 /** Colonne « Qté » : seulement si un lot de la page compte plusieurs exemplaires. */
 const showQuantity = computed(() => props.items.some((ci) => ci.quantity > 1));
@@ -241,6 +254,10 @@ function onCommand(cmd: LotCommand, ci: CollectionItem) {
       return emit("split", ci);
     case "merge":
       return emit("merge", ci);
+    case "lend":
+      return emit("lend", ci);
+    case "loans":
+      return emit("loans", ci);
     default:
       return emit("remove", ci);
   }

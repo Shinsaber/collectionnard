@@ -92,7 +92,13 @@ const store = useNotificationsStore();
 const badge = computed(() => store.unread + store.toReview + store.toModerate);
 
 function text(n: AppNotification): string {
-  return t(`notifications.kinds.${n.kind}`, {
+  // Rappel de retard : texte du prêteur ou de l'emprunteur (P7-3).
+  const kind =
+    n.kind === "loan_overdue" && n.payload.borrowed
+      ? "loan_overdue_borrowed"
+      : n.kind;
+  return t(`notifications.kinds.${kind}`, {
+    borrower: n.payload.borrower ?? "",
     by: n.payload.by_review_author
       ? t("notifications.reviewAuthor")
       : n.payload.by_member
@@ -106,6 +112,12 @@ function text(n: AppNotification): string {
 /** Recommandation, amis : leur page ; sinon la proposition ou la fiche. */
 function link(n: AppNotification): string {
   if (n.kind === "recommendation") return "/recommendations";
+  if (
+    n.kind === "loan_started" ||
+    (n.kind === "loan_overdue" && n.payload.borrowed)
+  )
+    return "/loans?tab=borrowed";
+  if (n.kind === "loan_overdue") return "/loans";
   if (n.kind === "friend_request" || n.kind === "friend_accepted")
     return "/members";
   if (n.payload.proposal_id) return `/proposals/${n.payload.proposal_id}`;

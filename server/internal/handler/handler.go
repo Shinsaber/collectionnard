@@ -208,6 +208,13 @@ func (h *Handler) Router() chi.Router {
 		r.Delete("/api/v1/collections/{collectionId}/lots/{lotId}", h.RemoveItemFromCollection)
 		r.Post("/api/v1/collections/{collectionId}/lots/{lotId}/split", h.SplitCollectionLot)
 		r.Post("/api/v1/collections/{collectionId}/lots/{lotId}/merge", h.MergeCollectionLot)
+		// Prêts (P7-3).
+		r.Get("/api/v1/collections/{collectionId}/lots/{lotId}/loans", h.ListLotLoans)
+		r.Post("/api/v1/collections/{collectionId}/lots/{lotId}/loans", h.CreateLoan)
+		r.Put("/api/v1/loans/{id}", h.UpdateLoan)
+		r.Delete("/api/v1/loans/{id}", h.DeleteLoan)
+		r.Get("/api/v1/me/loans", h.ListMyLoans)
+		r.Get("/api/v1/me/borrowings", h.ListMyBorrowings)
 
 		r.Get("/api/v1/items/{id}/history", h.GetItemHistory)
 

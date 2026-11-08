@@ -150,6 +150,15 @@ tags:
       traces (`blocked`), ses messages ne le notifient plus. Sur un contenu qui ne nomme pas son auteur (avis anonyme), le
       blocage ne refuse rien et l'avis reste listé : refuser ou retirer le nommerait. Les notes des membres bloqués comptent toujours dans les
       moyennes.
+  - name: Loans
+    description: |
+      Prêts (P7-3). Le propriétaire d'un lot d'une collection dont le type est marqué `x-lendable` (Possession) prête
+      des exemplaires à un **ami** (notifié `loan_started`, sans acceptation) ou à un **simple nom**. Les exemplaires
+      prêtés ne dépassent jamais la quantité du lot : un lot ne descend pas sous ses exemplaires prêtés, une scission
+      les laisse sur le lot d'origine, une fusion déplace ses prêts. Le prêt n'est vu que du propriétaire (liste de sa
+      collection, `GET /me/loans`) et de l'ami emprunteur (`GET /me/borrowings`, sans la note ni le nom de la
+      collection) : jamais des autres lecteurs. Un prêt rendu (`returned_at`) reste comme historique. Une fois l'échéance
+      passée, le propriétaire et l'ami sont notifiés (`loan_overdue`), une seule fois par échéance.
   - name: Friends
     description: |
       Amis (P7-2). Une amitié est réciproque : un membre en invite un autre dont il voit le profil, par son nom
@@ -1674,6 +1683,59 @@ components:
     # -------------------------------------------------------------------------
     # CollectionItem
     # -------------------------------------------------------------------------
+    Loan:
+      type: object
+      description: |
+        Prêt d'exemplaires d'un lot (P7-3). Dates au format `AAAA-MM-JJ`. `borrower` : l'ami emprunteur (absent pour un
+        simple nom, ou un compte disparu) ; `borrower_name` est toujours présent, figé au moment du prêt. `owner` n'est
+        donné qu'à l'emprunteur, `note` et `collection_name` qu'au propriétaire ; `item` dans `/me/loans` et
+        `/me/borrowings`.
+      required: [id, lot_id, collection_id, quantity, borrower_name, lent_at, overdue, note, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        lot_id: { type: string, format: uuid }
+        collection_id: { type: string, format: uuid }
+        quantity: { type: integer, minimum: 1, maximum: 100000 }
+        borrower:
+          $ref: "#/components/schemas/ReviewAuthor"
+        borrower_name: { type: string }
+        lent_at: { type: string, format: date }
+        due_at: { type: string, format: date }
+        returned_at: { type: string, format: date }
+        overdue:
+          type: boolean
+          description: En cours et son échéance est passée.
+        note: { type: string }
+        owner:
+          $ref: "#/components/schemas/ReviewAuthor"
+        item:
+          $ref: "#/components/schemas/Item"
+        collection_name: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    LoanCreate:
+      type: object
+      description: Un ami par son nom d'utilisateur (`borrower_username`) **ou** un simple nom (`borrower_name`).
+      properties:
+        quantity: { type: integer, minimum: 1, maximum: 100000, default: 1 }
+        borrower_username: { type: string }
+        borrower_name: { type: string, maxLength: 100 }
+        lent_at: { type: string, format: date, description: "Absent : aujourd'hui." }
+        due_at: { type: string, format: date }
+        note: { type: string, maxLength: 500 }
+
+    LoanUpdate:
+      type: object
+      description: "Champs modifiables d'un prêt, remplacés (l'emprunteur ne change pas). `returned_at` le clôt."
+      required: [quantity]
+      properties:
+        quantity: { type: integer, minimum: 1, maximum: 100000 }
+        lent_at: { type: string, format: date, description: "Absent : inchangé." }
+        due_at: { type: string, format: date }
+        returned_at: { type: string, format: date }
+        note: { type: string, maxLength: 500 }
+
     CollectionItem:
       type: object
       description: |
@@ -1718,6 +1780,11 @@ components:
             condition: new
             purchase_price: 45.00
             acquisition_date: "2020-12-25"
+        loans:
+          type: array
+          description: Prêts en cours du lot (P7-3), dans la liste de son propriétaire seulement.
+          items:
+            $ref: "#/components/schemas/Loan"
         created_at:
           type: string
           format: date-time
@@ -2509,7 +2576,7 @@ components:
             Propositions (P4-3) : `proposal_state`, `proposal_quota`, `proposal_invalid`, `proposal_conflict`,
             `proposal_meta_types`, `own_proposal`. Avis (I-0) : `reviews_closed` (409). Modération (I-1) :
             `report_exists`, `moderation_state` (409), `own_content` (403), `rate_limited` (429). Commentaires (I-2) :
-            `comments_closed` (409). Amis (P7-2) : `friendship_exists`, `member_blocked`, `friend_links_limit` (409). Chaque réponse d'erreur d'une opération nomme les codes qu'elle
+            `comments_closed` (409). Amis (P7-2) : `friendship_exists`, `member_blocked`, `friend_links_limit` (409). Prêts (P7-3) : `not_lendable`, `borrower_not_friend`, `loan_exceeds_lot` (422). Chaque réponse d'erreur d'une opération nomme les codes qu'elle
             émet. Un client doit prévoir un libellé générique pour un code inconnu.
           example: validation_error
         message:
@@ -3082,6 +3149,11 @@ components:
   # Paramètres réutilisables
   # ===========================================================================
   parameters:
+    loanStatus:
+      name: status
+      in: query
+      description: "`active` : en cours ; `returned` : rendus ; absent : tous."
+      schema: { type: string, enum: [active, returned] }
     lotId:
       name: lotId
       in: path
@@ -7042,6 +7114,184 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+
+  /collections/{collectionId}/lots/{lotId}/loans:
+    parameters:
+      - name: collectionId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - $ref: "#/components/parameters/lotId"
+    get:
+      tags: [Loans]
+      summary: Prêts d'un lot
+      description: En cours d'abord, puis l'historique (rendus), du plus récent au plus ancien. Propriétaire seulement.
+      operationId: listLotLoans
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Prêts du lot.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Loan"
+    post:
+      tags: [Loans]
+      summary: Prêter des exemplaires d'un lot
+      description: L'ami emprunteur est notifié (`loan_started`).
+      operationId: createLoan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoanCreate"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          description: |
+            `not_lendable` : le type de la collection n'ouvre pas les prêts ; `borrower_not_friend` : l'emprunteur
+            nommé n'est pas un ami (compte inconnu compris) ; `loan_exceeds_lot` : plus assez d'exemplaires non prêtés ;
+            `invalid_quantity`, `validation_error`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Prêt créé.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Loan"
+
+  /loans/{id}:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    put:
+      tags: [Loans]
+      summary: Modifier ou clore un prêt
+      description: Échéance, rendu le, quantité, note. Une nouvelle échéance permet un nouveau rappel. Propriétaire seulement.
+      operationId: updateLoan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoanUpdate"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          description: "`loan_exceeds_lot`, `invalid_quantity`, `validation_error`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Prêt modifié.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Loan"
+    delete:
+      tags: [Loans]
+      summary: Supprimer un prêt
+      description: Un prêt saisi par erreur ; un prêt rendu se garde comme historique.
+      operationId: deleteLoan
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Supprimé.
+
+  /me/loans:
+    get:
+      tags: [Loans]
+      summary: Ce que j'ai prêté
+      description: En cours d'abord, l'échéance la plus proche en premier.
+      operationId: listMyLoans
+      parameters:
+        - $ref: "#/components/parameters/loanStatus"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Loan"
+
+  /me/borrowings:
+    get:
+      tags: [Loans]
+      summary: Ce que mes amis m'ont prêté
+      operationId: listMyBorrowings
+      parameters:
+        - $ref: "#/components/parameters/loanStatus"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Loan"
 
   # ===========================================================================
   # Tags

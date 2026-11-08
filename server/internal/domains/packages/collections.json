@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "collections",
-  "package_version": 5,
+  "package_version": 6,
   "title": {
     "fr": "Collections",
     "en": "Collections"
@@ -21,6 +21,7 @@
       "item_type_ids": [],
       "attributes_schema": {
         "type": "object",
+        "x-lendable": true,
         "x-order": [
           "condition",
           "purchase_price",

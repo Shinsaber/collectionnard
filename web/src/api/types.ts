@@ -610,8 +610,55 @@ export interface CollectionItem {
   item?: Item;
   quantity: number;
   attributes: Record<string, unknown>;
+  /** Prêts en cours du lot (P7-3), dans la liste de son propriétaire seulement. */
+  loans?: Loan[];
   created_at: string;
   updated_at: string;
+}
+
+/** Prêt d'exemplaires d'un lot (P7-3) ; dates `AAAA-MM-JJ`. */
+export interface Loan {
+  id: string;
+  lot_id: string;
+  collection_id: string;
+  quantity: number;
+  /** L'ami emprunteur ; absent pour un simple nom. */
+  borrower?: { username: string; display_name?: string; avatar?: string };
+  /** Toujours présent, figé au moment du prêt. */
+  borrower_name: string;
+  lent_at: string;
+  due_at?: string;
+  returned_at?: string;
+  overdue: boolean;
+  note: string;
+  /** Le prêteur, donné à l'emprunteur seulement. */
+  owner?: { username: string; display_name?: string; avatar?: string };
+  item?: Item;
+  collection_name?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Un ami (`borrower_username`) ou un simple nom (`borrower_name`). */
+export interface LoanCreate {
+  quantity?: number;
+  borrower_username?: string;
+  borrower_name?: string;
+  lent_at?: string;
+  due_at?: string;
+  note?: string;
+}
+
+/** Filtre des listes de prêts : en cours, rendus ; absent : tous. */
+export type LoanStatus = "active" | "returned";
+
+/** Champs modifiables, remplacés ; `returned_at` clôt le prêt. */
+export interface LoanUpdate {
+  quantity: number;
+  lent_at?: string;
+  due_at?: string;
+  returned_at?: string;
+  note: string;
 }
 
 /** Crée toujours un nouveau lot (`quantity` : 1 par défaut). */
@@ -913,7 +960,9 @@ export type NotificationKind =
   | "article_comment"
   | "recommendation"
   | "friend_request"
-  | "friend_accepted";
+  | "friend_accepted"
+  | "loan_started"
+  | "loan_overdue";
 
 export interface AppNotification {
   id: string;
@@ -933,6 +982,10 @@ export interface AppNotification {
     recommendation_id?: string;
     /** Demande ou amitié acceptée (P7-2). */
     friendship_id?: string;
+    /** Prêts (P7-3) : le prêt, l'emprunteur (rappel au prêteur) ; `borrowed` : rappel à l'emprunteur. */
+    loan_id?: string;
+    borrower?: string;
+    borrowed?: boolean;
   };
   created_at: string;
   read_at?: string;

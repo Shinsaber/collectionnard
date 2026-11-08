@@ -258,6 +258,31 @@ le propriétaire et l'emprunteur membre d'un retour en retard, une seule fois pa
 `GET/POST /collections/{collectionId}/lots/{lotId}/loans`, `PATCH /loans/{id}` (retour prévu, rendu le), `DELETE
 /loans/{id}`, `GET /me/loans` (prêtés), `GET /me/borrowings` (empruntés).
 
+### Livré (2026-11-08)
+
+Migration `024_loans.sql`, paquet `collections` v6 (`x-lendable` sur Possession), case « Prêts possibles » dans
+l'éditeur des types de collection. Écarts et choix faits en cours de lot :
+
+- **`PUT /loans/{id}`** plutôt que `PATCH` : la convention du projet (PUT = remplacement des champs modifiables :
+  quantité, prêté le, retour prévu, rendu le, note ; l'emprunteur ne change pas).
+- **Nom figé toujours présent** : `borrower_name` est rempli aussi pour un ami (son nom affiché au moment du prêt), et
+  `borrower_id` passe à `NULL` si le compte disparaît. Le `CHECK` « membre **ou** nom » du modèle visé est donc remplacé
+  par « nom toujours, membre en plus ». La liste montre le nom actuel de l'ami tant que son compte est actif.
+- **Un emprunteur nommé qui n'est pas un ami** (ou un nom inconnu) répond le même 422 `borrower_not_friend` : rien à
+  deviner. Rompre l'amitié ne touche pas les prêts en cours.
+- **Exemplaires d'un lot** : un lot ne descend pas sous ses exemplaires prêtés (quantité, scission : 422
+  `invalid_quantity`) ; une fusion déplace les prêts du lot fusionné ; supprimer un lot supprime ses prêts.
+- **Ce que voit chacun** : le propriétaire voit ses prêts sur le lot (drapeau « 2 prêtés · Camille », rouge en
+  retard), dans « Prêts… » (en cours et historique) et sur la page « Prêts » ; l'ami voit, dans « Empruntés », l'item, le
+  prêteur, les dates — ni la note ni le nom de la collection. Les autres lecteurs de la collection ne voient rien.
+- **Rappels** : `RunReminders` tourne toutes les heures (une fois par échéance grâce à `reminded_at`, remis à zéro quand
+  l'échéance change) et notifie le prêteur et l'ami (`loan_overdue`). Pas de réglage par variable d'environnement.
+- **Dates** : champs de date natifs (comme `DynamicForm`), pas de `ElDatePicker`.
+
+Restent en suspens : les prêts ne voyagent pas avec l'export / import d'une collection (données personnelles, à
+trancher) ; l'ami ne voit pas le drapeau sur la page publique de la collection (seulement sa page « Empruntés ») ; pas
+de rappel « bientôt à rendre » avant l'échéance.
+
 ## P7-4 — Cadeaux réservés
 
 **Coût : petit à moyen.**

@@ -149,16 +149,28 @@ type MockStore struct {
 	BlockersFn  func(ctx context.Context, blockedID uuid.UUID, users []uuid.UUID) ([]uuid.UUID, error)
 	IsBlockedFn func(ctx context.Context, blockerID, blockedID uuid.UUID) (bool, error)
 	// FriendIDsFn: no friend when unset.
-	FriendIDsFn               func(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
-	ListFriendshipsFn         func(ctx context.Context, userID uuid.UUID, status string, pg model.Pagination) ([]model.Friendship, int, error)
-	RequestFriendFn           func(ctx context.Context, from, to uuid.UUID) (*model.Friendship, error)
-	AcceptFriendRequestFn     func(ctx context.Context, userID, id uuid.UUID) (*model.Friendship, error)
-	DeleteFriendshipFn        func(ctx context.Context, userID, id uuid.UUID) error
-	CreateFriendLinkFn        func(ctx context.Context, userID uuid.UUID, tokenHash string, expiresAt time.Time) (*model.FriendLink, error)
-	ListFriendLinksFn         func(ctx context.Context, userID uuid.UUID) ([]model.FriendLink, error)
-	DeleteFriendLinkFn        func(ctx context.Context, userID, id uuid.UUID) error
-	GetFriendLinkFn           func(ctx context.Context, tokenHash string) (*model.FriendLink, error)
-	UseFriendLinkFn           func(ctx context.Context, tokenHash string, userID uuid.UUID) (*model.Friendship, error)
+	FriendIDsFn           func(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
+	ListFriendshipsFn     func(ctx context.Context, userID uuid.UUID, status string, pg model.Pagination) ([]model.Friendship, int, error)
+	RequestFriendFn       func(ctx context.Context, from, to uuid.UUID) (*model.Friendship, error)
+	AcceptFriendRequestFn func(ctx context.Context, userID, id uuid.UUID) (*model.Friendship, error)
+	DeleteFriendshipFn    func(ctx context.Context, userID, id uuid.UUID) error
+	CreateFriendLinkFn    func(ctx context.Context, userID uuid.UUID, tokenHash string, expiresAt time.Time) (*model.FriendLink, error)
+	ListFriendLinksFn     func(ctx context.Context, userID uuid.UUID) ([]model.FriendLink, error)
+	DeleteFriendLinkFn    func(ctx context.Context, userID, id uuid.UUID) error
+	GetFriendLinkFn       func(ctx context.Context, tokenHash string) (*model.FriendLink, error)
+	UseFriendLinkFn       func(ctx context.Context, tokenHash string, userID uuid.UUID) (*model.Friendship, error)
+	// Loans (P7-3): no loan when unset.
+	GetCollectionLotFn        func(ctx context.Context, collectionID, lotID uuid.UUID) (*model.CollectionItem, error)
+	CreateLoanFn              func(ctx context.Context, lotID uuid.UUID, in model.LoanInput) (*model.Loan, error)
+	GetLoanFn                 func(ctx context.Context, id uuid.UUID) (*model.Loan, error)
+	UpdateLoanFn              func(ctx context.Context, id uuid.UUID, in model.LoanInput) (*model.Loan, error)
+	DeleteLoanFn              func(ctx context.Context, id uuid.UUID) error
+	ListLotLoansFn            func(ctx context.Context, lotID uuid.UUID) ([]model.Loan, error)
+	ActiveLoansFn             func(ctx context.Context, lotIDs []uuid.UUID) (map[uuid.UUID][]model.Loan, error)
+	ListLoansFn               func(ctx context.Context, ownerID uuid.UUID, status string, pg model.Pagination) ([]model.Loan, int, error)
+	ListBorrowingsFn          func(ctx context.Context, borrowerID uuid.UUID, status string, pg model.Pagination) ([]model.Loan, int, error)
+	OverdueLoansFn            func(ctx context.Context) ([]model.Loan, error)
+	MarkLoansRemindedFn       func(ctx context.Context, ids []uuid.UUID) error
 	ListCommentsFn            func(ctx context.Context, kind string, targetID, viewer uuid.UUID, pg model.Pagination) ([]model.Comment, int, error)
 	GetCommentFn              func(ctx context.Context, id uuid.UUID) (*model.Comment, error)
 	CreateCommentFn           func(ctx context.Context, kind string, targetID, authorID uuid.UUID, body string) (*model.Comment, error)
@@ -1134,6 +1146,83 @@ func (m *MockStore) GetFriendLink(ctx context.Context, tokenHash string) (*model
 func (m *MockStore) UseFriendLink(ctx context.Context, tokenHash string, userID uuid.UUID) (*model.Friendship, error) {
 	if m.UseFriendLinkFn != nil {
 		return m.UseFriendLinkFn(ctx, tokenHash, userID)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) CreateLoan(ctx context.Context, lotID uuid.UUID, in model.LoanInput) (*model.Loan, error) {
+	if m.CreateLoanFn != nil {
+		return m.CreateLoanFn(ctx, lotID, in)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) GetLoan(ctx context.Context, id uuid.UUID) (*model.Loan, error) {
+	if m.GetLoanFn != nil {
+		return m.GetLoanFn(ctx, id)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) UpdateLoan(ctx context.Context, id uuid.UUID, in model.LoanInput) (*model.Loan, error) {
+	if m.UpdateLoanFn != nil {
+		return m.UpdateLoanFn(ctx, id, in)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) DeleteLoan(ctx context.Context, id uuid.UUID) error {
+	if m.DeleteLoanFn != nil {
+		return m.DeleteLoanFn(ctx, id)
+	}
+	return store.ErrNotFound
+}
+
+func (m *MockStore) ListLotLoans(ctx context.Context, lotID uuid.UUID) ([]model.Loan, error) {
+	if m.ListLotLoansFn != nil {
+		return m.ListLotLoansFn(ctx, lotID)
+	}
+	return []model.Loan{}, nil
+}
+
+func (m *MockStore) ActiveLoans(ctx context.Context, lotIDs []uuid.UUID) (map[uuid.UUID][]model.Loan, error) {
+	if m.ActiveLoansFn != nil {
+		return m.ActiveLoansFn(ctx, lotIDs)
+	}
+	return map[uuid.UUID][]model.Loan{}, nil
+}
+
+func (m *MockStore) ListLoans(ctx context.Context, ownerID uuid.UUID, status string, pg model.Pagination) ([]model.Loan, int, error) {
+	if m.ListLoansFn != nil {
+		return m.ListLoansFn(ctx, ownerID, status, pg)
+	}
+	return []model.Loan{}, 0, nil
+}
+
+func (m *MockStore) ListBorrowings(ctx context.Context, borrowerID uuid.UUID, status string, pg model.Pagination) ([]model.Loan, int, error) {
+	if m.ListBorrowingsFn != nil {
+		return m.ListBorrowingsFn(ctx, borrowerID, status, pg)
+	}
+	return []model.Loan{}, 0, nil
+}
+
+func (m *MockStore) OverdueLoans(ctx context.Context) ([]model.Loan, error) {
+	if m.OverdueLoansFn != nil {
+		return m.OverdueLoansFn(ctx)
+	}
+	return nil, nil
+}
+
+func (m *MockStore) MarkLoansReminded(ctx context.Context, ids []uuid.UUID) error {
+	if m.MarkLoansRemindedFn != nil {
+		return m.MarkLoansRemindedFn(ctx, ids)
+	}
+	return nil
+}
+
+func (m *MockStore) GetCollectionLot(ctx context.Context, collectionID, lotID uuid.UUID) (*model.CollectionItem, error) {
+	if m.GetCollectionLotFn != nil {
+		return m.GetCollectionLotFn(ctx, collectionID, lotID)
 	}
 	return nil, store.ErrNotFound
 }

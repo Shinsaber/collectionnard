@@ -91,6 +91,10 @@ const en: typeof fr = {
     friendship_exists:
       "You are already friends, or your request is awaiting an answer.",
     member_blocked: "You blocked this member: unblock them first.",
+    not_lendable: "This type of collection does not open loans.",
+    borrower_not_friend:
+      "This member is not your friend: lend under a mere name, or invite them first.",
+    loan_exceeds_lot: "Not enough copies left to lend in this lot.",
     friend_links_limit:
       "You already have 10 valid friend links: revoke one first.",
     blocked: "The author of this content does not accept your interactions.",

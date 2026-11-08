@@ -5339,6 +5339,7 @@
     "name": "Ownership",
     "schema": {
       "type": "object",
+      "x-lendable": true,
       "x-order": [
         "condition",
         "purchase_price",

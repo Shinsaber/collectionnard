@@ -11,6 +11,10 @@ import type {
   Block,
   BlockCreate,
   FriendLink,
+  Loan,
+  LoanCreate,
+  LoanStatus,
+  LoanUpdate,
   Friendship,
   Comment,
   LoginRequest,
@@ -828,6 +832,29 @@ export const friendLinkApi = {
   accept: (token: string) =>
     http
       .post<Friendship>(`/friend-links/${encodeURIComponent(token)}/accept`)
+      .then((r) => r.data),
+};
+
+/** Prêts (P7-3) : par lot pour le propriétaire, et ses listes « prêtés » / « empruntés ». */
+export const loanApi = {
+  listLot: (collectionId: string, lotId: string) =>
+    http
+      .get<Loan[]>(`/collections/${collectionId}/lots/${lotId}/loans`)
+      .then((r) => r.data),
+  create: (collectionId: string, lotId: string, data: LoanCreate) =>
+    http
+      .post<Loan>(`/collections/${collectionId}/lots/${lotId}/loans`, data)
+      .then((r) => r.data),
+  update: (id: string, data: LoanUpdate) =>
+    http.put<Loan>(`/loans/${id}`, data).then((r) => r.data),
+  remove: (id: string) => http.delete(`/loans/${id}`),
+  mine: (params?: PaginationParams & { status?: LoanStatus }) =>
+    http
+      .get<PaginatedResponse<Loan>>("/me/loans", { params })
+      .then((r) => r.data),
+  borrowings: (params?: PaginationParams & { status?: LoanStatus }) =>
+    http
+      .get<PaginatedResponse<Loan>>("/me/borrowings", { params })
       .then((r) => r.data),
 };
 

@@ -296,6 +296,8 @@ type CollectionItem struct {
 	Attributes   json.RawMessage `json:"attributes"`
 	CreatedAt    time.Time       `json:"created_at"`
 	UpdatedAt    time.Time       `json:"updated_at"`
+	// Loans: the loans in progress of the lot (P7-3), in the owner's list only.
+	Loans []Loan `json:"loans,omitempty"`
 }
 
 // MaxQuantity bounds the copies of a lot (CHECK of migration 020).

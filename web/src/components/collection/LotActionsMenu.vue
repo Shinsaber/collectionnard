@@ -1,5 +1,6 @@
 <template>
-  <!-- Menu « ⋮ » d'un lot (P7-1) ; « Scinder » n'est proposé qu'à un lot de plusieurs exemplaires. -->
+  <!-- Menu « ⋮ » d'un lot (P7-1) ; « Scinder » n'est proposé qu'à un lot de plusieurs exemplaires, « Prêter » qu'à
+       un lot dont un exemplaire reste disponible (P7-3). -->
   <ElDropdown
     trigger="click"
     @command="(cmd: LotCommand) => emit('command', cmd)"
@@ -35,6 +36,22 @@
           {{ t("collections.lots.merge") }}
         </ElDropdownItem>
         <ElDropdownItem
+          v-if="commands.includes('lend') && availableCopies(lot) > 0"
+          command="lend"
+          data-test="lot-lend"
+        >
+          <i class="pi pi-arrow-up-right mr-2" aria-hidden="true"></i>
+          {{ t("loans.lend") }}
+        </ElDropdownItem>
+        <ElDropdownItem
+          v-if="commands.includes('loans')"
+          command="loans"
+          data-test="lot-loans"
+        >
+          <i class="pi pi-history mr-2" aria-hidden="true"></i>
+          {{ t("loans.loansOf") }}
+        </ElDropdownItem>
+        <ElDropdownItem
           v-if="commands.includes('remove')"
           command="remove"
           class="text-danger!"
@@ -50,6 +67,7 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 import type { LotCommand } from "@/lib/lots";
+import { availableCopies } from "@/lib/loans";
 import type { CollectionItem } from "@/api/types";
 
 defineProps<{

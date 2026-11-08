@@ -1712,3 +1712,92 @@ func TestFriendLinks(t *testing.T) {
 		t.Errorf("révocation : %v", err)
 	}
 }
+
+func TestLoans(t *testing.T) {
+	five := 5
+	lot, err := s.AddCollectionItem(ctx, colMesDVDs, model.CollectionItemAdd{ItemID: itemDVD,
+		Attributes: json.RawMessage(`{"condition":"good"}`), Quantity: &five})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = s.RemoveCollectionItem(ctx, colMesDVDs, lot.ID) }()
+	b, _ := s.CreateUser(ctx, "loan_b", "loan_b@example.org", "x", model.RoleUser)
+	pg := model.Pagination{Page: 1, PerPage: 20}
+
+	due := "2000-01-02"
+	toB, err := s.CreateLoan(ctx, lot.ID, model.LoanInput{Quantity: 2, BorrowerID: &b.ID, BorrowerName: "B",
+		LentAt: "2000-01-01", DueAt: &due})
+	if err != nil || toB.Borrower == nil || toB.Borrower.Username != "loan_b" || !toB.Overdue || toB.Item.ID != itemDVD ||
+		toB.OwnerID != shinsaberUser || toB.CollectionID != colMesDVDs {
+		t.Fatalf("prêt à b : %+v %v", toB, err)
+	}
+	odile, err := s.CreateLoan(ctx, lot.ID, model.LoanInput{Quantity: 3, BorrowerName: "Odile"})
+	if err != nil || odile.Borrower != nil || odile.LentAt == "" || odile.Overdue {
+		t.Fatalf("prêt à un nom : %+v %v", odile, err)
+	}
+	if _, err := s.CreateLoan(ctx, lot.ID, model.LoanInput{Quantity: 1, BorrowerName: "de trop"}); !errors.Is(err, store.ErrInvalidQuantity) {
+		t.Errorf("plus d'exemplaire libre : %v", err)
+	}
+	// Le lot garde ses exemplaires prêtés.
+	two := 2
+	if _, err := s.UpdateCollectionItem(ctx, colMesDVDs, lot.ID, model.CollectionItemUpdate{Attributes: lot.Attributes, Quantity: &two}); !errors.Is(err, store.ErrInvalidQuantity) {
+		t.Errorf("quantité sous les prêts : %v", err)
+	}
+	if _, err := s.SplitCollectionLot(ctx, colMesDVDs, lot.ID, 1, nil); !errors.Is(err, store.ErrInvalidQuantity) {
+		t.Errorf("scission sous les prêts : %v", err)
+	}
+	if active, _ := s.ActiveLoans(ctx, []uuid.UUID{lot.ID}); len(active[lot.ID]) != 2 {
+		t.Errorf("prêts en cours : %+v", active)
+	}
+	if over, _ := s.OverdueLoans(ctx); len(over) != 1 || over[0].ID != toB.ID {
+		t.Errorf("en retard : %+v", over)
+	}
+	if err := s.MarkLoansReminded(ctx, []uuid.UUID{toB.ID}); err != nil {
+		t.Fatal(err)
+	}
+	if over, _ := s.OverdueLoans(ctx); len(over) != 0 {
+		t.Errorf("rappelé une fois : %+v", over)
+	}
+	// Nouvelle échéance : nouveau rappel possible.
+	due2 := "2000-02-01"
+	if _, err := s.UpdateLoan(ctx, toB.ID, model.LoanInput{Quantity: 2, LentAt: "2000-01-01", DueAt: &due2}); err != nil {
+		t.Fatal(err)
+	}
+	if over, _ := s.OverdueLoans(ctx); len(over) != 1 {
+		t.Errorf("nouvelle échéance, nouveau rappel : %+v", over)
+	}
+	// Rendu : il libère ses exemplaires et passe à l'historique.
+	ret := "2000-03-01"
+	back, err := s.UpdateLoan(ctx, odile.ID, model.LoanInput{Quantity: 3, LentAt: odile.LentAt, ReturnedAt: &ret})
+	if err == nil {
+		t.Errorf("rendu avant d'être prêté accepté : %+v", back)
+	}
+	ret = odile.LentAt
+	if back, err = s.UpdateLoan(ctx, odile.ID, model.LoanInput{Quantity: 3, LentAt: odile.LentAt, ReturnedAt: &ret}); err != nil || back.ReturnedAt == nil {
+		t.Fatalf("rendu : %+v %v", back, err)
+	}
+	if _, err := s.CreateLoan(ctx, lot.ID, model.LoanInput{Quantity: 3, BorrowerName: "Paul"}); err != nil {
+		t.Errorf("exemplaires libérés : %v", err)
+	}
+	if list, _ := s.ListLotLoans(ctx, lot.ID); len(list) != 3 || list[2].ID != odile.ID {
+		t.Errorf("en cours d'abord, puis l'historique : %+v", list)
+	}
+	if list, total, _ := s.ListLoans(ctx, shinsaberUser, "returned", pg); total != 1 || list[0].ID != odile.ID {
+		t.Errorf("mes prêts rendus : %d", total)
+	}
+	if list, total, _ := s.ListBorrowings(ctx, b.ID, "active", pg); total != 1 || list[0].Owner.Username != "shinsaber" {
+		t.Errorf("emprunts de b : %+v", list)
+	}
+	// Une fusion emporte les prêts du lot fusionné.
+	other, _ := s.AddCollectionItem(ctx, colMesDVDs, model.CollectionItemAdd{ItemID: itemDVD, Attributes: json.RawMessage(`{"condition":"poor"}`)})
+	if _, err := s.MergeCollectionLots(ctx, colMesDVDs, lot.ID, other.ID, nil); err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = s.RemoveCollectionItem(ctx, colMesDVDs, other.ID) }()
+	if list, _ := s.ListLotLoans(ctx, other.ID); len(list) != 3 {
+		t.Errorf("prêts suivis : %d", len(list))
+	}
+	if err := s.DeleteLoan(ctx, odile.ID); err != nil {
+		t.Errorf("suppression : %v", err)
+	}
+}

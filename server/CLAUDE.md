@@ -131,6 +131,14 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
   d'un bloqué reste muette (cachée par `notBlockedBy`, jamais notifiée). Niveau `friends` : toute décision de visibilité
   prend un `privacy.Viewer` chargé par `h.viewer(r)` (`viewerOrStranger` pour les lectures qui ne font que nommer) ;
   en SQL, `friendOf(a, b)` et `reviewSigned(levels, viewer)` signent un avis `friends` pour les amis de son auteur.
+- Prêts (`handler/loan.go`, `store/loan.go`, P7-3, migration 024) : seulement sur un lot d'une collection `x-lendable`
+  (`model.IsLendable`, 422 `not_lendable`), par son propriétaire (`ownLot`, `ownLoan` : 404 pour tout autre, emprunteur
+  compris). Emprunteur ami (`viewer.FriendOf`, sinon 422 `borrower_not_friend`) ou simple nom ; `borrower_name` toujours
+  figé. Tout ce qui touche la quantité prêtée verrouille le lot (`FOR UPDATE`) et compare `lentCopies` (création,
+  modification, quantité du lot, scission ; `ErrInvalidQuantity` → 422 `loan_exceeds_lot` ou `invalid_quantity`) ; la
+  fusion déplace les prêts. Les prêts en cours ne sont joints qu'à la liste du propriétaire (`withActiveLoans`), jamais
+  aux lectures publiques ; `forOwner` / `forBorrower` retirent le prêteur ou la note. `RunReminders` (toutes les heures,
+  `main.go`) notifie `loan_overdue` une fois par échéance (`reminded_at`).
 - Visibilité et partage (`handler/sharing.go`, `store/sharing.go`, P4-2) : routes publiques derrière
   `Auth.OptionalAuthenticate` (sans jeton : anonyme, `GetUserID` = `uuid.Nil` ; jeton invalide : 401) ; `loadReadable`
   vérifie visibilité et compte actif (404 sinon) et calcule les champs cachés ; une nouvelle lecture publique doit

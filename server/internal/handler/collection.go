@@ -192,6 +192,9 @@ func (h *Handler) ListCollectionItems(w http.ResponseWriter, r *http.Request) {
 	}
 
 	items, total, err := h.Store.ListCollectionItems(r.Context(), colID, pg, f)
+	if err == nil {
+		err = h.withActiveLoans(r, items)
+	}
 	if err != nil {
 		handleStoreError(w, r, err)
 		return
@@ -312,7 +315,7 @@ func (h *Handler) UpdateCollectionItem(w http.ResponseWriter, r *http.Request) {
 
 	ci, err := h.Store.UpdateCollectionItem(r.Context(), colID, lotID, in)
 	if err != nil {
-		handleStoreError(w, r, err)
+		respondLotError(w, r, err)
 		return
 	}
 	respondJSON(w, http.StatusOK, ci)
@@ -360,7 +363,8 @@ func respondLotError(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
 	case errors.Is(err, store.ErrInvalidQuantity):
 		respondError(w, http.StatusUnprocessableEntity, "invalid_quantity",
-			"a split leaves at least one copy, a merge at most "+strconv.Itoa(model.MaxQuantity))
+			"a split leaves at least one copy, a merge at most "+strconv.Itoa(model.MaxQuantity)+
+				", and a lot keeps at least its copies lent")
 	case errors.Is(err, store.ErrNotMergeable):
 		respondError(w, http.StatusUnprocessableEntity, "lots_not_mergeable",
 			"only two different lots of the same item can be merged")

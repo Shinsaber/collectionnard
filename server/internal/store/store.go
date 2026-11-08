@@ -165,6 +165,19 @@ type Store interface {
 	GetFriendLink(ctx context.Context, tokenHash string) (*model.FriendLink, error)
 	UseFriendLink(ctx context.Context, tokenHash string, userID uuid.UUID) (*model.Friendship, error)
 
+	// Loans (P7-3)
+	GetCollectionLot(ctx context.Context, collectionID, lotID uuid.UUID) (*model.CollectionItem, error)
+	CreateLoan(ctx context.Context, lotID uuid.UUID, in model.LoanInput) (*model.Loan, error)
+	GetLoan(ctx context.Context, id uuid.UUID) (*model.Loan, error)
+	UpdateLoan(ctx context.Context, id uuid.UUID, in model.LoanInput) (*model.Loan, error)
+	DeleteLoan(ctx context.Context, id uuid.UUID) error
+	ListLotLoans(ctx context.Context, lotID uuid.UUID) ([]model.Loan, error)
+	ActiveLoans(ctx context.Context, lotIDs []uuid.UUID) (map[uuid.UUID][]model.Loan, error)
+	ListLoans(ctx context.Context, ownerID uuid.UUID, status string, pg model.Pagination) ([]model.Loan, int, error)
+	ListBorrowings(ctx context.Context, borrowerID uuid.UUID, status string, pg model.Pagination) ([]model.Loan, int, error)
+	OverdueLoans(ctx context.Context) ([]model.Loan, error)
+	MarkLoansReminded(ctx context.Context, ids []uuid.UUID) error
+
 	ListModerationLog(ctx context.Context, pg model.Pagination) ([]model.ModerationLogEntry, int, error)
 	ModerationHistory(ctx context.Context, userID uuid.UUID) (*model.ModerationHistory, error)
 	SetReaction(ctx context.Context, reviewID, userID uuid.UUID, kind string, on bool) error

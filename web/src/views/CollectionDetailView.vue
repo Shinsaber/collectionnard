@@ -64,9 +64,12 @@
           :empty-text="filtered ? t('collections.toolbar.noMatch') : undefined"
           :schema="schema"
           :loading="items.loading.value"
+          :lendable="lendable"
           @edit="(ci) => openLot('edit', ci)"
           @split="(ci) => openLot('split', ci)"
           @merge="(ci) => openLot('merge', ci)"
+          @lend="(ci) => openLot('lend', ci)"
+          @loans="(ci) => openLot('loans', ci)"
           @remove="confirmRemove"
         />
         <ElPagination
@@ -141,6 +144,21 @@
       :lot="lot"
       @done="afterChange"
     />
+    <!-- Prêts (P7-3) : prêter, voir et clore les prêts d'un lot. -->
+    <LoanDialog
+      v-model:visible="lotDialog.lend"
+      :collection-id="id"
+      :lot="lot"
+      :label="lot ? ciLabel(lot) : ''"
+      @done="afterChange"
+    />
+    <LotLoansDialog
+      v-model:visible="lotDialog.loans"
+      :collection-id="id"
+      :lot="lot"
+      :label="lot ? ciLabel(lot) : ''"
+      @changed="afterChange"
+    />
   </div>
 </template>
 
@@ -154,7 +172,7 @@ import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";
 import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import { MOBILE_QUERY, useMediaQuery } from "@/composables/useMediaQuery";
-import { itemLabel, typeTitle, type Schema } from "@/lib/schema";
+import { isLendable, itemLabel, typeTitle, type Schema } from "@/lib/schema";
 import { DEFAULT_LOT_SORT, emptyLotQuery, lotQueryParams } from "@/lib/lots";
 import { acceptedTypeIds, specializedTypeId } from "@/lib/collections";
 import { useMetaTypes } from "@/stores/metaTypes";
@@ -167,6 +185,8 @@ import CollectionItemList from "@/components/collection/CollectionItemList.vue";
 import CollectionItemsToolbar from "@/components/collection/CollectionItemsToolbar.vue";
 import CollectionEditDialog from "@/components/collection/CollectionEditDialog.vue";
 import LotEditDialog from "@/components/collection/LotEditDialog.vue";
+import LoanDialog from "@/components/collection/LoanDialog.vue";
+import LotLoansDialog from "@/components/collection/LotLoansDialog.vue";
 import LotMergeDialog from "@/components/collection/LotMergeDialog.vue";
 import LotSplitDialog from "@/components/collection/LotSplitDialog.vue";
 import CollectionShareDialog from "@/components/sharing/CollectionShareDialog.vue";
@@ -236,11 +256,19 @@ const tab = ref<"items" | "stats">("items");
 // Incrémenté à chaque modification : l'onglet Statistiques se recharge.
 const statsVersion = ref(0);
 
-// Lot visé par les dialogues « Modifier », « Scinder » et « Fusionner » (P7-1).
+// Lot visé par les dialogues « Modifier », « Scinder », « Fusionner » (P7-1), « Prêter » et « Prêts » (P7-3).
 const lot = ref<CollectionItem | null>(null);
-const lotDialog = ref({ edit: false, split: false, merge: false });
+const lotDialog = ref({
+  edit: false,
+  split: false,
+  merge: false,
+  lend: false,
+  loans: false,
+});
+/** Le type de la collection ouvre les prêts (`x-lendable`). */
+const lendable = computed(() => isLendable(schema.value));
 
-function openLot(kind: "edit" | "split" | "merge", ci: CollectionItem) {
+function openLot(kind: keyof typeof lotDialog.value, ci: CollectionItem) {
   lot.value = ci;
   lotDialog.value[kind] = true;
 }

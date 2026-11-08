@@ -12,6 +12,7 @@ import graph from "./graph";
 import history from "./history";
 import items from "./items";
 import layout from "./layout";
+import loans from "./loans";
 import moderation from "./moderation";
 import notifications from "./notifications";
 import offline from "./offline";
@@ -37,6 +38,7 @@ const en: Messages = {
   history,
   items,
   layout,
+  loans,
   moderation,
   notifications,
   offline,

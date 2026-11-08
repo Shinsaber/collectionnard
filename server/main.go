@@ -129,6 +129,8 @@ func serve() {
 	if cfg.UploadPurgeInterval > 0 {
 		go h.RunUploadPurge(ctx, cfg.UploadPurgeInterval)
 	}
+	// Rappels de retard des prêts (P7-3), une fois par échéance
+	go h.RunReminders(ctx, handler.RemindersInterval)
 
 	// Graceful shutdown
 	go func() {

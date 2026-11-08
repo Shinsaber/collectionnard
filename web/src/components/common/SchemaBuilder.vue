@@ -57,8 +57,10 @@
         v-model:title="xTitle"
         v-model:description="xDescription"
         v-model:completeness="xCompleteness"
+        v-model:lendable="xLendable"
         :labels="ft.labels"
         :show-completeness="ft.completeness"
+        :show-lendable="ft.lendable"
       />
 
       <!-- JSON Schema généré (lecture seule) -->
@@ -97,7 +99,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, type PropType } from "vue";
 import { useI18n } from "vue-i18n";
-import { isCompleteness } from "@/lib/schema";
+import { isCompleteness, isLendable } from "@/lib/schema";
 import SchemaFieldCard from "./SchemaFieldCard.vue";
 import SchemaRootCard from "./SchemaRootCard.vue";
 import { buildProperty, parseSchema } from "./schemaBuilderConvert";
@@ -162,6 +164,8 @@ const xTitle = ref<Record<string, string>>({});
 const xDescription = ref<Record<string, string>>({});
 // Relation de composition (x-completeness) : compte des cibles possédées dans les statistiques.
 const xCompleteness = ref(false);
+// Prêts possibles (x-lendable, types de collection, P7-3).
+const xLendable = ref(false);
 // Mots-clés racine inconnus, restitués à l'identique.
 const rootExtra = ref<Record<string, unknown>>({});
 
@@ -193,6 +197,7 @@ const schema = computed<Record<string, unknown>>(() => {
   if (Object.keys(xDescription.value).length > 0)
     result["x-description"] = xDescription.value;
   if (xCompleteness.value) result["x-completeness"] = true;
+  if (xLendable.value) result["x-lendable"] = true;
   return result;
 });
 
@@ -216,6 +221,7 @@ function loadFrom(value: Record<string, unknown>) {
   xTitle.value = stringMap(value["x-title"]);
   xDescription.value = stringMap(value["x-description"]);
   xCompleteness.value = isCompleteness(value);
+  xLendable.value = isLendable(value);
   rootExtra.value = Object.fromEntries(
     Object.entries(value ?? {}).filter(([k]) => !MANAGED_ROOT_KEYS.has(k)),
   );

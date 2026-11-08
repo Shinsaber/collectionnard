@@ -113,6 +113,9 @@ const en: typeof fr = {
     completeness: "Composition relation",
     completenessHelp:
       'The target is part of the source (volume of an edition, episode of a season…): statistics count the owned targets out of the total ("30 volumes of 42").',
+    lendable: "Loans allowed",
+    lendableHelp:
+      "Lots of collections of this type can be lent, to a friend or to a mere name (Ownership).",
   },
   field: {
     moveUp: "Move field up",

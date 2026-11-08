@@ -264,7 +264,8 @@ func (s *PgStore) ListCollectionItems(ctx context.Context, collectionID uuid.UUI
 const lotColumns = `id, collection_id, item_id, quantity, attributes, created_at, updated_at`
 
 var (
-	// ErrInvalidQuantity: a split leaving no copy behind, or a merge beyond model.MaxQuantity.
+	// ErrInvalidQuantity: a split leaving no copy behind, a merge beyond model.MaxQuantity, or fewer copies
+	// than those lent (P7-3).
 	ErrInvalidQuantity = errors.New("invalid quantity")
 	// ErrNotMergeable: merging a lot into itself or into a lot of another item.
 	ErrNotMergeable = errors.New("lots not mergeable")
@@ -303,13 +304,36 @@ func (s *PgStore) AddCollectionItem(ctx context.Context, collectionID uuid.UUID,
 	return ci, err
 }
 
-// UpdateCollectionItem replaces the attributes of a lot; its quantity changes only when given.
+// UpdateCollectionItem replaces the attributes of a lot; its quantity changes
+// only when given, never below the copies lent (ErrInvalidQuantity).
 func (s *PgStore) UpdateCollectionItem(ctx context.Context, collectionID, lotID uuid.UUID, in model.CollectionItemUpdate) (*model.CollectionItem, error) {
-	return scanLot(s.pool.QueryRow(ctx,
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	if in.Quantity != nil {
+		if _, err := scanLot(tx.QueryRow(ctx, `SELECT `+lotColumns+` FROM collection_items
+			WHERE collection_id = $1 AND id = $2 FOR UPDATE`, collectionID, lotID)); err != nil {
+			return nil, err
+		}
+		lent, err := lentCopies(ctx, tx, lotID, nil)
+		if err != nil {
+			return nil, err
+		}
+		if *in.Quantity < lent {
+			return nil, ErrInvalidQuantity
+		}
+	}
+	lot, err := scanLot(tx.QueryRow(ctx,
 		`UPDATE collection_items SET attributes = $3, quantity = COALESCE($4, quantity)
 		 WHERE collection_id = $1 AND id = $2
 		 RETURNING `+lotColumns,
 		collectionID, lotID, in.Attributes, in.Quantity))
+	if err != nil {
+		return nil, err
+	}
+	return lot, tx.Commit(ctx)
 }
 
 func (s *PgStore) RemoveCollectionItem(ctx context.Context, collectionID, lotID uuid.UUID) error {
@@ -341,6 +365,14 @@ func (s *PgStore) SplitCollectionLot(ctx context.Context, collectionID, lotID uu
 		return nil, err
 	}
 	if quantity < 1 || quantity >= lot.Quantity {
+		return nil, ErrInvalidQuantity
+	}
+	// Les prêts restent sur le lot d'origine : il garde au moins les exemplaires prêtés.
+	lent, err := lentCopies(ctx, tx, lotID, nil)
+	if err != nil {
+		return nil, err
+	}
+	if lot.Quantity-quantity < lent {
 		return nil, ErrInvalidQuantity
 	}
 	if len(attrs) == 0 {
@@ -390,6 +422,10 @@ func (s *PgStore) MergeCollectionLots(ctx context.Context, collectionID, lotID, 
 	}
 	if lots[0].Quantity+lots[1].Quantity > model.MaxQuantity {
 		return nil, ErrInvalidQuantity
+	}
+	// Les prêts du lot fusionné, rendus ou non, suivent ses exemplaires.
+	if _, err := tx.Exec(ctx, `UPDATE loans SET lot_id = $2 WHERE lot_id = $1`, lotID, into); err != nil {
+		return nil, err
 	}
 	if _, err := tx.Exec(ctx, `DELETE FROM collection_items WHERE id = $1`, lotID); err != nil {
 		return nil, err

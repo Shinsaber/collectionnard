@@ -71,7 +71,9 @@ export function addCopies(
 }
 
 /** Actions sur un lot dans la liste d'une collection. */
-export type LotCommand = "edit" | "split" | "merge" | "remove";
+/** Actions d'un lot ; `lend` et `loans` (P7-3) pour une collection dont le type ouvre les prêts. */
+export type LotCommand =
+  "edit" | "split" | "merge" | "lend" | "loans" | "remove";
 
 /** Tri par défaut des lots : ajout le plus récent (défaut de l'API sans recherche). */
 export const DEFAULT_LOT_SORT = "-created_at";

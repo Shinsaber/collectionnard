@@ -203,6 +203,11 @@ const router = createRouter({
           props: true,
         },
         {
+          path: "loans",
+          name: "loans",
+          component: () => import("@/views/LoansView.vue"),
+        },
+        {
           path: "recommendations",
           name: "recommendations",
           component: () => import("@/views/RecommendationsView.vue"),

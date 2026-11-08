@@ -98,6 +98,11 @@ export default {
     friendship_exists:
       "Vous êtes déjà amis, ou votre demande attend sa réponse.",
     member_blocked: "Vous avez bloqué ce membre : débloquez-le d'abord.",
+    not_lendable: "Ce type de collection n'ouvre pas les prêts.",
+    borrower_not_friend:
+      "Ce membre n'est pas votre ami : prêtez-lui sous un simple nom, ou invitez-le d'abord.",
+    loan_exceeds_lot:
+      "Il ne reste pas assez d'exemplaires disponibles dans ce lot.",
     friend_links_limit:
       "Vous avez déjà 10 liens d'ami valides : révoquez-en un d'abord.",
     blocked: "L'auteur de ce contenu n'accepte pas vos interactions.",
