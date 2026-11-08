@@ -100,7 +100,13 @@ le 2026-11-07, voir la fin du document). Les échanges restent dans [`docs/idée
 
 ### P7-1b — Types d'item acceptés et tri par défaut d'une collection
 
-**Retenu le 2026-11-08** (piste du mainteneur pour la question 4). Lot court, après P7-1.
+**Retenu et livré le 2026-11-08** (piste du mainteneur pour la question 4). Écarts : les types acceptés se choisissent
+dans une liste (`CollectionSettingsFields`, à la création et dans `CollectionEditDialog`, extrait de la page) ; sans
+`sort`, l'API applique le tri par défaut, le front envoie donc toujours le sien ; un tri par défaut devenu sans objet
+quand on change les types acceptés est remis à « Ajoutés récemment » dans le dialogue. Aides : `lib/collections.ts`
+(`acceptedTypeIds`, `specializedTypeId`, `lotSortOptions`) ; Go : `Collection.AcceptedItemTypes` / `SpecializedType`,
+`checkCollectionSettings`, `applyDefaultSort`. Seules les propriétés scalaires se trient : un titre multilingue
+(`i18n-text`) ne figure pas parmi les tris.
 
 Le propriétaire précise, à la création de sa collection ou dans « Modifier », les **types d'item qu'elle accepte**, et
 l'ordre dans lequel ses lots s'affichent à l'ouverture. Rien n'est figé dans les paquets : « Mes mangas » est une

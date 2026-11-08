@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
+	"github.com/shinsaber/colec/internal/itemquery"
 	"github.com/shinsaber/colec/internal/middleware"
 	"github.com/shinsaber/colec/internal/model"
 	"github.com/shinsaber/colec/internal/privacy"
@@ -60,6 +62,18 @@ func (h *Handler) CreateCollection(w http.ResponseWriter, r *http.Request) {
 		respondValidationError(w, "name is required", nil)
 		return
 	}
+	if len(in.ItemTypeIDs) > 0 || in.DefaultSort != "" {
+		ct, err := h.Store.GetCollectionType(r.Context(), in.CollectionTypeID)
+		if err != nil {
+			handleStoreError(w, r, err)
+			return
+		}
+		in.ItemTypeIDs = uniqueIDs(in.ItemTypeIDs)
+		draft := &model.Collection{CollectionType: ct, ItemTypeIDs: in.ItemTypeIDs}
+		if !h.checkCollectionSettings(w, r, draft, in.DefaultSort) {
+			return
+		}
+	}
 
 	userID := middleware.GetUserID(r.Context())
 	col, err := h.Store.CreateCollection(r.Context(), userID, in)
@@ -106,6 +120,22 @@ func (h *Handler) UpdateCollection(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		in.HiddenFields.Value = slices.Compact(slices.Sorted(slices.Values(in.HiddenFields.Value)))
+	}
+	if in.ItemTypeIDs != nil || in.DefaultSort != nil {
+		draft := *col
+		if in.ItemTypeIDs != nil {
+			ids := uniqueIDs(*in.ItemTypeIDs)
+			in.ItemTypeIDs, draft.ItemTypeIDs = &ids, ids
+		}
+		// Without a new default sort, the current one is kept even if it no longer
+		// applies: the list then falls back to the latest added.
+		sort := ""
+		if in.DefaultSort != nil {
+			sort = *in.DefaultSort
+		}
+		if !h.checkCollectionSettings(w, r, &draft, sort) {
+			return
+		}
 	}
 	updated, err := h.Store.UpdateCollection(r.Context(), id, in)
 	if err != nil {
@@ -156,7 +186,7 @@ func (h *Handler) ListCollectionItems(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pg := parsePagination(r)
-	f, ok := h.parseCollectionItemFilters(w, r)
+	f, ok := h.parseCollectionItemFilters(w, r, col)
 	if !ok {
 		return
 	}
@@ -210,15 +240,18 @@ func (h *Handler) AddItemToCollection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Allowed item types (empty = all); items already in the collection are not rechecked.
-	if len(ct.ItemTypeIDs) > 0 {
+	// Accepted types: those of the collection within those of its type (P7-1b).
+	limited := *col
+	limited.CollectionType = ct
+	if accepted := limited.AcceptedItemTypes(); len(accepted) > 0 {
 		item, err := h.Store.GetItem(r.Context(), in.ItemID)
 		if err != nil {
 			handleStoreError(w, r, err)
 			return
 		}
-		if !slices.Contains(ct.ItemTypeIDs, item.ItemTypeID) {
+		if !slices.Contains(accepted, item.ItemTypeID) {
 			respondError(w, http.StatusUnprocessableEntity, "item_type_not_allowed",
-				"the collection type does not allow items of type "+item.ItemTypeID.String())
+				"the collection does not accept items of type "+item.ItemTypeID.String())
 			return
 		}
 	}
@@ -412,7 +445,7 @@ var lotSortFields = map[string]bool{"created_at": true, "updated_at": true, "qua
 // parseCollectionItemFilters reads the search of the lots of a collection
 // (P7-1): the catalogue search (type, text, attributes, attribute sort) and
 // `multiple`. It answers 400 and returns ok=false on any invalid parameter.
-func (h *Handler) parseCollectionItemFilters(w http.ResponseWriter, r *http.Request) (store.CollectionItemFilters, bool) {
+func (h *Handler) parseCollectionItemFilters(w http.ResponseWriter, r *http.Request, col *model.Collection) (store.CollectionItemFilters, bool) {
 	q := r.URL.Query()
 	var f store.CollectionItemFilters
 	itemTypeID, ok := parseOptionalUUID(w, r, "item_type_id")
@@ -433,7 +466,15 @@ func (h *Handler) parseCollectionItemFilters(w http.ResponseWriter, r *http.Requ
 		return f, false
 	}
 	f.ItemTypeID, f.Search = itemTypeID, q.Get("search")
-	return f, h.parseItemSearch(w, r, &f.ItemFilters, lotSortFields)
+	// A specialized collection sorts and filters by the attributes of its only
+	// item type without filtering by type (P7-1b).
+	if !h.parseItemSearch(w, r, &f.ItemFilters, lotSortFields, col.SpecializedType()) {
+		return f, false
+	}
+	if q.Get("sort") == "" {
+		h.applyDefaultSort(r, &f, col)
+	}
+	return f, true
 }
 
 // galleryKeys lists the image galleries (`x-widget: image-gallery`) of a
@@ -455,4 +496,97 @@ func galleryKeys(schema json.RawMessage) []string {
 	}
 	slices.Sort(keys)
 	return keys
+}
+
+// defaultSortFields are the non-attribute default sorts of a collection.
+var defaultSortFields = map[string]bool{"created_at": true, "updated_at": true, "quantity": true}
+
+// checkCollectionSettings validates the item types a collection accepts and its
+// default sort (P7-1b) against draft (the collection as it would be): the types
+// must be allowed by the CollectionType (422 item_type_not_allowed), an
+// attribute sort requires a specialized collection and an attribute of its item
+// type (422 invalid_sort).
+func (h *Handler) checkCollectionSettings(w http.ResponseWriter, r *http.Request, draft *model.Collection, defaultSort string) bool {
+	if draft.CollectionType != nil {
+		for _, id := range draft.ItemTypeIDs {
+			if limit := draft.CollectionType.ItemTypeIDs; len(limit) > 0 && !slices.Contains(limit, id) {
+				respondError(w, http.StatusUnprocessableEntity, "item_type_not_allowed",
+					"the collection type does not allow items of type "+id.String())
+				return false
+			}
+		}
+	}
+	if defaultSort == "" {
+		return true
+	}
+	invalid := func(msg string) bool {
+		respondError(w, http.StatusUnprocessableEntity, "invalid_sort", msg)
+		return false
+	}
+	if !strings.Contains(defaultSort, itemquery.Prefix) {
+		if !defaultSortFields[strings.TrimPrefix(defaultSort, "-")] {
+			return invalid("default_sort: created_at, updated_at, quantity or attr.<key> (prefix with - for descending)")
+		}
+		return true
+	}
+	typeID := draft.SpecializedType()
+	if typeID == nil {
+		return invalid("an attribute sort requires a collection that accepts a single item type")
+	}
+	props, err := h.itemTypeProps(r, *typeID)
+	if err != nil {
+		handleStoreError(w, r, err)
+		return false
+	}
+	if _, ok, err := itemquery.ParseSort(defaultSort, props); !ok || err != nil {
+		return invalid("default_sort: unknown or unsortable attribute")
+	}
+	return true
+}
+
+// applyDefaultSort sorts by the default sort of col when the request gives
+// none; a default sort that no longer applies (attribute removed, accepted
+// types changed) is ignored: the latest added come first.
+func (h *Handler) applyDefaultSort(r *http.Request, f *store.CollectionItemFilters, col *model.Collection) {
+	sort := col.DefaultSort
+	if sort == "" {
+		return
+	}
+	if !strings.Contains(sort, itemquery.Prefix) {
+		if defaultSortFields[strings.TrimPrefix(sort, "-")] {
+			f.Sort = sort
+		}
+		return
+	}
+	typeID := col.SpecializedType()
+	if typeID == nil {
+		return
+	}
+	props, err := h.itemTypeProps(r, *typeID)
+	if err != nil {
+		return
+	}
+	if s, ok, err := itemquery.ParseSort(sort, props); ok && err == nil {
+		f.SortAttr = &s
+	}
+}
+
+// itemTypeProps reads the properties of an item type (filters and sorts).
+func (h *Handler) itemTypeProps(r *http.Request, id uuid.UUID) (map[string]itemquery.Property, error) {
+	it, err := h.Store.GetItemType(r.Context(), id)
+	if err != nil {
+		return nil, err
+	}
+	return itemquery.Properties(it.AttributesSchema)
+}
+
+// uniqueIDs drops the duplicates of ids, keeping their order.
+func uniqueIDs(ids []uuid.UUID) []uuid.UUID {
+	out := make([]uuid.UUID, 0, len(ids))
+	for _, id := range ids {
+		if !slices.Contains(out, id) {
+			out = append(out, id)
+		}
+	}
+	return out
 }

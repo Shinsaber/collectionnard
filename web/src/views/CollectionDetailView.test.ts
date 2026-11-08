@@ -54,6 +54,8 @@ const collection = {
   copy_count: 42,
   visibility: "private",
   hidden_fields: null,
+  item_type_ids: [],
+  default_sort: "",
   created_at: "2026-10-17T00:00:00Z",
   updated_at: "2026-10-17T00:00:00Z",
 } as Collection;
@@ -127,7 +129,11 @@ describe("CollectionDetailView", () => {
   it("affiche l'en-tête (nom, type, description, compteur) et confie les exemplaires à la liste", async () => {
     const w = await mountDetail();
     expect(api.get).toHaveBeenCalledWith("c1");
-    expect(api.listItems).toHaveBeenCalledWith("c1", { page: 1, per_page: 20 });
+    expect(api.listItems).toHaveBeenCalledWith("c1", {
+      page: 1,
+      per_page: 20,
+      sort: "-created_at",
+    });
     expect(w.find("h1").text()).toBe("Mes mangas");
     expect(w.find('[data-test="meta"]').text()).toBe(
       t("collections.itemCount", 42),
@@ -160,6 +166,8 @@ describe("CollectionDetailView", () => {
     expect(api.update).toHaveBeenCalledWith("c1", {
       name: "Mes mangas 2026",
       description: "Shōnen surtout",
+      item_type_ids: [],
+      default_sort: "",
     });
     expect(w.find("h1").text()).toBe("Mes mangas 2026");
   });

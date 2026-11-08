@@ -14,6 +14,8 @@ import (
 
 // collectionColumns / scanCollection: every collection read (with its CollectionType and item count).
 var collectionColumns = `c.id, c.user_id, c.collection_type_id, c.name, c.description, c.visibility, c.hidden_fields,
+		c.default_sort, COALESCE((SELECT array_agg(j.item_type_id ORDER BY j.item_type_id)
+			FROM collection_item_types j WHERE j.collection_id = c.id), '{}'),
 		c.created_at, c.updated_at,
 		ct.id, ct.name, ct.description, ct.attributes_schema, ` + ctItemTypeIDs("ct") + `, ct.created_at, ct.updated_at,
 		(SELECT count(DISTINCT ci.item_id) FROM collection_items ci WHERE ci.collection_id = c.id),
@@ -26,6 +28,7 @@ func scanCollection(row pgx.Row) (*model.Collection, error) {
 	var ct model.CollectionType
 	if err := row.Scan(
 		&col.ID, &col.UserID, &col.CollectionTypeID, &col.Name, &col.Description, &col.Visibility, &col.HiddenFields,
+		&col.DefaultSort, &col.ItemTypeIDs,
 		&col.CreatedAt, &col.UpdatedAt,
 		&ct.ID, &ct.Name, &ct.Description, &ct.AttributesSchema, &ct.ItemTypeIDs, &ct.CreatedAt, &ct.UpdatedAt,
 		&col.ItemCount, &col.CopyCount,
@@ -102,11 +105,16 @@ func (s *PgStore) ListVisibleCollections(ctx context.Context, ownerID uuid.UUID,
 }
 
 func (s *PgStore) CreateCollection(ctx context.Context, userID uuid.UUID, in model.CollectionCreate) (*model.Collection, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
 	var id uuid.UUID
-	err := s.pool.QueryRow(ctx,
-		`INSERT INTO collections (user_id, collection_type_id, name, description)
-		 VALUES ($1, $2, $3, $4) RETURNING id`,
-		userID, in.CollectionTypeID, in.Name, in.Description,
+	err = tx.QueryRow(ctx,
+		`INSERT INTO collections (user_id, collection_type_id, name, description, default_sort)
+		 VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+		userID, in.CollectionTypeID, in.Name, in.Description, in.DefaultSort,
 	).Scan(&id)
 	if err != nil {
 		if isUniqueViolation(err) {
@@ -117,19 +125,48 @@ func (s *PgStore) CreateCollection(ctx context.Context, userID uuid.UUID, in mod
 		}
 		return nil, err
 	}
+	if err := setCollectionItemTypes(ctx, tx, id, in.ItemTypeIDs); err != nil {
+		return nil, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
 	return s.GetCollection(ctx, id)
 }
 
+// setCollectionItemTypes replaces the item types a collection accepts (P7-1b).
+func setCollectionItemTypes(ctx context.Context, tx pgx.Tx, collectionID uuid.UUID, ids []uuid.UUID) error {
+	if _, err := tx.Exec(ctx, `DELETE FROM collection_item_types WHERE collection_id = $1`, collectionID); err != nil {
+		return err
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	_, err := tx.Exec(ctx,
+		`INSERT INTO collection_item_types (collection_id, item_type_id)
+		 SELECT $1, t FROM unnest($2::uuid[]) AS t ON CONFLICT DO NOTHING`, collectionID, ids)
+	if isForeignKeyViolation(err) {
+		return ErrNotFound
+	}
+	return err
+}
+
 func (s *PgStore) UpdateCollection(ctx context.Context, id uuid.UUID, in model.CollectionUpdate) (*model.Collection, error) {
-	ct, err := s.pool.Exec(ctx,
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	ct, err := tx.Exec(ctx,
 		`UPDATE collections SET
 			name = COALESCE($2, name),
 			description = COALESCE($3, description),
 			visibility = COALESCE($4, visibility),
 			hidden_fields = CASE WHEN $5 THEN $6::text[] ELSE hidden_fields END,
+			default_sort = COALESCE($7, default_sort),
 			updated_at = now()
 		 WHERE id = $1`,
-		id, in.Name, in.Description, in.Visibility, in.HiddenFields.Set, in.HiddenFields.Value,
+		id, in.Name, in.Description, in.Visibility, in.HiddenFields.Set, in.HiddenFields.Value, in.DefaultSort,
 	)
 	if err != nil {
 		if isUniqueViolation(err) {
@@ -139,6 +176,14 @@ func (s *PgStore) UpdateCollection(ctx context.Context, id uuid.UUID, in model.C
 	}
 	if ct.RowsAffected() == 0 {
 		return nil, ErrNotFound
+	}
+	if in.ItemTypeIDs != nil {
+		if err := setCollectionItemTypes(ctx, tx, id, *in.ItemTypeIDs); err != nil {
+			return nil, err
+		}
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
 	}
 	return s.GetCollection(ctx, id)
 }

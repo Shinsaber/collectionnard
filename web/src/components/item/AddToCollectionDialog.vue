@@ -101,6 +101,7 @@ import { useNotify } from "@/composables/useNotify";
 import { useLang } from "@/composables/useLang";
 import { typeTitle, type Schema } from "@/lib/schema";
 import { addCopies, lotsIn, type LotTarget } from "@/lib/lots";
+import { acceptedTypeIds } from "@/lib/collections";
 import DynamicForm from "@/components/common/DynamicForm.vue";
 import LotTargetPicker from "@/components/collection/LotTargetPicker.vue";
 import type { Collection, Item, ItemCollectionMembership } from "@/api/types";
@@ -139,10 +140,10 @@ watch(selectedCollectionId, () => {
   target.value = lots.value.length ? "" : "new";
 });
 
-// Collections dont le type permet le type de l'item (celles qui le contiennent déjà comprises, P7-1).
+// Collections qui acceptent le type de l'item (P7-1b ; celles qui le contiennent déjà comprises, P7-1).
 const availableCollections = computed(() =>
   collections.value.filter((c) => {
-    const allowed = c.collection_type?.item_type_ids ?? [];
+    const allowed = acceptedTypeIds(c);
     return allowed.length === 0 || allowed.includes(props.item.item_type_id);
   }),
 );

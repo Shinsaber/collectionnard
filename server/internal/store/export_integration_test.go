@@ -221,6 +221,7 @@ func collectionFile(t *testing.T, id uuid.UUID) *model.CollectionExport {
 	}
 	exp := &model.CollectionExport{Format: model.CollectionFormat, Version: model.ExportVersion,
 		Collection: model.CollectionExportHeader{ID: col.ID, Name: col.Name, Description: col.Description,
+			ItemTypeIDs: col.ItemTypeIDs, DefaultSort: col.DefaultSort,
 			CollectionType: model.ExportMetaType{ID: col.CollectionTypeID, Name: col.CollectionType.Name}}}
 	for _, e := range entries {
 		exp.Items = append(exp.Items, model.CollectionExportItem{ID: e.ID, ItemID: e.ItemID, Quantity: e.Quantity,

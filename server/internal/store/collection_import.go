@@ -76,22 +76,36 @@ func (s *PgStore) ImportCollection(ctx context.Context, userID uuid.UUID, exp *m
 	colCounts := rep.Counts[model.EntityCollection]
 	if exists {
 		o, err := upsert(ctx, tx, `
-			UPDATE collections SET name = $2, description = $3, collection_type_id = $4
-			WHERE id = $1 AND (name, description, collection_type_id) IS DISTINCT FROM ($2, $3, $4)
-			RETURNING false`, target, name, head.Description, ctID)
+			UPDATE collections SET name = $2, description = $3, collection_type_id = $4, default_sort = $5
+			WHERE id = $1 AND (name, description, collection_type_id, default_sort) IS DISTINCT FROM ($2, $3, $4, $5)
+			RETURNING false`, target, name, head.Description, ctID, head.DefaultSort)
 		if err != nil {
 			return nil, err
 		}
 		o.count(colCounts)
 	} else {
 		if _, err := tx.Exec(ctx, `
-			INSERT INTO collections (id, user_id, collection_type_id, name, description)
-			VALUES ($1, $2, $3, $4, $5)`, target, userID, ctID, name, head.Description); err != nil {
+			INSERT INTO collections (id, user_id, collection_type_id, name, description, default_sort)
+			VALUES ($1, $2, $3, $4, $5, $6)`, target, userID, ctID, name, head.Description, head.DefaultSort); err != nil {
 			return nil, err
 		}
 		colCounts.Created++
 	}
 	rep.CollectionID = &target
+
+	// Accepted item types (P7-1b): those known here and allowed by the type.
+	if _, err := tx.Exec(ctx, `DELETE FROM collection_item_types WHERE collection_id = $1`, target); err != nil {
+		return nil, err
+	}
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO collection_item_types (collection_id, item_type_id)
+		SELECT $1, it.id FROM item_types it
+		WHERE it.id = ANY($2::uuid[]) AND (
+			NOT EXISTS (SELECT 1 FROM collection_type_item_types j WHERE j.collection_type_id = $3)
+			OR it.id IN (SELECT j.item_type_id FROM collection_type_item_types j WHERE j.collection_type_id = $3))`,
+		target, head.ItemTypeIDs, ctID); err != nil {
+		return nil, err
+	}
 
 	if err := s.importCollectionItems(ctx, tx, rep, target, ctID, ctSchema, exp.Items); err != nil {
 		return nil, err
@@ -159,6 +173,15 @@ func (s *PgStore) importCollectionItems(ctx context.Context, tx pgx.Tx, rep *mod
 		`SELECT item_type_id FROM collection_type_item_types WHERE collection_type_id = $1`, ctID)
 	if err != nil {
 		return err
+	}
+	// Those the collection accepts, when it narrows them (P7-1b, already within the type).
+	own, err := uuidColumn(ctx, tx,
+		`SELECT item_type_id FROM collection_item_types WHERE collection_id = $1`, collectionID)
+	if err != nil {
+		return err
+	}
+	if len(own) > 0 {
+		allowed = own
 	}
 	// Lots of the collection, oldest first: an entry of the file updates the lot
 	// with its id, or, in files older than P7-1 (no lot id), the oldest lot of its

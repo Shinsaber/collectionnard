@@ -50,7 +50,9 @@ const en: typeof fr = {
     external_unavailable:
       "External source (Wikidata, BnF) unreachable, try again later",
     item_type_not_allowed:
-      "This item type is not allowed in this collection type",
+      "This item type is not accepted by this collection or its type",
+    invalid_sort:
+      "Impossible sort: sorting by an attribute requires a collection that accepts a single item type",
     invalid_quantity:
       "Impossible quantity: from 1 to 100,000 copies, and a split lot keeps at least one",
     lots_not_mergeable:

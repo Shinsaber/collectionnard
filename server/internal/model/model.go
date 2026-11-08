@@ -7,6 +7,7 @@ package model
 import (
 	"encoding/json"
 	"math"
+	"slices"
 	"time"
 
 	"github.com/google/uuid"
@@ -218,6 +219,11 @@ type Collection struct {
 	ItemCount        int             `json:"item_count"`
 	CopyCount        int             `json:"copy_count"`
 	Visibility       string          `json:"visibility"`
+	// ItemTypeIDs: the item types the owner accepts (P7-1b), within those of the
+	// CollectionType; empty = all those of the type.
+	ItemTypeIDs []uuid.UUID `json:"item_type_ids"`
+	// DefaultSort: order of the lots when the list is read without `sort`; "" = latest added.
+	DefaultSort string `json:"default_sort"`
 	// HiddenFields: nil = the x-private properties of the CollectionType (JSON null).
 	HiddenFields []string  `json:"hidden_fields"`
 	CreatedAt    time.Time `json:"created_at"`
@@ -225,9 +231,11 @@ type Collection struct {
 }
 
 type CollectionCreate struct {
-	CollectionTypeID uuid.UUID `json:"collection_type_id"`
-	Name             string    `json:"name"`
-	Description      *string   `json:"description,omitempty"`
+	CollectionTypeID uuid.UUID   `json:"collection_type_id"`
+	Name             string      `json:"name"`
+	Description      *string     `json:"description,omitempty"`
+	ItemTypeIDs      []uuid.UUID `json:"item_type_ids,omitempty"`
+	DefaultSort      string      `json:"default_sort,omitempty"`
 }
 
 type CollectionUpdate struct {
@@ -235,6 +243,42 @@ type CollectionUpdate struct {
 	Description  *string         `json:"description,omitempty"`
 	Visibility   *string         `json:"visibility,omitempty"`
 	HiddenFields OptionalStrings `json:"hidden_fields"`
+	ItemTypeIDs  *[]uuid.UUID    `json:"item_type_ids,omitempty"` // absent: unchanged; [] = all those of the type
+	DefaultSort  *string         `json:"default_sort,omitempty"`
+}
+
+// AcceptedItemTypes lists the item types the collection accepts: its own list
+// within that of its CollectionType (when joined); empty = all.
+func (c *Collection) AcceptedItemTypes() []uuid.UUID {
+	var limit []uuid.UUID
+	if c.CollectionType != nil {
+		limit = c.CollectionType.ItemTypeIDs
+	}
+	switch {
+	case len(c.ItemTypeIDs) == 0:
+		return limit
+	case len(limit) == 0:
+		return c.ItemTypeIDs
+	}
+	var out []uuid.UUID
+	for _, id := range c.ItemTypeIDs {
+		if slices.Contains(limit, id) {
+			out = append(out, id)
+		}
+	}
+	if len(out) == 0 { // list emptied by a later restriction of the type
+		return limit
+	}
+	return out
+}
+
+// SpecializedType is the only item type a specialized collection accepts
+// (P7-1b): its attributes can sort the lots. nil for a generic collection.
+func (c *Collection) SpecializedType() *uuid.UUID {
+	if ids := c.AcceptedItemTypes(); len(ids) == 1 {
+		return &ids[0]
+	}
+	return nil
 }
 
 // ---------------------------------------------------------------------------

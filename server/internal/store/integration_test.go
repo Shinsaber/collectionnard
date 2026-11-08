@@ -1527,3 +1527,49 @@ func TestCollectionLots_SearchAndPhotos(t *testing.T) {
 		t.Errorf("photos of both lots: %s %v", merged.Attributes, err)
 	}
 }
+
+// P7-1b (migration 021): a collection narrows its item types and keeps its
+// default sort; both round-trip through the collection export.
+func TestCollectionSettings(t *testing.T) {
+	ownership := uuid.MustParse("d0000000-0000-0000-0000-000000000001")
+	col, err := s.CreateCollection(ctx, adminUser, model.CollectionCreate{CollectionTypeID: ownership, Name: "Épisodes",
+		ItemTypeIDs: []uuid.UUID{typeEpisode}, DefaultSort: "attr.number"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = s.DeleteCollection(ctx, col.ID) }()
+	if len(col.ItemTypeIDs) != 1 || col.ItemTypeIDs[0] != typeEpisode || col.DefaultSort != "attr.number" ||
+		col.SpecializedType() == nil || *col.SpecializedType() != typeEpisode {
+		t.Fatalf("created: %+v", col)
+	}
+
+	both := []uuid.UUID{typeEpisode, typeSerie}
+	sort := "-quantity"
+	col, err = s.UpdateCollection(ctx, col.ID, model.CollectionUpdate{ItemTypeIDs: &both, DefaultSort: &sort})
+	if err != nil || len(col.ItemTypeIDs) != 2 || col.DefaultSort != "-quantity" || col.SpecializedType() != nil {
+		t.Fatalf("updated: %+v %v", col, err)
+	}
+	if _, err := s.UpdateCollection(ctx, col.ID, model.CollectionUpdate{ItemTypeIDs: &[]uuid.UUID{uuid.New()}}); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("unknown item type: %v", err)
+	}
+	none := []uuid.UUID{}
+	if col, err = s.UpdateCollection(ctx, col.ID, model.CollectionUpdate{ItemTypeIDs: &none}); err != nil || len(col.ItemTypeIDs) != 0 || col.DefaultSort != "-quantity" {
+		t.Errorf("all types again, sort kept: %+v %v", col, err)
+	}
+
+	// Import: the accepted types and the default sort follow, unknown types are ignored.
+	file := collectionFile(t, col.ID)
+	file.Collection.ID = uuid.New()
+	file.Collection.Name = "Épisodes importés"
+	file.Collection.ItemTypeIDs = []uuid.UUID{typeEpisode, uuid.New()}
+	file.Collection.DefaultSort = "attr.number"
+	rep, err := s.ImportCollection(ctx, adminUser, file, false)
+	if err != nil || !rep.Applied {
+		t.Fatalf("import: %v %+v", err, rep)
+	}
+	defer func() { _ = s.DeleteCollection(ctx, *rep.CollectionID) }()
+	got, err := s.GetCollection(ctx, *rep.CollectionID)
+	if err != nil || len(got.ItemTypeIDs) != 1 || got.ItemTypeIDs[0] != typeEpisode || got.DefaultSort != "attr.number" {
+		t.Errorf("imported settings: %+v %v", got, err)
+	}
+}

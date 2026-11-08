@@ -1511,6 +1511,22 @@ components:
           type: string
           description: Description libre de la collection.
           example: Ma collection de DVDs et Blu-rays
+        item_type_ids:
+          type: array
+          items: { type: string, format: uuid }
+          description: |
+            Types d'item que la collection accepte (P7-1b), parmi ceux de son CollectionType (sinon 422
+            `item_type_not_allowed`) ; vide = tous ceux du type. Une collection qui n'en accepte qu'un est
+            **spécialisée** : elle se trie et se filtre par les attributs de ce type sans `item_type_id`. Seuls les
+            nouveaux ajouts sont contrôlés.
+        default_sort:
+          type: string
+          description: |
+            Tri des lots quand la liste est lue sans `sort` (P7-1b), pages publiques et liens de partage compris :
+            `created_at`, `updated_at`, `quantity`, ou `attr.<clé>` pour une collection spécialisée ; préfixe `-` pour
+            descendant ; vide = ajout le plus récent. Sinon 422 `invalid_sort`. Un tri devenu sans objet (attribut
+            retiré, types acceptés changés) est ignoré à la lecture.
+          example: attr.number
         item_count:
           type: integer
           description: Nombre d'items différents de la collection (calculé automatiquement ; un item formant plusieurs lots compte une fois).
@@ -1549,6 +1565,22 @@ components:
         description:
           type: string
           description: Description libre.
+        item_type_ids:
+          type: array
+          items: { type: string, format: uuid }
+          description: |
+            Types d'item que la collection accepte (P7-1b), parmi ceux de son CollectionType (sinon 422
+            `item_type_not_allowed`) ; vide = tous ceux du type. Une collection qui n'en accepte qu'un est
+            **spécialisée** : elle se trie et se filtre par les attributs de ce type sans `item_type_id`. Seuls les
+            nouveaux ajouts sont contrôlés.
+        default_sort:
+          type: string
+          description: |
+            Tri des lots quand la liste est lue sans `sort` (P7-1b), pages publiques et liens de partage compris :
+            `created_at`, `updated_at`, `quantity`, ou `attr.<clé>` pour une collection spécialisée ; préfixe `-` pour
+            descendant ; vide = ajout le plus récent. Sinon 422 `invalid_sort`. Un tri devenu sans objet (attribut
+            retiré, types acceptés changés) est ignoré à la lecture.
+          example: attr.number
 
     CollectionUpdate:
       type: object
@@ -1568,6 +1600,22 @@ components:
           description: |
             Absent : inchangé. `null` : retour au défaut du type (`x-private`). Liste : champs cachés (clés du
             schéma du CollectionType, sinon 422).
+        item_type_ids:
+          type: array
+          items: { type: string, format: uuid }
+          description: |
+            Types d'item que la collection accepte (P7-1b), parmi ceux de son CollectionType (sinon 422
+            `item_type_not_allowed`) ; vide = tous ceux du type ; absent = inchangé. Une collection qui n'en accepte qu'un est
+            **spécialisée** : elle se trie et se filtre par les attributs de ce type sans `item_type_id`. Seuls les
+            nouveaux ajouts sont contrôlés.
+        default_sort:
+          type: string
+          description: |
+            Tri des lots quand la liste est lue sans `sort` (P7-1b), pages publiques et liens de partage compris :
+            `created_at`, `updated_at`, `quantity`, ou `attr.<clé>` pour une collection spécialisée ; préfixe `-` pour
+            descendant ; vide = ajout le plus récent. Sinon 422 `invalid_sort`. Un tri devenu sans objet (attribut
+            retiré, types acceptés changés) est ignoré à la lecture.
+          example: attr.number
 
     # -------------------------------------------------------------------------
     # CollectionItem
@@ -2745,6 +2793,11 @@ components:
             name: { type: string }
             description: { type: string }
             collection_type: { $ref: "#/components/schemas/ExportMetaType" }
+            item_type_ids:
+              type: array
+              items: { type: string, format: uuid }
+              description: Types d'item acceptés (P7-1b) ; à l'import, un type inconnu de l'instance est ignoré.
+            default_sort: { type: string, description: Tri par défaut (P7-1b). }
         items:
           type: array
           items:
@@ -6501,7 +6554,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "422":
-          $ref: "#/components/responses/ValidationError"
+          description: |
+            Données invalides (`validation_error`), type d'item que le CollectionType ne permet pas
+            (`item_type_not_allowed`) ou tri par défaut impossible (`invalid_sort`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "500":
           $ref: "#/components/responses/InternalError"
         "201":
@@ -6584,6 +6643,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "422":
+          description: |
+            Champs cachés inconnus (`validation_error`), type d'item que le CollectionType ne permet pas
+            (`item_type_not_allowed`) ou tri par défaut impossible (`invalid_sort`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
     delete:
       tags: [Collections]
       summary: Supprimer une collection
@@ -6634,7 +6701,8 @@ paths:
           in: query
           description: |
             `created_at` (date d'ajout du lot, défaut `-created_at`), `updated_at`, `quantity`, `relevance` (pertinence de
-            `search`) ou `attr.<clé>` (attribut de l'item, exige `item_type_id`) ; préfixe `-` pour descendant.
+            `search`) ou `attr.<clé>` (attribut de l'item, exige `item_type_id`, sauf pour une collection spécialisée) ;
+            préfixe `-` pour descendant. Absent : le `default_sort` de la collection.
           schema:
             type: string
           examples:

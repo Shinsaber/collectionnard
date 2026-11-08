@@ -507,6 +507,10 @@ export interface Collection {
   visibility: Visibility;
   /** Champs cachés aux autres lecteurs ; `null` = les propriétés `x-private` du type. */
   hidden_fields: string[] | null;
+  /** Types d'item acceptés (P7-1b), parmi ceux du type de collection ; vide = tous ceux du type. */
+  item_type_ids: string[];
+  /** Tri des lots à l'ouverture (`sort` de la liste) ; vide = ajout le plus récent. */
+  default_sort: string;
   created_at: string;
   updated_at: string;
 }
@@ -515,6 +519,8 @@ export interface CollectionCreate {
   collection_type_id: string;
   name: string;
   description?: string;
+  item_type_ids?: string[];
+  default_sort?: string;
 }
 
 export interface CollectionUpdate {
@@ -523,6 +529,9 @@ export interface CollectionUpdate {
   visibility?: Visibility;
   /** Absent : inchangé ; `null` : défaut du type (`x-private`). */
   hidden_fields?: string[] | null;
+  /** Absent : inchangé ; `[]` : tous ceux du type de collection. */
+  item_type_ids?: string[];
+  default_sort?: string;
 }
 
 // ---------- Visibilité et partage (P4-2) : miroir de server/internal/model/sharing.go ----------

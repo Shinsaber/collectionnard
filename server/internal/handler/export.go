@@ -232,7 +232,8 @@ func (h *Handler) ExportCollection(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var ctSchema json.RawMessage
-	header := model.CollectionExportHeader{ID: col.ID, Name: col.Name, Description: col.Description}
+	header := model.CollectionExportHeader{ID: col.ID, Name: col.Name, Description: col.Description,
+		ItemTypeIDs: col.ItemTypeIDs, DefaultSort: col.DefaultSort}
 	if ct := col.CollectionType; ct != nil {
 		ctSchema = ct.AttributesSchema
 		header.CollectionType = model.ExportMetaType{

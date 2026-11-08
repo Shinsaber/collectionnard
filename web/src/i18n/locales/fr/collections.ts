@@ -12,6 +12,16 @@ export default {
     done: "Collection importée",
   },
   itemCount: "aucun item | {n} item | {n} items",
+  // Types d'item acceptés et tri par défaut (P7-1b, CollectionSettingsFields)
+  settings: {
+    itemTypes: "Types d'item acceptés",
+    allTypes: "Tous ceux du type de collection",
+    itemTypesHelp:
+      "Facultatif. N'en garder qu'un spécialise la collection : elle peut alors se trier par les attributs de ce type (numéro, titre…).",
+    specializedHelp:
+      "Collection spécialisée : elle peut se trier par les attributs de ce type. Les items déjà présents d'un autre type sont gardés.",
+    defaultSort: "Tri par défaut",
+  },
   // Recherche et tri des lots d'une collection (CollectionItemsToolbar)
   toolbar: {
     search: "Rechercher dans la collection",

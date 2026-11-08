@@ -119,7 +119,11 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
   (`/collections/{collectionId}/lots/{lotId}`, `ownCollection(w, r, "collectionId")`) ; `POST …/items` crée toujours un lot.
   Scission et fusion en transaction (`FOR UPDATE`, lots verrouillés dans l'ordre des id), `ErrInvalidQuantity` / `ErrNotMergeable`
   → 422 ; la fusion réunit les photos des galeries (`galleryKeys`, `mergeGalleries`). Liste d'une collection : la recherche du
-  catalogue (`buildItemQuery`, `parseItemSearch` avec ses propres champs de tri, `lotOrderBy`) + `multiple`. Statistiques pondérées par la quantité (`collstats.Entry.Quantity`) ; `item_count` = items distincts, `copy_count` =
+  catalogue (`buildItemQuery`, `parseItemSearch` avec ses propres champs de tri, `lotOrderBy`) + `multiple`. Types acceptés
+  (P7-1b, migration 021) : `collection_item_types` resserre `collection_type_item_types` (`Collection.AcceptedItemTypes`,
+  contrôle à l'ajout et à l'import) ; une collection spécialisée (`SpecializedType`) trie et filtre par attribut sans
+  `item_type_id` ; `default_sort` vérifié par `checkCollectionSettings` (422 `invalid_sort`), appliqué sans `sort` par
+  `applyDefaultSort`, pages publiques comprises, ignoré s'il ne s'applique plus. Statistiques pondérées par la quantité (`collstats.Entry.Quantity`) ; `item_count` = items distincts, `copy_count` =
   exemplaires.
 - Visibilité et partage (`handler/sharing.go`, `store/sharing.go`, P4-2) : routes publiques derrière
   `Auth.OptionalAuthenticate` (sans jeton : anonyme, `GetUserID` = `uuid.Nil` ; jeton invalide : 401) ; `loadReadable`

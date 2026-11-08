@@ -52,7 +52,9 @@ export default {
     external_unavailable:
       "Source externe (Wikidata, BnF) injoignable, réessayez plus tard",
     item_type_not_allowed:
-      "Ce type d'item n'est pas permis dans ce type de collection",
+      "Ce type d'item n'est pas accepté par cette collection ou son type",
+    invalid_sort:
+      "Tri impossible : un tri par attribut demande une collection qui n'accepte qu'un type d'item",
     invalid_quantity:
       "Quantité impossible : de 1 à 100 000 exemplaires, et un lot scindé en garde au moins un",
     lots_not_mergeable:

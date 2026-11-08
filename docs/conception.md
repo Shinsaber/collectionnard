@@ -554,7 +554,7 @@ prêts et réservations dans deux tables distinctes ; emprunteur et offrant choi
 
 - [x] **P7-1 — Exemplaires multiples** (livré le 2026-11-08) : lots avec quantité, scission et fusion, routes adressées par lot (rupture d'API),
       `estimated_value` sur Possession (paquet `collections` v5), statistiques, import / export, hors ligne.
-- [ ] **P7-1b — Types d'item acceptés et tri par défaut** : une collection resserre les types d'item de son type de collection
+- [x] **P7-1b — Types d'item acceptés et tri par défaut** (livré le 2026-11-08) : une collection resserre les types d'item de son type de collection
       (spécialisée = un seul type, tris par ses attributs) ; tri par défaut appliqué aussi aux pages publiques.
 - [ ] **P7-2 — Amis** : demandes et acceptation, niveau de visibilité `friends` (collections, profil, avis).
 - [ ] **P7-3 — Prêts** : à un ami ou à un simple nom, retour prévu, rappels, historique, drapeau privé, page « Mes emprunts ».

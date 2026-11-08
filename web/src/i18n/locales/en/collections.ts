@@ -12,6 +12,15 @@ const en: typeof fr = {
     done: "Collection imported",
   },
   itemCount: "no items | {n} item | {n} items",
+  settings: {
+    itemTypes: "Accepted item types",
+    allTypes: "All those of the collection type",
+    itemTypesHelp:
+      "Optional. Keeping a single one specializes the collection: it can then be sorted by the attributes of that type (number, title…).",
+    specializedHelp:
+      "Specialized collection: it can be sorted by the attributes of this type. Items of another type already present are kept.",
+    defaultSort: "Default sort",
+  },
   toolbar: {
     search: "Search the collection",
     allTypes: "All types",

@@ -76,7 +76,9 @@ func (rd *readable) public() model.PublicCollection {
 
 func (h *Handler) respondReadableItems(w http.ResponseWriter, r *http.Request, rd *readable) {
 	pg := parsePagination(r)
-	items, total, err := h.Store.ListCollectionItems(r.Context(), rd.col.ID, pg, store.CollectionItemFilters{})
+	var f store.CollectionItemFilters
+	h.applyDefaultSort(r, &f, rd.col) // P7-1b : the order chosen by the owner
+	items, total, err := h.Store.ListCollectionItems(r.Context(), rd.col.ID, pg, f)
 	if err != nil {
 		handleStoreError(w, r, err)
 		return

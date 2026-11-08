@@ -98,7 +98,8 @@ export function lotQueryParams(q: LotQuery): Record<string, string> {
   const out: Record<string, string> = {};
   if (q.search.trim()) out.search = q.search.trim();
   if (q.item_type_id) out.item_type_id = q.item_type_id;
-  if (q.sort && q.sort !== DEFAULT_LOT_SORT) out.sort = q.sort;
+  // Toujours envoyé : sans `sort`, l'API applique le tri par défaut de la collection (P7-1b).
+  if (q.sort) out.sort = q.sort;
   if (q.multiple) out.multiple = "true";
   return out;
 }

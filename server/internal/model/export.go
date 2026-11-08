@@ -161,6 +161,9 @@ type CollectionExportHeader struct {
 	Name           string         `json:"name"`
 	Description    *string        `json:"description,omitempty"`
 	CollectionType ExportMetaType `json:"collection_type"`
+	// P7-1b; absent from older files. Unknown item types are ignored on import.
+	ItemTypeIDs []uuid.UUID `json:"item_type_ids,omitempty"`
+	DefaultSort string      `json:"default_sort,omitempty"`
 }
 
 type CollectionExportItem struct {

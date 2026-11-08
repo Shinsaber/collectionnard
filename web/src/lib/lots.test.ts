@@ -83,7 +83,7 @@ describe("lots (P7-1)", () => {
 describe("lotQueryParams", () => {
   it("n'envoie que les critères renseignés", async () => {
     const { emptyLotQuery, lotQueryParams } = await import("./lots");
-    expect(lotQueryParams(emptyLotQuery())).toEqual({});
+    expect(lotQueryParams(emptyLotQuery())).toEqual({ sort: "-created_at" });
     expect(
       lotQueryParams({
         search: "  sonic ",
