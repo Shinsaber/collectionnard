@@ -13,15 +13,15 @@
         class="inline-flex max-w-44 shrink-0 items-center gap-1 rounded-full bg-tint px-2 py-0.5 text-xs font-semibold text-tint-ink"
         :aria-label="
           t('items.relations.inCollectionsLabel', {
-            names: collections.map((c) => c.name).join(', '),
+            names: names.join(', '),
           })
         "
       >
         <NavIcon name="collections" :size="12" />
         <span class="truncate">{{
-          collections.length === 1
-            ? collections[0]!.name
-            : t("items.relations.inCollections", collections.length)
+          names.length === 1
+            ? names[0]
+            : t("items.relations.inCollections", names.length)
         }}</span>
       </button>
     </template>
@@ -29,11 +29,14 @@
       {{ t("items.relations.inCollectionsTitle") }}
     </p>
     <ul class="flex flex-col gap-2">
-      <li v-for="c in collections" :key="c.id" class="flex flex-col">
+      <li v-for="c in collections" :key="c.lot_id" class="flex flex-col">
         <RouterLink
           :to="`/collections/${c.id}`"
           class="truncate rounded-md px-1.5 py-1 text-sm font-semibold text-link hover:bg-soft"
-          >{{ c.name }}</RouterLink
+          >{{ c.name
+          }}<template v-if="c.quantity > 1">
+            · {{ t("collections.lots.copies", c.quantity) }}</template
+          ></RouterLink
         >
         <dl v-if="keysOf(c).length" class="flex flex-col gap-0.5 px-1.5">
           <div
@@ -53,6 +56,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";
@@ -61,7 +65,11 @@ import { fieldLabel, fieldValue, orderedKeys, type Schema } from "@/lib/schema";
 import NavIcon from "@/components/layout/NavIcon.vue";
 import type { RelatedCollection } from "@/api/types";
 
-defineProps<{ collections: RelatedCollection[] }>();
+const props = defineProps<{ collections: RelatedCollection[] }>();
+/** Collections distinctes : un item peut former plusieurs lots d'une collection (P7-1). */
+const names = computed(() => [
+  ...new Set(props.collections.map((c) => c.name)),
+]);
 const { t } = useI18n();
 const { lang } = useLang();
 const { notifyError } = useNotify();

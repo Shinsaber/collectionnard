@@ -65,7 +65,10 @@
           >
             {{
               itemCollections.length
-                ? t("items.detail.inCollections", itemCollections.length)
+                ? t(
+                    "items.detail.inCollections",
+                    collectionCount(itemCollections),
+                  )
                 : t("items.detail.inNoCollection")
             }}
           </button>
@@ -173,7 +176,7 @@
         </ElTabPane>
         <ElTabPane
           name="collections"
-          :label="`${t('items.detail.inYourCollections')} · ${itemCollections.length}`"
+          :label="`${t('items.detail.inYourCollections')} · ${collectionCount(itemCollections)}`"
         >
           <ItemCollectionsCard
             bare
@@ -224,7 +227,7 @@
     <AddToCollectionDialog
       v-model:visible="addToCollectionVisible"
       :item="item"
-      :exclude-ids="itemCollections.map((ic) => ic.collection.id)"
+      :memberships="itemCollections"
       @added="loadCollections(item.id)"
     />
     <RelationCreateDialog
@@ -275,6 +278,7 @@ import ItemHistoryCard from "@/components/item/ItemHistoryCard.vue";
 import ItemAttributes from "@/components/item/ItemAttributes.vue";
 import ItemMoreMenu from "@/components/item/ItemMoreMenu.vue";
 import AddToCollectionDialog from "@/components/item/AddToCollectionDialog.vue";
+import { collectionCount } from "@/lib/lots";
 import RelationCreateDialog from "@/components/item/RelationCreateDialog.vue";
 import RelationEditDialog from "@/components/item/RelationEditDialog.vue";
 import RelationTree from "@/components/item/RelationTree.vue";

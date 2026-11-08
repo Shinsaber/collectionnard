@@ -164,7 +164,9 @@ type CollectionExportHeader struct {
 }
 
 type CollectionExportItem struct {
+	ID             uuid.UUID       `json:"id,omitempty"` // lot (P7-1); absent from older files
 	ItemID         uuid.UUID       `json:"item_id"`
+	Quantity       int             `json:"quantity,omitempty"` // absent: 1
 	ItemType       string          `json:"item_type"`
 	Label          string          `json:"label"`
 	ItemAttributes json.RawMessage `json:"item_attributes"`

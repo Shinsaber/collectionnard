@@ -19,7 +19,7 @@
       </div>
       <div
         v-for="e in row.entries"
-        :key="e.collection.id"
+        :key="e.entry.id ?? e.collection.id"
         class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs"
       >
         <span
@@ -27,6 +27,9 @@
         >
           <NavIcon name="collections" :size="12" />
           {{ e.collection.name }}
+          <template v-if="(e.entry.quantity ?? 1) > 1">
+            · ×{{ e.entry.quantity }}</template
+          >
         </span>
         <span
           v-for="key in keysOf(e)"

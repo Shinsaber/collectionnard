@@ -35,6 +35,14 @@ type ItemFilters struct {
 	RelationTypeID *uuid.UUID
 }
 
+// CollectionItemFilters searches the lots of a collection (P7-1): the item part
+// is the catalogue search (type, text, attributes, attribute sort); Sort also
+// accepts quantity.
+type CollectionItemFilters struct {
+	ItemFilters
+	Multiple bool // lots of more than one copy only
+}
+
 // Store defines all data operations.
 type Store interface {
 	// Health
@@ -176,10 +184,12 @@ type Store interface {
 	DeleteCollection(ctx context.Context, id uuid.UUID) error
 
 	// CollectionItem
-	ListCollectionItems(ctx context.Context, collectionID uuid.UUID, pg model.Pagination, itemTypeID *uuid.UUID, sort string) ([]model.CollectionItem, int, error)
+	ListCollectionItems(ctx context.Context, collectionID uuid.UUID, pg model.Pagination, f CollectionItemFilters) ([]model.CollectionItem, int, error)
 	AddCollectionItem(ctx context.Context, collectionID uuid.UUID, in model.CollectionItemAdd) (*model.CollectionItem, error)
-	UpdateCollectionItem(ctx context.Context, collectionID, itemID uuid.UUID, in model.CollectionItemUpdate) (*model.CollectionItem, error)
-	RemoveCollectionItem(ctx context.Context, collectionID, itemID uuid.UUID) error
+	UpdateCollectionItem(ctx context.Context, collectionID, lotID uuid.UUID, in model.CollectionItemUpdate) (*model.CollectionItem, error)
+	RemoveCollectionItem(ctx context.Context, collectionID, lotID uuid.UUID) error
+	SplitCollectionLot(ctx context.Context, collectionID, lotID uuid.UUID, quantity int, attrs json.RawMessage) (*model.CollectionItem, error)
+	MergeCollectionLots(ctx context.Context, collectionID, lotID, into uuid.UUID, galleries []string) (*model.CollectionItem, error)
 
 	// Item collection membership
 	ListItemCollections(ctx context.Context, userID, itemID uuid.UUID) ([]model.ItemCollectionMembership, error)

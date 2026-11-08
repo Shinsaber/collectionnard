@@ -46,8 +46,17 @@
           </label>
         </fieldset>
 
+        <LotTargetPicker
+          v-if="selectedCollectionId"
+          v-model:target="target"
+          v-model:quantity="quantity"
+          :lots="lots"
+          :schema="selectedSchema ?? undefined"
+        />
+
         <div
           v-if="
+            target === 'new' &&
             selectedSchema &&
             Object.keys(selectedSchema.properties ?? {}).length > 0
           "
@@ -73,7 +82,7 @@
       }}</ElButton>
       <ElButton
         type="primary"
-        :disabled="!selectedCollectionId"
+        :disabled="!selectedCollectionId || !target"
         :loading="saving"
         @click="submit"
       >
@@ -90,15 +99,17 @@ import { useI18n } from "vue-i18n";
 import { collectionApi } from "@/api/client";
 import { useNotify } from "@/composables/useNotify";
 import { useLang } from "@/composables/useLang";
-import { typeTitle } from "@/lib/schema";
+import { typeTitle, type Schema } from "@/lib/schema";
+import { addCopies, lotsIn, type LotTarget } from "@/lib/lots";
 import DynamicForm from "@/components/common/DynamicForm.vue";
-import type { Collection, Item } from "@/api/types";
+import LotTargetPicker from "@/components/collection/LotTargetPicker.vue";
+import type { Collection, Item, ItemCollectionMembership } from "@/api/types";
 
 const props = defineProps<{
   visible: boolean;
   item: Item;
-  /** Collections contenant déjà l'item (exclues de la liste). */
-  excludeIds: string[];
+  /** Lots de l'item dans mes collections : ajouter à une collection qui le contient déjà demande quel lot augmenter (P7-1). */
+  memberships: ItemCollectionMembership[];
 }>();
 
 const emit = defineEmits<{
@@ -115,25 +126,33 @@ const selectedCollectionId = ref<string | null>(null);
 const attrs = ref<Record<string, unknown>>({});
 const saving = ref(false);
 const formRef = ref<InstanceType<typeof DynamicForm> | null>(null);
-
-// Collections qui ne contiennent pas déjà l'item et dont le type permet son type d'item.
-const availableCollections = computed(() => {
-  const exclude = new Set(props.excludeIds);
-  return collections.value.filter((c) => {
-    const allowed = c.collection_type?.item_type_ids ?? [];
-    return (
-      !exclude.has(c.id) &&
-      (allowed.length === 0 || allowed.includes(props.item.item_type_id))
-    );
-  });
+const target = ref<LotTarget>("");
+const quantity = ref(1);
+/** Lots de l'item dans la collection choisie. */
+const lots = computed(() =>
+  selectedCollectionId.value
+    ? lotsIn(props.memberships, selectedCollectionId.value)
+    : [],
+);
+// Nouvelle collection choisie : sans lot de l'item, un nouveau lot ; sinon, choix explicite.
+watch(selectedCollectionId, () => {
+  target.value = lots.value.length ? "" : "new";
 });
+
+// Collections dont le type permet le type de l'item (celles qui le contiennent déjà comprises, P7-1).
+const availableCollections = computed(() =>
+  collections.value.filter((c) => {
+    const allowed = c.collection_type?.item_type_ids ?? [];
+    return allowed.length === 0 || allowed.includes(props.item.item_type_id);
+  }),
+);
 
 const selectedSchema = computed(() => {
   const col = collections.value.find(
     (c) => c.id === selectedCollectionId.value,
   );
   return (
-    (col?.collection_type?.attributes_schema as Record<string, unknown>) ?? null
+    (col?.collection_type?.attributes_schema as Schema | undefined) ?? null
   );
 });
 
@@ -143,6 +162,7 @@ watch(
     if (!open) return;
     selectedCollectionId.value = null;
     attrs.value = {};
+    quantity.value = 1;
     try {
       collections.value = (await collectionApi.list({ per_page: 100 })).data;
     } catch (e) {
@@ -153,14 +173,19 @@ watch(
 );
 
 async function submit() {
-  if (!selectedCollectionId.value) return;
-  if (formRef.value && !formRef.value.validate()) return;
+  if (!selectedCollectionId.value || !target.value) return;
+  if (target.value === "new" && formRef.value && !formRef.value.validate())
+    return;
   saving.value = true;
   try {
-    await collectionApi.addItem(selectedCollectionId.value, {
-      item_id: props.item.id,
-      attributes: attrs.value,
-    });
+    await addCopies(
+      selectedCollectionId.value,
+      props.item.id,
+      target.value,
+      quantity.value,
+      attrs.value,
+      lots.value,
+    );
     notifySuccess(t("items.addToCollection.added"));
     emit("update:visible", false);
     emit("added");

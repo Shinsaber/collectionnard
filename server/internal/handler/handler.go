@@ -193,8 +193,10 @@ func (h *Handler) Router() chi.Router {
 		r.Delete("/api/v1/collections/{id}/share-links/{linkId}", h.RevokeShareLink)
 		r.Get("/api/v1/collections/{id}/items", h.ListCollectionItems)
 		r.Post("/api/v1/collections/{id}/items", h.AddItemToCollection)
-		r.Put("/api/v1/collections/{collectionId}/items/{itemId}", h.UpdateCollectionItem)
-		r.Delete("/api/v1/collections/{collectionId}/items/{itemId}", h.RemoveItemFromCollection)
+		r.Put("/api/v1/collections/{collectionId}/lots/{lotId}", h.UpdateCollectionItem)
+		r.Delete("/api/v1/collections/{collectionId}/lots/{lotId}", h.RemoveItemFromCollection)
+		r.Post("/api/v1/collections/{collectionId}/lots/{lotId}/split", h.SplitCollectionLot)
+		r.Post("/api/v1/collections/{collectionId}/lots/{lotId}/merge", h.MergeCollectionLot)
 
 		r.Get("/api/v1/items/{id}/history", h.GetItemHistory)
 
@@ -365,24 +367,6 @@ func respondDecodeError(w http.ResponseWriter, err error) {
 func hasAttributes(attrs json.RawMessage) bool {
 	trimmed := bytes.TrimSpace(attrs)
 	return len(trimmed) > 0 && !bytes.Equal(trimmed, []byte("null"))
-}
-
-// sortFields are the only sortable columns of the listing endpoints.
-var sortFields = map[string]bool{"created_at": true, "updated_at": true}
-
-// parseSort validates the `sort` query parameter (optional `-` prefix). An
-// unknown field answers 400 and returns ok=false.
-func parseSort(w http.ResponseWriter, r *http.Request) (string, bool) {
-	sort := r.URL.Query().Get("sort")
-	if sort == "" {
-		return "", true
-	}
-	if !sortFields[strings.TrimPrefix(sort, "-")] {
-		respondError(w, http.StatusBadRequest, "bad_request",
-			"invalid sort: accepted values are created_at, updated_at (prefix with - for descending)")
-		return "", false
-	}
-	return sort, true
 }
 
 // checkAttributesSchema rejects an invalid attributes_schema with a 422 and reports

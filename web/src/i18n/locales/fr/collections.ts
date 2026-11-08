@@ -12,6 +12,43 @@ export default {
     done: "Collection importée",
   },
   itemCount: "aucun item | {n} item | {n} items",
+  // Recherche et tri des lots d'une collection (CollectionItemsToolbar)
+  toolbar: {
+    search: "Rechercher dans la collection",
+    allTypes: "Tous les types",
+    sort: "Trier",
+    sortRelevance: "Pertinence",
+    sortRecent: "Ajoutés récemment",
+    sortOldest: "Ajoutés en premier",
+    sortQuantity: "Plus d'exemplaires",
+    multiple: "Plusieurs exemplaires",
+    noMatch: "Aucun lot ne correspond à ces critères.",
+  },
+  // Lots (P7-1) : exemplaires identiques d'un item ; un item peut former plusieurs lots d'une collection.
+  lots: {
+    copies: "aucun exemplaire | {n} exemplaire | {n} exemplaires",
+    quantity: "Exemplaires",
+    quantityShort: "Qté",
+    alreadyIn:
+      "Déjà dans cette collection | Déjà dans cette collection | Déjà dans cette collection, en {n} lots",
+    addTo: "Ajouter au lot de {n}",
+    newLot: "Nouveau lot (autre état, autre finition…)",
+    noAttributes: "Sans détail",
+    copiesToAdd: "Exemplaires à ajouter",
+    split: "Scinder le lot",
+    splitTitle: "Scinder le lot",
+    splitHelp:
+      "Ce lot compte {n} exemplaires. Ceux que vous détachez forment un nouveau lot du même item, avec leurs propres détails (une carte abîmée, une autre finition).",
+    copiesToMove: "Exemplaires à détacher",
+    newLotAttributes: "Détails du nouveau lot",
+    splitDone: "Lot scindé",
+    merge: "Fusionner dans un autre lot",
+    mergeTitle: "Fusionner le lot",
+    mergeHelp:
+      "L'exemplaire de ce lot rejoint le lot choisi, qui garde ses détails : ceux de ce lot (photos comprises) sont perdus. | L'exemplaire de ce lot rejoint le lot choisi, qui garde ses détails : ceux de ce lot (photos comprises) sont perdus. | Les {n} exemplaires de ce lot rejoignent le lot choisi, qui garde ses détails : ceux de ce lot (photos comprises) sont perdus.",
+    noOtherLot: "Cet item ne forme aucun autre lot dans cette collection.",
+    mergeDone: "Lots fusionnés",
+  },
   loadFailed: "Chargement impossible",
   typesUnavailable: "Types de collection indisponibles",
   list: {

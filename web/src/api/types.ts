@@ -500,7 +500,10 @@ export interface Collection {
   collection_type?: CollectionType;
   name: string;
   description?: string;
+  /** Items différents (un item formant plusieurs lots compte une fois). */
   item_count: number;
+  /** Exemplaires : somme des quantités des lots (P7-1). */
+  copy_count: number;
   visibility: Visibility;
   /** Champs cachés aux autres lecteurs ; `null` = les propriétés `x-private` du type. */
   hidden_fields: string[] | null;
@@ -566,31 +569,42 @@ export interface ShareLinkCreated {
 }
 
 // ---------- CollectionItem ----------
+/** Lot d'une collection (P7-1) : `quantity` exemplaires identiques d'un item ; un item peut former plusieurs lots. */
 export interface CollectionItem {
   id: string;
   collection_id: string;
   item_id: string;
   item?: Item;
+  quantity: number;
   attributes: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
 
+/** Crée toujours un nouveau lot (`quantity` : 1 par défaut). */
 export interface CollectionItemAdd {
   item_id: string;
   attributes?: Record<string, unknown>;
+  quantity?: number;
 }
 
 export interface CollectionItemUpdate {
   attributes: Record<string, unknown>;
+  /** Absente : quantité inchangée. */
+  quantity?: number;
 }
 
+/** Bornes de `quantity` (CHECK de la migration 020). */
+export const MAX_QUANTITY = 100000;
+
 // ---------- Item Collection Membership ----------
-/** Collection qui contient un item lié, avec les attributs contextuels de l'item. */
+/** Lot d'un item lié dans une collection (une collection revient si l'item y forme plusieurs lots). */
 export interface RelatedCollection {
   id: string;
   name: string;
   collection_type_id: string;
+  lot_id: string;
+  quantity: number;
   attributes: Record<string, unknown>;
 }
 
@@ -600,8 +614,11 @@ export interface RelatedItemCollections {
   collections: RelatedCollection[];
 }
 
+/** Lot d'un item dans une de mes collections (une entrée par lot). */
 export interface ItemCollectionMembership {
   collection: Collection;
+  lot_id: string;
+  quantity: number;
   attributes: Record<string, unknown>;
 }
 
@@ -1101,8 +1118,11 @@ export interface ExternalImportReport extends ImportReport {
 
 // ---------- Copie hors ligne (GET /me/offline, lot E5) ----------
 export interface OfflineEntry {
+  /** Identifiant du lot. */
+  id: string;
   collection_id: string;
   item_id: string;
+  quantity: number;
   attributes: Record<string, unknown>;
   added_at: string;
 }

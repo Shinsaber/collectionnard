@@ -51,6 +51,10 @@ const en: typeof fr = {
       "External source (Wikidata, BnF) unreachable, try again later",
     item_type_not_allowed:
       "This item type is not allowed in this collection type",
+    invalid_quantity:
+      "Impossible quantity: from 1 to 100,000 copies, and a split lot keeps at least one",
+    lots_not_mergeable:
+      "Only two different lots of the same item can be merged",
     account_disabled:
       "This account is disabled: contact an admin of the instance.",
     invalid_invitation:

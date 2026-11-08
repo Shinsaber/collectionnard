@@ -114,6 +114,13 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
   `notBlockedBy` en SQL (avis signés, articles), traces `blocked` dans `shapeComments` (jamais pour l'auteur d'un avis
   anonyme), `withoutBlockers` avant toute notification d'un fil. `user_blocks.anonymous` : bloqué sans être nommé, son
   nom ne sort jamais de `/me/blocks`.
+- Lots (P7-1, migration 020) : une ligne de `collection_items` est un lot de `quantity` exemplaires ; un item peut former
+  plusieurs lots d'une collection. Toute route d'écriture adresse le lot par son identifiant **dans** sa collection
+  (`/collections/{collectionId}/lots/{lotId}`, `ownCollection(w, r, "collectionId")`) ; `POST …/items` crée toujours un lot.
+  Scission et fusion en transaction (`FOR UPDATE`, lots verrouillés dans l'ordre des id), `ErrInvalidQuantity` / `ErrNotMergeable`
+  → 422 ; la fusion réunit les photos des galeries (`galleryKeys`, `mergeGalleries`). Liste d'une collection : la recherche du
+  catalogue (`buildItemQuery`, `parseItemSearch` avec ses propres champs de tri, `lotOrderBy`) + `multiple`. Statistiques pondérées par la quantité (`collstats.Entry.Quantity`) ; `item_count` = items distincts, `copy_count` =
+  exemplaires.
 - Visibilité et partage (`handler/sharing.go`, `store/sharing.go`, P4-2) : routes publiques derrière
   `Auth.OptionalAuthenticate` (sans jeton : anonyme, `GetUserID` = `uuid.Nil` ; jeton invalide : 401) ; `loadReadable`
   vérifie visibilité et compte actif (404 sinon) et calcule les champs cachés ; une nouvelle lecture publique doit

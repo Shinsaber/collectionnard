@@ -1513,8 +1513,12 @@ components:
           example: Ma collection de DVDs et Blu-rays
         item_count:
           type: integer
-          description: Nombre d'items dans la collection (calculé automatiquement).
+          description: Nombre d'items différents de la collection (calculé automatiquement ; un item formant plusieurs lots compte une fois).
           example: 42
+        copy_count:
+          type: integer
+          description: Nombre d'exemplaires (somme des quantités des lots, P7-1).
+          example: 45
         visibility:
           $ref: "#/components/schemas/Visibility"
         hidden_fields:
@@ -1571,8 +1575,10 @@ components:
     CollectionItem:
       type: object
       description: |
-        Lien entre une collection et un item. Porte les **attributs contextuels**
-        définis par le CollectionType : état physique, prix d'achat, date vue, note, etc.
+        **Lot** d'une collection (P7-1) : un ou plusieurs exemplaires identiques d'un item (`quantity`).
+        Porte les **attributs contextuels** définis par le CollectionType (état physique, prix d'achat
+        unitaire, date vue…), qui valent pour chacun de ses exemplaires. Un même item peut former plusieurs
+        lots dans une collection (un état ou une finition différents).
 
         C'est ici que se trouvent les données spécifiques à l'utilisateur pour un item donné.
         L'item lui-même reste partagé et immuable pour tous les utilisateurs.
@@ -1580,6 +1586,7 @@ components:
         id:
           type: string
           format: uuid
+          description: Identifiant du lot (adresse des routes `/collections/{collectionId}/lots/{lotId}`).
         collection_id:
           type: string
           format: uuid
@@ -1591,6 +1598,12 @@ components:
         item:
           $ref: "#/components/schemas/Item"
           description: Item complet (inclus dans les réponses GET).
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 100000
+          description: Nombre d'exemplaires du lot.
+          example: 1
         attributes:
           type: object
           description: |
@@ -1616,10 +1629,10 @@ components:
         Données pour ajouter un item à une collection. Les attributs sont validés
         contre le JSON Schema du CollectionType de la collection.
 
-        Un item ne peut apparaître qu'une seule fois dans une collection donnée.
+        Crée toujours un **nouveau lot**, même si l'item est déjà dans la collection : pour ajouter des
+        exemplaires à un lot existant, modifier sa `quantity` (`PUT /collections/{collectionId}/lots/{lotId}`).
         Si le CollectionType limite les types d'item (`item_type_ids`), un item d'un autre type
         est refusé (422 `item_type_not_allowed`).
-        S'il est déjà présent, une erreur 409 est retournée.
       required: [item_id]
       properties:
         item_id:
@@ -1632,17 +1645,56 @@ components:
             Attributs contextuels de l'item dans cette collection.
             Validés contre le JSON Schema du CollectionType.
           default: {}
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 100000
+          default: 1
+          description: Nombre d'exemplaires du lot.
 
     CollectionItemUpdate:
       type: object
       description: |
-        Modification des attributs contextuels d'un item dans une collection.
-        Les attributs sont revalidés contre le JSON Schema du CollectionType.
+        Modification d'un lot : ses attributs contextuels (remplacés, revalidés contre le JSON Schema du
+        CollectionType) et, si elle est donnée, sa quantité (absente : inchangée).
       required: [attributes]
       properties:
         attributes:
           type: object
           description: Nouveaux attributs contextuels.
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 100000
+          description: Nouvelle quantité ; absente, la quantité du lot ne change pas.
+
+    CollectionLotSplit:
+      type: object
+      description: |
+        Scission d'un lot (P7-1) : `quantity` exemplaires en sortent pour former un nouveau lot du même item,
+        avec `attributes` (absents : copie de ceux du lot d'origine). Il doit rester au moins un exemplaire.
+      required: [quantity]
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+          description: Exemplaires détachés, moins que la quantité du lot.
+        attributes:
+          type: object
+          additionalProperties: true
+          description: Attributs du nouveau lot, validés contre le JSON Schema du CollectionType.
+
+    CollectionLotMerge:
+      type: object
+      description: |
+        Fusion de deux lots du même item dans la même collection (P7-1) : le lot `into` reçoit les
+        exemplaires et garde ses attributs ; les photos des galeries du lot fusionné le rejoignent, puis il est supprimé.
+      required: [into]
+      properties:
+        into:
+          type: string
+          format: uuid
+          description: Lot qui reçoit les exemplaires.
 
     # -------------------------------------------------------------------------
     # Tag
@@ -1665,9 +1717,17 @@ components:
     ItemCollectionMembership:
       type: object
       description: |
-        Appartenance d'un item à une collection de l'utilisateur. Contient la
-        collection complète et les attributs contextuels du lien (état, prix, note…).
+        Lot d'un item dans une collection de l'utilisateur (une entrée par lot : un item peut former
+        plusieurs lots d'une même collection). Contient la collection complète, l'identifiant et la
+        quantité du lot, et ses attributs contextuels (état, prix, note…).
       properties:
+        lot_id:
+          type: string
+          format: uuid
+          description: Identifiant du lot.
+        quantity:
+          type: integer
+          description: Nombre d'exemplaires du lot.
         collection:
           $ref: "#/components/schemas/Collection"
           description: Collection contenant l'item.
@@ -2375,6 +2435,7 @@ components:
         item_id: { type: string, format: uuid }
         collections:
           type: array
+          description: Un élément par lot (une collection peut revenir si l'item y forme plusieurs lots).
           items:
             type: object
             required: [id, name, collection_type_id, attributes]
@@ -2389,6 +2450,8 @@ components:
                 type: object
                 additionalProperties: true
                 description: Attributs contextuels de l'item dans cette collection (état, prix…).
+              lot_id: { type: string, format: uuid }
+              quantity: { type: integer }
 
     OfflineSnapshot:
       type: object
@@ -2420,10 +2483,12 @@ components:
           type: array
           items:
             type: object
-            required: [collection_id, item_id, attributes, added_at]
+            required: [id, collection_id, item_id, quantity, attributes, added_at]
             properties:
+              id: { type: string, format: uuid, description: Identifiant du lot. }
               collection_id: { type: string, format: uuid }
               item_id: { type: string, format: uuid }
+              quantity: { type: integer }
               attributes: { type: object, additionalProperties: true }
               added_at: { type: string, format: date-time }
 
@@ -2685,8 +2750,15 @@ components:
           items:
             type: object
             properties:
+              id:
+                type: string
+                format: uuid
+                description: |
+                  Identifiant du lot (P7-1). À l'import, un lot de la collection cible portant cet identifiant est mis à
+                  jour ; absent (fichier antérieur), le lot est rapproché par item.
               item_id: { type: string, format: uuid }
               item_type: { type: string, description: Nom technique de l'ItemType. }
+              quantity: { type: integer, minimum: 1, default: 1, description: "Exemplaires du lot (absent : 1)." }
               label: { type: string, description: Libellé (`x-label`) dans la langue `lang`. }
               item_attributes: { type: object, additionalProperties: true }
               attributes:
@@ -2903,6 +2975,12 @@ components:
   # Paramètres réutilisables
   # ===========================================================================
   parameters:
+    lotId:
+      name: lotId
+      in: path
+      required: true
+      description: Identifiant du lot (`CollectionItem.id`, P7-1).
+      schema: { type: string, format: uuid }
     username:
       name: username
       in: path
@@ -2959,17 +3037,6 @@ components:
         default: 20
         minimum: 1
         maximum: 100
-    sort:
-      name: sort
-      in: query
-      description: |
-        Champ de tri. Préfixer par `-` pour un tri descendant.
-        Valeurs acceptées : `created_at`, `updated_at` (défaut `-created_at`).
-        Toute autre valeur renvoie 400. `GET /items` accepte en plus `relevance` et `attr.<clé>`.
-        Les champs de tri disponibles dépendent du type d'objet.
-      schema:
-        type: string
-
   # ===========================================================================
   # Réponses réutilisables
   # ===========================================================================
@@ -6556,18 +6623,49 @@ paths:
         Retourne les items d'une collection avec leurs **attributs contextuels**
         (état, prix, note…) et les détails de chaque item (type, attributs métier, tags).
 
-        Filtrable par type d'item (ex: uniquement les DVDs dans cette collection).
+        Une ligne par **lot** (P7-1). Filtres : type d'item, recherche plein texte dans les attributs de l'item, lots de
+        plusieurs exemplaires (`multiple`), et, avec `item_type_id`, filtres par attribut de l'item (`attr.<clé>[.<op>]`,
+        mêmes règles que `GET /items`). À valeur de tri égale, les lots d'un même item se suivent.
       operationId: listCollectionItems
       parameters:
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/per_page"
-        - $ref: "#/components/parameters/sort"
+        - name: sort
+          in: query
+          description: |
+            `created_at` (date d'ajout du lot, défaut `-created_at`), `updated_at`, `quantity`, `relevance` (pertinence de
+            `search`) ou `attr.<clé>` (attribut de l'item, exige `item_type_id`) ; préfixe `-` pour descendant.
+          schema:
+            type: string
+          examples:
+            largestLots: { value: "-quantity" }
+            byNumber: { value: "attr.number" }
         - name: item_type_id
           in: query
-          description: Filtrer par type d'item dans la collection.
+          description: Filtrer par type d'item dans la collection. Requis par `attr.*` et `sort=attr.*`.
           schema:
             type: string
             format: uuid
+        - name: search
+          in: query
+          description: Recherche plein texte dans les attributs de l'item (comme `GET /items`), 200 caractères au plus.
+          schema:
+            type: string
+        - name: multiple
+          in: query
+          description: "`true` : seulement les lots de plusieurs exemplaires (doubles à échanger…)."
+          schema:
+            type: boolean
+        - name: attr
+          in: query
+          description: |
+            Filtres par attribut de l'item, un paramètre par condition (voir `GET /items`). Exigent `item_type_id`.
+          style: form
+          explode: true
+          schema:
+            type: object
+            additionalProperties:
+              type: string
       responses:
         "400":
           $ref: "#/components/responses/BadRequest"
@@ -6597,7 +6695,8 @@ paths:
         **attributs contextuels** (état, prix, note…) validés contre le
         JSON Schema du CollectionType.
 
-        Un item ne peut apparaître qu'une seule fois dans une collection donnée.
+        Crée toujours un nouveau lot (`quantity`, 1 par défaut), même si l'item est déjà dans la collection :
+        le client propose alors d'augmenter un lot existant ou d'en créer un (P7-1).
       operationId: addItemToCollection
       requestBody:
         required: true
@@ -6632,12 +6731,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        "409":
-          description: Cet item est déjà dans la collection.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
         "422":
           description: |
             Attributs invalides (`validation_error`), ou type d'item non permis par le
@@ -6647,7 +6740,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /collections/{collectionId}/items/{itemId}:
+  /collections/{collectionId}/lots/{lotId}:
     parameters:
       - name: collectionId
         in: path
@@ -6656,20 +6749,13 @@ paths:
         schema:
           type: string
           format: uuid
-      - name: itemId
-        in: path
-        required: true
-        description: UUID de l'item dans la collection.
-        schema:
-          type: string
-          format: uuid
+      - $ref: "#/components/parameters/lotId"
     put:
       tags: [Collections]
-      summary: Modifier les attributs contextuels d'un item dans la collection
+      summary: Modifier un lot de la collection
       description: |
-        Met à jour les attributs contextuels (état, prix, note…) d'un item
-        dans cette collection. Les attributs sont revalidés contre le JSON Schema
-        du CollectionType.
+        Met à jour les attributs contextuels (état, prix, note…) d'un lot et, si elle est donnée, sa
+        quantité. Les attributs sont revalidés contre le JSON Schema du CollectionType.
 
         Ne modifie **pas** les attributs de l'item du catalogue (title, année…),
         uniquement les données personnelles de l'utilisateur.
@@ -6685,6 +6771,7 @@ paths:
                 condition: bon
                 purchase_price: 45.00
                 acquisition_date: "2020-12-25"
+              quantity: 2
       responses:
         "413":
           $ref: "#/components/responses/PayloadTooLarge"
@@ -6706,9 +6793,9 @@ paths:
           $ref: "#/components/responses/ValidationError"
     delete:
       tags: [Collections]
-      summary: Retirer un item de la collection
+      summary: Retirer un lot de la collection
       description: |
-        Retire le lien entre l'item et cette collection. **L'item n'est pas
+        Retire le lot (tous ses exemplaires) de cette collection. **L'item n'est pas
         supprimé du catalogue** — il reste disponible pour d'autres collections
         et d'autres utilisateurs. Seules les données contextuelles (état, prix, note…)
         sont perdues.
@@ -6721,9 +6808,112 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
         "204":
-          description: Item retiré de la collection.
+          description: Lot retiré de la collection.
         "404":
           $ref: "#/components/responses/NotFound"
+
+  /collections/{collectionId}/lots/{lotId}/split:
+    parameters:
+      - name: collectionId
+        in: path
+        required: true
+        description: UUID de la collection.
+        schema:
+          type: string
+          format: uuid
+      - $ref: "#/components/parameters/lotId"
+    post:
+      tags: [Collections]
+      summary: Scinder un lot
+      description: |
+        Détache `quantity` exemplaires du lot vers un nouveau lot du même item (une carte abîmée sort d'un lot
+        de 5). Le nouveau lot prend `attributes`, ou à défaut une copie des attributs du lot d'origine.
+      operationId: splitCollectionLot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CollectionLotSplit"
+            example:
+              quantity: 1
+              attributes:
+                condition: damaged
+      responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Nouveau lot ; le lot d'origine a perdu `quantity` exemplaires.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectionItem"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          description: |
+            Attributs invalides (`validation_error`), ou quantité hors bornes (`invalid_quantity` : il doit rester
+            au moins un exemplaire dans le lot d'origine).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /collections/{collectionId}/lots/{lotId}/merge:
+    parameters:
+      - name: collectionId
+        in: path
+        required: true
+        description: UUID de la collection.
+        schema:
+          type: string
+          format: uuid
+      - $ref: "#/components/parameters/lotId"
+    post:
+      tags: [Collections]
+      summary: Fusionner un lot dans un autre
+      description: |
+        Ajoute les exemplaires du lot à `into` (même item, même collection), qui garde ses attributs, puis
+        supprime le lot. Les photos de ses galeries (propriétés `x-widget: image-gallery` du CollectionType, photos
+        d'exemplaire) rejoignent celles de `into`, catégorie par catégorie, sans doublon ; ses autres attributs sont perdus.
+      operationId: mergeCollectionLot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CollectionLotMerge"
+      responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Lot `into`, avec la quantité cumulée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectionItem"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          description: |
+            `lots_not_mergeable` : `into` est le lot lui-même ou un lot d'un autre item ; `invalid_quantity` : la
+            quantité cumulée dépasse 100000.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
   # ===========================================================================
   # Tags

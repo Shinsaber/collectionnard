@@ -59,7 +59,7 @@ func newSharing(visibility string) (*sharingFixture, *testutil.MockStore) {
 			}
 			return nil, "", store.ErrNotFound
 		},
-		ListCollectionItemsFn: func(_ context.Context, colID uuid.UUID, _ model.Pagination, _ *uuid.UUID, _ string) ([]model.CollectionItem, int, error) {
+		ListCollectionItemsFn: func(_ context.Context, colID uuid.UUID, _ model.Pagination, _ store.CollectionItemFilters) ([]model.CollectionItem, int, error) {
 			return []model.CollectionItem{{
 				ID: uuid.New(), CollectionID: colID, ItemID: uuid.New(),
 				Attributes: json.RawMessage(`{"condition":"new","purchase_price":` + secret + `}`),

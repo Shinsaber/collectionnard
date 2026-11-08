@@ -75,22 +75,26 @@ func (s *PgStore) GetCollectionStats(ctx context.Context, collectionID uuid.UUID
 	}
 
 	rows, err := s.pool.Query(ctx,
-		`SELECT attributes, created_at FROM collection_items WHERE collection_id = $1`, collectionID)
+		`SELECT attributes, created_at, quantity FROM collection_items WHERE collection_id = $1`, collectionID)
 	if err != nil {
 		return nil, err
 	}
 	entries, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (collstats.Entry, error) {
 		var e collstats.Entry
-		err := row.Scan(&e.Attributes, &e.AddedAt)
+		err := row.Scan(&e.Attributes, &e.AddedAt, &e.Quantity)
 		return e, err
 	})
 	if err != nil {
 		return nil, err
 	}
+	copies := 0
+	for _, e := range entries {
+		copies += e.Copies()
+	}
 	agg := collstats.Aggregate(privacy.StripSchema(schema, hidden), entries)
 	st := &model.CollectionStats{
 		CollectionID:  collectionID,
-		TotalItems:    len(entries),
+		TotalItems:    copies,
 		Numbers:       agg.Numbers,
 		Distributions: agg.Distributions,
 		Timelines:     agg.Timelines,
@@ -98,10 +102,10 @@ func (s *PgStore) GetCollectionStats(ctx context.Context, collectionID uuid.UUID
 	}
 
 	if st.ItemsByType, err = s.itemsByType(ctx,
-		`SELECT it.id, it.name, count(*) FROM collection_items ci
+		`SELECT it.id, it.name, sum(ci.quantity) FROM collection_items ci
 		 JOIN items i ON i.id = ci.item_id JOIN item_types it ON it.id = i.item_type_id
 		 WHERE ci.collection_id = $1
-		 GROUP BY it.id ORDER BY count(*) DESC, it.display_order, it.name`, collectionID); err != nil {
+		 GROUP BY it.id ORDER BY sum(ci.quantity) DESC, it.display_order, it.name`, collectionID); err != nil {
 		return nil, err
 	}
 
@@ -175,10 +179,10 @@ func (s *PgStore) GetCollectionStats(ctx context.Context, collectionID uuid.UUID
 func (s *PgStore) GetUserStats(ctx context.Context, userID uuid.UUID) (*model.MeStats, error) {
 	st := &model.MeStats{}
 	rows, err := s.pool.Query(ctx,
-		`SELECT c.id, c.name, c.collection_type_id, count(ci.id)
+		`SELECT c.id, c.name, c.collection_type_id, COALESCE(sum(ci.quantity), 0)
 		 FROM collections c LEFT JOIN collection_items ci ON ci.collection_id = c.id
 		 WHERE c.user_id = $1
-		 GROUP BY c.id ORDER BY count(ci.id) DESC, c.name`, userID)
+		 GROUP BY c.id ORDER BY COALESCE(sum(ci.quantity), 0) DESC, c.name`, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +217,7 @@ func (s *PgStore) GetUserStats(ctx context.Context, userID uuid.UUID) (*model.Me
 	}
 
 	rows, err = s.pool.Query(ctx,
-		`SELECT to_char(ci.created_at AT TIME ZONE 'UTC', 'YYYY-MM'), count(*) FROM collection_items ci
+		`SELECT to_char(ci.created_at AT TIME ZONE 'UTC', 'YYYY-MM'), sum(ci.quantity) FROM collection_items ci
 		 JOIN collections c ON c.id = ci.collection_id WHERE c.user_id = $1 GROUP BY 1`, userID)
 	if err != nil {
 		return nil, err

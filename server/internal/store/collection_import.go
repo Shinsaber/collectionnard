@@ -160,53 +160,110 @@ func (s *PgStore) importCollectionItems(ctx context.Context, tx pgx.Tx, rep *mod
 	if err != nil {
 		return err
 	}
-	present, err := uuidColumn(ctx, tx, `SELECT item_id FROM collection_items WHERE collection_id = $1`, collectionID)
+	// Lots of the collection, oldest first: an entry of the file updates the lot
+	// with its id, or, in files older than P7-1 (no lot id), the oldest lot of its
+	// item not matched yet. Other entries create a lot.
+	rows, err = tx.Query(ctx,
+		`SELECT id, item_id FROM collection_items WHERE collection_id = $1 ORDER BY created_at, id`, collectionID)
 	if err != nil {
 		return err
 	}
+	type lot struct{ id, item uuid.UUID }
+	lots, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (lot, error) {
+		var l lot
+		err := row.Scan(&l.id, &l.item)
+		return l, err
+	})
+	if err != nil {
+		return err
+	}
+	present := make([]uuid.UUID, 0, len(lots))
+	for _, l := range lots {
+		present = append(present, l.item)
+	}
+	claimed := make(map[uuid.UUID]bool, len(lots))
+	match := func(e model.CollectionExportItem) (uuid.UUID, bool) {
+		for _, l := range lots {
+			if !claimed[l.id] && l.item == e.ItemID && (e.ID == uuid.Nil || l.id == e.ID) {
+				return l.id, true
+			}
+		}
+		return uuid.Nil, false
+	}
 
-	const sql = `
-		INSERT INTO collection_items (collection_id, item_id, attributes, created_at)
-		VALUES ($1, $2, $3, $4)
-		ON CONFLICT (collection_id, item_id) DO UPDATE SET attributes = EXCLUDED.attributes
-		WHERE collection_items.attributes IS DISTINCT FROM EXCLUDED.attributes
-		RETURNING (xmax = 0)`
+	const update = `
+		UPDATE collection_items SET attributes = $2, quantity = $3
+		WHERE id = $1 AND (attributes, quantity) IS DISTINCT FROM ($2, $3)
+		RETURNING false`
+	const insert = `
+		INSERT INTO collection_items (id, collection_id, item_id, attributes, quantity, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING true`
 	seen := make(map[uuid.UUID]bool, len(entries))
+	keep := make([]uuid.UUID, 0, len(entries))
 	for i, e := range entries {
 		o, ok, err := im.row(ctx, model.EntityItems, i, e.ItemID, func(sp pgx.Tx) (outcome, error) {
+			quantity := e.Quantity
+			if quantity == 0 {
+				quantity = 1
+			}
 			switch {
 			case e.ItemID == uuid.Nil:
 				return 0, rowError("item_id is required")
-			case seen[e.ItemID]:
-				return 0, rowError("item listed twice in the file")
+			case e.ID != uuid.Nil && seen[e.ID]:
+				return 0, rowError("lot listed twice in the file")
 			case itemType[e.ItemID] == uuid.Nil:
 				return 0, rowError("unknown item_id (not in the catalogue)")
 			case len(allowed) > 0 && !slices.Contains(allowed, itemType[e.ItemID]) && !slices.Contains(present, e.ItemID):
 				return 0, rowError("item type not allowed by the collection type")
+			case quantity < 1 || quantity > model.MaxQuantity:
+				return 0, rowError(fmt.Sprintf("quantity must be between 1 and %d", model.MaxQuantity))
 			}
-			seen[e.ItemID] = true
 			attrs := emptyObject(e.Attributes)
 			if err := validateAttrs(schema, attrs); err != nil {
 				return 0, err
+			}
+			if id, ok := match(e); ok {
+				claimed[id] = true
+				keep = append(keep, id)
+				return upsert(ctx, sp, update, id, attrs, quantity)
+			}
+			// New lot: the id of the file when it is free.
+			id := e.ID
+			if id != uuid.Nil {
+				var taken bool
+				if err := sp.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM collection_items WHERE id = $1)`, id).Scan(&taken); err != nil {
+					return 0, err
+				}
+				if taken {
+					id = uuid.Nil
+				}
+			}
+			if id == uuid.Nil {
+				id = uuid.New()
 			}
 			added := e.AddedAt
 			if added.IsZero() {
 				added = time.Now()
 			}
-			return upsert(ctx, sp, sql, collectionID, e.ItemID, attrs, added)
+			keep = append(keep, id)
+			return upsert(ctx, sp, insert, id, collectionID, e.ItemID, attrs, quantity, added)
 		})
 		if err != nil {
 			return err
+		}
+		if e.ID != uuid.Nil {
+			seen[e.ID] = true
 		}
 		if ok {
 			o.count(counts)
 		}
 	}
 
-	// The collection becomes exactly the file: drop the items it no longer lists.
+	// The collection becomes exactly the file: drop the lots it no longer lists.
 	tag, err := tx.Exec(ctx,
-		`DELETE FROM collection_items WHERE collection_id = $1 AND NOT (item_id = ANY($2))`,
-		collectionID, ids)
+		`DELETE FROM collection_items WHERE collection_id = $1 AND NOT (id = ANY($2))`,
+		collectionID, keep)
 	if err != nil {
 		return err
 	}

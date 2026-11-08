@@ -214,7 +214,8 @@ func collectionFile(t *testing.T, id uuid.UUID) *model.CollectionExport {
 	if err != nil {
 		t.Fatal(err)
 	}
-	entries, _, err := s.ListCollectionItems(ctx, id, model.Pagination{Page: 1, PerPage: 100}, nil, "created_at")
+	entries, _, err := s.ListCollectionItems(ctx, id, model.Pagination{Page: 1, PerPage: 100},
+		store.CollectionItemFilters{ItemFilters: store.ItemFilters{Sort: "created_at"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -222,7 +223,8 @@ func collectionFile(t *testing.T, id uuid.UUID) *model.CollectionExport {
 		Collection: model.CollectionExportHeader{ID: col.ID, Name: col.Name, Description: col.Description,
 			CollectionType: model.ExportMetaType{ID: col.CollectionTypeID, Name: col.CollectionType.Name}}}
 	for _, e := range entries {
-		exp.Items = append(exp.Items, model.CollectionExportItem{ItemID: e.ItemID, Attributes: e.Attributes, AddedAt: e.CreatedAt})
+		exp.Items = append(exp.Items, model.CollectionExportItem{ID: e.ID, ItemID: e.ItemID, Quantity: e.Quantity,
+			Attributes: e.Attributes, AddedAt: e.CreatedAt})
 	}
 	return exp
 }
@@ -258,8 +260,35 @@ func TestImportCollection_RestoreOwnCollection(t *testing.T) {
 	if c := counts(rep, model.EntityItems); c.Removed != 1 {
 		t.Errorf("items: %+v, want 1 removed", c)
 	}
-	if _, total, _ := s.ListCollectionItems(ctx, colMesDVDs, model.Pagination{Page: 1, PerPage: 10}, nil, ""); total != 1 {
+	if _, total, _ := s.ListCollectionItems(ctx, colMesDVDs, model.Pagination{Page: 1, PerPage: 10}, store.CollectionItemFilters{}); total != 1 {
 		t.Errorf("dry runs must not write: %d items", total)
+	}
+}
+
+// P7-1: a file older than the lots (no lot id) matches the lots by item; an
+// item listed twice forms two lots, and the quantity round-trips.
+func TestImportCollection_Lots(t *testing.T) {
+	legacy := collectionFile(t, colMesDVDs)
+	legacy.Items[0].ID, legacy.Items[0].Quantity = uuid.Nil, 0
+	rep, err := s.ImportCollection(ctx, shinsaberUser, legacy, true)
+	if c := counts(rep, model.EntityItems); err != nil || len(rep.Errors) != 0 || c.Unchanged != 1 || c.Created+c.Removed != 0 {
+		t.Fatalf("legacy file: %v %+v", err, rep)
+	}
+	legacy.Items = append(legacy.Items, model.CollectionExportItem{ItemID: itemDVD, Quantity: 4})
+	rep, _ = s.ImportCollection(ctx, shinsaberUser, legacy, true)
+	if c := counts(rep, model.EntityItems); len(rep.Errors) != 0 || c.Unchanged != 1 || c.Created != 1 {
+		t.Errorf("same item twice: %+v", rep)
+	}
+
+	file := collectionFile(t, colMesDVDs)
+	file.Items[0].Quantity = 2
+	rep, _ = s.ImportCollection(ctx, shinsaberUser, file, true)
+	if c := counts(rep, model.EntityItems); len(rep.Errors) != 0 || c.Updated != 1 {
+		t.Errorf("quantity change: %+v", rep)
+	}
+	file.Items[0].Quantity = model.MaxQuantity + 1
+	if rep, _ = s.ImportCollection(ctx, shinsaberUser, file, true); len(rep.Errors) != 1 {
+		t.Errorf("quantity out of bounds: %+v", rep)
 	}
 }
 
@@ -292,7 +321,7 @@ func TestImportCollection_Errors(t *testing.T) {
 	file := collectionFile(t, colMesDVDs)
 	file.Items = append(file.Items,
 		model.CollectionExportItem{ItemID: uuid.New()},                                                 // not in the catalogue
-		model.CollectionExportItem{ItemID: itemDVD},                                                    // listed twice
+		model.CollectionExportItem{ID: file.Items[0].ID, ItemID: itemDVD},                              // lot listed twice
 		model.CollectionExportItem{ItemID: itemPilot, Attributes: json.RawMessage(`{"condition": 3}`)}, // invalid attributes
 	)
 	rep, err := s.ImportCollection(ctx, shinsaberUser, file, false)

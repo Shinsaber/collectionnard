@@ -9,6 +9,7 @@ import (
 	"github.com/shinsaber/colec/internal/middleware"
 	"github.com/shinsaber/colec/internal/model"
 	"github.com/shinsaber/colec/internal/privacy"
+	"github.com/shinsaber/colec/internal/store"
 )
 
 // Visibility and sharing (P4-2). Every read below is made "as others see it":
@@ -75,7 +76,7 @@ func (rd *readable) public() model.PublicCollection {
 
 func (h *Handler) respondReadableItems(w http.ResponseWriter, r *http.Request, rd *readable) {
 	pg := parsePagination(r)
-	items, total, err := h.Store.ListCollectionItems(r.Context(), rd.col.ID, pg, nil, "")
+	items, total, err := h.Store.ListCollectionItems(r.Context(), rd.col.ID, pg, store.CollectionItemFilters{})
 	if err != nil {
 		handleStoreError(w, r, err)
 		return
@@ -225,9 +226,10 @@ func (h *Handler) ListMembers(w http.ResponseWriter, r *http.Request) {
 
 // --- Liens de partage (propriétaire) ---
 
-// ownCollection loads a collection of the current user (404 otherwise).
-func (h *Handler) ownCollection(w http.ResponseWriter, r *http.Request) (*model.Collection, bool) {
-	id, ok := parseUUID(w, r, "id")
+// ownCollection loads the collection of the route parameter param, when it
+// belongs to the current user (404 otherwise).
+func (h *Handler) ownCollection(w http.ResponseWriter, r *http.Request, param string) (*model.Collection, bool) {
+	id, ok := parseUUID(w, r, param)
 	if !ok {
 		return nil, false
 	}
@@ -244,7 +246,7 @@ func (h *Handler) ownCollection(w http.ResponseWriter, r *http.Request) (*model.
 }
 
 func (h *Handler) ListShareLinks(w http.ResponseWriter, r *http.Request) {
-	col, ok := h.ownCollection(w, r)
+	col, ok := h.ownCollection(w, r, "id")
 	if !ok {
 		return
 	}
@@ -257,7 +259,7 @@ func (h *Handler) ListShareLinks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreateShareLink(w http.ResponseWriter, r *http.Request) {
-	col, ok := h.ownCollection(w, r)
+	col, ok := h.ownCollection(w, r, "id")
 	if !ok {
 		return
 	}
@@ -275,7 +277,7 @@ func (h *Handler) CreateShareLink(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) RevokeShareLink(w http.ResponseWriter, r *http.Request) {
-	col, ok := h.ownCollection(w, r)
+	col, ok := h.ownCollection(w, r, "id")
 	if !ok {
 		return
 	}

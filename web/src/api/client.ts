@@ -648,16 +648,37 @@ export const collectionApi = {
     http
       .post<CollectionItem>(`/collections/${collectionId}/items`, data)
       .then((r) => r.data),
-  updateItem: (
+  /** Lot (P7-1) : routes adressées par l'identifiant du lot, pas de l'item. */
+  updateLot: (
     collectionId: string,
-    itemId: string,
+    lotId: string,
     data: CollectionItemUpdate,
   ) =>
     http
-      .put<CollectionItem>(`/collections/${collectionId}/items/${itemId}`, data)
+      .put<CollectionItem>(`/collections/${collectionId}/lots/${lotId}`, data)
       .then((r) => r.data),
-  removeItem: (collectionId: string, itemId: string) =>
-    http.delete(`/collections/${collectionId}/items/${itemId}`),
+  removeLot: (collectionId: string, lotId: string) =>
+    http.delete(`/collections/${collectionId}/lots/${lotId}`),
+  splitLot: (
+    collectionId: string,
+    lotId: string,
+    data: { quantity: number; attributes?: Record<string, unknown> },
+  ) =>
+    http
+      .post<CollectionItem>(
+        `/collections/${collectionId}/lots/${lotId}/split`,
+        data,
+      )
+      .then((r) => r.data),
+  mergeLot: (collectionId: string, lotId: string, into: string) =>
+    http
+      .post<CollectionItem>(
+        `/collections/${collectionId}/lots/${lotId}/merge`,
+        {
+          into,
+        },
+      )
+      .then((r) => r.data),
 };
 
 // ── Tags ──────────────────────────────────────────────────────────────

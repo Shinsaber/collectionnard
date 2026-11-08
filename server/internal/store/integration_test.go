@@ -380,11 +380,6 @@ func TestRelationType_Junctions(t *testing.T) {
 // --- Collections ---
 
 func TestCollections(t *testing.T) {
-	_, err := s.AddCollectionItem(ctx, colMesDVDs, model.CollectionItemAdd{ItemID: itemDVD, Attributes: json.RawMessage(`{}`)})
-	if !errors.Is(err, store.ErrConflict) {
-		t.Errorf("duplicate collection item: expected ErrConflict, got %v", err)
-	}
-
 	mine, err := s.ListItemCollections(ctx, shinsaberUser, itemSerie)
 	if err != nil || len(mine) != 1 || mine[0].Collection.Name != "Séries vues" {
 		t.Errorf("memberships for owner: %+v, err %v", mine, err)
@@ -408,7 +403,7 @@ func TestCollections(t *testing.T) {
 		}
 	}
 
-	items, total, err := s.ListCollectionItems(ctx, colMesDVDs, model.Pagination{Page: 1, PerPage: 20}, nil, "")
+	items, total, err := s.ListCollectionItems(ctx, colMesDVDs, model.Pagination{Page: 1, PerPage: 20}, store.CollectionItemFilters{})
 	if err != nil || total != 1 || items[0].Item == nil || items[0].Item.ID != itemDVD {
 		t.Errorf("collection items: total %d, err %v", total, err)
 	}
@@ -1423,5 +1418,112 @@ func TestRecommendationsAndBlocks(t *testing.T) {
 	}
 	if u, _ := s.UpdateProfile(ctx, a.ID, model.ProfileUpdate{ProfileVisibility: "members"}); !u.AcceptsRecommendations {
 		t.Errorf("absent = accepte")
+	}
+}
+
+// P7-1 (migration 020): an item may form several lots of a collection, which
+// split and merge; every write addresses a lot within its collection.
+func TestCollectionLots(t *testing.T) {
+	three := 3
+	lot, err := s.AddCollectionItem(ctx, colMesDVDs, model.CollectionItemAdd{ItemID: itemDVD,
+		Attributes: json.RawMessage(`{"condition":"good"}`), Quantity: &three})
+	if err != nil || lot.Quantity != 3 {
+		t.Fatalf("second lot of the DVD: %+v %v", lot, err)
+	}
+	defer func() { _ = s.RemoveCollectionItem(ctx, colMesDVDs, lot.ID) }()
+	mine, err := s.ListItemCollections(ctx, shinsaberUser, itemDVD)
+	if err != nil || len(mine) != 2 || mine[1].LotID != lot.ID || mine[1].Quantity != 3 || mine[1].Collection.CopyCount != 4 {
+		t.Fatalf("memberships: %+v %v", mine, err)
+	}
+	first := mine[0].LotID
+
+	// Quantity kept when absent, replaced when given.
+	if got, err := s.UpdateCollectionItem(ctx, colMesDVDs, lot.ID, model.CollectionItemUpdate{Attributes: json.RawMessage(`{"condition":"good"}`)}); err != nil || got.Quantity != 3 {
+		t.Errorf("update without quantity: %+v %v", got, err)
+	}
+	if _, err := s.UpdateCollectionItem(ctx, uuid.New(), lot.ID, model.CollectionItemUpdate{Attributes: json.RawMessage(`{}`)}); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("a lot is addressed within its collection: %v", err)
+	}
+
+	// Split one damaged copy, then merge it back.
+	split, err := s.SplitCollectionLot(ctx, colMesDVDs, lot.ID, 1, json.RawMessage(`{"condition":"poor"}`))
+	if err != nil || split.Quantity != 1 || split.ItemID != itemDVD || !split.CreatedAt.Equal(lot.CreatedAt) {
+		t.Fatalf("split: %+v %v", split, err)
+	}
+	if _, err := s.SplitCollectionLot(ctx, colMesDVDs, split.ID, 1, nil); !errors.Is(err, store.ErrInvalidQuantity) {
+		t.Errorf("a split leaves at least one copy: %v", err)
+	}
+	if _, err := s.MergeCollectionLots(ctx, colMesDVDs, split.ID, split.ID, nil); !errors.Is(err, store.ErrNotMergeable) {
+		t.Errorf("merge into itself: %v", err)
+	}
+	merged, err := s.MergeCollectionLots(ctx, colMesDVDs, split.ID, lot.ID, nil)
+	if err != nil || merged.ID != lot.ID || merged.Quantity != 3 || string(merged.Attributes) != `{"condition": "good"}` {
+		t.Fatalf("merge: %+v %v", merged, err)
+	}
+	if err := s.RemoveCollectionItem(ctx, colMesDVDs, split.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("the merged lot must be gone: %v", err)
+	}
+
+	// Statistics count copies.
+	st, err := s.GetCollectionStats(ctx, colMesDVDs, nil)
+	if err != nil || st.TotalItems != 4 {
+		t.Errorf("stats: %+v %v", st, err)
+	}
+
+	// Lots of different items never merge.
+	other, err := s.AddCollectionItem(ctx, colMesDVDs, model.CollectionItemAdd{ItemID: itemPilot})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = s.RemoveCollectionItem(ctx, colMesDVDs, other.ID) }()
+	if _, err := s.MergeCollectionLots(ctx, colMesDVDs, other.ID, first, nil); !errors.Is(err, store.ErrNotMergeable) {
+		t.Errorf("merge of another item: %v", err)
+	}
+}
+
+// P7-1: the list of a collection filters and sorts its lots; a merge keeps the
+// photos of both lots.
+func TestCollectionLots_SearchAndPhotos(t *testing.T) {
+	two := 2
+	a, err := s.AddCollectionItem(ctx, colMesDVDs, model.CollectionItemAdd{ItemID: itemDVD, Quantity: &two,
+		Attributes: json.RawMessage(`{"photos":{"condition":["/api/v1/uploads/a.jpg"]}}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = s.RemoveCollectionItem(ctx, colMesDVDs, a.ID) }()
+	b, err := s.AddCollectionItem(ctx, colMesDVDs, model.CollectionItemAdd{ItemID: itemDVD,
+		Attributes: json.RawMessage(`{"photos":{"condition":["/api/v1/uploads/b.jpg"]}}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = s.RemoveCollectionItem(ctx, colMesDVDs, b.ID) }()
+	page := model.Pagination{Page: 1, PerPage: 20}
+
+	multiple, total, err := s.ListCollectionItems(ctx, colMesDVDs, page, store.CollectionItemFilters{Multiple: true})
+	if err != nil || total != 1 || multiple[0].ID != a.ID {
+		t.Errorf("multiple: %d %+v %v", total, multiple, err)
+	}
+	byQty, _, err := s.ListCollectionItems(ctx, colMesDVDs, page, store.CollectionItemFilters{ItemFilters: store.ItemFilters{Sort: "-quantity"}})
+	if err != nil || len(byQty) != 3 || byQty[0].ID != a.ID {
+		t.Errorf("sort by quantity: %+v %v", byQty, err)
+	}
+	if _, total, err := s.ListCollectionItems(ctx, colMesDVDs, page, store.CollectionItemFilters{ItemFilters: store.ItemFilters{Search: "breaking"}}); err != nil || total != 3 {
+		t.Errorf("search: %d %v", total, err)
+	}
+	if _, total, err := s.ListCollectionItems(ctx, colMesDVDs, page, store.CollectionItemFilters{ItemFilters: store.ItemFilters{Search: "zzzz"}}); err != nil || total != 0 {
+		t.Errorf("search without match: %d %v", total, err)
+	}
+
+	merged, err := s.MergeCollectionLots(ctx, colMesDVDs, b.ID, a.ID, []string{"photos"})
+	if err != nil || merged.Quantity != 3 {
+		t.Fatalf("merge: %+v %v", merged, err)
+	}
+	var attrs struct {
+		Photos struct {
+			Condition []string `json:"condition"`
+		} `json:"photos"`
+	}
+	if err := json.Unmarshal(merged.Attributes, &attrs); err != nil || len(attrs.Photos.Condition) != 2 {
+		t.Errorf("photos of both lots: %s %v", merged.Attributes, err)
 	}
 }

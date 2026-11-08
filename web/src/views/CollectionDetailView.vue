@@ -9,10 +9,7 @@
       {{ t("layout.nav.collections") }}
     </RouterLink>
 
-    <PageHeader
-      :title="collection.name"
-      :meta="t('collections.itemCount', collection.item_count)"
-    >
+    <PageHeader :title="collection.name" :meta="countLabel">
       <template #subtitle>
         <div class="flex flex-wrap items-center gap-2">
           <span
@@ -54,11 +51,19 @@
 
     <ElTabs v-model="tab">
       <ElTabPane :label="t('stats.itemsTab')" name="items">
+        <CollectionItemsToolbar
+          v-model="lotQuery"
+          :types="filterTypes"
+          @change="onFilter"
+        />
         <CollectionItemList
           :items="items.data.value"
+          :empty-text="filtered ? t('collections.toolbar.noMatch') : undefined"
           :schema="schema"
           :loading="items.loading.value"
-          @edit="openEditItem"
+          @edit="(ci) => openLot('edit', ci)"
+          @split="(ci) => openLot('split', ci)"
+          @merge="(ci) => openLot('merge', ci)"
           @remove="confirmRemove"
         />
         <ElPagination
@@ -151,33 +156,28 @@
       </template>
     </ElDialog>
 
-    <!-- Edit item attributes dialog -->
-    <ElDialog
-      v-model="editDialogVisible"
-      :title="t('collections.detail.editAttributes')"
-      width="34rem"
-    >
-      <DynamicForm
-        v-if="schema"
-        ref="editFormRef"
-        v-model="editAttributes"
-        :schema="schema"
-      />
-      <template #footer>
-        <ElButton text @click="editDialogVisible = false">{{
-          t("common.cancel")
-        }}</ElButton>
-        <ElButton
-          type="primary"
-          :loading="saving"
-          :disabled="!editDirty"
-          @click="updateItem"
-        >
-          <i class="pi pi-check mr-2" aria-hidden="true"></i>
-          {{ t("common.save") }}
-        </ElButton>
-      </template>
-    </ElDialog>
+    <!-- Lots (P7-1) : modifier, scinder, fusionner. -->
+    <LotEditDialog
+      v-model:visible="lotDialog.edit"
+      :collection-id="id"
+      :schema="schema"
+      :lot="lot"
+      @saved="afterChange"
+    />
+    <LotSplitDialog
+      v-model:visible="lotDialog.split"
+      :collection-id="id"
+      :schema="schema"
+      :lot="lot"
+      @done="afterChange"
+    />
+    <LotMergeDialog
+      v-model:visible="lotDialog.merge"
+      :collection-id="id"
+      :schema="schema"
+      :lot="lot"
+      @done="afterChange"
+    />
   </div>
 </template>
 
@@ -193,13 +193,18 @@ import { useNotify } from "@/composables/useNotify";
 import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import { MOBILE_QUERY, useMediaQuery } from "@/composables/useMediaQuery";
 import { itemLabel, typeTitle, type Schema } from "@/lib/schema";
+import { emptyLotQuery, lotQueryParams } from "@/lib/lots";
+import { useMetaTypes } from "@/stores/metaTypes";
 import AppSpinner from "@/components/common/AppSpinner.vue";
-import DynamicForm from "@/components/common/DynamicForm.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
 import type { ExportFormat } from "@/components/common/ExportButton.vue";
 import CollectionMoreMenu from "@/components/collection/CollectionMoreMenu.vue";
 import CollectionAddItemDialog from "@/components/collection/CollectionAddItemDialog.vue";
 import CollectionItemList from "@/components/collection/CollectionItemList.vue";
+import CollectionItemsToolbar from "@/components/collection/CollectionItemsToolbar.vue";
+import LotEditDialog from "@/components/collection/LotEditDialog.vue";
+import LotMergeDialog from "@/components/collection/LotMergeDialog.vue";
+import LotSplitDialog from "@/components/collection/LotSplitDialog.vue";
 import CollectionShareDialog from "@/components/sharing/CollectionShareDialog.vue";
 import { defaultDelimiter } from "@/lib/csv";
 import type { Collection, CollectionItem } from "@/api/types";
@@ -220,8 +225,30 @@ const isMobile = useMediaQuery(MOBILE_QUERY);
 const collection = ref<Collection | null>(null);
 const loading = ref(true);
 
+// Recherche et tri des lots (P7-1) : type d'item, texte, lots de plusieurs exemplaires.
+const lotQuery = ref(emptyLotQuery());
+const filtered = computed(() =>
+  Object.keys(lotQueryParams(lotQuery.value)).some((k) => k !== "sort"),
+);
+const metaTypes = useMetaTypes();
+/** Types d'item proposés : ceux que le type de collection permet (tous s'il ne limite rien). */
+const filterTypes = computed(() => {
+  const allowed = collection.value?.collection_type?.item_type_ids ?? [];
+  return allowed.length
+    ? metaTypes.itemTypes.filter((it) => allowed.includes(it.id))
+    : metaTypes.itemTypes;
+});
+
+function onFilter() {
+  items.goToPage(1);
+  items.load().catch((e) => notifyError(e, t("collections.loadFailed")));
+}
+
 const items = usePagination((params: Record<string, unknown>) =>
-  collectionApi.listItems(props.id, params),
+  collectionApi.listItems(props.id, {
+    ...params,
+    ...lotQueryParams(lotQuery.value),
+  }),
 );
 
 const schema = computed(
@@ -243,15 +270,24 @@ const tab = ref<"items" | "stats">("items");
 const statsVersion = ref(0);
 const saving = ref(false);
 
-// Edit item
-const editDialogVisible = ref(false);
-const editingItemId = ref("");
-const editAttributes = ref<Record<string, unknown>>({});
-const editFormRef = ref<InstanceType<typeof DynamicForm> | null>(null);
-// « Enregistrer » reste grisé tant que rien n'a changé.
-const { dirty: editDirty, markClean: markEditClean } = useDirty(
-  () => editAttributes.value,
-);
+// Lot visé par les dialogues « Modifier », « Scinder » et « Fusionner » (P7-1).
+const lot = ref<CollectionItem | null>(null);
+const lotDialog = ref({ edit: false, split: false, merge: false });
+
+function openLot(kind: "edit" | "split" | "merge", ci: CollectionItem) {
+  lot.value = ci;
+  lotDialog.value[kind] = true;
+}
+
+/** « 12 items », ou « 12 items · 45 exemplaires » quand des lots en comptent plusieurs. */
+const countLabel = computed(() => {
+  const c = collection.value;
+  if (!c) return "";
+  const items = t("collections.itemCount", c.item_count);
+  return c.copy_count > c.item_count
+    ? `${items} · ${t("collections.lots.copies", c.copy_count)}`
+    : items;
+});
 
 // ── Collection elle-même : nom et description, suppression (menu « Plus ») ──
 const colDialogVisible = ref(false);
@@ -308,6 +344,7 @@ async function confirmDeleteCollection() {
 onMounted(async () => {
   try {
     collection.value = await collectionApi.get(props.id); // collection_type est toujours joint par l'API
+    metaTypes.loadItemTypes().catch((e) => notifyError(e));
     await items.load();
   } catch (e) {
     notifyError(e, t("collections.detail.notFound"));
@@ -340,31 +377,6 @@ function ciLabel(ci: CollectionItem): string {
   return itemLabel(ci.item, lang.value);
 }
 
-function openEditItem(ci: CollectionItem) {
-  editingItemId.value = ci.item_id;
-  editAttributes.value = { ...(ci.attributes ?? {}) };
-  markEditClean();
-  editDialogVisible.value = true;
-}
-
-async function updateItem() {
-  if (editFormRef.value && !editFormRef.value.validate()) return;
-  saving.value = true;
-  try {
-    await collectionApi.updateItem(props.id, editingItemId.value, {
-      attributes: editAttributes.value,
-    });
-    notifySuccess(t("collections.detail.attributesUpdated"));
-    editDialogVisible.value = false;
-    statsVersion.value++;
-    await items.load();
-  } catch (e) {
-    notifyError(e);
-  } finally {
-    saving.value = false;
-  }
-}
-
 async function confirmRemove(ci: CollectionItem) {
   const ok = await confirm({
     message: t("collections.detail.confirmRemove", { label: ciLabel(ci) }),
@@ -373,7 +385,7 @@ async function confirmRemove(ci: CollectionItem) {
   });
   if (!ok) return;
   try {
-    await collectionApi.removeItem(props.id, ci.item_id);
+    await collectionApi.removeLot(props.id, ci.id);
     notifySuccess(t("collections.detail.itemRemoved"));
     await afterChange();
   } catch (e) {

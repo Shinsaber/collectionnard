@@ -2,9 +2,13 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 	"slices"
+	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/shinsaber/colec/internal/middleware"
 	"github.com/shinsaber/colec/internal/model"
 	"github.com/shinsaber/colec/internal/privacy"
@@ -152,16 +156,12 @@ func (h *Handler) ListCollectionItems(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pg := parsePagination(r)
-	itemTypeID, ok := parseOptionalUUID(w, r, "item_type_id")
-	if !ok {
-		return
-	}
-	sort, ok := parseSort(w, r)
+	f, ok := h.parseCollectionItemFilters(w, r)
 	if !ok {
 		return
 	}
 
-	items, total, err := h.Store.ListCollectionItems(r.Context(), colID, pg, itemTypeID, sort)
+	items, total, err := h.Store.ListCollectionItems(r.Context(), colID, pg, f)
 	if err != nil {
 		handleStoreError(w, r, err)
 		return
@@ -193,6 +193,9 @@ func (h *Handler) AddItemToCollection(w http.ResponseWriter, r *http.Request) {
 	if len(in.Attributes) == 0 {
 		in.Attributes = json.RawMessage(`{}`)
 	}
+	if in.Quantity != nil && !validQuantity(w, *in.Quantity) {
+		return
+	}
 
 	// Validate attributes against collection type schema
 	ct, err := h.Store.GetCollectionType(r.Context(), col.CollectionTypeID)
@@ -222,10 +225,6 @@ func (h *Handler) AddItemToCollection(w http.ResponseWriter, r *http.Request) {
 
 	ci, err := h.Store.AddCollectionItem(r.Context(), colID, in)
 	if err != nil {
-		if err == store.ErrConflict {
-			respondError(w, http.StatusConflict, "conflict", "this item is already in the collection")
-			return
-		}
 		handleStoreError(w, r, err)
 		return
 	}
@@ -237,7 +236,7 @@ func (h *Handler) UpdateCollectionItem(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	itemID, ok := parseUUID(w, r, "itemId")
+	lotID, ok := parseUUID(w, r, "lotId")
 	if !ok {
 		return
 	}
@@ -261,6 +260,9 @@ func (h *Handler) UpdateCollectionItem(w http.ResponseWriter, r *http.Request) {
 		respondMissingAttributes(w)
 		return
 	}
+	if in.Quantity != nil && !validQuantity(w, *in.Quantity) {
+		return
+	}
 
 	// Validate attributes
 	ct, err := h.Store.GetCollectionType(r.Context(), col.CollectionTypeID)
@@ -275,7 +277,7 @@ func (h *Handler) UpdateCollectionItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ci, err := h.Store.UpdateCollectionItem(r.Context(), colID, itemID, in)
+	ci, err := h.Store.UpdateCollectionItem(r.Context(), colID, lotID, in)
 	if err != nil {
 		handleStoreError(w, r, err)
 		return
@@ -288,7 +290,7 @@ func (h *Handler) RemoveItemFromCollection(w http.ResponseWriter, r *http.Reques
 	if !ok {
 		return
 	}
-	itemID, ok := parseUUID(w, r, "itemId")
+	lotID, ok := parseUUID(w, r, "lotId")
 	if !ok {
 		return
 	}
@@ -303,9 +305,154 @@ func (h *Handler) RemoveItemFromCollection(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if err := h.Store.RemoveCollectionItem(r.Context(), colID, itemID); err != nil {
+	if err := h.Store.RemoveCollectionItem(r.Context(), colID, lotID); err != nil {
 		handleStoreError(w, r, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// validQuantity answers 422 invalid_quantity outside 1..model.MaxQuantity.
+func validQuantity(w http.ResponseWriter, quantity int) bool {
+	if quantity < 1 || quantity > model.MaxQuantity {
+		respondError(w, http.StatusUnprocessableEntity, "invalid_quantity",
+			fmt.Sprintf("quantity must be between 1 and %d", model.MaxQuantity))
+		return false
+	}
+	return true
+}
+
+// respondLotError translates the errors of a split or a merge.
+func respondLotError(w http.ResponseWriter, r *http.Request, err error) {
+	switch {
+	case errors.Is(err, store.ErrInvalidQuantity):
+		respondError(w, http.StatusUnprocessableEntity, "invalid_quantity",
+			"a split leaves at least one copy, a merge at most "+strconv.Itoa(model.MaxQuantity))
+	case errors.Is(err, store.ErrNotMergeable):
+		respondError(w, http.StatusUnprocessableEntity, "lots_not_mergeable",
+			"only two different lots of the same item can be merged")
+	default:
+		handleStoreError(w, r, err)
+	}
+}
+
+// SplitCollectionLot moves copies of a lot to a new lot (P7-1).
+func (h *Handler) SplitCollectionLot(w http.ResponseWriter, r *http.Request) {
+	col, ok := h.ownCollection(w, r, "collectionId")
+	if !ok {
+		return
+	}
+	lotID, ok := parseUUID(w, r, "lotId")
+	if !ok {
+		return
+	}
+	var in model.CollectionLotSplit
+	if err := decodeJSON(w, r, &in); err != nil {
+		respondDecodeError(w, err)
+		return
+	}
+	if !validQuantity(w, in.Quantity) {
+		return
+	}
+	if len(in.Attributes) > 0 {
+		ct, err := h.Store.GetCollectionType(r.Context(), col.CollectionTypeID)
+		if err != nil {
+			handleStoreError(w, r, err)
+			return
+		}
+		if vErr := validator.ValidateAttributes(ct.AttributesSchema, in.Attributes); vErr != nil {
+			respondValidationError(w, "attributes do not match the collection type schema", map[string]any{
+				"fields": validator.FormatValidationError(vErr),
+			})
+			return
+		}
+	}
+	lot, err := h.Store.SplitCollectionLot(r.Context(), col.ID, lotID, in.Quantity, in.Attributes)
+	if err != nil {
+		respondLotError(w, r, err)
+		return
+	}
+	respondJSON(w, http.StatusCreated, lot)
+}
+
+// MergeCollectionLot adds the copies of a lot to another lot of the same item (P7-1).
+func (h *Handler) MergeCollectionLot(w http.ResponseWriter, r *http.Request) {
+	col, ok := h.ownCollection(w, r, "collectionId")
+	if !ok {
+		return
+	}
+	lotID, ok := parseUUID(w, r, "lotId")
+	if !ok {
+		return
+	}
+	var in model.CollectionLotMerge
+	if err := decodeJSON(w, r, &in); err != nil {
+		respondDecodeError(w, err)
+		return
+	}
+	if in.Into == uuid.Nil {
+		respondValidationError(w, "into is required", nil)
+		return
+	}
+	var galleries []string
+	if col.CollectionType != nil {
+		galleries = galleryKeys(col.CollectionType.AttributesSchema)
+	}
+	lot, err := h.Store.MergeCollectionLots(r.Context(), col.ID, lotID, in.Into, galleries)
+	if err != nil {
+		respondLotError(w, r, err)
+		return
+	}
+	respondJSON(w, http.StatusOK, lot)
+}
+
+// lotSortFields are the non-attribute sorts of GET /collections/{id}/items.
+var lotSortFields = map[string]bool{"created_at": true, "updated_at": true, "quantity": true, "relevance": true}
+
+// parseCollectionItemFilters reads the search of the lots of a collection
+// (P7-1): the catalogue search (type, text, attributes, attribute sort) and
+// `multiple`. It answers 400 and returns ok=false on any invalid parameter.
+func (h *Handler) parseCollectionItemFilters(w http.ResponseWriter, r *http.Request) (store.CollectionItemFilters, bool) {
+	q := r.URL.Query()
+	var f store.CollectionItemFilters
+	itemTypeID, ok := parseOptionalUUID(w, r, "item_type_id")
+	if !ok {
+		return f, false
+	}
+	if len(q.Get("search")) > maxSearchLength {
+		respondError(w, http.StatusBadRequest, "bad_request",
+			fmt.Sprintf("search is limited to %d characters", maxSearchLength))
+		return f, false
+	}
+	switch q.Get("multiple") {
+	case "", "false":
+	case "true":
+		f.Multiple = true
+	default:
+		respondError(w, http.StatusBadRequest, "bad_request", "multiple must be true or false")
+		return f, false
+	}
+	f.ItemTypeID, f.Search = itemTypeID, q.Get("search")
+	return f, h.parseItemSearch(w, r, &f.ItemFilters, lotSortFields)
+}
+
+// galleryKeys lists the image galleries (`x-widget: image-gallery`) of a
+// schema, whose photos follow the copies of a merged lot.
+func galleryKeys(schema json.RawMessage) []string {
+	var root struct {
+		Properties map[string]struct {
+			Widget string `json:"x-widget"`
+		} `json:"properties"`
+	}
+	if json.Unmarshal(schema, &root) != nil {
+		return nil
+	}
+	var keys []string
+	for k, p := range root.Properties {
+		if p.Widget == "image-gallery" {
+			keys = append(keys, k)
+		}
+	}
+	slices.Sort(keys)
+	return keys
 }

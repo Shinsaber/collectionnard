@@ -219,7 +219,8 @@ func (h *Handler) ExportCollection(w http.ResponseWriter, r *http.Request) {
 	var entries []model.CollectionItem
 	for page := 1; len(entries) < maxExportRows; page++ {
 		batch, total, err := h.Store.ListCollectionItems(r.Context(), id,
-			model.Pagination{Page: page, PerPage: exportPageSize}, nil, "created_at")
+			model.Pagination{Page: page, PerPage: exportPageSize},
+			store.CollectionItemFilters{ItemFilters: store.ItemFilters{Sort: "created_at"}})
 		if err != nil {
 			handleStoreError(w, r, err)
 			return
@@ -240,7 +241,9 @@ func (h *Handler) ExportCollection(w http.ResponseWriter, r *http.Request) {
 	}
 	rows := make([]model.CollectionExportItem, len(entries))
 	for i, e := range entries {
-		row := model.CollectionExportItem{ItemID: e.ItemID, Attributes: e.Attributes, AddedAt: e.CreatedAt}
+		row := model.CollectionExportItem{
+			ID: e.ID, ItemID: e.ItemID, Quantity: e.Quantity, Attributes: e.Attributes, AddedAt: e.CreatedAt,
+		}
 		if e.Item != nil {
 			row.ItemAttributes = e.Item.Attributes
 			if e.Item.ItemType != nil {
@@ -267,7 +270,7 @@ func (h *Handler) ExportCollection(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cols := csvexport.Columns(ctSchema)
-	head := []string{"item_id", "item_type", "label"}
+	head := []string{"lot_id", "item_id", "item_type", "label", "quantity"}
 	for _, c := range cols {
 		head = append(head, c.Header())
 	}
@@ -278,7 +281,7 @@ func (h *Handler) ExportCollection(w http.ResponseWriter, r *http.Request) {
 	}
 	_ = cw.Write(append(head, "added_at"))
 	for _, row := range rows {
-		line := []string{row.ItemID.String(), row.ItemType, csvexport.Text(row.Label)}
+		line := []string{row.ID.String(), row.ItemID.String(), row.ItemType, csvexport.Text(row.Label), strconv.Itoa(row.Quantity)}
 		line = append(line, csvexport.Values(cols, row.Attributes)...)
 		_ = cw.Write(append(line, row.AddedAt.UTC().Format(time.RFC3339)))
 	}

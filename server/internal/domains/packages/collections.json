@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "collections",
-  "package_version": 4,
+  "package_version": 5,
   "title": {
     "fr": "Collections",
     "en": "Collections"
@@ -24,6 +24,7 @@
         "x-order": [
           "condition",
           "purchase_price",
+          "estimated_value",
           "acquisition_date",
           "photos"
         ],
@@ -34,15 +35,17 @@
         "x-labels": {
           "en": {
             "condition": "Physical Condition",
-            "purchase_price": "Purchase Price",
+            "purchase_price": "Purchase Price (per Copy)",
             "acquisition_date": "Acquisition Date",
-            "photos": "Photos of the copy"
+            "photos": "Photos of the copy",
+            "estimated_value": "Estimated Value (per Copy)"
           },
           "fr": {
             "condition": "État physique",
-            "purchase_price": "Prix d'achat",
+            "purchase_price": "Prix d'achat (unitaire)",
             "acquisition_date": "Date d'acquisition",
-            "photos": "Photos de l'exemplaire"
+            "photos": "Photos de l'exemplaire",
+            "estimated_value": "Valeur estimée (unitaire)"
           }
         },
         "properties": {
@@ -100,6 +103,11 @@
                 "ratio": "3/4"
               }
             }
+          },
+          "estimated_value": {
+            "type": "number",
+            "minimum": 0,
+            "x-private": true
           }
         },
         "x-description": {

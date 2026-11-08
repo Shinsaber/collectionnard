@@ -391,9 +391,9 @@ func TestCollections_OwnerChecks_Coverage(t *testing.T) {
 			}
 			return &out, nil
 		},
-		ListCollectionItemsFn: func(_ context.Context, colID uuid.UUID, pg model.Pagination, itID *uuid.UUID, sort string) ([]model.CollectionItem, int, error) {
-			if sort != "-created_at" {
-				t.Errorf("sort not forwarded: %q", sort)
+		ListCollectionItemsFn: func(_ context.Context, colID uuid.UUID, pg model.Pagination, f store.CollectionItemFilters) ([]model.CollectionItem, int, error) {
+			if f.Sort != "-created_at" {
+				t.Errorf("sort not forwarded: %q", f.Sort)
 			}
 			return []model.CollectionItem{{ID: uuid.New(), CollectionID: colID, ItemID: itemID, Attributes: emptyJSON}}, 1, nil
 		},
@@ -431,14 +431,14 @@ func TestCollections_OwnerChecks_Coverage(t *testing.T) {
 		{"list other's collection items → 404", "GET", "/collections/" + theirs.ID.String() + "/items", testutil.UserToken(), "", mock, 404, nil},
 		{"list collection items bad filter", "GET", "/collections/" + mine.ID.String() + "/items?item_type_id=x", testutil.UserToken(), "", mock, 400, nil},
 
-		{"remove item from own collection", "DELETE", "/collections/" + mine.ID.String() + "/items/" + itemID.String(), testutil.UserToken(), "", mock, 204,
+		{"remove item from own collection", "DELETE", "/collections/" + mine.ID.String() + "/lots/" + itemID.String(), testutil.UserToken(), "", mock, 204,
 			func(t *testing.T, _ []byte) {
 				if !removed {
 					t.Error("store.RemoveCollectionItem not called")
 				}
 			}},
-		{"remove item from other's collection → 404", "DELETE", "/collections/" + theirs.ID.String() + "/items/" + itemID.String(), testutil.UserToken(), "", mock, 404, nil},
-		{"remove unknown item", "DELETE", "/collections/" + mine.ID.String() + "/items/" + uuid.New().String(), testutil.UserToken(), "", mock, 404, nil},
+		{"remove item from other's collection → 404", "DELETE", "/collections/" + theirs.ID.String() + "/lots/" + itemID.String(), testutil.UserToken(), "", mock, 404, nil},
+		{"remove unknown item", "DELETE", "/collections/" + mine.ID.String() + "/lots/" + uuid.New().String(), testutil.UserToken(), "", mock, 404, nil},
 	})
 }
 

@@ -53,6 +53,10 @@ export default {
       "Source externe (Wikidata, BnF) injoignable, réessayez plus tard",
     item_type_not_allowed:
       "Ce type d'item n'est pas permis dans ce type de collection",
+    invalid_quantity:
+      "Quantité impossible : de 1 à 100 000 exemplaires, et un lot scindé en garde au moins un",
+    lots_not_mergeable:
+      "Seuls deux lots différents du même item peuvent fusionner",
     account_disabled:
       "Ce compte est désactivé : contactez un admin de l'instance.",
     invalid_invitation:

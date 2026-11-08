@@ -47,7 +47,7 @@
         row-key="id"
         size="small"
         class="cursor-pointer"
-        @current-change="selectedItem = $event"
+        @current-change="selectItem"
       >
         <ElTableColumn :label="t('common.type')" width="110">
           <template #default="{ row }">{{
@@ -61,7 +61,15 @@
         </ElTableColumn>
       </ElTable>
 
-      <div v-if="selectedItem && schema">
+      <LotTargetPicker
+        v-if="selectedItem"
+        v-model:target="target"
+        v-model:quantity="quantity"
+        :lots="lots"
+        :schema="schema"
+      />
+
+      <div v-if="selectedItem && schema && target === 'new'">
         <h4 class="mb-2 text-sm font-medium">
           {{ t("collections.detail.contextAttributes") }}
         </h4>
@@ -74,7 +82,7 @@
       }}</ElButton>
       <ElButton
         type="primary"
-        :disabled="!selectedItem"
+        :disabled="!selectedItem || !target"
         :loading="saving"
         @click="addItem"
       >
@@ -88,14 +96,16 @@
 <script setup lang="ts">
 import { computed, ref, useId } from "vue";
 import { useI18n } from "vue-i18n";
-import { collectionApi, itemApi } from "@/api/client";
+import { itemApi } from "@/api/client";
 import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";
 import { useMetaTypes } from "@/stores/metaTypes";
 import { itemLabel, typeTitle, type Schema } from "@/lib/schema";
+import { addCopies, lotsIn, type LotTarget } from "@/lib/lots";
 import DynamicForm from "@/components/common/DynamicForm.vue";
 import ScanButton from "@/components/common/ScanButton.vue";
-import type { Item } from "@/api/types";
+import LotTargetPicker from "./LotTargetPicker.vue";
+import type { Item, ItemCollectionMembership } from "@/api/types";
 
 const props = defineProps<{
   collectionId: string;
@@ -126,12 +136,34 @@ const selectedItem = ref<Item | null>(null);
 const attributes = ref<Record<string, unknown>>({});
 const formRef = ref<InstanceType<typeof DynamicForm> | null>(null);
 const saving = ref(false);
+/** Lots de l'item choisi dans cette collection : l'ajouter de nouveau demande quel lot augmenter (P7-1). */
+const lots = ref<ItemCollectionMembership[]>([]);
+const target = ref<LotTarget>("");
+const quantity = ref(1);
+
+async function selectItem(item: Item | null) {
+  selectedItem.value = item;
+  lots.value = [];
+  target.value = "";
+  if (!item) return;
+  try {
+    lots.value = lotsIn(await itemApi.collections(item.id), props.collectionId);
+  } catch (e) {
+    notifyError(e);
+  }
+  // La sélection a pu changer pendant le chargement.
+  if (selectedItem.value === item)
+    target.value = lots.value.length ? "" : "new";
+}
 
 async function reset() {
   searchText.value = "";
   searchResults.value = [];
   selectedItem.value = null;
   attributes.value = {};
+  lots.value = [];
+  target.value = "";
+  quantity.value = 1;
   typeFilter.value = undefined;
   if (!props.allowedTypeIds?.length) return;
   await metaTypes.loadItemTypes().catch((e) => notifyError(e));
@@ -158,14 +190,19 @@ function onScanned(code: string) {
 }
 
 async function addItem() {
-  if (!selectedItem.value) return;
-  if (formRef.value && !formRef.value.validate()) return;
+  if (!selectedItem.value || !target.value) return;
+  if (target.value === "new" && formRef.value && !formRef.value.validate())
+    return;
   saving.value = true;
   try {
-    await collectionApi.addItem(props.collectionId, {
-      item_id: selectedItem.value.id,
-      attributes: attributes.value,
-    });
+    await addCopies(
+      props.collectionId,
+      selectedItem.value.id,
+      target.value,
+      quantity.value,
+      attributes.value,
+      lots.value,
+    );
     notifySuccess(t("collections.detail.itemAdded"));
     visible.value = false;
     emit("added");

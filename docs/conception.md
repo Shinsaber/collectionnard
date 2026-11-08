@@ -136,7 +136,9 @@ Instance d'un lien entre deux items, avec les valeurs des attributs dynamiques d
 
 #### CollectionItem
 
-Instance du lien entre une collection et un item, avec les valeurs des attributs dynamiques définis par le CollectionType (état, prix…).
+**Lot** d'une collection (P7-1) : un ou plusieurs exemplaires identiques d'un item (`quantity`), avec les valeurs des
+attributs dynamiques définis par le CollectionType (état, prix unitaire…). Un même item peut former plusieurs lots d'une
+collection (un état ou une finition différents).
 
 #### Tag
 
@@ -225,7 +227,7 @@ d'autres codes de langue, et les traductions de types / champs / enums se compl�
 | CollectionType | Attributs du lien CollectionItem |
 | ReviewType | Critères notés d'un avis (`docs/phases/interactions.md`) |
 | -------------- | -------------------------------------------------------------------------- |
-| Ownership | condition (new/very_good/good/fair/poor), purchase_price, acquisition_date |
+| Ownership | condition (new/very_good/good/fair/poor), purchase_price et estimated_value (unitaires, privés), acquisition_date, photos |
 | Watching | watched_at, rating, progress |
 | Wishlist | priority, max_budget |
 
@@ -543,6 +545,20 @@ Avant l'ouverture publique : cadre légal et RGPD (voir les « Questions transve
 - [x] **I-2 — Commentaires** (livré le 2026-11-07) : fil sur les avis, notifications.
 - [x] **I-3 — Articles sur la fiche d'un item** (livré le 2026-11-07) : partage de nouvelles (titre, message, lien), fil de commentaires.
 - [x] **I-4 — Recommandations** (livré le 2026-11-07) : envoyer une fiche à un membre avec un mot ; refus et blocage d'un membre.
+
+### Phase 7 : Exemplaires, amis, prêts et cadeaux
+
+Ouverte le 2026-11-07 après la fusion de la Phase 6 (conception et décisions : `docs/phases/exemplaires-prets.md`), un commit par lot.
+Décisions : une ligne de collection par lot, avec une quantité, sur tous les types ; amitié réciproque et visibilité `friends` ;
+prêts et réservations dans deux tables distinctes ; emprunteur et offrant choisis parmi les amis (ou un simple nom pour un prêt).
+
+- [x] **P7-1 — Exemplaires multiples** (livré le 2026-11-08) : lots avec quantité, scission et fusion, routes adressées par lot (rupture d'API),
+      `estimated_value` sur Possession (paquet `collections` v5), statistiques, import / export, hors ligne.
+- [ ] **P7-1b — Types d'item acceptés et tri par défaut** : une collection resserre les types d'item de son type de collection
+      (spécialisée = un seul type, tris par ses attributs) ; tri par défaut appliqué aussi aux pages publiques.
+- [ ] **P7-2 — Amis** : demandes et acceptation, niveau de visibilité `friends` (collections, profil, avis).
+- [ ] **P7-3 — Prêts** : à un ami ou à un simple nom, retour prévu, rappels, historique, drapeau privé, page « Mes emprunts ».
+- [ ] **P7-4 — Cadeaux réservés** : réservation par les amis dans une liste de souhaits, jamais visible du propriétaire.
 
 ---
 

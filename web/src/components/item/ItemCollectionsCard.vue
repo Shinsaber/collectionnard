@@ -6,7 +6,7 @@
     </h2>
     <article
       v-for="m in memberships"
-      :key="m.collection.id"
+      :key="m.lot_id"
       class="flex flex-col gap-3 rounded-2xl bg-surface p-4.5 shadow-card"
     >
       <div class="flex min-w-0 flex-col">
@@ -15,9 +15,12 @@
           class="truncate text-base font-bold text-ink hover:text-link"
           >{{ m.collection.name }}</RouterLink
         >
-        <span class="text-[13px] text-muted">{{
-          typeTitle(m.collection.collection_type, lang) || "?"
-        }}</span>
+        <span class="text-[13px] text-muted"
+          >{{ typeTitle(m.collection.collection_type, lang) || "?" }}
+          <template v-if="m.quantity > 1">
+            · {{ t("collections.lots.copies", m.quantity) }}</template
+          ></span
+        >
       </div>
       <dl v-if="keysOf(m).length" class="flex flex-col gap-2">
         <div

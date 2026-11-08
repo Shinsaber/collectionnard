@@ -81,10 +81,12 @@ type MockStore struct {
 	CreateCollectionFn           func(ctx context.Context, userID uuid.UUID, in model.CollectionCreate) (*model.Collection, error)
 	UpdateCollectionFn           func(ctx context.Context, id uuid.UUID, in model.CollectionUpdate) (*model.Collection, error)
 	DeleteCollectionFn           func(ctx context.Context, id uuid.UUID) error
-	ListCollectionItemsFn        func(ctx context.Context, colID uuid.UUID, pg model.Pagination, itID *uuid.UUID, sort string) ([]model.CollectionItem, int, error)
+	ListCollectionItemsFn        func(ctx context.Context, colID uuid.UUID, pg model.Pagination, f store.CollectionItemFilters) ([]model.CollectionItem, int, error)
 	AddCollectionItemFn          func(ctx context.Context, colID uuid.UUID, in model.CollectionItemAdd) (*model.CollectionItem, error)
 	UpdateCollectionItemFn       func(ctx context.Context, colID, itemID uuid.UUID, in model.CollectionItemUpdate) (*model.CollectionItem, error)
 	RemoveCollectionItemFn       func(ctx context.Context, colID, itemID uuid.UUID) error
+	SplitCollectionLotFn         func(ctx context.Context, colID, lotID uuid.UUID, quantity int, attrs json.RawMessage) (*model.CollectionItem, error)
+	MergeCollectionLotsFn        func(ctx context.Context, colID, lotID, into uuid.UUID, galleries []string) (*model.CollectionItem, error)
 	ListItemCollectionsFn        func(ctx context.Context, userID, itemID uuid.UUID) ([]model.ItemCollectionMembership, error)
 	ListTagsFn                   func(ctx context.Context, search string) ([]model.Tag, error)
 	GetStatsFn                   func(ctx context.Context) (*model.Stats, error)
@@ -687,9 +689,9 @@ func (m *MockStore) DeleteCollection(ctx context.Context, id uuid.UUID) error {
 	}
 	return store.ErrNotFound
 }
-func (m *MockStore) ListCollectionItems(ctx context.Context, colID uuid.UUID, pg model.Pagination, itID *uuid.UUID, sort string) ([]model.CollectionItem, int, error) {
+func (m *MockStore) ListCollectionItems(ctx context.Context, colID uuid.UUID, pg model.Pagination, f store.CollectionItemFilters) ([]model.CollectionItem, int, error) {
 	if m.ListCollectionItemsFn != nil {
-		return m.ListCollectionItemsFn(ctx, colID, pg, itID, sort)
+		return m.ListCollectionItemsFn(ctx, colID, pg, f)
 	}
 	return nil, 0, nil
 }
@@ -710,6 +712,18 @@ func (m *MockStore) RemoveCollectionItem(ctx context.Context, colID, itemID uuid
 		return m.RemoveCollectionItemFn(ctx, colID, itemID)
 	}
 	return store.ErrNotFound
+}
+func (m *MockStore) SplitCollectionLot(ctx context.Context, colID, lotID uuid.UUID, quantity int, attrs json.RawMessage) (*model.CollectionItem, error) {
+	if m.SplitCollectionLotFn != nil {
+		return m.SplitCollectionLotFn(ctx, colID, lotID, quantity, attrs)
+	}
+	return nil, store.ErrNotFound
+}
+func (m *MockStore) MergeCollectionLots(ctx context.Context, colID, lotID, into uuid.UUID, galleries []string) (*model.CollectionItem, error) {
+	if m.MergeCollectionLotsFn != nil {
+		return m.MergeCollectionLotsFn(ctx, colID, lotID, into, galleries)
+	}
+	return nil, store.ErrNotFound
 }
 func (m *MockStore) ListItemCollections(ctx context.Context, userID, itemID uuid.UUID) ([]model.ItemCollectionMembership, error) {
 	if m.ListItemCollectionsFn != nil {

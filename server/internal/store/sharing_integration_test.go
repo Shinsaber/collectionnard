@@ -114,10 +114,10 @@ func TestVisibilityAndSharing(t *testing.T) {
 		t.Fatal(err)
 	}
 	full, err := st.GetCollectionStats(ctx, col.ID, nil)
-	if err != nil || len(full.Numbers) != 1 || len(full.ItemTypes) != 1 || full.ItemTypes[0].ID != volume {
+	if err != nil || len(full.Numbers) != 2 || len(full.ItemTypes) != 1 || full.ItemTypes[0].ID != volume {
 		t.Fatalf("owner stats: %v %+v", err, full)
 	}
-	public, err := st.GetCollectionStats(ctx, col.ID, []string{"purchase_price"})
+	public, err := st.GetCollectionStats(ctx, col.ID, []string{"purchase_price", "estimated_value"})
 	if err != nil || len(public.Numbers) != 0 || len(public.Distributions) != 1 {
 		t.Errorf("stats without the hidden field: %v %+v", err, public)
 	}

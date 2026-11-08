@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/shinsaber/colec/internal/itemquery"
@@ -60,23 +62,27 @@ func (h *Handler) parseItemFilters(w http.ResponseWriter, r *http.Request) (stor
 		RelatedTo:      relatedTo,
 		RelationTypeID: relationTypeID,
 	}
-	return filters, h.parseItemSearch(w, r, &filters)
+	return filters, h.parseItemSearch(w, r, &filters, itemSortFields)
 }
 
 // itemSortFields are the non-attribute sorts of GET /items.
 var itemSortFields = map[string]bool{"created_at": true, "updated_at": true, "relevance": true}
 
-// parseItemSearch validates `sort` and the attribute filters (`attr.<key>[.<op>]`)
-// against the schema of item_type_id, which they require. It answers 400 and
-// returns false on any invalid parameter.
-func (h *Handler) parseItemSearch(w http.ResponseWriter, r *http.Request, f *store.ItemFilters) bool {
+// parseItemSearch validates `sort` (fields, or attr.<key>) and the attribute
+// filters (`attr.<key>[.<op>]`) against the schema of item_type_id, which they
+// require. It answers 400 and returns false on any invalid parameter.
+func (h *Handler) parseItemSearch(w http.ResponseWriter, r *http.Request, f *store.ItemFilters, fields map[string]bool) bool {
 	q := r.URL.Query()
 	sort := q.Get("sort")
+	invalidSort := func() bool {
+		names := slices.Sorted(maps.Keys(fields))
+		respondError(w, http.StatusBadRequest, "bad_request", "invalid sort: accepted values are "+
+			strings.Join(names, ", ")+", attr.<key> (prefix with - for descending)")
+		return false
+	}
 	if !itemquery.HasAttrParams(q) {
-		if sort != "" && !itemSortFields[strings.TrimPrefix(sort, "-")] {
-			respondError(w, http.StatusBadRequest, "bad_request",
-				"invalid sort: accepted values are created_at, updated_at, relevance, attr.<key> (prefix with - for descending)")
-			return false
+		if sort != "" && !fields[strings.TrimPrefix(sort, "-")] {
+			return invalidSort()
 		}
 		f.Sort = sort
 		return true
@@ -111,10 +117,8 @@ func (h *Handler) parseItemSearch(w http.ResponseWriter, r *http.Request, f *sto
 		return false
 	case isAttr:
 		f.SortAttr = &attrSort
-	case sort != "" && !itemSortFields[strings.TrimPrefix(sort, "-")]:
-		respondError(w, http.StatusBadRequest, "bad_request",
-			"invalid sort: accepted values are created_at, updated_at, relevance, attr.<key> (prefix with - for descending)")
-		return false
+	case sort != "" && !fields[strings.TrimPrefix(sort, "-")]:
+		return invalidSort()
 	default:
 		f.Sort = sort
 	}

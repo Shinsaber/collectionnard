@@ -216,6 +216,7 @@ type Collection struct {
 	Name             string          `json:"name"`
 	Description      *string         `json:"description,omitempty"`
 	ItemCount        int             `json:"item_count"`
+	CopyCount        int             `json:"copy_count"`
 	Visibility       string          `json:"visibility"`
 	// HiddenFields: nil = the x-private properties of the CollectionType (JSON null).
 	HiddenFields []string  `json:"hidden_fields"`
@@ -240,29 +241,50 @@ type CollectionUpdate struct {
 // CollectionItem
 // ---------------------------------------------------------------------------
 
+// CollectionItem is a lot (P7-1): one or more identical copies of an item in a
+// collection. An item may form several lots of the same collection.
 type CollectionItem struct {
 	ID           uuid.UUID       `json:"id"`
 	CollectionID uuid.UUID       `json:"collection_id"`
 	ItemID       uuid.UUID       `json:"item_id"`
 	Item         *Item           `json:"item,omitempty"`
+	Quantity     int             `json:"quantity"`
 	Attributes   json.RawMessage `json:"attributes"`
 	CreatedAt    time.Time       `json:"created_at"`
 	UpdatedAt    time.Time       `json:"updated_at"`
 }
 
+// MaxQuantity bounds the copies of a lot (CHECK of migration 020).
+const MaxQuantity = 100000
+
 type CollectionItemAdd struct {
 	ItemID     uuid.UUID       `json:"item_id"`
 	Attributes json.RawMessage `json:"attributes,omitempty"`
+	Quantity   *int            `json:"quantity,omitempty"` // absent: 1
 }
 
 type CollectionItemUpdate struct {
 	Attributes json.RawMessage `json:"attributes"`
+	Quantity   *int            `json:"quantity,omitempty"` // absent: unchanged
+}
+
+// CollectionLotSplit moves Quantity copies of a lot to a new lot of the same item.
+type CollectionLotSplit struct {
+	Quantity   int             `json:"quantity"`
+	Attributes json.RawMessage `json:"attributes,omitempty"` // absent: copy of the lot's
+}
+
+// CollectionLotMerge adds the copies of a lot to Into, then removes it.
+type CollectionLotMerge struct {
+	Into uuid.UUID `json:"into"`
 }
 
 // OfflineEntry: an item of one of the user's collections, with its contextual attributes.
 type OfflineEntry struct {
+	ID           uuid.UUID       `json:"id"`
 	CollectionID uuid.UUID       `json:"collection_id"`
 	ItemID       uuid.UUID       `json:"item_id"`
+	Quantity     int             `json:"quantity"`
 	Attributes   json.RawMessage `json:"attributes"`
 	AddedAt      time.Time       `json:"added_at"`
 }
@@ -286,6 +308,8 @@ type RelatedCollection struct {
 	ID               uuid.UUID       `json:"id"`
 	Name             string          `json:"name"`
 	CollectionTypeID uuid.UUID       `json:"collection_type_id"`
+	LotID            uuid.UUID       `json:"lot_id"`
+	Quantity         int             `json:"quantity"`
 	Attributes       json.RawMessage `json:"attributes"`
 }
 
@@ -296,10 +320,12 @@ type RelatedItemCollections struct {
 	Collections []RelatedCollection `json:"collections"`
 }
 
-// ItemCollectionMembership represents a collection that contains a given item,
-// along with the contextual attributes of the membership.
+// ItemCollectionMembership is a lot of a given item in a collection of the user
+// (one entry per lot), with its contextual attributes.
 type ItemCollectionMembership struct {
 	Collection Collection      `json:"collection"`
+	LotID      uuid.UUID       `json:"lot_id"`
+	Quantity   int             `json:"quantity"`
 	Attributes json.RawMessage `json:"attributes"`
 }
 

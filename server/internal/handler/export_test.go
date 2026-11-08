@@ -158,6 +158,7 @@ func TestExportCollection(t *testing.T) {
 		AttributesSchema: json.RawMessage(`{"type":"object","properties":{"condition":{"type":"string"}}}`)}
 	col := &model.Collection{ID: uuid.New(), UserID: testutil.UserID, Name: "Mes DVD", CollectionType: ct}
 	item := testutil.SampleItem()
+	lotID := uuid.New()
 	mock := &testutil.MockStore{
 		GetCollectionFn: func(_ context.Context, id uuid.UUID) (*model.Collection, error) {
 			if id != col.ID {
@@ -165,8 +166,8 @@ func TestExportCollection(t *testing.T) {
 			}
 			return col, nil
 		},
-		ListCollectionItemsFn: func(context.Context, uuid.UUID, model.Pagination, *uuid.UUID, string) ([]model.CollectionItem, int, error) {
-			return []model.CollectionItem{{ItemID: item.ID, Item: item, Attributes: json.RawMessage(`{"condition":"good"}`)}}, 1, nil
+		ListCollectionItemsFn: func(context.Context, uuid.UUID, model.Pagination, store.CollectionItemFilters) ([]model.CollectionItem, int, error) {
+			return []model.CollectionItem{{ID: lotID, ItemID: item.ID, Item: item, Quantity: 3, Attributes: json.RawMessage(`{"condition":"good"}`)}}, 1, nil
 		},
 	}
 	user := testutil.UserToken()
@@ -178,14 +179,14 @@ func TestExportCollection(t *testing.T) {
 	}
 	var exp model.CollectionExport
 	if err := json.Unmarshal([]byte(body), &exp); err != nil || exp.Format != model.CollectionFormat ||
-		len(exp.Items) != 1 || exp.Items[0].ItemType != "Serie" || exp.Collection.CollectionType.Name != "Ownership" {
+		len(exp.Items) != 1 || exp.Items[0].ItemType != "Serie" || exp.Items[0].ID != lotID || exp.Items[0].Quantity != 3 || exp.Collection.CollectionType.Name != "Ownership" {
 		t.Errorf("json body: %v %+v", err, exp)
 	}
 
 	resp, body = call(t, mock, "GET", path+"?format=csv", user, nil)
 	lines := strings.Split(strings.TrimPrefix(body, "\xef\xbb\xbf"), "\r\n")
-	if resp.StatusCode != http.StatusOK || lines[0] != "item_id,item_type,label,condition,added_at" ||
-		!strings.HasPrefix(lines[1], item.ID.String()+",Serie,") || !strings.Contains(lines[1], ",good,") {
+	if resp.StatusCode != http.StatusOK || lines[0] != "lot_id,item_id,item_type,label,quantity,condition,added_at" ||
+		!strings.HasPrefix(lines[1], lotID.String()+","+item.ID.String()+",Serie,Breaking Bad,3,") || !strings.Contains(lines[1], ",good,") {
 		t.Errorf("csv: %d %q", resp.StatusCode, lines)
 	}
 

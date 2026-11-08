@@ -37,11 +37,11 @@ func (s *PgStore) GetOfflineSnapshot(ctx context.Context, userID uuid.UUID) (*mo
 	}
 
 	rows, err := s.pool.Query(ctx, `
-		SELECT ci.collection_id, ci.item_id, ci.attributes, ci.created_at
+		SELECT ci.id, ci.collection_id, ci.item_id, ci.quantity, ci.attributes, ci.created_at
 		FROM collection_items ci
 		JOIN collections c ON c.id = ci.collection_id
 		WHERE c.user_id = $1
-		ORDER BY ci.collection_id, ci.created_at`, userID)
+		ORDER BY ci.collection_id, ci.created_at, ci.id`, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (s *PgStore) GetOfflineSnapshot(ctx context.Context, userID uuid.UUID) (*mo
 	snap.Entries = []model.OfflineEntry{}
 	for rows.Next() {
 		var e model.OfflineEntry
-		if err := rows.Scan(&e.CollectionID, &e.ItemID, &e.Attributes, &e.AddedAt); err != nil {
+		if err := rows.Scan(&e.ID, &e.CollectionID, &e.ItemID, &e.Quantity, &e.Attributes, &e.AddedAt); err != nil {
 			return nil, err
 		}
 		snap.Entries = append(snap.Entries, e)
