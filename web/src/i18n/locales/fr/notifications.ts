@@ -31,6 +31,10 @@ export default {
     friend_accepted: "{by} et vous êtes maintenant amis",
     loan_started: "{by} vous a prêté un item",
     loan_overdue: "Retour en retard : {borrower}",
+    gift_given: "{by} vous a offert un cadeau de votre liste",
+    gift_received: "{by} a bien reçu votre cadeau",
+    gift_declined:
+      "{by} indique ne pas avoir reçu votre cadeau : la réservation est annulée",
     gift_expiring: "Votre réservation pour {by} expire le {date}",
     gift_left_list: "Un cadeau réservé pour {by} a quitté sa liste",
     loan_overdue_borrowed: "{by} attend le retour d'un prêt",

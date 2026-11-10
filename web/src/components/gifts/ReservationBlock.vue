@@ -10,8 +10,14 @@
         t("gifts.flag", { names, n: reservedCopies(lot), total: lot.quantity })
       }}</span
     >
+    <span
+      v-if="mine && mine.status !== 'reserved'"
+      class="text-xs text-muted"
+      data-test="reserve-given"
+      >{{ t("gifts.given") }}</span
+    >
     <ElButton
-      v-if="mine || reservableCopies(lot) > 0"
+      v-else-if="mine || reservableCopies(lot) > 0"
       size="small"
       :type="mine ? 'default' : 'primary'"
       data-test="reserve"
@@ -38,10 +44,13 @@ const emit = defineEmits<{ reserve: [lot: CollectionItem] }>();
 const { t } = useI18n();
 
 const mine = computed(() => myReservation(props.lot));
-/** Offrants, moi compris (« vous »), dans l'ordre des réservations. */
+/** Offrants, moi compris (« vous »), dans l'ordre des réservations ; « (offert) » une fois remis (P7-4b). */
 const names = computed(() =>
   (props.lot.reservations ?? [])
-    .map((r) => (r.mine ? t("gifts.you") : personName(r.giver)))
+    .map((r) => {
+      const who = r.mine ? t("gifts.you") : personName(r.giver);
+      return r.status === "reserved" ? who : `${who} (${t("gifts.givenMark")})`;
+    })
     .join(", "),
 );
 </script>

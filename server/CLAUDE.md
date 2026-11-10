@@ -139,9 +139,12 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
   fusion déplace les prêts. Les prêts en cours ne sont joints qu'à la liste du propriétaire (`withActiveLoans`), jamais
   aux lectures publiques ; `forOwner` / `forBorrower` retirent le prêteur ou la note. `RunReminders` (toutes les heures,
   `main.go`) notifie `loan_overdue` une fois par échéance (`reminded_at`).
-- Cadeaux réservés (`handler/gift.go`, `store/gift.go`, P7-4, migrations 025–026) : **jamais lus pour le propriétaire de la
-  liste** — aucune de ses routes, listes, exports, statistiques ou copie hors ligne ne touche `gift_reservations` ; une
-  réservation de sa liste répond 404. Un ami lisant une liste `x-reservable` (`readable.canReserve`, jamais par lien de
+- Cadeaux réservés (`handler/gift.go`, `store/gift.go`, P7-4, migrations 025–027) : une réservation **non remise n'est
+  jamais lue pour le propriétaire de la liste** — ni ses listes, exports, statistiques ou copie hors ligne ; seules les
+  remises (`given`, P7-4b) lui sont jointes (`withGivenGifts` → `GivenGifts`), et `ownerGift` répond 404 à toute autre.
+  Remise (`HandOverReservation`, notifie `gift_given`), confirmation (`ReceiveGift` : le lot perd les exemplaires, nouveau
+  lot dans une autre collection qui accepte l'item, attributs validés ; `received`, `lot_id` NULL) ou refus
+  (`DeclineGift` : supprimée) ; un lot supprimé vaut réception de ses remises (déclencheur `gift_lot_deleted`). Un ami lisant une liste `x-reservable` (`readable.canReserve`, jamais par lien de
   partage) reçoit les réservations des lots (`withReservations`, `shapeReservation` : note de l'offrant à lui seul).
   Création verrouille le lot et compare `reservedCopies` (422 `reservation_exceeds_lot`) ; un lot supprimé laisse la
   réservation (`lot_id` NULL), `remindGifts` (dans `RunReminders`) prévient l'offrant une fois (`notified_at`). Durée

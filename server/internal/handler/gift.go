@@ -2,8 +2,11 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -12,6 +15,7 @@ import (
 	"github.com/shinsaber/colec/internal/middleware"
 	"github.com/shinsaber/colec/internal/model"
 	"github.com/shinsaber/colec/internal/store"
+	"github.com/shinsaber/colec/internal/validator"
 )
 
 // Gift reservations (P7-4, docs/phases/exemplaires-prets.md). A friend of the
@@ -153,7 +157,12 @@ func (h *Handler) ownReservation(w http.ResponseWriter, r *http.Request) (*model
 	return g, true
 }
 
-// UpdateReservation answers PUT /reservations/{id}: quantity, status (given), due date, note.
+func respondGiftState(w http.ResponseWriter) {
+	respondError(w, http.StatusConflict, "gift_state", "this gift is already handed over")
+}
+
+// UpdateReservation answers PUT /reservations/{id}: quantity, due date, note,
+// while the gift is not handed over (409 gift_state after).
 func (h *Handler) UpdateReservation(w http.ResponseWriter, r *http.Request) {
 	g, ok := h.ownReservation(w, r)
 	if !ok {
@@ -164,8 +173,8 @@ func (h *Handler) UpdateReservation(w http.ResponseWriter, r *http.Request) {
 		respondDecodeError(w, err)
 		return
 	}
-	if in.Status != model.GiftReserved && in.Status != model.GiftGiven {
-		respondValidationError(w, "status: reserved or given", map[string]any{"fields": map[string]string{"status": "reserved or given"}})
+	if g.Status != model.GiftReserved {
+		respondGiftState(w)
 		return
 	}
 	if !checkReservation(w, in.Quantity, &in.Note) {
@@ -186,6 +195,41 @@ func (h *Handler) UpdateReservation(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, updated)
 }
 
+// HandOverReservation answers POST /reservations/{id}/hand-over: the gift is
+// handed over, the surprise is over. The owner is told and, while the lot is
+// on the list, confirms or declines (P7-4b); its lot gone, it is received.
+func (h *Handler) HandOverReservation(w http.ResponseWriter, r *http.Request) {
+	g, ok := h.ownReservation(w, r)
+	if !ok {
+		return
+	}
+	if g.Status != model.GiftReserved {
+		respondGiftState(w)
+		return
+	}
+	done, err := h.Store.HandOverReservation(r.Context(), g.ID)
+	if errors.Is(err, store.ErrConflict) {
+		respondGiftState(w)
+		return
+	}
+	if err != nil {
+		handleStoreError(w, r, err)
+		return
+	}
+	payload := map[string]any{"reservation_id": done.ID, "item_id": done.ItemID}
+	if done.Giver != nil {
+		payload["by"] = done.Giver.Username
+	}
+	if done.CollectionID != nil {
+		payload["collection_id"] = *done.CollectionID
+	}
+	if err := h.Store.CreateNotifications(r.Context(), []uuid.UUID{done.OwnerID}, model.NotifyGiftGiven, payload); err != nil {
+		slog.WarnContext(r.Context(), "notification not recorded", "kind", model.NotifyGiftGiven, "err", err)
+	}
+	done.Mine, done.Giver = true, nil
+	respondJSON(w, http.StatusOK, done)
+}
+
 // DeleteReservation answers DELETE /reservations/{id}: the giver cancels.
 func (h *Handler) DeleteReservation(w http.ResponseWriter, r *http.Request) {
 	g, ok := h.ownReservation(w, r)
@@ -199,10 +243,16 @@ func (h *Handler) DeleteReservation(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// ListMyGifts answers GET /me/gifts: what I plan to give, to whom.
+// ListMyGifts answers GET /me/gifts: what I plan to give, to whom
+// (status: open, received; absent: all).
 func (h *Handler) ListMyGifts(w http.ResponseWriter, r *http.Request) {
+	status := r.URL.Query().Get("status")
+	if status != "" && status != "open" && status != "received" {
+		respondError(w, http.StatusBadRequest, "bad_request", "status must be open or received")
+		return
+	}
 	pg := parsePagination(r)
-	list, total, err := h.Store.ListGifts(r.Context(), middleware.GetUserID(r.Context()), pg)
+	list, total, err := h.Store.ListGifts(r.Context(), middleware.GetUserID(r.Context()), status, pg)
 	if err != nil {
 		handleStoreError(w, r, err)
 		return
@@ -264,4 +314,126 @@ func (h *Handler) remindLeftGifts(ctx context.Context) (int, error) {
 		}
 	}
 	return len(ids), err
+}
+
+// --- Côté propriétaire : les cadeaux remis (P7-4b) ---
+
+// withGivenGifts attaches to the lots of the owner's list the gifts handed
+// over, waiting for confirmation: never a reservation still secret.
+func (h *Handler) withGivenGifts(r *http.Request, lots []model.CollectionItem) error {
+	ids := make([]uuid.UUID, len(lots))
+	for i := range lots {
+		ids[i] = lots[i].ID
+	}
+	byLot, err := h.Store.GivenGifts(r.Context(), ids)
+	if err != nil {
+		return err
+	}
+	for i := range lots {
+		lots[i].Gifts = byLot[lots[i].ID]
+		for j := range lots[i].Gifts {
+			g := &lots[i].Gifts[j]
+			g.Note, g.Owner, g.Item = "", nil, nil // la note reste à l'offrant
+		}
+	}
+	return nil
+}
+
+// ownerGift loads a gift handed over on a lot of a collection of the reader (404 otherwise).
+func (h *Handler) ownerGift(w http.ResponseWriter, r *http.Request) (*model.Collection, *model.GiftReservation, bool) {
+	col, ok := h.ownCollection(w, r, "collectionId")
+	if !ok {
+		return nil, nil, false
+	}
+	id, ok := parseUUID(w, r, "id")
+	if !ok {
+		return nil, nil, false
+	}
+	g, err := h.Store.GetReservation(r.Context(), id)
+	if err != nil {
+		handleStoreError(w, r, err)
+		return nil, nil, false
+	}
+	// Une réservation encore secrète ne se distingue pas d'une inconnue.
+	if g.Status != model.GiftGiven || g.CollectionID == nil || *g.CollectionID != col.ID {
+		notFound(w)
+		return nil, nil, false
+	}
+	return col, g, true
+}
+
+func (h *Handler) notifyGiver(r *http.Request, g *model.GiftReservation, kind string) {
+	payload := map[string]any{"reservation_id": g.ID, "item_id": g.ItemID}
+	if g.Owner != nil {
+		payload["by"] = g.Owner.Username
+	}
+	if err := h.Store.CreateNotifications(r.Context(), []uuid.UUID{g.GiverID}, kind, payload); err != nil {
+		slog.WarnContext(r.Context(), "notification not recorded", "kind", kind, "err", err)
+	}
+}
+
+// ReceiveGift answers POST /collections/{collectionId}/gifts/{id}/receive:
+// the owner received the gift; its copies leave the list, into another of
+// their collections that accepts the item (a new lot, its attributes
+// validated), or simply removed if they already added it themselves.
+func (h *Handler) ReceiveGift(w http.ResponseWriter, r *http.Request) {
+	col, g, ok := h.ownerGift(w, r)
+	if !ok {
+		return
+	}
+	var in model.GiftReceive
+	if err := decodeJSON(w, r, &in); err != nil {
+		respondDecodeError(w, err)
+		return
+	}
+	if len(in.Attributes) == 0 {
+		in.Attributes = json.RawMessage(`{}`)
+	}
+	if in.CollectionID != nil {
+		if *in.CollectionID == col.ID {
+			respondValidationError(w, "collection_id: another collection",
+				map[string]any{"fields": map[string]string{"collection_id": "another collection"}})
+			return
+		}
+		into, err := h.Store.GetCollection(r.Context(), *in.CollectionID)
+		if err != nil {
+			handleStoreError(w, r, err)
+			return
+		}
+		if into.UserID != col.UserID || into.CollectionType == nil {
+			notFound(w)
+			return
+		}
+		if accepted := into.AcceptedItemTypes(); len(accepted) > 0 && !slices.Contains(accepted, g.Item.ItemTypeID) {
+			respondError(w, http.StatusUnprocessableEntity, "item_type_not_allowed",
+				"the collection does not accept items of type "+g.Item.ItemTypeID.String())
+			return
+		}
+		if vErr := validator.ValidateAttributes(into.CollectionType.AttributesSchema, in.Attributes); vErr != nil {
+			respondValidationError(w, "attributes do not match the collection type schema",
+				map[string]any{"fields": validator.FormatValidationError(vErr)})
+			return
+		}
+	}
+	if _, err := h.Store.ReceiveGift(r.Context(), g.ID, in.CollectionID, in.Attributes); err != nil {
+		handleStoreError(w, r, err)
+		return
+	}
+	h.notifyGiver(r, g, model.NotifyGiftReceived)
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// DeclineGift answers POST /collections/{collectionId}/gifts/{id}/decline:
+// the owner did not receive it; the reservation is invalidated.
+func (h *Handler) DeclineGift(w http.ResponseWriter, r *http.Request) {
+	_, g, ok := h.ownerGift(w, r)
+	if !ok {
+		return
+	}
+	if err := h.Store.DeclineGift(r.Context(), g.ID); err != nil {
+		handleStoreError(w, r, err)
+		return
+	}
+	h.notifyGiver(r, g, model.NotifyGiftDeclined)
+	w.WriteHeader(http.StatusNoContent)
 }

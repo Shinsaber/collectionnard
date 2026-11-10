@@ -133,7 +133,7 @@ async function submit() {
     if (mine.value) {
       await giftApi.update(mine.value.id, {
         quantity: quantity.value,
-        status: mine.value.status,
+
         expires_at: expiresAt.value,
         note: note.value.trim(),
       });

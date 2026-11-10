@@ -167,9 +167,15 @@ tags:
       n'en sait **jamais** rien : ni ses routes, ni ses listes, exports, statistiques ou copie hors ligne ne lisent les
       réservations ; une réservation sur sa propre liste répond 404 ; une lecture anonyme ou par lien de partage ne les
       montre pas. Annuler supprime la réservation. Quand le lot quitte la liste, la réservation reste (`left_list`) et
-      l'offrant est notifié (`gift_left_list`) ; il la marque offerte (`given`) ou l'annule. Une réservation non offerte vaut
+      l'offrant est notifié (`gift_left_list`) ; il la marque remise ou l'annule. Une réservation non remise vaut
       jusqu'à `expires_at` (60 jours par défaut, un an au plus) : passée cette date, elle ne compte plus et sort de la vue des
       amis, son offrant la garde (`expired`) pour la prolonger ou l'annuler ; il est prévenu 7 jours avant (`gift_expiring`).
+
+      **Remise** (P7-4b) : quand l'offrant indique avoir remis le cadeau (`hand-over`, état `given`), la surprise est levée :
+      le propriétaire est notifié (`gift_given`) et voit la remise sur son lot (`gifts` de sa liste, jamais une réservation
+      encore secrète). Il confirme (`receive` : les exemplaires quittent la liste, vers une autre de ses collections ou
+      simplement retirés ; état `received`, historique de l'offrant, notifié `gift_received`) ou refuse (`decline` : la
+      réservation est supprimée, l'offrant notifié `gift_declined`). Lot déjà retiré : la remise vaut réception.
   - name: Friends
     description: |
       Amis (P7-2). Une amitié est réciproque : un membre en invite un autre dont il voit le profil, par son nom
@@ -1706,7 +1712,12 @@ components:
         left_list: { type: boolean }
         item_id: { type: string, format: uuid }
         quantity: { type: integer, minimum: 1, maximum: 100000 }
-        status: { type: string, enum: [reserved, given] }
+        status:
+          type: string
+          enum: [reserved, given, received]
+          description: "`reserved` : secrète ; `given` : remise, en attente du propriétaire ; `received` : reçue."
+        given_at: { type: string, format: date-time }
+        received_at: { type: string, format: date-time }
         expires_at:
           type: string
           format: date
@@ -1725,6 +1736,15 @@ components:
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
 
+    GiftReceive:
+      type: object
+      description: |
+        « Bien reçu » : les exemplaires vont dans une autre collection du propriétaire qui accepte l'item
+        (`collection_id`, avec les attributs du nouveau lot), ou quittent simplement la liste (`collection_id` absent).
+      properties:
+        collection_id: { type: string, format: uuid }
+        attributes: { type: object }
+
     ReservationCreate:
       type: object
       properties:
@@ -1737,10 +1757,10 @@ components:
 
     ReservationUpdate:
       type: object
-      required: [quantity, status]
+      description: Tant que la réservation n'est pas remise (409 `gift_state` ensuite).
+      required: [quantity]
       properties:
         quantity: { type: integer, minimum: 1, maximum: 100000 }
-        status: { type: string, enum: [reserved, given] }
         expires_at:
           type: string
           format: date
@@ -1854,6 +1874,11 @@ components:
           description: |
             Réservations de cadeau du lot (P7-4), pour un ami du propriétaire lisant sa liste de souhaits, jamais pour le
             propriétaire.
+          items:
+            $ref: "#/components/schemas/GiftReservation"
+        gifts:
+          type: array
+          description: Cadeaux remis sur le lot, en attente de confirmation (P7-4b), dans la liste de son propriétaire seulement.
           items:
             $ref: "#/components/schemas/GiftReservation"
         created_at:
@@ -2650,7 +2675,7 @@ components:
             Propositions (P4-3) : `proposal_state`, `proposal_quota`, `proposal_invalid`, `proposal_conflict`,
             `proposal_meta_types`, `own_proposal`. Avis (I-0) : `reviews_closed` (409). Modération (I-1) :
             `report_exists`, `moderation_state` (409), `own_content` (403), `rate_limited` (429). Commentaires (I-2) :
-            `comments_closed` (409). Amis (P7-2) : `friendship_exists`, `member_blocked`, `friend_links_limit` (409). Prêts (P7-3) : `not_lendable`, `borrower_not_friend`, `loan_exceeds_lot` (422). Cadeaux (P7-4) : `reservation_exceeds_lot` (422). Chaque réponse d'erreur d'une opération nomme les codes qu'elle
+            `comments_closed` (409). Amis (P7-2) : `friendship_exists`, `member_blocked`, `friend_links_limit` (409). Prêts (P7-3) : `not_lendable`, `borrower_not_friend`, `loan_exceeds_lot` (422). Cadeaux (P7-4) : `reservation_exceeds_lot` (422), `gift_state` (409). Chaque réponse d'erreur d'une opération nomme les codes qu'elle
             émet. Un client doit prévoir un libellé générique pour un code inconnu.
           example: validation_error
         message:
@@ -7395,7 +7420,7 @@ paths:
     put:
       tags: [Gifts]
       summary: Modifier ma réservation
-      description: "Quantité, état (`given` : offert), note. L'offrant seulement."
+      description: "Quantité, échéance, note, tant qu'elle n'est pas remise. L'offrant seulement."
       operationId: updateReservation
       requestBody:
         required: true
@@ -7410,6 +7435,12 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+        "409":
+          description: "`gift_state` : déjà remise."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "413":
           $ref: "#/components/responses/PayloadTooLarge"
         "422":
@@ -7442,13 +7473,113 @@ paths:
         "204":
           description: Annulée.
 
+  /reservations/{id}/hand-over:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Gifts]
+      summary: Je l'ai remis
+      description: |
+        La surprise est levée : le propriétaire est notifié (`gift_given`) et confirme ou refuse depuis son lot. Lot déjà
+        retiré de la liste : la réservation est reçue d'office. L'offrant seulement.
+      operationId: handOverReservation
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: "`gift_state` : déjà remise."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Réservation remise (ou reçue).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GiftReservation"
+
+  /collections/{collectionId}/gifts/{id}/receive:
+    parameters:
+      - name: collectionId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Gifts]
+      summary: Bien reçu
+      description: |
+        Le propriétaire confirme un cadeau remis sur un lot de sa liste ; l'offrant est notifié (`gift_received`). 404 pour
+        une réservation encore secrète, comme pour une inconnue.
+      operationId: receiveGift
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GiftReceive"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          description: "`item_type_not_allowed` : la collection choisie n'accepte pas l'item ; `validation_error`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Reçu.
+
+  /collections/{collectionId}/gifts/{id}/decline:
+    parameters:
+      - name: collectionId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Gifts]
+      summary: Pas reçu
+      description: La réservation remise est invalidée (supprimée) ; l'offrant est notifié (`gift_declined`).
+      operationId: declineGift
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Invalidée.
+
   /me/gifts:
     get:
       tags: [Gifts]
       summary: Les cadeaux que je compte offrir
-      description: Ceux dont le lot a quitté la liste d'abord, puis à offrir, puis offerts.
+      description: Ceux dont le lot a quitté la liste d'abord, puis expirés, à offrir, remis, et reçus.
       operationId: listMyGifts
       parameters:
+        - name: status
+          in: query
+          description: "`open` : à offrir ou remis ; `received` : reçus ; absent : tous."
+          schema: { type: string, enum: [open, received] }
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/per_page"
       responses:

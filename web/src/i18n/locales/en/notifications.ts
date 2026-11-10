@@ -32,6 +32,10 @@ const en: typeof fr = {
     friend_accepted: "You and {by} are now friends",
     loan_started: "{by} lent you an item",
     loan_overdue: "Overdue loan: {borrower}",
+    gift_given: "{by} gave you a gift from your list",
+    gift_received: "{by} received your gift",
+    gift_declined:
+      "{by} says they did not receive your gift: the reservation is cancelled",
     gift_expiring: "Your reservation for {by} expires on {date}",
     gift_left_list: "A gift reserved for {by} left their list",
     loan_overdue_borrowed: "{by} is waiting for a loan to come back",

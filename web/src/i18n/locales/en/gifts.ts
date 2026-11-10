@@ -30,10 +30,35 @@ const en: typeof fr = {
   you: "you",
   full: "All reserved",
   for: "For {name}",
-  given: "Given",
-  markGiven: "It's given",
-  markReserved: "Not given yet",
+  handOver: "I handed it over",
+  handOverConfirm:
+    "Mark this gift as handed over? The owner will be told: the surprise is over.",
+  handedOver: "Handover noted: the owner will confirm they received it.",
+  given: "Handed over, awaiting confirmation",
+  received: "Received on {date}",
+  receivedAll: "Received included",
+  remove: "Remove",
+  removeConfirm: "Remove this gift from your list?",
+  removed: "Removed.",
+  givenMark: "given",
   leftList: "Left their list",
+  owner: {
+    flag: "{n} given by {names} | {n} given by {names}",
+    receive: "Received",
+    decline: "Not received",
+    declineConfirm:
+      "Mark this gift as not received? {name}'s reservation will be cancelled and they will be told.",
+    declined: "Reservation cancelled.",
+    receiveTitle: "Received: “{label}”",
+    receiveHelp:
+      "{n} copy leaves your list. Where to put it? | {n} copies leave your list. Where to put them?",
+    moveTo: "In one of my collections",
+    removeOnly: "Just remove it (I already added it)",
+    noTarget: "None of your other collections accepts this item.",
+    attributes: "The new lot",
+    submit: "Confirm",
+    received: "Gift received.",
+  },
   leftHelp:
     "This gift is no longer on their list: mark it given, or cancel the reservation.",
 };

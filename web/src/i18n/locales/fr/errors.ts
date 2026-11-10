@@ -103,6 +103,7 @@ export default {
       "Ce membre n'est pas votre ami : prêtez-lui sous un simple nom, ou invitez-le d'abord.",
     loan_exceeds_lot:
       "Il ne reste pas assez d'exemplaires disponibles dans ce lot.",
+    gift_state: "Ce cadeau est déjà remis : il ne se modifie plus.",
     reservation_exceeds_lot:
       "Il ne reste pas assez d'exemplaires à réserver : un autre ami a été plus rapide.",
     friend_links_limit:

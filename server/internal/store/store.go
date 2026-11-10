@@ -184,11 +184,15 @@ type Store interface {
 	UpdateReservation(ctx context.Context, id uuid.UUID, in model.ReservationUpdate) (*model.GiftReservation, error)
 	DeleteReservation(ctx context.Context, id uuid.UUID) error
 	LotReservations(ctx context.Context, lotIDs []uuid.UUID) (map[uuid.UUID][]model.GiftReservation, error)
-	ListGifts(ctx context.Context, giverID uuid.UUID, pg model.Pagination) ([]model.GiftReservation, int, error)
+	ListGifts(ctx context.Context, giverID uuid.UUID, status string, pg model.Pagination) ([]model.GiftReservation, int, error)
 	LeftReservations(ctx context.Context) ([]model.GiftReservation, error)
 	MarkReservationsNotified(ctx context.Context, ids []uuid.UUID) error
 	ExpiringReservations(ctx context.Context) ([]model.GiftReservation, error)
 	MarkReservationsExpiryReminded(ctx context.Context, ids []uuid.UUID) error
+	HandOverReservation(ctx context.Context, id uuid.UUID) (*model.GiftReservation, error)
+	GivenGifts(ctx context.Context, lotIDs []uuid.UUID) (map[uuid.UUID][]model.GiftReservation, error)
+	ReceiveGift(ctx context.Context, id uuid.UUID, into *uuid.UUID, attrs json.RawMessage) (*model.GiftReservation, error)
+	DeclineGift(ctx context.Context, id uuid.UUID) error
 
 	ListModerationLog(ctx context.Context, pg model.Pagination) ([]model.ModerationLogEntry, int, error)
 	ModerationHistory(ctx context.Context, userID uuid.UUID) (*model.ModerationHistory, error)

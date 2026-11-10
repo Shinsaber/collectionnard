@@ -122,8 +122,11 @@ function link(n: AppNotification): string {
   )
     return "/loans?tab=borrowed";
   if (n.kind === "loan_overdue") return "/loans";
-  if (n.kind === "gift_left_list" || n.kind === "gift_expiring")
-    return "/loans?tab=gifts";
+  if (n.kind === "gift_given")
+    return n.payload.collection_id
+      ? `/collections/${n.payload.collection_id}`
+      : "/collections";
+  if (n.kind.startsWith("gift_")) return "/loans?tab=gifts";
   if (n.kind === "friend_request" || n.kind === "friend_accepted")
     return "/members";
   if (n.payload.proposal_id) return `/proposals/${n.payload.proposal_id}`;

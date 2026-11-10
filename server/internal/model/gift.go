@@ -13,11 +13,18 @@ import (
 const (
 	ReservableKey = "x-reservable"
 
+	// reserved: secret, limited in time. given (P7-4b): handed over, the
+	// owner is told and confirms or declines. received: confirmed, the copies
+	// left the list; only the giver's history.
 	GiftReserved = "reserved"
 	GiftGiven    = "given"
+	GiftReceived = "received"
 
 	NotifyGiftLeftList = "gift_left_list"
 	NotifyGiftExpiring = "gift_expiring"
+	NotifyGiftGiven    = "gift_given"
+	NotifyGiftReceived = "gift_received"
+	NotifyGiftDeclined = "gift_declined"
 
 	// A reservation not given lasts GiftDefaultDays unless told otherwise, at
 	// most GiftMaxDays from today; its giver is reminded GiftExpiryNoticeDays before.
@@ -51,6 +58,11 @@ type GiftReservation struct {
 	// Expired: it no longer counts and only its giver sees it.
 	ExpiresAt string `json:"expires_at"`
 	Expired   bool   `json:"expired"`
+	// GivenAt, ReceivedAt: handed over, confirmed by the owner (P7-4b).
+	GivenAt    *time.Time `json:"given_at,omitempty"`
+	ReceivedAt *time.Time `json:"received_at,omitempty"`
+	// CollectionID: the wish list of the lot, while it is on it.
+	CollectionID *uuid.UUID `json:"-"`
 	// Mine: reserved by the reader.
 	Mine      bool          `json:"mine"`
 	GiverID   uuid.UUID     `json:"-"`
@@ -70,10 +82,18 @@ type ReservationCreate struct {
 	Note      string `json:"note,omitempty"`
 }
 
-// ReservationUpdate is the body of PUT /reservations/{id}: fields replaced.
+// ReservationUpdate is the body of PUT /reservations/{id}: fields replaced,
+// while the reservation is not handed over.
 type ReservationUpdate struct {
 	Quantity  int    `json:"quantity"`
-	Status    string `json:"status"`
 	ExpiresAt string `json:"expires_at,omitempty"` // absent: unchanged
 	Note      string `json:"note"`
+}
+
+// GiftReceive is the body of POST /collections/{collectionId}/gifts/{id}/receive:
+// the copies move to another collection of the owner (CollectionID, with the
+// attributes of the new lot), or simply leave the list (CollectionID absent).
+type GiftReceive struct {
+	CollectionID *uuid.UUID      `json:"collection_id,omitempty"`
+	Attributes   json.RawMessage `json:"attributes,omitempty"`
 }

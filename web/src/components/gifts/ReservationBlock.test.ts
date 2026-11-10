@@ -5,7 +5,13 @@ import type { CollectionItem, GiftReservation } from "@/api/types";
 import ReservationBlock from "./ReservationBlock.vue";
 
 const res = (over: Partial<GiftReservation>) =>
-  ({ id: "r", quantity: 1, mine: false, ...over }) as GiftReservation;
+  ({
+    id: "r",
+    quantity: 1,
+    mine: false,
+    status: "reserved",
+    ...over,
+  }) as GiftReservation;
 const lot = (quantity: number, reservations: GiftReservation[]) =>
   ({ id: "l1", quantity, reservations }) as unknown as CollectionItem;
 
@@ -34,6 +40,20 @@ describe("ReservationBlock", () => {
     expect(w.find('[data-test="reservation-flag"]').exists()).toBe(false);
     await w.find('[data-test="reserve"]').trigger("click");
     expect(w.emitted("reserve")).toBeTruthy();
+  });
+
+  it("un cadeau remis se signale aux autres amis, et ma remise ne se modifie plus", () => {
+    const w = mountBlock(
+      lot(2, [
+        res({ giver: { username: "cam" }, status: "given" }),
+        res({ mine: true, status: "given" }),
+      ]),
+    );
+    expect(w.find('[data-test="reservation-flag"]').text()).toBe(
+      "cam (offert), vous (offert) · 2 sur 2",
+    );
+    expect(w.find('[data-test="reserve"]').exists()).toBe(false);
+    expect(w.find('[data-test="reserve-given"]').exists()).toBe(true);
   });
 
   it("tout réservé par d'autres : plus de bouton", () => {

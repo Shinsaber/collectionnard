@@ -616,6 +616,8 @@ export interface CollectionItem {
   loans?: Loan[];
   /** Réservations de cadeau (P7-4), pour un ami du propriétaire seulement, jamais pour lui. */
   reservations?: GiftReservation[];
+  /** Cadeaux remis, en attente de confirmation (P7-4b), dans la liste de son propriétaire seulement. */
+  gifts?: GiftReservation[];
   created_at: string;
   updated_at: string;
 }
@@ -651,7 +653,10 @@ export interface GiftReservation {
   left_list: boolean;
   item_id: string;
   quantity: number;
-  status: "reserved" | "given";
+  /** `reserved` : secrète ; `given` : remise, en attente du propriétaire ; `received` : reçue (P7-4b). */
+  status: "reserved" | "given" | "received";
+  given_at?: string;
+  received_at?: string;
   /** Dernier jour où une réservation non offerte tient (`AAAA-MM-JJ`). */
   expires_at: string;
   /** Non offerte et échue : ne compte plus, vue de son offrant seul. */
@@ -991,7 +996,10 @@ export type NotificationKind =
   | "loan_started"
   | "loan_overdue"
   | "gift_left_list"
-  | "gift_expiring";
+  | "gift_expiring"
+  | "gift_given"
+  | "gift_received"
+  | "gift_declined";
 
 export interface AppNotification {
   id: string;
@@ -1019,6 +1027,8 @@ export interface AppNotification {
     reservation_id?: string;
     /** Échéance d'une réservation bientôt expirée. */
     expires_at?: string;
+    /** Cadeau remis (P7-4b) : la liste où le confirmer. */
+    collection_id?: string;
   };
   created_at: string;
   read_at?: string;

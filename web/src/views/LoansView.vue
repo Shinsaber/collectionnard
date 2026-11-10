@@ -13,13 +13,9 @@
         :name="side"
       />
     </ElTabs>
-    <ElCheckbox
-      v-if="tab !== 'gifts'"
-      v-model="all"
-      data-test="loans-all"
-      @change="reload"
-      >{{ t("loans.status.all") }}</ElCheckbox
-    >
+    <ElCheckbox v-model="all" data-test="loans-all" @change="reload">{{
+      tab === "gifts" ? t("gifts.receivedAll") : t("loans.status.all")
+    }}</ElCheckbox>
     <AppSpinner v-if="current.loading.value && empty" />
     <p
       v-else-if="empty"
@@ -93,7 +89,7 @@ const tab = computed<Side>({
     router.replace({ query: v === "lent" ? {} : { tab: v } });
   },
 });
-/** Sans cette case : les prêts en cours seulement. */
+/** Sans cette case : les prêts en cours, les cadeaux pas encore reçus. */
 const all = ref(false);
 
 const loans = usePagination((params: Record<string, unknown>) => {
@@ -101,7 +97,10 @@ const loans = usePagination((params: Record<string, unknown>) => {
   return tab.value === "borrowed" ? loanApi.borrowings(p) : loanApi.mine(p);
 });
 const gifts = usePagination((params: Record<string, unknown>) =>
-  giftApi.mine(params),
+  giftApi.mine({
+    ...params,
+    ...(all.value ? {} : { status: "open" as const }),
+  }),
 );
 const current = computed(() => (tab.value === "gifts" ? gifts : loans));
 const empty = computed(() =>

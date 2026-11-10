@@ -5,10 +5,18 @@ import { createMemoryHistory, createRouter } from "vue-router";
 import type { GiftReservation } from "@/api/types";
 import GiftCard from "./GiftCard.vue";
 
-const api = vi.hoisted(() => ({ update: vi.fn(), cancel: vi.fn() }));
+const api = vi.hoisted(() => ({
+  update: vi.fn(),
+  cancel: vi.fn(),
+  handOver: vi.fn(),
+}));
 vi.mock("@/api/client", () => ({
   giftApi: api,
   extractApiError: () => ({ message: "" }),
+}));
+const confirm = vi.hoisted(() => vi.fn());
+vi.mock("@/composables/useConfirmDialog", () => ({
+  useConfirmDialog: () => ({ confirm }),
 }));
 
 const gift: GiftReservation = {
@@ -39,7 +47,10 @@ function mountCard(g: GiftReservation) {
 }
 
 describe("GiftCard", () => {
-  beforeEach(() => api.update.mockReset().mockResolvedValue({}));
+  beforeEach(() => {
+    Object.values(api).forEach((m) => m.mockReset().mockResolvedValue({}));
+    confirm.mockReset().mockResolvedValue(true);
+  });
 
   it("une réservation expirée se signale et se prolonge, le reste gardé", async () => {
     const w = mountCard(gift);
@@ -53,15 +64,39 @@ describe("GiftCard", () => {
     await flushPromises();
     expect(api.update).toHaveBeenCalledWith("g1", {
       quantity: 1,
-      status: "reserved",
       expires_at: "2026-12-24",
       note: "la bleue",
     });
   });
 
-  it("offert : plus d'échéance à prolonger", () => {
+  it("« Je l'ai remis » demande confirmation, puis prévient le propriétaire", async () => {
+    const w = mountCard({ ...gift, expired: false });
+    await w.find('[data-test="gift-hand-over"]').trigger("click");
+    await flushPromises();
+    expect(confirm).toHaveBeenCalled();
+    expect(api.handOver).toHaveBeenCalledWith("g1");
+    expect(w.emitted("changed")).toBeTruthy();
+  });
+
+  it("remis : en attente, plus d'échéance ni de remise", () => {
     const w = mountCard({ ...gift, status: "given", expired: false });
+    expect(w.find('[data-test="gift-given"]').exists()).toBe(true);
     expect(w.find('[data-test="gift-until"]').exists()).toBe(false);
-    expect(w.text()).toContain("Offert");
+    expect(w.find('[data-test="gift-hand-over"]').exists()).toBe(false);
+  });
+
+  it("reçu : la date de réception, et un retrait de l'historique", async () => {
+    const w = mountCard({
+      ...gift,
+      status: "received",
+      expired: false,
+      received_at: "2026-11-10T10:00:00Z",
+    });
+    expect(w.find('[data-test="gift-received"]').text()).toContain(
+      "10/11/2026",
+    );
+    await w.find('[data-test="gift-cancel"]').trigger("click");
+    await flushPromises();
+    expect(api.cancel).toHaveBeenCalledWith("g1");
   });
 });

@@ -95,6 +95,8 @@ const en: typeof fr = {
     borrower_not_friend:
       "This member is not your friend: lend under a mere name, or invite them first.",
     loan_exceeds_lot: "Not enough copies left to lend in this lot.",
+    gift_state:
+      "This gift is already handed over: it can no longer be changed.",
     reservation_exceeds_lot:
       "Not enough copies left to reserve: another friend was quicker.",
     friend_links_limit:

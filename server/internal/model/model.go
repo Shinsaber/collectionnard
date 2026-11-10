@@ -300,6 +300,9 @@ type CollectionItem struct {
 	Loans []Loan `json:"loans,omitempty"`
 	// Reservations: the gift reservations of the lot (P7-4), for the owner's friends only.
 	Reservations []GiftReservation `json:"reservations,omitempty"`
+	// Gifts: the gifts handed over on the lot, waiting for the owner to
+	// confirm (P7-4b), in the owner's list only.
+	Gifts []GiftReservation `json:"gifts,omitempty"`
 }
 
 // MaxQuantity bounds the copies of a lot (CHECK of migration 020).

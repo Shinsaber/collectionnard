@@ -872,18 +872,28 @@ export const giftApi = {
         data,
       )
       .then((r) => r.data),
+  /** Tant que la réservation n'est pas remise. */
   update: (
     id: string,
-    data: {
-      quantity: number;
-      status: GiftReservation["status"];
-      expires_at?: string;
-      note: string;
-    },
+    data: { quantity: number; expires_at?: string; note: string },
   ) =>
     http.put<GiftReservation>(`/reservations/${id}`, data).then((r) => r.data),
   cancel: (id: string) => http.delete(`/reservations/${id}`),
-  mine: (params?: PaginationParams) =>
+  /** « Je l'ai remis » (P7-4b) : le propriétaire est prévenu. */
+  handOver: (id: string) =>
+    http
+      .post<GiftReservation>(`/reservations/${id}/hand-over`)
+      .then((r) => r.data),
+  /** « Bien reçu » (propriétaire) : vers une autre collection, ou simplement retiré de la liste. */
+  receive: (
+    collectionId: string,
+    id: string,
+    data: { collection_id?: string; attributes?: Record<string, unknown> },
+  ) => http.post(`/collections/${collectionId}/gifts/${id}/receive`, data),
+  /** « Pas reçu » (propriétaire) : la réservation est invalidée. */
+  decline: (collectionId: string, id: string) =>
+    http.post(`/collections/${collectionId}/gifts/${id}/decline`),
+  mine: (params?: PaginationParams & { status?: "open" | "received" }) =>
     http
       .get<PaginatedResponse<GiftReservation>>("/me/gifts", { params })
       .then((r) => r.data),

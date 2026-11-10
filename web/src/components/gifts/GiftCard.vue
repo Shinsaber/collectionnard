@@ -1,5 +1,5 @@
 <template>
-  <!-- Un cadeau que je compte offrir (P7-4) : pour qui, combien ; offert, ou annulé. -->
+  <!-- Un cadeau que je compte offrir (P7-4) : pour qui, combien, jusqu'à quand ; remis (P7-4b), reçu, ou retiré. -->
   <li
     class="flex flex-col gap-2 rounded-xl bg-soft px-3 py-2.5 sm:flex-row sm:items-center"
     data-test="gift"
@@ -28,16 +28,13 @@
           <span v-if="gift.quantity > 1" class="font-mono text-xs text-muted">
             · ×{{ gift.quantity }}</span
           >
-          <span
-            v-if="gift.status === 'reserved'"
-            class="font-mono text-[11px] text-muted"
-          >
+          <span v-if="reserved" class="font-mono text-[11px] text-muted">
             ·
             {{ t("gifts.untilOn", { date: formatDay(gift.expires_at, lang) }) }}
           </span>
         </span>
         <span
-          v-if="gift.left_list && gift.status === 'reserved'"
+          v-if="reserved && gift.left_list"
           class="self-start rounded-full bg-danger/10 px-2 py-0.5 font-mono text-[11px] text-danger"
           :title="t('gifts.leftHelp')"
           data-test="gift-left"
@@ -55,41 +52,50 @@
         <span
           v-else-if="gift.status === 'given'"
           class="self-start rounded-full bg-tint px-2 py-0.5 font-mono text-[11px] text-tint-ink"
+          data-test="gift-given"
           >{{ t("gifts.given") }}</span
+        >
+        <span
+          v-else-if="gift.status === 'received' && gift.received_at"
+          class="self-start rounded-full bg-tint px-2 py-0.5 font-mono text-[11px] text-tint-ink"
+          data-test="gift-received"
+          >{{
+            t("gifts.received", {
+              date: new Date(gift.received_at).toLocaleDateString(lang),
+            })
+          }}</span
         >
         <p v-if="gift.note" class="text-xs text-muted">{{ gift.note }}</p>
       </div>
     </div>
     <div class="flex flex-wrap items-center gap-2 sm:justify-end">
-      <ElInput
-        v-if="gift.status === 'reserved' && !gift.left_list"
-        :model-value="gift.expires_at"
-        type="date"
-        size="small"
-        class="w-40!"
-        :min="today()"
-        :max="maxExpiry()"
-        :aria-label="t('gifts.until')"
-        data-test="gift-until"
-        @change="(v: string) => v && save({ expires_at: v }, 'gifts.extended')"
-      />
-      <ElButton
-        size="small"
-        :type="gift.status === 'reserved' ? 'primary' : 'default'"
-        data-test="gift-given"
-        @click="toggleGiven"
-        >{{
-          gift.status === "reserved"
-            ? t("gifts.markGiven")
-            : t("gifts.markReserved")
-        }}</ElButton
-      >
+      <template v-if="reserved">
+        <ElInput
+          v-if="!gift.left_list"
+          :model-value="gift.expires_at"
+          type="date"
+          size="small"
+          class="w-40!"
+          :min="today()"
+          :max="maxExpiry()"
+          :aria-label="t('gifts.until')"
+          data-test="gift-until"
+          @change="(v: string) => v && extend(v)"
+        />
+        <ElButton
+          size="small"
+          type="primary"
+          data-test="gift-hand-over"
+          @click="handOver"
+          >{{ t("gifts.handOver") }}</ElButton
+        >
+      </template>
       <ElButton
         text
         size="small"
-        :aria-label="t('gifts.cancel')"
+        :aria-label="reserved ? t('gifts.cancel') : t('gifts.remove')"
         data-test="gift-cancel"
-        @click="cancel"
+        @click="remove"
       >
         <i class="pi pi-trash" aria-hidden="true"></i>
       </ElButton>
@@ -98,6 +104,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { giftApi } from "@/api/client";
 import { useConfirmDialog } from "@/composables/useConfirmDialog";
@@ -117,20 +124,12 @@ const { lang } = useLang();
 const { notifyError, notifySuccess } = useNotify();
 const { confirm } = useConfirmDialog();
 
-/** Remplace les champs de ma réservation (PUT), en gardant ceux qu'on ne touche pas. */
-async function save(
-  change: { status?: GiftReservation["status"]; expires_at?: string },
-  done = "gifts.saved",
-) {
-  const g = props.gift;
+/** Encore secrète : se prolonge, se remet ; une fois remise, elle ne se modifie plus. */
+const reserved = computed(() => props.gift.status === "reserved");
+
+async function run(action: () => Promise<unknown>, done: string) {
   try {
-    await giftApi.update(g.id, {
-      quantity: g.quantity,
-      status: g.status,
-      expires_at: g.expires_at,
-      note: g.note ?? "",
-      ...change,
-    });
+    await action();
     notifySuccess(t(done));
     emit("changed");
   } catch (e) {
@@ -138,22 +137,40 @@ async function save(
   }
 }
 
-const toggleGiven = () =>
-  save({ status: props.gift.status === "reserved" ? "given" : "reserved" });
+/** Nouvelle échéance (PUT), le reste de la réservation gardé. */
+const extend = (day: string) =>
+  run(
+    () =>
+      giftApi.update(props.gift.id, {
+        quantity: props.gift.quantity,
+        expires_at: day,
+        note: props.gift.note ?? "",
+      }),
+    "gifts.extended",
+  );
 
-async function cancel() {
+/** « Je l'ai remis » : la surprise est levée, le propriétaire est prévenu. */
+async function handOver() {
   const ok = await confirm({
-    message: t("gifts.cancelConfirm"),
-    confirmText: t("gifts.cancel"),
+    message: t("gifts.handOverConfirm"),
+    confirmText: t("gifts.handOver"),
+  });
+  if (ok) await run(() => giftApi.handOver(props.gift.id), "gifts.handedOver");
+}
+
+/** Annuler une réservation encore secrète, ou retirer un cadeau remis ou reçu. */
+async function remove() {
+  const ok = await confirm({
+    message: reserved.value
+      ? t("gifts.cancelConfirm")
+      : t("gifts.removeConfirm"),
+    confirmText: reserved.value ? t("gifts.cancel") : t("gifts.remove"),
     danger: true,
   });
-  if (!ok) return;
-  try {
-    await giftApi.cancel(props.gift.id);
-    notifySuccess(t("gifts.cancelled"));
-    emit("changed");
-  } catch (e) {
-    notifyError(e);
-  }
+  if (ok)
+    await run(
+      () => giftApi.cancel(props.gift.id),
+      reserved.value ? "gifts.cancelled" : "gifts.removed",
+    );
 }
 </script>

@@ -566,6 +566,9 @@ prêts et réservations dans deux tables distinctes ; emprunteur et offrant choi
       propriétaire ; offrants nommés aux autres amis, « Ma réservation », durée limitée (60 jours par défaut, un an au plus, rappel
       7 jours avant), onglet « À offrir », rappel quand le lot quitte la liste,
       `x-reservable` (paquet `collections` v7). Phase 7 close (hors échanges, reportés).
+- [x] **P7-4b — Remise d'un cadeau** (livré le 2026-11-10) : « Je l'ai remis » lève la surprise, le propriétaire est notifié et
+      confirme (« Bien reçu », vers une autre collection ou simplement retiré) ou refuse (« Pas reçu », réservation invalidée) ;
+      historique « Reçu le … » de l'offrant.
 
 ---
 

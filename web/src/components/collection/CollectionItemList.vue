@@ -36,6 +36,12 @@
                 typeTitle((row as CollectionItem).item?.item_type, lang) || "?"
               }}</span>
               <LoanFlag :lot="row as CollectionItem" />
+              <GivenGiftsBlock
+                v-if="(row as CollectionItem).gifts?.length"
+                :lot="row as CollectionItem"
+                @receive="(g) => emit('receiveGift', row as CollectionItem, g)"
+                @decline="(g) => emit('declineGift', row as CollectionItem, g)"
+              />
               <ReservationBlock
                 v-if="reservable"
                 :lot="row as CollectionItem"
@@ -134,6 +140,12 @@
             >{{ t("collections.lots.copies", ci.quantity) }}</span
           >
           <LoanFlag :lot="ci" />
+          <GivenGiftsBlock
+            v-if="ci.gifts?.length"
+            :lot="ci"
+            @receive="(g) => emit('receiveGift', ci, g)"
+            @decline="(g) => emit('declineGift', ci, g)"
+          />
           <ReservationBlock
             v-if="reservable"
             :lot="ci"
@@ -192,10 +204,11 @@ import {
 import ItemCover from "@/components/item/ItemCover.vue";
 import GalleryThumbs from "@/components/common/GalleryThumbs.vue";
 import LoanFlag from "./LoanFlag.vue";
+import GivenGiftsBlock from "@/components/gifts/GivenGiftsBlock.vue";
 import ReservationBlock from "@/components/gifts/ReservationBlock.vue";
 import LotActionsMenu from "./LotActionsMenu.vue";
 import type { LotCommand } from "@/lib/lots";
-import type { CollectionItem } from "@/api/types";
+import type { CollectionItem, GiftReservation } from "@/api/types";
 
 // Items d'une collection : colonnes / attributs tirés du schéma du CollectionType.
 const props = withDefaults(
@@ -231,6 +244,8 @@ const emit = defineEmits<{
   lend: [ci: CollectionItem];
   loans: [ci: CollectionItem];
   reserve: [ci: CollectionItem];
+  receiveGift: [ci: CollectionItem, gift: GiftReservation];
+  declineGift: [ci: CollectionItem, gift: GiftReservation];
 }>();
 
 const { t } = useI18n();

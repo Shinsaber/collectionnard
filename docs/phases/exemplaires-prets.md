@@ -342,6 +342,47 @@ réservables » dans l'éditeur des types de collection. Écarts et choix faits 
   l'annuler. Une réservation offerte n'expire pas. Rappel `gift_expiring` 7 jours avant, une fois par échéance
   (`expiry_reminded_at`).
 
+### P7-4b — Remise d'un cadeau
+
+**Le défaut de P7-4** (relevé par le mainteneur le 2026-11-10) : « C'est offert » était le seul état qui bloquait des
+exemplaires **sans échéance** tout en restant **invisible du propriétaire**. Une fausse manœuvre, ou un cadeau jamais
+fait, bloquait sa liste sans qu'il puisse le voir ni le corriger. Le bouton mêlait deux moments : avant la remise (le
+secret doit tenir ; la date limite y suffit, réglée sur l'occasion) et après (plus rien à cacher, et c'est le
+propriétaire qui sait s'il a reçu le cadeau).
+
+**Retenu le 2026-11-10** :
+
+- **« Je l'ai remis »** remplace « C'est offert », avec une confirmation (« le propriétaire sera prévenu : la surprise
+  est levée »). Avant ce clic, la réservation reste secrète et limitée dans le temps : aucun état ne bloque plus sans
+  échéance en restant caché. Une fois remise, l'offrant ne la repasse plus en « réservé » (le propriétaire le sait) ;
+  il peut seulement la retirer.
+- **Le propriétaire est notifié** (`gift_given` : « Camille vous a offert « Breaking Bad » ») et voit sur le lot de sa
+  liste « 1 offert par Camille ». Il ne voit que les réservations **remises**, jamais celles en cours.
+- **« Bien reçu »** : les exemplaires quittent la liste (la quantité du lot baisse, ou le lot disparaît). Le
+  propriétaire choisit de les **déplacer dans une autre de ses collections qui accepte l'item** (attributs du nouveau
+  lot saisis au passage), ou de **simplement les retirer** s'il les a déjà ajoutés à la main. L'offrant est prévenu
+  (`gift_received`) ; la réservation passe dans son historique (« Reçu le … »), hors de « À offrir » par défaut (case
+  « Reçus compris »).
+- **« Pas reçu »** : la réservation est **invalidée** (supprimée) ; l'offrant est prévenu (`gift_declined`).
+- **Lot déjà retiré** : si le propriétaire a retiré l'item de sa liste avant la remise, « Je l'ai remis » clôt
+  directement la réservation comme reçue (il n'y a plus de lot à confirmer) ; le propriétaire est notifié.
+- Les autres amis voient « Camille (offert) » dans le compte d'un lot.
+- **Pas de rappel** au propriétaire qui ne répond pas, dans un premier temps (`docs/idées.md`) : la réservation remise
+  reste en attente, visible sur son lot.
+
+**Livré (2026-11-10)** : migration `027_gift_handover.sql` (état `received`, `given_at`, `received_at`), routes
+`POST /reservations/{id}/hand-over`, `POST /collections/{collectionId}/gifts/{id}/receive` et `…/decline`, `gifts` sur
+les lots de la liste du propriétaire (seules les remises, lues par `GivenGifts`), `GET /me/gifts?status=open|received`.
+Le `PUT` d'une réservation ne porte plus d'état (409 `gift_state` une fois remise). Choix faits en cours de lot :
+
+- **Un lot supprimé vaut réception** de ses cadeaux remis (déclencheur `gift_lot_deleted`) : si le propriétaire retire
+  l'item de sa liste au lieu de confirmer, la remise ne reste pas en attente sans lot. L'offrant n'en est pas notifié.
+- **Collections proposées par « Bien reçu »** : toutes les autres collections du propriétaire qui acceptent l'item, celles
+  qui se prêtent (une possession) en tête ; les attributs du nouveau lot se saisissent dans le dialogue.
+- **Pas de choix du lot de destination** : « Bien reçu » crée toujours un nouveau lot, même si l'item est déjà dans la
+  collection choisie (la règle « toujours demander » de P7-1 n'y est pas encore appliquée ; la fusion de lots le rattrape).
+- La page d'une collection confie ses dialogues de lot à `LotDialogs` (au-delà de 400 lignes sinon).
+
 ## Briques mutualisées
 
 | Brique                   | Prêt                              | Cadeau                              |

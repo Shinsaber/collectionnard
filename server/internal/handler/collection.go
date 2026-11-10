@@ -195,6 +195,9 @@ func (h *Handler) ListCollectionItems(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		err = h.withActiveLoans(r, items)
 	}
+	if err == nil {
+		err = h.withGivenGifts(r, items)
+	}
 	if err != nil {
 		handleStoreError(w, r, err)
 		return

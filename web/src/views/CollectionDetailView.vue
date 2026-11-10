@@ -65,12 +65,14 @@
           :schema="schema"
           :loading="items.loading.value"
           :lendable="lendable"
-          @edit="(ci) => openLot('edit', ci)"
-          @split="(ci) => openLot('split', ci)"
-          @merge="(ci) => openLot('merge', ci)"
-          @lend="(ci) => openLot('lend', ci)"
-          @loans="(ci) => openLot('loans', ci)"
+          @edit="(ci) => lotDialogs?.open('edit', ci)"
+          @split="(ci) => lotDialogs?.open('split', ci)"
+          @merge="(ci) => lotDialogs?.open('merge', ci)"
+          @lend="(ci) => lotDialogs?.open('lend', ci)"
+          @loans="(ci) => lotDialogs?.open('loans', ci)"
           @remove="confirmRemove"
+          @receive-gift="(ci, g) => lotDialogs?.open('receive', ci, g)"
+          @decline-gift="(ci, g) => lotDialogs?.decline(ci, g)"
         />
         <ElPagination
           class="mt-4 justify-end"
@@ -122,41 +124,11 @@
       @saved="onCollectionSaved"
     />
 
-    <!-- Lots (P7-1) : modifier, scinder, fusionner. -->
-    <LotEditDialog
-      v-model:visible="lotDialog.edit"
+    <!-- Lots : modifier, scinder, fusionner, prêter, prêts, cadeau reçu. -->
+    <LotDialogs
+      ref="lotDialogs"
       :collection-id="id"
       :schema="schema"
-      :lot="lot"
-      @saved="afterChange"
-    />
-    <LotSplitDialog
-      v-model:visible="lotDialog.split"
-      :collection-id="id"
-      :schema="schema"
-      :lot="lot"
-      @done="afterChange"
-    />
-    <LotMergeDialog
-      v-model:visible="lotDialog.merge"
-      :collection-id="id"
-      :schema="schema"
-      :lot="lot"
-      @done="afterChange"
-    />
-    <!-- Prêts (P7-3) : prêter, voir et clore les prêts d'un lot. -->
-    <LoanDialog
-      v-model:visible="lotDialog.lend"
-      :collection-id="id"
-      :lot="lot"
-      :label="lot ? ciLabel(lot) : ''"
-      @done="afterChange"
-    />
-    <LotLoansDialog
-      v-model:visible="lotDialog.loans"
-      :collection-id="id"
-      :lot="lot"
-      :label="lot ? ciLabel(lot) : ''"
       @changed="afterChange"
     />
   </div>
@@ -184,11 +156,7 @@ import CollectionAddItemDialog from "@/components/collection/CollectionAddItemDi
 import CollectionItemList from "@/components/collection/CollectionItemList.vue";
 import CollectionItemsToolbar from "@/components/collection/CollectionItemsToolbar.vue";
 import CollectionEditDialog from "@/components/collection/CollectionEditDialog.vue";
-import LotEditDialog from "@/components/collection/LotEditDialog.vue";
-import LoanDialog from "@/components/collection/LoanDialog.vue";
-import LotLoansDialog from "@/components/collection/LotLoansDialog.vue";
-import LotMergeDialog from "@/components/collection/LotMergeDialog.vue";
-import LotSplitDialog from "@/components/collection/LotSplitDialog.vue";
+import LotDialogs from "@/components/collection/LotDialogs.vue";
 import CollectionShareDialog from "@/components/sharing/CollectionShareDialog.vue";
 import { defaultDelimiter } from "@/lib/csv";
 import type { Collection, CollectionItem } from "@/api/types";
@@ -256,22 +224,10 @@ const tab = ref<"items" | "stats">("items");
 // Incrémenté à chaque modification : l'onglet Statistiques se recharge.
 const statsVersion = ref(0);
 
-// Lot visé par les dialogues « Modifier », « Scinder », « Fusionner » (P7-1), « Prêter » et « Prêts » (P7-3).
-const lot = ref<CollectionItem | null>(null);
-const lotDialog = ref({
-  edit: false,
-  split: false,
-  merge: false,
-  lend: false,
-  loans: false,
-});
+// Dialogues d'un lot (P7-1, P7-3, P7-4b).
+const lotDialogs = ref<InstanceType<typeof LotDialogs> | null>(null);
 /** Le type de la collection ouvre les prêts (`x-lendable`). */
 const lendable = computed(() => isLendable(schema.value));
-
-function openLot(kind: keyof typeof lotDialog.value, ci: CollectionItem) {
-  lot.value = ci;
-  lotDialog.value[kind] = true;
-}
 
 /** « 12 items », ou « 12 items · 45 exemplaires » quand des lots en comptent plusieurs. */
 const countLabel = computed(() => {

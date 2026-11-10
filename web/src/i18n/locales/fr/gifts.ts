@@ -28,10 +28,35 @@ export default {
   you: "vous",
   full: "Tout est réservé",
   for: "Pour {name}",
-  given: "Offert",
-  markGiven: "C'est offert",
-  markReserved: "Pas encore offert",
+  handOver: "Je l'ai remis",
+  handOverConfirm:
+    "Indiquer que vous avez remis ce cadeau ? Le propriétaire sera prévenu : la surprise est levée.",
+  handedOver: "Remise indiquée : le propriétaire confirmera sa réception.",
+  given: "Remis, en attente de confirmation",
+  received: "Reçu le {date}",
+  receivedAll: "Reçus compris",
+  remove: "Retirer",
+  removeConfirm: "Retirer ce cadeau de votre liste ?",
+  removed: "Retiré.",
+  givenMark: "offert",
   leftList: "A quitté sa liste",
+  owner: {
+    flag: "{n} offert par {names} | {n} offerts par {names}",
+    receive: "Bien reçu",
+    decline: "Pas reçu",
+    declineConfirm:
+      "Indiquer que vous n'avez pas reçu ce cadeau ? La réservation de {name} sera annulée, avec une notification.",
+    declined: "Réservation annulée.",
+    receiveTitle: "Bien reçu : « {label} »",
+    receiveHelp:
+      "{n} exemplaire quitte votre liste. Où le ranger ? | {n} exemplaires quittent votre liste. Où les ranger ?",
+    moveTo: "Dans une de mes collections",
+    removeOnly: "Le retirer seulement (je l'ai déjà ajouté)",
+    noTarget: "Aucune autre de vos collections n'accepte cet item.",
+    attributes: "Le nouveau lot",
+    submit: "Confirmer",
+    received: "Cadeau reçu.",
+  },
   leftHelp:
     "Ce cadeau n'est plus sur sa liste : marquez-le offert, ou annulez la réservation.",
 };

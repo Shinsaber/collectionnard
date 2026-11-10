@@ -1833,11 +1833,11 @@ func TestGiftReservations(t *testing.T) {
 	if err != nil || !rc.Expired || rc.ExpiresAt != yesterday {
 		t.Fatalf("réservation expirée : %+v %v", rc, err)
 	}
-	if mine, _, _ := s.ListGifts(ctx, c.ID, pg); len(mine) != 1 || !mine[0].Expired {
+	if mine, _, _ := s.ListGifts(ctx, c.ID, "", pg); len(mine) != 1 || !mine[0].Expired {
 		t.Errorf("gardée par son offrant : %+v", mine)
 	}
 	// Prolonger une réservation expirée : elle compte de nouveau, si le lot le permet.
-	if _, err := s.UpdateReservation(ctx, rc.ID, model.ReservationUpdate{Quantity: 2, Status: model.GiftReserved, ExpiresAt: later}); !errors.Is(err, store.ErrInvalidQuantity) {
+	if _, err := s.UpdateReservation(ctx, rc.ID, model.ReservationUpdate{Quantity: 2, ExpiresAt: later}); !errors.Is(err, store.ErrInvalidQuantity) {
 		t.Errorf("prolongée au-delà du lot : %v", err)
 	}
 	if err := s.DeleteReservation(ctx, rc.ID); err != nil {
@@ -1868,17 +1868,42 @@ func TestGiftReservations(t *testing.T) {
 	if expiring, _ := s.ExpiringReservations(ctx); slices.ContainsFunc(expiring, func(g model.GiftReservation) bool { return g.ID == rb.ID }) {
 		t.Errorf("rappelée une fois")
 	}
-	if _, err := s.UpdateReservation(ctx, rb.ID, model.ReservationUpdate{Quantity: 2, Status: model.GiftReserved, ExpiresAt: soon}); !errors.Is(err, store.ErrInvalidQuantity) {
+	if _, err := s.UpdateReservation(ctx, rb.ID, model.ReservationUpdate{Quantity: 2, ExpiresAt: soon}); !errors.Is(err, store.ErrInvalidQuantity) {
 		t.Errorf("modification au-delà du lot : %v", err)
 	}
-	if got, err := s.UpdateReservation(ctx, ra.ID, model.ReservationUpdate{Quantity: 2, Status: model.GiftGiven, ExpiresAt: later, Note: "offert"}); err != nil || got.Status != model.GiftGiven {
-		t.Errorf("offert : %+v %v", got, err)
+	// P7-4b : a remet son cadeau ; le propriétaire le voit, et lui seul de ses réservations.
+	given, err := s.HandOverReservation(ctx, ra.ID)
+	if err != nil || given.Status != model.GiftGiven || given.GivenAt == nil || given.CollectionID == nil || *given.CollectionID != col.ID {
+		t.Fatalf("remise : %+v %v", given, err)
+	}
+	if _, err := s.HandOverReservation(ctx, ra.ID); !errors.Is(err, store.ErrConflict) {
+		t.Errorf("deux fois : %v", err)
+	}
+	if byLot, _ := s.GivenGifts(ctx, []uuid.UUID{lot.ID}); len(byLot[lot.ID]) != 1 || byLot[lot.ID][0].ID != ra.ID {
+		t.Errorf("remises vues du propriétaire : %+v", byLot)
+	}
+	// « Bien reçu » vers sa Possession : 2 des 3 exemplaires quittent la liste.
+	owned, _ := s.CreateCollection(ctx, owner.ID, model.CollectionCreate{Name: "Possédés", CollectionTypeID: uuid.MustParse("d0000000-0000-0000-0000-000000000001")})
+	if got, err := s.ReceiveGift(ctx, ra.ID, &owned.ID, json.RawMessage(`{"condition":"new"}`)); err != nil || got.Status != model.GiftReceived || !got.LeftList {
+		t.Fatalf("réception : %+v %v", got, err)
+	}
+	if l, _ := s.GetCollectionLot(ctx, col.ID, lot.ID); l == nil || l.Quantity != 1 {
+		t.Errorf("le lot garde 1 exemplaire : %+v", l)
+	}
+	if moved, _, _ := s.ListCollectionItems(ctx, owned.ID, pg, store.CollectionItemFilters{}); len(moved) != 1 || moved[0].Quantity != 2 {
+		t.Errorf("déplacés dans la Possession : %+v", moved)
+	}
+	if open, n, _ := s.ListGifts(ctx, a.ID, "open", pg); n != 0 {
+		t.Errorf("plus à offrir : %+v", open)
+	}
+	if _, n, _ := s.ListGifts(ctx, a.ID, "received", pg); n != 1 {
+		t.Errorf("historique : %d", n)
 	}
 	// Le lot quitte la liste : la réservation reste, l'offrant à prévenir.
 	if err := s.RemoveCollectionItem(ctx, col.ID, lot.ID); err != nil {
 		t.Fatal(err)
 	}
-	gifts, total, _ := s.ListGifts(ctx, b.ID, pg)
+	gifts, total, _ := s.ListGifts(ctx, b.ID, "", pg)
 	if total != 1 || !gifts[0].LeftList || gifts[0].Owner.Username != "gift_owner" || gifts[0].Item == nil {
 		t.Errorf("mes cadeaux : %+v", gifts)
 	}
@@ -1905,7 +1930,34 @@ func TestGiftReservations(t *testing.T) {
 			}
 		}
 	}
+	// Lot déjà retiré : la remise vaut réception.
+	if got, err := s.HandOverReservation(ctx, rb.ID); err != nil || got.Status != model.GiftReceived {
+		t.Errorf("remise sans lot : %+v %v", got, err)
+	}
 	if err := s.DeleteReservation(ctx, rb.ID); err != nil {
-		t.Errorf("annulation : %v", err)
+		t.Errorf("retrait de l'historique : %v", err)
+	}
+	// « Pas reçu » invalide la réservation remise.
+	one := 1
+	lot2, _ := s.AddCollectionItem(ctx, col.ID, model.CollectionItemAdd{ItemID: itemDVD, Attributes: json.RawMessage(`{}`), Quantity: &one})
+	rd, _ := s.CreateReservation(ctx, lot2.ID, c.ID, 1, later, "")
+	_, _ = s.HandOverReservation(ctx, rd.ID)
+	if err := s.DeclineGift(ctx, rd.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.GetReservation(ctx, rd.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("invalidée : %v", err)
+	}
+	if err := s.DeclineGift(ctx, ra.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("une réservation reçue ne se refuse plus : %v", err)
+	}
+	// Le propriétaire retire le lot d'une remise en attente : elle vaut réception.
+	re, _ := s.CreateReservation(ctx, lot2.ID, c.ID, 1, later, "")
+	_, _ = s.HandOverReservation(ctx, re.ID)
+	if err := s.RemoveCollectionItem(ctx, col.ID, lot2.ID); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := s.GetReservation(ctx, re.ID); got == nil || got.Status != model.GiftReceived || !got.LeftList {
+		t.Errorf("lot retiré, remise reçue : %+v", got)
 	}
 }

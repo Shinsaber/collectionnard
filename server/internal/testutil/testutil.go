@@ -177,11 +177,15 @@ type MockStore struct {
 	UpdateReservationFn              func(ctx context.Context, id uuid.UUID, in model.ReservationUpdate) (*model.GiftReservation, error)
 	DeleteReservationFn              func(ctx context.Context, id uuid.UUID) error
 	LotReservationsFn                func(ctx context.Context, lotIDs []uuid.UUID) (map[uuid.UUID][]model.GiftReservation, error)
-	ListGiftsFn                      func(ctx context.Context, giverID uuid.UUID, pg model.Pagination) ([]model.GiftReservation, int, error)
+	ListGiftsFn                      func(ctx context.Context, giverID uuid.UUID, status string, pg model.Pagination) ([]model.GiftReservation, int, error)
 	LeftReservationsFn               func(ctx context.Context) ([]model.GiftReservation, error)
 	MarkReservationsNotifiedFn       func(ctx context.Context, ids []uuid.UUID) error
 	ExpiringReservationsFn           func(ctx context.Context) ([]model.GiftReservation, error)
 	MarkReservationsExpiryRemindedFn func(ctx context.Context, ids []uuid.UUID) error
+	HandOverReservationFn            func(ctx context.Context, id uuid.UUID) (*model.GiftReservation, error)
+	GivenGiftsFn                     func(ctx context.Context, lotIDs []uuid.UUID) (map[uuid.UUID][]model.GiftReservation, error)
+	ReceiveGiftFn                    func(ctx context.Context, id uuid.UUID, into *uuid.UUID, attrs json.RawMessage) (*model.GiftReservation, error)
+	DeclineGiftFn                    func(ctx context.Context, id uuid.UUID) error
 	ListCommentsFn                   func(ctx context.Context, kind string, targetID, viewer uuid.UUID, pg model.Pagination) ([]model.Comment, int, error)
 	GetCommentFn                     func(ctx context.Context, id uuid.UUID) (*model.Comment, error)
 	CreateCommentFn                  func(ctx context.Context, kind string, targetID, authorID uuid.UUID, body string) (*model.Comment, error)
@@ -1273,9 +1277,9 @@ func (m *MockStore) LotReservations(ctx context.Context, lotIDs []uuid.UUID) (ma
 	return map[uuid.UUID][]model.GiftReservation{}, nil
 }
 
-func (m *MockStore) ListGifts(ctx context.Context, giverID uuid.UUID, pg model.Pagination) ([]model.GiftReservation, int, error) {
+func (m *MockStore) ListGifts(ctx context.Context, giverID uuid.UUID, status string, pg model.Pagination) ([]model.GiftReservation, int, error) {
 	if m.ListGiftsFn != nil {
-		return m.ListGiftsFn(ctx, giverID, pg)
+		return m.ListGiftsFn(ctx, giverID, status, pg)
 	}
 	return []model.GiftReservation{}, 0, nil
 }
@@ -1306,4 +1310,32 @@ func (m *MockStore) MarkReservationsExpiryReminded(ctx context.Context, ids []uu
 		return m.MarkReservationsExpiryRemindedFn(ctx, ids)
 	}
 	return nil
+}
+
+func (m *MockStore) HandOverReservation(ctx context.Context, id uuid.UUID) (*model.GiftReservation, error) {
+	if m.HandOverReservationFn != nil {
+		return m.HandOverReservationFn(ctx, id)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) GivenGifts(ctx context.Context, lotIDs []uuid.UUID) (map[uuid.UUID][]model.GiftReservation, error) {
+	if m.GivenGiftsFn != nil {
+		return m.GivenGiftsFn(ctx, lotIDs)
+	}
+	return map[uuid.UUID][]model.GiftReservation{}, nil
+}
+
+func (m *MockStore) ReceiveGift(ctx context.Context, id uuid.UUID, into *uuid.UUID, attrs json.RawMessage) (*model.GiftReservation, error) {
+	if m.ReceiveGiftFn != nil {
+		return m.ReceiveGiftFn(ctx, id, into, attrs)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) DeclineGift(ctx context.Context, id uuid.UUID) error {
+	if m.DeclineGiftFn != nil {
+		return m.DeclineGiftFn(ctx, id)
+	}
+	return store.ErrNotFound
 }
