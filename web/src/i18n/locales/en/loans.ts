@@ -2,8 +2,8 @@
 import type fr from "../fr/loans";
 
 const en: typeof fr = {
-  title: "Loans",
-  help: "What you lent, and what your friends lent you.",
+  title: "Loans and gifts",
+  help: "What you lent, what your friends lent you, and the gifts you plan to give them.",
   tabs: { lent: "Lent", borrowed: "Borrowed" },
   status: { all: "All, returned included" },
   none: { lent: "No loan.", borrowed: "Nothing borrowed." },

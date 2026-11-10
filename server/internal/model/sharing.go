@@ -49,8 +49,10 @@ type PublicCollection struct {
 	ItemCount      int             `json:"item_count"`
 	Owner          Owner           `json:"owner"`
 	Visibility     string          `json:"visibility"`
-	CreatedAt      time.Time       `json:"created_at"`
-	UpdatedAt      time.Time       `json:"updated_at"`
+	// CanReserve: the reader, a friend of the owner, may reserve gifts on this wish list (P7-4).
+	CanReserve bool      `json:"can_reserve,omitempty"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 // PublicProfile is a member profile as other readers see it (no email, no role).

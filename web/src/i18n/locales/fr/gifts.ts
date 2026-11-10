@@ -1,0 +1,37 @@
+// Catalogue « gifts » (français) : cadeaux réservés sur la liste de souhaits d'un ami (P7-4).
+export default {
+  tab: "À offrir",
+  none: "Aucun cadeau réservé.",
+  reserve: "Réserver",
+  mine: "Ma réservation",
+  reserveTitle: "Réserver « {label} »",
+  help: "Le propriétaire de la liste n'en saura rien : seuls ses amis voient les réservations, pour éviter les doublons.",
+  quantity: "Exemplaires",
+  left: "aucun à réserver | 1 à réserver | {n} à réserver",
+  note: "Note (pour vous seul)",
+  until: "Réservé jusqu'au",
+  untilHelp:
+    "Passé cette date, la réservation ne tient plus pour vos amis : vous la prolongez ou l'annulez.",
+  untilOn: "jusqu'au {date}",
+  expired: "Expirée",
+  expiredHelp:
+    "Échue le {date} : vos amis ne la voient plus. Prolongez-la, ou annulez-la.",
+  extended: "Échéance enregistrée.",
+  submit: "Réserver",
+  save: "Enregistrer",
+  cancel: "Annuler la réservation",
+  cancelConfirm: "Annuler votre réservation ?",
+  reserved: "Réservé.",
+  saved: "Réservation enregistrée.",
+  cancelled: "Réservation annulée.",
+  flag: "{names} · {n} sur {total}",
+  you: "vous",
+  full: "Tout est réservé",
+  for: "Pour {name}",
+  given: "Offert",
+  markGiven: "C'est offert",
+  markReserved: "Pas encore offert",
+  leftList: "A quitté sa liste",
+  leftHelp:
+    "Ce cadeau n'est plus sur sa liste : marquez-le offert, ou annulez la réservation.",
+};

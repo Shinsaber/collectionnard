@@ -1801,3 +1801,111 @@ func TestLoans(t *testing.T) {
 		t.Errorf("suppression : %v", err)
 	}
 }
+
+func TestGiftReservations(t *testing.T) {
+	owner, _ := s.CreateUser(ctx, "gift_owner", "gift_owner@example.org", "x", model.RoleUser)
+	a, _ := s.CreateUser(ctx, "gift_a", "gift_a@example.org", "x", model.RoleUser)
+	b, _ := s.CreateUser(ctx, "gift_b", "gift_b@example.org", "x", model.RoleUser)
+	wishlist := uuid.MustParse("d0000000-0000-0000-0000-000000000003")
+	col, err := s.CreateCollection(ctx, owner.ID, model.CollectionCreate{Name: "Mes envies", CollectionTypeID: wishlist})
+	if err != nil {
+		t.Fatal(err)
+	}
+	three := 3
+	lot, err := s.AddCollectionItem(ctx, col.ID, model.CollectionItemAdd{ItemID: itemDVD, Attributes: json.RawMessage(`{}`), Quantity: &three})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pg := model.Pagination{Page: 1, PerPage: 20}
+
+	later := time.Now().AddDate(0, 0, 30).Format("2006-01-02")
+	ra, err := s.CreateReservation(ctx, lot.ID, a.ID, 2, later, "la bleue")
+	if err != nil || ra.OwnerID != owner.ID || ra.ItemID != itemDVD || ra.Giver.Username != "gift_a" || ra.LeftList {
+		t.Fatalf("réservation de a : %+v %v", ra, err)
+	}
+	if _, err := s.CreateReservation(ctx, lot.ID, b.ID, 2, later, ""); !errors.Is(err, store.ErrInvalidQuantity) {
+		t.Errorf("au-delà du lot : %v", err)
+	}
+	// Une réservation expirée ne compte plus et sort de la vue des amis ; son offrant la garde.
+	c, _ := s.CreateUser(ctx, "gift_c", "gift_c@example.org", "x", model.RoleUser)
+	yesterday := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
+	rc, err := s.CreateReservation(ctx, lot.ID, c.ID, 1, yesterday, "")
+	if err != nil || !rc.Expired || rc.ExpiresAt != yesterday {
+		t.Fatalf("réservation expirée : %+v %v", rc, err)
+	}
+	if mine, _, _ := s.ListGifts(ctx, c.ID, pg); len(mine) != 1 || !mine[0].Expired {
+		t.Errorf("gardée par son offrant : %+v", mine)
+	}
+	// Prolonger une réservation expirée : elle compte de nouveau, si le lot le permet.
+	if _, err := s.UpdateReservation(ctx, rc.ID, model.ReservationUpdate{Quantity: 2, Status: model.GiftReserved, ExpiresAt: later}); !errors.Is(err, store.ErrInvalidQuantity) {
+		t.Errorf("prolongée au-delà du lot : %v", err)
+	}
+	if err := s.DeleteReservation(ctx, rc.ID); err != nil {
+		t.Fatal(err)
+	}
+	soon := time.Now().AddDate(0, 0, 3).Format("2006-01-02")
+	rb, err := s.CreateReservation(ctx, lot.ID, b.ID, 1, soon, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if byLot, _ := s.LotReservations(ctx, []uuid.UUID{lot.ID}); len(byLot[lot.ID]) != 2 {
+		t.Errorf("réservations du lot : %+v", byLot)
+	}
+	expiring, _ := s.ExpiringReservations(ctx)
+	var soonIDs []uuid.UUID
+	for _, g := range expiring {
+		if g.GiverID == b.ID {
+			soonIDs = append(soonIDs, g.ID)
+		}
+		if g.ID == ra.ID {
+			t.Errorf("échéance lointaine rappelée")
+		}
+	}
+	if len(soonIDs) != 1 {
+		t.Fatalf("bientôt expirée : %+v", expiring)
+	}
+	_ = s.MarkReservationsExpiryReminded(ctx, soonIDs)
+	if expiring, _ := s.ExpiringReservations(ctx); slices.ContainsFunc(expiring, func(g model.GiftReservation) bool { return g.ID == rb.ID }) {
+		t.Errorf("rappelée une fois")
+	}
+	if _, err := s.UpdateReservation(ctx, rb.ID, model.ReservationUpdate{Quantity: 2, Status: model.GiftReserved, ExpiresAt: soon}); !errors.Is(err, store.ErrInvalidQuantity) {
+		t.Errorf("modification au-delà du lot : %v", err)
+	}
+	if got, err := s.UpdateReservation(ctx, ra.ID, model.ReservationUpdate{Quantity: 2, Status: model.GiftGiven, ExpiresAt: later, Note: "offert"}); err != nil || got.Status != model.GiftGiven {
+		t.Errorf("offert : %+v %v", got, err)
+	}
+	// Le lot quitte la liste : la réservation reste, l'offrant à prévenir.
+	if err := s.RemoveCollectionItem(ctx, col.ID, lot.ID); err != nil {
+		t.Fatal(err)
+	}
+	gifts, total, _ := s.ListGifts(ctx, b.ID, pg)
+	if total != 1 || !gifts[0].LeftList || gifts[0].Owner.Username != "gift_owner" || gifts[0].Item == nil {
+		t.Errorf("mes cadeaux : %+v", gifts)
+	}
+	left, _ := s.LeftReservations(ctx)
+	var mine []uuid.UUID
+	for _, g := range left {
+		if g.GiverID == b.ID {
+			mine = append(mine, g.ID)
+		}
+		if g.ID == ra.ID {
+			t.Errorf("une réservation offerte n'est pas à rappeler")
+		}
+	}
+	if len(mine) != 1 {
+		t.Fatalf("à prévenir : %+v", left)
+	}
+	if err := s.MarkReservationsNotified(ctx, mine); err != nil {
+		t.Fatal(err)
+	}
+	if left, _ := s.LeftReservations(ctx); len(left) != 0 {
+		for _, g := range left {
+			if g.GiverID == b.ID {
+				t.Errorf("prévenu une fois : %+v", g)
+			}
+		}
+	}
+	if err := s.DeleteReservation(ctx, rb.ID); err != nil {
+		t.Errorf("annulation : %v", err)
+	}
+}

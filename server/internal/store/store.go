@@ -178,6 +178,18 @@ type Store interface {
 	OverdueLoans(ctx context.Context) ([]model.Loan, error)
 	MarkLoansReminded(ctx context.Context, ids []uuid.UUID) error
 
+	// Gift reservations (P7-4): never read for the owner of the list
+	CreateReservation(ctx context.Context, lotID, giverID uuid.UUID, quantity int, expiresAt, note string) (*model.GiftReservation, error)
+	GetReservation(ctx context.Context, id uuid.UUID) (*model.GiftReservation, error)
+	UpdateReservation(ctx context.Context, id uuid.UUID, in model.ReservationUpdate) (*model.GiftReservation, error)
+	DeleteReservation(ctx context.Context, id uuid.UUID) error
+	LotReservations(ctx context.Context, lotIDs []uuid.UUID) (map[uuid.UUID][]model.GiftReservation, error)
+	ListGifts(ctx context.Context, giverID uuid.UUID, pg model.Pagination) ([]model.GiftReservation, int, error)
+	LeftReservations(ctx context.Context) ([]model.GiftReservation, error)
+	MarkReservationsNotified(ctx context.Context, ids []uuid.UUID) error
+	ExpiringReservations(ctx context.Context) ([]model.GiftReservation, error)
+	MarkReservationsExpiryReminded(ctx context.Context, ids []uuid.UUID) error
+
 	ListModerationLog(ctx context.Context, pg model.Pagination) ([]model.ModerationLogEntry, int, error)
 	ModerationHistory(ctx context.Context, userID uuid.UUID) (*model.ModerationHistory, error)
 	SetReaction(ctx context.Context, reviewID, userID uuid.UUID, kind string, on bool) error

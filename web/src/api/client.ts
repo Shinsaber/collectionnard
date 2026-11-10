@@ -11,6 +11,7 @@ import type {
   Block,
   BlockCreate,
   FriendLink,
+  GiftReservation,
   Loan,
   LoanCreate,
   LoanStatus,
@@ -855,6 +856,36 @@ export const loanApi = {
   borrowings: (params?: PaginationParams & { status?: LoanStatus }) =>
     http
       .get<PaginatedResponse<Loan>>("/me/borrowings", { params })
+      .then((r) => r.data),
+};
+
+/** Cadeaux réservés (P7-4) : sur la liste de souhaits d'un ami ; jamais lus pour le propriétaire de la liste. */
+export const giftApi = {
+  reserve: (
+    collectionId: string,
+    lotId: string,
+    data: { quantity: number; expires_at?: string; note?: string },
+  ) =>
+    http
+      .post<GiftReservation>(
+        `/collections/${collectionId}/lots/${lotId}/reservations`,
+        data,
+      )
+      .then((r) => r.data),
+  update: (
+    id: string,
+    data: {
+      quantity: number;
+      status: GiftReservation["status"];
+      expires_at?: string;
+      note: string;
+    },
+  ) =>
+    http.put<GiftReservation>(`/reservations/${id}`, data).then((r) => r.data),
+  cancel: (id: string) => http.delete(`/reservations/${id}`),
+  mine: (params?: PaginationParams) =>
+    http
+      .get<PaginatedResponse<GiftReservation>>("/me/gifts", { params })
       .then((r) => r.data),
 };
 

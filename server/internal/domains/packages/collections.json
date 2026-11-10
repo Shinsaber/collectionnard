@@ -2,7 +2,7 @@
   "format": "collectionnard.domain",
   "version": 1,
   "id": "collections",
-  "package_version": 6,
+  "package_version": 7,
   "title": {
     "fr": "Collections",
     "en": "Collections"
@@ -169,6 +169,7 @@
       "item_type_ids": [],
       "attributes_schema": {
         "type": "object",
+        "x-reservable": true,
         "x-order": [
           "priority",
           "max_budget"

@@ -9,59 +9,74 @@
       <ElTabPane
         v-for="side in SIDES"
         :key="side"
-        :label="t(`loans.tabs.${side}`)"
+        :label="side === 'gifts' ? t('gifts.tab') : t(`loans.tabs.${side}`)"
         :name="side"
       />
     </ElTabs>
-    <ElCheckbox v-model="all" data-test="loans-all" @change="reload">{{
-      t("loans.status.all")
-    }}</ElCheckbox>
-    <AppSpinner v-if="list.loading.value && list.data.value.length === 0" />
+    <ElCheckbox
+      v-if="tab !== 'gifts'"
+      v-model="all"
+      data-test="loans-all"
+      @change="reload"
+      >{{ t("loans.status.all") }}</ElCheckbox
+    >
+    <AppSpinner v-if="current.loading.value && empty" />
     <p
-      v-else-if="list.data.value.length === 0"
+      v-else-if="empty"
       class="rounded-2xl bg-surface p-5 text-muted shadow-card"
       data-test="loans-none"
     >
-      {{ t(`loans.none.${tab}`) }}
+      {{ tab === "gifts" ? t("gifts.none") : t(`loans.none.${tab}`) }}
     </p>
     <ul
       v-else
       class="flex flex-col gap-2 rounded-2xl bg-surface p-3 shadow-card"
     >
-      <LoanCard
-        v-for="l in list.data.value"
-        :key="l.id"
-        :loan="l"
-        :borrower-side="tab === 'borrowed'"
-        @changed="reload"
-      />
+      <template v-if="tab === 'gifts'">
+        <GiftCard
+          v-for="g in gifts.data.value"
+          :key="g.id"
+          :gift="g"
+          @changed="reload"
+        />
+      </template>
+      <template v-else>
+        <LoanCard
+          v-for="l in loans.data.value"
+          :key="l.id"
+          :loan="l"
+          :borrower-side="tab === 'borrowed'"
+          @changed="reload"
+        />
+      </template>
     </ul>
     <ElPagination
       class="justify-end"
       hide-on-single-page
       layout="prev, pager, next"
-      :total="list.total.value"
-      :page-size="list.perPage.value"
-      :current-page="list.page.value"
+      :total="current.total.value"
+      :page-size="current.perPage.value"
+      :current-page="current.page.value"
       @current-change="onPage"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-// Prêts (P7-3) : ce que j'ai prêté (actions du prêteur) et ce que mes amis m'ont prêté (lecture). L'onglet suit
-// `?tab=borrowed`, cible des notifications d'emprunt.
+// Prêts et cadeaux (P7-3, P7-4) : ce que j'ai prêté (actions du prêteur), ce que mes amis m'ont prêté (lecture), et
+// les cadeaux que je compte leur offrir. L'onglet suit `?tab=borrowed|gifts`, cible des notifications.
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
-import { loanApi } from "@/api/client";
+import { giftApi, loanApi } from "@/api/client";
 import { useNotify } from "@/composables/useNotify";
 import { usePagination } from "@/composables/usePagination";
 import AppSpinner from "@/components/common/AppSpinner.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
+import GiftCard from "@/components/gifts/GiftCard.vue";
 import LoanCard from "@/components/loans/LoanCard.vue";
 
-const SIDES = ["lent", "borrowed"] as const;
+const SIDES = ["lent", "borrowed", "gifts"] as const;
 type Side = (typeof SIDES)[number];
 
 const { t } = useI18n();
@@ -70,7 +85,10 @@ const route = useRoute();
 const router = useRouter();
 
 const tab = computed<Side>({
-  get: () => (route.query.tab === "borrowed" ? "borrowed" : "lent"),
+  get: () =>
+    SIDES.includes(route.query.tab as Side)
+      ? (route.query.tab as Side)
+      : "lent",
   set: (v) => {
     router.replace({ query: v === "lent" ? {} : { tab: v } });
   },
@@ -78,22 +96,32 @@ const tab = computed<Side>({
 /** Sans cette case : les prêts en cours seulement. */
 const all = ref(false);
 
-const list = usePagination((params: Record<string, unknown>) => {
+const loans = usePagination((params: Record<string, unknown>) => {
   const p = { ...params, ...(all.value ? {} : { status: "active" as const }) };
   return tab.value === "borrowed" ? loanApi.borrowings(p) : loanApi.mine(p);
 });
+const gifts = usePagination((params: Record<string, unknown>) =>
+  giftApi.mine(params),
+);
+const current = computed(() => (tab.value === "gifts" ? gifts : loans));
+const empty = computed(() =>
+  tab.value === "gifts"
+    ? gifts.data.value.length === 0
+    : loans.data.value.length === 0,
+);
 
 function reload() {
-  list.load().catch(notifyError);
+  current.value.load().catch(notifyError);
 }
 
 function onPage(p: number) {
-  list.goToPage(p);
+  current.value.goToPage(p);
   reload();
 }
 
 watch(tab, () => {
-  list.goToPage(1);
+  loans.data.value = [];
+  current.value.goToPage(1);
   reload();
 });
 onMounted(reload);

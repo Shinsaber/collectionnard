@@ -159,6 +159,17 @@ tags:
       collection, `GET /me/loans`) et de l'ami emprunteur (`GET /me/borrowings`, sans la note ni le nom de la
       collection) : jamais des autres lecteurs. Un prêt rendu (`returned_at`) reste comme historique. Une fois l'échéance
       passée, le propriétaire et l'ami sont notifiés (`loan_overdue`), une seule fois par échéance.
+  - name: Gifts
+    description: |
+      Cadeaux réservés (P7-4). Sur une liste de souhaits (type marqué `x-reservable`), un **ami** du propriétaire
+      réserve une part d'un lot pour l'offrir ; les autres amis voient qui a réservé et combien, pour se coordonner
+      (`reservations` des lots de `GET /public/collections/{id}/items`, `can_reserve` de la collection). Le propriétaire
+      n'en sait **jamais** rien : ni ses routes, ni ses listes, exports, statistiques ou copie hors ligne ne lisent les
+      réservations ; une réservation sur sa propre liste répond 404 ; une lecture anonyme ou par lien de partage ne les
+      montre pas. Annuler supprime la réservation. Quand le lot quitte la liste, la réservation reste (`left_list`) et
+      l'offrant est notifié (`gift_left_list`) ; il la marque offerte (`given`) ou l'annule. Une réservation non offerte vaut
+      jusqu'à `expires_at` (60 jours par défaut, un an au plus) : passée cette date, elle ne compte plus et sort de la vue des
+      amis, son offrant la garde (`expired`) pour la prolonger ou l'annuler ; il est prévenu 7 jours avant (`gift_expiring`).
   - name: Friends
     description: |
       Amis (P7-2). Une amitié est réciproque : un membre en invite un autre dont il voit le profil, par son nom
@@ -1683,6 +1694,59 @@ components:
     # -------------------------------------------------------------------------
     # CollectionItem
     # -------------------------------------------------------------------------
+    GiftReservation:
+      type: object
+      description: |
+        Réservation de cadeau (P7-4). `giver` : l'offrant, nommé aux autres amis du propriétaire ; `note` : la sienne,
+        à lui seul. Dans `/me/gifts` : `owner` (pour qui) et `item` ; `left_list` quand le lot a quitté la liste.
+      required: [id, item_id, quantity, status, expires_at, expired, mine, left_list, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        lot_id: { type: string, format: uuid }
+        left_list: { type: boolean }
+        item_id: { type: string, format: uuid }
+        quantity: { type: integer, minimum: 1, maximum: 100000 }
+        status: { type: string, enum: [reserved, given] }
+        expires_at:
+          type: string
+          format: date
+          description: Dernier jour où une réservation non offerte tient.
+        expired:
+          type: boolean
+          description: Non offerte et échue ; ne compte plus, vue de son offrant seul.
+        mine: { type: boolean, description: Réservée par le lecteur. }
+        giver:
+          $ref: "#/components/schemas/ReviewAuthor"
+        note: { type: string }
+        owner:
+          $ref: "#/components/schemas/ReviewAuthor"
+        item:
+          $ref: "#/components/schemas/Item"
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    ReservationCreate:
+      type: object
+      properties:
+        quantity: { type: integer, minimum: 1, maximum: 100000, default: 1 }
+        expires_at:
+          type: string
+          format: date
+          description: "D'aujourd'hui à un an ; absent : dans 60 jours."
+        note: { type: string, maxLength: 500 }
+
+    ReservationUpdate:
+      type: object
+      required: [quantity, status]
+      properties:
+        quantity: { type: integer, minimum: 1, maximum: 100000 }
+        status: { type: string, enum: [reserved, given] }
+        expires_at:
+          type: string
+          format: date
+          description: "Absent : inchangée (même passée) ; changée : d'aujourd'hui à un an."
+        note: { type: string, maxLength: 500 }
+
     Loan:
       type: object
       description: |
@@ -1785,6 +1849,13 @@ components:
           description: Prêts en cours du lot (P7-3), dans la liste de son propriétaire seulement.
           items:
             $ref: "#/components/schemas/Loan"
+        reservations:
+          type: array
+          description: |
+            Réservations de cadeau du lot (P7-4), pour un ami du propriétaire lisant sa liste de souhaits, jamais pour le
+            propriétaire.
+          items:
+            $ref: "#/components/schemas/GiftReservation"
         created_at:
           type: string
           format: date-time
@@ -2293,6 +2364,9 @@ components:
           $ref: "#/components/schemas/Visibility"
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+        can_reserve:
+          type: boolean
+          description: Le lecteur, ami du propriétaire, peut réserver des cadeaux sur cette liste de souhaits (P7-4).
 
     PublicProfile:
       type: object
@@ -2576,7 +2650,7 @@ components:
             Propositions (P4-3) : `proposal_state`, `proposal_quota`, `proposal_invalid`, `proposal_conflict`,
             `proposal_meta_types`, `own_proposal`. Avis (I-0) : `reviews_closed` (409). Modération (I-1) :
             `report_exists`, `moderation_state` (409), `own_content` (403), `rate_limited` (429). Commentaires (I-2) :
-            `comments_closed` (409). Amis (P7-2) : `friendship_exists`, `member_blocked`, `friend_links_limit` (409). Prêts (P7-3) : `not_lendable`, `borrower_not_friend`, `loan_exceeds_lot` (422). Chaque réponse d'erreur d'une opération nomme les codes qu'elle
+            `comments_closed` (409). Amis (P7-2) : `friendship_exists`, `member_blocked`, `friend_links_limit` (409). Prêts (P7-3) : `not_lendable`, `borrower_not_friend`, `loan_exceeds_lot` (422). Cadeaux (P7-4) : `reservation_exceeds_lot` (422). Chaque réponse d'erreur d'une opération nomme les codes qu'elle
             émet. Un client doit prévoir un libellé générique pour un code inconnu.
           example: validation_error
         message:
@@ -7264,6 +7338,135 @@ paths:
                       data:
                         items:
                           $ref: "#/components/schemas/Loan"
+
+  /collections/{collectionId}/lots/{lotId}/reservations:
+    parameters:
+      - name: collectionId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - $ref: "#/components/parameters/lotId"
+    post:
+      tags: [Gifts]
+      summary: Réserver un cadeau
+      description: |
+        Un ami du propriétaire, qui lit sa liste de souhaits, réserve des exemplaires d'un lot. 404 pour le propriétaire
+        et pour qui ne peut pas réserver : rien n'est révélé. 60 par heure.
+      operationId: createReservation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReservationCreate"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          description: "`reservation_exceeds_lot` : plus assez d'exemplaires non réservés ; `invalid_quantity`, `validation_error`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: "`rate_limited` (`Retry-After`)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Réservation créée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GiftReservation"
+
+  /reservations/{id}:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    put:
+      tags: [Gifts]
+      summary: Modifier ma réservation
+      description: "Quantité, état (`given` : offert), note. L'offrant seulement."
+      operationId: updateReservation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReservationUpdate"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          description: "`reservation_exceeds_lot`, `invalid_quantity`, `validation_error`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Réservation modifiée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GiftReservation"
+    delete:
+      tags: [Gifts]
+      summary: Annuler ma réservation
+      operationId: deleteReservation
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Annulée.
+
+  /me/gifts:
+    get:
+      tags: [Gifts]
+      summary: Les cadeaux que je compte offrir
+      description: Ceux dont le lot a quitté la liste d'abord, puis à offrir, puis offerts.
+      operationId: listMyGifts
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/GiftReservation"
 
   /me/borrowings:
     get:

@@ -579,6 +579,8 @@ export interface PublicCollection {
   visibility: Visibility;
   created_at: string;
   updated_at: string;
+  /** Le lecteur, ami du propriétaire, peut réserver des cadeaux sur cette liste (P7-4). */
+  can_reserve?: boolean;
 }
 
 export interface PublicProfile {
@@ -612,6 +614,8 @@ export interface CollectionItem {
   attributes: Record<string, unknown>;
   /** Prêts en cours du lot (P7-3), dans la liste de son propriétaire seulement. */
   loans?: Loan[];
+  /** Réservations de cadeau (P7-4), pour un ami du propriétaire seulement, jamais pour lui. */
+  reservations?: GiftReservation[];
   created_at: string;
   updated_at: string;
 }
@@ -635,6 +639,29 @@ export interface Loan {
   owner?: { username: string; display_name?: string; avatar?: string };
   item?: Item;
   collection_name?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Réservation de cadeau (P7-4) : `giver` nommé aux autres amis, `note` à l'offrant seul. */
+export interface GiftReservation {
+  id: string;
+  /** Absent quand le lot a quitté la liste (`left_list`). */
+  lot_id?: string;
+  left_list: boolean;
+  item_id: string;
+  quantity: number;
+  status: "reserved" | "given";
+  /** Dernier jour où une réservation non offerte tient (`AAAA-MM-JJ`). */
+  expires_at: string;
+  /** Non offerte et échue : ne compte plus, vue de son offrant seul. */
+  expired: boolean;
+  mine: boolean;
+  giver?: { username: string; display_name?: string; avatar?: string };
+  note?: string;
+  /** Pour qui (dans « Mes cadeaux »). */
+  owner?: { username: string; display_name?: string; avatar?: string };
+  item?: Item;
   created_at: string;
   updated_at: string;
 }
@@ -962,7 +989,9 @@ export type NotificationKind =
   | "friend_request"
   | "friend_accepted"
   | "loan_started"
-  | "loan_overdue";
+  | "loan_overdue"
+  | "gift_left_list"
+  | "gift_expiring";
 
 export interface AppNotification {
   id: string;
@@ -986,6 +1015,10 @@ export interface AppNotification {
     loan_id?: string;
     borrower?: string;
     borrowed?: boolean;
+    /** Cadeau (P7-4) : la réservation dont le lot a quitté la liste. */
+    reservation_id?: string;
+    /** Échéance d'une réservation bientôt expirée. */
+    expires_at?: string;
   };
   created_at: string;
   read_at?: string;

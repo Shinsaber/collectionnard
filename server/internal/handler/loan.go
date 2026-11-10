@@ -334,7 +334,8 @@ func (h *Handler) ListMyBorrowings(w http.ResponseWriter, r *http.Request) {
 }
 
 // RunReminders notifies, every interval, the lender and the borrowing friend
-// of each loan past its due date, once per due date.
+// of each loan past its due date, once per due date, and the giver of each
+// reservation whose lot left the wish list (P7-4).
 func (h *Handler) RunReminders(ctx context.Context, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -345,6 +346,13 @@ func (h *Handler) RunReminders(ctx context.Context, interval time.Duration) {
 			}
 		} else if n > 0 {
 			slog.Info("loan reminders", "loans", n)
+		}
+		if n, err := h.remindGifts(ctx); err != nil {
+			if ctx.Err() == nil {
+				slog.Error("gift reminders", "err", err)
+			}
+		} else if n > 0 {
+			slog.Info("gift reminders", "reservations", n)
 		}
 		select {
 		case <-ctx.Done():

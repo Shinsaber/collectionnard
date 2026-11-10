@@ -58,6 +58,7 @@
         v-model:description="xDescription"
         v-model:completeness="xCompleteness"
         v-model:lendable="xLendable"
+        v-model:reservable="xReservable"
         :labels="ft.labels"
         :show-completeness="ft.completeness"
         :show-lendable="ft.lendable"
@@ -99,7 +100,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, type PropType } from "vue";
 import { useI18n } from "vue-i18n";
-import { isCompleteness, isLendable } from "@/lib/schema";
+import { isCompleteness, isLendable, isReservable } from "@/lib/schema";
 import SchemaFieldCard from "./SchemaFieldCard.vue";
 import SchemaRootCard from "./SchemaRootCard.vue";
 import { buildProperty, parseSchema } from "./schemaBuilderConvert";
@@ -166,6 +167,8 @@ const xDescription = ref<Record<string, string>>({});
 const xCompleteness = ref(false);
 // Prêts possibles (x-lendable, types de collection, P7-3).
 const xLendable = ref(false);
+// Cadeaux réservables (x-reservable, listes de souhaits, P7-4).
+const xReservable = ref(false);
 // Mots-clés racine inconnus, restitués à l'identique.
 const rootExtra = ref<Record<string, unknown>>({});
 
@@ -198,6 +201,7 @@ const schema = computed<Record<string, unknown>>(() => {
     result["x-description"] = xDescription.value;
   if (xCompleteness.value) result["x-completeness"] = true;
   if (xLendable.value) result["x-lendable"] = true;
+  if (xReservable.value) result["x-reservable"] = true;
   return result;
 });
 
@@ -222,6 +226,7 @@ function loadFrom(value: Record<string, unknown>) {
   xDescription.value = stringMap(value["x-description"]);
   xCompleteness.value = isCompleteness(value);
   xLendable.value = isLendable(value);
+  xReservable.value = isReservable(value);
   rootExtra.value = Object.fromEntries(
     Object.entries(value ?? {}).filter(([k]) => !MANAGED_ROOT_KEYS.has(k)),
   );

@@ -427,6 +427,10 @@ func (s *PgStore) MergeCollectionLots(ctx context.Context, collectionID, lotID, 
 	if _, err := tx.Exec(ctx, `UPDATE loans SET lot_id = $2 WHERE lot_id = $1`, lotID, into); err != nil {
 		return nil, err
 	}
+	// Ses réservations de cadeau aussi (P7-4) : le propriétaire n'en sait rien.
+	if _, err := tx.Exec(ctx, `UPDATE gift_reservations SET lot_id = $2 WHERE lot_id = $1`, lotID, into); err != nil {
+		return nil, err
+	}
 	if _, err := tx.Exec(ctx, `DELETE FROM collection_items WHERE id = $1`, lotID); err != nil {
 		return nil, err
 	}

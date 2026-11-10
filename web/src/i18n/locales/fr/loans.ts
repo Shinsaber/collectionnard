@@ -1,7 +1,7 @@
 // Catalogue « loans » (français) : prêts et emprunts (P7-3).
 export default {
-  title: "Prêts",
-  help: "Ce que vous avez prêté, et ce que vos amis vous ont prêté.",
+  title: "Prêts et cadeaux",
+  help: "Ce que vous avez prêté, ce que vos amis vous ont prêté, et les cadeaux que vous comptez leur offrir.",
   tabs: { lent: "Prêtés", borrowed: "Empruntés" },
   status: { all: "Tous, rendus compris" },
   none: { lent: "Aucun prêt.", borrowed: "Rien d'emprunté." },

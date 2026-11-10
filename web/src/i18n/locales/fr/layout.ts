@@ -16,7 +16,7 @@ export default {
     offline: "Hors ligne",
     stats: "Statistiques",
     members: "Membres",
-    loans: "Prêts",
+    loans: "Prêts et cadeaux",
     recommendations: "Recommandations",
     proposals: "Propositions",
     scan: "Scanner",

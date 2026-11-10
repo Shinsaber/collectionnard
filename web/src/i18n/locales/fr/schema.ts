@@ -115,6 +115,9 @@ export default {
     completeness: "Relation de composition",
     completenessHelp:
       "La cible fait partie de la source (tome d'une édition, épisode d'une saison…) : les statistiques comptent les cibles possédées sur le total (« 30 tomes sur 42 »).",
+    reservable: "Cadeaux réservables",
+    reservableHelp:
+      "Liste de souhaits : les amis du propriétaire y réservent des cadeaux, sans qu'il le sache (Liste d'envies).",
     lendable: "Prêts possibles",
     lendableHelp:
       "Les lots des collections de ce type peuvent être prêtés, à un ami ou à un simple nom (Possession).",

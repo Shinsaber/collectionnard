@@ -18,11 +18,14 @@ import (
 // view stays GET /collections/{id}.
 
 // readable is a collection read through a public route, with its owner and
-// the fields to hide.
+// the fields to hide. reader and canReserve: a friend of the owner reading a
+// wish list (P7-4), never through a share link.
 type readable struct {
-	col    *model.Collection
-	owner  *model.User
-	hidden []string
+	col        *model.Collection
+	owner      *model.User
+	hidden     []string
+	reader     uuid.UUID
+	canReserve bool
 }
 
 func notFound(w http.ResponseWriter) {
@@ -38,9 +41,9 @@ func (h *Handler) loadReadable(w http.ResponseWriter, r *http.Request, id uuid.U
 		handleStoreError(w, r, err)
 		return nil, false
 	}
+	var viewer privacy.Viewer
 	if !shared {
-		viewer, err := h.viewer(r)
-		if err != nil {
+		if viewer, err = h.viewer(r); err != nil {
 			handleStoreError(w, r, err)
 			return nil, false
 		}
@@ -62,7 +65,8 @@ func (h *Handler) loadReadable(w http.ResponseWriter, r *http.Request, id uuid.U
 	if col.CollectionType != nil {
 		schema = col.CollectionType.AttributesSchema
 	}
-	return &readable{col: col, owner: owner, hidden: privacy.HiddenFields(schema, col.HiddenFields)}, true
+	return &readable{col: col, owner: owner, hidden: privacy.HiddenFields(schema, col.HiddenFields),
+		reader: viewer.ID, canReserve: !shared && viewer.FriendOf(col.UserID) && model.IsReservable(schema)}, true
 }
 
 // public converts to the response: CollectionType schema without the hidden fields.
@@ -77,7 +81,7 @@ func (rd *readable) public() model.PublicCollection {
 		ID: rd.col.ID, Name: rd.col.Name, Description: rd.col.Description, CollectionType: ct,
 		ItemCount: rd.col.ItemCount, Visibility: rd.col.Visibility,
 		Owner:     model.Owner{Username: rd.owner.Username, DisplayName: rd.owner.DisplayName, Avatar: rd.owner.Avatar},
-		CreatedAt: rd.col.CreatedAt, UpdatedAt: rd.col.UpdatedAt,
+		CreatedAt: rd.col.CreatedAt, UpdatedAt: rd.col.UpdatedAt, CanReserve: rd.canReserve,
 	}
 }
 
@@ -92,6 +96,12 @@ func (h *Handler) respondReadableItems(w http.ResponseWriter, r *http.Request, r
 	}
 	for i := range items {
 		items[i].Attributes = privacy.StripAttributes(items[i].Attributes, rd.hidden)
+	}
+	if rd.canReserve {
+		if err := h.withReservations(r, items, rd.reader); err != nil {
+			handleStoreError(w, r, err)
+			return
+		}
 	}
 	if items == nil {
 		items = []model.CollectionItem{}

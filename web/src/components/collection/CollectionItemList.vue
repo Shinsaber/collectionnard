@@ -36,6 +36,11 @@
                 typeTitle((row as CollectionItem).item?.item_type, lang) || "?"
               }}</span>
               <LoanFlag :lot="row as CollectionItem" />
+              <ReservationBlock
+                v-if="reservable"
+                :lot="row as CollectionItem"
+                @reserve="(ci) => emit('reserve', ci)"
+              />
             </div>
           </template>
         </ElTableColumn>
@@ -129,6 +134,11 @@
             >{{ t("collections.lots.copies", ci.quantity) }}</span
           >
           <LoanFlag :lot="ci" />
+          <ReservationBlock
+            v-if="reservable"
+            :lot="ci"
+            @reserve="(lot) => emit('reserve', lot)"
+          />
           <dl
             v-if="filledKeys(ci).length"
             class="flex flex-wrap gap-x-3 gap-y-1 text-[13px]"
@@ -182,6 +192,7 @@ import {
 import ItemCover from "@/components/item/ItemCover.vue";
 import GalleryThumbs from "@/components/common/GalleryThumbs.vue";
 import LoanFlag from "./LoanFlag.vue";
+import ReservationBlock from "@/components/gifts/ReservationBlock.vue";
 import LotActionsMenu from "./LotActionsMenu.vue";
 import type { LotCommand } from "@/lib/lots";
 import type { CollectionItem } from "@/api/types";
@@ -200,8 +211,16 @@ const props = withDefaults(
     emptyText?: string;
     /** Le type de la collection ouvre les prêts (`x-lendable`, P7-3) : « Prêter… », « Prêts… ». */
     lendable?: boolean;
+    /** Liste de souhaits d'un ami (P7-4) : réservations et « Réserver ». */
+    reservable?: boolean;
   }>(),
-  { readonly: false, linkItems: true, emptyText: "", lendable: false },
+  {
+    readonly: false,
+    linkItems: true,
+    emptyText: "",
+    lendable: false,
+    reservable: false,
+  },
 );
 
 const emit = defineEmits<{
@@ -211,6 +230,7 @@ const emit = defineEmits<{
   remove: [ci: CollectionItem];
   lend: [ci: CollectionItem];
   loans: [ci: CollectionItem];
+  reserve: [ci: CollectionItem];
 }>();
 
 const { t } = useI18n();

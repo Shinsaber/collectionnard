@@ -215,6 +215,11 @@ func (h *Handler) Router() chi.Router {
 		r.Delete("/api/v1/loans/{id}", h.DeleteLoan)
 		r.Get("/api/v1/me/loans", h.ListMyLoans)
 		r.Get("/api/v1/me/borrowings", h.ListMyBorrowings)
+		// Cadeaux réservés (P7-4).
+		r.Post("/api/v1/collections/{collectionId}/lots/{lotId}/reservations", h.CreateReservation)
+		r.Put("/api/v1/reservations/{id}", h.UpdateReservation)
+		r.Delete("/api/v1/reservations/{id}", h.DeleteReservation)
+		r.Get("/api/v1/me/gifts", h.ListMyGifts)
 
 		r.Get("/api/v1/items/{id}/history", h.GetItemHistory)
 

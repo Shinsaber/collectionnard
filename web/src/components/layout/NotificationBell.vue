@@ -81,6 +81,7 @@ import { useRoute } from "vue-router";
 import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";
 import { useNotificationsStore } from "@/stores/notifications";
+import { formatDay } from "@/lib/loans";
 import type { AppNotification } from "@/api/types";
 
 const { t } = useI18n();
@@ -99,6 +100,9 @@ function text(n: AppNotification): string {
       : n.kind;
   return t(`notifications.kinds.${kind}`, {
     borrower: n.payload.borrower ?? "",
+    date: n.payload.expires_at
+      ? formatDay(n.payload.expires_at, lang.value)
+      : "",
     by: n.payload.by_review_author
       ? t("notifications.reviewAuthor")
       : n.payload.by_member
@@ -118,6 +122,8 @@ function link(n: AppNotification): string {
   )
     return "/loans?tab=borrowed";
   if (n.kind === "loan_overdue") return "/loans";
+  if (n.kind === "gift_left_list" || n.kind === "gift_expiring")
+    return "/loans?tab=gifts";
   if (n.kind === "friend_request" || n.kind === "friend_accepted")
     return "/members";
   if (n.payload.proposal_id) return `/proposals/${n.payload.proposal_id}`;

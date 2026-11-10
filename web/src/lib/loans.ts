@@ -26,6 +26,13 @@ export function today(now = new Date()): string {
   return `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}`;
 }
 
+/** Le jour situé `days` jours après `now`, au format de l'API. */
+export function daysFrom(days: number, now = new Date()): string {
+  const d = new Date(now);
+  d.setDate(d.getDate() + days);
+  return today(d);
+}
+
 /** Date `AAAA-MM-JJ` lisible dans la langue de l'interface, sans décalage de fuseau. */
 export function formatDay(day: string, lang: string): string {
   const [y, m, d] = day.split("-").map(Number);

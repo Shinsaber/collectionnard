@@ -315,6 +315,33 @@ collection de possession) ; la réservation passe alors en `given` ou reste à c
 `GET/POST /collections/{collectionId}/lots/{lotId}/reservations` (refusé au propriétaire : 404, pour ne rien révéler),
 `PATCH/DELETE /reservations/{id}` (l'offrant seul), `GET /me/gifts` (ce que je compte offrir).
 
+### Livré (2026-11-08)
+
+Migration `025_gift_reservations.sql`, paquet `collections` v7 (`x-reservable` sur Liste d'envies), case « Cadeaux
+réservables » dans l'éditeur des types de collection. Écarts et choix faits en cours de lot :
+
+- **Pas de `GET` par lot** : les réservations sont jointes aux lots de `GET /public/collections/{id}/items` quand le
+  lecteur est un ami du propriétaire (`can_reserve` sur la collection) ; jamais par un lien de partage, jamais pour
+  le propriétaire ni un non-ami (vérifié par un test qui échoue si la table est seulement lue).
+- **`PUT /reservations/{id}`** (convention du projet) ; **annuler supprime** la réservation : plus d'état `cancelled`,
+  seulement `reserved` et `given`.
+- **Le lot qui quitte la liste** : `lot_id` passe à `NULL` (au lieu d'une suppression en cascade) ; l'item et le
+  propriétaire sont gardés sur la réservation. `RunReminders` prévient l'offrant une fois (`gift_left_list`) ; il la
+  marque offerte ou l'annule depuis « À offrir ». Une fusion de lots déplace les réservations, comme les prêts.
+- **Quantité** : les réservations d'un lot (offertes comprises) ne dépassent pas sa quantité au moment de réserver
+  (422 `reservation_exceeds_lot`). Le propriétaire, lui, garde la main sur sa quantité : la borner trahirait des
+  réservations qu'il ne doit pas voir. L'affichage peut donc montrer « 3 sur 2 » après une baisse.
+- **Où ça se passe** : sur la page publique de la liste (`/c/:id`), un ami voit « Camille, vous · 2 sur 3 » et un
+  bouton « Réserver » / « Ma réservation » (quantité, note à soi, annulation). La page « Prêts » devient « Prêts et
+  cadeaux », avec un onglet « À offrir ».
+
+- **Durée limitée** (migration `026_gift_reservation_expiry.sql`, choix du mainteneur le 2026-11-08) : une réservation
+  non offerte vaut jusqu'à `expires_at` — 60 jours par défaut, de aujourd'hui à un an, réglable à la réservation et
+  ensuite. Le serveur l'applique à chaque lecture : échue, elle ne compte plus dans le lot et sort de la vue des amis ;
+  son offrant la garde dans « À offrir », marquée « Expirée », pour la prolonger (si les exemplaires sont libres) ou
+  l'annuler. Une réservation offerte n'expire pas. Rappel `gift_expiring` 7 jours avant, une fois par échéance
+  (`expiry_reminded_at`).
+
 ## Briques mutualisées
 
 | Brique                   | Prêt                              | Cadeau                              |
@@ -355,5 +382,5 @@ Un commit par lot, branche `phase7-exemplaires`.
 ## Points encore ouverts (à voir en cours de lot)
 
 - Compte supprimé d'un emprunteur ou d'un offrant : nom figé ou effacé (à caler sur le RGPD, avant l'ouverture publique).
-- Réservation sans suite : faut-il une échéance (date de l'occasion) après laquelle elle s'annule d'elle-même ?
+
 - Scission et fusion d'un lot avec des photos d'exemplaire (M5) : les photos restent sur le lot d'origine.

@@ -5474,6 +5474,7 @@
     "name": "Wishlist",
     "schema": {
       "type": "object",
+      "x-reservable": true,
       "x-order": ["priority", "max_budget"],
       "x-title": {
         "en": "Wishlist",

@@ -176,6 +176,7 @@ une abstraction de ce schéma ; elle n'existe pas dans l'implémentation.
 | `x-identifier`       | propriété | ItemType : identifiant (ISBN, EAN, QID Wikidata, ARK BnF, MBID…), au premier niveau ou dans un objet (`external_ids.wikidata`). Un autre item du même type portant la même valeur est signalé comme doublon possible avant l'enregistrement ou la proposition (`POST /items/duplicates`). Dans les formulaires, un champ `x-identifier` de premier niveau a un bouton « scanner un code-barres » (`docs/phases/mobile.md` M2) |
 | `x-completeness`     | racine    | RelationType seulement : `true` marque une relation de composition (la cible fait partie de la source : `contains_volume`, `contains_track`, `contains_episode`, `includes_episode`, `contains_work`). Les statistiques d'une collection comptent, pour chaque source, les cibles présentes sur le total (« 30 tomes sur 42 »)                                                                                                |
 | `x-lendable`         | racine    | CollectionType seulement : `true` ouvre les prêts des lots de ses collections (P7-3, `Ownership` du paquet `collections` v6). Le serveur refuse un prêt ailleurs (422 `not_lendable`) |
+| `x-reservable`       | racine    | CollectionType seulement : `true` ouvre les réservations de cadeau des amis du propriétaire (P7-4, `Wishlist` du paquet `collections` v7). Jamais renvoyées au propriétaire ; refusées ailleurs (404) |
 | `x-label`            | racine    | Gabarit du libellé des instances : `"{title}"`, `"{number}. {title}"`, `"{last_name} {first_name}"` ; sans gabarit, repli sur `title`, `name`, `label` (Go `internal/label`, TS `web/src/lib/schema.ts`)                                                                                                                                                                                                                      |
 
 Règles d'affichage dérivées du schéma lui-même (pas d'extension) : un `integer` / `number` avec `minimum`
@@ -561,7 +562,10 @@ prêts et réservations dans deux tables distinctes ; emprunteur et offrant choi
       niveau de visibilité `friends` (collections, profil, avis), rupture par le blocage, onglets Amis / Annuaire de « Membres ».
 - [x] **P7-3 — Prêts** (livré le 2026-11-08) : à un ami (notifié) ou à un simple nom, retour prévu, rappel de retard aux deux,
       historique des prêts rendus, drapeau privé sur le lot, page « Prêts » (prêtés / empruntés), `x-lendable` (paquet `collections` v6).
-- [ ] **P7-4 — Cadeaux réservés** : réservation par les amis dans une liste de souhaits, jamais visible du propriétaire.
+- [x] **P7-4 — Cadeaux réservés** (livré le 2026-11-08) : réservation par les amis dans une liste de souhaits, jamais visible du
+      propriétaire ; offrants nommés aux autres amis, « Ma réservation », durée limitée (60 jours par défaut, un an au plus, rappel
+      7 jours avant), onglet « À offrir », rappel quand le lot quitte la liste,
+      `x-reservable` (paquet `collections` v7). Phase 7 close (hors échanges, reportés).
 
 ---
 

@@ -103,6 +103,8 @@ export default {
       "Ce membre n'est pas votre ami : prêtez-lui sous un simple nom, ou invitez-le d'abord.",
     loan_exceeds_lot:
       "Il ne reste pas assez d'exemplaires disponibles dans ce lot.",
+    reservation_exceeds_lot:
+      "Il ne reste pas assez d'exemplaires à réserver : un autre ami a été plus rapide.",
     friend_links_limit:
       "Vous avez déjà 10 liens d'ami valides : révoquez-en un d'abord.",
     blocked: "L'auteur de ce contenu n'accepte pas vos interactions.",
