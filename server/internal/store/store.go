@@ -193,6 +193,7 @@ type Store interface {
 	GivenGifts(ctx context.Context, lotIDs []uuid.UUID) (map[uuid.UUID][]model.GiftReservation, error)
 	ReceiveGift(ctx context.Context, id uuid.UUID, into *uuid.UUID, attrs json.RawMessage) (*model.GiftReservation, error)
 	DeclineGift(ctx context.Context, id uuid.UUID) error
+	ListReceivedGifts(ctx context.Context, ownerID uuid.UUID, status string, pg model.Pagination) ([]model.GiftReservation, int, error)
 
 	ListModerationLog(ctx context.Context, pg model.Pagination) ([]model.ModerationLogEntry, int, error)
 	ModerationHistory(ctx context.Context, userID uuid.UUID) (*model.ModerationHistory, error)

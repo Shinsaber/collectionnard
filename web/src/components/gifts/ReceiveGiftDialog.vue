@@ -74,7 +74,7 @@ import { acceptedTypeIds } from "@/lib/collections";
 import { isLendable, typeTitle, type Schema } from "@/lib/schema";
 import AppSpinner from "@/components/common/AppSpinner.vue";
 import DynamicForm from "@/components/common/DynamicForm.vue";
-import type { Collection, CollectionItem, GiftReservation } from "@/api/types";
+import type { Collection, GiftReservation } from "@/api/types";
 
 /** Choix « le retirer seulement » (aucune collection de destination). */
 const REMOVE_ONLY = "";
@@ -82,7 +82,8 @@ const REMOVE_ONLY = "";
 const props = defineProps<{
   /** La liste de souhaits. */
   collectionId: string;
-  lot: CollectionItem | null;
+  /** Type d'item du cadeau : seules les collections qui l'acceptent sont proposées. */
+  itemTypeId?: string;
   gift: GiftReservation | null;
   label: string;
 }>();
@@ -102,7 +103,7 @@ const saving = ref(false);
 
 /** Mes autres collections qui acceptent l'item ; celles qui se prêtent (une possession) d'abord. */
 const targets = computed(() => {
-  const typeId = props.lot?.item?.item_type_id;
+  const typeId = props.itemTypeId;
   return collections.value
     .filter((c) => c.id !== props.collectionId)
     .filter((c) => {

@@ -186,6 +186,7 @@ type MockStore struct {
 	GivenGiftsFn                     func(ctx context.Context, lotIDs []uuid.UUID) (map[uuid.UUID][]model.GiftReservation, error)
 	ReceiveGiftFn                    func(ctx context.Context, id uuid.UUID, into *uuid.UUID, attrs json.RawMessage) (*model.GiftReservation, error)
 	DeclineGiftFn                    func(ctx context.Context, id uuid.UUID) error
+	ListReceivedGiftsFn              func(ctx context.Context, ownerID uuid.UUID, status string, pg model.Pagination) ([]model.GiftReservation, int, error)
 	ListCommentsFn                   func(ctx context.Context, kind string, targetID, viewer uuid.UUID, pg model.Pagination) ([]model.Comment, int, error)
 	GetCommentFn                     func(ctx context.Context, id uuid.UUID) (*model.Comment, error)
 	CreateCommentFn                  func(ctx context.Context, kind string, targetID, authorID uuid.UUID, body string) (*model.Comment, error)
@@ -1338,4 +1339,11 @@ func (m *MockStore) DeclineGift(ctx context.Context, id uuid.UUID) error {
 		return m.DeclineGiftFn(ctx, id)
 	}
 	return store.ErrNotFound
+}
+
+func (m *MockStore) ListReceivedGifts(ctx context.Context, ownerID uuid.UUID, status string, pg model.Pagination) ([]model.GiftReservation, int, error) {
+	if m.ListReceivedGiftsFn != nil {
+		return m.ListReceivedGiftsFn(ctx, ownerID, status, pg)
+	}
+	return []model.GiftReservation{}, 0, nil
 }

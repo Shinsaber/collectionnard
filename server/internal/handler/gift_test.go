@@ -432,3 +432,51 @@ func TestCollectionItems_GivenGiftsForTheOwner(t *testing.T) {
 		t.Errorf("%d %s", resp.StatusCode, body)
 	}
 }
+
+// P7-4c : l'onglet « Reçus » du propriétaire, et des cadeaux reçus qui ne se suppriment plus.
+
+func TestListReceivedGifts(t *testing.T) {
+	var status string
+	mock := &testutil.MockStore{
+		ListReceivedGiftsFn: func(_ context.Context, owner uuid.UUID, s string, _ model.Pagination) ([]model.GiftReservation, int, error) {
+			if owner != testutil.UserID {
+				t.Errorf("owner %s", owner)
+			}
+			status = s
+			return []model.GiftReservation{{ID: uuid.New(), Status: model.GiftReceived, Note: "secret de camille",
+				Giver: &model.ReviewAuthor{Username: "camille"}, Owner: &model.ReviewAuthor{Username: "user"}}}, 1, nil
+		},
+	}
+	resp, body := call(t, mock, "GET", "/api/v1/me/received-gifts?status=received", testutil.UserToken(), nil)
+	if resp.StatusCode != http.StatusOK || status != "received" || !strings.Contains(body, "camille") ||
+		strings.Contains(body, "secret de camille") || strings.Contains(body, `"owner"`) {
+		t.Errorf("%d %s", resp.StatusCode, body)
+	}
+	for _, q := range []string{"?status=reserved", "?status=all"} {
+		if resp, _ := call(t, mock, "GET", "/api/v1/me/received-gifts"+q, testutil.UserToken(), nil); resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("%s: %d (a secret reservation is never listed)", q, resp.StatusCode)
+		}
+	}
+}
+
+func TestDeleteReservation_ReceivedIsKept(t *testing.T) {
+	status := model.GiftReceived
+	deleted := false
+	mock := &testutil.MockStore{
+		GetReservationFn: func(_ context.Context, id uuid.UUID) (*model.GiftReservation, error) {
+			return &model.GiftReservation{ID: id, GiverID: testutil.AdminID, Status: status}, nil
+		},
+		DeleteReservationFn: func(context.Context, uuid.UUID) error {
+			deleted = true
+			return nil
+		},
+	}
+	path := "/api/v1/reservations/" + uuid.New().String()
+	if resp, body := call(t, mock, "DELETE", path, testutil.AdminToken(), nil); resp.StatusCode != http.StatusConflict || deleted || !strings.Contains(body, "gift_state") {
+		t.Errorf("received: %d %s", resp.StatusCode, body)
+	}
+	status = model.GiftGiven // remise pas encore confirmée : l'offrant peut la reprendre
+	if resp, _ := call(t, mock, "DELETE", path, testutil.AdminToken(), nil); resp.StatusCode != http.StatusNoContent || !deleted {
+		t.Errorf("given: %d", resp.StatusCode)
+	}
+}

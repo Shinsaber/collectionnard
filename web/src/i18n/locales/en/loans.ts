@@ -3,7 +3,7 @@ import type fr from "../fr/loans";
 
 const en: typeof fr = {
   title: "Loans and gifts",
-  help: "What you lent, what your friends lent you, and the gifts you plan to give them.",
+  help: "What you lent, what your friends lent you, the gifts you plan to give and those given to you.",
   tabs: { lent: "Lent", borrowed: "Borrowed" },
   status: { all: "All, returned included" },
   none: { lent: "No loan.", borrowed: "Nothing borrowed." },

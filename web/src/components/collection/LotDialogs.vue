@@ -39,7 +39,7 @@
   <ReceiveGiftDialog
     v-model:visible="shown.receive"
     :collection-id="collectionId"
-    :lot="lot"
+    :item-type-id="lot?.item?.item_type_id"
     :gift="gift"
     :label="label"
     @done="emit('changed')"
@@ -48,12 +48,8 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { useI18n } from "vue-i18n";
-import { giftApi } from "@/api/client";
-import { useConfirmDialog } from "@/composables/useConfirmDialog";
+import { useGiftDecline } from "@/composables/useGiftDecline";
 import { useLang } from "@/composables/useLang";
-import { useNotify } from "@/composables/useNotify";
-import { personName } from "@/lib/gifts";
 import { itemLabel, type Schema } from "@/lib/schema";
 import LoanDialog from "./LoanDialog.vue";
 import LotEditDialog from "./LotEditDialog.vue";
@@ -70,10 +66,8 @@ const props = defineProps<{
 /** Un lot a changé : la page recharge sa liste et son compteur. */
 const emit = defineEmits<{ changed: [] }>();
 
-const { t } = useI18n();
 const { lang } = useLang();
-const { notifyError, notifySuccess } = useNotify();
-const { confirm } = useConfirmDialog();
+const { decline: declineGift } = useGiftDecline();
 
 const shown = ref({
   edit: false,
@@ -100,19 +94,7 @@ function open(kind: LotDialog, ci: CollectionItem, g?: GiftReservation) {
 
 /** « Pas reçu » : la réservation est invalidée, l'offrant prévenu. */
 async function decline(_ci: CollectionItem, g: GiftReservation) {
-  const ok = await confirm({
-    message: t("gifts.owner.declineConfirm", { name: personName(g.giver) }),
-    confirmText: t("gifts.owner.decline"),
-    danger: true,
-  });
-  if (!ok) return;
-  try {
-    await giftApi.decline(props.collectionId, g.id);
-    notifySuccess(t("gifts.owner.declined"));
-    emit("changed");
-  } catch (e) {
-    notifyError(e);
-  }
+  if (await declineGift(props.collectionId, g)) emit("changed");
 }
 
 defineExpose({ open, decline });

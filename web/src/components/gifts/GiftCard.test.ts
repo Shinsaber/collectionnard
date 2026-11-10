@@ -85,7 +85,7 @@ describe("GiftCard", () => {
     expect(w.find('[data-test="gift-hand-over"]').exists()).toBe(false);
   });
 
-  it("reçu : la date de réception, et un retrait de l'historique", async () => {
+  it("reçu : la date de réception, et rien à retirer (P7-4c)", () => {
     const w = mountCard({
       ...gift,
       status: "received",
@@ -95,8 +95,6 @@ describe("GiftCard", () => {
     expect(w.find('[data-test="gift-received"]').text()).toContain(
       "10/11/2026",
     );
-    await w.find('[data-test="gift-cancel"]').trigger("click");
-    await flushPromises();
-    expect(api.cancel).toHaveBeenCalledWith("g1");
+    expect(w.find('[data-test="gift-cancel"]').exists()).toBe(false);
   });
 });

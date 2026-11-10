@@ -569,6 +569,8 @@ prêts et réservations dans deux tables distinctes ; emprunteur et offrant choi
 - [x] **P7-4b — Remise d'un cadeau** (livré le 2026-11-10) : « Je l'ai remis » lève la surprise, le propriétaire est notifié et
       confirme (« Bien reçu », vers une autre collection ou simplement retiré) ou refuse (« Pas reçu », réservation invalidée) ;
       historique « Reçu le … » de l'offrant.
+- [x] **P7-4c — Cadeaux reçus** (livré le 2026-11-10) : onglet « Reçus » (à confirmer, puis historique), cadeaux reçus gardés
+      des deux côtés.
 
 ---
 

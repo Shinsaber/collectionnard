@@ -650,6 +650,8 @@ export interface GiftReservation {
   id: string;
   /** Absent quand le lot a quitté la liste (`left_list`). */
   lot_id?: string;
+  /** La liste de souhaits du lot, tant qu'il y est (où confirmer une remise). */
+  collection_id?: string;
   left_list: boolean;
   item_id: string;
   quantity: number;

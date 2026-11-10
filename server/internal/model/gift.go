@@ -61,8 +61,9 @@ type GiftReservation struct {
 	// GivenAt, ReceivedAt: handed over, confirmed by the owner (P7-4b).
 	GivenAt    *time.Time `json:"given_at,omitempty"`
 	ReceivedAt *time.Time `json:"received_at,omitempty"`
-	// CollectionID: the wish list of the lot, while it is on it.
-	CollectionID *uuid.UUID `json:"-"`
+	// CollectionID: the wish list of the lot, while it is on it (where the
+	// owner confirms a gift handed over).
+	CollectionID *uuid.UUID `json:"collection_id,omitempty"`
 	// Mine: reserved by the reader.
 	Mine      bool          `json:"mine"`
 	GiverID   uuid.UUID     `json:"-"`

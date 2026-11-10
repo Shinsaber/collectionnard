@@ -1899,6 +1899,13 @@ func TestGiftReservations(t *testing.T) {
 	if _, n, _ := s.ListGifts(ctx, a.ID, "received", pg); n != 1 {
 		t.Errorf("historique : %d", n)
 	}
+	// P7-4c : le destinataire retrouve le cadeau reçu ; une réservation secrète n'y paraît jamais.
+	if got, n, _ := s.ListReceivedGifts(ctx, owner.ID, "", pg); n != 1 || got[0].ID != ra.ID || got[0].Giver.Username != "gift_a" {
+		t.Errorf("reçus : %+v", got)
+	}
+	if _, n, _ := s.ListReceivedGifts(ctx, owner.ID, model.GiftGiven, pg); n != 0 {
+		t.Errorf("rien à confirmer : %d", n)
+	}
 	// Le lot quitte la liste : la réservation reste, l'offrant à prévenir.
 	if err := s.RemoveCollectionItem(ctx, col.ID, lot.ID); err != nil {
 		t.Fatal(err)

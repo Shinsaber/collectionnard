@@ -223,6 +223,7 @@ func (h *Handler) Router() chi.Router {
 		r.Post("/api/v1/collections/{collectionId}/gifts/{id}/receive", h.ReceiveGift)
 		r.Post("/api/v1/collections/{collectionId}/gifts/{id}/decline", h.DeclineGift)
 		r.Get("/api/v1/me/gifts", h.ListMyGifts)
+		r.Get("/api/v1/me/received-gifts", h.ListReceivedGifts)
 
 		r.Get("/api/v1/items/{id}/history", h.GetItemHistory)
 

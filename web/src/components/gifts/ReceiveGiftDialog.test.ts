@@ -33,7 +33,13 @@ const gift = { id: "g1", quantity: 1 } as GiftReservation;
 
 async function open() {
   const w = mount(ReceiveGiftDialog, {
-    props: { collectionId: "wish", lot, gift, label: "Tome 1", visible: false },
+    props: {
+      collectionId: "wish",
+      itemTypeId: lot.item?.item_type_id,
+      gift,
+      label: "Tome 1",
+      visible: false,
+    },
     global: {
       plugins: [ElementPlus],
       stubs: {

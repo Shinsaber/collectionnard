@@ -353,3 +353,24 @@ func (s *PgStore) DeclineGift(ctx context.Context, id uuid.UUID) error {
 	}
 	return nil
 }
+
+// ListReceivedGifts lists the gifts handed over to ownerID (status "given":
+// to confirm, the oldest first) or received (the latest first); "" both, those
+// to confirm first. Never a reservation still secret.
+func (s *PgStore) ListReceivedGifts(ctx context.Context, ownerID uuid.UUID, status string, pg model.Pagination) ([]model.GiftReservation, int, error) {
+	where := ` WHERE r.owner_id = $1 AND r.status IN ('given', 'received')`
+	switch status {
+	case model.GiftGiven:
+		where = ` WHERE r.owner_id = $1 AND r.status = 'given'`
+	case model.GiftReceived:
+		where = ` WHERE r.owner_id = $1 AND r.status = 'received'`
+	}
+	var total int
+	if err := s.pool.QueryRow(ctx, `SELECT count(*) FROM gift_reservations r`+where, ownerID).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+	list, err := collectReservations(s.pool.Query(ctx, reservationSelect+where+`
+		ORDER BY r.status = 'received', r.given_at, r.received_at DESC, r.id LIMIT $2 OFFSET $3`,
+		ownerID, pg.PerPage, pg.Offset()))
+	return list, total, err
+}

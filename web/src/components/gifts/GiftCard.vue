@@ -60,7 +60,7 @@
           class="self-start rounded-full bg-tint px-2 py-0.5 font-mono text-[11px] text-tint-ink"
           data-test="gift-received"
           >{{
-            t("gifts.received", {
+            t("gifts.received.on", {
               date: new Date(gift.received_at).toLocaleDateString(lang),
             })
           }}</span
@@ -90,7 +90,9 @@
           >{{ t("gifts.handOver") }}</ElButton
         >
       </template>
+      <!-- Un cadeau reçu se garde, chez l'offrant comme chez le destinataire (P7-4c). -->
       <ElButton
+        v-if="gift.status !== 'received'"
         text
         size="small"
         :aria-label="reserved ? t('gifts.cancel') : t('gifts.remove')"

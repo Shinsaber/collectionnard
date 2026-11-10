@@ -230,10 +230,16 @@ func (h *Handler) HandOverReservation(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, done)
 }
 
-// DeleteReservation answers DELETE /reservations/{id}: the giver cancels.
+// DeleteReservation answers DELETE /reservations/{id}: the giver cancels a
+// reservation, or takes back a handover not confirmed yet. A gift received
+// stays, for the giver and the owner alike (P7-4c: 409 gift_state).
 func (h *Handler) DeleteReservation(w http.ResponseWriter, r *http.Request) {
 	g, ok := h.ownReservation(w, r)
 	if !ok {
+		return
+	}
+	if g.Status == model.GiftReceived {
+		respondError(w, http.StatusConflict, "gift_state", "a gift received is kept on both sides")
 		return
 	}
 	if err := h.Store.DeleteReservation(r.Context(), g.ID); err != nil {
@@ -316,7 +322,28 @@ func (h *Handler) remindLeftGifts(ctx context.Context) (int, error) {
 	return len(ids), err
 }
 
-// --- Côté propriétaire : les cadeaux remis (P7-4b) ---
+// --- Côté propriétaire : les cadeaux remis (P7-4b) et reçus (P7-4c) ---
+
+// ListReceivedGifts answers GET /me/received-gifts: the gifts handed over to
+// me, to confirm (status given) or received; never a reservation still secret,
+// never the giver's note.
+func (h *Handler) ListReceivedGifts(w http.ResponseWriter, r *http.Request) {
+	status := r.URL.Query().Get("status")
+	if status != "" && status != model.GiftGiven && status != model.GiftReceived {
+		respondError(w, http.StatusBadRequest, "bad_request", "status must be given or received")
+		return
+	}
+	pg := parsePagination(r)
+	list, total, err := h.Store.ListReceivedGifts(r.Context(), middleware.GetUserID(r.Context()), status, pg)
+	if err != nil {
+		handleStoreError(w, r, err)
+		return
+	}
+	for i := range list {
+		list[i].Note, list[i].Owner, list[i].Mine = "", nil, false
+	}
+	respondJSON(w, http.StatusOK, model.NewPaginatedResponse(list, total, pg))
+}
 
 // withGivenGifts attaches to the lots of the owner's list the gifts handed
 // over, waiting for confirmation: never a reservation still secret.

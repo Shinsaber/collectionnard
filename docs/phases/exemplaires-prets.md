@@ -383,6 +383,19 @@ Le `PUT` d'une réservation ne porte plus d'état (409 `gift_state` une fois rem
   collection choisie (la règle « toujours demander » de P7-1 n'y est pas encore appliquée ; la fusion de lots le rattrape).
 - La page d'une collection confie ses dialogues de lot à `LotDialogs` (au-delà de 400 lignes sinon).
 
+### P7-4c — Cadeaux reçus
+
+**Retenu et livré le 2026-11-10** (demande du mainteneur) :
+
+- **Onglet « Reçus »** de « Prêts et cadeaux » (`GET /me/received-gifts?status=given|received`) : en tête, la section
+  **« À confirmer »** réunit les cadeaux remis sur toutes mes listes, avec « Bien reçu » et « Pas reçu » sur place ; puis
+  l'historique des cadeaux reçus (« Offert par Camille », « Reçu le … »). Jamais une réservation encore secrète, jamais
+  la note de l'offrant. La notification `gift_given` mène à cet onglet.
+- **Un cadeau reçu ne se supprime plus, d'aucun côté** (`DELETE` → 409 `gift_state`) : l'offrant et le destinataire
+  partagent la même ligne, la retirer chez l'un l'effacerait chez l'autre. Une remise pas encore confirmée reste
+  reprenable par l'offrant. Le compte supprimé d'un offrant efface encore ses cadeaux (point RGPD ouvert).
+- **Pas de suivi de l'exemplaire** dans sa nouvelle collection (« Offert par … » sur le lot) : écarté pour l'instant.
+
 ## Briques mutualisées
 
 | Brique                   | Prêt                              | Cadeau                              |

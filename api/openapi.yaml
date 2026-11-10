@@ -176,6 +176,8 @@ tags:
       encore secrète). Il confirme (`receive` : les exemplaires quittent la liste, vers une autre de ses collections ou
       simplement retirés ; état `received`, historique de l'offrant, notifié `gift_received`) ou refuse (`decline` : la
       réservation est supprimée, l'offrant notifié `gift_declined`). Lot déjà retiré : la remise vaut réception.
+      Le destinataire retrouve ses cadeaux à confirmer et reçus dans `GET /me/received-gifts` (P7-4c) ; un cadeau reçu ne
+      se supprime plus, d'aucun côté (409 `gift_state`).
   - name: Friends
     description: |
       Amis (P7-2). Une amitié est réciproque : un membre en invite un autre dont il voit le profil, par son nom
@@ -1709,6 +1711,10 @@ components:
       properties:
         id: { type: string, format: uuid }
         lot_id: { type: string, format: uuid }
+        collection_id:
+          type: string
+          format: uuid
+          description: La liste de souhaits du lot, tant qu'il y est (où confirmer une remise).
         left_list: { type: boolean }
         item_id: { type: string, format: uuid }
         quantity: { type: integer, minimum: 1, maximum: 100000 }
@@ -7468,6 +7474,12 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+        "409":
+          description: "`gift_state` : un cadeau reçu ne se supprime plus."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "500":
           $ref: "#/components/responses/InternalError"
         "204":
@@ -7568,6 +7580,40 @@ paths:
           $ref: "#/components/responses/InternalError"
         "204":
           description: Invalidée.
+
+  /me/received-gifts:
+    get:
+      tags: [Gifts]
+      summary: Les cadeaux qu'on m'a offerts
+      description: |
+        Remis à confirmer (`given`, les plus anciens d'abord), puis reçus (les plus récents d'abord) ; jamais une
+        réservation encore secrète, jamais la note de l'offrant.
+      operationId: listReceivedGifts
+      parameters:
+        - name: status
+          in: query
+          description: "`given` : à confirmer ; `received` : reçus ; absent : les deux."
+          schema: { type: string, enum: [given, received] }
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/GiftReservation"
 
   /me/gifts:
     get:

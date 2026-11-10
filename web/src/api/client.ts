@@ -893,6 +893,11 @@ export const giftApi = {
   /** « Pas reçu » (propriétaire) : la réservation est invalidée. */
   decline: (collectionId: string, id: string) =>
     http.post(`/collections/${collectionId}/gifts/${id}/decline`),
+  /** Cadeaux qu'on m'a offerts (P7-4c) : à confirmer (`given`) ou reçus. */
+  received: (params?: PaginationParams & { status?: "given" | "received" }) =>
+    http
+      .get<PaginatedResponse<GiftReservation>>("/me/received-gifts", { params })
+      .then((r) => r.data),
   mine: (params?: PaginationParams & { status?: "open" | "received" }) =>
     http
       .get<PaginatedResponse<GiftReservation>>("/me/gifts", { params })
