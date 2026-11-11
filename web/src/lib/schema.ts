@@ -116,6 +116,24 @@ export function itemLabel(
   return renderLabel(schema, item.attributes, lang) || item.id.slice(0, 8);
 }
 
+/** Liste de souhaits où les amis réservent des cadeaux (extension racine `x-reservable`, P7-4). */
+export function isReservable(schema: unknown): boolean {
+  return (
+    !!schema &&
+    typeof schema === "object" &&
+    (schema as Record<string, unknown>)["x-reservable"] === true
+  );
+}
+
+/** Type de collection qui ouvre les prêts (extension racine `x-lendable`, P7-3). */
+export function isLendable(schema: unknown): boolean {
+  return (
+    !!schema &&
+    typeof schema === "object" &&
+    (schema as Record<string, unknown>)["x-lendable"] === true
+  );
+}
+
 /**
  * Relation de composition (extension racine `x-completeness` d'un RelationType) : la cible fait
  * partie de la source ; les statistiques comptent les cibles possédées sur le total.

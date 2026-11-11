@@ -50,7 +50,13 @@ const en: typeof fr = {
     external_unavailable:
       "External source (Wikidata, BnF) unreachable, try again later",
     item_type_not_allowed:
-      "This item type is not allowed in this collection type",
+      "This item type is not accepted by this collection or its type",
+    invalid_sort:
+      "Impossible sort: sorting by an attribute requires a collection that accepts a single item type",
+    invalid_quantity:
+      "Impossible quantity: from 1 to 100,000 copies, and a split lot keeps at least one",
+    lots_not_mergeable:
+      "Only two different lots of the same item can be merged",
     account_disabled:
       "This account is disabled: contact an admin of the instance.",
     invalid_invitation:
@@ -82,6 +88,19 @@ const en: typeof fr = {
     moderation_state: "This content changed meanwhile: reload the page.",
     recommendations_refused: "This member does not accept recommendations.",
     already_recommended: "You already recommended this item to them.",
+    friendship_exists:
+      "You are already friends, or your request is awaiting an answer.",
+    member_blocked: "You blocked this member: unblock them first.",
+    not_lendable: "This type of collection does not open loans.",
+    borrower_not_friend:
+      "This member is not your friend: lend under a mere name, or invite them first.",
+    loan_exceeds_lot: "Not enough copies left to lend in this lot.",
+    gift_state:
+      "This gift is already handed over: it can no longer be changed.",
+    reservation_exceeds_lot:
+      "Not enough copies left to reserve: another friend was quicker.",
+    friend_links_limit:
+      "You already have 10 valid friend links: revoke one first.",
     blocked: "The author of this content does not accept your interactions.",
   },
 };

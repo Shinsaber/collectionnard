@@ -27,14 +27,14 @@ const (
 
 // reviewShownTo tells whether a review appears to the viewer (listed, not
 // hidden): what may be reported or reacted to. Their own review is not.
-func reviewShownTo(r *model.Review, viewer uuid.UUID) bool {
-	if r.HiddenAt != nil || r.UserID == viewer {
+func reviewShownTo(r *model.Review, viewer privacy.Viewer) bool {
+	if r.HiddenAt != nil || viewer.Is(r.UserID) {
 		return false
 	}
 	if r.Visibility == privacy.Anonymous {
 		return r.Body != ""
 	}
-	return slices.Contains(privacy.Levels(viewer), r.Visibility)
+	return privacy.CanView(r.Visibility, r.UserID, viewer)
 }
 
 // CreateReport records a report on a content shown to the reporter.
@@ -57,8 +57,13 @@ func (h *Handler) CreateReport(w http.ResponseWriter, r *http.Request) {
 		respondValidationError(w, "details too long", map[string]any{"fields": map[string]string{"details": "too long"}})
 		return
 	}
-	me := middleware.GetUserID(r.Context())
-	author, shown, err := h.reportable(r, in.TargetKind, in.TargetID, me)
+	viewer, err := h.viewer(r)
+	if err != nil {
+		handleStoreError(w, r, err)
+		return
+	}
+	me := viewer.ID
+	author, shown, err := h.reportable(r, in.TargetKind, in.TargetID, viewer)
 	if err != nil {
 		handleStoreError(w, r, err)
 		return
@@ -88,14 +93,14 @@ func (h *Handler) CreateReport(w http.ResponseWriter, r *http.Request) {
 
 // reportable returns the author of a content and whether the reader sees it:
 // a review listed for them, or a comment of a thread open to them.
-func (h *Handler) reportable(r *http.Request, kind string, id, viewer uuid.UUID) (uuid.UUID, bool, error) {
+func (h *Handler) reportable(r *http.Request, kind string, id uuid.UUID, viewer privacy.Viewer) (uuid.UUID, bool, error) {
 	switch kind {
 	case model.ReportTargetArticle:
 		a, err := h.Store.GetArticle(r.Context(), id)
 		if err != nil {
 			return uuid.Nil, false, err
 		}
-		return a.AuthorID, a.AuthorID != viewer && articleShownTo(a, viewer), nil
+		return a.AuthorID, !viewer.Is(a.AuthorID) && articleShownTo(a, viewer), nil
 	case model.ReportTargetComment:
 		c, err := h.Store.GetComment(r.Context(), id)
 		if err != nil {
@@ -211,7 +216,7 @@ func (h *Handler) moderate(w http.ResponseWriter, r *http.Request, kind, action 
 		return
 	}
 	me := middleware.GetUserID(r.Context())
-	author, _, err := h.reportable(r, kind, id, me)
+	author, _, err := h.reportable(r, kind, id, privacy.NewViewer(me, nil))
 	if err != nil {
 		handleStoreError(w, r, err)
 		return
@@ -282,7 +287,12 @@ func (h *Handler) SetReaction(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "bad_request", "unknown reaction")
 		return
 	}
-	me := middleware.GetUserID(r.Context())
+	viewer, err := h.viewer(r)
+	if err != nil {
+		handleStoreError(w, r, err)
+		return
+	}
+	me := viewer.ID
 	rv, err := h.Store.GetReview(r.Context(), id)
 	if err != nil {
 		handleStoreError(w, r, err)
@@ -292,11 +302,11 @@ func (h *Handler) SetReaction(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusForbidden, "own_content", "you cannot react to your own review")
 		return
 	}
-	if !reviewShownTo(rv, me) {
+	if !reviewShownTo(rv, viewer) {
 		notFound(w)
 		return
 	}
-	if r.Method == http.MethodPut && h.refuseBlocked(w, r, rv.UserID, privacy.CanView(rv.Visibility, rv.UserID, me)) {
+	if r.Method == http.MethodPut && h.refuseBlocked(w, r, rv.UserID, privacy.CanView(rv.Visibility, rv.UserID, viewer)) {
 		return
 	}
 	if h.limited(w, r, "reactions", rateReactions) {

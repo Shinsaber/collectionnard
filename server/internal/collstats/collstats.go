@@ -14,10 +14,17 @@ import (
 	"github.com/shinsaber/colec/internal/model"
 )
 
-// Entry is one collection item, as far as statistics are concerned.
+// Entry is one lot of a collection, as far as statistics are concerned: every
+// aggregate counts its Quantity copies (0 counts as 1).
 type Entry struct {
 	Attributes json.RawMessage
 	AddedAt    time.Time
+	Quantity   int
+}
+
+// Copies is the number of copies of e.
+func (e Entry) Copies() int {
+	return max(e.Quantity, 1)
 }
 
 // Result holds the schema-driven part of model.CollectionStats.
@@ -59,7 +66,9 @@ var monthRE = regexp.MustCompile(`^(\d{4})-(\d{2})`)
 func Aggregate(schema json.RawMessage, entries []Entry) Result {
 	fields := fieldsOf(schema)
 	values := make([]map[string]any, len(entries))
+	weights := make([]int, len(entries))
 	for i, e := range entries {
+		weights[i] = e.Copies()
 		_ = json.Unmarshal(e.Attributes, &values[i]) // invalid attributes: no value
 	}
 
@@ -71,15 +80,15 @@ func Aggregate(schema json.RawMessage, entries []Entry) Result {
 	for _, f := range fields {
 		switch f.kind {
 		case kindNumber:
-			res.Numbers = append(res.Numbers, numberStat(f.key, values))
+			res.Numbers = append(res.Numbers, numberStat(f.key, values, weights))
 		case kindEnum:
-			res.Distributions = append(res.Distributions, distribution(f, values))
+			res.Distributions = append(res.Distributions, distribution(f, values, weights))
 		case kindDate:
 			counts := map[string]int{}
-			for _, v := range values {
+			for i, v := range values {
 				if s, ok := v[f.key].(string); ok {
 					if m := monthRE.FindStringSubmatch(s); m != nil {
-						counts[m[1]+"-"+m[2]]++
+						counts[m[1]+"-"+m[2]] += weights[i]
 					}
 				}
 			}
@@ -89,16 +98,16 @@ func Aggregate(schema json.RawMessage, entries []Entry) Result {
 	added := map[string]int{}
 	for _, e := range entries {
 		if !e.AddedAt.IsZero() {
-			added[e.AddedAt.UTC().Format("2006-01")]++
+			added[e.AddedAt.UTC().Format("2006-01")] += e.Copies()
 		}
 	}
 	res.Added = Months(added)
 	return res
 }
 
-func numberStat(key string, values []map[string]any) model.NumberStat {
+func numberStat(key string, values []map[string]any, weights []int) model.NumberStat {
 	st := model.NumberStat{Field: key}
-	for _, v := range values {
+	for i, v := range values {
 		n, ok := v[key].(float64)
 		if !ok {
 			continue
@@ -109,8 +118,8 @@ func numberStat(key string, values []map[string]any) model.NumberStat {
 		if st.Count == 0 || n > st.Max {
 			st.Max = n
 		}
-		st.Sum += n
-		st.Count++
+		st.Sum += n * float64(weights[i])
+		st.Count += weights[i]
 	}
 	if st.Count > 0 {
 		st.Avg = st.Sum / float64(st.Count)
@@ -118,16 +127,16 @@ func numberStat(key string, values []map[string]any) model.NumberStat {
 	return st
 }
 
-func distribution(f field, values []map[string]any) model.Distribution {
+func distribution(f field, values []map[string]any, weights []int) model.Distribution {
 	d := model.Distribution{Field: f.key, Values: []model.ValueCount{}}
 	counts := map[string]int{}
-	for _, v := range values {
+	for i, v := range values {
 		s, ok := scalar(v[f.key])
 		if !ok {
-			d.Missing++
+			d.Missing += weights[i]
 			continue
 		}
-		counts[s]++
+		counts[s] += weights[i]
 	}
 	declared := map[string]bool{}
 	for _, e := range f.enum {

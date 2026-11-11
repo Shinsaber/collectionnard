@@ -9,6 +9,7 @@ import (
 	"github.com/shinsaber/colec/internal/middleware"
 	"github.com/shinsaber/colec/internal/model"
 	"github.com/shinsaber/colec/internal/privacy"
+	"github.com/shinsaber/colec/internal/store"
 )
 
 // Visibility and sharing (P4-2). Every read below is made "as others see it":
@@ -17,11 +18,14 @@ import (
 // view stays GET /collections/{id}.
 
 // readable is a collection read through a public route, with its owner and
-// the fields to hide.
+// the fields to hide. reader and canReserve: a friend of the owner reading a
+// wish list (P7-4), never through a share link.
 type readable struct {
-	col    *model.Collection
-	owner  *model.User
-	hidden []string
+	col        *model.Collection
+	owner      *model.User
+	hidden     []string
+	reader     uuid.UUID
+	canReserve bool
 }
 
 func notFound(w http.ResponseWriter) {
@@ -37,9 +41,16 @@ func (h *Handler) loadReadable(w http.ResponseWriter, r *http.Request, id uuid.U
 		handleStoreError(w, r, err)
 		return nil, false
 	}
-	if !shared && !privacy.CanView(col.Visibility, col.UserID, middleware.GetUserID(r.Context())) {
-		notFound(w)
-		return nil, false
+	var viewer privacy.Viewer
+	if !shared {
+		if viewer, err = h.viewer(r); err != nil {
+			handleStoreError(w, r, err)
+			return nil, false
+		}
+		if !privacy.CanView(col.Visibility, col.UserID, viewer) {
+			notFound(w)
+			return nil, false
+		}
 	}
 	owner, err := h.Store.GetUserByID(r.Context(), col.UserID)
 	if err != nil {
@@ -54,7 +65,8 @@ func (h *Handler) loadReadable(w http.ResponseWriter, r *http.Request, id uuid.U
 	if col.CollectionType != nil {
 		schema = col.CollectionType.AttributesSchema
 	}
-	return &readable{col: col, owner: owner, hidden: privacy.HiddenFields(schema, col.HiddenFields)}, true
+	return &readable{col: col, owner: owner, hidden: privacy.HiddenFields(schema, col.HiddenFields),
+		reader: viewer.ID, canReserve: !shared && viewer.FriendOf(col.UserID) && model.IsReservable(schema)}, true
 }
 
 // public converts to the response: CollectionType schema without the hidden fields.
@@ -69,19 +81,27 @@ func (rd *readable) public() model.PublicCollection {
 		ID: rd.col.ID, Name: rd.col.Name, Description: rd.col.Description, CollectionType: ct,
 		ItemCount: rd.col.ItemCount, Visibility: rd.col.Visibility,
 		Owner:     model.Owner{Username: rd.owner.Username, DisplayName: rd.owner.DisplayName, Avatar: rd.owner.Avatar},
-		CreatedAt: rd.col.CreatedAt, UpdatedAt: rd.col.UpdatedAt,
+		CreatedAt: rd.col.CreatedAt, UpdatedAt: rd.col.UpdatedAt, CanReserve: rd.canReserve,
 	}
 }
 
 func (h *Handler) respondReadableItems(w http.ResponseWriter, r *http.Request, rd *readable) {
 	pg := parsePagination(r)
-	items, total, err := h.Store.ListCollectionItems(r.Context(), rd.col.ID, pg, nil, "")
+	var f store.CollectionItemFilters
+	h.applyDefaultSort(r, &f, rd.col) // P7-1b : the order chosen by the owner
+	items, total, err := h.Store.ListCollectionItems(r.Context(), rd.col.ID, pg, f)
 	if err != nil {
 		handleStoreError(w, r, err)
 		return
 	}
 	for i := range items {
 		items[i].Attributes = privacy.StripAttributes(items[i].Attributes, rd.hidden)
+	}
+	if rd.canReserve {
+		if err := h.withReservations(r, items, rd.reader); err != nil {
+			handleStoreError(w, r, err)
+			return
+		}
 	}
 	if items == nil {
 		items = []model.CollectionItem{}
@@ -162,22 +182,27 @@ func (h *Handler) GetSharedCollectionStats(w http.ResponseWriter, r *http.Reques
 
 // --- /public/users/{username} ---
 
-// visibleProfile loads an active user whose profile the reader may see.
-func (h *Handler) visibleProfile(w http.ResponseWriter, r *http.Request) (*model.User, bool) {
+// visibleProfile loads an active user whose profile the reader may see, and the reader.
+func (h *Handler) visibleProfile(w http.ResponseWriter, r *http.Request) (*model.User, privacy.Viewer, bool) {
+	viewer, err := h.viewer(r)
+	if err != nil {
+		handleStoreError(w, r, err)
+		return nil, viewer, false
+	}
 	u, _, err := h.Store.GetUserByUsername(r.Context(), chi.URLParam(r, "username"))
 	if err != nil {
 		handleStoreError(w, r, err)
-		return nil, false
+		return nil, viewer, false
 	}
-	if u.DisabledAt != nil || !privacy.CanView(u.ProfileVisibility, u.ID, middleware.GetUserID(r.Context())) {
+	if u.DisabledAt != nil || !privacy.CanView(u.ProfileVisibility, u.ID, viewer) {
 		notFound(w)
-		return nil, false
+		return nil, viewer, false
 	}
-	return u, true
+	return u, viewer, true
 }
 
 func (h *Handler) GetPublicProfile(w http.ResponseWriter, r *http.Request) {
-	if u, ok := h.visibleProfile(w, r); ok {
+	if u, _, ok := h.visibleProfile(w, r); ok {
 		respondJSON(w, http.StatusOK, model.NewPublicProfile(u))
 	}
 }
@@ -185,11 +210,11 @@ func (h *Handler) GetPublicProfile(w http.ResponseWriter, r *http.Request) {
 // ListPublicCollections lists the collections of a visible profile that the
 // reader may see (the owner sees the list as members do: preview).
 func (h *Handler) ListPublicCollections(w http.ResponseWriter, r *http.Request) {
-	u, ok := h.visibleProfile(w, r)
+	u, viewer, ok := h.visibleProfile(w, r)
 	if !ok {
 		return
 	}
-	levels := privacy.Levels(middleware.GetUserID(r.Context()))
+	levels := privacy.LevelsOf(viewer, u.ID)
 	cols, err := h.Store.ListVisibleCollections(r.Context(), u.ID, levels)
 	if err != nil {
 		handleStoreError(w, r, err)
@@ -225,9 +250,10 @@ func (h *Handler) ListMembers(w http.ResponseWriter, r *http.Request) {
 
 // --- Liens de partage (propriétaire) ---
 
-// ownCollection loads a collection of the current user (404 otherwise).
-func (h *Handler) ownCollection(w http.ResponseWriter, r *http.Request) (*model.Collection, bool) {
-	id, ok := parseUUID(w, r, "id")
+// ownCollection loads the collection of the route parameter param, when it
+// belongs to the current user (404 otherwise).
+func (h *Handler) ownCollection(w http.ResponseWriter, r *http.Request, param string) (*model.Collection, bool) {
+	id, ok := parseUUID(w, r, param)
 	if !ok {
 		return nil, false
 	}
@@ -244,7 +270,7 @@ func (h *Handler) ownCollection(w http.ResponseWriter, r *http.Request) (*model.
 }
 
 func (h *Handler) ListShareLinks(w http.ResponseWriter, r *http.Request) {
-	col, ok := h.ownCollection(w, r)
+	col, ok := h.ownCollection(w, r, "id")
 	if !ok {
 		return
 	}
@@ -257,7 +283,7 @@ func (h *Handler) ListShareLinks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreateShareLink(w http.ResponseWriter, r *http.Request) {
-	col, ok := h.ownCollection(w, r)
+	col, ok := h.ownCollection(w, r, "id")
 	if !ok {
 		return
 	}
@@ -275,7 +301,7 @@ func (h *Handler) CreateShareLink(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) RevokeShareLink(w http.ResponseWriter, r *http.Request) {
-	col, ok := h.ownCollection(w, r)
+	col, ok := h.ownCollection(w, r, "id")
 	if !ok {
 		return
 	}

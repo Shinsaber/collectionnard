@@ -147,3 +147,20 @@ func (q *itemQuery) orderBy(f ItemFilters) string {
 		"updated_at": "i.updated_at",
 	}) + ", i.id"
 }
+
+// lotOrderBy is the ORDER BY of the lots of a collection (P7-1): date added,
+// quantity, or the catalogue order (item attribute, relevance). At equal
+// values the lots of an item follow each other, oldest first. Like orderBy, it
+// may append the sort key to the arguments.
+func (q *itemQuery) lotOrderBy(f ItemFilters) string {
+	const lots = "i.id, ci.created_at, ci.id"
+	field := strings.TrimPrefix(f.Sort, "-")
+	if f.SortAttr != nil || field == "relevance" || (f.Sort == "" && q.tsquery != "") {
+		return strings.TrimSuffix(q.orderBy(f), ", i.id") + ", " + lots
+	}
+	return buildSortClause(f.Sort, "ci.created_at DESC", map[string]string{
+		"created_at": "ci.created_at",
+		"updated_at": "ci.updated_at",
+		"quantity":   "ci.quantity",
+	}) + ", " + lots
+}

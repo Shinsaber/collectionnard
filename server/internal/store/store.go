@@ -35,6 +35,14 @@ type ItemFilters struct {
 	RelationTypeID *uuid.UUID
 }
 
+// CollectionItemFilters searches the lots of a collection (P7-1): the item part
+// is the catalogue search (type, text, attributes, attribute sort); Sort also
+// accepts quantity.
+type CollectionItemFilters struct {
+	ItemFilters
+	Multiple bool // lots of more than one copy only
+}
+
 // Store defines all data operations.
 type Store interface {
 	// Health
@@ -144,6 +152,49 @@ type Store interface {
 	BlockedBy(ctx context.Context, blockerID uuid.UUID) ([]uuid.UUID, error)
 	Blockers(ctx context.Context, blockedID uuid.UUID, users []uuid.UUID) ([]uuid.UUID, error)
 	IsBlocked(ctx context.Context, blockerID, blockedID uuid.UUID) (bool, error)
+
+	// Friends (P7-2)
+	FriendIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
+	ListFriendships(ctx context.Context, userID uuid.UUID, status string, pg model.Pagination) ([]model.Friendship, int, error)
+	RequestFriend(ctx context.Context, from, to uuid.UUID) (*model.Friendship, error)
+	AcceptFriendRequest(ctx context.Context, userID, id uuid.UUID) (*model.Friendship, error)
+	DeleteFriendship(ctx context.Context, userID, id uuid.UUID) error
+	CreateFriendLink(ctx context.Context, userID uuid.UUID, tokenHash string, expiresAt time.Time) (*model.FriendLink, error)
+	ListFriendLinks(ctx context.Context, userID uuid.UUID) ([]model.FriendLink, error)
+	DeleteFriendLink(ctx context.Context, userID, id uuid.UUID) error
+	GetFriendLink(ctx context.Context, tokenHash string) (*model.FriendLink, error)
+	UseFriendLink(ctx context.Context, tokenHash string, userID uuid.UUID) (*model.Friendship, error)
+
+	// Loans (P7-3)
+	GetCollectionLot(ctx context.Context, collectionID, lotID uuid.UUID) (*model.CollectionItem, error)
+	CreateLoan(ctx context.Context, lotID uuid.UUID, in model.LoanInput) (*model.Loan, error)
+	GetLoan(ctx context.Context, id uuid.UUID) (*model.Loan, error)
+	UpdateLoan(ctx context.Context, id uuid.UUID, in model.LoanInput) (*model.Loan, error)
+	DeleteLoan(ctx context.Context, id uuid.UUID) error
+	ListLotLoans(ctx context.Context, lotID uuid.UUID) ([]model.Loan, error)
+	ActiveLoans(ctx context.Context, lotIDs []uuid.UUID) (map[uuid.UUID][]model.Loan, error)
+	ListLoans(ctx context.Context, ownerID uuid.UUID, status string, pg model.Pagination) ([]model.Loan, int, error)
+	ListBorrowings(ctx context.Context, borrowerID uuid.UUID, status string, pg model.Pagination) ([]model.Loan, int, error)
+	OverdueLoans(ctx context.Context) ([]model.Loan, error)
+	MarkLoansReminded(ctx context.Context, ids []uuid.UUID) error
+
+	// Gift reservations (P7-4): never read for the owner of the list
+	CreateReservation(ctx context.Context, lotID, giverID uuid.UUID, quantity int, expiresAt, note string) (*model.GiftReservation, error)
+	GetReservation(ctx context.Context, id uuid.UUID) (*model.GiftReservation, error)
+	UpdateReservation(ctx context.Context, id uuid.UUID, in model.ReservationUpdate) (*model.GiftReservation, error)
+	DeleteReservation(ctx context.Context, id uuid.UUID) error
+	LotReservations(ctx context.Context, lotIDs []uuid.UUID) (map[uuid.UUID][]model.GiftReservation, error)
+	ListGifts(ctx context.Context, giverID uuid.UUID, status string, pg model.Pagination) ([]model.GiftReservation, int, error)
+	LeftReservations(ctx context.Context) ([]model.GiftReservation, error)
+	MarkReservationsNotified(ctx context.Context, ids []uuid.UUID) error
+	ExpiringReservations(ctx context.Context) ([]model.GiftReservation, error)
+	MarkReservationsExpiryReminded(ctx context.Context, ids []uuid.UUID) error
+	HandOverReservation(ctx context.Context, id uuid.UUID) (*model.GiftReservation, error)
+	GivenGifts(ctx context.Context, lotIDs []uuid.UUID) (map[uuid.UUID][]model.GiftReservation, error)
+	ReceiveGift(ctx context.Context, id uuid.UUID, into *uuid.UUID, attrs json.RawMessage) (*model.GiftReservation, error)
+	DeclineGift(ctx context.Context, id uuid.UUID) error
+	ListReceivedGifts(ctx context.Context, ownerID uuid.UUID, status string, pg model.Pagination) ([]model.GiftReservation, int, error)
+
 	ListModerationLog(ctx context.Context, pg model.Pagination) ([]model.ModerationLogEntry, int, error)
 	ModerationHistory(ctx context.Context, userID uuid.UUID) (*model.ModerationHistory, error)
 	SetReaction(ctx context.Context, reviewID, userID uuid.UUID, kind string, on bool) error
@@ -176,10 +227,12 @@ type Store interface {
 	DeleteCollection(ctx context.Context, id uuid.UUID) error
 
 	// CollectionItem
-	ListCollectionItems(ctx context.Context, collectionID uuid.UUID, pg model.Pagination, itemTypeID *uuid.UUID, sort string) ([]model.CollectionItem, int, error)
+	ListCollectionItems(ctx context.Context, collectionID uuid.UUID, pg model.Pagination, f CollectionItemFilters) ([]model.CollectionItem, int, error)
 	AddCollectionItem(ctx context.Context, collectionID uuid.UUID, in model.CollectionItemAdd) (*model.CollectionItem, error)
-	UpdateCollectionItem(ctx context.Context, collectionID, itemID uuid.UUID, in model.CollectionItemUpdate) (*model.CollectionItem, error)
-	RemoveCollectionItem(ctx context.Context, collectionID, itemID uuid.UUID) error
+	UpdateCollectionItem(ctx context.Context, collectionID, lotID uuid.UUID, in model.CollectionItemUpdate) (*model.CollectionItem, error)
+	RemoveCollectionItem(ctx context.Context, collectionID, lotID uuid.UUID) error
+	SplitCollectionLot(ctx context.Context, collectionID, lotID uuid.UUID, quantity int, attrs json.RawMessage) (*model.CollectionItem, error)
+	MergeCollectionLots(ctx context.Context, collectionID, lotID, into uuid.UUID, galleries []string) (*model.CollectionItem, error)
 
 	// Item collection membership
 	ListItemCollections(ctx context.Context, userID, itemID uuid.UUID) ([]model.ItemCollectionMembership, error)

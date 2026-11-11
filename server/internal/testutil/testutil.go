@@ -81,10 +81,12 @@ type MockStore struct {
 	CreateCollectionFn           func(ctx context.Context, userID uuid.UUID, in model.CollectionCreate) (*model.Collection, error)
 	UpdateCollectionFn           func(ctx context.Context, id uuid.UUID, in model.CollectionUpdate) (*model.Collection, error)
 	DeleteCollectionFn           func(ctx context.Context, id uuid.UUID) error
-	ListCollectionItemsFn        func(ctx context.Context, colID uuid.UUID, pg model.Pagination, itID *uuid.UUID, sort string) ([]model.CollectionItem, int, error)
+	ListCollectionItemsFn        func(ctx context.Context, colID uuid.UUID, pg model.Pagination, f store.CollectionItemFilters) ([]model.CollectionItem, int, error)
 	AddCollectionItemFn          func(ctx context.Context, colID uuid.UUID, in model.CollectionItemAdd) (*model.CollectionItem, error)
 	UpdateCollectionItemFn       func(ctx context.Context, colID, itemID uuid.UUID, in model.CollectionItemUpdate) (*model.CollectionItem, error)
 	RemoveCollectionItemFn       func(ctx context.Context, colID, itemID uuid.UUID) error
+	SplitCollectionLotFn         func(ctx context.Context, colID, lotID uuid.UUID, quantity int, attrs json.RawMessage) (*model.CollectionItem, error)
+	MergeCollectionLotsFn        func(ctx context.Context, colID, lotID, into uuid.UUID, galleries []string) (*model.CollectionItem, error)
 	ListItemCollectionsFn        func(ctx context.Context, userID, itemID uuid.UUID) ([]model.ItemCollectionMembership, error)
 	ListTagsFn                   func(ctx context.Context, search string) ([]model.Tag, error)
 	GetStatsFn                   func(ctx context.Context) (*model.Stats, error)
@@ -143,40 +145,79 @@ type MockStore struct {
 	ListBlocksFn                 func(ctx context.Context, blockerID uuid.UUID, pg model.Pagination) ([]model.Block, int, error)
 	DeleteBlockFn                func(ctx context.Context, blockerID, id uuid.UUID) error
 	// BlockedByFn, BlockersFn, IsBlockedFn: nothing blocked when unset.
-	BlockedByFn               func(ctx context.Context, blockerID uuid.UUID) ([]uuid.UUID, error)
-	BlockersFn                func(ctx context.Context, blockedID uuid.UUID, users []uuid.UUID) ([]uuid.UUID, error)
-	IsBlockedFn               func(ctx context.Context, blockerID, blockedID uuid.UUID) (bool, error)
-	ListCommentsFn            func(ctx context.Context, kind string, targetID, viewer uuid.UUID, pg model.Pagination) ([]model.Comment, int, error)
-	GetCommentFn              func(ctx context.Context, id uuid.UUID) (*model.Comment, error)
-	CreateCommentFn           func(ctx context.Context, kind string, targetID, authorID uuid.UUID, body string) (*model.Comment, error)
-	UpdateCommentFn           func(ctx context.Context, id, authorID uuid.UUID, body string) (*model.Comment, error)
-	DeleteCommentFn           func(ctx context.Context, id, authorID uuid.UUID) error
-	CommentParticipantsFn     func(ctx context.Context, kind string, targetID uuid.UUID) ([]uuid.UUID, error)
-	SetReviewCommentsClosedFn func(ctx context.Context, reviewID, userID uuid.UUID, closed bool) error
-	GetReviewFn               func(ctx context.Context, id uuid.UUID) (*model.Review, error)
-	CreateReportFn            func(ctx context.Context, reporterID uuid.UUID, in model.ReportCreate) (*model.Report, error)
-	CountModerationQueueFn    func(ctx context.Context) (int, error)
-	ListModerationQueueFn     func(ctx context.Context, pg model.Pagination) ([]model.ModerationItem, int, error)
-	ModerationRecapFn         func(ctx context.Context, userID uuid.UUID) (*model.ModerationRecap, error)
-	ModerateFn                func(ctx context.Context, kind string, targetID, moderatorID uuid.UUID, action, reason string) (*model.ModerationResult, error)
-	ListModerationLogFn       func(ctx context.Context, pg model.Pagination) ([]model.ModerationLogEntry, int, error)
-	ModerationHistoryFn       func(ctx context.Context, userID uuid.UUID) (*model.ModerationHistory, error)
-	SetReactionFn             func(ctx context.Context, reviewID, userID uuid.UUID, kind string, on bool) error
-	ReactionsOfFn             func(ctx context.Context, reviewIDs []uuid.UUID, viewer uuid.UUID) (map[uuid.UUID]map[string]int, map[uuid.UUID][]string, error)
-	ListReviewTypesFn         func(ctx context.Context, pg model.Pagination) ([]model.ReviewType, int, error)
-	GetReviewTypeFn           func(ctx context.Context, id uuid.UUID) (*model.ReviewType, error)
-	CreateReviewTypeFn        func(ctx context.Context, in model.ReviewTypeCreate) (*model.ReviewType, error)
-	UpdateReviewTypeFn        func(ctx context.Context, id uuid.UUID, in model.ReviewTypeUpdate) (*model.ReviewType, error)
-	DeleteReviewTypeFn        func(ctx context.Context, id uuid.UUID) error
-	ListReviewContextItemsFn  func(ctx context.Context, reviewTypeID, itemID uuid.UUID) ([]model.Item, error)
-	IsReviewContextFn         func(ctx context.Context, reviewTypeID, itemID, contextID uuid.UUID) (bool, error)
-	GetItemReviewTypeFn       func(ctx context.Context, itemID uuid.UUID) (*model.ReviewType, error)
-	ListItemReviewsFn         func(ctx context.Context, itemID uuid.UUID, p model.ReviewListParams, pg model.Pagination) ([]model.Review, int, error)
-	GetReviewStatsFn          func(ctx context.Context, itemID, viewer uuid.UUID, levels []string) (*model.ReviewStats, error)
-	GetMyReviewFn             func(ctx context.Context, itemID, userID uuid.UUID) (*model.Review, error)
-	PutReviewFn               func(ctx context.Context, itemID, userID uuid.UUID, in model.ReviewWrite) (*model.Review, error)
-	DeleteReviewFn            func(ctx context.Context, itemID, userID uuid.UUID) error
-	ListUserReviewsFn         func(ctx context.Context, userID uuid.UUID, levels []string, pg model.Pagination) ([]model.Review, int, error)
+	BlockedByFn func(ctx context.Context, blockerID uuid.UUID) ([]uuid.UUID, error)
+	BlockersFn  func(ctx context.Context, blockedID uuid.UUID, users []uuid.UUID) ([]uuid.UUID, error)
+	IsBlockedFn func(ctx context.Context, blockerID, blockedID uuid.UUID) (bool, error)
+	// FriendIDsFn: no friend when unset.
+	FriendIDsFn           func(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
+	ListFriendshipsFn     func(ctx context.Context, userID uuid.UUID, status string, pg model.Pagination) ([]model.Friendship, int, error)
+	RequestFriendFn       func(ctx context.Context, from, to uuid.UUID) (*model.Friendship, error)
+	AcceptFriendRequestFn func(ctx context.Context, userID, id uuid.UUID) (*model.Friendship, error)
+	DeleteFriendshipFn    func(ctx context.Context, userID, id uuid.UUID) error
+	CreateFriendLinkFn    func(ctx context.Context, userID uuid.UUID, tokenHash string, expiresAt time.Time) (*model.FriendLink, error)
+	ListFriendLinksFn     func(ctx context.Context, userID uuid.UUID) ([]model.FriendLink, error)
+	DeleteFriendLinkFn    func(ctx context.Context, userID, id uuid.UUID) error
+	GetFriendLinkFn       func(ctx context.Context, tokenHash string) (*model.FriendLink, error)
+	UseFriendLinkFn       func(ctx context.Context, tokenHash string, userID uuid.UUID) (*model.Friendship, error)
+	// Loans (P7-3): no loan when unset.
+	GetCollectionLotFn  func(ctx context.Context, collectionID, lotID uuid.UUID) (*model.CollectionItem, error)
+	CreateLoanFn        func(ctx context.Context, lotID uuid.UUID, in model.LoanInput) (*model.Loan, error)
+	GetLoanFn           func(ctx context.Context, id uuid.UUID) (*model.Loan, error)
+	UpdateLoanFn        func(ctx context.Context, id uuid.UUID, in model.LoanInput) (*model.Loan, error)
+	DeleteLoanFn        func(ctx context.Context, id uuid.UUID) error
+	ListLotLoansFn      func(ctx context.Context, lotID uuid.UUID) ([]model.Loan, error)
+	ActiveLoansFn       func(ctx context.Context, lotIDs []uuid.UUID) (map[uuid.UUID][]model.Loan, error)
+	ListLoansFn         func(ctx context.Context, ownerID uuid.UUID, status string, pg model.Pagination) ([]model.Loan, int, error)
+	ListBorrowingsFn    func(ctx context.Context, borrowerID uuid.UUID, status string, pg model.Pagination) ([]model.Loan, int, error)
+	OverdueLoansFn      func(ctx context.Context) ([]model.Loan, error)
+	MarkLoansRemindedFn func(ctx context.Context, ids []uuid.UUID) error
+	// Gift reservations (P7-4): none when unset.
+	CreateReservationFn              func(ctx context.Context, lotID, giverID uuid.UUID, quantity int, expiresAt, note string) (*model.GiftReservation, error)
+	GetReservationFn                 func(ctx context.Context, id uuid.UUID) (*model.GiftReservation, error)
+	UpdateReservationFn              func(ctx context.Context, id uuid.UUID, in model.ReservationUpdate) (*model.GiftReservation, error)
+	DeleteReservationFn              func(ctx context.Context, id uuid.UUID) error
+	LotReservationsFn                func(ctx context.Context, lotIDs []uuid.UUID) (map[uuid.UUID][]model.GiftReservation, error)
+	ListGiftsFn                      func(ctx context.Context, giverID uuid.UUID, status string, pg model.Pagination) ([]model.GiftReservation, int, error)
+	LeftReservationsFn               func(ctx context.Context) ([]model.GiftReservation, error)
+	MarkReservationsNotifiedFn       func(ctx context.Context, ids []uuid.UUID) error
+	ExpiringReservationsFn           func(ctx context.Context) ([]model.GiftReservation, error)
+	MarkReservationsExpiryRemindedFn func(ctx context.Context, ids []uuid.UUID) error
+	HandOverReservationFn            func(ctx context.Context, id uuid.UUID) (*model.GiftReservation, error)
+	GivenGiftsFn                     func(ctx context.Context, lotIDs []uuid.UUID) (map[uuid.UUID][]model.GiftReservation, error)
+	ReceiveGiftFn                    func(ctx context.Context, id uuid.UUID, into *uuid.UUID, attrs json.RawMessage) (*model.GiftReservation, error)
+	DeclineGiftFn                    func(ctx context.Context, id uuid.UUID) error
+	ListReceivedGiftsFn              func(ctx context.Context, ownerID uuid.UUID, status string, pg model.Pagination) ([]model.GiftReservation, int, error)
+	ListCommentsFn                   func(ctx context.Context, kind string, targetID, viewer uuid.UUID, pg model.Pagination) ([]model.Comment, int, error)
+	GetCommentFn                     func(ctx context.Context, id uuid.UUID) (*model.Comment, error)
+	CreateCommentFn                  func(ctx context.Context, kind string, targetID, authorID uuid.UUID, body string) (*model.Comment, error)
+	UpdateCommentFn                  func(ctx context.Context, id, authorID uuid.UUID, body string) (*model.Comment, error)
+	DeleteCommentFn                  func(ctx context.Context, id, authorID uuid.UUID) error
+	CommentParticipantsFn            func(ctx context.Context, kind string, targetID uuid.UUID) ([]uuid.UUID, error)
+	SetReviewCommentsClosedFn        func(ctx context.Context, reviewID, userID uuid.UUID, closed bool) error
+	GetReviewFn                      func(ctx context.Context, id uuid.UUID) (*model.Review, error)
+	CreateReportFn                   func(ctx context.Context, reporterID uuid.UUID, in model.ReportCreate) (*model.Report, error)
+	CountModerationQueueFn           func(ctx context.Context) (int, error)
+	ListModerationQueueFn            func(ctx context.Context, pg model.Pagination) ([]model.ModerationItem, int, error)
+	ModerationRecapFn                func(ctx context.Context, userID uuid.UUID) (*model.ModerationRecap, error)
+	ModerateFn                       func(ctx context.Context, kind string, targetID, moderatorID uuid.UUID, action, reason string) (*model.ModerationResult, error)
+	ListModerationLogFn              func(ctx context.Context, pg model.Pagination) ([]model.ModerationLogEntry, int, error)
+	ModerationHistoryFn              func(ctx context.Context, userID uuid.UUID) (*model.ModerationHistory, error)
+	SetReactionFn                    func(ctx context.Context, reviewID, userID uuid.UUID, kind string, on bool) error
+	ReactionsOfFn                    func(ctx context.Context, reviewIDs []uuid.UUID, viewer uuid.UUID) (map[uuid.UUID]map[string]int, map[uuid.UUID][]string, error)
+	ListReviewTypesFn                func(ctx context.Context, pg model.Pagination) ([]model.ReviewType, int, error)
+	GetReviewTypeFn                  func(ctx context.Context, id uuid.UUID) (*model.ReviewType, error)
+	CreateReviewTypeFn               func(ctx context.Context, in model.ReviewTypeCreate) (*model.ReviewType, error)
+	UpdateReviewTypeFn               func(ctx context.Context, id uuid.UUID, in model.ReviewTypeUpdate) (*model.ReviewType, error)
+	DeleteReviewTypeFn               func(ctx context.Context, id uuid.UUID) error
+	ListReviewContextItemsFn         func(ctx context.Context, reviewTypeID, itemID uuid.UUID) ([]model.Item, error)
+	IsReviewContextFn                func(ctx context.Context, reviewTypeID, itemID, contextID uuid.UUID) (bool, error)
+	GetItemReviewTypeFn              func(ctx context.Context, itemID uuid.UUID) (*model.ReviewType, error)
+	ListItemReviewsFn                func(ctx context.Context, itemID uuid.UUID, p model.ReviewListParams, pg model.Pagination) ([]model.Review, int, error)
+	GetReviewStatsFn                 func(ctx context.Context, itemID, viewer uuid.UUID, levels []string) (*model.ReviewStats, error)
+	GetMyReviewFn                    func(ctx context.Context, itemID, userID uuid.UUID) (*model.Review, error)
+	PutReviewFn                      func(ctx context.Context, itemID, userID uuid.UUID, in model.ReviewWrite) (*model.Review, error)
+	DeleteReviewFn                   func(ctx context.Context, itemID, userID uuid.UUID) error
+	ListUserReviewsFn                func(ctx context.Context, userID uuid.UUID, levels []string, pg model.Pagination) ([]model.Review, int, error)
 }
 
 func (m *MockStore) ListReviewTypes(ctx context.Context, pg model.Pagination) ([]model.ReviewType, int, error) {
@@ -687,9 +728,9 @@ func (m *MockStore) DeleteCollection(ctx context.Context, id uuid.UUID) error {
 	}
 	return store.ErrNotFound
 }
-func (m *MockStore) ListCollectionItems(ctx context.Context, colID uuid.UUID, pg model.Pagination, itID *uuid.UUID, sort string) ([]model.CollectionItem, int, error) {
+func (m *MockStore) ListCollectionItems(ctx context.Context, colID uuid.UUID, pg model.Pagination, f store.CollectionItemFilters) ([]model.CollectionItem, int, error) {
 	if m.ListCollectionItemsFn != nil {
-		return m.ListCollectionItemsFn(ctx, colID, pg, itID, sort)
+		return m.ListCollectionItemsFn(ctx, colID, pg, f)
 	}
 	return nil, 0, nil
 }
@@ -710,6 +751,18 @@ func (m *MockStore) RemoveCollectionItem(ctx context.Context, colID, itemID uuid
 		return m.RemoveCollectionItemFn(ctx, colID, itemID)
 	}
 	return store.ErrNotFound
+}
+func (m *MockStore) SplitCollectionLot(ctx context.Context, colID, lotID uuid.UUID, quantity int, attrs json.RawMessage) (*model.CollectionItem, error) {
+	if m.SplitCollectionLotFn != nil {
+		return m.SplitCollectionLotFn(ctx, colID, lotID, quantity, attrs)
+	}
+	return nil, store.ErrNotFound
+}
+func (m *MockStore) MergeCollectionLots(ctx context.Context, colID, lotID, into uuid.UUID, galleries []string) (*model.CollectionItem, error) {
+	if m.MergeCollectionLotsFn != nil {
+		return m.MergeCollectionLotsFn(ctx, colID, lotID, into, galleries)
+	}
+	return nil, store.ErrNotFound
 }
 func (m *MockStore) ListItemCollections(ctx context.Context, userID, itemID uuid.UUID) ([]model.ItemCollectionMembership, error) {
 	if m.ListItemCollectionsFn != nil {
@@ -1041,4 +1094,256 @@ func (m *MockStore) IsBlocked(ctx context.Context, blockerID, blockedID uuid.UUI
 		return m.IsBlockedFn(ctx, blockerID, blockedID)
 	}
 	return false, nil
+}
+
+func (m *MockStore) FriendIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
+	if m.FriendIDsFn != nil {
+		return m.FriendIDsFn(ctx, userID)
+	}
+	return nil, nil
+}
+
+func (m *MockStore) ListFriendships(ctx context.Context, userID uuid.UUID, status string, pg model.Pagination) ([]model.Friendship, int, error) {
+	if m.ListFriendshipsFn != nil {
+		return m.ListFriendshipsFn(ctx, userID, status, pg)
+	}
+	return nil, 0, store.ErrNotFound
+}
+
+func (m *MockStore) RequestFriend(ctx context.Context, from, to uuid.UUID) (*model.Friendship, error) {
+	if m.RequestFriendFn != nil {
+		return m.RequestFriendFn(ctx, from, to)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) AcceptFriendRequest(ctx context.Context, userID, id uuid.UUID) (*model.Friendship, error) {
+	if m.AcceptFriendRequestFn != nil {
+		return m.AcceptFriendRequestFn(ctx, userID, id)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) DeleteFriendship(ctx context.Context, userID, id uuid.UUID) error {
+	if m.DeleteFriendshipFn != nil {
+		return m.DeleteFriendshipFn(ctx, userID, id)
+	}
+	return store.ErrNotFound
+}
+
+func (m *MockStore) CreateFriendLink(ctx context.Context, userID uuid.UUID, tokenHash string, expiresAt time.Time) (*model.FriendLink, error) {
+	if m.CreateFriendLinkFn != nil {
+		return m.CreateFriendLinkFn(ctx, userID, tokenHash, expiresAt)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) ListFriendLinks(ctx context.Context, userID uuid.UUID) ([]model.FriendLink, error) {
+	if m.ListFriendLinksFn != nil {
+		return m.ListFriendLinksFn(ctx, userID)
+	}
+	return []model.FriendLink{}, nil
+}
+
+func (m *MockStore) DeleteFriendLink(ctx context.Context, userID, id uuid.UUID) error {
+	if m.DeleteFriendLinkFn != nil {
+		return m.DeleteFriendLinkFn(ctx, userID, id)
+	}
+	return store.ErrNotFound
+}
+
+func (m *MockStore) GetFriendLink(ctx context.Context, tokenHash string) (*model.FriendLink, error) {
+	if m.GetFriendLinkFn != nil {
+		return m.GetFriendLinkFn(ctx, tokenHash)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) UseFriendLink(ctx context.Context, tokenHash string, userID uuid.UUID) (*model.Friendship, error) {
+	if m.UseFriendLinkFn != nil {
+		return m.UseFriendLinkFn(ctx, tokenHash, userID)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) CreateLoan(ctx context.Context, lotID uuid.UUID, in model.LoanInput) (*model.Loan, error) {
+	if m.CreateLoanFn != nil {
+		return m.CreateLoanFn(ctx, lotID, in)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) GetLoan(ctx context.Context, id uuid.UUID) (*model.Loan, error) {
+	if m.GetLoanFn != nil {
+		return m.GetLoanFn(ctx, id)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) UpdateLoan(ctx context.Context, id uuid.UUID, in model.LoanInput) (*model.Loan, error) {
+	if m.UpdateLoanFn != nil {
+		return m.UpdateLoanFn(ctx, id, in)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) DeleteLoan(ctx context.Context, id uuid.UUID) error {
+	if m.DeleteLoanFn != nil {
+		return m.DeleteLoanFn(ctx, id)
+	}
+	return store.ErrNotFound
+}
+
+func (m *MockStore) ListLotLoans(ctx context.Context, lotID uuid.UUID) ([]model.Loan, error) {
+	if m.ListLotLoansFn != nil {
+		return m.ListLotLoansFn(ctx, lotID)
+	}
+	return []model.Loan{}, nil
+}
+
+func (m *MockStore) ActiveLoans(ctx context.Context, lotIDs []uuid.UUID) (map[uuid.UUID][]model.Loan, error) {
+	if m.ActiveLoansFn != nil {
+		return m.ActiveLoansFn(ctx, lotIDs)
+	}
+	return map[uuid.UUID][]model.Loan{}, nil
+}
+
+func (m *MockStore) ListLoans(ctx context.Context, ownerID uuid.UUID, status string, pg model.Pagination) ([]model.Loan, int, error) {
+	if m.ListLoansFn != nil {
+		return m.ListLoansFn(ctx, ownerID, status, pg)
+	}
+	return []model.Loan{}, 0, nil
+}
+
+func (m *MockStore) ListBorrowings(ctx context.Context, borrowerID uuid.UUID, status string, pg model.Pagination) ([]model.Loan, int, error) {
+	if m.ListBorrowingsFn != nil {
+		return m.ListBorrowingsFn(ctx, borrowerID, status, pg)
+	}
+	return []model.Loan{}, 0, nil
+}
+
+func (m *MockStore) OverdueLoans(ctx context.Context) ([]model.Loan, error) {
+	if m.OverdueLoansFn != nil {
+		return m.OverdueLoansFn(ctx)
+	}
+	return nil, nil
+}
+
+func (m *MockStore) MarkLoansReminded(ctx context.Context, ids []uuid.UUID) error {
+	if m.MarkLoansRemindedFn != nil {
+		return m.MarkLoansRemindedFn(ctx, ids)
+	}
+	return nil
+}
+
+func (m *MockStore) GetCollectionLot(ctx context.Context, collectionID, lotID uuid.UUID) (*model.CollectionItem, error) {
+	if m.GetCollectionLotFn != nil {
+		return m.GetCollectionLotFn(ctx, collectionID, lotID)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) CreateReservation(ctx context.Context, lotID, giverID uuid.UUID, quantity int, expiresAt, note string) (*model.GiftReservation, error) {
+	if m.CreateReservationFn != nil {
+		return m.CreateReservationFn(ctx, lotID, giverID, quantity, expiresAt, note)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) GetReservation(ctx context.Context, id uuid.UUID) (*model.GiftReservation, error) {
+	if m.GetReservationFn != nil {
+		return m.GetReservationFn(ctx, id)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) UpdateReservation(ctx context.Context, id uuid.UUID, in model.ReservationUpdate) (*model.GiftReservation, error) {
+	if m.UpdateReservationFn != nil {
+		return m.UpdateReservationFn(ctx, id, in)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) DeleteReservation(ctx context.Context, id uuid.UUID) error {
+	if m.DeleteReservationFn != nil {
+		return m.DeleteReservationFn(ctx, id)
+	}
+	return store.ErrNotFound
+}
+
+func (m *MockStore) LotReservations(ctx context.Context, lotIDs []uuid.UUID) (map[uuid.UUID][]model.GiftReservation, error) {
+	if m.LotReservationsFn != nil {
+		return m.LotReservationsFn(ctx, lotIDs)
+	}
+	return map[uuid.UUID][]model.GiftReservation{}, nil
+}
+
+func (m *MockStore) ListGifts(ctx context.Context, giverID uuid.UUID, status string, pg model.Pagination) ([]model.GiftReservation, int, error) {
+	if m.ListGiftsFn != nil {
+		return m.ListGiftsFn(ctx, giverID, status, pg)
+	}
+	return []model.GiftReservation{}, 0, nil
+}
+
+func (m *MockStore) LeftReservations(ctx context.Context) ([]model.GiftReservation, error) {
+	if m.LeftReservationsFn != nil {
+		return m.LeftReservationsFn(ctx)
+	}
+	return nil, nil
+}
+
+func (m *MockStore) MarkReservationsNotified(ctx context.Context, ids []uuid.UUID) error {
+	if m.MarkReservationsNotifiedFn != nil {
+		return m.MarkReservationsNotifiedFn(ctx, ids)
+	}
+	return nil
+}
+
+func (m *MockStore) ExpiringReservations(ctx context.Context) ([]model.GiftReservation, error) {
+	if m.ExpiringReservationsFn != nil {
+		return m.ExpiringReservationsFn(ctx)
+	}
+	return nil, nil
+}
+
+func (m *MockStore) MarkReservationsExpiryReminded(ctx context.Context, ids []uuid.UUID) error {
+	if m.MarkReservationsExpiryRemindedFn != nil {
+		return m.MarkReservationsExpiryRemindedFn(ctx, ids)
+	}
+	return nil
+}
+
+func (m *MockStore) HandOverReservation(ctx context.Context, id uuid.UUID) (*model.GiftReservation, error) {
+	if m.HandOverReservationFn != nil {
+		return m.HandOverReservationFn(ctx, id)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) GivenGifts(ctx context.Context, lotIDs []uuid.UUID) (map[uuid.UUID][]model.GiftReservation, error) {
+	if m.GivenGiftsFn != nil {
+		return m.GivenGiftsFn(ctx, lotIDs)
+	}
+	return map[uuid.UUID][]model.GiftReservation{}, nil
+}
+
+func (m *MockStore) ReceiveGift(ctx context.Context, id uuid.UUID, into *uuid.UUID, attrs json.RawMessage) (*model.GiftReservation, error) {
+	if m.ReceiveGiftFn != nil {
+		return m.ReceiveGiftFn(ctx, id, into, attrs)
+	}
+	return nil, store.ErrNotFound
+}
+
+func (m *MockStore) DeclineGift(ctx context.Context, id uuid.UUID) error {
+	if m.DeclineGiftFn != nil {
+		return m.DeclineGiftFn(ctx, id)
+	}
+	return store.ErrNotFound
+}
+
+func (m *MockStore) ListReceivedGifts(ctx context.Context, ownerID uuid.UUID, status string, pg model.Pagination) ([]model.GiftReservation, int, error) {
+	if m.ListReceivedGiftsFn != nil {
+		return m.ListReceivedGiftsFn(ctx, ownerID, status, pg)
+	}
+	return []model.GiftReservation{}, 0, nil
 }

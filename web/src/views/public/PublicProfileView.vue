@@ -31,12 +31,18 @@
           {{ profile.bio }}
         </p>
       </div>
-      <BlockButton
+      <div
         v-if="auth.isAuthenticated && auth.user?.username !== profile.username"
-        class="sm:ml-auto sm:self-start"
-        :username="profile.username"
-        @blocked="blocks++"
-      />
+        class="flex gap-2 sm:ml-auto sm:self-start"
+      >
+        <ElButton
+          :loading="inviting"
+          data-test="profile-invite-friend"
+          @click="inviteFriend"
+          >{{ t("friends.invite.button") }}</ElButton
+        >
+        <BlockButton :username="profile.username" @blocked="blocks++" />
+      </div>
     </section>
 
     <section class="flex flex-col gap-3">
@@ -88,7 +94,7 @@
 // Profil public d'un membre (/u/:username) et ses collections visibles (P4-2).
 import { onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { publicApi } from "@/api/client";
+import { friendApi, publicApi } from "@/api/client";
 import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";
 import { typeTitle } from "@/lib/schema";
@@ -108,7 +114,7 @@ const fetchReviews = (params: PaginationParams) =>
   publicApi.reviews(props.username, params);
 const { t } = useI18n();
 const { lang } = useLang();
-const { notifyError } = useNotify();
+const { notifyError, notifySuccess } = useNotify();
 
 const profile = ref<PublicProfile | null>(null);
 const collections = ref<PublicCollection[]>([]);
@@ -116,6 +122,29 @@ const loading = ref(true);
 /** Change après un blocage : la liste des avis se recharge (ceux du membre bloqué me sont masqués). */
 const blocks = ref(0);
 const auth = useAuthStore();
+const inviting = ref(false);
+
+/** Inviter en ami (P7-2) : le profil m'est visible, l'invitation par nom est permise. */
+async function inviteFriend() {
+  if (!profile.value) return;
+  inviting.value = true;
+  try {
+    const f = await friendApi.request(profile.value.username);
+    const name = f.user.display_name || f.user.username;
+    notifySuccess(
+      t(
+        f.status === "accepted"
+          ? "friends.invite.accepted"
+          : "friends.invite.sent",
+        { name },
+      ),
+    );
+  } catch (e) {
+    notifyError(e);
+  } finally {
+    inviting.value = false;
+  }
+}
 
 async function load() {
   loading.value = true;

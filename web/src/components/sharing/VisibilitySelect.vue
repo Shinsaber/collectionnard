@@ -24,11 +24,11 @@
 </template>
 
 <script setup lang="ts">
-// Visibilité d'une collection ou d'un profil (P4-2) : privée, membres, publique.
+// Visibilité d'une collection ou d'un profil (P4-2) : privée, amis (P7-2), membres, publique.
 import { useI18n } from "vue-i18n";
 import type { Visibility } from "@/api/types";
 
-const LEVELS: Visibility[] = ["private", "members", "public"];
+const LEVELS: Visibility[] = ["private", "friends", "members", "public"];
 
 defineProps<{ modelValue: Visibility; label?: string }>();
 const emit = defineEmits<{ "update:modelValue": [value: Visibility] }>();

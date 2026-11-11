@@ -52,7 +52,12 @@ func (h *Handler) CreateRecommendation(w http.ResponseWriter, r *http.Request) {
 		handleStoreError(w, r, err)
 		return
 	}
-	me := middleware.GetUserID(r.Context())
+	viewer, err := h.viewer(r)
+	if err != nil {
+		handleStoreError(w, r, err)
+		return
+	}
+	me := viewer.ID
 	to, _, err := h.Store.GetUserByUsername(r.Context(), in.To)
 	if err != nil {
 		handleStoreError(w, r, err)
@@ -63,7 +68,7 @@ func (h *Handler) CreateRecommendation(w http.ResponseWriter, r *http.Request) {
 			map[string]any{"fields": map[string]string{"to": "yourself"}})
 		return
 	}
-	if to.DisabledAt != nil || !privacy.CanView(to.ProfileVisibility, to.ID, me) {
+	if to.DisabledAt != nil || !privacy.CanView(to.ProfileVisibility, to.ID, viewer) {
 		notFound(w) // hors de l'annuaire : comme inconnu
 		return
 	}
@@ -145,7 +150,7 @@ func (h *Handler) DeleteMyRecommendation(w http.ResponseWriter, r *http.Request)
 // --- Blocks ---
 
 // shapeBlock withholds the name of a member the blocker may not know.
-func shapeBlock(b *model.Block, viewer uuid.UUID) {
+func shapeBlock(b *model.Block, viewer privacy.Viewer) {
 	if b.Anonymous || !privacy.CanView(b.BlockedProfile, b.BlockedID, viewer) {
 		b.User = nil
 	}
@@ -153,15 +158,19 @@ func shapeBlock(b *model.Block, viewer uuid.UUID) {
 
 // ListBlocks answers GET /me/blocks.
 func (h *Handler) ListBlocks(w http.ResponseWriter, r *http.Request) {
-	me := middleware.GetUserID(r.Context())
+	viewer, err := h.viewer(r)
+	if err != nil {
+		handleStoreError(w, r, err)
+		return
+	}
 	pg := parsePagination(r)
-	list, total, err := h.Store.ListBlocks(r.Context(), me, pg)
+	list, total, err := h.Store.ListBlocks(r.Context(), viewer.ID, pg)
 	if err != nil {
 		handleStoreError(w, r, err)
 		return
 	}
 	for i := range list {
-		shapeBlock(&list[i], me)
+		shapeBlock(&list[i], viewer)
 	}
 	respondJSON(w, http.StatusOK, model.NewPaginatedResponse(list, total, pg))
 }
@@ -174,7 +183,12 @@ func (h *Handler) CreateBlock(w http.ResponseWriter, r *http.Request) {
 		respondDecodeError(w, err)
 		return
 	}
-	me := middleware.GetUserID(r.Context())
+	viewer, err := h.viewer(r)
+	if err != nil {
+		handleStoreError(w, r, err)
+		return
+	}
+	me := viewer.ID
 	var target uuid.UUID
 	var named bool
 	switch in.Username = strings.TrimSpace(in.Username); {
@@ -184,7 +198,7 @@ func (h *Handler) CreateBlock(w http.ResponseWriter, r *http.Request) {
 			handleStoreError(w, r, err)
 			return
 		}
-		if u.DisabledAt != nil || !privacy.CanView(u.ProfileVisibility, u.ID, me) {
+		if u.DisabledAt != nil || !privacy.CanView(u.ProfileVisibility, u.ID, viewer) {
 			notFound(w)
 			return
 		}
@@ -192,7 +206,7 @@ func (h *Handler) CreateBlock(w http.ResponseWriter, r *http.Request) {
 	case in.Username == "" && in.ContentID != nil:
 		var shown bool
 		var err error
-		target, named, shown, err = h.blockTarget(r, in.ContentKind, *in.ContentID, me)
+		target, named, shown, err = h.blockTarget(r, in.ContentKind, *in.ContentID, viewer)
 		if err != nil {
 			handleStoreError(w, r, err)
 			return
@@ -214,17 +228,17 @@ func (h *Handler) CreateBlock(w http.ResponseWriter, r *http.Request) {
 		handleStoreError(w, r, err)
 		return
 	}
-	shapeBlock(b, me)
+	shapeBlock(b, viewer)
 	respondJSON(w, http.StatusCreated, b)
 }
 
 // blockTarget returns the author of a content, whether the reader knows who
 // they are, and whether the content is shown to the reader.
-func (h *Handler) blockTarget(r *http.Request, kind string, id, viewer uuid.UUID) (uuid.UUID, bool, bool, error) {
+func (h *Handler) blockTarget(r *http.Request, kind string, id uuid.UUID, viewer privacy.Viewer) (uuid.UUID, bool, bool, error) {
 	ctx := r.Context()
 	switch kind {
 	case model.BlockFromRecommendation:
-		rc, err := h.Store.GetRecommendation(ctx, id, viewer)
+		rc, err := h.Store.GetRecommendation(ctx, id, viewer.ID)
 		if err != nil {
 			return uuid.Nil, false, false, err
 		}

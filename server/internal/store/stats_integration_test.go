@@ -69,7 +69,8 @@ func TestCollectionStats(t *testing.T) {
 	if stats.TotalItems != 3 || len(stats.ItemsByType) != 1 || stats.ItemsByType[0].TypeID != volumeType || stats.ItemsByType[0].Count != 3 {
 		t.Errorf("totals: %d %+v", stats.TotalItems, stats.ItemsByType)
 	}
-	if len(stats.Numbers) != 1 || stats.Numbers[0].Field != "purchase_price" || stats.Numbers[0].Count != 2 || stats.Numbers[0].Sum != 10 {
+	// purchase_price, then estimated_value (collections v5), never filled here.
+	if len(stats.Numbers) != 2 || stats.Numbers[0].Field != "purchase_price" || stats.Numbers[0].Count != 2 || stats.Numbers[0].Sum != 10 {
 		t.Errorf("numbers: %+v", stats.Numbers)
 	}
 	if len(stats.Distributions) != 1 || stats.Distributions[0].Missing != 1 {

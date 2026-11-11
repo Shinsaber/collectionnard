@@ -122,7 +122,8 @@ func scanBlock(row pgx.Row) (*model.Block, error) {
 }
 
 // BlockUser blocks a member; anonymous when the blocker does not know who they
-// are (a block by name lifts it). The recommendations they sent to the blocker go.
+// are (a block by name lifts it). The recommendations they sent to the blocker go,
+// with their friendship and the requests between them (P7-2).
 func (s *PgStore) BlockUser(ctx context.Context, blockerID, blockedID uuid.UUID, anonymous bool) (*model.Block, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
@@ -135,6 +136,10 @@ func (s *PgStore) BlockUser(ctx context.Context, blockerID, blockedID uuid.UUID,
 		return nil, err
 	}
 	if _, err := tx.Exec(ctx, `DELETE FROM recommendations WHERE sender_id = $2 AND recipient_id = $1`, blockerID, blockedID); err != nil {
+		return nil, err
+	}
+	if _, err := tx.Exec(ctx, `DELETE FROM friendships WHERE (requester_id = $1 AND addressee_id = $2)
+		OR (requester_id = $2 AND addressee_id = $1)`, blockerID, blockedID); err != nil {
 		return nil, err
 	}
 	b, err := scanBlock(tx.QueryRow(ctx, `SELECT `+blockColumns+` FROM user_blocks b JOIN users u ON u.id = b.blocked_id

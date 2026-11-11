@@ -52,7 +52,13 @@ export default {
     external_unavailable:
       "Source externe (Wikidata, BnF) injoignable, réessayez plus tard",
     item_type_not_allowed:
-      "Ce type d'item n'est pas permis dans ce type de collection",
+      "Ce type d'item n'est pas accepté par cette collection ou son type",
+    invalid_sort:
+      "Tri impossible : un tri par attribut demande une collection qui n'accepte qu'un type d'item",
+    invalid_quantity:
+      "Quantité impossible : de 1 à 100 000 exemplaires, et un lot scindé en garde au moins un",
+    lots_not_mergeable:
+      "Seuls deux lots différents du même item peuvent fusionner",
     account_disabled:
       "Ce compte est désactivé : contactez un admin de l'instance.",
     invalid_invitation:
@@ -89,6 +95,19 @@ export default {
     moderation_state: "Ce contenu a changé entre-temps : rechargez la page.",
     recommendations_refused: "Ce membre n'accepte pas les recommandations.",
     already_recommended: "Vous lui avez déjà recommandé cet item.",
+    friendship_exists:
+      "Vous êtes déjà amis, ou votre demande attend sa réponse.",
+    member_blocked: "Vous avez bloqué ce membre : débloquez-le d'abord.",
+    not_lendable: "Ce type de collection n'ouvre pas les prêts.",
+    borrower_not_friend:
+      "Ce membre n'est pas votre ami : prêtez-lui sous un simple nom, ou invitez-le d'abord.",
+    loan_exceeds_lot:
+      "Il ne reste pas assez d'exemplaires disponibles dans ce lot.",
+    gift_state: "Ce cadeau est déjà remis : il ne se modifie plus.",
+    reservation_exceeds_lot:
+      "Il ne reste pas assez d'exemplaires à réserver : un autre ami a été plus rapide.",
+    friend_links_limit:
+      "Vous avez déjà 10 liens d'ami valides : révoquez-en un d'abord.",
     blocked: "L'auteur de ce contenu n'accepte pas vos interactions.",
   },
 };

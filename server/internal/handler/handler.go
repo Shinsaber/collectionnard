@@ -158,6 +158,17 @@ func (h *Handler) Router() chi.Router {
 		r.Get("/api/v1/me/blocks", h.ListBlocks)
 		r.Post("/api/v1/me/blocks", h.CreateBlock)
 		r.Delete("/api/v1/me/blocks/{id}", h.DeleteBlock)
+		// Amis (P7-2).
+		r.Get("/api/v1/me/friends", h.ListFriends)
+		r.Post("/api/v1/me/friends", h.RequestFriend)
+		r.Delete("/api/v1/me/friends/{id}", h.DeleteFriendship)
+		r.Get("/api/v1/me/friend-requests", h.ListFriendRequests)
+		r.Post("/api/v1/me/friend-requests/{id}/accept", h.AcceptFriendRequest)
+		r.Get("/api/v1/me/friend-links", h.ListFriendLinks)
+		r.Post("/api/v1/me/friend-links", h.CreateFriendLink)
+		r.Delete("/api/v1/me/friend-links/{id}", h.DeleteFriendLink)
+		r.Get("/api/v1/friend-links/{token}", h.GetFriendLink)
+		r.Post("/api/v1/friend-links/{token}/accept", h.AcceptFriendLink)
 
 		// Read endpoints (all authenticated users)
 		r.Get("/api/v1/item-types", h.ListItemTypes)
@@ -193,8 +204,26 @@ func (h *Handler) Router() chi.Router {
 		r.Delete("/api/v1/collections/{id}/share-links/{linkId}", h.RevokeShareLink)
 		r.Get("/api/v1/collections/{id}/items", h.ListCollectionItems)
 		r.Post("/api/v1/collections/{id}/items", h.AddItemToCollection)
-		r.Put("/api/v1/collections/{collectionId}/items/{itemId}", h.UpdateCollectionItem)
-		r.Delete("/api/v1/collections/{collectionId}/items/{itemId}", h.RemoveItemFromCollection)
+		r.Put("/api/v1/collections/{collectionId}/lots/{lotId}", h.UpdateCollectionItem)
+		r.Delete("/api/v1/collections/{collectionId}/lots/{lotId}", h.RemoveItemFromCollection)
+		r.Post("/api/v1/collections/{collectionId}/lots/{lotId}/split", h.SplitCollectionLot)
+		r.Post("/api/v1/collections/{collectionId}/lots/{lotId}/merge", h.MergeCollectionLot)
+		// Prêts (P7-3).
+		r.Get("/api/v1/collections/{collectionId}/lots/{lotId}/loans", h.ListLotLoans)
+		r.Post("/api/v1/collections/{collectionId}/lots/{lotId}/loans", h.CreateLoan)
+		r.Put("/api/v1/loans/{id}", h.UpdateLoan)
+		r.Delete("/api/v1/loans/{id}", h.DeleteLoan)
+		r.Get("/api/v1/me/loans", h.ListMyLoans)
+		r.Get("/api/v1/me/borrowings", h.ListMyBorrowings)
+		// Cadeaux réservés (P7-4).
+		r.Post("/api/v1/collections/{collectionId}/lots/{lotId}/reservations", h.CreateReservation)
+		r.Put("/api/v1/reservations/{id}", h.UpdateReservation)
+		r.Delete("/api/v1/reservations/{id}", h.DeleteReservation)
+		r.Post("/api/v1/reservations/{id}/hand-over", h.HandOverReservation)
+		r.Post("/api/v1/collections/{collectionId}/gifts/{id}/receive", h.ReceiveGift)
+		r.Post("/api/v1/collections/{collectionId}/gifts/{id}/decline", h.DeclineGift)
+		r.Get("/api/v1/me/gifts", h.ListMyGifts)
+		r.Get("/api/v1/me/received-gifts", h.ListReceivedGifts)
 
 		r.Get("/api/v1/items/{id}/history", h.GetItemHistory)
 
@@ -365,24 +394,6 @@ func respondDecodeError(w http.ResponseWriter, err error) {
 func hasAttributes(attrs json.RawMessage) bool {
 	trimmed := bytes.TrimSpace(attrs)
 	return len(trimmed) > 0 && !bytes.Equal(trimmed, []byte("null"))
-}
-
-// sortFields are the only sortable columns of the listing endpoints.
-var sortFields = map[string]bool{"created_at": true, "updated_at": true}
-
-// parseSort validates the `sort` query parameter (optional `-` prefix). An
-// unknown field answers 400 and returns ok=false.
-func parseSort(w http.ResponseWriter, r *http.Request) (string, bool) {
-	sort := r.URL.Query().Get("sort")
-	if sort == "" {
-		return "", true
-	}
-	if !sortFields[strings.TrimPrefix(sort, "-")] {
-		respondError(w, http.StatusBadRequest, "bad_request",
-			"invalid sort: accepted values are created_at, updated_at (prefix with - for descending)")
-		return "", false
-	}
-	return sort, true
 }
 
 // checkAttributesSchema rejects an invalid attributes_schema with a 422 and reports

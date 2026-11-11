@@ -62,7 +62,7 @@
             <div class="text-xs text-muted">
               {{ typeTitle(hit.item.item_type, lang) }}
               <template v-if="hit.collections">
-                · {{ membershipLabel(hit.collections.length) }}
+                · {{ membershipLabel(collectionCount(hit.collections)) }}
               </template>
             </div>
           </div>
@@ -111,7 +111,7 @@
           >
             {{ itemLabel(hit.item, lang) }}
             <span v-if="hit.collections" class="font-normal text-muted">
-              · {{ membershipLabel(hit.collections.length) }}</span
+              · {{ membershipLabel(collectionCount(hit.collections)) }}</span
             >
           </span>
         </template>
@@ -123,7 +123,7 @@
       v-if="addTarget"
       :visible="!!addTarget"
       :item="addTarget.item"
-      :exclude-ids="(addTarget.collections ?? []).map((m) => m.collection.id)"
+      :memberships="addTarget.collections ?? []"
       @update:visible="(v) => !v && (addTarget = null)"
       @added="refreshMemberships(addTarget!)"
     />
@@ -152,6 +152,7 @@ import PageHeader from "@/components/common/PageHeader.vue";
 import BarcodeScannerDialog from "@/components/common/BarcodeScannerDialog.vue";
 import ItemCover from "@/components/item/ItemCover.vue";
 import AddToCollectionDialog from "@/components/item/AddToCollectionDialog.vue";
+import { collectionCount } from "@/lib/lots";
 import ItemEditDialog from "@/components/item/ItemEditDialog.vue";
 import type { Item, ItemCollectionMembership } from "@/api/types";
 

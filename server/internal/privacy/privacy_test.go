@@ -22,27 +22,47 @@ const ownership = `{
 }`
 
 func TestCanView(t *testing.T) {
-	owner, other := uuid.New(), uuid.New()
+	owner, other, friend := uuid.New(), uuid.New(), uuid.New()
+	ownerV, otherV := NewViewer(owner, nil), NewViewer(other, []uuid.UUID{uuid.New()})
+	friendV, anon := NewViewer(friend, []uuid.UUID{owner}), NewViewer(uuid.Nil, []uuid.UUID{owner})
 	cases := []struct {
 		vis    string
-		viewer uuid.UUID
+		viewer Viewer
 		want   bool
 	}{
-		{Private, owner, true},
-		{Private, other, false},
-		{Private, uuid.Nil, false},
-		{Members, other, true},
-		{Members, uuid.Nil, false},
-		{Public, uuid.Nil, true},
-		{"bogus", other, false},
+		{Private, ownerV, true},
+		{Private, otherV, false},
+		{Private, friendV, false},
+		{Private, anon, false},
+		{Friends, ownerV, true},
+		{Friends, friendV, true},
+		{Friends, otherV, false},
+		{Friends, anon, false},
+		{Members, otherV, true},
+		{Members, anon, false},
+		{Public, anon, true},
+		{"bogus", friendV, false},
 	}
 	for _, c := range cases {
 		if got := CanView(c.vis, owner, c.viewer); got != c.want {
-			t.Errorf("CanView(%s, viewer=%v) = %v", c.vis, c.viewer, got)
+			t.Errorf("CanView(%s, viewer=%v) = %v", c.vis, c.viewer.ID, got)
 		}
 	}
-	if CanView(Private, uuid.Nil, uuid.Nil) {
+	if CanView(Private, uuid.Nil, Viewer{}) {
 		t.Error("an anonymous viewer is never the owner")
+	}
+}
+
+func TestLevelsOf(t *testing.T) {
+	owner, me := uuid.New(), uuid.New()
+	if got := LevelsOf(NewViewer(me, []uuid.UUID{owner}), owner); !reflect.DeepEqual(got, []string{Friends, Members, Public}) {
+		t.Errorf("friend: %v", got)
+	}
+	if got := LevelsOf(NewViewer(me, nil), owner); !reflect.DeepEqual(got, []string{Members, Public}) {
+		t.Errorf("member: %v", got)
+	}
+	if got := LevelsOf(Viewer{}, owner); !reflect.DeepEqual(got, []string{Public}) {
+		t.Errorf("anonymous: %v", got)
 	}
 }
 

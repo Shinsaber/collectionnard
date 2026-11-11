@@ -7,6 +7,7 @@ package model
 import (
 	"encoding/json"
 	"math"
+	"slices"
 	"time"
 
 	"github.com/google/uuid"
@@ -216,7 +217,13 @@ type Collection struct {
 	Name             string          `json:"name"`
 	Description      *string         `json:"description,omitempty"`
 	ItemCount        int             `json:"item_count"`
+	CopyCount        int             `json:"copy_count"`
 	Visibility       string          `json:"visibility"`
+	// ItemTypeIDs: the item types the owner accepts (P7-1b), within those of the
+	// CollectionType; empty = all those of the type.
+	ItemTypeIDs []uuid.UUID `json:"item_type_ids"`
+	// DefaultSort: order of the lots when the list is read without `sort`; "" = latest added.
+	DefaultSort string `json:"default_sort"`
 	// HiddenFields: nil = the x-private properties of the CollectionType (JSON null).
 	HiddenFields []string  `json:"hidden_fields"`
 	CreatedAt    time.Time `json:"created_at"`
@@ -224,9 +231,11 @@ type Collection struct {
 }
 
 type CollectionCreate struct {
-	CollectionTypeID uuid.UUID `json:"collection_type_id"`
-	Name             string    `json:"name"`
-	Description      *string   `json:"description,omitempty"`
+	CollectionTypeID uuid.UUID   `json:"collection_type_id"`
+	Name             string      `json:"name"`
+	Description      *string     `json:"description,omitempty"`
+	ItemTypeIDs      []uuid.UUID `json:"item_type_ids,omitempty"`
+	DefaultSort      string      `json:"default_sort,omitempty"`
 }
 
 type CollectionUpdate struct {
@@ -234,35 +243,99 @@ type CollectionUpdate struct {
 	Description  *string         `json:"description,omitempty"`
 	Visibility   *string         `json:"visibility,omitempty"`
 	HiddenFields OptionalStrings `json:"hidden_fields"`
+	ItemTypeIDs  *[]uuid.UUID    `json:"item_type_ids,omitempty"` // absent: unchanged; [] = all those of the type
+	DefaultSort  *string         `json:"default_sort,omitempty"`
+}
+
+// AcceptedItemTypes lists the item types the collection accepts: its own list
+// within that of its CollectionType (when joined); empty = all.
+func (c *Collection) AcceptedItemTypes() []uuid.UUID {
+	var limit []uuid.UUID
+	if c.CollectionType != nil {
+		limit = c.CollectionType.ItemTypeIDs
+	}
+	switch {
+	case len(c.ItemTypeIDs) == 0:
+		return limit
+	case len(limit) == 0:
+		return c.ItemTypeIDs
+	}
+	var out []uuid.UUID
+	for _, id := range c.ItemTypeIDs {
+		if slices.Contains(limit, id) {
+			out = append(out, id)
+		}
+	}
+	if len(out) == 0 { // list emptied by a later restriction of the type
+		return limit
+	}
+	return out
+}
+
+// SpecializedType is the only item type a specialized collection accepts
+// (P7-1b): its attributes can sort the lots. nil for a generic collection.
+func (c *Collection) SpecializedType() *uuid.UUID {
+	if ids := c.AcceptedItemTypes(); len(ids) == 1 {
+		return &ids[0]
+	}
+	return nil
 }
 
 // ---------------------------------------------------------------------------
 // CollectionItem
 // ---------------------------------------------------------------------------
 
+// CollectionItem is a lot (P7-1): one or more identical copies of an item in a
+// collection. An item may form several lots of the same collection.
 type CollectionItem struct {
 	ID           uuid.UUID       `json:"id"`
 	CollectionID uuid.UUID       `json:"collection_id"`
 	ItemID       uuid.UUID       `json:"item_id"`
 	Item         *Item           `json:"item,omitempty"`
+	Quantity     int             `json:"quantity"`
 	Attributes   json.RawMessage `json:"attributes"`
 	CreatedAt    time.Time       `json:"created_at"`
 	UpdatedAt    time.Time       `json:"updated_at"`
+	// Loans: the loans in progress of the lot (P7-3), in the owner's list only.
+	Loans []Loan `json:"loans,omitempty"`
+	// Reservations: the gift reservations of the lot (P7-4), for the owner's friends only.
+	Reservations []GiftReservation `json:"reservations,omitempty"`
+	// Gifts: the gifts handed over on the lot, waiting for the owner to
+	// confirm (P7-4b), in the owner's list only.
+	Gifts []GiftReservation `json:"gifts,omitempty"`
 }
+
+// MaxQuantity bounds the copies of a lot (CHECK of migration 020).
+const MaxQuantity = 100000
 
 type CollectionItemAdd struct {
 	ItemID     uuid.UUID       `json:"item_id"`
 	Attributes json.RawMessage `json:"attributes,omitempty"`
+	Quantity   *int            `json:"quantity,omitempty"` // absent: 1
 }
 
 type CollectionItemUpdate struct {
 	Attributes json.RawMessage `json:"attributes"`
+	Quantity   *int            `json:"quantity,omitempty"` // absent: unchanged
+}
+
+// CollectionLotSplit moves Quantity copies of a lot to a new lot of the same item.
+type CollectionLotSplit struct {
+	Quantity   int             `json:"quantity"`
+	Attributes json.RawMessage `json:"attributes,omitempty"` // absent: copy of the lot's
+}
+
+// CollectionLotMerge adds the copies of a lot to Into, then removes it.
+type CollectionLotMerge struct {
+	Into uuid.UUID `json:"into"`
 }
 
 // OfflineEntry: an item of one of the user's collections, with its contextual attributes.
 type OfflineEntry struct {
+	ID           uuid.UUID       `json:"id"`
 	CollectionID uuid.UUID       `json:"collection_id"`
 	ItemID       uuid.UUID       `json:"item_id"`
+	Quantity     int             `json:"quantity"`
 	Attributes   json.RawMessage `json:"attributes"`
 	AddedAt      time.Time       `json:"added_at"`
 }
@@ -286,6 +359,8 @@ type RelatedCollection struct {
 	ID               uuid.UUID       `json:"id"`
 	Name             string          `json:"name"`
 	CollectionTypeID uuid.UUID       `json:"collection_type_id"`
+	LotID            uuid.UUID       `json:"lot_id"`
+	Quantity         int             `json:"quantity"`
 	Attributes       json.RawMessage `json:"attributes"`
 }
 
@@ -296,10 +371,12 @@ type RelatedItemCollections struct {
 	Collections []RelatedCollection `json:"collections"`
 }
 
-// ItemCollectionMembership represents a collection that contains a given item,
-// along with the contextual attributes of the membership.
+// ItemCollectionMembership is a lot of a given item in a collection of the user
+// (one entry per lot), with its contextual attributes.
 type ItemCollectionMembership struct {
 	Collection Collection      `json:"collection"`
+	LotID      uuid.UUID       `json:"lot_id"`
+	Quantity   int             `json:"quantity"`
 	Attributes json.RawMessage `json:"attributes"`
 }
 

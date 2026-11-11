@@ -24,6 +24,7 @@ export type ReportReason = (typeof REPORT_REASONS)[number];
 /** Ordre du formulaire : du plus discret au plus exposé. */
 export const REVIEW_VISIBILITIES: ReviewVisibility[] = [
   "private",
+  "friends",
   "members",
   "anonymous",
   "public",

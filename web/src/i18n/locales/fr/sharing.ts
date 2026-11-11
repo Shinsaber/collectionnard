@@ -3,9 +3,11 @@ export default {
   visibility: {
     label: "Visibilité",
     private: "Privée",
+    friends: "Amis",
     members: "Membres",
     public: "Publique",
     privateHelp: "Moi seul.",
+    friendsHelp: "Mes amis seulement.",
     membersHelp: "Tout compte connecté de cette instance.",
     publicHelp: "Tout le monde, même sans compte.",
   },
@@ -53,7 +55,8 @@ export default {
   },
   members: {
     title: "Membres",
-    help: "Profils ouverts aux membres ou publics.",
+    help: "Vos amis, et l'annuaire des profils ouverts aux membres ou publics.",
+    directory: "Annuaire",
     none: "Aucun profil visible pour l'instant.",
   },
 };

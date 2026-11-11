@@ -197,7 +197,8 @@ export interface ReviewTypeUpdate {
   context_label?: Record<string, string>;
 }
 
-export type ReviewVisibility = "private" | "members" | "anonymous" | "public";
+export type ReviewVisibility =
+  "private" | "friends" | "members" | "anonymous" | "public";
 
 export interface Review {
   id: string;
@@ -340,6 +341,28 @@ export interface Block {
   id: string;
   user?: { username: string; display_name?: string; avatar?: string };
   created_at: string;
+}
+
+/** Une amitié ou une demande (P7-2), vue par l'un des deux : `user` est l'autre. */
+export interface Friendship {
+  id: string;
+  status: "pending" | "accepted";
+  /** Demande reçue (`false` : envoyée, ou amitié). */
+  incoming: boolean;
+  user: { username: string; display_name?: string; avatar?: string };
+  /** Son profil public m'est ouvert. */
+  profile_visible: boolean;
+  created_at: string;
+  accepted_at?: string;
+}
+
+/** Lien d'ami secret (P7-2) : `token` à la création seulement, `user` (son auteur) à l'ouverture. */
+export interface FriendLink {
+  id: string;
+  token?: string;
+  user?: { username: string; display_name?: string; avatar?: string };
+  created_at: string;
+  expires_at: string;
 }
 
 export type BlockContentKind =
@@ -500,10 +523,17 @@ export interface Collection {
   collection_type?: CollectionType;
   name: string;
   description?: string;
+  /** Items différents (un item formant plusieurs lots compte une fois). */
   item_count: number;
+  /** Exemplaires : somme des quantités des lots (P7-1). */
+  copy_count: number;
   visibility: Visibility;
   /** Champs cachés aux autres lecteurs ; `null` = les propriétés `x-private` du type. */
   hidden_fields: string[] | null;
+  /** Types d'item acceptés (P7-1b), parmi ceux du type de collection ; vide = tous ceux du type. */
+  item_type_ids: string[];
+  /** Tri des lots à l'ouverture (`sort` de la liste) ; vide = ajout le plus récent. */
+  default_sort: string;
   created_at: string;
   updated_at: string;
 }
@@ -512,6 +542,8 @@ export interface CollectionCreate {
   collection_type_id: string;
   name: string;
   description?: string;
+  item_type_ids?: string[];
+  default_sort?: string;
 }
 
 export interface CollectionUpdate {
@@ -520,11 +552,15 @@ export interface CollectionUpdate {
   visibility?: Visibility;
   /** Absent : inchangé ; `null` : défaut du type (`x-private`). */
   hidden_fields?: string[] | null;
+  /** Absent : inchangé ; `[]` : tous ceux du type de collection. */
+  item_type_ids?: string[];
+  default_sort?: string;
 }
 
 // ---------- Visibilité et partage (P4-2) : miroir de server/internal/model/sharing.go ----------
 
-export type Visibility = "private" | "members" | "public";
+/** `friends` : les amis du propriétaire (P7-2). */
+export type Visibility = "private" | "friends" | "members" | "public";
 
 export interface Owner {
   username: string;
@@ -543,6 +579,8 @@ export interface PublicCollection {
   visibility: Visibility;
   created_at: string;
   updated_at: string;
+  /** Le lecteur, ami du propriétaire, peut réserver des cadeaux sur cette liste (P7-4). */
+  can_reserve?: boolean;
 }
 
 export interface PublicProfile {
@@ -566,31 +604,121 @@ export interface ShareLinkCreated {
 }
 
 // ---------- CollectionItem ----------
+/** Lot d'une collection (P7-1) : `quantity` exemplaires identiques d'un item ; un item peut former plusieurs lots. */
 export interface CollectionItem {
   id: string;
   collection_id: string;
   item_id: string;
   item?: Item;
+  quantity: number;
   attributes: Record<string, unknown>;
+  /** Prêts en cours du lot (P7-3), dans la liste de son propriétaire seulement. */
+  loans?: Loan[];
+  /** Réservations de cadeau (P7-4), pour un ami du propriétaire seulement, jamais pour lui. */
+  reservations?: GiftReservation[];
+  /** Cadeaux remis, en attente de confirmation (P7-4b), dans la liste de son propriétaire seulement. */
+  gifts?: GiftReservation[];
   created_at: string;
   updated_at: string;
 }
 
+/** Prêt d'exemplaires d'un lot (P7-3) ; dates `AAAA-MM-JJ`. */
+export interface Loan {
+  id: string;
+  lot_id: string;
+  collection_id: string;
+  quantity: number;
+  /** L'ami emprunteur ; absent pour un simple nom. */
+  borrower?: { username: string; display_name?: string; avatar?: string };
+  /** Toujours présent, figé au moment du prêt. */
+  borrower_name: string;
+  lent_at: string;
+  due_at?: string;
+  returned_at?: string;
+  overdue: boolean;
+  note: string;
+  /** Le prêteur, donné à l'emprunteur seulement. */
+  owner?: { username: string; display_name?: string; avatar?: string };
+  item?: Item;
+  collection_name?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Réservation de cadeau (P7-4) : `giver` nommé aux autres amis, `note` à l'offrant seul. */
+export interface GiftReservation {
+  id: string;
+  /** Absent quand le lot a quitté la liste (`left_list`). */
+  lot_id?: string;
+  /** La liste de souhaits du lot, tant qu'il y est (où confirmer une remise). */
+  collection_id?: string;
+  left_list: boolean;
+  item_id: string;
+  quantity: number;
+  /** `reserved` : secrète ; `given` : remise, en attente du propriétaire ; `received` : reçue (P7-4b). */
+  status: "reserved" | "given" | "received";
+  given_at?: string;
+  received_at?: string;
+  /** Dernier jour où une réservation non offerte tient (`AAAA-MM-JJ`). */
+  expires_at: string;
+  /** Non offerte et échue : ne compte plus, vue de son offrant seul. */
+  expired: boolean;
+  mine: boolean;
+  giver?: { username: string; display_name?: string; avatar?: string };
+  note?: string;
+  /** Pour qui (dans « Mes cadeaux »). */
+  owner?: { username: string; display_name?: string; avatar?: string };
+  item?: Item;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Un ami (`borrower_username`) ou un simple nom (`borrower_name`). */
+export interface LoanCreate {
+  quantity?: number;
+  borrower_username?: string;
+  borrower_name?: string;
+  lent_at?: string;
+  due_at?: string;
+  note?: string;
+}
+
+/** Filtre des listes de prêts : en cours, rendus ; absent : tous. */
+export type LoanStatus = "active" | "returned";
+
+/** Champs modifiables, remplacés ; `returned_at` clôt le prêt. */
+export interface LoanUpdate {
+  quantity: number;
+  lent_at?: string;
+  due_at?: string;
+  returned_at?: string;
+  note: string;
+}
+
+/** Crée toujours un nouveau lot (`quantity` : 1 par défaut). */
 export interface CollectionItemAdd {
   item_id: string;
   attributes?: Record<string, unknown>;
+  quantity?: number;
 }
 
 export interface CollectionItemUpdate {
   attributes: Record<string, unknown>;
+  /** Absente : quantité inchangée. */
+  quantity?: number;
 }
 
+/** Bornes de `quantity` (CHECK de la migration 020). */
+export const MAX_QUANTITY = 100000;
+
 // ---------- Item Collection Membership ----------
-/** Collection qui contient un item lié, avec les attributs contextuels de l'item. */
+/** Lot d'un item lié dans une collection (une collection revient si l'item y forme plusieurs lots). */
 export interface RelatedCollection {
   id: string;
   name: string;
   collection_type_id: string;
+  lot_id: string;
+  quantity: number;
   attributes: Record<string, unknown>;
 }
 
@@ -600,8 +728,11 @@ export interface RelatedItemCollections {
   collections: RelatedCollection[];
 }
 
+/** Lot d'un item dans une de mes collections (une entrée par lot). */
 export interface ItemCollectionMembership {
   collection: Collection;
+  lot_id: string;
+  quantity: number;
   attributes: Record<string, unknown>;
 }
 
@@ -861,7 +992,16 @@ export type NotificationKind =
   | "article_hidden"
   | "article_restored"
   | "article_comment"
-  | "recommendation";
+  | "recommendation"
+  | "friend_request"
+  | "friend_accepted"
+  | "loan_started"
+  | "loan_overdue"
+  | "gift_left_list"
+  | "gift_expiring"
+  | "gift_given"
+  | "gift_received"
+  | "gift_declined";
 
 export interface AppNotification {
   id: string;
@@ -879,6 +1019,18 @@ export interface AppNotification {
     by_member?: boolean;
     /** Recommandation reçue (I-4). */
     recommendation_id?: string;
+    /** Demande ou amitié acceptée (P7-2). */
+    friendship_id?: string;
+    /** Prêts (P7-3) : le prêt, l'emprunteur (rappel au prêteur) ; `borrowed` : rappel à l'emprunteur. */
+    loan_id?: string;
+    borrower?: string;
+    borrowed?: boolean;
+    /** Cadeau (P7-4) : la réservation dont le lot a quitté la liste. */
+    reservation_id?: string;
+    /** Échéance d'une réservation bientôt expirée. */
+    expires_at?: string;
+    /** Cadeau remis (P7-4b) : la liste où le confirmer. */
+    collection_id?: string;
   };
   created_at: string;
   read_at?: string;
@@ -1101,8 +1253,11 @@ export interface ExternalImportReport extends ImportReport {
 
 // ---------- Copie hors ligne (GET /me/offline, lot E5) ----------
 export interface OfflineEntry {
+  /** Identifiant du lot. */
+  id: string;
   collection_id: string;
   item_id: string;
+  quantity: number;
   attributes: Record<string, unknown>;
   added_at: string;
 }

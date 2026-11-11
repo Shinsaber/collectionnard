@@ -89,6 +89,9 @@ const en: typeof fr = {
     private: "Rating only",
     privateHelp:
       "Your rating counts in the average, without your name; your text stays yours.",
+    friends: "Friends",
+    friendsHelp:
+      "Signed for your friends; others only get the rating, in the average.",
     members: "Members",
     membersHelp:
       "Signed for members; visitors only get the rating, in the average.",

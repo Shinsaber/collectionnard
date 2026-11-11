@@ -61,6 +61,34 @@
         t("schema.root.completenessHelp")
       }}</span>
     </div>
+
+    <!-- Prêts possibles (x-lendable, P7-3), types de collection seulement -->
+    <div v-if="showLendable" class="flex flex-col gap-1">
+      <ElCheckbox
+        :model-value="lendable"
+        data-test="x-lendable"
+        @update:model-value="emit('update:lendable', Boolean($event))"
+      >
+        {{ t("schema.root.lendable") }} (<code>x-lendable</code>)
+      </ElCheckbox>
+      <span class="text-xs text-muted">{{
+        t("schema.root.lendableHelp")
+      }}</span>
+    </div>
+
+    <!-- Cadeaux réservables (x-reservable, P7-4), types de collection seulement -->
+    <div v-if="showLendable" class="flex flex-col gap-1">
+      <ElCheckbox
+        :model-value="reservable"
+        data-test="x-reservable"
+        @update:model-value="emit('update:reservable', Boolean($event))"
+      >
+        {{ t("schema.root.reservable") }} (<code>x-reservable</code>)
+      </ElCheckbox>
+      <span class="text-xs text-muted">{{
+        t("schema.root.reservableHelp")
+      }}</span>
+    </div>
   </div>
 </template>
 
@@ -71,7 +99,7 @@ import { LANGS } from "@/i18n/langs";
 
 // En-tête du SchemaBuilder : extensions racine du schéma — nom et description
 // affichés du méta-type par langue (`x-title`, `x-description`), gabarit `x-label` et,
-// pour un type de relation, la composition `x-completeness`.
+// pour un type de relation, la composition `x-completeness` ; pour un type de collection, les prêts `x-lendable` et les cadeaux `x-reservable`.
 // Les langues hors `LANGS` présentes dans les objets sont conservées par le parent.
 const props = defineProps<{
   xLabel: string;
@@ -82,6 +110,10 @@ const props = defineProps<{
   completeness?: boolean;
   /** Affiche la case x-completeness (feature `completeness` : types de relation). */
   showCompleteness?: boolean;
+  lendable?: boolean;
+  reservable?: boolean;
+  /** Affiche les cases x-lendable et x-reservable (feature `lendable` : types de collection, P7-3 / P7-4). */
+  showLendable?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -89,6 +121,8 @@ const emit = defineEmits<{
   "update:title": [value: Record<string, string>];
   "update:description": [value: Record<string, string>];
   "update:completeness": [value: boolean];
+  "update:lendable": [value: boolean];
+  "update:reservable": [value: boolean];
 }>();
 
 const { t } = useI18n();

@@ -39,6 +39,7 @@
       v-model="form.attributes_schema"
       :features="{
         completeness: kind === 'relation',
+        lendable: kind === 'collection',
         private: kind === 'collection',
         identifier: kind === 'item',
         criteria: kind === 'review',

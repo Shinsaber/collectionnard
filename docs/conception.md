@@ -136,7 +136,9 @@ Instance d'un lien entre deux items, avec les valeurs des attributs dynamiques d
 
 #### CollectionItem
 
-Instance du lien entre une collection et un item, avec les valeurs des attributs dynamiques définis par le CollectionType (état, prix…).
+**Lot** d'une collection (P7-1) : un ou plusieurs exemplaires identiques d'un item (`quantity`), avec les valeurs des
+attributs dynamiques définis par le CollectionType (état, prix unitaire…). Un même item peut former plusieurs lots d'une
+collection (un état ou une finition différents).
 
 #### Tag
 
@@ -173,6 +175,8 @@ une abstraction de ce schéma ; elle n'existe pas dans l'implémentation.
 | `x-private`          | propriété | CollectionType : champ caché par défaut à tout autre lecteur que le propriétaire (prix payé, budget max), même dans une collection publique ; le propriétaire peut remplacer ce défaut par collection (`hidden_fields`). Retiré **par le serveur** des pages publiques, liens de partage et statistiques, administrateurs compris                                                                                             |
 | `x-identifier`       | propriété | ItemType : identifiant (ISBN, EAN, QID Wikidata, ARK BnF, MBID…), au premier niveau ou dans un objet (`external_ids.wikidata`). Un autre item du même type portant la même valeur est signalé comme doublon possible avant l'enregistrement ou la proposition (`POST /items/duplicates`). Dans les formulaires, un champ `x-identifier` de premier niveau a un bouton « scanner un code-barres » (`docs/phases/mobile.md` M2) |
 | `x-completeness`     | racine    | RelationType seulement : `true` marque une relation de composition (la cible fait partie de la source : `contains_volume`, `contains_track`, `contains_episode`, `includes_episode`, `contains_work`). Les statistiques d'une collection comptent, pour chaque source, les cibles présentes sur le total (« 30 tomes sur 42 »)                                                                                                |
+| `x-lendable`         | racine    | CollectionType seulement : `true` ouvre les prêts des lots de ses collections (P7-3, `Ownership` du paquet `collections` v6). Le serveur refuse un prêt ailleurs (422 `not_lendable`)                                                                                                                                                                                                                                         |
+| `x-reservable`       | racine    | CollectionType seulement : `true` ouvre les réservations de cadeau des amis du propriétaire (P7-4, `Wishlist` du paquet `collections` v7). Jamais renvoyées au propriétaire ; refusées ailleurs (404)                                                                                                                                                                                                                         |
 | `x-label`            | racine    | Gabarit du libellé des instances : `"{title}"`, `"{number}. {title}"`, `"{last_name} {first_name}"` ; sans gabarit, repli sur `title`, `name`, `label` (Go `internal/label`, TS `web/src/lib/schema.ts`)                                                                                                                                                                                                                      |
 
 Règles d'affichage dérivées du schéma lui-même (pas d'extension) : un `integer` / `number` avec `minimum`
@@ -225,7 +229,7 @@ d'autres codes de langue, et les traductions de types / champs / enums se compl�
 | CollectionType | Attributs du lien CollectionItem |
 | ReviewType | Critères notés d'un avis (`docs/phases/interactions.md`) |
 | -------------- | -------------------------------------------------------------------------- |
-| Ownership | condition (new/very_good/good/fair/poor), purchase_price, acquisition_date |
+| Ownership | condition (new/very_good/good/fair/poor), purchase_price et estimated_value (unitaires, privés), acquisition_date, photos |
 | Watching | watched_at, rating, progress |
 | Wishlist | priority, max_budget |
 
@@ -325,7 +329,7 @@ La table unique d'items avec attributs dynamiques nécessite une attention parti
 ### Fonctionnalités sociales (Phase 4, livrée — `docs/phases/social.md`)
 
 - Comptes sur invitation, profils (nom affiché, avatar, présentation), rôles admin / contributeur / membre
-- Visibilité par collection et pour le profil (privé, membres, public), liens de partage secrets, champs privés retirés par le serveur
+- Visibilité par collection et pour le profil (privé, amis, membres, public), liens de partage secrets, champs privés retirés par le serveur
 - Listes de souhaits partageables ; statistiques personnelles et complétude (« 30 tomes sur 42 »)
 - Contributions : propositions modérées, rôle contributeur, historique des fiches, notifications
 - _Reporté_ : système d'échange entre collectionneurs (exemplaires « à échanger », correspondances avec les listes de souhaits, messagerie)
@@ -543,6 +547,30 @@ Avant l'ouverture publique : cadre légal et RGPD (voir les « Questions transve
 - [x] **I-2 — Commentaires** (livré le 2026-11-07) : fil sur les avis, notifications.
 - [x] **I-3 — Articles sur la fiche d'un item** (livré le 2026-11-07) : partage de nouvelles (titre, message, lien), fil de commentaires.
 - [x] **I-4 — Recommandations** (livré le 2026-11-07) : envoyer une fiche à un membre avec un mot ; refus et blocage d'un membre.
+
+### Phase 7 : Exemplaires, amis, prêts et cadeaux
+
+Ouverte le 2026-11-07 après la fusion de la Phase 6 (conception et décisions : `docs/phases/exemplaires.md`), un commit par lot.
+Décisions : une ligne de collection par lot, avec une quantité, sur tous les types ; amitié réciproque et visibilité `friends` ;
+prêts et réservations dans deux tables distinctes ; emprunteur et offrant choisis parmi les amis (ou un simple nom pour un prêt).
+
+- [x] **P7-1 — Exemplaires multiples** (livré le 2026-11-08) : lots avec quantité, scission et fusion, routes adressées par lot (rupture d'API),
+      `estimated_value` sur Possession (paquet `collections` v5), statistiques, import / export, hors ligne.
+- [x] **P7-1b — Types d'item acceptés et tri par défaut** (livré le 2026-11-08) : une collection resserre les types d'item de son type de collection
+      (spécialisée = un seul type, tris par ses attributs) ; tri par défaut appliqué aussi aux pages publiques.
+- [x] **P7-2 — Amis** (livré le 2026-11-08) : invitation d'un profil visible ou par lien d'ami à usage unique, acceptation,
+      niveau de visibilité `friends` (collections, profil, avis), rupture par le blocage, onglets Amis / Annuaire de « Membres ».
+- [x] **P7-3 — Prêts** (livré le 2026-11-08) : à un ami (notifié) ou à un simple nom, retour prévu, rappel de retard aux deux,
+      historique des prêts rendus, drapeau privé sur le lot, page « Prêts » (prêtés / empruntés), `x-lendable` (paquet `collections` v6).
+- [x] **P7-4 — Cadeaux réservés** (livré le 2026-11-08) : réservation par les amis dans une liste de souhaits, jamais visible du
+      propriétaire ; offrants nommés aux autres amis, « Ma réservation », durée limitée (60 jours par défaut, un an au plus, rappel
+      7 jours avant), onglet « À offrir », rappel quand le lot quitte la liste,
+      `x-reservable` (paquet `collections` v7). Phase 7 close (hors échanges, reportés).
+- [x] **P7-4b — Remise d'un cadeau** (livré le 2026-11-10) : « Je l'ai remis » lève la surprise, le propriétaire est notifié et
+      confirme (« Bien reçu », vers une autre collection ou simplement retiré) ou refuse (« Pas reçu », réservation invalidée) ;
+      historique « Reçu le … » de l'offrant.
+- [x] **P7-4c — Cadeaux reçus** (livré le 2026-11-10) : onglet « Reçus » (à confirmer, puis historique), cadeaux reçus gardés
+      des deux côtés.
 
 ---
 

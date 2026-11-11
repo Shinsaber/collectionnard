@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/shinsaber/colec/internal/middleware"
 	"github.com/shinsaber/colec/internal/model"
 	"github.com/shinsaber/colec/internal/privacy"
@@ -19,7 +18,7 @@ import (
 
 // signedFor keeps the author only when the review is signed for the reader, and
 // the edition used with it: a rare edition could point at its owner.
-func signedFor(reviews []model.Review, viewer uuid.UUID) {
+func signedFor(reviews []model.Review, viewer privacy.Viewer) {
 	for i := range reviews {
 		if !privacy.CanView(reviews[i].Visibility, reviews[i].UserID, viewer) {
 			reviews[i].Author = nil
@@ -35,8 +34,12 @@ func (h *Handler) ListItemReviews(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	viewer := middleware.GetUserID(r.Context())
-	p := model.ReviewListParams{Viewer: viewer, Levels: privacy.Levels(viewer),
+	viewer, err := h.viewer(r)
+	if err != nil {
+		handleStoreError(w, r, err)
+		return
+	}
+	p := model.ReviewListParams{Viewer: viewer.ID, Levels: privacy.Levels(viewer.ID),
 		Sort: r.URL.Query().Get("sort"), Lang: r.URL.Query().Get("lang")}
 	if p.Sort != "" && p.Sort != "recent" && p.Sort != "rating" && p.Sort != "interesting" {
 		respondError(w, http.StatusBadRequest, "bad_request", "sort must be recent, rating or interesting")
@@ -247,13 +250,12 @@ func (h *Handler) ListMyReviews(w http.ResponseWriter, r *http.Request) {
 // ListPublicReviews returns the reviews a member signed for the reader: an
 // anonymous or note-only review listed under a name would lose its anonymity.
 func (h *Handler) ListPublicReviews(w http.ResponseWriter, r *http.Request) {
-	u, ok := h.visibleProfile(w, r)
+	u, viewer, ok := h.visibleProfile(w, r)
 	if !ok {
 		return
 	}
-	viewer := middleware.GetUserID(r.Context())
 	pg := parsePagination(r)
-	blocked, err := h.Store.IsBlocked(r.Context(), viewer, u.ID)
+	blocked, err := h.Store.IsBlocked(r.Context(), viewer.ID, u.ID)
 	if err != nil {
 		handleStoreError(w, r, err)
 		return
@@ -262,7 +264,7 @@ func (h *Handler) ListPublicReviews(w http.ResponseWriter, r *http.Request) {
 		respondJSON(w, http.StatusOK, model.NewPaginatedResponse([]model.Review{}, 0, pg))
 		return
 	}
-	list, total, err := h.Store.ListUserReviews(r.Context(), u.ID, privacy.Levels(viewer), pg)
+	list, total, err := h.Store.ListUserReviews(r.Context(), u.ID, privacy.LevelsOf(viewer, u.ID), pg)
 	if err == nil {
 		err = h.withReactions(r, list)
 	}

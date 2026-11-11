@@ -380,11 +380,6 @@ func TestRelationType_Junctions(t *testing.T) {
 // --- Collections ---
 
 func TestCollections(t *testing.T) {
-	_, err := s.AddCollectionItem(ctx, colMesDVDs, model.CollectionItemAdd{ItemID: itemDVD, Attributes: json.RawMessage(`{}`)})
-	if !errors.Is(err, store.ErrConflict) {
-		t.Errorf("duplicate collection item: expected ErrConflict, got %v", err)
-	}
-
 	mine, err := s.ListItemCollections(ctx, shinsaberUser, itemSerie)
 	if err != nil || len(mine) != 1 || mine[0].Collection.Name != "Séries vues" {
 		t.Errorf("memberships for owner: %+v, err %v", mine, err)
@@ -408,7 +403,7 @@ func TestCollections(t *testing.T) {
 		}
 	}
 
-	items, total, err := s.ListCollectionItems(ctx, colMesDVDs, model.Pagination{Page: 1, PerPage: 20}, nil, "")
+	items, total, err := s.ListCollectionItems(ctx, colMesDVDs, model.Pagination{Page: 1, PerPage: 20}, store.CollectionItemFilters{})
 	if err != nil || total != 1 || items[0].Item == nil || items[0].Item.ID != itemDVD {
 		t.Errorf("collection items: total %d, err %v", total, err)
 	}
@@ -1423,5 +1418,553 @@ func TestRecommendationsAndBlocks(t *testing.T) {
 	}
 	if u, _ := s.UpdateProfile(ctx, a.ID, model.ProfileUpdate{ProfileVisibility: "members"}); !u.AcceptsRecommendations {
 		t.Errorf("absent = accepte")
+	}
+}
+
+// P7-1 (migration 020): an item may form several lots of a collection, which
+// split and merge; every write addresses a lot within its collection.
+func TestCollectionLots(t *testing.T) {
+	three := 3
+	lot, err := s.AddCollectionItem(ctx, colMesDVDs, model.CollectionItemAdd{ItemID: itemDVD,
+		Attributes: json.RawMessage(`{"condition":"good"}`), Quantity: &three})
+	if err != nil || lot.Quantity != 3 {
+		t.Fatalf("second lot of the DVD: %+v %v", lot, err)
+	}
+	defer func() { _ = s.RemoveCollectionItem(ctx, colMesDVDs, lot.ID) }()
+	mine, err := s.ListItemCollections(ctx, shinsaberUser, itemDVD)
+	if err != nil || len(mine) != 2 || mine[1].LotID != lot.ID || mine[1].Quantity != 3 || mine[1].Collection.CopyCount != 4 {
+		t.Fatalf("memberships: %+v %v", mine, err)
+	}
+	first := mine[0].LotID
+
+	// Quantity kept when absent, replaced when given.
+	if got, err := s.UpdateCollectionItem(ctx, colMesDVDs, lot.ID, model.CollectionItemUpdate{Attributes: json.RawMessage(`{"condition":"good"}`)}); err != nil || got.Quantity != 3 {
+		t.Errorf("update without quantity: %+v %v", got, err)
+	}
+	if _, err := s.UpdateCollectionItem(ctx, uuid.New(), lot.ID, model.CollectionItemUpdate{Attributes: json.RawMessage(`{}`)}); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("a lot is addressed within its collection: %v", err)
+	}
+
+	// Split one damaged copy, then merge it back.
+	split, err := s.SplitCollectionLot(ctx, colMesDVDs, lot.ID, 1, json.RawMessage(`{"condition":"poor"}`))
+	if err != nil || split.Quantity != 1 || split.ItemID != itemDVD || !split.CreatedAt.Equal(lot.CreatedAt) {
+		t.Fatalf("split: %+v %v", split, err)
+	}
+	if _, err := s.SplitCollectionLot(ctx, colMesDVDs, split.ID, 1, nil); !errors.Is(err, store.ErrInvalidQuantity) {
+		t.Errorf("a split leaves at least one copy: %v", err)
+	}
+	if _, err := s.MergeCollectionLots(ctx, colMesDVDs, split.ID, split.ID, nil); !errors.Is(err, store.ErrNotMergeable) {
+		t.Errorf("merge into itself: %v", err)
+	}
+	merged, err := s.MergeCollectionLots(ctx, colMesDVDs, split.ID, lot.ID, nil)
+	if err != nil || merged.ID != lot.ID || merged.Quantity != 3 || string(merged.Attributes) != `{"condition": "good"}` {
+		t.Fatalf("merge: %+v %v", merged, err)
+	}
+	if err := s.RemoveCollectionItem(ctx, colMesDVDs, split.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("the merged lot must be gone: %v", err)
+	}
+
+	// Statistics count copies.
+	st, err := s.GetCollectionStats(ctx, colMesDVDs, nil)
+	if err != nil || st.TotalItems != 4 {
+		t.Errorf("stats: %+v %v", st, err)
+	}
+
+	// Lots of different items never merge.
+	other, err := s.AddCollectionItem(ctx, colMesDVDs, model.CollectionItemAdd{ItemID: itemPilot})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = s.RemoveCollectionItem(ctx, colMesDVDs, other.ID) }()
+	if _, err := s.MergeCollectionLots(ctx, colMesDVDs, other.ID, first, nil); !errors.Is(err, store.ErrNotMergeable) {
+		t.Errorf("merge of another item: %v", err)
+	}
+}
+
+// P7-1: the list of a collection filters and sorts its lots; a merge keeps the
+// photos of both lots.
+func TestCollectionLots_SearchAndPhotos(t *testing.T) {
+	two := 2
+	a, err := s.AddCollectionItem(ctx, colMesDVDs, model.CollectionItemAdd{ItemID: itemDVD, Quantity: &two,
+		Attributes: json.RawMessage(`{"photos":{"condition":["/api/v1/uploads/a.jpg"]}}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = s.RemoveCollectionItem(ctx, colMesDVDs, a.ID) }()
+	b, err := s.AddCollectionItem(ctx, colMesDVDs, model.CollectionItemAdd{ItemID: itemDVD,
+		Attributes: json.RawMessage(`{"photos":{"condition":["/api/v1/uploads/b.jpg"]}}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = s.RemoveCollectionItem(ctx, colMesDVDs, b.ID) }()
+	page := model.Pagination{Page: 1, PerPage: 20}
+
+	multiple, total, err := s.ListCollectionItems(ctx, colMesDVDs, page, store.CollectionItemFilters{Multiple: true})
+	if err != nil || total != 1 || multiple[0].ID != a.ID {
+		t.Errorf("multiple: %d %+v %v", total, multiple, err)
+	}
+	byQty, _, err := s.ListCollectionItems(ctx, colMesDVDs, page, store.CollectionItemFilters{ItemFilters: store.ItemFilters{Sort: "-quantity"}})
+	if err != nil || len(byQty) != 3 || byQty[0].ID != a.ID {
+		t.Errorf("sort by quantity: %+v %v", byQty, err)
+	}
+	if _, total, err := s.ListCollectionItems(ctx, colMesDVDs, page, store.CollectionItemFilters{ItemFilters: store.ItemFilters{Search: "breaking"}}); err != nil || total != 3 {
+		t.Errorf("search: %d %v", total, err)
+	}
+	if _, total, err := s.ListCollectionItems(ctx, colMesDVDs, page, store.CollectionItemFilters{ItemFilters: store.ItemFilters{Search: "zzzz"}}); err != nil || total != 0 {
+		t.Errorf("search without match: %d %v", total, err)
+	}
+
+	merged, err := s.MergeCollectionLots(ctx, colMesDVDs, b.ID, a.ID, []string{"photos"})
+	if err != nil || merged.Quantity != 3 {
+		t.Fatalf("merge: %+v %v", merged, err)
+	}
+	var attrs struct {
+		Photos struct {
+			Condition []string `json:"condition"`
+		} `json:"photos"`
+	}
+	if err := json.Unmarshal(merged.Attributes, &attrs); err != nil || len(attrs.Photos.Condition) != 2 {
+		t.Errorf("photos of both lots: %s %v", merged.Attributes, err)
+	}
+}
+
+// P7-1b (migration 021): a collection narrows its item types and keeps its
+// default sort; both round-trip through the collection export.
+func TestCollectionSettings(t *testing.T) {
+	ownership := uuid.MustParse("d0000000-0000-0000-0000-000000000001")
+	col, err := s.CreateCollection(ctx, adminUser, model.CollectionCreate{CollectionTypeID: ownership, Name: "Épisodes",
+		ItemTypeIDs: []uuid.UUID{typeEpisode}, DefaultSort: "attr.number"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = s.DeleteCollection(ctx, col.ID) }()
+	if len(col.ItemTypeIDs) != 1 || col.ItemTypeIDs[0] != typeEpisode || col.DefaultSort != "attr.number" ||
+		col.SpecializedType() == nil || *col.SpecializedType() != typeEpisode {
+		t.Fatalf("created: %+v", col)
+	}
+
+	both := []uuid.UUID{typeEpisode, typeSerie}
+	sort := "-quantity"
+	col, err = s.UpdateCollection(ctx, col.ID, model.CollectionUpdate{ItemTypeIDs: &both, DefaultSort: &sort})
+	if err != nil || len(col.ItemTypeIDs) != 2 || col.DefaultSort != "-quantity" || col.SpecializedType() != nil {
+		t.Fatalf("updated: %+v %v", col, err)
+	}
+	if _, err := s.UpdateCollection(ctx, col.ID, model.CollectionUpdate{ItemTypeIDs: &[]uuid.UUID{uuid.New()}}); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("unknown item type: %v", err)
+	}
+	none := []uuid.UUID{}
+	if col, err = s.UpdateCollection(ctx, col.ID, model.CollectionUpdate{ItemTypeIDs: &none}); err != nil || len(col.ItemTypeIDs) != 0 || col.DefaultSort != "-quantity" {
+		t.Errorf("all types again, sort kept: %+v %v", col, err)
+	}
+
+	// Import: the accepted types and the default sort follow, unknown types are ignored.
+	file := collectionFile(t, col.ID)
+	file.Collection.ID = uuid.New()
+	file.Collection.Name = "Épisodes importés"
+	file.Collection.ItemTypeIDs = []uuid.UUID{typeEpisode, uuid.New()}
+	file.Collection.DefaultSort = "attr.number"
+	rep, err := s.ImportCollection(ctx, adminUser, file, false)
+	if err != nil || !rep.Applied {
+		t.Fatalf("import: %v %+v", err, rep)
+	}
+	defer func() { _ = s.DeleteCollection(ctx, *rep.CollectionID) }()
+	got, err := s.GetCollection(ctx, *rep.CollectionID)
+	if err != nil || len(got.ItemTypeIDs) != 1 || got.ItemTypeIDs[0] != typeEpisode || got.DefaultSort != "attr.number" {
+		t.Errorf("imported settings: %+v %v", got, err)
+	}
+}
+
+func TestFriendships(t *testing.T) {
+	a, _ := s.CreateUser(ctx, "fr_a", "fr_a@example.org", "x", model.RoleUser)
+	b, _ := s.CreateUser(ctx, "fr_b", "fr_b@example.org", "x", model.RoleUser)
+	c, _ := s.CreateUser(ctx, "fr_c", "fr_c@example.org", "x", model.RoleUser)
+	pg := model.Pagination{Page: 1, PerPage: 20}
+
+	req, err := s.RequestFriend(ctx, a.ID, b.ID)
+	if err != nil || req.Status != model.FriendPending || req.Incoming || req.User.Username != "fr_b" {
+		t.Fatalf("demande : %+v %v", req, err)
+	}
+	if _, err := s.RequestFriend(ctx, a.ID, b.ID); !errors.Is(err, store.ErrConflict) {
+		t.Errorf("deux fois : %v", err)
+	}
+	if list, total, _ := s.ListFriendships(ctx, b.ID, model.FriendPending, pg); total != 1 || !list[0].Incoming || list[0].User.Username != "fr_a" {
+		t.Errorf("reçue par b : %+v", list)
+	}
+	if _, err := s.AcceptFriendRequest(ctx, a.ID, req.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("seul le destinataire accepte : %v", err)
+	}
+	// Ma demande à qui m'a invité vaut acceptation.
+	crossed, err := s.RequestFriend(ctx, b.ID, a.ID)
+	if err != nil || crossed.ID != req.ID || crossed.Status != model.FriendAccepted || crossed.AcceptedAt == nil {
+		t.Fatalf("demande croisée : %+v %v", crossed, err)
+	}
+	if ids, _ := s.FriendIDs(ctx, a.ID); len(ids) != 1 || ids[0] != b.ID {
+		t.Errorf("amis de a : %v", ids)
+	}
+	if list, total, _ := s.ListFriendships(ctx, b.ID, model.FriendAccepted, pg); total != 1 || list[0].User.Username != "fr_a" {
+		t.Errorf("amis de b : %+v", list)
+	}
+
+	// Un avis `friends` de a : signé pour b, note seule pour c.
+	rt, _ := s.CreateReviewType(ctx, model.ReviewTypeCreate{Name: "TestFriendsReview"})
+	it, _ := s.CreateItemType(ctx, model.ItemTypeCreate{Name: "TestFriends", AttributesSchema: json.RawMessage(`{"type":"object"}`)})
+	_, _ = s.UpdateItemType(ctx, it.ID, model.ItemTypeUpdate{ReviewTypeID: model.OptionalUUID{Set: true, Value: &rt.ID}})
+	reviewed, _ := s.CreateItem(ctx, model.ItemCreate{ItemTypeID: it.ID, Attributes: json.RawMessage(`{}`)})
+	if _, err := s.PutReview(ctx, reviewed.ID, a.ID, model.ReviewWrite{Rating: 4, Body: "pour mes amis", Lang: "fr", Visibility: "friends"}); err != nil {
+		t.Fatal(err)
+	}
+	levels := []string{"members", "public"}
+	if list, _, _ := s.ListItemReviews(ctx, reviewed.ID, model.ReviewListParams{Viewer: b.ID, Levels: levels}, pg); len(list) != 1 {
+		t.Errorf("listé pour un ami : %d", len(list))
+	}
+	if list, _, _ := s.ListItemReviews(ctx, reviewed.ID, model.ReviewListParams{Viewer: c.ID, Levels: levels}, pg); len(list) != 0 {
+		t.Errorf("pas listé pour un autre : %d", len(list))
+	}
+	if st, _ := s.GetReviewStats(ctx, reviewed.ID, c.ID, levels); st.Count != 1 || st.NoteOnly != 1 {
+		t.Errorf("note seule pour un autre : %+v", st)
+	}
+	if st, _ := s.GetReviewStats(ctx, reviewed.ID, b.ID, levels); st.NoteOnly != 0 {
+		t.Errorf("signé pour un ami : %+v", st)
+	}
+
+	// Une collection `friends` : la visibilité est acceptée par la base.
+	col, err := s.CreateCollection(ctx, a.ID, model.CollectionCreate{Name: "Pour mes amis", CollectionTypeID: uuid.MustParse("d0000000-0000-0000-0000-000000000001")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.UpdateCollection(ctx, col.ID, model.CollectionUpdate{Visibility: new("friends")}); err != nil {
+		t.Errorf("visibilité friends : %v", err)
+	}
+
+	// Bloquer rompt l'amitié ; la demande du bloqué reste muette.
+	if _, err := s.BlockUser(ctx, b.ID, a.ID, false); err != nil {
+		t.Fatal(err)
+	}
+	if ids, _ := s.FriendIDs(ctx, a.ID); len(ids) != 0 {
+		t.Errorf("amitié rompue : %v", ids)
+	}
+	muted, err := s.RequestFriend(ctx, a.ID, b.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, total, _ := s.ListFriendships(ctx, b.ID, model.FriendPending, pg); total != 0 {
+		t.Errorf("demande d'un bloqué cachée : %d", total)
+	}
+	if _, err := s.AcceptFriendRequest(ctx, b.ID, muted.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("ni acceptable : %v", err)
+	}
+	if _, total, _ := s.ListFriendships(ctx, a.ID, model.FriendPending, pg); total != 1 {
+		t.Errorf("toujours en attente pour lui : %d", total)
+	}
+	if err := s.DeleteFriendship(ctx, c.ID, muted.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("un tiers ne la supprime pas : %v", err)
+	}
+	if err := s.DeleteFriendship(ctx, a.ID, muted.ID); err != nil {
+		t.Errorf("annulation : %v", err)
+	}
+}
+
+func TestFriendLinks(t *testing.T) {
+	a, _ := s.CreateUser(ctx, "fl_a", "fl_a@example.org", "x", model.RoleUser)
+	b, _ := s.CreateUser(ctx, "fl_b", "fl_b@example.org", "x", model.RoleUser)
+	c, _ := s.CreateUser(ctx, "fl_c", "fl_c@example.org", "x", model.RoleUser)
+	l, err := s.CreateFriendLink(ctx, a.ID, "hash-fl-1", time.Now().Add(time.Hour))
+	if err != nil || l.Owner == nil || l.Owner.Username != "fl_a" {
+		t.Fatalf("création : %+v %v", l, err)
+	}
+	if _, err := s.CreateFriendLink(ctx, a.ID, "hash-fl-old", time.Now().Add(-time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	if list, _ := s.ListFriendLinks(ctx, a.ID); len(list) != 1 || list[0].ID != l.ID {
+		t.Errorf("seuls les liens valides : %+v", list)
+	}
+	if _, err := s.GetFriendLink(ctx, "hash-fl-old"); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("expiré : %v", err)
+	}
+	// b avait une demande en attente vers a : le lien l'accepte.
+	if _, err := s.RequestFriend(ctx, b.ID, a.ID); err != nil {
+		t.Fatal(err)
+	}
+	f, err := s.UseFriendLink(ctx, "hash-fl-1", b.ID)
+	if err != nil || f.Status != model.FriendAccepted || f.User.Username != "fl_a" {
+		t.Fatalf("utilisation : %+v %v", f, err)
+	}
+	if _, err := s.UseFriendLink(ctx, "hash-fl-1", c.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("usage unique : %v", err)
+	}
+	if _, err := s.CreateFriendLink(ctx, a.ID, "hash-fl-2", time.Now().Add(time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.UseFriendLink(ctx, "hash-fl-2", b.ID); !errors.Is(err, store.ErrConflict) {
+		t.Errorf("déjà amis : %v", err)
+	}
+	if _, err := s.UseFriendLink(ctx, "hash-fl-2", c.ID); err != nil {
+		t.Errorf("le lien reste valide après un refus : %v", err)
+	}
+	if ids, _ := s.FriendIDs(ctx, a.ID); len(ids) != 2 {
+		t.Errorf("amis de a : %v", ids)
+	}
+	l3, _ := s.CreateFriendLink(ctx, a.ID, "hash-fl-3", time.Now().Add(time.Hour))
+	if err := s.DeleteFriendLink(ctx, b.ID, l3.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("seul son auteur le révoque : %v", err)
+	}
+	if err := s.DeleteFriendLink(ctx, a.ID, l3.ID); err != nil {
+		t.Errorf("révocation : %v", err)
+	}
+}
+
+func TestLoans(t *testing.T) {
+	five := 5
+	lot, err := s.AddCollectionItem(ctx, colMesDVDs, model.CollectionItemAdd{ItemID: itemDVD,
+		Attributes: json.RawMessage(`{"condition":"good"}`), Quantity: &five})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = s.RemoveCollectionItem(ctx, colMesDVDs, lot.ID) }()
+	b, _ := s.CreateUser(ctx, "loan_b", "loan_b@example.org", "x", model.RoleUser)
+	pg := model.Pagination{Page: 1, PerPage: 20}
+
+	due := "2000-01-02"
+	toB, err := s.CreateLoan(ctx, lot.ID, model.LoanInput{Quantity: 2, BorrowerID: &b.ID, BorrowerName: "B",
+		LentAt: "2000-01-01", DueAt: &due})
+	if err != nil || toB.Borrower == nil || toB.Borrower.Username != "loan_b" || !toB.Overdue || toB.Item.ID != itemDVD ||
+		toB.OwnerID != shinsaberUser || toB.CollectionID != colMesDVDs {
+		t.Fatalf("prêt à b : %+v %v", toB, err)
+	}
+	odile, err := s.CreateLoan(ctx, lot.ID, model.LoanInput{Quantity: 3, BorrowerName: "Odile"})
+	if err != nil || odile.Borrower != nil || odile.LentAt == "" || odile.Overdue {
+		t.Fatalf("prêt à un nom : %+v %v", odile, err)
+	}
+	if _, err := s.CreateLoan(ctx, lot.ID, model.LoanInput{Quantity: 1, BorrowerName: "de trop"}); !errors.Is(err, store.ErrInvalidQuantity) {
+		t.Errorf("plus d'exemplaire libre : %v", err)
+	}
+	// Le lot garde ses exemplaires prêtés.
+	two := 2
+	if _, err := s.UpdateCollectionItem(ctx, colMesDVDs, lot.ID, model.CollectionItemUpdate{Attributes: lot.Attributes, Quantity: &two}); !errors.Is(err, store.ErrInvalidQuantity) {
+		t.Errorf("quantité sous les prêts : %v", err)
+	}
+	if _, err := s.SplitCollectionLot(ctx, colMesDVDs, lot.ID, 1, nil); !errors.Is(err, store.ErrInvalidQuantity) {
+		t.Errorf("scission sous les prêts : %v", err)
+	}
+	if active, _ := s.ActiveLoans(ctx, []uuid.UUID{lot.ID}); len(active[lot.ID]) != 2 {
+		t.Errorf("prêts en cours : %+v", active)
+	}
+	if over, _ := s.OverdueLoans(ctx); len(over) != 1 || over[0].ID != toB.ID {
+		t.Errorf("en retard : %+v", over)
+	}
+	if err := s.MarkLoansReminded(ctx, []uuid.UUID{toB.ID}); err != nil {
+		t.Fatal(err)
+	}
+	if over, _ := s.OverdueLoans(ctx); len(over) != 0 {
+		t.Errorf("rappelé une fois : %+v", over)
+	}
+	// Nouvelle échéance : nouveau rappel possible.
+	due2 := "2000-02-01"
+	if _, err := s.UpdateLoan(ctx, toB.ID, model.LoanInput{Quantity: 2, LentAt: "2000-01-01", DueAt: &due2}); err != nil {
+		t.Fatal(err)
+	}
+	if over, _ := s.OverdueLoans(ctx); len(over) != 1 {
+		t.Errorf("nouvelle échéance, nouveau rappel : %+v", over)
+	}
+	// Rendu : il libère ses exemplaires et passe à l'historique.
+	ret := "2000-03-01"
+	back, err := s.UpdateLoan(ctx, odile.ID, model.LoanInput{Quantity: 3, LentAt: odile.LentAt, ReturnedAt: &ret})
+	if err == nil {
+		t.Errorf("rendu avant d'être prêté accepté : %+v", back)
+	}
+	ret = odile.LentAt
+	if back, err = s.UpdateLoan(ctx, odile.ID, model.LoanInput{Quantity: 3, LentAt: odile.LentAt, ReturnedAt: &ret}); err != nil || back.ReturnedAt == nil {
+		t.Fatalf("rendu : %+v %v", back, err)
+	}
+	if _, err := s.CreateLoan(ctx, lot.ID, model.LoanInput{Quantity: 3, BorrowerName: "Paul"}); err != nil {
+		t.Errorf("exemplaires libérés : %v", err)
+	}
+	if list, _ := s.ListLotLoans(ctx, lot.ID); len(list) != 3 || list[2].ID != odile.ID {
+		t.Errorf("en cours d'abord, puis l'historique : %+v", list)
+	}
+	if list, total, _ := s.ListLoans(ctx, shinsaberUser, "returned", pg); total != 1 || list[0].ID != odile.ID {
+		t.Errorf("mes prêts rendus : %d", total)
+	}
+	if list, total, _ := s.ListBorrowings(ctx, b.ID, "active", pg); total != 1 || list[0].Owner.Username != "shinsaber" {
+		t.Errorf("emprunts de b : %+v", list)
+	}
+	// Une fusion emporte les prêts du lot fusionné.
+	other, _ := s.AddCollectionItem(ctx, colMesDVDs, model.CollectionItemAdd{ItemID: itemDVD, Attributes: json.RawMessage(`{"condition":"poor"}`)})
+	if _, err := s.MergeCollectionLots(ctx, colMesDVDs, lot.ID, other.ID, nil); err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = s.RemoveCollectionItem(ctx, colMesDVDs, other.ID) }()
+	if list, _ := s.ListLotLoans(ctx, other.ID); len(list) != 3 {
+		t.Errorf("prêts suivis : %d", len(list))
+	}
+	if err := s.DeleteLoan(ctx, odile.ID); err != nil {
+		t.Errorf("suppression : %v", err)
+	}
+}
+
+func TestGiftReservations(t *testing.T) {
+	owner, _ := s.CreateUser(ctx, "gift_owner", "gift_owner@example.org", "x", model.RoleUser)
+	a, _ := s.CreateUser(ctx, "gift_a", "gift_a@example.org", "x", model.RoleUser)
+	b, _ := s.CreateUser(ctx, "gift_b", "gift_b@example.org", "x", model.RoleUser)
+	wishlist := uuid.MustParse("d0000000-0000-0000-0000-000000000003")
+	col, err := s.CreateCollection(ctx, owner.ID, model.CollectionCreate{Name: "Mes envies", CollectionTypeID: wishlist})
+	if err != nil {
+		t.Fatal(err)
+	}
+	three := 3
+	lot, err := s.AddCollectionItem(ctx, col.ID, model.CollectionItemAdd{ItemID: itemDVD, Attributes: json.RawMessage(`{}`), Quantity: &three})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pg := model.Pagination{Page: 1, PerPage: 20}
+
+	later := time.Now().AddDate(0, 0, 30).Format("2006-01-02")
+	ra, err := s.CreateReservation(ctx, lot.ID, a.ID, 2, later, "la bleue")
+	if err != nil || ra.OwnerID != owner.ID || ra.ItemID != itemDVD || ra.Giver.Username != "gift_a" || ra.LeftList {
+		t.Fatalf("réservation de a : %+v %v", ra, err)
+	}
+	if _, err := s.CreateReservation(ctx, lot.ID, b.ID, 2, later, ""); !errors.Is(err, store.ErrInvalidQuantity) {
+		t.Errorf("au-delà du lot : %v", err)
+	}
+	// Une réservation expirée ne compte plus et sort de la vue des amis ; son offrant la garde.
+	c, _ := s.CreateUser(ctx, "gift_c", "gift_c@example.org", "x", model.RoleUser)
+	yesterday := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
+	rc, err := s.CreateReservation(ctx, lot.ID, c.ID, 1, yesterday, "")
+	if err != nil || !rc.Expired || rc.ExpiresAt != yesterday {
+		t.Fatalf("réservation expirée : %+v %v", rc, err)
+	}
+	if mine, _, _ := s.ListGifts(ctx, c.ID, "", pg); len(mine) != 1 || !mine[0].Expired {
+		t.Errorf("gardée par son offrant : %+v", mine)
+	}
+	// Prolonger une réservation expirée : elle compte de nouveau, si le lot le permet.
+	if _, err := s.UpdateReservation(ctx, rc.ID, model.ReservationUpdate{Quantity: 2, ExpiresAt: later}); !errors.Is(err, store.ErrInvalidQuantity) {
+		t.Errorf("prolongée au-delà du lot : %v", err)
+	}
+	if err := s.DeleteReservation(ctx, rc.ID); err != nil {
+		t.Fatal(err)
+	}
+	soon := time.Now().AddDate(0, 0, 3).Format("2006-01-02")
+	rb, err := s.CreateReservation(ctx, lot.ID, b.ID, 1, soon, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if byLot, _ := s.LotReservations(ctx, []uuid.UUID{lot.ID}); len(byLot[lot.ID]) != 2 {
+		t.Errorf("réservations du lot : %+v", byLot)
+	}
+	expiring, _ := s.ExpiringReservations(ctx)
+	var soonIDs []uuid.UUID
+	for _, g := range expiring {
+		if g.GiverID == b.ID {
+			soonIDs = append(soonIDs, g.ID)
+		}
+		if g.ID == ra.ID {
+			t.Errorf("échéance lointaine rappelée")
+		}
+	}
+	if len(soonIDs) != 1 {
+		t.Fatalf("bientôt expirée : %+v", expiring)
+	}
+	_ = s.MarkReservationsExpiryReminded(ctx, soonIDs)
+	if expiring, _ := s.ExpiringReservations(ctx); slices.ContainsFunc(expiring, func(g model.GiftReservation) bool { return g.ID == rb.ID }) {
+		t.Errorf("rappelée une fois")
+	}
+	if _, err := s.UpdateReservation(ctx, rb.ID, model.ReservationUpdate{Quantity: 2, ExpiresAt: soon}); !errors.Is(err, store.ErrInvalidQuantity) {
+		t.Errorf("modification au-delà du lot : %v", err)
+	}
+	// P7-4b : a remet son cadeau ; le propriétaire le voit, et lui seul de ses réservations.
+	given, err := s.HandOverReservation(ctx, ra.ID)
+	if err != nil || given.Status != model.GiftGiven || given.GivenAt == nil || given.CollectionID == nil || *given.CollectionID != col.ID {
+		t.Fatalf("remise : %+v %v", given, err)
+	}
+	if _, err := s.HandOverReservation(ctx, ra.ID); !errors.Is(err, store.ErrConflict) {
+		t.Errorf("deux fois : %v", err)
+	}
+	if byLot, _ := s.GivenGifts(ctx, []uuid.UUID{lot.ID}); len(byLot[lot.ID]) != 1 || byLot[lot.ID][0].ID != ra.ID {
+		t.Errorf("remises vues du propriétaire : %+v", byLot)
+	}
+	// « Bien reçu » vers sa Possession : 2 des 3 exemplaires quittent la liste.
+	owned, _ := s.CreateCollection(ctx, owner.ID, model.CollectionCreate{Name: "Possédés", CollectionTypeID: uuid.MustParse("d0000000-0000-0000-0000-000000000001")})
+	if got, err := s.ReceiveGift(ctx, ra.ID, &owned.ID, json.RawMessage(`{"condition":"new"}`)); err != nil || got.Status != model.GiftReceived || !got.LeftList {
+		t.Fatalf("réception : %+v %v", got, err)
+	}
+	if l, _ := s.GetCollectionLot(ctx, col.ID, lot.ID); l == nil || l.Quantity != 1 {
+		t.Errorf("le lot garde 1 exemplaire : %+v", l)
+	}
+	if moved, _, _ := s.ListCollectionItems(ctx, owned.ID, pg, store.CollectionItemFilters{}); len(moved) != 1 || moved[0].Quantity != 2 {
+		t.Errorf("déplacés dans la Possession : %+v", moved)
+	}
+	if open, n, _ := s.ListGifts(ctx, a.ID, "open", pg); n != 0 {
+		t.Errorf("plus à offrir : %+v", open)
+	}
+	if _, n, _ := s.ListGifts(ctx, a.ID, "received", pg); n != 1 {
+		t.Errorf("historique : %d", n)
+	}
+	// P7-4c : le destinataire retrouve le cadeau reçu ; une réservation secrète n'y paraît jamais.
+	if got, n, _ := s.ListReceivedGifts(ctx, owner.ID, "", pg); n != 1 || got[0].ID != ra.ID || got[0].Giver.Username != "gift_a" {
+		t.Errorf("reçus : %+v", got)
+	}
+	if _, n, _ := s.ListReceivedGifts(ctx, owner.ID, model.GiftGiven, pg); n != 0 {
+		t.Errorf("rien à confirmer : %d", n)
+	}
+	// Le lot quitte la liste : la réservation reste, l'offrant à prévenir.
+	if err := s.RemoveCollectionItem(ctx, col.ID, lot.ID); err != nil {
+		t.Fatal(err)
+	}
+	gifts, total, _ := s.ListGifts(ctx, b.ID, "", pg)
+	if total != 1 || !gifts[0].LeftList || gifts[0].Owner.Username != "gift_owner" || gifts[0].Item == nil {
+		t.Errorf("mes cadeaux : %+v", gifts)
+	}
+	left, _ := s.LeftReservations(ctx)
+	var mine []uuid.UUID
+	for _, g := range left {
+		if g.GiverID == b.ID {
+			mine = append(mine, g.ID)
+		}
+		if g.ID == ra.ID {
+			t.Errorf("une réservation offerte n'est pas à rappeler")
+		}
+	}
+	if len(mine) != 1 {
+		t.Fatalf("à prévenir : %+v", left)
+	}
+	if err := s.MarkReservationsNotified(ctx, mine); err != nil {
+		t.Fatal(err)
+	}
+	if left, _ := s.LeftReservations(ctx); len(left) != 0 {
+		for _, g := range left {
+			if g.GiverID == b.ID {
+				t.Errorf("prévenu une fois : %+v", g)
+			}
+		}
+	}
+	// Lot déjà retiré : la remise vaut réception.
+	if got, err := s.HandOverReservation(ctx, rb.ID); err != nil || got.Status != model.GiftReceived {
+		t.Errorf("remise sans lot : %+v %v", got, err)
+	}
+	if err := s.DeleteReservation(ctx, rb.ID); err != nil {
+		t.Errorf("retrait de l'historique : %v", err)
+	}
+	// « Pas reçu » invalide la réservation remise.
+	one := 1
+	lot2, _ := s.AddCollectionItem(ctx, col.ID, model.CollectionItemAdd{ItemID: itemDVD, Attributes: json.RawMessage(`{}`), Quantity: &one})
+	rd, _ := s.CreateReservation(ctx, lot2.ID, c.ID, 1, later, "")
+	_, _ = s.HandOverReservation(ctx, rd.ID)
+	if err := s.DeclineGift(ctx, rd.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.GetReservation(ctx, rd.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("invalidée : %v", err)
+	}
+	if err := s.DeclineGift(ctx, ra.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("une réservation reçue ne se refuse plus : %v", err)
+	}
+	// Le propriétaire retire le lot d'une remise en attente : elle vaut réception.
+	re, _ := s.CreateReservation(ctx, lot2.ID, c.ID, 1, later, "")
+	_, _ = s.HandOverReservation(ctx, re.ID)
+	if err := s.RemoveCollectionItem(ctx, col.ID, lot2.ID); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := s.GetReservation(ctx, re.ID); got == nil || got.Status != model.GiftReceived || !got.LeftList {
+		t.Errorf("lot retiré, remise reçue : %+v", got)
 	}
 }

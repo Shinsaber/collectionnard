@@ -29,6 +29,7 @@ export interface SchemaBuilderFeatures {
   links: boolean;
   // racine
   completeness: boolean; // x-completeness (types de relation : composition)
+  lendable: boolean; // x-lendable et x-reservable (types de collection : prêts P7-3, cadeaux P7-4)
   private: boolean; // x-private par champ (types de collection : caché aux autres lecteurs)
   identifier: boolean; // x-identifier par champ (types d'item : ISBN, EAN… pour les doublons)
   criteria: boolean; // types d'avis : chaque champ est un critère, entier de 0 à 10 sans autre réglage
@@ -56,6 +57,7 @@ export const defaultFeatures: SchemaBuilderFeatures = {
   imageGallery: true,
   links: true,
   completeness: false,
+  lendable: false,
   private: false,
   identifier: false,
   criteria: false,
@@ -218,6 +220,8 @@ export const MANAGED_ROOT_KEYS = new Set([
   "x-title",
   "x-description",
   "x-completeness",
+  "x-lendable",
+  "x-reservable",
 ]);
 
 /** Parse « neuf, bon, mauvais » en tableau d'enum (null si vide). */

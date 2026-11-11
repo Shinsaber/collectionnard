@@ -8,7 +8,7 @@
         v-loading="loading"
         :data="items"
         row-key="id"
-        :empty-text="t('collections.detail.empty')"
+        :empty-text="emptyText || t('collections.detail.empty')"
       >
         <ElTableColumn width="68" class-name="cover-cell">
           <template #default="{ row }">
@@ -35,7 +35,31 @@
               <span class="font-mono text-xs uppercase text-muted">{{
                 typeTitle((row as CollectionItem).item?.item_type, lang) || "?"
               }}</span>
+              <LoanFlag :lot="row as CollectionItem" />
+              <GivenGiftsBlock
+                v-if="(row as CollectionItem).gifts?.length"
+                :lot="row as CollectionItem"
+                @receive="(g) => emit('receiveGift', row as CollectionItem, g)"
+                @decline="(g) => emit('declineGift', row as CollectionItem, g)"
+              />
+              <ReservationBlock
+                v-if="reservable"
+                :lot="row as CollectionItem"
+                @reserve="(ci) => emit('reserve', ci)"
+              />
             </div>
+          </template>
+        </ElTableColumn>
+        <ElTableColumn
+          v-if="showQuantity"
+          :label="t('collections.lots.quantityShort')"
+          width="72"
+          align="right"
+        >
+          <template #default="{ row }">
+            <span class="font-mono text-sm" data-test="lot-quantity-cell"
+              >×{{ (row as CollectionItem).quantity }}</span
+            >
           </template>
         </ElTableColumn>
         <ElTableColumn
@@ -75,15 +99,12 @@
               >
                 <i class="pi pi-pencil" aria-hidden="true"></i>
               </ElButton>
-              <ElButton
-                text
-                circle
-                type="danger"
-                :aria-label="t('collections.detail.removeFromCollection')"
-                @click="emit('remove', row as CollectionItem)"
-              >
-                <i class="pi pi-trash" aria-hidden="true"></i>
-              </ElButton>
+              <LotActionsMenu
+                :lot="row as CollectionItem"
+                :label="labelOf(row as CollectionItem)"
+                :commands="menuCommands"
+                @command="(cmd) => onCommand(cmd, row as CollectionItem)"
+              />
             </div>
           </template>
         </ElTableColumn>
@@ -113,6 +134,23 @@
           <span v-else class="text-[15px] font-bold leading-tight text-ink">{{
             labelOf(ci)
           }}</span>
+          <span
+            v-if="ci.quantity > 1"
+            class="self-start rounded-full bg-tint px-2 py-0.5 font-mono text-[11px] text-tint-ink"
+            >{{ t("collections.lots.copies", ci.quantity) }}</span
+          >
+          <LoanFlag :lot="ci" />
+          <GivenGiftsBlock
+            v-if="ci.gifts?.length"
+            :lot="ci"
+            @receive="(g) => emit('receiveGift', ci, g)"
+            @decline="(g) => emit('declineGift', ci, g)"
+          />
+          <ReservationBlock
+            v-if="reservable"
+            :lot="ci"
+            @reserve="(lot) => emit('reserve', lot)"
+          />
           <dl
             v-if="filledKeys(ci).length"
             class="flex flex-wrap gap-x-3 gap-y-1 text-[13px]"
@@ -130,40 +168,20 @@
             :size="48"
           />
         </div>
-        <ElDropdown
+        <LotActionsMenu
           v-if="!readonly"
-          trigger="click"
           class="self-center"
-          @command="(cmd: 'edit' | 'remove') => onCommand(cmd, ci)"
-        >
-          <button
-            type="button"
-            class="flex size-11 items-center justify-center rounded-[10px] text-muted"
-            :aria-label="
-              t('collections.detail.itemActions', { label: labelOf(ci) })
-            "
-          >
-            <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
-          </button>
-          <template #dropdown>
-            <ElDropdownMenu>
-              <ElDropdownItem command="edit">
-                <i class="pi pi-pencil mr-2" aria-hidden="true"></i>
-                {{ t("collections.detail.editAttributes") }}
-              </ElDropdownItem>
-              <ElDropdownItem command="remove" class="text-danger!">
-                <i class="pi pi-trash mr-2" aria-hidden="true"></i>
-                {{ t("collections.detail.removeFromCollection") }}
-              </ElDropdownItem>
-            </ElDropdownMenu>
-          </template>
-        </ElDropdown>
+          :lot="ci"
+          :label="labelOf(ci)"
+          :commands="['edit', ...menuCommands]"
+          @command="(cmd) => onCommand(cmd, ci)"
+        />
       </li>
       <li
         v-if="!loading && items.length === 0"
         class="rounded-2xl bg-surface p-6 text-center text-sm text-muted shadow-card"
       >
-        {{ t("collections.detail.empty") }}
+        {{ emptyText || t("collections.detail.empty") }}
       </li>
     </ul>
   </div>
@@ -185,7 +203,12 @@ import {
 } from "@/lib/schema";
 import ItemCover from "@/components/item/ItemCover.vue";
 import GalleryThumbs from "@/components/common/GalleryThumbs.vue";
-import type { CollectionItem } from "@/api/types";
+import LoanFlag from "./LoanFlag.vue";
+import GivenGiftsBlock from "@/components/gifts/GivenGiftsBlock.vue";
+import ReservationBlock from "@/components/gifts/ReservationBlock.vue";
+import LotActionsMenu from "./LotActionsMenu.vue";
+import type { LotCommand } from "@/lib/lots";
+import type { CollectionItem, GiftReservation } from "@/api/types";
 
 // Items d'une collection : colonnes / attributs tirés du schéma du CollectionType.
 const props = withDefaults(
@@ -197,13 +220,32 @@ const props = withDefaults(
     readonly?: boolean;
     /** Lien vers la fiche de l'item (réservée aux comptes connectés). */
     linkItems?: boolean;
+    /** Texte de la liste vide (défaut : collection vide). */
+    emptyText?: string;
+    /** Le type de la collection ouvre les prêts (`x-lendable`, P7-3) : « Prêter… », « Prêts… ». */
+    lendable?: boolean;
+    /** Liste de souhaits d'un ami (P7-4) : réservations et « Réserver ». */
+    reservable?: boolean;
   }>(),
-  { readonly: false, linkItems: true },
+  {
+    readonly: false,
+    linkItems: true,
+    emptyText: "",
+    lendable: false,
+    reservable: false,
+  },
 );
 
 const emit = defineEmits<{
   edit: [ci: CollectionItem];
+  split: [ci: CollectionItem];
+  merge: [ci: CollectionItem];
   remove: [ci: CollectionItem];
+  lend: [ci: CollectionItem];
+  loans: [ci: CollectionItem];
+  reserve: [ci: CollectionItem];
+  receiveGift: [ci: CollectionItem, gift: GiftReservation];
+  declineGift: [ci: CollectionItem, gift: GiftReservation];
 }>();
 
 const { t } = useI18n();
@@ -213,6 +255,14 @@ const { lang } = useLang();
 const attrKeys = computed(() =>
   orderedKeys(props.schema, {}).filter((k) => !isImageGallery(props.schema, k)),
 );
+/** Actions du menu d'un lot (hors « Modifier », bouton à part sur bureau). */
+const menuCommands = computed<LotCommand[]>(() =>
+  props.lendable
+    ? ["split", "merge", "lend", "loans", "remove"]
+    : ["split", "merge", "remove"],
+);
+/** Colonne « Qté » : seulement si un lot de la page compte plusieurs exemplaires. */
+const showQuantity = computed(() => props.items.some((ci) => ci.quantity > 1));
 /** Galeries du type de collection (photos de l'exemplaire), en vignettes. */
 const galleryKeys = computed(() =>
   orderedKeys(props.schema, {}).filter((k) => isImageGallery(props.schema, k)),
@@ -231,9 +281,21 @@ function valueOf(ci: CollectionItem, key: string): string {
   return fieldValue(props.schema, key, ci.attributes[key], lang.value);
 }
 
-function onCommand(cmd: "edit" | "remove", ci: CollectionItem) {
-  if (cmd === "edit") emit("edit", ci);
-  else emit("remove", ci);
+function onCommand(cmd: LotCommand, ci: CollectionItem) {
+  switch (cmd) {
+    case "edit":
+      return emit("edit", ci);
+    case "split":
+      return emit("split", ci);
+    case "merge":
+      return emit("merge", ci);
+    case "lend":
+      return emit("lend", ci);
+    case "loans":
+      return emit("loans", ci);
+    default:
+      return emit("remove", ci);
+  }
 }
 
 function filledKeys(ci: CollectionItem): string[] {

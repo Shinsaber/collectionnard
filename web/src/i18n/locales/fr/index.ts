@@ -8,10 +8,13 @@ import collections from "./collections";
 import common from "./common";
 import dashboard from "./dashboard";
 import errors from "./errors";
+import friends from "./friends";
+import gifts from "./gifts";
 import graph from "./graph";
 import history from "./history";
 import items from "./items";
 import layout from "./layout";
+import loans from "./loans";
 import moderation from "./moderation";
 import notifications from "./notifications";
 import offline from "./offline";
@@ -32,10 +35,13 @@ const fr = {
   common,
   dashboard,
   errors,
+  friends,
+  gifts,
   graph,
   history,
   items,
   layout,
+  loans,
   moderation,
   notifications,
   offline,

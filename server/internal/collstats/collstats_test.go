@@ -79,3 +79,28 @@ func TestMonths_LongSpanNotFilled(t *testing.T) {
 		t.Errorf("got %d months, want the 2 with values", len(got))
 	}
 }
+
+func TestAggregate_LotsCountTheirCopies(t *testing.T) {
+	lot := entry(`{"condition":"good","purchase_price":2,"acquisition_date":"2026-02-10"}`, "2026-02-11")
+	lot.Quantity = 5 // P7-1 : un lot de 5 cartes
+	res := Aggregate(json.RawMessage(ownership), []Entry{
+		lot,
+		entry(`{"condition":"new","purchase_price":10}`, "2026-02-12"), // quantité absente : 1
+	})
+	if n := res.Numbers[0]; n.Count != 6 || n.Sum != 20 || n.Min != 2 || n.Max != 10 || n.Avg != 20.0/6 {
+		t.Errorf("number: %+v", n)
+	}
+	got := map[string]int{}
+	for _, v := range res.Distributions[0].Values {
+		got[v.Value] = v.Count
+	}
+	if got["good"] != 5 || got["new"] != 1 {
+		t.Errorf("distribution: %v", got)
+	}
+	if want := []model.MonthCount{{Month: "2026-02", Count: 6}}; !reflect.DeepEqual(res.Added, want) {
+		t.Errorf("added: %+v", res.Added)
+	}
+	if res.Timelines[0].Months[0].Count != 5 {
+		t.Errorf("timeline: %+v", res.Timelines[0])
+	}
+}

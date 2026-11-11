@@ -13,6 +13,7 @@ export const NAV_ICONS = {
   proposals: "M4 4h16v12H8l-4 4zM8 9h8M8 12h5",
   members:
     "M12 11a4 4 0 1 0 0-8a4 4 0 1 0 0 8M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1",
+  loans: "M4 12h11M11 8l4 4-4 4M20 4v16",
   offline:
     "M3 3l18 18M8.6 8.6A5 5 0 0 0 7 18h10.6M20.4 16.4A4 4 0 0 0 18 9a6 6 0 0 0-7.7-3.8",
   importExport: "M12 3v12M7 10l5 5 5-5M4 21h16",
@@ -55,6 +56,7 @@ export function isMoreActive(path: string): boolean {
     isNavActive("/scan", path) ||
     isNavActive("/stats", path) ||
     isNavActive("/members", path) ||
+    isNavActive("/loans", path) ||
     isNavActive("/recommendations", path) ||
     isNavActive("/proposals", path) ||
     isNavActive("/moderation", path) ||
@@ -78,6 +80,7 @@ export function useNavigation() {
     { to: "/stats", label: t("layout.nav.stats"), icon: "stats" },
     { to: "/proposals", label: t("layout.nav.proposals"), icon: "proposals" },
     { to: "/members", label: t("layout.nav.members"), icon: "members" },
+    { to: "/loans", label: t("layout.nav.loans"), icon: "loans" },
     {
       to: "/recommendations",
       label: t("layout.nav.recommendations"),
@@ -92,6 +95,7 @@ export function useNavigation() {
     { to: "/stats", label: t("layout.nav.stats"), icon: "stats" },
     { to: "/proposals", label: t("layout.nav.proposals"), icon: "proposals" },
     { to: "/members", label: t("layout.nav.members"), icon: "members" },
+    { to: "/loans", label: t("layout.nav.loans"), icon: "loans" },
     {
       to: "/recommendations",
       label: t("layout.nav.recommendations"),

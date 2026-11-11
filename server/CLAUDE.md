@@ -18,7 +18,7 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
 | `label`      | `Render(schema, attrs, lang)` : libellé d'un item via `x-label` (pendant de `web/src/lib/schema.ts`) |
 | `itemquery`  | Recherche avancée de `GET /items` : filtres `attr.<clé>[.<op>]`, tri `attr.<clé>`, requête plein texte — validés contre le schéma du type (pendant de `web/src/lib/itemSearch.ts`) |
 | `collstats`  | Statistiques d'une collection (P4-1) déduites du schéma du CollectionType : nombres, répartitions (enum, booléen), mois des dates, ajouts par mois ; la complétude (relations `x-completeness`) est calculée en SQL dans `store/stats.go` |
-| `privacy`    | Visibilité et champs cachés (P4-2) : `CanView`, `Levels`, `HiddenFields` (`x-private` ou `hidden_fields`), `StripAttributes`, `StripSchema`. **Toute lecture faite pour un autre que le propriétaire** (routes `/public/…`, `/share`, statistiques) passe par ce filtre, admins compris |
+| `privacy`    | Visibilité et champs cachés (P4-2) : `Viewer` (compte + amis, P7-2 ; `h.viewer(r)`), `CanView`, `Levels` / `LevelsOf`, `HiddenFields` (`x-private` ou `hidden_fields`), `StripAttributes`, `StripSchema`. **Toute lecture faite pour un autre que le propriétaire** (routes `/public/…`, `/share`, statistiques) passe par ce filtre, admins compris |
 | `review`     | Règles d'un avis (I-0) : `CheckSchema` (critères = entiers de 0 à 10), `Rate` (moyenne, tous les critères obligatoires), `MinRatings` (seuil d'affichage d'une moyenne), `MaxBody`, `Languages` (pendant de `web/src/i18n/langs.ts`) |
 | `identifier` | Champs `x-identifier` d'un schéma (premier niveau ou un niveau dans un objet) et leurs valeurs : doublons (`POST /items/duplicates`, P4-3b) |
 | `csvexport`  | Mise à plat CSV des attributs (colonnes depuis le schéma, i18n-text → `clé.langue`, BOM, anti-injection de formules) |
@@ -114,6 +114,45 @@ d'environnement (`config/config.go`) : `DATABASE_URL` et `JWT_SECRET` (≥ 32 ca
   `notBlockedBy` en SQL (avis signés, articles), traces `blocked` dans `shapeComments` (jamais pour l'auteur d'un avis
   anonyme), `withoutBlockers` avant toute notification d'un fil. `user_blocks.anonymous` : bloqué sans être nommé, son
   nom ne sort jamais de `/me/blocks`.
+- Lots (P7-1, migration 020) : une ligne de `collection_items` est un lot de `quantity` exemplaires ; un item peut former
+  plusieurs lots d'une collection. Toute route d'écriture adresse le lot par son identifiant **dans** sa collection
+  (`/collections/{collectionId}/lots/{lotId}`, `ownCollection(w, r, "collectionId")`) ; `POST …/items` crée toujours un lot.
+  Scission et fusion en transaction (`FOR UPDATE`, lots verrouillés dans l'ordre des id), `ErrInvalidQuantity` / `ErrNotMergeable`
+  → 422 ; la fusion réunit les photos des galeries (`galleryKeys`, `mergeGalleries`). Liste d'une collection : la recherche du
+  catalogue (`buildItemQuery`, `parseItemSearch` avec ses propres champs de tri, `lotOrderBy`) + `multiple`. Types acceptés
+  (P7-1b, migration 021) : `collection_item_types` resserre `collection_type_item_types` (`Collection.AcceptedItemTypes`,
+  contrôle à l'ajout et à l'import) ; une collection spécialisée (`SpecializedType`) trie et filtre par attribut sans
+  `item_type_id` ; `default_sort` vérifié par `checkCollectionSettings` (422 `invalid_sort`), appliqué sans `sort` par
+  `applyDefaultSort`, pages publiques comprises, ignoré s'il ne s'applique plus. Statistiques pondérées par la quantité (`collstats.Entry.Quantity`) ; `item_count` = items distincts, `copy_count` =
+  exemplaires.
+- Amis (`handler/friend.go`, `store/friend.go`, P7-2, migrations 022–023) : une ligne par paire (`friendships_pair`), demande par
+  nom réservée aux profils visibles du demandeur (sinon 404, comme un nom inconnu : rien à deviner), liens d'ami à usage
+  unique pour les autres (`friend_links`, hash seul, `UseFriendLink` en transaction), demande croisée = acceptation, `BlockUser` rompt l'amitié ; la demande
+  d'un bloqué reste muette (cachée par `notBlockedBy`, jamais notifiée). Niveau `friends` : toute décision de visibilité
+  prend un `privacy.Viewer` chargé par `h.viewer(r)` (`viewerOrStranger` pour les lectures qui ne font que nommer) ;
+  en SQL, `friendOf(a, b)` et `reviewSigned(levels, viewer)` signent un avis `friends` pour les amis de son auteur.
+- Prêts (`handler/loan.go`, `store/loan.go`, P7-3, migration 024) : seulement sur un lot d'une collection `x-lendable`
+  (`model.IsLendable`, 422 `not_lendable`), par son propriétaire (`ownLot`, `ownLoan` : 404 pour tout autre, emprunteur
+  compris). Emprunteur ami (`viewer.FriendOf`, sinon 422 `borrower_not_friend`) ou simple nom ; `borrower_name` toujours
+  figé. Tout ce qui touche la quantité prêtée verrouille le lot (`FOR UPDATE`) et compare `lentCopies` (création,
+  modification, quantité du lot, scission ; `ErrInvalidQuantity` → 422 `loan_exceeds_lot` ou `invalid_quantity`) ; la
+  fusion déplace les prêts. Les prêts en cours ne sont joints qu'à la liste du propriétaire (`withActiveLoans`), jamais
+  aux lectures publiques ; `forOwner` / `forBorrower` retirent le prêteur ou la note. `RunReminders` (toutes les heures,
+  `main.go`) notifie `loan_overdue` une fois par échéance (`reminded_at`).
+- Cadeaux réservés (`handler/gift.go`, `store/gift.go`, P7-4, migrations 025–027) : une réservation **non remise n'est
+  jamais lue pour le propriétaire de la liste** — ni ses listes, exports, statistiques ou copie hors ligne ; seules les
+  remises (`given`, P7-4b) lui sont jointes (`withGivenGifts` → `GivenGifts`), et `ownerGift` répond 404 à toute autre.
+  Remise (`HandOverReservation`, notifie `gift_given`), confirmation (`ReceiveGift` : le lot perd les exemplaires, nouveau
+  lot dans une autre collection qui accepte l'item, attributs validés ; `received`, `lot_id` NULL) ou refus
+  (`DeclineGift` : supprimée) ; un lot supprimé vaut réception de ses remises (déclencheur `gift_lot_deleted`). Le
+  destinataire lit ses remises et cadeaux reçus par `ListReceivedGifts` (`/me/received-gifts`, P7-4c) ; un cadeau reçu ne
+  se supprime plus (409 `gift_state`). Un ami lisant une liste `x-reservable` (`readable.canReserve`, jamais par lien de
+  partage) reçoit les réservations des lots (`withReservations`, `shapeReservation` : note de l'offrant à lui seul).
+  Création verrouille le lot et compare `reservedCopies` (422 `reservation_exceeds_lot`) ; un lot supprimé laisse la
+  réservation (`lot_id` NULL), `remindGifts` (dans `RunReminders`) prévient l'offrant une fois (`notified_at`). Durée
+  limitée (`expires_at`, `checkExpiry` : d'aujourd'hui à `GiftMaxDays`, `GiftDefaultDays` par défaut) appliquée en SQL à
+  chaque lecture (`reservationActive` : offerte ou non échue) ; rappel `gift_expiring` `GiftExpiryNoticeDays` avant
+  (`expiry_reminded_at`).
 - Visibilité et partage (`handler/sharing.go`, `store/sharing.go`, P4-2) : routes publiques derrière
   `Auth.OptionalAuthenticate` (sans jeton : anonyme, `GetUserID` = `uuid.Nil` ; jeton invalide : 401) ; `loadReadable`
   vérifie visibilité et compte actif (404 sinon) et calcule les champs cachés ; une nouvelle lecture publique doit

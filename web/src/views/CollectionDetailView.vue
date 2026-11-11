@@ -9,10 +9,7 @@
       {{ t("layout.nav.collections") }}
     </RouterLink>
 
-    <PageHeader
-      :title="collection.name"
-      :meta="t('collections.itemCount', collection.item_count)"
-    >
+    <PageHeader :title="collection.name" :meta="countLabel">
       <template #subtitle>
         <div class="flex flex-wrap items-center gap-2">
           <span
@@ -54,12 +51,28 @@
 
     <ElTabs v-model="tab">
       <ElTabPane :label="t('stats.itemsTab')" name="items">
+        <CollectionItemsToolbar
+          v-model="lotQuery"
+          :types="filterTypes"
+          :specialized-type-id="
+            collection ? specializedTypeId(collection) : undefined
+          "
+          @change="onFilter"
+        />
         <CollectionItemList
           :items="items.data.value"
+          :empty-text="filtered ? t('collections.toolbar.noMatch') : undefined"
           :schema="schema"
           :loading="items.loading.value"
-          @edit="openEditItem"
+          :lendable="lendable"
+          @edit="(ci) => lotDialogs?.open('edit', ci)"
+          @split="(ci) => lotDialogs?.open('split', ci)"
+          @merge="(ci) => lotDialogs?.open('merge', ci)"
+          @lend="(ci) => lotDialogs?.open('lend', ci)"
+          @loans="(ci) => lotDialogs?.open('loans', ci)"
           @remove="confirmRemove"
+          @receive-gift="(ci, g) => lotDialogs?.open('receive', ci, g)"
+          @decline-gift="(ci, g) => lotDialogs?.decline(ci, g)"
         />
         <ElPagination
           class="mt-4 justify-end"
@@ -101,83 +114,23 @@
       v-model:visible="addVisible"
       :collection-id="id"
       :schema="schema"
-      :allowed-type-ids="collection.collection_type?.item_type_ids"
+      :allowed-type-ids="accepted"
       @added="afterChange"
     />
 
-    <!-- Nom et description de la collection (le type ne change pas). -->
-    <ElDialog
-      v-model="colDialogVisible"
-      :title="t('collections.detail.editTitle')"
-      width="28rem"
-    >
-      <div class="flex flex-col gap-4">
-        <div class="flex flex-col gap-1">
-          <label for="col-name" class="text-sm font-medium">{{
-            t("common.name")
-          }}</label>
-          <ElInput
-            id="col-name"
-            v-model="colForm.name"
-            :placeholder="t('collections.list.namePlaceholder')"
-          />
-        </div>
-        <div class="flex flex-col gap-1">
-          <label for="col-desc" class="text-sm font-medium">{{
-            t("common.description")
-          }}</label>
-          <ElInput
-            id="col-desc"
-            v-model="colForm.description"
-            type="textarea"
-            :rows="2"
-          />
-        </div>
-      </div>
-      <template #footer>
-        <ElButton text @click="colDialogVisible = false">{{
-          t("common.cancel")
-        }}</ElButton>
-        <ElButton
-          type="primary"
-          :loading="saving"
-          :disabled="!colDirty || !colForm.name.trim()"
-          data-test="collection-save"
-          @click="saveCollection"
-        >
-          <i class="pi pi-check mr-2" aria-hidden="true"></i>
-          {{ t("common.save") }}
-        </ElButton>
-      </template>
-    </ElDialog>
+    <CollectionEditDialog
+      v-model:visible="colDialogVisible"
+      :collection="collection"
+      @saved="onCollectionSaved"
+    />
 
-    <!-- Edit item attributes dialog -->
-    <ElDialog
-      v-model="editDialogVisible"
-      :title="t('collections.detail.editAttributes')"
-      width="34rem"
-    >
-      <DynamicForm
-        v-if="schema"
-        ref="editFormRef"
-        v-model="editAttributes"
-        :schema="schema"
-      />
-      <template #footer>
-        <ElButton text @click="editDialogVisible = false">{{
-          t("common.cancel")
-        }}</ElButton>
-        <ElButton
-          type="primary"
-          :loading="saving"
-          :disabled="!editDirty"
-          @click="updateItem"
-        >
-          <i class="pi pi-check mr-2" aria-hidden="true"></i>
-          {{ t("common.save") }}
-        </ElButton>
-      </template>
-    </ElDialog>
+    <!-- Lots : modifier, scinder, fusionner, prêter, prêts, cadeau reçu. -->
+    <LotDialogs
+      ref="lotDialogs"
+      :collection-id="id"
+      :schema="schema"
+      @changed="afterChange"
+    />
   </div>
 </template>
 
@@ -188,18 +141,22 @@ import { useRouter } from "vue-router";
 import { collectionApi, importExportApi, statsApi } from "@/api/client";
 import { usePagination } from "@/composables/usePagination";
 import { useLang } from "@/composables/useLang";
-import { useDirty } from "@/composables/useDirty";
 import { useNotify } from "@/composables/useNotify";
 import { useConfirmDialog } from "@/composables/useConfirmDialog";
 import { MOBILE_QUERY, useMediaQuery } from "@/composables/useMediaQuery";
-import { itemLabel, typeTitle, type Schema } from "@/lib/schema";
+import { isLendable, itemLabel, typeTitle, type Schema } from "@/lib/schema";
+import { DEFAULT_LOT_SORT, emptyLotQuery, lotQueryParams } from "@/lib/lots";
+import { acceptedTypeIds, specializedTypeId } from "@/lib/collections";
+import { useMetaTypes } from "@/stores/metaTypes";
 import AppSpinner from "@/components/common/AppSpinner.vue";
-import DynamicForm from "@/components/common/DynamicForm.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
 import type { ExportFormat } from "@/components/common/ExportButton.vue";
 import CollectionMoreMenu from "@/components/collection/CollectionMoreMenu.vue";
 import CollectionAddItemDialog from "@/components/collection/CollectionAddItemDialog.vue";
 import CollectionItemList from "@/components/collection/CollectionItemList.vue";
+import CollectionItemsToolbar from "@/components/collection/CollectionItemsToolbar.vue";
+import CollectionEditDialog from "@/components/collection/CollectionEditDialog.vue";
+import LotDialogs from "@/components/collection/LotDialogs.vue";
 import CollectionShareDialog from "@/components/sharing/CollectionShareDialog.vue";
 import { defaultDelimiter } from "@/lib/csv";
 import type { Collection, CollectionItem } from "@/api/types";
@@ -220,8 +177,33 @@ const isMobile = useMediaQuery(MOBILE_QUERY);
 const collection = ref<Collection | null>(null);
 const loading = ref(true);
 
+// Recherche et tri des lots (P7-1) : type d'item, texte, lots de plusieurs exemplaires.
+const lotQuery = ref(emptyLotQuery());
+const filtered = computed(() =>
+  Object.keys(lotQueryParams(lotQuery.value)).some((k) => k !== "sort"),
+);
+const metaTypes = useMetaTypes();
+/** Types d'item proposés : ceux que la collection accepte (tous si rien ne les limite). */
+const accepted = computed(() =>
+  collection.value ? acceptedTypeIds(collection.value) : [],
+);
+const filterTypes = computed(() => {
+  const allowed = accepted.value;
+  return allowed.length
+    ? metaTypes.itemTypes.filter((it) => allowed.includes(it.id))
+    : metaTypes.itemTypes;
+});
+
+function onFilter() {
+  items.goToPage(1);
+  items.load().catch((e) => notifyError(e, t("collections.loadFailed")));
+}
+
 const items = usePagination((params: Record<string, unknown>) =>
-  collectionApi.listItems(props.id, params),
+  collectionApi.listItems(props.id, {
+    ...params,
+    ...lotQueryParams(lotQuery.value),
+  }),
 );
 
 const schema = computed(
@@ -241,49 +223,37 @@ const shareVisible = ref(false);
 const tab = ref<"items" | "stats">("items");
 // Incrémenté à chaque modification : l'onglet Statistiques se recharge.
 const statsVersion = ref(0);
-const saving = ref(false);
 
-// Edit item
-const editDialogVisible = ref(false);
-const editingItemId = ref("");
-const editAttributes = ref<Record<string, unknown>>({});
-const editFormRef = ref<InstanceType<typeof DynamicForm> | null>(null);
-// « Enregistrer » reste grisé tant que rien n'a changé.
-const { dirty: editDirty, markClean: markEditClean } = useDirty(
-  () => editAttributes.value,
-);
+// Dialogues d'un lot (P7-1, P7-3, P7-4b).
+const lotDialogs = ref<InstanceType<typeof LotDialogs> | null>(null);
+/** Le type de la collection ouvre les prêts (`x-lendable`). */
+const lendable = computed(() => isLendable(schema.value));
 
-// ── Collection elle-même : nom et description, suppression (menu « Plus ») ──
+/** « 12 items », ou « 12 items · 45 exemplaires » quand des lots en comptent plusieurs. */
+const countLabel = computed(() => {
+  const c = collection.value;
+  if (!c) return "";
+  const items = t("collections.itemCount", c.item_count);
+  return c.copy_count > c.item_count
+    ? `${items} · ${t("collections.lots.copies", c.copy_count)}`
+    : items;
+});
+
+// ── Collection elle-même : modification, suppression (menu « Plus ») ──
 const colDialogVisible = ref(false);
-const colForm = ref({ name: "", description: "" });
-const { dirty: colDirty, markClean: markColClean } = useDirty(
-  () => colForm.value,
-);
 
 function openEditCollection() {
-  if (!collection.value) return;
-  colForm.value = {
-    name: collection.value.name,
-    description: collection.value.description ?? "",
-  };
-  markColClean();
   colDialogVisible.value = true;
 }
 
-async function saveCollection() {
-  saving.value = true;
-  try {
-    collection.value = await collectionApi.update(props.id, {
-      name: colForm.value.name.trim(),
-      description: colForm.value.description,
-    });
-    notifySuccess(t("collections.detail.updated"));
-    colDialogVisible.value = false;
-  } catch (e) {
-    notifyError(e);
-  } finally {
-    saving.value = false;
-  }
+/** Collection modifiée : son tri par défaut et ses types acceptés s'appliquent à la liste. */
+function onCollectionSaved(c: Collection) {
+  collection.value = c;
+  lotQuery.value = {
+    ...emptyLotQuery(),
+    sort: c.default_sort || DEFAULT_LOT_SORT,
+  };
+  onFilter();
 }
 
 async function confirmDeleteCollection() {
@@ -308,6 +278,8 @@ async function confirmDeleteCollection() {
 onMounted(async () => {
   try {
     collection.value = await collectionApi.get(props.id); // collection_type est toujours joint par l'API
+    lotQuery.value.sort = collection.value.default_sort || DEFAULT_LOT_SORT;
+    metaTypes.loadItemTypes().catch((e) => notifyError(e));
     await items.load();
   } catch (e) {
     notifyError(e, t("collections.detail.notFound"));
@@ -340,31 +312,6 @@ function ciLabel(ci: CollectionItem): string {
   return itemLabel(ci.item, lang.value);
 }
 
-function openEditItem(ci: CollectionItem) {
-  editingItemId.value = ci.item_id;
-  editAttributes.value = { ...(ci.attributes ?? {}) };
-  markEditClean();
-  editDialogVisible.value = true;
-}
-
-async function updateItem() {
-  if (editFormRef.value && !editFormRef.value.validate()) return;
-  saving.value = true;
-  try {
-    await collectionApi.updateItem(props.id, editingItemId.value, {
-      attributes: editAttributes.value,
-    });
-    notifySuccess(t("collections.detail.attributesUpdated"));
-    editDialogVisible.value = false;
-    statsVersion.value++;
-    await items.load();
-  } catch (e) {
-    notifyError(e);
-  } finally {
-    saving.value = false;
-  }
-}
-
 async function confirmRemove(ci: CollectionItem) {
   const ok = await confirm({
     message: t("collections.detail.confirmRemove", { label: ciLabel(ci) }),
@@ -373,7 +320,7 @@ async function confirmRemove(ci: CollectionItem) {
   });
   if (!ok) return;
   try {
-    await collectionApi.removeItem(props.id, ci.item_id);
+    await collectionApi.removeLot(props.id, ci.id);
     notifySuccess(t("collections.detail.itemRemoved"));
     await afterChange();
   } catch (e) {

@@ -143,6 +143,12 @@
             :rows="2"
           />
         </div>
+        <CollectionSettingsFields
+          v-if="selectedType"
+          v-model:item-type-ids="form.item_type_ids"
+          v-model:default-sort="form.default_sort"
+          :collection-type="selectedType"
+        />
       </div>
       <template #footer>
         <ElButton text @click="dialogVisible = false">{{
@@ -176,6 +182,8 @@ import AppSpinner from "@/components/common/AppSpinner.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
 import NavIcon from "@/components/layout/NavIcon.vue";
 import CollectionImportDialog from "@/components/collection/CollectionImportDialog.vue";
+import CollectionSettingsFields from "@/components/collection/CollectionSettingsFields.vue";
+import type { CollectionCreate } from "@/api/types";
 
 const router = useRouter();
 const importVisible = ref(false);
@@ -189,7 +197,20 @@ const filterTypeId = ref<string>();
 
 const dialogVisible = ref(false);
 const saving = ref(false);
-const form = ref({ collection_type_id: "", name: "", description: "" });
+const form = ref<Required<CollectionCreate>>(emptyForm());
+const selectedType = computed(() =>
+  collectionTypes.value.find((ct) => ct.id === form.value.collection_type_id),
+);
+
+function emptyForm(): Required<CollectionCreate> {
+  return {
+    collection_type_id: "",
+    name: "",
+    description: "",
+    item_type_ids: [],
+    default_sort: "",
+  };
+}
 
 onMounted(async () => {
   await metaTypes
@@ -206,7 +227,7 @@ function reload() {
 }
 
 function openCreate() {
-  form.value = { collection_type_id: "", name: "", description: "" };
+  form.value = emptyForm();
   dialogVisible.value = true;
 }
 

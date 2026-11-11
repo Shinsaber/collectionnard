@@ -14,7 +14,7 @@ import (
 	"github.com/shinsaber/colec/internal/testutil"
 )
 
-// PUT /relations/{id} and PUT /collections/{c}/items/{i} replace `attributes`:
+// PUT /relations/{id} and PUT /collections/{c}/lots/{l} replace `attributes`:
 // omitting the field (or sending null) must be a 422, not a 500 or a silent wipe.
 
 func TestUpdateRelation_MissingAttributes(t *testing.T) {
@@ -65,7 +65,7 @@ func TestUpdateCollectionItem_MissingAttributes(t *testing.T) {
 	srv := testutil.NewTestServer(mock)
 	defer srv.Close()
 
-	url := srv.URL + "/api/v1/collections/" + colID.String() + "/items/" + itemID.String()
+	url := srv.URL + "/api/v1/collections/" + colID.String() + "/lots/" + itemID.String()
 	req, _ := http.NewRequest("PUT", url, bytes.NewReader([]byte(`{}`)))
 	req.Header = testutil.AuthHeader(testutil.UserToken())
 	resp, err := http.DefaultClient.Do(req)

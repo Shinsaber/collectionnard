@@ -118,6 +118,7 @@ tags:
       | `visibility` | Membres connectés | Visiteurs anonymes |
       | --- | --- | --- |
       | `private` | Note seule | Note seule |
+      | `friends` | Avis signé pour les amis, note seule sinon | Note seule |
       | `members` | Avis signé | Note seule |
       | `anonymous` | Texte sans auteur | Texte sans auteur |
       | `public` | Avis signé | Avis signé |
@@ -149,6 +150,47 @@ tags:
       traces (`blocked`), ses messages ne le notifient plus. Sur un contenu qui ne nomme pas son auteur (avis anonyme), le
       blocage ne refuse rien et l'avis reste listé : refuser ou retirer le nommerait. Les notes des membres bloqués comptent toujours dans les
       moyennes.
+  - name: Loans
+    description: |
+      Prêts (P7-3). Le propriétaire d'un lot d'une collection dont le type est marqué `x-lendable` (Possession) prête
+      des exemplaires à un **ami** (notifié `loan_started`, sans acceptation) ou à un **simple nom**. Les exemplaires
+      prêtés ne dépassent jamais la quantité du lot : un lot ne descend pas sous ses exemplaires prêtés, une scission
+      les laisse sur le lot d'origine, une fusion déplace ses prêts. Le prêt n'est vu que du propriétaire (liste de sa
+      collection, `GET /me/loans`) et de l'ami emprunteur (`GET /me/borrowings`, sans la note ni le nom de la
+      collection) : jamais des autres lecteurs. Un prêt rendu (`returned_at`) reste comme historique. Une fois l'échéance
+      passée, le propriétaire et l'ami sont notifiés (`loan_overdue`), une seule fois par échéance.
+  - name: Gifts
+    description: |
+      Cadeaux réservés (P7-4). Sur une liste de souhaits (type marqué `x-reservable`), un **ami** du propriétaire
+      réserve une part d'un lot pour l'offrir ; les autres amis voient qui a réservé et combien, pour se coordonner
+      (`reservations` des lots de `GET /public/collections/{id}/items`, `can_reserve` de la collection). Le propriétaire
+      n'en sait **jamais** rien : ni ses routes, ni ses listes, exports, statistiques ou copie hors ligne ne lisent les
+      réservations ; une réservation sur sa propre liste répond 404 ; une lecture anonyme ou par lien de partage ne les
+      montre pas. Annuler supprime la réservation. Quand le lot quitte la liste, la réservation reste (`left_list`) et
+      l'offrant est notifié (`gift_left_list`) ; il la marque remise ou l'annule. Une réservation non remise vaut
+      jusqu'à `expires_at` (60 jours par défaut, un an au plus) : passée cette date, elle ne compte plus et sort de la vue des
+      amis, son offrant la garde (`expired`) pour la prolonger ou l'annuler ; il est prévenu 7 jours avant (`gift_expiring`).
+
+      **Remise** (P7-4b) : quand l'offrant indique avoir remis le cadeau (`hand-over`, état `given`), la surprise est levée :
+      le propriétaire est notifié (`gift_given`) et voit la remise sur son lot (`gifts` de sa liste, jamais une réservation
+      encore secrète). Il confirme (`receive` : les exemplaires quittent la liste, vers une autre de ses collections ou
+      simplement retirés ; état `received`, historique de l'offrant, notifié `gift_received`) ou refuse (`decline` : la
+      réservation est supprimée, l'offrant notifié `gift_declined`). Lot déjà retiré : la remise vaut réception.
+      Le destinataire retrouve ses cadeaux à confirmer et reçus dans `GET /me/received-gifts` (P7-4c) ; un cadeau reçu ne
+      se supprime plus, d'aucun côté (409 `gift_state`).
+  - name: Friends
+    description: |
+      Amis (P7-2). Une amitié est réciproque : un membre en invite un autre dont il voit le profil, par son nom
+      d'utilisateur (tout autre nom répond 404, comme un nom inconnu : les noms ne se devinent pas), et l'autre
+      accepte ou refuse. Inviter un membre qui m'a déjà invité vaut acceptation. Pour un profil privé, un **lien
+      d'ami** secret (usage unique, 7 jours, 10 valides au plus, seul son hash est stocké) se transmet hors de
+      l'application : qui l'ouvre et l'accepte devient ami de son auteur.
+      L'amitié ouvre le niveau de visibilité `friends` des collections, des profils et des avis.
+      Refuser, annuler ou rompre supprime l'amitié, sans notification. Bloquer un membre rompt l'amitié et retire les
+      demandes entre eux ; la demande d'un membre bloqué reste sans réponse (en attente, jamais montrée ni notifiée).
+      20 demandes par jour et par compte (admins exemptés). Notifications `friend_request` et `friend_accepted`
+      (`payload` : `friendship_id`, `by`).
+
   - name: Items
     description: |
       Gestion du catalogue d'items. Chaque item est un **nœud unique** dans le graphe :
@@ -897,7 +939,7 @@ components:
 
     ReviewVisibility:
       type: string
-      enum: [private, members, anonymous, public]
+      enum: [private, friends, members, anonymous, public]
       description: Ce que voit le lecteur, voir l'étiquette `Reviews`.
 
     ReviewAuthor:
@@ -1183,6 +1225,46 @@ components:
           type: string
           enum: [review, comment, article, recommendation]
         content_id: { type: string, format: uuid }
+
+    Friendship:
+      type: object
+      description: |
+        Une amitié ou une demande, vue par l'un des deux membres : `user` est l'autre. Une demande envoyée à un membre
+        dont le profil ne m'est pas visible ne montre que le nom d'utilisateur saisi.
+      required: [id, status, incoming, user, profile_visible, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        status:
+          type: string
+          enum: [pending, accepted]
+        incoming:
+          type: boolean
+          description: "Demande reçue (`false` : demande envoyée, ou amitié)."
+        user:
+          $ref: "#/components/schemas/ReviewAuthor"
+        profile_visible:
+          type: boolean
+          description: Le profil public de l'autre membre m'est ouvert (`/public/users/{username}`).
+        created_at: { type: string, format: date-time }
+        accepted_at: { type: string, format: date-time }
+
+    FriendLink:
+      type: object
+      description: Lien d'ami secret, à usage unique. `token` n'est présent qu'à la création, `user` qu'à l'ouverture.
+      required: [id, created_at, expires_at]
+      properties:
+        id: { type: string, format: uuid }
+        token: { type: string }
+        user:
+          $ref: "#/components/schemas/ReviewAuthor"
+        created_at: { type: string, format: date-time }
+        expires_at: { type: string, format: date-time }
+
+    FriendRequestCreate:
+      type: object
+      required: [username]
+      properties:
+        username: { type: string, description: "Nom d'utilisateur exact du membre invité." }
 
     CommentBody:
       type: object
@@ -1511,10 +1593,30 @@ components:
           type: string
           description: Description libre de la collection.
           example: Ma collection de DVDs et Blu-rays
+        item_type_ids:
+          type: array
+          items: { type: string, format: uuid }
+          description: |
+            Types d'item que la collection accepte (P7-1b), parmi ceux de son CollectionType (sinon 422
+            `item_type_not_allowed`) ; vide = tous ceux du type. Une collection qui n'en accepte qu'un est
+            **spécialisée** : elle se trie et se filtre par les attributs de ce type sans `item_type_id`. Seuls les
+            nouveaux ajouts sont contrôlés.
+        default_sort:
+          type: string
+          description: |
+            Tri des lots quand la liste est lue sans `sort` (P7-1b), pages publiques et liens de partage compris :
+            `created_at`, `updated_at`, `quantity`, ou `attr.<clé>` pour une collection spécialisée ; préfixe `-` pour
+            descendant ; vide = ajout le plus récent. Sinon 422 `invalid_sort`. Un tri devenu sans objet (attribut
+            retiré, types acceptés changés) est ignoré à la lecture.
+          example: attr.number
         item_count:
           type: integer
-          description: Nombre d'items dans la collection (calculé automatiquement).
+          description: Nombre d'items différents de la collection (calculé automatiquement ; un item formant plusieurs lots compte une fois).
           example: 42
+        copy_count:
+          type: integer
+          description: Nombre d'exemplaires (somme des quantités des lots, P7-1).
+          example: 45
         visibility:
           $ref: "#/components/schemas/Visibility"
         hidden_fields:
@@ -1545,6 +1647,22 @@ components:
         description:
           type: string
           description: Description libre.
+        item_type_ids:
+          type: array
+          items: { type: string, format: uuid }
+          description: |
+            Types d'item que la collection accepte (P7-1b), parmi ceux de son CollectionType (sinon 422
+            `item_type_not_allowed`) ; vide = tous ceux du type. Une collection qui n'en accepte qu'un est
+            **spécialisée** : elle se trie et se filtre par les attributs de ce type sans `item_type_id`. Seuls les
+            nouveaux ajouts sont contrôlés.
+        default_sort:
+          type: string
+          description: |
+            Tri des lots quand la liste est lue sans `sort` (P7-1b), pages publiques et liens de partage compris :
+            `created_at`, `updated_at`, `quantity`, ou `attr.<clé>` pour une collection spécialisée ; préfixe `-` pour
+            descendant ; vide = ajout le plus récent. Sinon 422 `invalid_sort`. Un tri devenu sans objet (attribut
+            retiré, types acceptés changés) est ignoré à la lecture.
+          example: attr.number
 
     CollectionUpdate:
       type: object
@@ -1564,15 +1682,157 @@ components:
           description: |
             Absent : inchangé. `null` : retour au défaut du type (`x-private`). Liste : champs cachés (clés du
             schéma du CollectionType, sinon 422).
+        item_type_ids:
+          type: array
+          items: { type: string, format: uuid }
+          description: |
+            Types d'item que la collection accepte (P7-1b), parmi ceux de son CollectionType (sinon 422
+            `item_type_not_allowed`) ; vide = tous ceux du type ; absent = inchangé. Une collection qui n'en accepte qu'un est
+            **spécialisée** : elle se trie et se filtre par les attributs de ce type sans `item_type_id`. Seuls les
+            nouveaux ajouts sont contrôlés.
+        default_sort:
+          type: string
+          description: |
+            Tri des lots quand la liste est lue sans `sort` (P7-1b), pages publiques et liens de partage compris :
+            `created_at`, `updated_at`, `quantity`, ou `attr.<clé>` pour une collection spécialisée ; préfixe `-` pour
+            descendant ; vide = ajout le plus récent. Sinon 422 `invalid_sort`. Un tri devenu sans objet (attribut
+            retiré, types acceptés changés) est ignoré à la lecture.
+          example: attr.number
 
     # -------------------------------------------------------------------------
     # CollectionItem
     # -------------------------------------------------------------------------
+    GiftReservation:
+      type: object
+      description: |
+        Réservation de cadeau (P7-4). `giver` : l'offrant, nommé aux autres amis du propriétaire ; `note` : la sienne,
+        à lui seul. Dans `/me/gifts` : `owner` (pour qui) et `item` ; `left_list` quand le lot a quitté la liste.
+      required: [id, item_id, quantity, status, expires_at, expired, mine, left_list, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        lot_id: { type: string, format: uuid }
+        collection_id:
+          type: string
+          format: uuid
+          description: La liste de souhaits du lot, tant qu'il y est (où confirmer une remise).
+        left_list: { type: boolean }
+        item_id: { type: string, format: uuid }
+        quantity: { type: integer, minimum: 1, maximum: 100000 }
+        status:
+          type: string
+          enum: [reserved, given, received]
+          description: "`reserved` : secrète ; `given` : remise, en attente du propriétaire ; `received` : reçue."
+        given_at: { type: string, format: date-time }
+        received_at: { type: string, format: date-time }
+        expires_at:
+          type: string
+          format: date
+          description: Dernier jour où une réservation non offerte tient.
+        expired:
+          type: boolean
+          description: Non offerte et échue ; ne compte plus, vue de son offrant seul.
+        mine: { type: boolean, description: Réservée par le lecteur. }
+        giver:
+          $ref: "#/components/schemas/ReviewAuthor"
+        note: { type: string }
+        owner:
+          $ref: "#/components/schemas/ReviewAuthor"
+        item:
+          $ref: "#/components/schemas/Item"
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    GiftReceive:
+      type: object
+      description: |
+        « Bien reçu » : les exemplaires vont dans une autre collection du propriétaire qui accepte l'item
+        (`collection_id`, avec les attributs du nouveau lot), ou quittent simplement la liste (`collection_id` absent).
+      properties:
+        collection_id: { type: string, format: uuid }
+        attributes: { type: object }
+
+    ReservationCreate:
+      type: object
+      properties:
+        quantity: { type: integer, minimum: 1, maximum: 100000, default: 1 }
+        expires_at:
+          type: string
+          format: date
+          description: "D'aujourd'hui à un an ; absent : dans 60 jours."
+        note: { type: string, maxLength: 500 }
+
+    ReservationUpdate:
+      type: object
+      description: Tant que la réservation n'est pas remise (409 `gift_state` ensuite).
+      required: [quantity]
+      properties:
+        quantity: { type: integer, minimum: 1, maximum: 100000 }
+        expires_at:
+          type: string
+          format: date
+          description: "Absent : inchangée (même passée) ; changée : d'aujourd'hui à un an."
+        note: { type: string, maxLength: 500 }
+
+    Loan:
+      type: object
+      description: |
+        Prêt d'exemplaires d'un lot (P7-3). Dates au format `AAAA-MM-JJ`. `borrower` : l'ami emprunteur (absent pour un
+        simple nom, ou un compte disparu) ; `borrower_name` est toujours présent, figé au moment du prêt. `owner` n'est
+        donné qu'à l'emprunteur, `note` et `collection_name` qu'au propriétaire ; `item` dans `/me/loans` et
+        `/me/borrowings`.
+      required: [id, lot_id, collection_id, quantity, borrower_name, lent_at, overdue, note, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        lot_id: { type: string, format: uuid }
+        collection_id: { type: string, format: uuid }
+        quantity: { type: integer, minimum: 1, maximum: 100000 }
+        borrower:
+          $ref: "#/components/schemas/ReviewAuthor"
+        borrower_name: { type: string }
+        lent_at: { type: string, format: date }
+        due_at: { type: string, format: date }
+        returned_at: { type: string, format: date }
+        overdue:
+          type: boolean
+          description: En cours et son échéance est passée.
+        note: { type: string }
+        owner:
+          $ref: "#/components/schemas/ReviewAuthor"
+        item:
+          $ref: "#/components/schemas/Item"
+        collection_name: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    LoanCreate:
+      type: object
+      description: Un ami par son nom d'utilisateur (`borrower_username`) **ou** un simple nom (`borrower_name`).
+      properties:
+        quantity: { type: integer, minimum: 1, maximum: 100000, default: 1 }
+        borrower_username: { type: string }
+        borrower_name: { type: string, maxLength: 100 }
+        lent_at: { type: string, format: date, description: "Absent : aujourd'hui." }
+        due_at: { type: string, format: date }
+        note: { type: string, maxLength: 500 }
+
+    LoanUpdate:
+      type: object
+      description: "Champs modifiables d'un prêt, remplacés (l'emprunteur ne change pas). `returned_at` le clôt."
+      required: [quantity]
+      properties:
+        quantity: { type: integer, minimum: 1, maximum: 100000 }
+        lent_at: { type: string, format: date, description: "Absent : inchangé." }
+        due_at: { type: string, format: date }
+        returned_at: { type: string, format: date }
+        note: { type: string, maxLength: 500 }
+
     CollectionItem:
       type: object
       description: |
-        Lien entre une collection et un item. Porte les **attributs contextuels**
-        définis par le CollectionType : état physique, prix d'achat, date vue, note, etc.
+        **Lot** d'une collection (P7-1) : un ou plusieurs exemplaires identiques d'un item (`quantity`).
+        Porte les **attributs contextuels** définis par le CollectionType (état physique, prix d'achat
+        unitaire, date vue…), qui valent pour chacun de ses exemplaires. Un même item peut former plusieurs
+        lots dans une collection (un état ou une finition différents).
 
         C'est ici que se trouvent les données spécifiques à l'utilisateur pour un item donné.
         L'item lui-même reste partagé et immuable pour tous les utilisateurs.
@@ -1580,6 +1840,7 @@ components:
         id:
           type: string
           format: uuid
+          description: Identifiant du lot (adresse des routes `/collections/{collectionId}/lots/{lotId}`).
         collection_id:
           type: string
           format: uuid
@@ -1591,6 +1852,12 @@ components:
         item:
           $ref: "#/components/schemas/Item"
           description: Item complet (inclus dans les réponses GET).
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 100000
+          description: Nombre d'exemplaires du lot.
+          example: 1
         attributes:
           type: object
           description: |
@@ -1603,6 +1870,23 @@ components:
             condition: new
             purchase_price: 45.00
             acquisition_date: "2020-12-25"
+        loans:
+          type: array
+          description: Prêts en cours du lot (P7-3), dans la liste de son propriétaire seulement.
+          items:
+            $ref: "#/components/schemas/Loan"
+        reservations:
+          type: array
+          description: |
+            Réservations de cadeau du lot (P7-4), pour un ami du propriétaire lisant sa liste de souhaits, jamais pour le
+            propriétaire.
+          items:
+            $ref: "#/components/schemas/GiftReservation"
+        gifts:
+          type: array
+          description: Cadeaux remis sur le lot, en attente de confirmation (P7-4b), dans la liste de son propriétaire seulement.
+          items:
+            $ref: "#/components/schemas/GiftReservation"
         created_at:
           type: string
           format: date-time
@@ -1616,10 +1900,10 @@ components:
         Données pour ajouter un item à une collection. Les attributs sont validés
         contre le JSON Schema du CollectionType de la collection.
 
-        Un item ne peut apparaître qu'une seule fois dans une collection donnée.
+        Crée toujours un **nouveau lot**, même si l'item est déjà dans la collection : pour ajouter des
+        exemplaires à un lot existant, modifier sa `quantity` (`PUT /collections/{collectionId}/lots/{lotId}`).
         Si le CollectionType limite les types d'item (`item_type_ids`), un item d'un autre type
         est refusé (422 `item_type_not_allowed`).
-        S'il est déjà présent, une erreur 409 est retournée.
       required: [item_id]
       properties:
         item_id:
@@ -1632,17 +1916,56 @@ components:
             Attributs contextuels de l'item dans cette collection.
             Validés contre le JSON Schema du CollectionType.
           default: {}
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 100000
+          default: 1
+          description: Nombre d'exemplaires du lot.
 
     CollectionItemUpdate:
       type: object
       description: |
-        Modification des attributs contextuels d'un item dans une collection.
-        Les attributs sont revalidés contre le JSON Schema du CollectionType.
+        Modification d'un lot : ses attributs contextuels (remplacés, revalidés contre le JSON Schema du
+        CollectionType) et, si elle est donnée, sa quantité (absente : inchangée).
       required: [attributes]
       properties:
         attributes:
           type: object
           description: Nouveaux attributs contextuels.
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 100000
+          description: Nouvelle quantité ; absente, la quantité du lot ne change pas.
+
+    CollectionLotSplit:
+      type: object
+      description: |
+        Scission d'un lot (P7-1) : `quantity` exemplaires en sortent pour former un nouveau lot du même item,
+        avec `attributes` (absents : copie de ceux du lot d'origine). Il doit rester au moins un exemplaire.
+      required: [quantity]
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+          description: Exemplaires détachés, moins que la quantité du lot.
+        attributes:
+          type: object
+          additionalProperties: true
+          description: Attributs du nouveau lot, validés contre le JSON Schema du CollectionType.
+
+    CollectionLotMerge:
+      type: object
+      description: |
+        Fusion de deux lots du même item dans la même collection (P7-1) : le lot `into` reçoit les
+        exemplaires et garde ses attributs ; les photos des galeries du lot fusionné le rejoignent, puis il est supprimé.
+      required: [into]
+      properties:
+        into:
+          type: string
+          format: uuid
+          description: Lot qui reçoit les exemplaires.
 
     # -------------------------------------------------------------------------
     # Tag
@@ -1665,9 +1988,17 @@ components:
     ItemCollectionMembership:
       type: object
       description: |
-        Appartenance d'un item à une collection de l'utilisateur. Contient la
-        collection complète et les attributs contextuels du lien (état, prix, note…).
+        Lot d'un item dans une collection de l'utilisateur (une entrée par lot : un item peut former
+        plusieurs lots d'une même collection). Contient la collection complète, l'identifiant et la
+        quantité du lot, et ses attributs contextuels (état, prix, note…).
       properties:
+        lot_id:
+          type: string
+          format: uuid
+          description: Identifiant du lot.
+        quantity:
+          type: integer
+          description: Nombre d'exemplaires du lot.
         collection:
           $ref: "#/components/schemas/Collection"
           description: Collection contenant l'item.
@@ -2031,10 +2362,10 @@ components:
 
     Visibility:
       type: string
-      enum: [private, members, public]
+      enum: [private, friends, members, public]
       description: |
-        `private` : le propriétaire seul ; `members` : tout compte connecté ; `public` : tout le monde,
-        connecté ou non.
+        `private` : le propriétaire seul ; `friends` : ses amis (P7-2) ; `members` : tout compte connecté ;
+        `public` : tout le monde, connecté ou non.
 
     Owner:
       type: object
@@ -2064,6 +2395,9 @@ components:
           $ref: "#/components/schemas/Visibility"
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+        can_reserve:
+          type: boolean
+          description: Le lecteur, ami du propriétaire, peut réserver des cadeaux sur cette liste de souhaits (P7-4).
 
     PublicProfile:
       type: object
@@ -2347,7 +2681,7 @@ components:
             Propositions (P4-3) : `proposal_state`, `proposal_quota`, `proposal_invalid`, `proposal_conflict`,
             `proposal_meta_types`, `own_proposal`. Avis (I-0) : `reviews_closed` (409). Modération (I-1) :
             `report_exists`, `moderation_state` (409), `own_content` (403), `rate_limited` (429). Commentaires (I-2) :
-            `comments_closed` (409). Chaque réponse d'erreur d'une opération nomme les codes qu'elle
+            `comments_closed` (409). Amis (P7-2) : `friendship_exists`, `member_blocked`, `friend_links_limit` (409). Prêts (P7-3) : `not_lendable`, `borrower_not_friend`, `loan_exceeds_lot` (422). Cadeaux (P7-4) : `reservation_exceeds_lot` (422), `gift_state` (409). Chaque réponse d'erreur d'une opération nomme les codes qu'elle
             émet. Un client doit prévoir un libellé générique pour un code inconnu.
           example: validation_error
         message:
@@ -2375,6 +2709,7 @@ components:
         item_id: { type: string, format: uuid }
         collections:
           type: array
+          description: Un élément par lot (une collection peut revenir si l'item y forme plusieurs lots).
           items:
             type: object
             required: [id, name, collection_type_id, attributes]
@@ -2389,6 +2724,8 @@ components:
                 type: object
                 additionalProperties: true
                 description: Attributs contextuels de l'item dans cette collection (état, prix…).
+              lot_id: { type: string, format: uuid }
+              quantity: { type: integer }
 
     OfflineSnapshot:
       type: object
@@ -2420,10 +2757,12 @@ components:
           type: array
           items:
             type: object
-            required: [collection_id, item_id, attributes, added_at]
+            required: [id, collection_id, item_id, quantity, attributes, added_at]
             properties:
+              id: { type: string, format: uuid, description: Identifiant du lot. }
               collection_id: { type: string, format: uuid }
               item_id: { type: string, format: uuid }
+              quantity: { type: integer }
               attributes: { type: object, additionalProperties: true }
               added_at: { type: string, format: date-time }
 
@@ -2680,13 +3019,25 @@ components:
             name: { type: string }
             description: { type: string }
             collection_type: { $ref: "#/components/schemas/ExportMetaType" }
+            item_type_ids:
+              type: array
+              items: { type: string, format: uuid }
+              description: Types d'item acceptés (P7-1b) ; à l'import, un type inconnu de l'instance est ignoré.
+            default_sort: { type: string, description: Tri par défaut (P7-1b). }
         items:
           type: array
           items:
             type: object
             properties:
+              id:
+                type: string
+                format: uuid
+                description: |
+                  Identifiant du lot (P7-1). À l'import, un lot de la collection cible portant cet identifiant est mis à
+                  jour ; absent (fichier antérieur), le lot est rapproché par item.
               item_id: { type: string, format: uuid }
               item_type: { type: string, description: Nom technique de l'ItemType. }
+              quantity: { type: integer, minimum: 1, default: 1, description: "Exemplaires du lot (absent : 1)." }
               label: { type: string, description: Libellé (`x-label`) dans la langue `lang`. }
               item_attributes: { type: object, additionalProperties: true }
               attributes:
@@ -2903,6 +3254,17 @@ components:
   # Paramètres réutilisables
   # ===========================================================================
   parameters:
+    loanStatus:
+      name: status
+      in: query
+      description: "`active` : en cours ; `returned` : rendus ; absent : tous."
+      schema: { type: string, enum: [active, returned] }
+    lotId:
+      name: lotId
+      in: path
+      required: true
+      description: Identifiant du lot (`CollectionItem.id`, P7-1).
+      schema: { type: string, format: uuid }
     username:
       name: username
       in: path
@@ -2913,6 +3275,12 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    friendLinkToken:
+      name: token
+      in: path
+      required: true
+      description: Jeton d'un lien d'ami.
+      schema: { type: string }
     shareToken:
       name: token
       in: query
@@ -2959,17 +3327,6 @@ components:
         default: 20
         minimum: 1
         maximum: 100
-    sort:
-      name: sort
-      in: query
-      description: |
-        Champ de tri. Préfixer par `-` pour un tri descendant.
-        Valeurs acceptées : `created_at`, `updated_at` (défaut `-created_at`).
-        Toute autre valeur renvoie 400. `GET /items` accepte en plus `relevance` et `attr.<clé>`.
-        Les champs de tri disponibles dépendent du type d'objet.
-      schema:
-        type: string
-
   # ===========================================================================
   # Réponses réutilisables
   # ===========================================================================
@@ -6434,7 +6791,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "422":
-          $ref: "#/components/responses/ValidationError"
+          description: |
+            Données invalides (`validation_error`), type d'item que le CollectionType ne permet pas
+            (`item_type_not_allowed`) ou tri par défaut impossible (`invalid_sort`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "500":
           $ref: "#/components/responses/InternalError"
         "201":
@@ -6517,6 +6880,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "422":
+          description: |
+            Champs cachés inconnus (`validation_error`), type d'item que le CollectionType ne permet pas
+            (`item_type_not_allowed`) ou tri par défaut impossible (`invalid_sort`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
     delete:
       tags: [Collections]
       summary: Supprimer une collection
@@ -6556,18 +6927,50 @@ paths:
         Retourne les items d'une collection avec leurs **attributs contextuels**
         (état, prix, note…) et les détails de chaque item (type, attributs métier, tags).
 
-        Filtrable par type d'item (ex: uniquement les DVDs dans cette collection).
+        Une ligne par **lot** (P7-1). Filtres : type d'item, recherche plein texte dans les attributs de l'item, lots de
+        plusieurs exemplaires (`multiple`), et, avec `item_type_id`, filtres par attribut de l'item (`attr.<clé>[.<op>]`,
+        mêmes règles que `GET /items`). À valeur de tri égale, les lots d'un même item se suivent.
       operationId: listCollectionItems
       parameters:
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/per_page"
-        - $ref: "#/components/parameters/sort"
+        - name: sort
+          in: query
+          description: |
+            `created_at` (date d'ajout du lot, défaut `-created_at`), `updated_at`, `quantity`, `relevance` (pertinence de
+            `search`) ou `attr.<clé>` (attribut de l'item, exige `item_type_id`, sauf pour une collection spécialisée) ;
+            préfixe `-` pour descendant. Absent : le `default_sort` de la collection.
+          schema:
+            type: string
+          examples:
+            largestLots: { value: "-quantity" }
+            byNumber: { value: "attr.number" }
         - name: item_type_id
           in: query
-          description: Filtrer par type d'item dans la collection.
+          description: Filtrer par type d'item dans la collection. Requis par `attr.*` et `sort=attr.*`.
           schema:
             type: string
             format: uuid
+        - name: search
+          in: query
+          description: Recherche plein texte dans les attributs de l'item (comme `GET /items`), 200 caractères au plus.
+          schema:
+            type: string
+        - name: multiple
+          in: query
+          description: "`true` : seulement les lots de plusieurs exemplaires (doubles à échanger…)."
+          schema:
+            type: boolean
+        - name: attr
+          in: query
+          description: |
+            Filtres par attribut de l'item, un paramètre par condition (voir `GET /items`). Exigent `item_type_id`.
+          style: form
+          explode: true
+          schema:
+            type: object
+            additionalProperties:
+              type: string
       responses:
         "400":
           $ref: "#/components/responses/BadRequest"
@@ -6597,7 +7000,8 @@ paths:
         **attributs contextuels** (état, prix, note…) validés contre le
         JSON Schema du CollectionType.
 
-        Un item ne peut apparaître qu'une seule fois dans une collection donnée.
+        Crée toujours un nouveau lot (`quantity`, 1 par défaut), même si l'item est déjà dans la collection :
+        le client propose alors d'augmenter un lot existant ou d'en créer un (P7-1).
       operationId: addItemToCollection
       requestBody:
         required: true
@@ -6632,12 +7036,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        "409":
-          description: Cet item est déjà dans la collection.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
         "422":
           description: |
             Attributs invalides (`validation_error`), ou type d'item non permis par le
@@ -6647,7 +7045,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /collections/{collectionId}/items/{itemId}:
+  /collections/{collectionId}/lots/{lotId}:
     parameters:
       - name: collectionId
         in: path
@@ -6656,20 +7054,13 @@ paths:
         schema:
           type: string
           format: uuid
-      - name: itemId
-        in: path
-        required: true
-        description: UUID de l'item dans la collection.
-        schema:
-          type: string
-          format: uuid
+      - $ref: "#/components/parameters/lotId"
     put:
       tags: [Collections]
-      summary: Modifier les attributs contextuels d'un item dans la collection
+      summary: Modifier un lot de la collection
       description: |
-        Met à jour les attributs contextuels (état, prix, note…) d'un item
-        dans cette collection. Les attributs sont revalidés contre le JSON Schema
-        du CollectionType.
+        Met à jour les attributs contextuels (état, prix, note…) d'un lot et, si elle est donnée, sa
+        quantité. Les attributs sont revalidés contre le JSON Schema du CollectionType.
 
         Ne modifie **pas** les attributs de l'item du catalogue (title, année…),
         uniquement les données personnelles de l'utilisateur.
@@ -6685,6 +7076,7 @@ paths:
                 condition: bon
                 purchase_price: 45.00
                 acquisition_date: "2020-12-25"
+              quantity: 2
       responses:
         "413":
           $ref: "#/components/responses/PayloadTooLarge"
@@ -6706,9 +7098,9 @@ paths:
           $ref: "#/components/responses/ValidationError"
     delete:
       tags: [Collections]
-      summary: Retirer un item de la collection
+      summary: Retirer un lot de la collection
       description: |
-        Retire le lien entre l'item et cette collection. **L'item n'est pas
+        Retire le lot (tous ses exemplaires) de cette collection. **L'item n'est pas
         supprimé du catalogue** — il reste disponible pour d'autres collections
         et d'autres utilisateurs. Seules les données contextuelles (état, prix, note…)
         sont perdues.
@@ -6721,9 +7113,565 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
         "204":
-          description: Item retiré de la collection.
+          description: Lot retiré de la collection.
         "404":
           $ref: "#/components/responses/NotFound"
+
+  /collections/{collectionId}/lots/{lotId}/split:
+    parameters:
+      - name: collectionId
+        in: path
+        required: true
+        description: UUID de la collection.
+        schema:
+          type: string
+          format: uuid
+      - $ref: "#/components/parameters/lotId"
+    post:
+      tags: [Collections]
+      summary: Scinder un lot
+      description: |
+        Détache `quantity` exemplaires du lot vers un nouveau lot du même item (une carte abîmée sort d'un lot
+        de 5). Le nouveau lot prend `attributes`, ou à défaut une copie des attributs du lot d'origine.
+      operationId: splitCollectionLot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CollectionLotSplit"
+            example:
+              quantity: 1
+              attributes:
+                condition: damaged
+      responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Nouveau lot ; le lot d'origine a perdu `quantity` exemplaires.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectionItem"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          description: |
+            Attributs invalides (`validation_error`), ou quantité hors bornes (`invalid_quantity` : il doit rester
+            au moins un exemplaire dans le lot d'origine).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /collections/{collectionId}/lots/{lotId}/merge:
+    parameters:
+      - name: collectionId
+        in: path
+        required: true
+        description: UUID de la collection.
+        schema:
+          type: string
+          format: uuid
+      - $ref: "#/components/parameters/lotId"
+    post:
+      tags: [Collections]
+      summary: Fusionner un lot dans un autre
+      description: |
+        Ajoute les exemplaires du lot à `into` (même item, même collection), qui garde ses attributs, puis
+        supprime le lot. Les photos de ses galeries (propriétés `x-widget: image-gallery` du CollectionType, photos
+        d'exemplaire) rejoignent celles de `into`, catégorie par catégorie, sans doublon ; ses autres attributs sont perdus.
+      operationId: mergeCollectionLot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CollectionLotMerge"
+      responses:
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Lot `into`, avec la quantité cumulée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectionItem"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          description: |
+            `lots_not_mergeable` : `into` est le lot lui-même ou un lot d'un autre item ; `invalid_quantity` : la
+            quantité cumulée dépasse 100000.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /collections/{collectionId}/lots/{lotId}/loans:
+    parameters:
+      - name: collectionId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - $ref: "#/components/parameters/lotId"
+    get:
+      tags: [Loans]
+      summary: Prêts d'un lot
+      description: En cours d'abord, puis l'historique (rendus), du plus récent au plus ancien. Propriétaire seulement.
+      operationId: listLotLoans
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Prêts du lot.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Loan"
+    post:
+      tags: [Loans]
+      summary: Prêter des exemplaires d'un lot
+      description: L'ami emprunteur est notifié (`loan_started`).
+      operationId: createLoan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoanCreate"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          description: |
+            `not_lendable` : le type de la collection n'ouvre pas les prêts ; `borrower_not_friend` : l'emprunteur
+            nommé n'est pas un ami (compte inconnu compris) ; `loan_exceeds_lot` : plus assez d'exemplaires non prêtés ;
+            `invalid_quantity`, `validation_error`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Prêt créé.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Loan"
+
+  /loans/{id}:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    put:
+      tags: [Loans]
+      summary: Modifier ou clore un prêt
+      description: Échéance, rendu le, quantité, note. Une nouvelle échéance permet un nouveau rappel. Propriétaire seulement.
+      operationId: updateLoan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoanUpdate"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          description: "`loan_exceeds_lot`, `invalid_quantity`, `validation_error`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Prêt modifié.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Loan"
+    delete:
+      tags: [Loans]
+      summary: Supprimer un prêt
+      description: Un prêt saisi par erreur ; un prêt rendu se garde comme historique.
+      operationId: deleteLoan
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Supprimé.
+
+  /me/loans:
+    get:
+      tags: [Loans]
+      summary: Ce que j'ai prêté
+      description: En cours d'abord, l'échéance la plus proche en premier.
+      operationId: listMyLoans
+      parameters:
+        - $ref: "#/components/parameters/loanStatus"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Loan"
+
+  /collections/{collectionId}/lots/{lotId}/reservations:
+    parameters:
+      - name: collectionId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - $ref: "#/components/parameters/lotId"
+    post:
+      tags: [Gifts]
+      summary: Réserver un cadeau
+      description: |
+        Un ami du propriétaire, qui lit sa liste de souhaits, réserve des exemplaires d'un lot. 404 pour le propriétaire
+        et pour qui ne peut pas réserver : rien n'est révélé. 60 par heure.
+      operationId: createReservation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReservationCreate"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          description: "`reservation_exceeds_lot` : plus assez d'exemplaires non réservés ; `invalid_quantity`, `validation_error`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: "`rate_limited` (`Retry-After`)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Réservation créée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GiftReservation"
+
+  /reservations/{id}:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    put:
+      tags: [Gifts]
+      summary: Modifier ma réservation
+      description: "Quantité, échéance, note, tant qu'elle n'est pas remise. L'offrant seulement."
+      operationId: updateReservation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReservationUpdate"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: "`gift_state` : déjà remise."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          description: "`reservation_exceeds_lot`, `invalid_quantity`, `validation_error`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Réservation modifiée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GiftReservation"
+    delete:
+      tags: [Gifts]
+      summary: Annuler ma réservation
+      operationId: deleteReservation
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: "`gift_state` : un cadeau reçu ne se supprime plus."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Annulée.
+
+  /reservations/{id}/hand-over:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Gifts]
+      summary: Je l'ai remis
+      description: |
+        La surprise est levée : le propriétaire est notifié (`gift_given`) et confirme ou refuse depuis son lot. Lot déjà
+        retiré de la liste : la réservation est reçue d'office. L'offrant seulement.
+      operationId: handOverReservation
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: "`gift_state` : déjà remise."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Réservation remise (ou reçue).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GiftReservation"
+
+  /collections/{collectionId}/gifts/{id}/receive:
+    parameters:
+      - name: collectionId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Gifts]
+      summary: Bien reçu
+      description: |
+        Le propriétaire confirme un cadeau remis sur un lot de sa liste ; l'offrant est notifié (`gift_received`). 404 pour
+        une réservation encore secrète, comme pour une inconnue.
+      operationId: receiveGift
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GiftReceive"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          description: "`item_type_not_allowed` : la collection choisie n'accepte pas l'item ; `validation_error`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Reçu.
+
+  /collections/{collectionId}/gifts/{id}/decline:
+    parameters:
+      - name: collectionId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Gifts]
+      summary: Pas reçu
+      description: La réservation remise est invalidée (supprimée) ; l'offrant est notifié (`gift_declined`).
+      operationId: declineGift
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Invalidée.
+
+  /me/received-gifts:
+    get:
+      tags: [Gifts]
+      summary: Les cadeaux qu'on m'a offerts
+      description: |
+        Remis à confirmer (`given`, les plus anciens d'abord), puis reçus (les plus récents d'abord) ; jamais une
+        réservation encore secrète, jamais la note de l'offrant.
+      operationId: listReceivedGifts
+      parameters:
+        - name: status
+          in: query
+          description: "`given` : à confirmer ; `received` : reçus ; absent : les deux."
+          schema: { type: string, enum: [given, received] }
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/GiftReservation"
+
+  /me/gifts:
+    get:
+      tags: [Gifts]
+      summary: Les cadeaux que je compte offrir
+      description: Ceux dont le lot a quitté la liste d'abord, puis expirés, à offrir, remis, et reçus.
+      operationId: listMyGifts
+      parameters:
+        - name: status
+          in: query
+          description: "`open` : à offrir ou remis ; `received` : reçus ; absent : tous."
+          schema: { type: string, enum: [open, received] }
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/GiftReservation"
+
+  /me/borrowings:
+    get:
+      tags: [Loans]
+      summary: Ce que mes amis m'ont prêté
+      operationId: listMyBorrowings
+      parameters:
+        - $ref: "#/components/parameters/loanStatus"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Loan"
 
   # ===========================================================================
   # Tags
@@ -8587,6 +9535,271 @@ paths:
           $ref: "#/components/responses/InternalError"
         "204":
           description: Débloqué.
+
+  /me/friends:
+    get:
+      tags: [Friends]
+      summary: Mes amis
+      operationId: listFriends
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée, par nom d'utilisateur.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Friendship"
+    post:
+      tags: [Friends]
+      summary: Inviter un membre à devenir ami
+      description: |
+        Le membre, dont je dois voir le profil, est notifié (`friend_request`). S'il m'avait déjà invité, sa demande
+        est acceptée (`status` : `accepted`, notification `friend_accepted`).
+      operationId: requestFriend
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FriendRequestCreate"
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: |
+            `friendship_exists` : déjà amis, ou demande déjà envoyée ; `member_blocked` : j'ai bloqué ce membre.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          description: "`rate_limited` (`Retry-After`)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Demande envoyée, ou amitié acceptée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Friendship"
+
+  /me/friends/{id}:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    delete:
+      tags: [Friends]
+      summary: Refuser, annuler ou rompre
+      description: Supprime une demande reçue ou envoyée, ou une amitié ; l'autre membre n'est pas notifié.
+      operationId: deleteFriendship
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Supprimée.
+
+  /me/friend-requests:
+    get:
+      tags: [Friends]
+      summary: Demandes d'amitié en attente
+      description: Les demandes reçues (`incoming`) d'abord, puis celles envoyées ; les plus récentes d'abord.
+      operationId: listFriendRequests
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/per_page"
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liste paginée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - properties:
+                      data:
+                        items:
+                          $ref: "#/components/schemas/Friendship"
+
+  /me/friend-requests/{id}/accept:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    post:
+      tags: [Friends]
+      summary: Accepter une demande reçue
+      description: L'autre membre est notifié (`friend_accepted`).
+      operationId: acceptFriendRequest
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Amitié acceptée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Friendship"
+
+  /me/friend-links:
+    get:
+      tags: [Friends]
+      summary: Mes liens d'ami valides
+      description: Sans leur jeton, montré une seule fois à la création.
+      operationId: listFriendLinks
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Liens valides, le plus récent d'abord.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FriendLink"
+    post:
+      tags: [Friends]
+      summary: Créer un lien d'ami
+      description: Le jeton n'est renvoyé qu'ici ; le lien se construit côté client (`/friend/{token}`). 20 par jour.
+      operationId: createFriendLink
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: "`friend_links_limit` : 10 liens valides au plus, en révoquer un d'abord."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: "`rate_limited` (`Retry-After`)."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "201":
+          description: Lien créé, avec son jeton.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FriendLink"
+
+  /me/friend-links/{id}:
+    parameters:
+      - $ref: "#/components/parameters/collectionId"
+    delete:
+      tags: [Friends]
+      summary: Révoquer un lien d'ami
+      operationId: deleteFriendLink
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "204":
+          description: Révoqué.
+
+  /friend-links/{token}:
+    parameters:
+      - $ref: "#/components/parameters/friendLinkToken"
+    get:
+      tags: [Friends]
+      summary: Ouvrir un lien d'ami
+      description: Qui m'invite (`user`). 404 si le lien est inconnu, expiré, déjà utilisé, ou si son auteur m'a bloqué.
+      operationId: getFriendLink
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Le lien et son auteur.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FriendLink"
+
+  /friend-links/{token}/accept:
+    parameters:
+      - $ref: "#/components/parameters/friendLinkToken"
+    post:
+      tags: [Friends]
+      summary: Accepter un lien d'ami
+      description: |
+        Je deviens ami de l'auteur du lien, qui est notifié (`friend_accepted`) ; une demande en attente entre nous est
+        acceptée. Le lien est consommé.
+      operationId: acceptFriendLink
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: "`friendship_exists` : déjà amis (le lien reste valide) ; `member_blocked` : j'ai bloqué son auteur."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Mon propre lien.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "200":
+          description: Amitié acceptée.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Friendship"
 
   /me/notifications:
     get:

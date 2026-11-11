@@ -13,6 +13,16 @@
     {
       devShells = forAllSystems (pkgs:
       let
+        # Go 1.27.4 (GO-2026-6859, plantage du serveur HTTP/1 par MaxBytesReader, net/http) avant son arrivée dans
+        # nixpkgs, qui en est à 1.27.3 le 2026-11-11 : source officielle, empreinte vérifiée sur go.dev. À retirer dès que
+        # nixpkgs fournit go_1_27 ≥ 1.27.4 (`nix flake update`, puis `nix develop -c go version`).
+        go = pkgs.go_1_27.overrideAttrs (old: rec {
+          version = "1.27.4";
+          src = pkgs.fetchurl {
+            url = "https://go.dev/dl/go${version}.src.tar.gz";
+            hash = "sha256-c8+4VxrsDAEXdofbhxY9Rqog6XeWcncokaoXZU2aYJk=";
+          };
+        });
 
         # PostgreSQL local (alternative à Docker) : données dans ./.pgdata
         pgStart = pkgs.writeShellScriptBin "pg-start" ''
@@ -43,7 +53,7 @@
         default = pkgs.mkShell {
           packages = with pkgs; [
             # Backend (Go 1.27 : go.mod exige ≥ 1.26, pgx ≥ 5.9 exige ≥ 1.25)
-            go_1_27
+            go
             gopls
             gotools
             govulncheck

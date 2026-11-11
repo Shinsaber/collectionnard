@@ -5,9 +5,11 @@ const en: typeof fr = {
   visibility: {
     label: "Visibility",
     private: "Private",
+    friends: "Friends",
     members: "Members",
     public: "Public",
     privateHelp: "Only me.",
+    friendsHelp: "My friends only.",
     membersHelp: "Any signed-in account of this instance.",
     publicHelp: "Everyone, even without an account.",
   },
@@ -55,7 +57,8 @@ const en: typeof fr = {
   },
   members: {
     title: "Members",
-    help: "Profiles open to members or public.",
+    help: "Your friends, and the directory of profiles open to members or public.",
+    directory: "Directory",
     none: "No visible profile yet.",
   },
 };

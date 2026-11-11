@@ -53,6 +53,8 @@
           :loading="items.loading.value"
           readonly
           :link-items="auth.isAuthenticated"
+          :reservable="!!collection.can_reserve"
+          @reserve="openReserve"
         />
         <ElPagination
           class="mt-4 justify-end"
@@ -72,6 +74,15 @@
         />
       </ElTabPane>
     </ElTabs>
+
+    <ReserveDialog
+      v-if="collection.can_reserve"
+      v-model:visible="reserveVisible"
+      :collection-id="collection.id"
+      :lot="reserveLot"
+      :label="reserveLot ? itemLabel(reserveLot.item, lang) : ''"
+      @done="items.load().catch((e) => notifyError(e))"
+    />
   </div>
 </template>
 
@@ -85,11 +96,12 @@ import { useLang } from "@/composables/useLang";
 import { useNotify } from "@/composables/useNotify";
 import { usePagination } from "@/composables/usePagination";
 import { useAuthStore } from "@/stores/auth";
-import { typeTitle, type Schema } from "@/lib/schema";
+import { itemLabel, typeTitle, type Schema } from "@/lib/schema";
 import AppSpinner from "@/components/common/AppSpinner.vue";
 import PageHeader from "@/components/common/PageHeader.vue";
 import CollectionItemList from "@/components/collection/CollectionItemList.vue";
 import UserAvatar from "@/components/account/UserAvatar.vue";
+import ReserveDialog from "@/components/gifts/ReserveDialog.vue";
 import type {
   CollectionItem,
   CollectionStats,
@@ -143,6 +155,14 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
+// Cadeaux (P7-4) : un ami du propriétaire réserve un lot de sa liste de souhaits.
+const reserveVisible = ref(false);
+const reserveLot = ref<CollectionItem | null>(null);
+function openReserve(lot: CollectionItem) {
+  reserveLot.value = lot;
+  reserveVisible.value = true;
+}
 
 function onPage(p: number) {
   items.goToPage(p);
