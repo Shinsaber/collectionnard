@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Gift reservations (P7-4, docs/phases/exemplaires-prets.md): a friend of the
+// Gift reservations (P7-4, docs/phases/exemplaires.md): a friend of the
 // owner of a wish list (type marked `x-reservable`) reserves a share of a lot
 // to give it. Never returned to the owner.
 const (

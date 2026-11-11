@@ -1,4 +1,4 @@
--- P7-1 — Exemplaires multiples (docs/phases/exemplaires-prets.md).
+-- P7-1 — Exemplaires multiples (docs/phases/exemplaires.md).
 --
 -- Une ligne de collection devient un **lot** : un ou plusieurs exemplaires identiques d'un item, avec une
 -- quantité. Un même item peut former plusieurs lots d'une collection (un état ou une finition différents) :

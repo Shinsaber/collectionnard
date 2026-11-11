@@ -1,4 +1,4 @@
--- P7-4 — Durée limitée d'une réservation de cadeau (docs/phases/exemplaires-prets.md).
+-- P7-4 — Durée limitée d'une réservation de cadeau (docs/phases/exemplaires.md).
 --
 -- Une réservation non offerte vaut jusqu'à expires_at (inclus) : au-delà, elle ne compte plus dans le lot et sort de la
 -- vue des amis, mais l'offrant la garde dans « À offrir » (« Expirée ») pour la prolonger ou l'annuler. Le serveur

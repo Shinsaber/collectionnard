@@ -1,4 +1,4 @@
--- P7-3 — Prêts (docs/phases/exemplaires-prets.md).
+-- P7-3 — Prêts (docs/phases/exemplaires.md).
 --
 -- Un prêt porte une partie (ou la totalité) d'un lot d'une collection dont le type est marqué `x-lendable`.
 -- L'emprunteur est un ami (borrower_id) ou un simple nom ; borrower_name garde toujours le nom affiché au moment du

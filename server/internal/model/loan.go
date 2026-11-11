@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Loans (P7-3, docs/phases/exemplaires-prets.md): copies of a lot lent to a
+// Loans (P7-3, docs/phases/exemplaires.md): copies of a lot lent to a
 // friend or to a mere name, in a collection whose type is marked `x-lendable`.
 const (
 	LendableKey = "x-lendable"

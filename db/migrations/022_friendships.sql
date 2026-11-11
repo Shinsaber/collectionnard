@@ -1,4 +1,4 @@
--- P7-2 — Amis (docs/phases/exemplaires-prets.md).
+-- P7-2 — Amis (docs/phases/exemplaires.md).
 --
 -- Une amitié est réciproque : un membre fait une demande, l'autre l'accepte. Une seule ligne par paire, quel
 -- que soit le sens ; refuser, annuler ou rompre supprime la ligne. Bloquer un membre rompt l'amitié et retire

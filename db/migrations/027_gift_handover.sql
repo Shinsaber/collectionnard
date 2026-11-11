@@ -1,4 +1,4 @@
--- P7-4b — Remise d'un cadeau (docs/phases/exemplaires-prets.md).
+-- P7-4b — Remise d'un cadeau (docs/phases/exemplaires.md).
 --
 -- `given` change de sens : le cadeau est **remis**, la surprise est levée. Le propriétaire est prévenu et voit la
 -- remise sur son lot (given_at), puis confirme (`received`, received_at : les exemplaires ont quitté sa liste, la

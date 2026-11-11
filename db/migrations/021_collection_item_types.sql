@@ -1,4 +1,4 @@
--- P7-1b — Types d'item acceptés et tri par défaut d'une collection (docs/phases/exemplaires-prets.md).
+-- P7-1b — Types d'item acceptés et tri par défaut d'une collection (docs/phases/exemplaires.md).
 --
 -- Le propriétaire resserre les types d'item que sa collection accepte, dans la limite de son type de collection
 -- (`collection_type_item_types`) : aucune ligne = tout ce que permet le type. Une collection qui n'accepte qu'un type

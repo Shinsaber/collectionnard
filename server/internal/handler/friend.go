@@ -15,7 +15,7 @@ import (
 	"github.com/shinsaber/colec/internal/store"
 )
 
-// Friends (P7-2, docs/phases/exemplaires-prets.md). A member asks another
+// Friends (P7-2, docs/phases/exemplaires.md). A member asks another
 // whose profile they see, by username (any other name answers 404, as an
 // unknown one: usernames cannot be probed); the other accepts or refuses. A
 // private profile hands out a secret single-use link instead (friend links).

@@ -1,4 +1,4 @@
--- P7-2 — Liens d'ami (docs/phases/exemplaires-prets.md).
+-- P7-2 — Liens d'ami (docs/phases/exemplaires.md).
 --
 -- L'invitation par nom d'utilisateur est réservée aux profils visibles de l'inviteur (sinon les noms se
 -- devineraient). Pour un profil privé, le membre crée un lien secret, à usage unique et limité dans le temps,

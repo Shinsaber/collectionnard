@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Friends (P7-2, docs/phases/exemplaires-prets.md): a reciprocal relation, a
+// Friends (P7-2, docs/phases/exemplaires.md): a reciprocal relation, a
 // request then its acceptance, that opens the `friends` visibility.
 const (
 	FriendPending  = "pending"

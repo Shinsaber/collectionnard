@@ -18,7 +18,7 @@ import (
 	"github.com/shinsaber/colec/internal/validator"
 )
 
-// Gift reservations (P7-4, docs/phases/exemplaires-prets.md). A friend of the
+// Gift reservations (P7-4, docs/phases/exemplaires.md). A friend of the
 // owner of a wish list (type marked `x-reservable`) reserves a share of a lot
 // to give it; the other friends see who reserved, to agree. The owner never
 // learns anything: their routes, lists, exports and statistics never read the

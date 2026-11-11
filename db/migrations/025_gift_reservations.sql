@@ -1,4 +1,4 @@
--- P7-4 — Cadeaux réservés (docs/phases/exemplaires-prets.md).
+-- P7-4 — Cadeaux réservés (docs/phases/exemplaires.md).
 --
 -- Un ami du propriétaire d'une liste de souhaits (type marqué `x-reservable`) réserve une part d'un lot pour
 -- l'offrir. Les réservations ne sont JAMAIS renvoyées au propriétaire : aucune requête de ses listes, exports,

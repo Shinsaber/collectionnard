@@ -15,7 +15,7 @@ import (
 	"github.com/shinsaber/colec/internal/store"
 )
 
-// Loans (P7-3, docs/phases/exemplaires-prets.md). The owner of a lot of a
+// Loans (P7-3, docs/phases/exemplaires.md). The owner of a lot of a
 // collection whose type is marked `x-lendable` lends copies to a friend
 // (notified, nothing to accept) or to a mere name. Only the owner writes; the
 // loan is shown to the owner and to the borrowing friend, never to the other
